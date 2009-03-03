@@ -1,0 +1,28 @@
+# Contributor: enderst <enderst@gmail.com>
+# Contributor: Roman Chalupa <rchalupa@seznam.cz>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=autoscan
+pkgver=1.40
+pkgrel=1
+pkgdesc="Utility for network exploration"
+url="http://autoscan-network.com"
+depends=(libao libvorbis vte net-snmp libgnomeui libelf gtk-vnc)
+source=(http://autoscan-network.com/download/autoscan-network-$pkgver.tar.gz
+        modules-patch.diff)
+md5sums=('e18ea80781c59e2c2a389543201914a5'
+         '7c89fa580b10441c01deea3d481e1815')
+arch=('i686' 'x86_64')
+license=('GPL')
+groups=('archpwn' 'archpwn-scanners')
+install=$pkgname.install
+
+build() {
+  patch -p0 < modules-patch.diff
+  cd $startdir/src/autoscan-network-$pkgver
+  ./configure --distrib-ArchLinux
+  patch Makefile < $startdir/autoscan.patch || return 1
+  make || return 1
+  make DESTDIR=$startdir/pkg install || return 1
+  install -D -m755 $startdir/src/autoscan-network-$pkgver/init.d/autoscan-network-debian $startdir/pkg/etc/rc.d/autoscan-network
+}

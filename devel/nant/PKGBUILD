@@ -1,0 +1,37 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=nant
+pkgver=0.85
+pkgrel=1
+pkgdesc="A free .NET build tool, like make but without make's problems"
+arch=('i686' 'x86_64')
+url="http://nant.sourceforge.net"
+license="GPL"
+depends=('mono')
+makedepends=('mono' 'make' 'pkgconfig')
+source=(http://dl.sourceforge.net/sourceforge/nant/$pkgname-$pkgver-src.tar.gz)
+md5sums=('45ae065439b6cbc0e02051b855843f50')
+
+build() {
+  cd $srcdir/$pkgname-$pkgver
+
+  # Fix a problem with duplicate building caused by the doc= target
+  for file in $(find src -name '*.build') ; do
+    sed -i "s: doc=.*>:>:" ${file}
+  done
+
+  # Build against the .NET 2.0 Framework, as it is backwards compatible
+  sed -i -e "s/-f:NAnt.build/-t:mono-2.0 -f:NAnt.build/" \
+    Makefile || return 1
+
+  sed -i 's!warnaserror="true"!warnaserror="false"!' `find -name '*.build'`
+  make -j1 prefix=$pkgdir/usr install || return 1
+
+  install -d $pkgdir/usr/bin/
+  cat > $pkgdir/usr/bin/nant << EOF
+#!/bin/sh
+exec /usr/bin/mono /usr/share/NAnt/bin/NAnt.exe "\$@"
+EOF
+  chmod 0755 $pkgdir/usr/bin/nant
+}
+

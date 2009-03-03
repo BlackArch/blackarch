@@ -1,0 +1,49 @@
+# Contributor: Chris Giles <Chris.G.27 (at) Gmail.com>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=autopsy
+pkgver=2.20
+pkgrel=1
+pkgdesc="The Autopsy Forensic Browser is a GUI for The Sleuth Kit."
+arch=('i686' 'x86_64')
+url="http://www.sleuthkit.org/${pkgname}"
+license=('GPL2')
+groups=('archpwn' 'archpwn-forensic')
+depends=('perl' 'sleuthkit')
+options=(!emptydirs)
+source=(http://dl.sourceforge.net/sourceforge/${pkgname}/${pkgname}-${pkgver}.tar.gz)
+md5sums=('2be68a52b6493032c37f976c494fc2aa')
+
+build() {
+  cd ${startdir}/src/${pkgname}-${pkgver}
+
+  echo "#!/usr/bin/perl -wT" > ${pkgname}
+  echo "use lib '/usr/lib/${pkgname}/';" >> ${pkgname}
+  echo "use lib '/usr/lib/${pkgname}/lib/';" >> ${pkgname}
+  cat base/${pkgname}.base >> ${pkgname}
+  sed -i 's:conf.pl:/etc/autopsy.pl:' ${pkgname} lib/Main.pm
+
+  mkdir -p ${startdir}/pkg/usr/lib/${pkgname}
+  cp ${pkgname} ${startdir}/pkg/usr/lib/${pkgname}/
+  chmod +x ${startdir}/pkg/usr/lib/${pkgname}/${pkgname}
+
+  mkdir -p ${startdir}/pkg/etc
+  cp ${startdir}/extra/${pkgname}.pl ${startdir}/pkg/etc
+
+  mkdir -p ${startdir}/pkg/usr/lib/${pkgname}/help
+  cp -r help ${startdir}/pkg/usr/lib/${pkgname}/
+
+  mkdir -p ${startdir}/pkg/usr/lib/${pkgname}/lib
+  cp -r lib ${startdir}/pkg/usr/lib/${pkgname}/
+
+  mkdir -p ${startdir}/pkg/usr/man/man1
+  cp -r man ${startdir}/pkg/usr/
+
+  mkdir -p ${startdir}/pkg/usr/lib/${pkgname}/pict
+  cp -r pict ${startdir}/pkg/usr/lib/${pkgname}/
+
+  mkdir -p ${startdir}/pkg/usr/bin
+  cd ${startdir}/pkg/usr/bin
+  ln -s /usr/lib/${pkgname}/${pkgname} ${pkgname}
+}
+

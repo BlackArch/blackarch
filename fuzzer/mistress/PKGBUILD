@@ -1,0 +1,36 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=mistress
+pkgver=0.2
+pkgrel=1
+pkgdesc=""
+url="http://software.tripbit.ne"
+groups=('archpwn' 'archpwn-fuzzer')
+license=('GPL')
+depends=('python>=2.4')
+makedepends=('unrar')
+arch=(any)
+source=(http://packetstormsecurity.nl/fuzzer/${pkgname}.rar)
+md5sums=('4645eb78375e656076df614ef2e133b4')
+noextract=($pkname.rar)
+
+build() {
+  cd "$srcdir"
+  unrar x $pkgname || return 1
+
+  install -d $pkgdir/usr/bin
+  install -d $pkgdir/usr/share/$pkgname
+
+  for dir in Mistress Documentation Logfiles Scripts Templates Temporary; do
+    cp -r $dir $pkgdir/usr/share/$pkgname/ || return 1
+  done
+
+  cat >> $pkgdir/usr/bin/mistress << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/Mistress/
+python mistress.py \$*
+EOF
+   chmod 0755 $pkgdir/usr/bin/mistress
+}
+
+# vim:set ts=2 sw=2 et:

@@ -1,0 +1,30 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=metagoofil
+pkgver=1.4a
+pkgrel=1
+pkgdesc="Metagoofil is an information gathering tool designed for extracting metadata of public documents availables in the target/victim websites."
+url="http://www.edge-security.com/metagoofil.php"
+groups=('archpwn' 'archpwn-enumeration')
+license=('GPL')
+source=(http://www.edge-security.com/soft/${pkgname}-${pkgver}.tar)
+md5sums=('99bf874c4b831b47077c6055e6b05ca4')
+depends=('python>=2.4' 'libextractor')
+arch=(any)
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  sed -ie "s|^extcommand=.*|extcommand='/usr/bin/extract'|g" $pkgname.py
+  mv $pkgname.py $pkgname.pyold
+  echo "#!/usr/bin/python" > $pkgname.py || return 1
+  cat $pkgname.pyold >> $pkgname.py || return 1
+
+  install -d $pkgdir/usr/bin
+  install -d $pkgdir/usr/share/doc/$pkgname
+
+  install -Dm755 $pkgname.py $pkgdir/usr/bin/
+  install -Dm644 README $pkgdir/usr/share/doc/$pkgname/
+}
+
+# vim:set ts=2 sw=2 et:

@@ -1,0 +1,75 @@
+--- bed.pl.old	2008-12-31 15:35:44.000000000 +0100
++++ bed.pl	2008-12-31 15:34:20.000000000 +0100
+@@ -9,7 +9,9 @@
+ use Getopt::Std;
+ use Socket;
+ my $SOCKET = "";
++use Time::HiRes;
+ 
++use lib '/usr/share/bed';
+ # which plugins do we support? insert your plugin ( dummy ) here...
+ @plugins = ( "ftp", "smtp", "pop", "http", "irc", "imap", "pjl", "lpd", "finger", "socks4", "socks5" );
+ 
+@@ -29,7 +31,7 @@
+ print ("\n BED 0.5 by mjm ( www.codito.de ) & eric ( www.snake-basket.de )\n\n");
+ 
+ # get the parameters we need for every test
+-getopts('s:t:o:p:u:v:w:x:');
++getopts('s:t:o:p:u:v:w:x:b:');
+ &usage unless(defined $opt_s);
+ 
+ $opt_s = lc($opt_s);                         # convert it to lowercase
+@@ -49,6 +51,7 @@
+ %special_cfg=(
+   "t" => "$opt_t",                           # target
+   "o" => "$opt_o",                           # timeOut
++  "b" => "$opt_b",                           # banner wait time
+   "p" => "$opt_p",                           # port
+ 
+   "u" => "$opt_u",                           # special parameters for the plugin...
+@@ -62,6 +65,7 @@
+ $module->{port}         = undef;
+ $module->{vrfy}         = ""; 
+ $module->{timeout}      = undef;
++$module->{bannersleep}  = 0.2;
+ $module->{sport}        = 0;
+ 
+ if ($special_cfg{'t'} eq "") { $module->{target}='127.0.0.1'; }
+@@ -146,7 +150,7 @@
+                         foreach $log (@login){
+                                 if ( $log ne "" ){
+                                         send(SOCKET, $log, 0);
+-                                        sleep(1);                     # some daemons need some time to reply
++                                        Time::HiRes::sleep($module->{bannersleep});
+                                 }
+                         }
+                         send(SOCKET, $command, 0);                    # send the attack and verify that the server is still alive
+@@ -165,8 +169,7 @@
+                                 connect(SOCKET, $paddr)                           || die "Problem (3) occured with -$count-$cmd2-\n";
+                                 close SOCKET;
+                         }
+-
+-                sleep($module->{timeout});                                             # some servers would kick us for too fast logins
++                Time::HiRes::sleep($module->{timeout});
+                 }
+                 print "\n";
+         }
+@@ -178,12 +181,13 @@
+ print qq~
+  Usage:
+ 
+- $0 -s <plugin> -t <target> -p <port> -o <timeout> [ depends on the plugin ]
++ $0 -s <plugin> -t <target> -p <port> -o <timeout> -b <banner wait time> [ depends on the plugin ]
+ 
+- <plugin>   = FTP/SMTP/POP/HTTP/IRC/IMAP/PJL/LPD/FINGER/SOCKS4/SOCKS5
+- <target>   = Host to check (default: localhost)
+- <port>     = Port to connect to (default: standard port)
+- <timeout>  = seconds to wait after each test (default: 2 seconds)
++ <plugin>     = FTP/SMTP/POP/HTTP/IRC/IMAP/PJL/LPD/FINGER/SOCKS4/SOCKS5
++ <target>     = Host to check (default: localhost)
++ <port>       = Port to connect to (default: standard port)
++ <timeout>    = seconds to wait after each test (default: 2 seconds)
++ <bannertime> = time to wait for banner (default: 0.2 seconds)
+  use "$0 -s <plugin>" to obtain the parameters you need for the plugin.
+ 
+  Only -s is a mandatory switch.

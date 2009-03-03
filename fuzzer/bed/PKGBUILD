@@ -1,0 +1,33 @@
+# Contributor: nofxx <x@nofxx.com>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=bed
+pkgver=0.5
+pkgrel=1
+pkgdesc="Collection of scripts to test for buffer overflows, format string vulnerabilities."
+arch=(any)
+groups=('archpwn' 'archpwn-fuzzer')
+url="http://snake-basket.de/bed.html"
+license=('GPL')
+depends=('perl')
+source=(http://snake-basket.de/bed/$pkgname-$pkgver.tar.bz2 hires.diff)
+md5sums=('caa0a351f38ce41da21961888b2040f9'
+         'daad0dac47dbcec5c178a04098200c51')
+
+build() {
+  cd $startdir/src/$pkgname
+  patch -p0 < ../hires.diff || return 1
+  
+  install -Dm755 bed.pl $startdir/pkg/usr/share/$pkgname/bed.pl || return 1
+      
+  for file in bedmod/*.pm; do
+    install -Dm644 ${file} ${startdir}/pkg/usr/share/${pkgname}/${file}
+  done
+  
+  for file in docs/*; do
+    install -Dm644 ${file} $startdir/pkg/usr/share/${pkgname}/${file} || return 1
+  done
+  
+  mkdir $startdir/pkg/usr/bin
+  ln -sf /usr/share/bed/bed.pl $startdir/pkg/usr/bin/bed || return 1
+}

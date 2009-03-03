@@ -1,0 +1,57 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=wxdotnet
+pkgver=0.7.2
+pkgrel=1
+pkgdesc="wx.NET is a .NET Common Language Infrastructure (CLI) wrapper for wxWidgets."
+url="http://pbnj.sourceforge.net"
+depends=('mono' 'wxgtk')
+makedepends=('gcc' 'coreutils' 'pkgconfig')
+arch=(i686 x86_64)
+license=(custom:wxWidgets)
+md5sums=('c6363b655cc18e4890ad4aabfbcc56bc')
+source=(http://dl.sourceforge.net/sourceforge/wxnet/wx.NET-$pkgver-Source.tar.gz
+        wx-config-helper-0.7.2.patch
+        RJH_CL_Helper_Assy_info.patch)
+md5sums=('c6363b655cc18e4890ad4aabfbcc56bc'
+         'c9849ae0e57b9b8a5bb35a4ecfb23508'
+         '388611423d43c167e1891993971ebc8f')
+
+build(){
+  cd $srcdir/wx.NET-$pkgver
+  patch -p0 < ../wx-config-helper-0.7.2.patch
+  patch -p0 < ../RJH_CL_Helper_Assy_info.patch
+  
+  cd Build/Linux
+  sed -i -r "s:^WXW_INSTALL_DIR =.*:WXW_INSTALL_DIR = /usr:" Defs.in.template
+  sed -i -r "s:^# WXNET_INSTALL_DIR = /usr/local.*:WXNET_INSTALL_DIR = $pkgdir/usr/share/wx-dotnet:" Defs.in.template
+  sed -i -r "s:/Bin::" Sample-Launcher.sh
+  cp Defs.in.template Defs.in
+  
+  make -j1 wxnet || return 1
+  
+  cd $srcdir/wx.NET-$pkgver/Bin
+
+  install -d $pkgdir/usr/lib
+  install -d $pkgdir/usr/share/wx-dotnet/bin
+  install -Dm755 libwx-c.so $pkgdir/usr/lib
+
+  for dll in wx.NET.dll RJH.CommandLineHelper.dll; do
+    gacutil -i $dll -package wx-dotnet -root $pkgdir/usr/lib || return 1
+  done
+
+  for exe in *.exe wxnet-run; do
+    install -Dm755 $exe $pkgdir/usr/share/wx-dotnet/bin
+  done
+
+  ln -s $pkgdir/usr/share/wx-dotnet/bin/towxnet.exe $pkgir/usr/bin/towxnet
+  install -Dm755 Sample-Launcher.sh $pkgdir/usr/share/wx-dotnet/bin
+
+  cd $srcdir/wx.NET-$pkgver
+
+  cp -r Demos $pkgdir/usr/share/wx-dotnet/
+  cp -r Samples $pkgdir/usr/share/wx-dotnet/
+
+  cp README* ChangeLog* CONTRIBUTORS* $pkgdir/usr/share/wx-dotnet/
+  cp -r Docs/* $pkgdir/usr/share/wx-dotnet
+}

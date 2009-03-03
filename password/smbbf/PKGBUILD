@@ -1,0 +1,32 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=smbbf
+pkgver=0.9.1
+pkgrel=1
+pkgdesc="SMB password bruteforcer."
+groups=('archpwn' 'archpwn-password' 'archpwn-bruteforce')
+license=('GPL')
+makedepends=('gcc' 'make')
+arch=('i686' 'x86_64')
+source=(http://packetstormsecurity.org/Crackers/${pkgname}-${pkgver}.tar.gz)
+md5sums=('ddee38c0194ecef0bc0fe41aa6429ceb')
+
+build() {
+  cd "$srcdir/$pkgname"
+
+  sed -ie '/SMBBF_INCLUDE =/cSMBBF_INCLUDE = -Iinclude -I\/usr\/include\/openssl -DCLK_TCK=CLOCKS_PER_SEC' Makefile || return 1
+  sed -ie '/LIBDES=/cLIBDES = -lcrypto' Makefile || return 1
+  sed -ie '/^CC =/cCC = gcc' Makefile || return 1
+
+  make -j 1|| return 1
+
+  for bin in nbdecode smbbf smbdumpusers smbgetserverinfo; do
+    install -Dm755 $bin $pkgdir/usr/bin/$bin || return 1
+  done
+
+  for data in README *.txt; do
+    install -Dm644 $data $pkgdir/usr/share/$pkgname/$data || return 1
+  done
+}
+
+# vim:set ts=2 sw=2 et:

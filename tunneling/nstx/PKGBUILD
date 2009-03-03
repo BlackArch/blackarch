@@ -1,0 +1,32 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=nstx
+_pkgver=1.1-beta6
+pkgver=1.1b6
+pkgrel=1
+pkgdesc="NSTX (the Nameserver Transfer Protocol) makes it possible to create IP tunnels using DNS queries and replies for IP packet encapsulation where IP traffic other than DNS isn't possible."
+url="http://thomer.com/howtos/nstx.html"
+groups=('archpwn' 'archpwn-tunneling')
+license=('GPL')
+depends=('make' 'gcc')
+arch=(i686 x86_64)
+source=(http://ftp.debian.org/debian/pool/main/n/$pkgname/${pkgname}_${_pkgver}.orig.tar.gz
+        http://ftp.debian.org/debian/pool/main/n/$pkgname/${pkgname}_${_pkgver}-5.diff.gz)
+md5sums=('275abd75a856b07a798b1f2360088cf5'
+         '0b7b4d4d3added258ff61b1c5357a1b9')
+
+build() {
+  cd "$srcdir/$pkgname-$_pkgver"
+  patch -Np1 < ../${pkgname}_${_pkgver}-5.diff || return 1
+  make || return 1
+
+  install -Dm755 nstxcd $pkgdir/usr/bin/nstxcd && \
+  install -Dm755 nstxd $pkgdir/usr/bin/nstxd && \
+  install -Dm644 README $pkgdir/usr/share/doc/$pkgname/README && \
+  install -Dm644 Changelog $pkgdir/usr/share/doc/$pkgname/Changelog && \
+  gzip nstxcd.8 && gzip nstxd.8 && \
+  install -Dm644 nstxcd.8.gz $pkgdir/usr/share/man/man8/nstxcd.8.gz && \
+  install -Dm644 nstxd.8.gz $pkgdir/usr/share/man/man8/nstxd.8.gz || return 1
+}
+
+# vim:set ts=2 sw=2 et:

@@ -1,0 +1,28 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=perl-net-sinfp
+pkgver=2.06
+pkgrel=1
+pkgdesc="a full operating system stack fingerprinting suite"
+arch=('i686' 'x86_64')
+url="http://search.cpan.org/~gomor/Net-SinFP"
+groups=('archpwn' 'archpwn-scanners')
+license=('PerlArtistic')
+provides=('sinfp')
+depends=('perl' 'perl-net-packet' 'perl-net-packet-target' 'perl-class-gomor' 'perl-dbix-sqlite-simple')
+source=(http://search.cpan.org/CPAN/authors/id/G/GO/GOMOR/Net-SinFP-$pkgver.tar.gz)
+md5sums=('e0a04f67801b594345a7eee91041803f')
+
+build() {
+  cd  $startdir/src/Net-SinFP-$pkgver
+  PERL_MM_USE_DEFAULT=1 perl Makefile.PL INSTALLDIRS=vendor || return 1 
+  make || return 1
+  make pure_install doc_install DESTDIR=$startdir/pkg || return 1
+  find $startdir/pkg -name '.packlist' -delete
+  find $startdir/pkg -name '*.pod' -delete
+  cat > $pkgdir/usr/bin/sinfp << EOF
+#!/bin/sh
+exec /usr/bin/perlbin/vendor/sinfp.pl $*
+EOF
+  chmod 0755 $pkgdir/usr/bin/sinfp
+}

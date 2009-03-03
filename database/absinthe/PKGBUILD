@@ -1,0 +1,36 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=absinthe
+pkgver=1.4.1
+pkgrel=1
+pkgdesc="Absinthe is a gui-based tool that automates the process of downloading the schema & contents of a database that is vulnerable to Blind SQL Injection."
+url="http://www.0x90.org/releases/absinthe/index.php"
+groups=('archpwn' 'archpwn-database')
+arch=('any')
+license=('GPL' 'BSD')
+depends=('mono' 'gtk-sharp-2' 'wxdotnet')
+source=(http://www.0x90.org/releases/absinthe/Absinthe-${pkgver}-Linux.tar.gz)
+md5sums=('09cf527031ff7487bcab6d31ecfad0c1')
+
+build() {
+  cd "$srcdir/Absinthe-$pkgver-Linux"
+
+  install -d $pkgdir/usr/bin
+  install -d $pkgdir/usr/share/$pkgname
+  install -Dm644 README $pkgdir/usr/share/$pkgname
+
+  for file in Absinthe.Core.dll Absinthe.exe \
+              Absinthe.ico LiquorCabinet.Shared.dll; do
+    cp bin/$file $pkgdir/usr/share/$pkgname/
+  done
+
+  cp -r bin/plugins $pkgdir/usr/share/$pkgname/
+
+  cat > $pkgdir/usr/bin/absinthe << EOF
+#!/bin/sh
+mono /usr/share/$pkgname/Absinthe.exe
+EOF
+  chmod 0755 $pkgdir/usr/bin/absinthe
+}
+
+# vim:set ts=2 sw=2 et:

@@ -1,0 +1,31 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=csrftester
+pkgver=1.0
+pkgrel=1
+pkgdesc="The OWASP CSRFTester Project attempts to give developers the ability to test their applications for CSRF flaws."
+url="http://www.owasp.org/index.php/Category:OWASP_CSRFTester_Project"
+groups=('archpwn' 'archpwn-www' 'archpwn-fuzzer')
+license=('LGPL')
+depends=('java-runtime')
+arch=(any)
+source=(http://www.owasp.org/images/0/08/CSRFTester-$pkgver.zip)
+md5sums=('f2ff031c3db7a1fe005700766bf3fc98')
+
+build() {
+  cd "$srcdir/CSRFTester-$pkgver"
+
+  install -d $pkgdir/usr/bin
+  install -d $pkgdir/usr/share/$pkgname
+
+  cp -r * $pkgdir/usr/share/$pkgname/ || return 1
+  rm $pkgdir/usr/share/$pkgname/run.bat
+  cat > $pkgdir/usr/bin/$pkgname << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+java -classpath ".:lib/concurrent.jar:OWASP-CSRFTester-1.0.jar" org.owasp.csrftester.CSRFTester
+EOF
+  chmod 0755 $pkgdir/usr/bin/$pkgname
+}
+
+# vim:set ts=2 sw=2 et:

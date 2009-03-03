@@ -1,0 +1,46 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=nikto
+pkgver=2.03
+pkgrel=1
+pkgdesc='Nikto is a web server scanner which performs comprehensive tests against web servers for multiple items'
+url='http://www.cirt.net/code/nikto.shtml'
+license='GPL'
+arch=('any')
+groups=('archpwn' 'archpwn-scanners' 'archpwn-www')
+depends=('perl' 'openssl' 'perl-net-ssleay')
+source=(http://www.cirt.net/nikto/$pkgname-current.tar.gz)
+md5sums=('2577536f8cd03cc37cb1c4ff99d1c66a')
+
+build() {
+  cd $srcdir/$pkgname
+
+  perl nikto.pl -update
+
+  install -d $pkgdir/usr/bin
+  install -d $pkgdir/usr/share/$pkgname/
+  install -d $pkgdir/usr/share/doc/$pkgname/
+  
+  install -Dm644 docs/nikto.dtd $pkgdir/usr/share/doc/$pkgname/nikto.dtd || return 1
+  install -Dm644 docs/nikto_manual.html $pkgdir/usr/share/doc/$pkgname/nikto_manual.html || return 1
+  
+  gzip docs/nikto.1 || return 1
+  install -Dm644 docs/nikto.1.gz /usr/share/man/man1/nikto.1.gz || return 1
+  
+  for dir in plugins templates; do
+    cp -r $dir $pkgdir/usr/share/$pkgname/ || return 1
+  done
+  
+  install -Dm644 config.txt $pkgdir/usr/share/$pkgname/ || return 1
+  install -Dm755 nikto.pl $pkgdir/usr/share/$pkgname/ || return 1
+  
+  cat > $pkgdir/usr/bin/nikto << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/
+perl nikto.pl \$*
+EOF
+  chmod 0755 $pkgdir/usr/bin/nikto
+
+	echo "Don't forget to update the database first with:"
+	echo "nikto -update"
+}

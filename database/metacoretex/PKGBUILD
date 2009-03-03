@@ -1,0 +1,43 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=metacoretex
+pkgver=0.8.0
+pkgrel=1
+pkgdesc="MetaCoretex is an entirely JAVA vulnerability scanning framework for databases."
+url="http://metacoretex.sourceforge.net/"
+groups=('archpwn' 'archpwn-database' 'archpwn-scanners')
+arch=(any)
+license=('custom')
+depends=('java-runtime')
+source=(http://downloads.sourceforge.net/metacoretex/${pkgname}-${pkgver}.tar.gz)
+md5sums=('0505b17ff98627f7a43663211e5c7a89')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  install -d $pkgdir/usr/bin/
+  install -d $pkgdir/usr/share/$pkgname/
+  install -d $pkgdir/usr/share/doc/$pkgname/
+
+  install -Dm644 LICENSE $pkgdir/usr/share/licenses/$pkgname/LICENSE
+  install -Dm644 README $pkgdir/usr/share/doc/$pkgname/README
+  install -Dm644 TODO $pkgdir/usr/share/doc/$pkgname/TODO
+
+  install -Dm755 mctx.sh $pkgdir/usr/share/$pkgname/mctx.sh
+
+  cp -r docs/* $pkgdir/usr/share/doc/$pkgname/ || return 1
+
+  for dir in contrib schema conf dist probes; do
+    cp -r $dir $pkgdir/usr/share/$pkgname/ || return 1
+  done
+
+  cat > $pkgdir/usr/bin/metacoretex << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/
+./mctx.sh \$*
+EOF
+
+  chmod 0755 $pkgdir/usr/bin/metacoretex
+}
+
+# vim:set ts=2 sw=2 et:

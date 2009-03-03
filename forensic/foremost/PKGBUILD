@@ -1,0 +1,29 @@
+# Contributor: Jaroslav Lichtblau <dragonlord@aur.archlinux.org>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=foremost
+pkgver=1.5.5
+pkgrel=1
+pkgdesc="A console program to recover files based on their headers, footers, and internal data structures."
+arch=('i686' 'x86_64')
+url="http://foremost.sourceforge.net"
+license=('custom')
+groups=('archpwn' 'archpwn-forensic')
+backup=(etc/foremost.conf)
+source=(http://downloads.sourceforge.net/$pkgname/$pkgname-$pkgver.tar.gz \
+        $pkgname-makefile.diff)
+md5sums=('5868b629e2c9802f0d36d4e10ae9fe34'
+         '0e6b7f653b6b7811158ba7732dead04e')
+
+build() {
+  cd "${srcdir}/$pkgname-$pkgver"
+  install -d "${pkgdir}"/{etc,{usr/bin,usr/share/man/man8}}
+
+  make || return 1
+  patch -Np0 -i "${srcdir}/$pkgname-makefile.diff"
+  make DESTDIR="${pkgdir}" install || return 1
+
+#license
+  ./foremost -V > COPYRIGHT
+  install -D -m644 "COPYRIGHT" "${pkgdir}/usr/share/licenses/$pkgname/COPYRIGHT" || return 1
+}

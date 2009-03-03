@@ -1,0 +1,26 @@
+# Contributor: Pranay Kanwar <warl0ck@metaeye.org>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=unicornscan
+pkgver=0.4.7
+pkgrel=2
+pkgdesc="Unicornscan is a new information gathering and correlation engine."
+url="http://www.unicornscan.org/"
+depends=('libpcap' 'postgresql-libs' 'geoip' 'libdnet')
+groups=('archpwn' 'archpwn-scanners')
+license="GPL"
+arch=(i686)
+source=(http://www.unicornscan.org/releases/$pkgname-$pkgver-$pkgrel.tar.bz2
+        dirty-trans-ucred.diff)
+md5sums=('4c5f272eb38c333c0094c32317edf758'
+         '3f81711f24a53d97448f10560b08a969')
+
+build() {
+  cd $srcdir/$pkgname-$pkgver
+  patch -p1 < ../dirty-trans-ucred.diff || return 1
+  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --with-pgsql --with-geoip --enable-bundled-ltdl
+  make || return 1
+  make DESTDIR=$startdir/pkg install
+  cd $startdir/pkg/etc/unicornscan
+  ln -s /usr/share/GeoIP/GeoIP.dat GeoIP.dat
+}

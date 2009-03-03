@@ -1,0 +1,31 @@
+# Contributor: Darwin Bautista <djclue917@gmail.com>
+
+pkgname=gsm
+pkgver=1.0.12
+pkgrel=6
+pkgdesc="Shared libraries for GSM 06.10 lossy speech compression"
+arch=('i686' 'x86_64')
+url="http://kbs.cs.tu-berlin.de/~jutta/toast.html"
+license=('custom')
+depends=('glibc')
+source=(http://kbs.cs.tu-berlin.de/~jutta/gsm/${pkgname}-${pkgver}.tar.gz)
+md5sums=('8909828c601e82e842e6a0ceade60a4e')
+
+build() {
+  cd ${startdir}/src/${pkgname}-1.0-pl12/
+
+  [ "${CARCH}" = "x86_64" ] && CFLAGS="${CFLAGS} -fPIC"
+
+  # Prepare directories
+  install -d ${startdir}/pkg/usr/{bin,lib,include,share/man/man3}
+
+  make CCFLAGS="-c ${CFLAGS}" || return 1
+  make INSTALL_ROOT=${startdir}/pkg/usr \
+    GSM_INSTALL_INC=${startdir}/pkg/usr/include \
+    GSM_INSTALL_MAN=$startdir/pkg/usr/share/man/man3 install
+
+  # Install license
+  install -D -m644 COPYRIGHT ${startdir}/pkg/usr/share/licenses/${pkgname}/license.txt
+}
+
+# vim:set ts=2 sw=2 et:

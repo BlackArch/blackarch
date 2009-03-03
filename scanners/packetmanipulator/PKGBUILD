@@ -1,0 +1,34 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=packetmanipulator-svn
+pkgver=0.2RC2
+pkgrel=1
+pkgdesc="Packet manipulation made easy."
+arch=('i686' 'x86_64')
+url="http://manipulator.umitproject.org"
+license=('GPL')
+groups=('archpwn' 'archpwn-scanners')
+depends=('python>=2.4' 'scapy' 'pygtk')
+makedepends=('gcc' 'make' 'gtk')
+
+_svntrunk=http://svn.umitproject.org/svnroot/umit/branch/PacketManipulator
+_svnmod=PacketManipulator
+
+build() {
+  cd "$srcdir"
+
+  if [ -d $_svnmod/.svn ]; then
+    (cd $_svnmod && svn up -r $pkgver)
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
+  fi
+
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_svnmod-build"
+  cp -r "$srcdir/$_svnmod" "$srcdir/$_svnmod-build"
+  cd "$srcdir/$_svnmod-build"
+
+  PM_DOCKING=1 python setup.py install --prefix=/usr --root=$pkgdir
+}

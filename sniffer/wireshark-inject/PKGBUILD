@@ -1,0 +1,31 @@
+# Maintainer: Hugo Doria <hugo@archlinux.org>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=wireshark-inject
+_pkgname=wireshark
+pkgver=1.0.5
+pkgrel=1
+pkgdesc="A free network protocol analyzer for Unix/Linux and Windows"
+arch=('i686' 'x86_64')
+license=('GPL2')
+depends=('gtk2>=2.14.5' 'heimdal>=1.2.1' 'libpcap>=1.0.0' 'bash' 'gnutls>=2.4.1' 'libcap' 'ghex' 'lorcon')
+makedepends=('bison' 'flex' 'patch')
+url="http://www.wireshark.org/"
+replaces=('ethereal')
+groups=('archpwn' 'archpwn-sniffer')
+options=(!libtool)
+source=(http://www.wireshark.org/download/src/${_pkgname}-${pkgver}.tar.gz
+        http://802.11ninja.net/lorcon/raw-attachment/wiki/WiresharkWiFiInjection/injection_patch-0.1.1.tar.gz)
+md5sums=('99ac9a9d2c1445658039f1f34c89e3f6'
+         '3ed5c9d9bb993751b830fcd61380ab1c')
+
+build() {
+  cd ${srcdir}/${_pkgname}-${pkgver}
+  patch -Np0 < ../wishark.diff || return 1
+  export CFLAGS="-fno-unit-at-a-time ${CFLAGS}"
+  ./configure --prefix=/opt/wireshark-inject/ --with-ssl || return 1
+  sed -ie 's|^CFLAGS =\(.*\)|CFLAGS =\1 -lorcon -lgtkhex|g' Makefile || return 1
+  sed -ie 's|^CFLAGS =\(.*\)|CFLAGS =\1 -I/usr/include/gtkhex/ -DCAPTURE_PCAP_ERRBUF_SIZE=PCAP_ERRBUF_SIZE|g' gtk/Makefile || return 1
+  make all || return 1
+  make DESTDIR=${pkgdir} install || return 1
+}

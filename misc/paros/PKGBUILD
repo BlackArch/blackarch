@@ -1,0 +1,37 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=paros
+pkgver=3.2.13
+pkgrel=1
+pkgdesc="Web Proxy, written in Java. Supports http and https"
+url="http://"
+groups=('archpwn' 'archpwn-misc')
+license=('custom:Clarified-Artistic')
+arch=(any)
+depends=('java-runtime')
+makedepends=('java-environment' 'unzip' 'apache-ant')
+source=(http://downloads.sourceforge.net/paros/${pkgname}-${pkgver}-src.zip)
+md5sums=('93d1a4abab7e2d2188ed4c40f53c1d4c')
+
+build() {
+  cd "$srcdir/$pkgname/build"
+  ant dist || return 1
+
+  cd "$srcdir/$pkgname"
+
+  sed -i -e '1i#!/bin/sh' -e "1icd /usr/share/paros" "build/paros/startserver.sh" || return 1
+  install -Dm755 build/paros/startserver.sh $pkgdir/usr/bin/paros || return 1
+
+  rm build/paros/startserver.*
+
+  install -d $pkgdir/usr/share/paros/ || return 1
+  install -d $pkgdir/usr/share/doc/paros/ || return 1
+
+  cp -r build/paros/* $pkgdir/usr/share/paros/ || return 1
+
+  for doc in src/doc/{*.txt,*.rtf}; do
+    install -Dm644 $doc $pkgdir/usr/share/doc/paros/ || return 1
+  done
+}
+
+# vim:set ts=2 sw=2 et:

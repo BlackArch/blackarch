@@ -1,0 +1,40 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=wicrawl-git
+pkgver=0.4a
+pkgrel=1
+pkgdesc="Wicrawl is a simple wi-fi (802.11x) Access Point auditor with a simple and flexible plugin architecture."
+arch=(i686 x86_64)
+url="http://midnightresearch.com/projects/wicrawl/"
+license=('GPL')
+depends=('openssl' 'libpcap' 'perl' 'python')
+makedepends=('gcc')
+
+_gitroot="git://github.com/davidn/wicrawl-debian.git"
+_gitname="wicrawl-debian"
+
+build() {
+  cd "$srcdir"
+  msg "Connecting to GIT server...."
+
+  if [ -d $_gitname ] ; then
+    cd $_gitname && git pull origin
+    msg "The local files are updated."
+  else
+    git clone $_gitroot
+  fi
+
+  msg "GIT checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_gitname-build"
+  cp -r "$srcdir/$_gitname" "$srcdir/$_gitname-build"
+  cd "$srcdir/$_gitname-build"
+
+  install -d $pkgdir/usr/
+  sed -ie "/wicrawl.h/a#include <limits.h>" discovery/parse2.c || return 1
+
+  ./configure --prefix=/usr
+  make || return 1
+  make prefix="$pkgdir/usr" install
+} 

@@ -1,0 +1,25 @@
+# Contributor: Andrea Zucchelli <zukka77@gmail.com>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=tinyproxy
+pkgver=1.6.4
+pkgrel=2
+pkgdesc="lightweight HTTP proxy easy to run and configure"
+arch=('i686' 'x86_64')
+url="http://www.banu.com/tinyproxy/"
+license=('GPL')
+backup=('etc/tinyproxy/tinyproxy.conf')
+groups=('archpwn' 'archpwn-tunneling')
+source=(http://www.banu.com/pub/tinyproxy/1.6/$pkgname-$pkgver.tar.gz
+        tinyproxy-rc)
+md5sums=('3157b9159a8d005f4248cf4d4d6c65e2'
+         'bceb1aa1711d4092614813a96b815ecb')
+build() {
+  cd $srcdir/$pkgname-$pkgver
+  ./configure --prefix=/usr
+  make || return 1
+  make DESTDIR=$pkgdir install
+  install -m 755 -D  $srcdir/tinyproxy-rc $pkgdir/etc/rc.d/tinyproxy
+  #fix default group 
+  cat $pkgdir/etc/tinyproxy/tinyproxy.conf |sed  's/Group nogroup/Group nobody/' > $pkgdir/etc/tinyproxy/tinyproxy.conf
+}

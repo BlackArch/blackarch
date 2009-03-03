@@ -1,0 +1,216 @@
+diff -r -U 3 a/src/config.h b/src/config.h
+--- a/src/config.h	2002-12-24 21:40:35.000000000 +0530
++++ b/src/config.h	2007-06-23 17:03:10.000000000 +0530
+@@ -11,7 +11,7 @@
+ #define HAVE_MEMORY_H 1
+ 
+ /* Define to 1 if you have the <stdint.h> header file. */
+-/* #undef HAVE_STDINT_H */
++#define HAVE_STDINT_H 1
+ 
+ /* Define to 1 if you have the <stdlib.h> header file. */
+ #define HAVE_STDLIB_H 1
+@@ -23,7 +23,7 @@
+ #define HAVE_STRING_H 1
+ 
+ /* Define to 1 if you have the <sys/ioccom.h> header file. */
+-#define HAVE_SYS_IOCCOM_H 1
++/* #undef HAVE_SYS_IOCCOM_H */
+ 
+ /* Define to 1 if you have the <sys/stat.h> header file. */
+ #define HAVE_SYS_STAT_H 1
+diff -r -U 3 a/src/lc.c b/src/lc.c
+--- a/src/lc.c	2002-12-24 20:39:00.000000000 +0530
++++ b/src/lc.c	2007-06-23 17:03:10.000000000 +0530
+@@ -190,8 +190,8 @@
+ 				break;
+ 			case 'h':
+ 				if(sniff_file[0]=='-' &&
+-				   sniff_file[1]==0)    (void *)sniff.dump = stdout;
+-				else sniff.dump = (void *)fopen(sniff_file, "w");
++				   sniff_file[1]==0)    sniff.dump = stdout;
++				else sniff.dump = (void*)fopen(sniff_file, "w");
+ 				if(!sniff.dump){
+ 					fprintf(stderr, "Couldn't open file: %s\n", sniff.dump);
+ 					lc_usage();
+@@ -223,7 +223,7 @@
+ 				break;
+ 			case 'h':
+ 				if(spoof_file[0]=='-' &&
+-				   spoof_file[1]==0)    (void *)spoof.pcap = stdin;
++				   spoof_file[1]==0)    spoof.pcap = stdin;
+ 				else spoof.pcap = (void *)fopen(spoof_file, "r");
+ 				if(!spoof.pcap){
+ 					fprintf(stderr, "Couldn't open file: %s\n", spoof.pcap);
+@@ -244,7 +244,7 @@
+ 		i=1;
+ 		if(!pid){
+ 			if(sniff_packets){
+-			   (void *)sniff.packet = pcap_next(sniff.pcap, &(sniff.pkthdr));
++			   sniff.packet = pcap_next(sniff.pcap, &(sniff.pkthdr));
+ 			   if(!sniff.packet) continue; /* network has "infinite packets, but there's blocking */
+ 			   if(trailer_sniff){
+ 			      pk_hmac(buf, sniff_key, sniff.packet, sniff.pkthdr.caplen-21);
+diff -r -U 3 a/src/minewt.c b/src/minewt.c
+--- a/src/minewt.c	2002-12-24 20:39:00.000000000 +0530
++++ b/src/minewt.c	2007-06-23 17:03:38.000000000 +0530
+@@ -185,9 +185,6 @@
+ 		perror("pcap_open_live");
+ 		exit(EXIT_FAILURE);
+ 	}
+-	if (ioctl(pcap_fileno(internal_pcap), BIOCIMMEDIATE, &immediate)) {
+-		/*perror("Couldn't set BPF to Immediate Mode.");*/
+-	}
+ 
+ 	if(!strncmp(internal_dev, external_dev, sizeof(internal_dev)))
+ 	{
+@@ -240,9 +237,6 @@
+ 			perror("pcap_open_live");
+ 			exit(EXIT_FAILURE);
+ 		}
+-		if (ioctl(pcap_fileno(external_pcap), BIOCIMMEDIATE, &immediate)) {
+-		//perror("Couldn't set BPF to Immediate Mode.");
+-		}
+ 		/* Compile and set the filter program */
+ 		if (pcap_compile(external_pcap, &external_fp, external_pfprogram, 1, 0x0) == -1) {
+ 			pcap_perror(external_pcap, "pcap_compile");
+@@ -599,7 +593,7 @@
+ 				/* XXX very probable security hole lives here -- we must validate length, at minimum*/				 
+ 				if(stateless_ipt   && 
+ 				   (x.ip->ip_hl*4) != LIBNET_IP_H){ 
+-				   	(char *)packet_state = (char *)x.ip + LIBNET_IP_H + 4; 
++				   	packet_state = (char *)x.ip + LIBNET_IP_H + 4; 
+ 				   } 
+ 				 
+ 				if(packet_state || (packet_state = find_entry(packet_key)))	
+diff -r -U 3 a/src/paketto.c b/src/paketto.c
+--- a/src/paketto.c	2002-12-23 18:04:35.000000000 +0530
++++ b/src/paketto.c	2007-06-23 17:03:10.000000000 +0530
+@@ -109,7 +109,7 @@
+       if(datalink != DLT_EN10MB) return(0); /* validate is our ethernet */
+       if(length < LIBNET_ETH_H) return(0);  /* validate can be ethernet */
+       
+-      (char *)x->eth = (char *)packet;
++      x->eth = (struct libnet_ethernet_hdr *)packet;
+       l2_offset=LIBNET_ETH_H;
+       ok += l2_offset;
+       	  
+@@ -118,7 +118,7 @@
+       	case ETHERTYPE_ARP:
+    		if(length < LIBNET_ETH_H + LIBNET_ARP_H)
+    		   return(0);
+-      		(char *)x->arp = (char *)x->eth + LIBNET_ETH_H;
++      		x->arp = (struct libnet_arp_hdr *)(x->eth + LIBNET_ETH_H);
+       		ok+=LIBNET_ARP_H;
+       		return(ok);
+       		break;
+@@ -133,8 +133,8 @@
+    if(length < l2_offset + LIBNET_IP_H)  /* Could we be IP? */
+       return(0);
+    ok+=LIBNET_IP_H;
+-   if(x->eth) (char *)x->ip  = (char *)x->eth + l2_offset;
+-   else       (char *)x->ip  = (char *)packet;
++   if(x->eth) x->ip  = (char*)x->eth + l2_offset;
++   else       x->ip  = (char *)packet;
+    
+    if(x->ip->ip_off != 0 && x->ip->ip_off != ntohs(16384)) return(0); 
+    if(x->ip->ip_v   != 4) return(0);
+@@ -164,19 +164,19 @@
+ 	         return(0);
+ 	      ok+=LIBNET_TCP_H;
+ 	   }
+-   	   (char *)x->tcp = (char *)x->ip + ((int)x->ip->ip_hl*4);
++   	   x->tcp = (char *)x->ip + ((int)x->ip->ip_hl*4);
+    	   break;
+    	case IPPROTO_UDP:
+ 	   if(length < l2_offset + (int)x->ip->ip_hl*4 + LIBNET_UDP_H)
+ 	      return(0);
+ 	   ok+=LIBNET_UDP_H;
+-   	   (char *)x->udp = (char *)x->ip + ((int)x->ip->ip_hl*4);
++   	   x->udp = (char *)x->ip + ((int)x->ip->ip_hl*4);
+    	   break;
+    	case IPPROTO_ICMP:
+ 	   if(length < l2_offset + (int)x->ip->ip_hl*4 + 8)
+ 	        return(0);
+ 	   ok+=LIBNET_ICMP_H;
+-   	   (char *)x->icmp= (char *)x->ip + ((int)x->ip->ip_hl*4);
++   	   x->icmp= (char *)x->ip + ((int)x->ip->ip_hl*4);
+    	   break;   	   
+    	default:
+ 	   return(0);  	        
+@@ -317,7 +317,7 @@
+ 	char buf[MX_B], buf2[MX_B];
+ 	struct frame x;
+ 
+-	(char *)x.ip = 	target;	
++	x.ip = 	target;	
+         snprintf(buf, sizeof(buf),   "%s", inet_ntoa(x.ip->ip_src));
+         snprintf(buf2, sizeof(buf2), "%s", inet_ntoa(x.ip->ip_dst));
+      	fprintf(stderr, " IP: i=%s->%s v=%hu hl=%hu s=%hu id=%i o=%hu ttl=%hu pay=%u\n",
+@@ -334,7 +334,7 @@
+ 	char tmp = '\n';
+ 
+ 	if(!short_tcp)tmp=' ';	
+-	(char *)x.tcp = target;	
++	x.tcp = target;	
+ 	fprintf(stderr, "TCP: p=%u->%u, s/a=%u%c",
+ 	ntohs(x.tcp->th_sport), ntohs(x.tcp->th_dport), ntohl(x.tcp->th_seq),tmp);
+ 	if(!short_tcp) fprintf(stderr, "-> %u o=%hu f=%hu w=%u u=%u optl=%i\n",
+diff -r -U 3 a/src/paketto.h b/src/paketto.h
+--- a/src/paketto.h	2002-12-23 11:12:22.000000000 +0530
++++ b/src/paketto.h	2007-06-23 17:03:10.000000000 +0530
+@@ -17,10 +17,7 @@
+ #include <sys/ioccom.h>
+ #endif
+ #ifndef _IOW
+-#error "We couldn't find the system macro _IOW on your machine...if you run
+-find /usr/include | xargs grep _IOW
+-and find some file other than sys/sockio.h containing the macro, email
+-dan@doxpara.com and I'll get it in the next build."
++#error "We couldn't find the system macro _IOW on your machine...if you run find /usr/include | xargs grep _IOW and find some file other than sys/sockio.h containing the macro, email dan@doxpara.com and I'll get it in the next build."
+ #endif
+    
+ #include <sys/types.h>
+diff -r -U 3 a/src/scanutil.c b/src/scanutil.c
+--- a/src/scanutil.c	2002-12-24 21:16:10.000000000 +0530
++++ b/src/scanutil.c	2007-06-23 17:03:10.000000000 +0530
+@@ -10,8 +10,8 @@
+    u_char syncookie[20];
+    long synbits;
+    
+-   (char *)ip  = (char *)ipp;
+-   (char *)tcp = (char *)ip + (int)ip->ip_hl*4;
++   ip  = (char *)ipp;
++   tcp = (char *)ip + (int)ip->ip_hl*4;
+ 
+ 
+     bzero(buf, sizeof(buf));
+@@ -39,8 +39,8 @@
+    u_char syncookie[20];
+    long synbits;
+ 
+-   (char *)ip  = (char *)ipp;
+-   (char *)tcp = (char *)ip + (int)ip->ip_hl*4;
++   ip  = (char *)ipp;
++   tcp = (char *)ip + (int)ip->ip_hl*4;
+ 
+    bzero(buf, sizeof(buf));
+    memcpy(buf,   &ip->ip_dst, 4);   
+@@ -261,7 +261,7 @@
+                          0,             /*how much crap*/
+                          (char *)x->eth);
+  
+-   (char *)x->ip = (char *)x->eth + LIBNET_ETH_H;
++   x->ip = (char *)x->eth + LIBNET_ETH_H;
+    
+    libnet_build_ip(LIBNET_TCP_H,
+                 0, // tos
+@@ -276,7 +276,7 @@
+                 (char *)x->ip);
+    
+    x->ip->ip_off = 64; /* set DF flag */
+-   (char *)x->tcp = (char *)x->ip + (int)x->ip->ip_hl*4;
++   x->tcp = (char *)x->ip + (int)x->ip->ip_hl*4;
+    
+    libnet_build_tcp(12345, // source port
+                  139,  // dest port
