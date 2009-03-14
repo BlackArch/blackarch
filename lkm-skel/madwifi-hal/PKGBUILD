@@ -1,0 +1,30 @@
+# Contributor: Andrea Scarpino <andrea@archlinux.org>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=madwifi-hal
+pkgver=0.10.5.6r3942
+pkgrel=1
+_rpkgver=0.10.5.6-r3942-20090205
+pkgdesc="Madwifi hal branch drivers for Atheros wireless chipsets. For stock arch 2.6 kernel. Patched for injection."
+arch=('i686' 'x86_64')
+license=('GPL')
+url="http://madwifi.org/ticket/1192"
+depends=('kernel26')
+provides=('madwifi')
+conflicts=('madwifi')
+install=${pkgname}.install
+source=(http://snapshots.madwifi-project.org/${pkgname}-0.10.5.6/${pkgname}-${_rpkgver}.tar.gz
+        http://patches.aircrack-ng.org/madwifi-ng-r3925.patch)
+md5sums=('697f0c0ca8363fed78d67152119bcd46'
+         '08b969d5786fe19a1381263e18348919')
+_kernver=2.6.28-ARCH
+
+build() {
+  cd ${srcdir}/${pkgname}-${_rpkgver}
+  patch -Np0 -i "${srcdir}"/madwifi-ng-r3925.patch || return 1
+  make KERNELPATH=/lib/modules/$_kernver/build KERNELRELEASE=$_kernver all || return 1
+  make DESTDIR=${pkgdir} \
+       BINDIR=/usr/bin \
+       MANDIR=/usr/share/man install || return 1
+  sed -i -e "s/KERNEL_VERSION='.*'/KERNEL_VERSION='${_kernver}'/" $startdir/*.install
+}

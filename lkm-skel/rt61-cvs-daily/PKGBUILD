@@ -1,0 +1,24 @@
+# $Id: PKGBUILD,v 1.3 2007/09/19 10:08:45 tom Exp $
+# Maintainer: Oleg Fajans <ofajans@gmail.com>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=rt61-cvs-daily
+pkgver=21.0
+pkgrel=2
+pkgdesc="Firmware for the rt2x00 wireless drivers"
+arch=('i686' 'x86_64')
+depends=('kernel26')
+url="http://www.ralinktech.com/ralink/Home/Support/Linux.html"
+license=('RALINK')
+install=$pkgname.install
+source=(http://rt2x00.serialmonkey.com/rt61-cvs-daily.tar.gz)
+_kernver=2.6.28-ARCH
+
+build() {
+  cd $startdir/src/rt61-cvs-*/Module
+  make KERNDIR=/lib/modules/$_kernver/build || return 1
+  mkdir -p $startdir/pkg/lib/firmware
+  install -m644 rt2*.bin $startdir/pkg/lib/firmware || return 1
+  install -Dm644 rt61.ko $startdir/pkg/lib/modules/$_kernver/kernel/drivers/net/wireless/rt61.ko || return 1
+  sed -i -e "s/KERNEL_VERSION='.*'/KERNEL_VERSION='${_kernver}'/" $startdir/*.install
+}
