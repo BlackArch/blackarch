@@ -1,0 +1,32 @@
+# Contributor: Jens Pranaitis <jens@jenux.homelinux.org>
+pkgname=airgraph-ng-svn
+pkgver=1414
+pkgrel=1
+pkgdesc="Graphing tool for the aircrack suite"
+arch=('i686' 'x86_64')
+url="http://www.aircrack-ng.org"
+license=('GPL2')
+depends=('graphviz' 'python')
+makedepends=("subversion")
+groups=('archpwn' 'archpwn-misc')
+
+_svntrunk="http://trac.aircrack-ng.org/svn/trunk/scripts/airgraph-ng/"
+_svnmod=airgraph-ng
+
+build() {
+  cd "${srcdir}"
+  msg "Connecting to SVN server...."
+  if [ -d $_svnmod/.svn ]; then
+    (cd $_svnmod && svn up -r $pkgver)
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
+  fi
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+  svn export $_svnmod $_svnmod-build
+  cd $_svnmod-build
+  mkdir -p "${pkgdir}"{/usr/lib/python2.6/site-packages,/usr/bin,/usr/share/man/man1} || return 1
+  install -m 644 lib/lib_Airgraphviz.py "${pkgdir}"/usr/lib/python2.6/site-packages/ || return 1
+  install -m 644 man/{airgraph-ng.1,dump-join.1} "${pkgdir}"/usr/share/man/man1/ || return 1
+  install -m 755 {airgraph-ng.py,dump-join.py} "${pkgdir}"/usr/bin/ || return 1
+}

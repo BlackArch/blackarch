@@ -1,0 +1,37 @@
+# Contributor: Shino <shino@jenux.homelinux.org>
+# Contributor: Thomas Schneider <blacklotus@jenux.homelinux.org>
+
+pkgname=pyrit
+pkgver=73
+pkgrel=1
+pkgdesc="WPA-PSK and WPA2-PSK improved brute force and dictonary attack.Can use nvidia cards"
+url="http://code.google.com/p/pyrit/"
+arch=('i686' 'x86_64')
+license=('GPL')
+depends=('python')
+makedepends=('gcc' 'subversion')
+groups=('archpwn' 'archpwn-wireless' 'archpwn-bruteforce')
+source=(fix-includes.patch)
+md5sums=(e2b2adcb5d7293b9e2f836f376941142)
+
+_svntrunk=http://pyrit.googlecode.com/svn/trunk/
+_svnmod=pyrit
+
+build() {
+  cd "${srcdir}"
+
+  if [ -d $_svnmod/.svn ]; then
+    (cd $_svnmod && svn up -r $pkgver)
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
+  fi
+
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+
+  cd $_svnmod/pyrit
+  patch -p0 -i "${srcdir}/fix-includes.patch" || return 1
+
+  ./setup.py install --root="${pkgdir}" || return 1
+}
+# vim:syntax=sh

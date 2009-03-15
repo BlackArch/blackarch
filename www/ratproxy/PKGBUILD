@@ -1,25 +1,24 @@
+# Contributor: Jens Pranaitis <jens@jenux.homelinux.org>
 # Contributor: Simon Busch <morphis@gravedo.de>
-# Contributor: Francesco Piccinno <stack.box@gmail.com>
-
 pkgname=ratproxy
-pkgver=1.53
+pkgver=1.54
 pkgrel=1
 pkgdesc="A passive web application security assessment tool"
 url="http://code.google.com/p/ratproxy/"
+depends=("openssl" "bash")
 license=('APACHE')
 arch=('i686' 'x86_64')
 groups=('archpwn' 'archpwn-www' 'archpwn-scanners')
-source=(http://ratproxy.googlecode.com/files/$pkgname-$pkgver.tar.gz)
-md5sums=('515ded853cd489cd894162fcf8e069d9')
-
+source=(http://$pkgname.googlecode.com/files/$pkgname-$pkgver.tar.gz)
+md5sums=('560f64f2de79040a57e0379501cfae9f')
 build() {
-	cd $srcdir/ratproxy
+	cd "${srcdir}"/ratproxy
+	sed -i "s|-O3|${CFLAGS}|g" Makefile
+	# build
 	make || return 1
-
-    install -d $pkgdir/usr/bin
-    install -d $pkgdir/usr/share/doc/$pkgname
-
-	install -m755 ratproxy $pkgdir/usr/bin/ratproxy || return 1
-	install -m755 ratproxy-report.sh $pkgdir/usr/bin/ratproxy-report.sh || return 1
-    cp doc/* $pkgdir/usr/share/doc/$pkgname/ || return 1
+	# create directories and install files
+	mkdir -p "${pkgdir}"/usr/{share/ratproxy,bin}
+	install -m755 "${srcdir}"/ratproxy/ratproxy "${pkgdir}"/usr/bin/ratproxy
+	install -m755 "${srcdir}"/ratproxy/ratproxy-report.sh "${pkgdir}"/usr/share/ratproxy/ratproxy-report.sh
+	install -m644 "${srcdir}"/ratproxy/ratproxy-back.png "${pkgdir}"/usr/share/ratproxy/ratproxy-back.png
 }

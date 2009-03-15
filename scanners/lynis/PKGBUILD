@@ -1,0 +1,28 @@
+#Contributor Jens Pranaitis <jens@jenux.homelinux.org>
+pkgname=lynis
+pkgver=1.2.3
+pkgrel=2
+pkgdesc='Lynis is an auditing tool for Unix (specialists)'
+url='http://www.rootkit.nl/projects/lynis.html'
+license=('GPL')
+arch=('i686' 'x86_64')
+depends=('bash')
+groups=('archpwn' 'archpwn-scanners' 'archpwn-misc')
+source=(http://www.rootkit.nl/files/$pkgname-$pkgver.tar.gz)
+md5sums=('57d3058b60bb26fc333e4f1800498fdf')
+
+build() {
+	mkdir -p ${pkgdir}/{usr/share/$pkgname,usr/man/man8}
+	gzip -9 "${srcdir}"/$pkgname-$pkgver/$pkgname.8
+	install -Dm 644 "${srcdir}"/$pkgname-$pkgver/$pkgname.8.gz $pkgdir/usr/share/man/man8/$pkgname.8.gz
+	rm "${srcdir}"/$pkgname-$pkgver/$pkgname.8*
+	cp -ax "${srcdir}"/$pkgname-$pkgver/* $pkgdir/usr/share/$pkgname
+	mkdir -p $pkgdir/usr/sbin
+        cat > $pkgdir/usr/sbin/lynis << EOF
+#!/bin/bash
+cd /usr/share/lynis
+./lynis \$@
+cd \$OLDPWD
+EOF
+        chmod 755 $pkgdir/usr/sbin/lynis
+}

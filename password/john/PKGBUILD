@@ -1,0 +1,65 @@
+# Contributor: Jens Pranaitis <jens@jenux.homelinux.org>
+# Contributor: Dale Blount <dale@archlinux.org>
+# Original Contributor: Tom Newsom <Jeepster@gmx.co.uk>
+# Portions from AUR john-devel PKGBUILD used with permission from Michal Krenek <mikos@sg1.cz>
+
+pkgname=john
+pkgver=1.7.3.1
+pkgrel=4
+pkgdesc="John the Ripper is a fast password cracker. Additional patches (NTLM, MySQL, Kerberos V5, etc.) included."
+arch=(i686 x86_64)
+url="http://www.openwall.com/$pkgname/"
+depends=('openssl')
+license=("GPL")
+groups=('archpwn' 'archpwn-password')
+source=(http://www.openwall.com/$pkgname/g/$pkgname-$pkgver.tar.bz2 \
+	ftp://ftp.openwall.com/pub/projects/john/contrib/john-1.7.3.1-all-5.diff.gz
+	)
+md5sums=('4a8de450ff332bd0c7cbc573eb5032d9'
+         '198b96030a679057faadcd318113a787')
+build() {
+	# jumbo patch
+	cd "${srcdir}"/$pkgname-$pkgver
+	patch -p1 < "${srcdir}"/$pkgname-1.7.3.1-all-5.diff || return 1
+	cd "${srcdir}"/john-$pkgver/src/
+
+	sed -i 's|CFLAGS = -c -Wall -O2|CFLAGS = -c -Wall -O2 -march=i686 -fomit-frame-pointer -pipe -mtune=generic -DJOHN_SYSTEMWIDE=1|' Makefile || return 1
+	make linux-x86-mmx || return 1
+
+	sed -i 's|$JOHN|/usr/share/john|g' "${srcdir}"/john-$pkgver/run/john.conf || return 1
+	mkdir -p "${pkgdir}"/usr/share/john/ 
+	install -m644 "${srcdir}"/john-$pkgver/run/john.conf "${pkgdir}"/usr/share/john/john.ini || return 1
+	
+	# docs
+	mkdir -p "${pkgdir}"/usr/share/john/doc
+	install -m644 "${srcdir}"/john-$pkgver/doc/* "${pkgdir}"/usr/share/john/doc/
+	install -m644 "${srcdir}"/john-$pkgver/run/*.chr "${pkgdir}"/usr/share/john/	
+	install -m644 "${srcdir}"/john-$pkgver/run/password.lst "${pkgdir}"/usr/share/john/	
+
+	# install binaries
+	mkdir -p "${pkgdir}"/usr/bin
+	make linux-x86-mmx || return 1
+	install -m755 "${srcdir}"/john-$pkgver/run/john "${pkgdir}"/usr/bin/john-mmx
+	install -m755 "${srcdir}"/john-$pkgver/run/mailer "${pkgdir}"/usr/bin/john-mailer
+	# now build again for sse2
+	cd "${srcdir}"/$pkgname-$pkgver/src
+	make clean || return 1
+	make linux-x86-sse2 || return 1
+	install -m755 "${srcdir}"/john-$pkgver/run/john "${pkgdir}"/usr/bin/john-sse2
+	cd "${pkgdir}"/usr/bin
+	# FIXME
+	cat >> john << EOF
+#!/bin/bash
+if grep -q sse2 /proc/cpuinfo
+then
+	john-sse2 \$@
+else
+	john-mmx \$@
+fi
+EOF
+	chmod 755 john
+	ln -s john unafs
+	ln -s john unique
+	ln -s john unshadow
+	ln -s john undrop
+}
