@@ -1,0 +1,40 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
+# Contributor: Jaroslav Lichtblau <dragonlord@aur.archlinux.org>
+# Contributor: Pierre Schmitz <pierre@archlinux.de>
+pkgname=rkhunter
+pkgver=1.3.4
+pkgrel=2
+pkgdesc="An easy-to-use tool which checks machines running UNIX (clones) for the presence of rootkits and other unwanted tools."
+arch=('i686' 'x86_64')
+url="http://rkhunter.sourceforge.net/"
+license=('GPL')
+depends=('bash' 'perl' 'wget')
+backup=(etc/rkhunter.conf)
+source=(http://downloads.sourceforge.net/sourceforge/${pkgname}/${pkgname}-${pkgver}.tar.gz)
+
+md5sums=('31eaacc4d01ad138d1a4283f105088e6')
+
+build() {
+  cd "$srcdir"/${pkgname}-${pkgver}
+
+  install -d -m755 "$pkgdir"/usr
+
+# fix installer for x86_64
+  sed -i -e "s/lib64/lib/g" installer.sh
+
+# install to /usr
+  ./installer.sh --layout custom "$pkgdir"/usr --striproot "$pkgdir" --install || return 1
+
+# use /etc instead of /usr/etc
+  sed -i -e "s#/usr/etc/rkhunter.conf#/etc/rkhunter.conf#g" "$pkgdir"/usr/bin/rkhunter
+  mv "$pkgdir"/usr/etc "$pkgdir"/
+  mv "$pkgdir"/usr/var "$pkgdir"/
+
+# cleanup
+  rm -f "$pkgdir"/var/lib/rkhunter/tmp/{group,passwd}
+
+# we trust in udev
+  sed -i 's|^#ALLOWHIDDENDIR=/dev/.udev$|ALLOWHIDDENDIR=/dev/.udev|' "$pkgdir"/etc/rkhunter.conf
+# fix paths
+  sed -i 's|/usr/var/|/var/|g' "$pkgdir"/etc/rkhunter.conf
+}
