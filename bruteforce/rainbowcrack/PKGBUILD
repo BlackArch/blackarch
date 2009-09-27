@@ -1,0 +1,29 @@
+# Contributor: Geoffroy Carrier <geoffroy.carrier@koon.fr>
+# Past Contributor: Michal Krenek <mikos@sg1.cz>
+pkgname=rainbowcrack
+pkgver=1.2
+pkgrel=2
+pkgdesc="Password cracker based on the faster time-memory trade-off. Additional patches (NTLM, MD2, MD4, RIPEMD160, MySQL and Cisco PIX) included."
+url="http://www.antsight.com/zsl/rainbowcrack"
+license=('unknown')
+arch=('i686' 'x86_64')
+depends=('gcc-libs' 'openssl')
+source=(http://www.antsight.com/zsl/rainbowcrack/$pkgname-$pkgver-src.zip \
+        http://www.oxid.it/downloads/rc_patch_mysql_pix.zip)
+md5sums=('e7e8304caff8f7051916ff484c2f0231'
+         '71845ac352ff888a9cfcff6c1ea4184b')
+build() {
+  cd $srcdir/$pkgname-$pkgver-src/src
+  cp $srcdir/HashAlgorithm.cpp $srcdir/$pkgname-$pkgver-src/src/
+  cp $srcdir/HashAlgorithm.h $srcdir/$pkgname-$pkgver-src/src/
+  cp $srcdir/HashRoutine.cpp $srcdir/$pkgname-$pkgver-src/src/
+  sed '9s_.*_&\n\#include \<stdlib.h\>\n\#include \<string.h\>_' -i Public.h
+  make -f makefile.linux || return 1
+  mkdir -p $pkgdir/usr/bin
+  cp rtgen $pkgdir/usr/bin/
+  cp rtdump $pkgdir/usr/bin/
+  cp rtsort $pkgdir/usr/bin/
+  cp rcrack $pkgdir/usr/bin/
+  mkdir -p $pkgdir/usr/share/rainbowcrack
+  cp charset.txt $pkgdir/usr/share/rainbowcrack/
+}
