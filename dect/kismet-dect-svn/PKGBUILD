@@ -1,0 +1,46 @@
+# Contributor: Shino <shino@jenux.homelinux.org>
+# Contributor: Jens Pranaitis <jens@jenux.homelinux.org>
+pkgname=kismet-dect-svn
+pkgver=89
+pkgrel=2
+pkgdesc="DECT Plugin for Kismet"
+arch=('i686' 'x86_64')
+url="https://dedected.org/"
+license=('GPL2')
+depends=('gcc-libs' 'kismet')
+makedepends=('subversion')
+provides=(kismet-dect)
+conflicts=(kismet-dect)
+install='kismet-dect.install'
+source=()
+md5sums=() 
+
+_svntrunk="https://dedected.org/svn/trunk/kismet-dect"
+_svnmod="kismet-dect"
+
+build() {
+  cd "${srcdir}"
+  msg "Connecting to SVN server...."
+  if [ -d $_svnmod/.svn ]; then
+    (cd $_svnmod && svn up -r $pkgver)
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
+  fi
+
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+  cd $_svnmod
+  # Build with CFLAGS from makepkg.conf
+  sed -i -e "s/-g/${CFLAGS}/g" server_module/Makefile
+  sed -i -e "s/-fPIC/${CFLAGS} -fPIC/g" client_module/Makefile
+  # Building
+  make KIS_SRC_DIR="/usr/include/kismet/" -C client_module || return 1
+  make KIS_SRC_DIR="/usr/include/kismet/" -C server_module || return 1
+
+  # Installing
+  mkdir -p "${pkgdir}/usr/lib/kismet"
+  mkdir -p "${pkgdir}/usr/lib/kismet_client"
+
+  make KIS_DEST_DIR="${pkgdir}/usr/" -C client_module install || return 1
+  make KIS_DEST_DIR="${pkgdir}/usr/" -C server_module install || return 1
+}
