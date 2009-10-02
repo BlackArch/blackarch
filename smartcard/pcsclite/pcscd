@@ -1,0 +1,40 @@
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+DAEMON=/usr/sbin/pcscd
+NAME=pcscd
+DESC="Middleware to access a smart card using the SCard API"
+PID_FILE=/var/run/pcscd/pcscd.pid 
+
+case "$1" in
+    start)
+        #Check for running hal, start when not running
+        ck_daemon hal && /etc/rc.d/hal start
+        stat_busy "Starting $DESC"
+        $DAEMON
+        if [ $? -gt 0 ]; then
+            stat_fail
+        else
+            add_daemon $NAME
+            stat_done
+        fi
+        ;;
+    stop)
+        stat_busy "Stopping $DESC"
+        [ -f $PID_FILE ] && kill `cat $PID_FILE` &> /dev/null
+        if [ $? -gt 0 ]; then
+            stat_fail
+        else
+            rm_daemon $NAME
+            stat_done
+        fi
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        echo "usage: $0 {start|stop|restart}"
+	;;
+esac
+exit 0

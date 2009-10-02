@@ -1,0 +1,27 @@
+# Contributor: Daniel Plaza <daniel@dilmun.ls.fi.upm.es>
+pkgname=pcsclite
+pkgver=1.5.3
+pkgrel=2
+pkgdesc="Middleware to access a smart card using the SCard API"
+arch=('i686' 'x86_64')
+url="https://alioth.debian.org/projects/pcsclite"
+license="BSD"
+depends=('hal')
+groups=('archpwn' 'archpwn-smartcard')
+makedepends=('pkgconfig' 'gcc')
+options=('!libtool')
+backup=(etc/reader.conf.d/reader.conf)
+source=(https://alioth.debian.org/frs/download.php/3017/pcsc-lite-1.5.3.tar.bz2 \
+        pcscd)
+md5sums=('95fbd1fb1b51a6f22bb0dd4a796772d3'
+         '760ed7db7300f89ea20a994f0aae9074')
+
+build() {
+  cd "${srcdir}"/pcsc-lite-$pkgver
+  ./configure --prefix=/usr --sysconfdir=/etc --enable-scf --enable-usbdropdir=/usr/share/pcsc/drivers || return 1
+  make || return 1
+  make DESTDIR="${pkgdir}" install || return 1
+  install -D "${srcdir}"/pcsc-lite-$pkgver/COPYING "${pkgdir}"/usr/share/licenses/$pkgname/COPYING || return 1
+  install -D -m755 "${srcdir}"/pcscd "${pkgdir}"/etc/rc.d/pcscd || return 1
+  mkdir -p "${pkgdir}"/usr/share/pcsc/drivers
+}
