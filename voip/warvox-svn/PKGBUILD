@@ -1,0 +1,43 @@
+# Contributor: Jens Pranaitis <jens@jenux.homelinux.org>
+pkgname=warvox-svn
+pkgver=6585
+pkgrel=1
+pkgdesc="telephone system auditing tool"
+arch=("i686")
+url="http://warvox.org/"
+license=('custom')
+depends=("iaxclient" "rake" "ruby-sqlite3" "gnuplot" "rubygems")
+source=("warvox-launcher")
+md5sums=("b765c14171c0614901b83510d2b5aced")
+_svntrunk=http://metasploit.com/svn/warvox/trunk/
+_svnmod=warvox
+
+build() {
+  cd "$srcdir"
+
+  if [ -d $_svnmod/.svn ]; then
+    (cd $_svnmod && svn up -r $pkgver)
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
+  fi
+
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir"/$_svnmod-build
+  cp -r "$srcdir"/$_svnmod "$srcdir"/$_svnmod-build
+  cd "$srcdir"/$_svnmod-build
+
+  #
+  # BUILD
+  #
+  make || return 1
+  make install || return 1
+  # I know the permissions are ugly, but that's what hdm himself recommends Oo
+  chmod 644 web/config/session.key
+  chmod 666 web/log/production.log
+  mkdir -p "$pkgdir"/opt/warvox
+  cp -r {bin,data,docs,etc,lib,web} "$pkgdir"/opt/warvox/
+  install -D -m 644 docs/LICENSE "$pkgdir"/usr/share/licenses/warvox-svn/COPYING
+  install -D -m 755 "$srcdir"/warvox-launcher "$pkgdir"/usr/bin/warvox-launcher
+}
