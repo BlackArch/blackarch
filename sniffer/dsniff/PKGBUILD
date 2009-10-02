@@ -1,0 +1,33 @@
+# Contributor: Jens Pranaitis <jens@jenux.homelinux.org>
+# Contributor: Sergej Pupykin <sergej@aur.archlinux.org>
+# Contributor: ViNS <gladiator@fastwebnet.it>
+
+pkgname=dsniff
+pkgver=2.4b1
+pkgrel=13
+pkgdesc="Collection of tools for network auditing and penetration testing."
+url="http://www.monkey.org/~dugsong/dsniff/"
+arch=(i686 x86_64)
+license=('GPL')
+depends=('libpcap' 'openssl' 'libxmu' 'glib2')
+groups=('archpwn' 'archpwn-sniffer')
+makedepends=('libnet' 'libnids')
+source=(http://www.monkey.org/~dugsong/dsniff/beta/$pkgname-$pkgver.tar.gz \
+	http://ftp.de.debian.org/debian/pool/main/d/dsniff/dsniff_2.4b1+debian-18.diff.gz)
+md5sums=('2f761fa3475682a7512b0b43568ee7d6'
+	 'fbc9f62f9ab2f98f24f53ad497c1ce5d')
+ 
+build() {
+  cd "${srcdir}"/dsniff-2.4
+  patch -N < ../dsniff_2.4b1+debian-18.diff || return 1
+  for i in *.dpatch; do
+    patch -N < "$i" || return 1
+  done
+
+  LDFLAGS="-lresolv -lglib-2.0 -lgthread-2.0 $LDFLAGS" ./configure --prefix=/usr
+  make || return 1
+  make prefix="${pkgdir}"/usr install || return 1
+
+  mkdir -p "${pkgdir}"/usr/share
+  mv "${pkgdir}"/usr/man "${pkgdir}"/usr/share/
+}
