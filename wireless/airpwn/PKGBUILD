@@ -1,22 +1,22 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
 # Contributor: nofxx <x@nofxx.com>
-# Contributor: Francesco Piccinno <stack.box@gmail.com>
-
 pkgname=airpwn
-pkgver=1.3
-pkgrel=2
+pkgver=1.4
+pkgrel=1
 pkgdesc="Airpwn is a tool for generic packet injection on an 802.11 network."
 arch=('i686' 'x86_64')
 url="http://airpwn.sourceforge.net"
 license=('GPL')
-depends=('pcre' 'libpcap' 'openssl' 'lorcon' 'wireless_tools' 'libnet')
+depends=('pcre' 'libpcap' 'openssl' 'lorcon' 'wireless_tools' 'libnet' 'python')
 groups=('archpwn' 'archpwn-wireless')
 source=(http://downloads.sourceforge.net/airpwn/$pkgname-$pkgver.tgz)
-md5sums=('15b6f1cd287b4bb20dd586bb6c83628d')
-
+md5sums=('c5538f5eadc2afa0bf3e873c4bfa2513')
 build() {
-  cd $startdir/src/$pkgname-$pkgver
-  sed -ie '/if_ether.h/a#include <linux/if.h>' airpwn.c
-  ./configure --prefix=/usr
-  make || return 1
-  make DESTDIR=$startdir/pkg install || return 1
+	cd "${srcdir}"/$pkgname-$pkgver
+	./configure --prefix=/usr --mandir=/usr/share/man
+	# really configure should be fixed to detect python 2.6, but I'm too dumb for that :(
+	sed -i 's/python2.4/python2.6/g' conf.h || return 1
+	sed -i 's|-lssl -lorcon -lpthread -lpcre -lpcap -lnet|-lssl -lorcon -lpthread -lpcre -lpcap -lnet -lpython2.6|g' Makefile
+	make || return 1
+	make DESTDIR="${pkgdir}" install || return 1
 }
