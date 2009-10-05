@@ -1,0 +1,36 @@
+# Contributor: Jens Pranaitis <jens@jenux.homelinux.org>
+# Contributor: nofxx <x@nofxx.com>
+pkgname=aircrack-ng-svn
+pkgver=1623
+pkgrel=1
+pkgdesc="Wifi security suite - WEP / WPA crack tools -- with SQLite3."
+arch=('i686' 'x86_64')
+url="http://www.aircrack-ng.org"
+license=('GPL2')
+depends=('openssl' 'sqlite3' 'wireless_tools' 'libtool')
+groups=('archpwn' 'archpwn-wireless')
+makedepends=("subversion" "autoconf")
+provides=(aircrack-ng)
+conflicts=(aircrack-ng)
+
+_svntrunk="http://trac.aircrack-ng.org/svn/trunk"
+_svnmod=aircrack
+
+build() {
+  cd ${srcdir}
+  msg "Connecting to SVN server...."
+  if [ -d $_svnmod/.svn ]; then
+    (cd $_svnmod && svn up -r $pkgver)
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
+  fi
+
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+  cd $_svnmod
+  #
+  # BUILD
+  #
+  make SQLITE=true unstable=true || return 1
+  make prefix=/usr SQLITE=true unstable=true DESTDIR=${pkgdir}/ mandir=usr/share/man/man1/ install
+}
