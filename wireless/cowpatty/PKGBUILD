@@ -1,39 +1,22 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
 # Contributor: icarus <icarus.roaming@gmail.com>
-# Contributor: Francesco Piccinno <stack.box@gmail.com>
-
+# Contributor: Thomas Schneider <blacklotus@jenux.homelinux.org>
 pkgname=cowpatty
-pkgver=4.3
-pkgrel=1
+pkgver=4.6
+pkgrel=2
 pkgdesc="Wireless WPA/WPA2 PSK handshake cracking utility"
 arch=('i686' 'x86_64')
-url="http://www.willhackforsushi.com/Cowpatty.html"
+url="http://www.willhackforsushi.com/?page_id=50"
 license=('GPL')
-depends=('openssl')
+depends=('openssl' 'libpcap')
 groups=('archpwn' 'archpwn-wireless' 'archpwn-password' 'archpwn-bruteforce')
-source=(http://www.willhackforsushi.com/code/$pkgname/$pkgver/$pkgname-$pkgver.tgz)
-md5sums=('deccac0763a05ef7014107d347bf9190')
-
+source=("http://www.willhackforsushi.com/code/$pkgname/$pkgver/$pkgname-$pkgver.tgz" "cow.patch")
+md5sums=('b90fd36ad987c99e7cc1d2a05a565cbd'
+         '16b15fe7fa814f3e206c0010ba8c1411')
 build() {
-  cd "$srcdir/$pkgname-$pkgver"
-
+  cd "${srcdir}/$pkgname-$pkgver"
+  sed -e "s/-g3 -ggdb/${CFLAGS}/g" -i Makefile || return 1
+  patch -Np0 -i "${srcdir}"/cow.patch
   make || return 1
-
-#fakeroot + install is not properly setting owner right now, so chown is being used instead
-#this is slightly messy for removing pkgbuild files after build, I'll fix it when possible  
-  
-  chown root:root * 
-
-  install $pkgname -D $pkgdir/usr/bin/$pkgname -m 0755
-  install genpmk -D $pkgdir/usr/bin/genpmk -m 0755
-  install AUTHORS -D $pkgdir/usr/share/doc/$pkgname/AUTHORS -m 0664
-  install CHANGELOG -D $pkgdir/usr/share/doc/$pkgname/CHANGELOG -m 0664
-  install COPYING -D $pkgdir/usr/share/doc/$pkgname/COPYING -m 0664
-  install FAQ -D $pkgdir/usr/share/doc/$pkgname/FAQ -m 0664
-  install README -D $pkgdir/usr/share/doc/$pkgname/README -m 0664
-  install TODO -D $pkgdir/usr/share/doc/$pkgname/TODO -m 0664
-  install dict -D $pkgdir/usr/share/$pkgname/dict -m 0664
-  install eap-test.dump -D $pkgdir/usr/share/$pkgname/eap-test.dump -m 0664
-  install file_magic -D $pkgdir/usr/share/$pkgname/file_magic -m 0664
-  install wpa2psk-linksys.dump -D $pkgdir/usr/share/$pkgname/wpa2psk-linksys.dump -m 0664
-  install wpapsk-linksys.dump -D $pkgdir/usr/share/$pkgname/wpapsk-linksys.dump -m 0664
+  make DESTDIR="${pkgdir}/" install || return 1
 }
