@@ -1,0 +1,31 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
+pkgname=giskismet-svn
+pkgver=12
+pkgrel=3
+pkgdesc="generate graphs from kismet-newcore data"
+arch=("i686")
+url="http://my-trac.assembla.com/giskismet"
+license=('GPL')
+depends=("perl" "perl-xml-libxml" "perl-dbi" "perl-dbd-sqlite")
+groups=('archpwn' 'archpwn-wireless')
+makedepends=('subversion')
+_svntrunk=https://my-svn.assembla.com/svn/giskismet/trunk 
+_svnmod=giskismet
+
+build() {
+  cd "$srcdir"
+  if [ -d $_svnmod/.svn ]; then
+    (cd $_svnmod && svn up -r $pkgver)
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
+  fi
+  msg "SVN checkout done or server timeout"
+  rm -rf "$srcdir/$_svnmod-build"
+  cp -r "$srcdir/$_svnmod" "$srcdir/$_svnmod-build"
+  cd "$srcdir/$_svnmod-build"
+  PERL_MM_USE_DEFAULT=1 perl Makefile.PL INSTALLDIRS=vendor || return 1
+  make || return 1
+  make install DESTDIR="${pkgdir}" || return 1
+  find "${pkgdir}" -name '.packlist' -delete
+  find "${pkgdir}" -name '*.pod' -delete
+}
