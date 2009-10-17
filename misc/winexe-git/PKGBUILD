@@ -1,0 +1,46 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
+pkgname=winexe-git
+pkgver=20091017
+pkgrel=1
+pkgdesc="remotely execute commands on Windows NT/2000/XP/2003 systems, with lmhash passthrough support"
+arch=("i686")
+url="http://sourceforge.net/projects/winexe/"
+license=('GPL3')
+groups=("archpwn" "archpwn-misc")
+depends=("gnutls" "popt" "libsasl")
+makedepends=('git')
+source=(winexe-passthrough.patch)
+md5sums=('043b5aaa67c0583275cb59ed9b7125e1')
+
+_gitroot="git://winexe.git.sourceforge.net/gitroot/winexe/winexe"
+_gitname="winexe"
+
+build() {
+  cd "$srcdir"
+  msg "Connecting to GIT server...."
+
+  if [ -d $_gitname ] ; then
+    cd $_gitname && git pull origin
+    msg "The local files are updated."
+  else
+    git clone $_gitroot
+  fi
+
+  msg "GIT checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_gitname-build"
+  git clone "$srcdir/$_gitname" "$srcdir/$_gitname-build"
+  cd "$srcdir/$_gitname-build"
+
+  #
+  # BUILD HERE
+  #
+	patch -Np1 -i "$srcdir"/winexe-passthrough.patch || return 1
+	cd source4
+  ./autogen.sh
+  ./configure --prefix=/usr --enable-fhs
+  #FIXME: find out a way to only build winexe
+  make || return 1
+  install -D -m755 bin/winexe "$pkgdir"/usr/bin/winexe || return 1
+} 
