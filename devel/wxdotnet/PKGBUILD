@@ -1,7 +1,7 @@
 # Contributor: Francesco Piccinno <stack.box@gmail.com>
 
 pkgname=wxdotnet
-pkgver=0.7.2
+pkgver=0.8.0
 pkgrel=1
 pkgdesc="wx.NET is a .NET Common Language Infrastructure (CLI) wrapper for wxWidgets."
 url="http://pbnj.sourceforge.net"
@@ -10,26 +10,27 @@ makedepends=('gcc' 'coreutils' 'pkgconfig')
 arch=(i686 x86_64)
 license=(custom:wxWidgets)
 md5sums=('c6363b655cc18e4890ad4aabfbcc56bc')
-source=(http://dl.sourceforge.net/sourceforge/wxnet/wx.NET-$pkgver-Source.tar.gz
-        wx-config-helper-0.7.2.patch
-        RJH_CL_Helper_Assy_info.patch)
-md5sums=('c6363b655cc18e4890ad4aabfbcc56bc'
-         'c9849ae0e57b9b8a5bb35a4ecfb23508'
-         '388611423d43c167e1891993971ebc8f')
+source=(http://dl.sourceforge.net/sourceforge/wxnet/wx.NET-$pkgver-Source.tgz
+        RJH_CL_Helper_Assy_info.patch
+        wx-config-helper-0.7.2.patch)
+md5sums=('ee64d9cb478c9fb6945d0e41edc2b3b2'
+         '388611423d43c167e1891993971ebc8f'
+         'c9849ae0e57b9b8a5bb35a4ecfb23508')
 
 build(){
-  cd $srcdir/wx.NET-$pkgver
-  patch -p0 < ../wx-config-helper-0.7.2.patch
-  patch -p0 < ../RJH_CL_Helper_Assy_info.patch
-  
+  cd $srcdir/wx.NET-$pkgver-Source
+
+  patch -Np0 < $srcdir/RJH_CL_Helper_Assy_info.patch || exit 1
+  patch -Np0 < $srcdir/wx-config-helper-0.7.2.patch || exit 1
+
   cd Build/Linux
   sed -i -r "s:^WXW_INSTALL_DIR =.*:WXW_INSTALL_DIR = /usr:" Defs.in.template
   sed -i -r "s:^# WXNET_INSTALL_DIR = /usr/local.*:WXNET_INSTALL_DIR = $pkgdir/usr/share/wx-dotnet:" Defs.in.template
   sed -i -r "s:/Bin::" Sample-Launcher.sh
   cp Defs.in.template Defs.in
-  
+
   make -j1 wxnet || return 1
-  
+
   cd $srcdir/wx.NET-$pkgver/Bin
 
   install -d $pkgdir/usr/lib
