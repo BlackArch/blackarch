@@ -1,24 +1,31 @@
-# Contributor: Patrick Baumgart <Baumi@gmx.com>
+# Contributor: Francesco Piccinnno <stack.box@gmail.com>
 
 pkgname=scapy
-pkgver=2.0.0.11
+pkgver=1118
 pkgrel=1
 pkgdesc="Scapy is a powerful interactive packet manipulation program"
 url="http://www.secdev.org/projects/scapy/"
+makedepends=('mercurial')
 depends=('tcpdump' 'libpcap' 'pycrypto' 'gnuplot' 'python>=2.5' 'graphviz')
 arch=('i686' 'x86_64')
 license=('GPLv2')
 
-source=(http://pierre.droids-corp.org/${pkgname}/ethertypes \
-	http://www.secdev.org/projects/scapy/files/scapy-latest.zip )
-	
-md5sums=('94bffde8f75a1b8f891fb780bfe15ca2'
-         '4458858675b45a5188fe743b80edc76f')
+_hgroot=http://hg.secdev.org/
+_hgrepo=scapy
 
 build(){
-        cd $startdir/src
-	unzip -o scapy-latest.zip
-	cd $startdir/src/scapy-$pkgver
+	cd ${startdir}/src
+
+	if [ -d ${_hgrepo} ]; then
+		cd ${startdir}/src/${_hgrepo}
+		hg pull -u
+	else
+		hg clone ${_hgroot}${_hgrepo} || return 1
+		cd ${startdir}/src/${_hgrepo}
+	fi
+
+	msg "Mercurial checkout done or server timeout"
+	msg "Starting make..."
 
 	./setup.py build
 	./setup.py install --prefix=$pkgdir/usr
