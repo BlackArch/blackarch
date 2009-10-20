@@ -1,16 +1,18 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
 # Contributor: Francesco Piccinno <stack.box@gmail.com>
 
 pkgname=webshag
-pkgver=1.00
+pkgver=110
 pkgrel=1
 pkgdesc="Webshag is a multi-threaded, multi-platform web server audit tool."
 url="http://www.scrt.ch/pages_en/outils.html"
 groups=('archpwn' 'archpwn-www' 'archpwn-scanners' 'archpwn-enumeration')
 license=('GPL')
-depends=('python')
+depends=('nmap' 'nikto' 'wxpython')
 arch=(any)
-source=(http://www.scrt.ch/outils/$pkgname/ws100_linux.tar.gz)
-md5sums=('0a2f6e48680410a06f300c86527d59c3')
+install=$pkgname.install
+source=(http://www.scrt.ch/outils/$pkgname/ws110.tar.gz)
+md5sums=('14c0a579e6fe72ab691e063c06d33ed3')
 
 build() {
   cd "$srcdir"
@@ -19,17 +21,23 @@ build() {
   install -d $pkgdir/usr/bin
   install -d $pkgdir/usr/share/$pkgname
 
-  cp -r config config_linux.py database webshag webshag.py $pkgdir/usr/share/$pkgname/ || return 1
+  cp -r setup.linux.py config database webshag webshag_cli.py webshag_gui.py $pkgdir/usr/share/$pkgname/ || return 1
   chmod +r -R $pkgdir/usr/share/$pkgname/ || return 1
 
-  chmod 0755 $pkgdir/usr/share/$pkgname/webshag.py $pkgdir/usr/share/$pkgname/config_linux.py || return 1
+  chmod 0755 $pkgdir/usr/share/$pkgname/webshag_*.py $pkgdir/usr/share/$pkgname/setup.linux.py || return 1
 
-  cat > $pkgdir/usr/bin/$pkgname << EOF
+  cat > $pkgdir/usr/bin/${pkgname}-cli << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/
-python webshag.py \$*
+python webshag_cli.py \$*
 EOF
-  chmod 0755 $pkgdir/usr/bin/$pkgname || return 1
+  cat > $pkgdir/usr/bin/${pkgname}-gui << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/
+python webshag_gui.py \$*
+EOF
+
+  chmod 0755 $pkgdir/usr/bin/{${pkgname}-cli,${pkgname}-gui} || return 1
 }
 
 # vim:set ts=2 sw=2 et:
