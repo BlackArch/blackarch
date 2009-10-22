@@ -1,29 +1,33 @@
-# Contributor: Jaroslav Lichtblau <dragonlord@aur.archlinux.org>
+# Maintainer: Jaroslav Lichtblau <dragonlord@aur.archlinux.org>
 # Contributor: Francesco Piccinno <stack.box@gmail.com>
 
 pkgname=foremost
-pkgver=1.5.5
+pkgver=1.5.6
 pkgrel=1
 pkgdesc="A console program to recover files based on their headers, footers, and internal data structures."
 arch=('i686' 'x86_64')
-url="http://foremost.sourceforge.net"
-license=('custom')
+url="http://foremost.sourceforge.net/"
+makedepends=('make' 'gcc')
 groups=('archpwn' 'archpwn-forensic')
+license=('custom')
 backup=(etc/foremost.conf)
-source=(http://downloads.sourceforge.net/$pkgname/$pkgname-$pkgver.tar.gz \
+source=(http://foremost.sourceforge.net/pkg/$pkgname-$pkgver.tar.gz \
+        http://kambing.ui.edu/gentoo-portage/app-forensics/$pkgname/files/$pkgname-1.4-config-location.patch \
         $pkgname-makefile.diff)
-md5sums=('5868b629e2c9802f0d36d4e10ae9fe34'
+
+md5sums=('1ac068f5681bbee679f99d2f9fa7f39f'
+         '2666ad901eab09061c265b706494e140'
          '0e6b7f653b6b7811158ba7732dead04e')
 
 build() {
-  cd "${srcdir}/$pkgname-$pkgver"
-  install -d "${pkgdir}"/{etc,{usr/bin,usr/share/man/man8}}
+  cd ${srcdir}/$pkgname-$pkgver
+  install -d ${pkgdir}/{etc,{usr/bin,usr/share/man/man8}} || return 1
 
   make || return 1
-  patch -Np0 -i "${srcdir}/$pkgname-makefile.diff"
-  make DESTDIR="${pkgdir}" install || return 1
+  patch -Np0 -i ${srcdir}/$pkgname-makefile.diff || return 1
+  patch -Np1 -i ${srcdir}/$pkgname-1.4-config-location.patch || return 1
+  make DESTDIR=${pkgdir} install || return 1
 
-#license
-  ./foremost -V > COPYRIGHT
-  install -D -m644 "COPYRIGHT" "${pkgdir}/usr/share/licenses/$pkgname/COPYRIGHT" || return 1
+  ./foremost -V > COPYRIGHT || return 1
+  install -D -m644 COPYRIGHT ${pkgdir}/usr/share/licenses/$pkgname/COPYRIGHT || return 1
 }
