@@ -1,28 +1,29 @@
-# Contributor: enderst <enderst@gmail.com>
-# Contributor: Roman Chalupa <rchalupa@seznam.cz>
+# Maintainer: Nathan Owe <ndowens04+AUR at gmail.com>
 # Contributor: Francesco Piccinno <stack.box@gmail.com>
 
 pkgname=autoscan
-pkgver=1.40
+pkgver=1.42
 pkgrel=1
 pkgdesc="Utility for network exploration"
 url="http://autoscan-network.com"
-depends=(libao libvorbis vte net-snmp libgnomeui libelf gtk-vnc)
-source=(http://autoscan-network.com/download/autoscan-network-$pkgver.tar.gz
-        modules-patch.diff)
-md5sums=('e18ea80781c59e2c2a389543201914a5'
-         '7c89fa580b10441c01deea3d481e1815')
+depends=('net-snmp' 'libelf' 'gtk-vnc' 'libgnomeui' 'vte')
+makedepends=('gconf')
 arch=('i686' 'x86_64')
 license=('GPL')
-groups=('archpwn' 'archpwn-scanners')
 install=$pkgname.install
+groups=('archpwn' 'archpwn-scanners')
+source=(http://autoscan.fr/download_files/$pkgname-network-$pkgver.tar.gz 'autoscan-network')
+md5sums=('a36f658165c36bfe8f1c01eb597546f8'
+        '98583cd427e829b09035c7833fb0c294')
 
 build() {
-  patch -p0 < modules-patch.diff
-  cd $startdir/src/autoscan-network-$pkgver
-  ./configure --distrib-ArchLinux
-  patch Makefile < $startdir/autoscan.patch || return 1
+  cd $srcdir/autoscan-network-$pkgver
+  install -d $pkgdir/{usr/sbin,etc/rc.d,etc/conf.d} || return 1
+  ./configure --distrib-Linux || return 1
   make || return 1
-  make DESTDIR=$startdir/pkg install || return 1
-  install -D -m755 $startdir/src/autoscan-network-$pkgver/init.d/autoscan-network-debian $startdir/pkg/etc/rc.d/autoscan-network
+  make DESTDIR=$pkgdir install
+  install -m755 $srcdir/autoscan-network $pkgdir/etc/rc.d/ || return 1
+  chmod -R a+r $pkgdir/usr/share/pixmaps/autoscan-network/ || return 1
+  chmod -R a+rx $pkgdir/usr/share/pixmaps/autoscan-network/{Onglet/,Network/,Modes/,Animation/,Equipment/,Type/,Modules/,Port} || return 1
+  install -m755 bin/{autoscan-network,autoscan-network-daemon} $pkgdir/usr/sbin/ || return 1
 }
