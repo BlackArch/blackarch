@@ -1,0 +1,39 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
+# Contributor: Geoffroy Carrier <geoffroy.carrier@koon.fr>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=driftnet-git
+pkgver=20091021
+pkgrel=1
+pkgdesc="Listens to network traffic and picks out images from TCP streams it observes."
+url=('http://www.ex-parrot.com/~chris/driftnet/')
+license=('GPL')
+arch=('i686' 'x86_64')
+depends=('libpcap' 'giflib' 'gtk2')
+makedepends=('imake' 'git')
+groups=('archpwn' 'archpwn-sniffer' 'archpwn-misc')
+
+_gitroot="git://github.com/rbu/driftnet.git"
+_gitname="driftnet"
+
+build() {
+  cd "$srcdir/"
+  msg "Connecting to GIT server...."
+
+  if [ -d $_gitname ] ; then
+    cd $_gitname && git pull origin
+    msg "The local files are updated."
+  else
+    git clone $_gitroot
+  fi
+
+  msg "GIT checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_gitname-build"
+  git clone "$srcdir/$_gitname" "$srcdir/$_gitname-build"
+  cd "$srcdir/$_gitname-build"
+
+  make DESTDIR=$pkgdir || return 1
+  install -Dm755 $_gitname "$pkgdir/usr/bin/$_gitname"
+}

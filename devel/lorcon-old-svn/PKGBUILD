@@ -1,0 +1,36 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
+# Contributor: dninja <dninja@gmail.com>
+pkgname=lorcon-old-svn
+pkgrel=1
+makedepends=('subversion')
+pkgver=197
+pkgdesc="Create what libradiate could have been: A generic library for injecting 802.11 frames, capable of injection via multiple driver frameworks, without forcing modification of the application code, old API version"
+url="http://802.11ninja.net/lorcon/"
+license="GPL"
+arch=('i686' 'x86_64')
+provides=("lorcon=199")
+_svntrunk=http://802.11ninja.net/svn/lorcon/branch/lorcon-old
+_svnmod=lorcon-old
+
+build() {
+  cd "$srcdir"
+
+  if [ -d $_svnmod/.svn ]; then
+    (cd $_svnmod && svn up -r $pkgver)
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
+  fi
+
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_svnmod-build"
+  cp -r "$srcdir/$_svnmod" "$srcdir/$_svnmod-build"
+  cd "$srcdir/$_svnmod-build"
+
+  ./configure --prefix=/usr --mandir=/usr/share/man
+  make || return 1
+  make DESTDIR="$pkgdir/" install
+  cd $pkgdir/usr/share/man/man3
+  mv lorcon.3 lorcon-old.3
+}
