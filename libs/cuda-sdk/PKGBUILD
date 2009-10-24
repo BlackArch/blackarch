@@ -1,0 +1,70 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
+# Contributor: Carson Reynolds <carson@k2.t.u-tokyo.ac.jp>
+# Contributor: Lawrence Lee <valheru AT facticius DOT net>
+pkgname=cuda-sdk
+pkgver=2.2
+pkgrel=7
+pkgdesc="NVIDIA's CUDA architecture can be programmed in the only C language environment that unlocks the processing power of GPUs to solve the most complex compute-intensive challenges."
+arch=('i686' 'x86_64')
+[ "$CARCH" = "i686"   ] && ARCH=x86
+[ "$CARCH" = "x86_64" ] && ARCH=x86_64
+url="http://www.nvidia.com/object/cuda_home.html"
+license=('custom')
+depends=('cuda-toolkit'
+	       'freeglut'
+	       'gcc43')
+source=(http://developer.download.nvidia.com/compute/cuda/2_2/sdk/cudasdk_${pkgver}_linux.run
+	      common.mk.gcc-4.3.patch)
+md5sums=('6ba1f419a88139530c0e82176bb1a8af'
+	       'f48a474e997d9f6c3bb5e08be340dee4')
+build() {
+  #Make directories
+  mkdir -p "$pkgdir"/usr/share/licenses/cuda-sdk
+  mkdir -p "$pkgdir"/usr/share/doc/cuda-sdk
+  mkdir -p "$pkgdir"/opt/cuda/bin
+  mkdir -p "$pkgdir"/opt/cuda/lib
+  mkdir -p "$pkgdir"/opt/cuda/releaseNotesData
+  mkdir -p "$pkgdir"/opt/cuda/tools
+
+  #Create links for gcc-4.3 build environment
+  ln -s /usr/bin/gcc-4.3 "$pkgdir"/opt/cuda/bin/gcc || return 1
+  ln -s /usr/bin/g++-4.3 "$pkgdir"/opt/cuda/bin/g++ || return 1
+
+  #Extract the SDK
+  cd "$srcdir"
+  echo "extracting the SDK"
+  sh cudasdk_${pkgver}_linux.run --noexec --keep --nox11 || return 1
+ 
+  # fix common.mk
+  sed -i 's|CUDA_INSTALL_PATH ?= .*|CUDA_INSTALL_PATH ?= /opt/cuda|' "$srcdir"/pkg/sdk/common/common.mk ||  return 1
+  #Copy over folders
+  cp -rf "$srcdir"/pkg/sdk/common "$pkgdir"/opt/cuda
+  cp -rf "$srcdir"/pkg/sdk/projects "$pkgdir"/opt/cuda
+  #TODO: data really belongs elsewhere, however many sdk samples would need a rewrite
+  cp -rf "$srcdir"/pkg/sdk/projects/*/data "$pkgdir"/opt/cuda/bin
+
+  #Build the SDK
+  cd "$srcdir"/pkg/sdk/common
+  patch -Np0 -i "$srcdir"/common.mk.gcc-4.3.patch || return 1
+  sed -i 's|GCC34DIR|'"$pkgdir"'/opt/cuda/bin|' "$srcdir"/pkg/sdk/common/common.mk
+  cd "$srcdir"/pkg/sdk
+  make || return 1
+  
+  #Install the files
+  install -m 755 "$srcdir"/pkg/sdk/bin/linux/release/* "$pkgdir"/opt/cuda/bin || return 1
+  install -m 755 "$srcdir"/pkg/sdk/lib/* "$pkgdir"/opt/cuda/lib || return 1
+  install -m 644 "$srcdir"/pkg/sdk/releaseNotesData/* "$pkgdir"/opt/cuda/releaseNotesData || return 1
+  install -m 755 "$srcdir"/pkg/sdk/tools/* "$pkgdir"/opt/cuda/tools || return 1
+  mv "$srcdir"/pkg/sdk/doc/cudpp_license.txt "$pkgdir"/usr/share/licenses/cuda-sdk
+  mv "$srcdir"/pkg/sdk/doc/license.txt "$pkgdir"/usr/share/licenses/cuda-sdk
+  install -m 644 "$srcdir"/pkg/sdk/doc/* "$pkgdir"/usr/share/doc/cuda-sdk
+  sed -i 's|NVCCFLAGS += $(COMMONFLAGS)|NVCCFLAGS += $(COMMONFLAGS) -ccbin /opt/cuda/bin/|' "$pkgdir"/opt/cuda/common/common.mk || return 1
+  cat >> "$pkgdir"/opt/cuda/bin/ld << EOF
+#!/bin/bash
+/usr/bin/ld -L/opt/cuda/lib \@$
+EOF
+chmod 755 "$pkgdir"/opt/cuda/bin/ld
+}
+
+#TODO: dxtc & simpleTexture must run as root since the data directory is not writable by default
+#TODO: matrixMulDrv & simpleTexture are not passing tests

@@ -1,0 +1,33 @@
+# Contributor: Sergej Pupykin <pupykin.s+arch@gmail.com>
+# Contributor: dsa <dsa@unilestemg.br>
+pkgname=ncpfs-chaox
+pkgver=2.2.6
+pkgrel=2
+pkgdesc="ncpfs allows you to mount volumes of NetWare servers under Linux."
+arch=(i686 x86_64)
+license=('GPL')
+url=ftp://platan.vc.cvut.cz/pub/linux/ncpfs/
+replaces=("ncpfs")
+provides=("ncpfs")
+conflicts=("ncpfs")
+source=(http://platan.vc.cvut.cz/pub/linux/ncpfs/ncpfs-$pkgver.tar.gz\
+        ncpfs-2.2.6-gcc4.patch\
+        ncpfs-2.2.6-missing-includes.patch)
+md5sums=('a9ab9f135d504440202069393dd9eb36'
+         '092609494c8d03e8a2272dea609a3e48'
+         '32d09b12bc780ed127254de4ac9b82a2')
+
+build() {
+  cd "${srcdir}"/ncpfs-$pkgver
+
+  # Patch from gentoo folks to make it compile with gcc4
+  # Thanks !
+  patch -Np1 -i "$srcdir"/ncpfs-2.2.6-gcc4.patch || return 1
+  patch -Np1 -i "$srcdir"/ncpfs-2.2.6-missing-includes.patch || return 1
+  ./configure --prefix=/usr --mandir=/usr/share/man
+  make || return 1
+  make DESTDIR="${pkgdir}" install
+  mkdir -p "${pkgdir}"/usr/include
+  cp -r include/ncp "${pkgdir}"/usr/include/
+}
+
