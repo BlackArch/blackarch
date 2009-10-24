@@ -1,22 +1,21 @@
 # Contributor: Jens Pranaitis <jens@chaox.net>
 # Contributor: Carson Reynolds <carson@k2.t.u-tokyo.ac.jp>
 # Contributor: Lawrence Lee <valheru AT facticius DOT net>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
 pkgname=cuda-sdk
 pkgver=2.2
-pkgrel=7
+pkgrel=8
 pkgdesc="NVIDIA's CUDA architecture can be programmed in the only C language environment that unlocks the processing power of GPUs to solve the most complex compute-intensive challenges."
 arch=('i686' 'x86_64')
 [ "$CARCH" = "i686"   ] && ARCH=x86
 [ "$CARCH" = "x86_64" ] && ARCH=x86_64
 url="http://www.nvidia.com/object/cuda_home.html"
 license=('custom')
-depends=('cuda-toolkit'
-	       'freeglut'
-	       'gcc43')
-source=(http://developer.download.nvidia.com/compute/cuda/2_2/sdk/cudasdk_${pkgver}_linux.run
-	      common.mk.gcc-4.3.patch)
-md5sums=('6ba1f419a88139530c0e82176bb1a8af'
-	       'f48a474e997d9f6c3bb5e08be340dee4')
+depends=('cuda-toolkit' 'freeglut')
+source=(http://developer.download.nvidia.com/compute/cuda/2_2/sdk/cudasdk_${pkgver}_linux.run)
+md5sums=('6ba1f419a88139530c0e82176bb1a8af')
+
 build() {
   #Make directories
   mkdir -p "$pkgdir"/usr/share/licenses/cuda-sdk
@@ -27,16 +26,19 @@ build() {
   mkdir -p "$pkgdir"/opt/cuda/tools
 
   #Create links for gcc-4.3 build environment
-  ln -s /usr/bin/gcc-4.3 "$pkgdir"/opt/cuda/bin/gcc || return 1
-  ln -s /usr/bin/g++-4.3 "$pkgdir"/opt/cuda/bin/g++ || return 1
+  ln -s /usr/bin/gcc "$pkgdir"/opt/cuda/bin/gcc || return 1
+  ln -s /usr/bin/g++ "$pkgdir"/opt/cuda/bin/g++ || return 1
 
   #Extract the SDK
   cd "$srcdir"
   echo "extracting the SDK"
   sh cudasdk_${pkgver}_linux.run --noexec --keep --nox11 || return 1
- 
+
   # fix common.mk
   sed -i 's|CUDA_INSTALL_PATH ?= .*|CUDA_INSTALL_PATH ?= /opt/cuda|' "$srcdir"/pkg/sdk/common/common.mk ||  return 1
+  sed -i 's|^NVCCFLAGS :=|NVCCFLAGS := --compiler-options -fno-inline|' "$srcdir"/pkg/sdk/common/common.mk ||  return 1
+  # fix Makefile clean to build with gcc-4.4
+  sed -i '/common clean/a\\t\@make -C common -f Makefile_paramgl clean\n\t\@make -C common -f Makefile_rendercheckgl clean' "$srcdir"/pkg/sdk/Makefile || return 1
   #Copy over folders
   cp -rf "$srcdir"/pkg/sdk/common "$pkgdir"/opt/cuda
   cp -rf "$srcdir"/pkg/sdk/projects "$pkgdir"/opt/cuda
@@ -44,12 +46,10 @@ build() {
   cp -rf "$srcdir"/pkg/sdk/projects/*/data "$pkgdir"/opt/cuda/bin
 
   #Build the SDK
-  cd "$srcdir"/pkg/sdk/common
-  patch -Np0 -i "$srcdir"/common.mk.gcc-4.3.patch || return 1
-  sed -i 's|GCC34DIR|'"$pkgdir"'/opt/cuda/bin|' "$srcdir"/pkg/sdk/common/common.mk
   cd "$srcdir"/pkg/sdk
+  make clean
   make || return 1
-  
+
   #Install the files
   install -m 755 "$srcdir"/pkg/sdk/bin/linux/release/* "$pkgdir"/opt/cuda/bin || return 1
   install -m 755 "$srcdir"/pkg/sdk/lib/* "$pkgdir"/opt/cuda/lib || return 1
