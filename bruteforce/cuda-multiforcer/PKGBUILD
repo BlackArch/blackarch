@@ -1,7 +1,9 @@
 # Contributor: Jens Pranaitis <jens@chaox.net>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
 pkgname=cuda-multiforcer
 pkgver=0.7
-pkgrel=4
+pkgrel=5
 pkgdesc="a hash multiforcer using nvidia gpu acceleration"
 arch=("i686")
 url="http://www.cryptohaze.com"
@@ -9,18 +11,23 @@ license=('GPL')
 depends=("cuda-toolkit" "argtable")
 makedepends=("cuda-sdk")
 source=("http://www.cryptohaze.com/releases/CUDA-Multiforcer-src-0.7.tar.bz2"
-        "cuda-mf-makefile.patch"
         "README")
 md5sums=('e1242b210abb9f9c839733a896e80e1e'
-         '0f1d1dbda33c6a9c7fe4ad0a6053ae95'
          '6b42f09a39c3dfbcccad994e5fe5ebe4')
 build() {
   cd "$srcdir/CUDA-Multiforcer-Release"
-  patch -Np0 -i "${srcdir}"/cuda-mf-makefile.patch || return 1
+  cat > Makefile << EOF
+EXECUTABLE := cuda-multiforcer
+CUFILES := Multiforcer.cu
+CCFILES := -largtable2 -lcuda
+ROOTDIR := bin
+ROOTBINDIR := bin
+include /opt/cuda/common/common.mk
+EOF
   make || return 1
   # I know this is very bad, patches welcome
-  install -D -m755 "$startdir"/bin/linux/release/cuda-multiforcer "$pkgdir"/usr/bin/_cuda-multiforcer
-  cat >> "$pkgdir"/usr/bin/$pkgname << EOF
+  install -D -m755 "$srcdir"/CUDA-Multiforcer-Release/bin/linux/release/cuda-multiforcer "$pkgdir"/usr/bin/_cuda-multiforcer || return 1
+  cat > "$pkgdir"/usr/bin/$pkgname << EOF
 #!/bin/bash
 LD_LIBRARY_PATH="/opt/cuda/lib" /usr/bin/_cuda-multiforcer \$@
 EOF
