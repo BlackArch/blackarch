@@ -1,9 +1,11 @@
 # Contributor: Adam Wolk <netprobe@gmail.com>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
 pkgname=scalpel
 pkgver=1.60
 pkgrel=1
 pkgdesc="A frugal, high performance file carver"
 url="http://www.digitalforensicssolutions.com/Scalpel/"
+updateurl="http://www.digitalforensicssolutions.com/Scalpel/=>scalpel-"
 license='GPL'
 depends=('glibc')
 groups=('archpwn' 'archpwn-forensic')
@@ -12,13 +14,11 @@ md5sums=('a0ad1ae3f709bb42d30ba2dee992c3b0')
 arch=('i686' 'x86_64')
 
 build() {
-  cd $startdir/src/$pkgname-$pkgver
-  sed -i "s/\"scalpel\.conf\"/\"\/etc\/scalpel.conf\"/" scalpel.h
+  cd $srcdir/$pkgname-$pkgver
+  sed -i "s/\"scalpel\.conf\"/\"\/etc\/scalpel.conf\"/" scalpel.h || return 1
   make || return 1
-  mkdir -p $startdir/pkg/etc/
-  cp scalpel.conf $startdir/pkg/etc/scalpel.conf
-  mkdir -p $startdir/pkg/usr/bin/
-  cp scalpel $startdir/pkg/usr/bin/scalpel
-  mkdir -p $startdir/pkg/usr/man/man1/
-  cp scalpel.1 $startdir/pkg/usr/man/man1/scalpel.1
+  install -Dm644 scalpel.conf $pkgdir/etc/scalpel.conf || return 1
+  install -Dm750 scalpel $pkgdir/usr/bin/scalpel || return 1
+  gzip scalpel.1 || return 1
+  install -Dm644 scalpel.1.gz $pkgdir/usr/man/man1/scalpel.1.gz || return 1
 }
