@@ -1,23 +1,21 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
 # Contributor: Rudy Matela <rudy.matela@gmail.com>
-# Maintainer: Rudy Matela <rudy.matela@gmail.com>
-# Date: 2008-10-24 17:36
 pkgname=packeth
-pkgver=1.6.2
+pkgver=1.6.3
 pkgrel=1
 pkgdesc="A Linux GUI packet generator tool for ethernet."
 depends=(gtk2)
-source=("http://downloads.sourceforge.net/packeth/packETH-1.6.tar.gz" Makefile.patch)
+source=("http://downloads.sourceforge.net/packeth/packETH-${pkgver}.tar.gz")
 url="http://packeth.sourceforge.net/"
 groups=('archpwn' 'archpwn-scanners')
 arch=('i686' 'x86_64')
 license=('GPL')
-md5sums=('7303f884fbd2c8d18b2799d7c3fa8463'
-         '6e5872e1932d55fda050a369e0e6eb55')
+md5sums=('622793ef12349104fbe5fdda21ea2c45')
 
 build() {
-  cd $srcdir/packETH-1.6
-  patch -p1 < $srcdir/Makefile.patch
-  cd ./src
-  /usr/bin/make || return 1
-  /usr/bin/make install DESTDIR=$pkgdir
+  cd $srcdir/packETH-${pkgver}
+  sed -i "s|-g|$CFLAGS|g" Makefile || return 1 # remove debug flags
+  sed -i "s|/usr/bin/install -c|/usr/bin/install -D -c|g" Makefile || return 1 # fix make install
+  make || return 1
+  make install DESTDIR=$pkgdir || return 1
 }
