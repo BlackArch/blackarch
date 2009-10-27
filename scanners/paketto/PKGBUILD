@@ -9,20 +9,25 @@ url="http://www.doxpara.com/paketto"
 license="GPL"
 groups=('archpwn' 'archpwn-scanners')
 arch=(i686 x86_64)
-source=(http://www.doxpara.com/paketto/$pkgname-$pkgver.tar.gz
-        paketto.patch libnet.h.patch configure.patch)
+depends=('glibc')
+source=(http://ftp.oregonstate.edu/pub/gentoo/distfiles/$pkgname-$pkgver.tar.gz
+        paketto.patch libnet.h.patch configure.patch gcc4-tomcrypt.diff)
 md5sums=('7fd82af09a6493f24c8681f7bbf03898'
          '6311927674ef6e91cf8ea335188ee5ff'
          'e5f89a48b1e0e5f7455a82badb567871'
-         '5f15c42c90d3cd6bc1acac4778cc0298')
-
+         '5f15c42c90d3cd6bc1acac4778cc0298'
+         '2fe6703e7d8ad74f2fbc0e5b670b5176')
 
 build() {
-  cd $startdir/src/$pkgname-$pkgver
-  patch -p1 < $startdir/src/paketto.patch
-  patch -p1 < $startdir/src/configure.patch
-  ./configure --prefix=/usr
-  patch -p1 < $startdir/src/libnet.h.patch
+  cd $srcdir/$pkgname-$pkgver
+  patch -p1 < $srcdir/paketto.patch || return 1
+  patch -p1 < $srcdir/configure.patch || return 1
+  ./configure --prefix=/usr --mandir=/usr/share/man
+  cd libtomcrypt/
+  patch -p0 < $srcdir/gcc4-tomcrypt.diff || return 1
   make || return 1
-  make DESTDIR=$startdir/pkg install
+  cd ..
+  patch -p1 < $srcdir/libnet.h.patch || return 1
+  make || return 1
+  make DESTDIR=$pkgdir install
 }
