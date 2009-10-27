@@ -1,0 +1,41 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
+pkgname=netdiscover-svn
+pkgver=102
+pkgrel=1
+pkgdesc="A active/passive address reconnaissance tool, mainly developed for those wireless networks without dhcp server, when you are wardriving. It can be also used on hub/switched networks"
+arch=("i686")
+url="http://nixgeneration.com/~jaime/netdiscover/"
+license=('GPL3')
+groups=("archpwn" "archpwn-scanners")
+depends=("libnet" "libpcap")
+makedepends=('subversion')
+provides=("netdiscover")
+
+_svntrunk=https://netdiscover.svn.sourceforge.net/svnroot/netdiscover/trunk
+_svnmod=netdiscover
+
+build() {
+  cd "$srcdir"
+
+  if [ -d $_svnmod/.svn ]; then
+    (cd $_svnmod && svn up -r $pkgver)
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
+  fi
+
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_svnmod-build"
+  cp -r "$srcdir/$_svnmod" "$srcdir/$_svnmod-build"
+  cd "$srcdir/$_svnmod-build"
+
+  #
+  # BUILD
+  #
+  ./autogen.sh
+  ./configure --prefix=/usr
+  sh ./update-oui-database.sh
+  make || return 1
+  make DESTDIR="$pkgdir/" install
+}
