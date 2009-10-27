@@ -6,21 +6,22 @@ pkgver=0.4.7
 pkgrel=2
 pkgdesc="Unicornscan is a new information gathering and correlation engine."
 url="http://www.unicornscan.org/"
-depends=('libpcap' 'postgresql-libs' 'geoip' 'libdnet')
+updateurl="http://www.unicornscan.org/=>unicornscan-"
+depends=('libpcap' 'postgresql-libs' 'geoip' 'libdnet' 'libtool')
 groups=('archpwn' 'archpwn-scanners')
 license="GPL"
-arch=(i686)
-source=(http://www.unicornscan.org/releases/$pkgname-$pkgver-$pkgrel.tar.bz2
-        dirty-trans-ucred.diff)
-md5sums=('4c5f272eb38c333c0094c32317edf758'
-         '3f81711f24a53d97448f10560b08a969')
+arch=(i686 x86_64)
+source=(http://www.unicornscan.org/releases/$pkgname-$pkgver-$pkgrel.tar.bz2)
+md5sums=('4c5f272eb38c333c0094c32317edf758')
 
 build() {
   cd $srcdir/$pkgname-$pkgver
-  patch -p1 < ../dirty-trans-ucred.diff || return 1
-  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --with-pgsql --with-geoip --enable-bundled-ltdl
+  #sed -i 's:G_LDADD=:G_LDADD=-lGeoIP :' src/scan_progs/Makefile.in || return 1
+  #sed -i 's:G_LDADD=:G_LDADD=-lGeoIP :' Makefile.in || return 1
+  unset LDFLAGS
+  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --with-pgsql --with-geoip CFLAGS="$CFLAGS -D_GNU_SOURCE"
   make || return 1
-  make DESTDIR=$startdir/pkg install
-  cd $startdir/pkg/etc/unicornscan
+  make DESTDIR=$pkgdir install
+  cd $pkgdir/etc/unicornscan
   ln -s /usr/share/GeoIP/GeoIP.dat GeoIP.dat
 }
