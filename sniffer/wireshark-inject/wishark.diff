@@ -1,0 +1,716 @@
+--- ./gtk/packet_win.c	2009-10-28 19:23:48.495295336 +0100
++++ packet_win.c	2009-10-28 19:24:27.831985766 +0100
+@@ -39,6 +39,14 @@
+ #include <sys/types.h>
+ #endif
+ 
++#include <time.h>
++#include <pthread.h>
++#include <sys/socket.h>
++#include <linux/wireless.h>
++#include <tx80211.h>
++#include <tx80211_packet.h>
++#include <gtkhex.h>
++#include "capture-pcap-util.h"
+ #include <gtk/gtk.h>
+ 
+ #include <string.h>
+@@ -66,6 +74,7 @@
+ #include "gtk/gtkglobals.h"
+ #include "gtk/gui_utils.h"
+ 
++#define SIGNAL_CONNECT(widget, name, callback, arg) g_signal_connect(G_OBJECT(widget), name, G_CALLBACK(callback), (gpointer)(arg))
+ 
+ /* Data structure holding information about a packet-detail window. */
+ struct PacketWinData {
+@@ -76,10 +85,29 @@
+ 	GtkWidget  *tv_scrollw;
+ 	GtkWidget  *tree_view;
+ 	GtkWidget  *bv_nb_ptr;
++	
++	/* Information for WiFi injection patch */
++	GtkHex  	*hex;
++	GtkWidget 	*interface_combo;
++	GtkWidget	*drivertype_combo;
++	GtkWidget	*channel_entry;
++  	GtkWidget 	*frames_per_second_spin;
++  	GtkWidget 	*times_spinbutton;
++  	GtkWidget 	*status_label;
++  	GtkWidget 	*frame_len_spin;
++	GtkWidget	*time_button;
++	GtkWidget	*progressbar;
++	
+  	field_info *finfo_selected;
+ 	epan_dissect_t	*edt;
+ };
+ 
++struct InjectionThreadInfo {
++	struct PacketWinData *DataPtr;
++	struct tx80211* tx_info;
++	struct tx80211_packet* tx_packet;
++};
++
+ /* List of all the packet-detail windows popped up. */
+ static GList *detail_windows;
+ 
+@@ -293,3 +321,636 @@
+ {
+ 	g_list_foreach(detail_windows, redraw_hex_dump_cb, NULL);
+ }
++
++/* Wifi Injection Patch functions */
++
++static gboolean global_stop_injection = FALSE;
++
++static void send_frame_button_cb(GtkWidget*, gpointer);
++static void edit_frame_button_cb(GtkWidget*, gpointer);
++static void populate_interface_combo(GtkWidget*);
++static void populate_drivertype_combo(GtkWidget*);
++static void on_stop_button_clicked(GtkWidget *, gpointer);
++static void on_edit_cursor_moved(GtkWidget*,gpointer);
++static void* injection_thread(void *);
++
++void new_injection_window_cb(GtkWidget *w _U_)
++{
++		#define NewWinTitleLen 1000
++  char Title[NewWinTitleLen] = "";
++  const char *TextPtr;
++  gint tv_size = 95, bv_size = 75;
++  GtkWidget *main_w, *main_vbox, *pane,
++                      *tree_view, *tv_scrollw,
++                      *bv_nb_ptr;
++  struct PacketWinData *DataPtr;
++  int i;
++
++  /* Allocate data structure to represent this window. */
++  DataPtr = (struct PacketWinData *) g_malloc(sizeof(struct PacketWinData));
++
++  DataPtr->frame = cfile.current_frame;
++  memcpy(&DataPtr->pseudo_header, &cfile.pseudo_header, sizeof DataPtr->pseudo_header);
++  DataPtr->pd = g_malloc(DataPtr->frame->cap_len);
++  memcpy(DataPtr->pd, cfile.pd, DataPtr->frame->cap_len);
++  DataPtr->edt = epan_dissect_new(TRUE, TRUE);
++  epan_dissect_run(DataPtr->edt, &DataPtr->pseudo_header, DataPtr->pd,
++          DataPtr->frame, &cfile.cinfo);
++  epan_dissect_fill_in_columns(DataPtr->edt);
++
++  /*
++   * Build title of window by getting column data constructed when the
++   * frame was dissected.
++   */
++  for (i = 0; i < cfile.cinfo.num_cols; ++i) {
++    TextPtr = cfile.cinfo.col_data[i];
++    if ((strlen(Title) + strlen(TextPtr)) < NewWinTitleLen - 1) {
++      strcat(Title, TextPtr);
++      strcat(Title, " ");
++    }
++  }
++
++  main_w = window_new(GTK_WINDOW_TOPLEVEL, Title);
++  gtk_window_set_default_size(GTK_WINDOW(main_w), DEF_WIDTH, -1);
++
++  /* Container for paned windows  */
++  main_vbox = gtk_vbox_new(FALSE, 1);
++  gtk_container_border_width(GTK_CONTAINER(main_vbox), 1);
++  gtk_container_add(GTK_CONTAINER(main_w), main_vbox);
++  gtk_widget_show(main_vbox);
++
++  /* Panes for the tree and byte view */
++  pane = gtk_vpaned_new();
++  gtk_paned_gutter_size(GTK_PANED(pane), (GTK_PANED(pane))->handle_size);
++  gtk_container_add(GTK_CONTAINER(main_vbox), pane);
++  gtk_widget_show(pane);
++
++  /* Tree view */
++  tv_scrollw = main_tree_view_new(&prefs, &tree_view);
++  gtk_paned_pack1(GTK_PANED(pane), tv_scrollw, TRUE, TRUE);
++  gtk_widget_set_size_request(tv_scrollw, -1, tv_size);
++  gtk_widget_show(tv_scrollw);
++  gtk_widget_show(tree_view);
++
++  /* Byte view */
++  bv_nb_ptr = byte_view_new();
++  gtk_paned_pack2(GTK_PANED(pane), bv_nb_ptr, FALSE, FALSE);
++  gtk_widget_set_size_request(bv_nb_ptr, -1, bv_size);
++  gtk_widget_show(bv_nb_ptr);
++  
++  /* Wifi Injection Patch Options */
++  
++  GtkWidget *frame1;
++  GtkWidget *alignment1;
++  GtkWidget *table1;
++  GtkObject *frames_per_second_spin_adj;
++  GtkWidget *frames_per_second_spin;
++  GtkWidget *table2;
++  GtkWidget *time_button;
++  GSList *time_button_group = NULL;
++  GtkObject *times_spinbutton_adj;
++  GtkWidget *times_spinbutton;
++  GtkWidget *label5;
++  GtkWidget *label3;
++  GtkWidget *continuosly_button;
++  GtkWidget *label6;
++  GtkWidget *interface_combo;
++  GtkWidget *drivertype_combo;
++  GtkWidget *edit_frame_button;
++  GtkWidget *frame3;
++  GtkWidget *alignment3;
++  GtkWidget *vbox1;
++  GtkWidget *status_label;
++  GtkWidget *progressbar;
++  GtkWidget *label9;
++  GtkWidget *label2;
++  GtkObject *frame_len_spin_adj;
++  GtkWidget *frame_len_spin;
++  GtkWidget *label10;
++  GtkWidget *channel_entry;
++  GtkWidget *hbuttonbox1;
++  GtkWidget *send_button;
++  GtkWidget *stop_button;
++  GtkWidget *label1;
++  guint injection_frame_len = 0;
++  
++  frame1 = gtk_frame_new (NULL);
++  gtk_widget_show (frame1);
++  gtk_box_pack_end (GTK_BOX (main_vbox), frame1, FALSE, FALSE, 0);
++  gtk_container_set_border_width (GTK_CONTAINER (frame1), 5);
++
++  alignment1 = gtk_alignment_new (0.5, 0.5, 1, 1);
++  gtk_widget_show (alignment1);
++  gtk_container_add (GTK_CONTAINER (frame1), alignment1);
++  gtk_alignment_set_padding (GTK_ALIGNMENT (alignment1), 0, 0, 12, 0);
++
++  table1 = gtk_table_new (4, 4, FALSE);
++  gtk_widget_show (table1);
++  gtk_container_add (GTK_CONTAINER (alignment1), table1);
++  gtk_container_set_border_width (GTK_CONTAINER (table1), 5);
++  gtk_table_set_row_spacings (GTK_TABLE (table1), 5);
++  gtk_table_set_col_spacings (GTK_TABLE (table1), 5);
++
++  frames_per_second_spin_adj = gtk_adjustment_new (10, 0, 1000000, 1, 10, 10);
++  frames_per_second_spin = gtk_spin_button_new (GTK_ADJUSTMENT (frames_per_second_spin_adj), 1, 0);
++  gtk_widget_show (frames_per_second_spin);
++  gtk_table_attach (GTK_TABLE (table1), frames_per_second_spin, 1, 2, 2, 3,
++                    (GtkAttachOptions) (0),
++                    (GtkAttachOptions) (0), 0, 0);
++
++  table2 = gtk_table_new (1, 2, FALSE);
++  gtk_widget_show (table2);
++  gtk_table_attach (GTK_TABLE (table1), table2, 2, 3, 2, 3,
++                    (GtkAttachOptions) (0),
++                    (GtkAttachOptions) (0), 0, 0);
++
++  time_button = gtk_radio_button_new_with_mnemonic (NULL, "Time(s) ");
++  gtk_widget_show (time_button);
++  gtk_table_attach (GTK_TABLE (table2), time_button, 0, 1, 0, 1,
++                    (GtkAttachOptions) (0),
++                    (GtkAttachOptions) (0), 0, 0);
++  gtk_container_set_border_width (GTK_CONTAINER (time_button), 5);
++  gtk_radio_button_set_group (GTK_RADIO_BUTTON (time_button), time_button_group);
++  time_button_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (time_button));
++
++  times_spinbutton_adj = gtk_adjustment_new (10, 1, 255, 1, 10, 10);
++  times_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (times_spinbutton_adj), 1, 0);
++  gtk_widget_show (times_spinbutton);
++  gtk_table_attach (GTK_TABLE (table2), times_spinbutton, 1, 2, 0, 1,
++                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
++                    (GtkAttachOptions) (0), 0, 0);
++
++  label5 = gtk_label_new ("Interface Selector :");
++  gtk_widget_show (label5);
++  gtk_table_attach (GTK_TABLE (table1), label5, 0, 1, 0, 1,
++                    (GtkAttachOptions) (GTK_FILL),
++                    (GtkAttachOptions) (0), 0, 0);
++  gtk_misc_set_alignment (GTK_MISC (label5), 0, 0.5);
++
++  label3 = gtk_label_new ("Frames per second : ");
++  gtk_widget_show (label3);
++  gtk_table_attach (GTK_TABLE (table1), label3, 0, 1, 2, 3,
++                    (GtkAttachOptions) (GTK_FILL),
++                    (GtkAttachOptions) (0), 0, 0);
++  gtk_misc_set_alignment (GTK_MISC (label3), 0, 0.5);
++
++  continuosly_button = gtk_radio_button_new_with_mnemonic (NULL, "Continuosly");
++  gtk_widget_show (continuosly_button);
++  gtk_table_attach (GTK_TABLE (table1), continuosly_button, 2, 3, 1, 2,
++                    (GtkAttachOptions) (GTK_FILL),
++                    (GtkAttachOptions) (0), 0, 0);
++  gtk_container_set_border_width (GTK_CONTAINER (continuosly_button), 5);
++  gtk_radio_button_set_group (GTK_RADIO_BUTTON (continuosly_button), time_button_group);
++  time_button_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (continuosly_button));
++
++  label6 = gtk_label_new ("Driver Type :");
++  gtk_widget_show (label6);
++  gtk_table_attach (GTK_TABLE (table1), label6, 2, 3, 0, 1,
++                    (GtkAttachOptions) (GTK_FILL),
++                    (GtkAttachOptions) (0), 5, 0);
++  gtk_misc_set_alignment (GTK_MISC (label6), 0, 0.5);
++
++  interface_combo = gtk_combo_box_entry_new_text ();
++  gtk_widget_show (interface_combo);
++  gtk_table_attach (GTK_TABLE (table1), interface_combo, 1, 2, 0, 1,
++                    (GtkAttachOptions) (0),
++                    (GtkAttachOptions) (0), 0, 0);
++
++  drivertype_combo = gtk_combo_box_entry_new_text ();
++  gtk_widget_show (drivertype_combo);
++  gtk_table_attach (GTK_TABLE (table1), drivertype_combo, 3, 4, 0, 1,
++                    (GtkAttachOptions) (0),
++                    (GtkAttachOptions) (0), 0, 0);
++  gtk_container_set_border_width (GTK_CONTAINER (drivertype_combo), 5);
++
++  edit_frame_button = gtk_button_new_with_mnemonic ("Edit Frame");
++  gtk_widget_show (edit_frame_button);
++  gtk_table_attach (GTK_TABLE (table1), edit_frame_button, 3, 4, 2, 3,
++                    (GtkAttachOptions) (0),
++                    (GtkAttachOptions) (0), 0, 0);
++  gtk_widget_set_size_request (edit_frame_button, 115, 48);
++  gtk_container_set_border_width (GTK_CONTAINER (edit_frame_button), 10);
++  gtk_button_set_focus_on_click (GTK_BUTTON (edit_frame_button), FALSE);
++ 
++  frame3 = gtk_frame_new (NULL);
++  gtk_widget_show (frame3);
++  gtk_table_attach (GTK_TABLE (table1), frame3, 3, 4, 3, 4,
++                    (GtkAttachOptions) (GTK_FILL),
++                    (GtkAttachOptions) (GTK_FILL), 0, 0);
++  gtk_frame_set_shadow_type (GTK_FRAME (frame3), GTK_SHADOW_NONE);
++
++  alignment3 = gtk_alignment_new (0.5, 0.5, 1, 1);
++  gtk_widget_show (alignment3);
++  gtk_container_add (GTK_CONTAINER (frame3), alignment3);
++  gtk_alignment_set_padding (GTK_ALIGNMENT (alignment3), 0, 0, 12, 0);
++
++  vbox1 = gtk_vbox_new (FALSE, 0);
++  gtk_widget_show (vbox1);
++  gtk_container_add (GTK_CONTAINER (alignment3), vbox1);
++
++  status_label = gtk_label_new ("");
++  gtk_widget_show (status_label);
++  gtk_box_pack_start (GTK_BOX (vbox1), status_label, FALSE, FALSE, 0);
++
++  progressbar = gtk_progress_bar_new ();
++  gtk_widget_show (progressbar);
++  gtk_box_pack_start (GTK_BOX (vbox1), progressbar, FALSE, FALSE, 0);
++
++  label9 = gtk_label_new ("<i>Status </i>");
++  gtk_widget_show (label9);
++  gtk_frame_set_label_widget (GTK_FRAME (frame3), label9);
++  gtk_label_set_use_markup (GTK_LABEL (label9), TRUE);
++
++  label2 = gtk_label_new ("Frame length : ");
++  gtk_widget_show (label2);
++  gtk_table_attach (GTK_TABLE (table1), label2, 0, 1, 3, 4,
++                    (GtkAttachOptions) (GTK_FILL),
++                    (GtkAttachOptions) (0), 0, 0);
++  gtk_misc_set_alignment (GTK_MISC (label2), 0, 0.5);
++
++  switch (cfile.lnk_t)
++	{
++		case WTAP_ENCAP_PRISM_HEADER:
++			injection_frame_len = DataPtr->frame->cap_len - 144;
++			break;
++		case WTAP_ENCAP_IEEE_802_11:
++			injection_frame_len = DataPtr->frame->cap_len;
++			break;
++		default :
++			injection_frame_len = DataPtr->frame->cap_len;
++			break;
++	}
++	/*
++         WTAP_ENCAP_IEEE_802_11 
++        { "IEEE 802.11 Wireless LAN", "ieee-802-11" },
++
++         WTAP_ENCAP_PRISM_HEADER 
++        { "IEEE 802.11 plus Prism II monitor mode header", "prism" },
++
++         WTAP_ENCAP_IEEE_802_11_WITH_RADIO 
++        { "IEEE 802.11 Wireless LAN with radio information", "ieee-802-11-radio" },
++
++         WTAP_ENCAP_IEEE_802_11_WLAN_RADIOTAP 
++        { "IEEE 802.11 plus radiotap WLAN header", "ieee-802-11-radiotap" },
++
++         WTAP_ENCAP_IEEE_802_11_WLAN_AVS 
++        { "IEEE 802.11 plus AVS WLAN header", "ieee-802-11-avs" }
++	*/
++	
++  frame_len_spin_adj = gtk_adjustment_new (injection_frame_len, 0, 10000, 1, 10, 10);
++  
++  frame_len_spin = gtk_spin_button_new (GTK_ADJUSTMENT (frame_len_spin_adj), 2, 0);
++  gtk_widget_show (frame_len_spin);
++  gtk_table_attach (GTK_TABLE (table1), frame_len_spin, 1, 2, 3, 4,
++                    (GtkAttachOptions) (0),
++                    (GtkAttachOptions) (0), 0, 0);
++
++  label10 = gtk_label_new ("Channel Number :");
++  gtk_widget_show (label10);
++  gtk_table_attach (GTK_TABLE (table1), label10, 0, 1, 1, 2,
++                    (GtkAttachOptions) (GTK_FILL),
++                    (GtkAttachOptions) (0), 0, 0);
++  gtk_misc_set_alignment (GTK_MISC (label10), 0, 0.5);
++
++  channel_entry = gtk_entry_new ();
++  gtk_widget_show (channel_entry);
++  gtk_table_attach (GTK_TABLE (table1), channel_entry, 1, 2, 1, 2,
++                    (GtkAttachOptions) (0),
++                    (GtkAttachOptions) (0), 0, 0);
++  gtk_widget_set_size_request (channel_entry, 40, 27);
++  gtk_entry_set_max_length (GTK_ENTRY (channel_entry), 2);
++  gtk_entry_set_text (GTK_ENTRY (channel_entry), "6");
++
++  hbuttonbox1 = gtk_hbutton_box_new ();
++  gtk_widget_show (hbuttonbox1);
++  gtk_table_attach (GTK_TABLE (table1), hbuttonbox1, 3, 4, 1, 2,
++                    (GtkAttachOptions) (GTK_FILL),
++                    (GtkAttachOptions) (GTK_FILL), 0, 0);
++
++  send_button = gtk_button_new_with_mnemonic ("Send Frame");
++  gtk_widget_show (send_button);
++  gtk_container_add (GTK_CONTAINER (hbuttonbox1), send_button);
++  GTK_WIDGET_SET_FLAGS (send_button, GTK_CAN_DEFAULT);
++  
++  stop_button = gtk_button_new_with_mnemonic ("Stop");
++  gtk_widget_show (stop_button);
++  gtk_container_add (GTK_CONTAINER (hbuttonbox1), stop_button);
++  GTK_WIDGET_SET_FLAGS (stop_button, GTK_CAN_DEFAULT);
++					
++  label1 = gtk_label_new_with_mnemonic ("<b>Send Menu</b>");
++  gtk_widget_show (label1);
++  gtk_frame_set_label_widget (GTK_FRAME (frame1), label1);
++  gtk_label_set_use_markup (GTK_LABEL (label1), TRUE);
++  gtk_label_set_single_line_mode (GTK_LABEL (label1), TRUE);
++  
++  DataPtr->main 					= main_w;
++  DataPtr->tv_scrollw 				= tv_scrollw;
++  DataPtr->tree_view 				= tree_view;
++  DataPtr->bv_nb_ptr				= bv_nb_ptr;
++
++  DataPtr->interface_combo 			= interface_combo;
++  DataPtr->channel_entry   			= channel_entry;
++  DataPtr->drivertype_combo 		= drivertype_combo;
++  DataPtr->frames_per_second_spin 	= frames_per_second_spin;
++  DataPtr->times_spinbutton 		= times_spinbutton;
++  DataPtr->status_label 			= status_label;
++  DataPtr->frame_len_spin			= frame_len_spin;
++  DataPtr->time_button 				= time_button;
++  DataPtr->progressbar				= progressbar;
++  
++  /* load callback handlers */
++  /* load callback handlers */
++#if GTK_MAJOR_VERSION < 2
++  SIGNAL_CONNECT(tree_view, "tree-select-row", new_tree_view_select_row_cb,
++                 DataPtr);
++
++  SIGNAL_CONNECT(tree_view, "tree-unselect-row", new_tree_view_unselect_row_cb,
++                 DataPtr);
++#else
++  SIGNAL_CONNECT(gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view)),
++                 "changed", new_tree_view_selection_changed_cb, DataPtr);
++#endif
++
++  SIGNAL_CONNECT(main_w, "destroy", destroy_new_window, DataPtr);
++
++  SIGNAL_CONNECT(edit_frame_button, "clicked", edit_frame_button_cb, DataPtr);
++  SIGNAL_CONNECT(send_button, "clicked", send_frame_button_cb, DataPtr);
++  SIGNAL_CONNECT(stop_button, "clicked", on_stop_button_clicked, NULL);
++  
++  /* draw the protocol tree & print hex data */
++  add_byte_views(DataPtr->edt, tree_view, DataPtr->bv_nb_ptr);
++  proto_tree_draw(DataPtr->edt->tree, tree_view);
++  
++  /* Populate WiFi combos */
++  populate_drivertype_combo(drivertype_combo);
++  populate_interface_combo(interface_combo);
++  
++  DataPtr->finfo_selected = NULL;
++  detail_windows = g_list_append(detail_windows, DataPtr);
++  gtk_widget_show(main_w);
++}
++
++static void
++on_stop_button_clicked(GtkWidget * button, gpointer data)
++{
++	global_stop_injection = TRUE;
++}
++
++static void
++populate_interface_combo(GtkWidget* combo)
++{
++  int           err;
++  char          err_str[PCAP_ERRBUF_SIZE];
++  gchar         *cant_get_if_list_errstr;
++  GList         *if_list;
++  if_info_t     *if_info;
++  int           ifs;
++  GList         *curr;
++  
++  if_list = get_interface_list(&err, err_str);
++  
++  if (if_list == NULL && err == CANT_GET_INTERFACE_LIST) {
++    cant_get_if_list_errstr = cant_get_if_list_error_message(err_str);
++    simple_dialog(ESD_TYPE_ERROR, ESD_BTN_OK, "%s",
++                  cant_get_if_list_errstr);
++    g_free(cant_get_if_list_errstr);
++    return;
++  }
++  
++  for(ifs = 0; (curr = g_list_nth(if_list, ifs)); ifs++) {
++      if_info = curr->data;
++	  gtk_combo_box_append_text (GTK_COMBO_BOX (combo), if_info->name);
++	}
++  free_interface_list(if_list);
++}
++
++static void 
++populate_drivertype_combo(GtkWidget* combo)
++{
++
++  struct tx80211_cardlist *cardlist = NULL;
++  int i;
++
++  cardlist = tx80211_getcardlist();
++  
++  if (cardlist == NULL) {
++	  simple_dialog(ESD_TYPE_ERROR, ESD_BTN_OK, 
++	  			"%s","Error accessing supported driver list");
++  } else 
++  {
++    for (i = 1; i < cardlist->num_cards; i++) {
++	 gtk_combo_box_append_text (GTK_COMBO_BOX(combo), cardlist->cardnames[i]);
++    }
++  }
++  tx80211_freecardlist(cardlist);
++}
++
++static void 
++on_edit_cursor_moved(GtkWidget *button, gpointer data)
++{
++	struct PacketWinData *DataPtr = (struct PacketWinData *)data;
++	HexDocument* hex_doc = DataPtr->hex->document;
++	guint8* user_data = DataPtr->pd;
++	size_t exp_len;
++	epan_dissect_t* prev_edt;
++	
++	if(hex_doc->gap_pos > hex_doc->buffer) {
++		exp_len = MIN(hex_doc->file_size, hex_doc->gap_pos - hex_doc->buffer);
++		memcpy(user_data,hex_doc->buffer,exp_len);
++	}
++	if(hex_doc->gap_pos < hex_doc->buffer + hex_doc->file_size) {
++		exp_len = hex_doc->file_size - (size_t)(hex_doc->gap_pos - hex_doc->buffer);
++		memcpy(user_data,hex_doc->gap_pos + hex_doc->gap_size,exp_len);
++	}
++	
++	prev_edt = DataPtr->edt;
++	DataPtr->edt = epan_dissect_new(TRUE, TRUE);
++	
++	epan_dissect_run(DataPtr->edt, &DataPtr->pseudo_header, DataPtr->pd,
++          DataPtr->frame, &cfile.cinfo);
++  	epan_dissect_fill_in_columns(DataPtr->edt);
++
++	proto_tree_draw(DataPtr->edt->tree, DataPtr->tree_view);
++	add_byte_views(DataPtr->edt, DataPtr->tree_view, DataPtr->bv_nb_ptr);
++	
++	DataPtr->finfo_selected = NULL;
++	epan_dissect_free(prev_edt);
++}
++
++static void 
++edit_frame_button_cb(GtkWidget *button, gpointer data)
++{
++	GtkWidget *window,*vbox;
++	GtkHex *hex;
++	HexDocument* hex_doc;
++	struct PacketWinData *DataPtr = (struct PacketWinData *)data;
++	
++	window = window_new(GTK_WINDOW_TOPLEVEL,"Frame Edit Window");
++	gtk_container_set_border_width(GTK_CONTAINER(window), 10);
++	
++	hex_doc = hex_document_new();
++	hex_doc->file_size = DataPtr->frame->cap_len;
++	hex_doc->buffer_size = hex_doc->file_size + hex_doc->gap_size;
++	
++	hex_doc->buffer = (guchar *)g_malloc(hex_doc->buffer_size);
++	memcpy(hex_doc->buffer+hex_doc->gap_size,DataPtr->pd,hex_doc->file_size);
++	hex_doc->gap_pos = hex_doc->buffer;
++	
++	hex = GTK_HEX(gtk_hex_new(hex_doc));
++	gtk_widget_show(GTK_WIDGET(hex));
++	gtk_hex_set_font(hex, gtk_hex_load_font (prefs.gui_font_name),
++					pango_font_description_from_string (prefs.gui_font_name));
++	gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(hex));
++	SIGNAL_CONNECT(hex, "cursor_moved", on_edit_cursor_moved, DataPtr);
++	DataPtr->hex = hex;
++	
++	gtk_widget_show(window);
++}
++
++static void
++send_frame_button_cb(GtkWidget *button, gpointer data) 
++{
++
++	struct tx80211 tx_info;
++	struct tx80211_packet tx_packet;
++	struct InjectionThreadInfo* ti;
++		
++	char *ifname;
++	char *drivertype_name;
++	gint channel;
++	gint drivertype;
++	
++	struct PacketWinData *DataPtr 	= (struct PacketWinData *)data;
++	GtkWidget* interface_combo 		= DataPtr->interface_combo;
++	GtkWidget* drivertype_combo 	= DataPtr->drivertype_combo;
++	GtkWidget* channel_entry 		= DataPtr->channel_entry;
++	
++	channel = atoi(gtk_entry_get_text (GTK_ENTRY (channel_entry)));
++	ifname 	= gtk_combo_box_get_active_text(GTK_COMBO_BOX(interface_combo));
++	drivertype_name = gtk_combo_box_get_active_text(GTK_COMBO_BOX(drivertype_combo));
++	
++	drivertype = tx80211_resolvecard(drivertype_name);
++	
++	if (drivertype == INJ_NODRIVER) {
++    	
++		simple_dialog(ESD_TYPE_ERROR, ESD_BTN_OK, 
++					"%s","Driver name not recognized");
++		return;
++  	}
++	/* Initialize lorcon function pointers and other parameters */
++	if (tx80211_init(&tx_info, ifname, drivertype) < 0) {
++		
++		simple_dialog(ESD_TYPE_ERROR, ESD_BTN_OK, 
++					"%s", "Error initializing lorcon");
++    	return;
++	}
++	if (tx80211_setmode(&tx_info, IW_MODE_MONITOR) != 0) {
++		
++    	simple_dialog(ESD_TYPE_WARN, ESD_BTN_OK,
++					"Error setting monitor mode for interface %s", 
++					tx_info.ifname);
++	}
++	if (tx80211_setchannel(&tx_info, channel) != 0) {
++          simple_dialog(ESD_TYPE_WARN, ESD_BTN_OK, 
++					"Error setting channel to %d", channel);
++    }
++	if (tx80211_open(&tx_info) < 0) {
++    
++		simple_dialog(ESD_TYPE_ERROR, ESD_BTN_OK, 
++					"Unable to open interface %s", tx_info.ifname);
++		return;
++	}
++	/* Establish lorcon packet transmission structure */
++	guint injection_frame_len;
++	
++	injection_frame_len = gtk_spin_button_get_value(GTK_SPIN_BUTTON(DataPtr->frame_len_spin));
++	
++	tx_packet.packet = DataPtr->pd + ( DataPtr->frame->cap_len - injection_frame_len );
++  	tx_packet.plen 	 = injection_frame_len;
++
++	ti 				= calloc(1,sizeof(struct InjectionThreadInfo));
++	ti->tx_info 	= calloc(1,sizeof(struct tx80211));
++	ti->tx_packet 	= calloc(1,sizeof(struct tx80211_packet));
++		
++	ti->DataPtr 	= DataPtr;
++	memcpy(ti->tx_info,&tx_info,sizeof(struct tx80211));
++	memcpy(ti->tx_packet,&tx_packet,sizeof(struct tx80211_packet));
++	
++	pthread_t thread;
++	
++  	if(pthread_create( &thread, NULL,injection_thread, ti) ){
++    	simple_dialog(ESD_TYPE_ERROR, ESD_BTN_OK,"%s","pthread create");
++		free(ti->tx_info);
++		free(ti->tx_packet);
++		free(ti);
++    	return;
++	}
++}
++
++static void* 
++injection_thread(void *arg)
++{
++	struct InjectionThreadInfo *ti = (struct InjectionThreadInfo*)arg;
++	char msg[50];
++	gulong sleep_time; 
++	gulong i;
++	guint frames_per_second;
++	guint times;
++	
++	times = gtk_spin_button_get_value(GTK_SPIN_BUTTON(ti->DataPtr->times_spinbutton));
++	frames_per_second = gtk_spin_button_get_value(GTK_SPIN_BUTTON(ti->DataPtr->frames_per_second_spin));
++	sleep_time = 1000000/frames_per_second; /* 1 second in us divided by frame per second*/
++	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ti->DataPtr->progressbar),0.0);
++	if ( gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ti->DataPtr->time_button)) == TRUE )
++	{
++		for ( i = 1; i <= (times * frames_per_second) ; i++ )
++		{
++			if ( (i % frames_per_second) == 0 ){
++			
++				g_snprintf(msg,49,"Sended %lu frames ...",i);
++				gtk_label_set_text(GTK_LABEL(ti->DataPtr->status_label),msg);
++				gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ti->DataPtr->progressbar),
++											((float)i)/((float)(times*frames_per_second)));
++			}
++			if (global_stop_injection)
++				break;
++			tx80211_txpacket(ti->tx_info, ti->tx_packet);	
++			usleep(sleep_time);
++		}
++	}
++	else
++	{	
++	
++		for ( i = 1; ;i++ )
++		{
++			if ( (i % frames_per_second) == 0 ){
++				
++					g_snprintf(msg,49,"Sended %lu frames ...",i);
++					gtk_label_set_text(GTK_LABEL(ti->DataPtr->status_label),msg);
++				}
++
++			if (global_stop_injection)
++				break;				
++			tx80211_txpacket(ti->tx_info, ti->tx_packet);
++			usleep(sleep_time);
++		}
++
++	}
++	if (global_stop_injection)
++		gtk_label_set_text(GTK_LABEL(ti->DataPtr->status_label),"Stopped!");
++	else
++		gtk_label_set_text(GTK_LABEL(ti->DataPtr->status_label),"Finished!");
++	
++	/* Close socket */
++	
++	if (tx80211_close(ti->tx_info) < 0) {
++		simple_dialog(ESD_TYPE_ERROR, ESD_BTN_OK,
++				"%s","Error closing socket");
++	}
++	free(ti->tx_info);
++	free(ti->tx_packet);
++	free(ti);
++	global_stop_injection = FALSE;
++	return NULL;
++	
++}
+--- ./gtk/packet_win.h	2006-10-31 18:52:33.000000000 +0100
++++ /home/axi/desarrollo-wireshark/wireshark-patch-source/wireshark-0.99.4/gtk/packet_win.h	2007-01-09 18:41:25.000000000 +0100
+@@ -36,7 +36,8 @@
+  * @param widget parent widget (unused)
+  */
+ extern void new_window_cb(GtkWidget *widget);
+-
++/* Wifi Injection Patch */
++extern void new_injection_window_cb(GtkWidget *widget);
+ /** Destroy all popup packet windows.
+  */
+ void destroy_packet_wins(void);
+--- ./gtk/main_menu.c	2009-10-28 16:12:28.090011265 +0100
++++ main_menu.c	2009-10-28 16:34:09.437147082 +0100
+@@ -941,6 +941,8 @@
+     {"/Decode As...", NULL, GTK_MENU_FUNC(decode_as_cb), 0, "<StockItem>", WIRESHARK_STOCK_DECODE_AS,},
+     {"/Print...", NULL, GTK_MENU_FUNC(file_print_selected_cmd_cb), 0, "<StockItem>", GTK_STOCK_PRINT,},
+     {"/Show Packet in New Window", NULL, GTK_MENU_FUNC(new_window_cb),
++                       0, NULL, NULL},
++    {"/Send WiFi Frame", NULL, GTK_MENU_FUNC(new_injection_window_cb),
+                        0, NULL, NULL}
+ };
+ 
+

@@ -3,29 +3,40 @@
 
 pkgname=wireshark-inject
 _pkgname=wireshark
-pkgver=1.0.5
+pkgver=1.2.3
 pkgrel=1
 pkgdesc="A free network protocol analyzer for Unix/Linux and Windows"
 arch=('i686' 'x86_64')
 license=('GPL2')
-depends=('gtk2>=2.14.5' 'heimdal>=1.2.1' 'libpcap>=1.0.0' 'bash' 'gnutls>=2.4.1' 'libcap' 'ghex' 'lorcon')
+depends=('gtk2' 'heimdal' 'libpcap' 'bash' 'gnutls' 'libcap' 'ghex' 'lorcon-old-svn' 'geoip')
 makedepends=('bison' 'flex' 'patch')
 url="http://www.wireshark.org/"
 replaces=('ethereal')
 groups=('archpwn' 'archpwn-sniffer')
 options=(!libtool)
-source=(http://www.wireshark.org/download/src/${_pkgname}-${pkgver}.tar.gz
-        http://802.11ninja.net/lorcon/raw-attachment/wiki/WiresharkWiFiInjection/injection_patch-0.1.1.tar.gz)
-md5sums=('99ac9a9d2c1445658039f1f34c89e3f6'
-         '3ed5c9d9bb993751b830fcd61380ab1c')
+source=(http://downloads.sourceforge.net/$_pkgname/${_pkgname}-${pkgver}.tar.gz
+        lorcon-autotooling.patch
+        wireshark-1.1.2--as-needed.patch
+        wireshark-except-double-free.diff
+        wishark.diff)
+md5sums=('607eb3416e6240e4236ea5eb6eb6b6f1'
+         '0884489ef0548cf00958d196844cf05f'
+         'cc87d7eb31f256df751b3371b1c426e9'
+         '81d414ffae4323c3d36afb14ea0377b8'
+         '8ba04b4912a6231ac59e8f1a96577e7c')
 
 build() {
-  cd ${srcdir}/${_pkgname}-${pkgver}
+  cd ${srcdir}/${_pkgname}-${pkgver}/epan
+  patch -Np0 < ../../wireshark-except-double-free.diff || return 1
+
+  cd ../
+  patch -Np0 < ../lorcon-autotooling.patch || return 1
+  patch -Np1 < ../wireshark-1.1.2--as-needed.patch || return 1
   patch -Np0 < ../wishark.diff || return 1
-  export CFLAGS="-fno-unit-at-a-time ${CFLAGS}"
+
+  ./autogen.sh || return 1
   ./configure --prefix=/opt/wireshark-inject/ --with-ssl || return 1
-  sed -ie 's|^CFLAGS =\(.*\)|CFLAGS =\1 -lorcon -lgtkhex|g' Makefile || return 1
-  sed -ie 's|^CFLAGS =\(.*\)|CFLAGS =\1 -I/usr/include/gtkhex/ -DCAPTURE_PCAP_ERRBUF_SIZE=PCAP_ERRBUF_SIZE|g' gtk/Makefile || return 1
+
   make all || return 1
   make DESTDIR=${pkgdir} install || return 1
 }
