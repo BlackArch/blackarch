@@ -4,25 +4,24 @@ pkgname=sipp
 pkgver=3.1
 pkgrel=1
 pkgdesc="Sipp is a performance testing tool for the SIP protocol"
-url="http://"
+url="http://sipp.sourceforge.net"
 groups=('archpwn' 'archpwn-voip')
 license=('GPL')
-depends=('libpcap')
+depends=('libpcap' 'ncurses' 'gcc-libs')
+makedepends=('make' 'gcc')
 arch=(i686 x86_64)
 source=(http://downloads.sourceforge.net/$pkgname/${pkgname}.${pkgver}.src.tar.gz)
+md5sums=('452a6f88f2d314dbb2f44e318a60982b')
 
 build() {
   cd "$srcdir/$pkgname.svn"
-  sed -ie "/<stdlib.h>/a#include <limits.h>" sipp.hpp
+  sed -i "/<stdlib.h>/a#include <limits.h>" sipp.hpp || return 1
 
-  make || return 1
+  make EXTRACPPFLAGS="$CFLAGS" EXTRACFLAGS="$CFLAGS" || return 1
 
-  install -d $pkgdir/usr/bin
-  install -d $pkgdir/usr/share/$pkgname
-
-  install -Dm755 $pkgname $pkgdir/usr/bin/
-  cp -r pcap $pkgdir/usr/share/$pkgname/
+  install -d $pkgdir/usr/share/$pkgname || return 1
+  install -Dm755 $pkgname $pkgdir/usr/bin/$pkgname || return 1
+  cp -r pcap $pkgdir/usr/share/$pkgname/ || return 1
 }
 
 # vim:set ts=2 sw=2 et:
-md5sums=('452a6f88f2d314dbb2f44e318a60982b')
