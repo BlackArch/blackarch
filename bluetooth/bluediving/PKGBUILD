@@ -4,12 +4,12 @@
 
 pkgname=bluediving
 pkgver=0.9
-pkgrel=2
+pkgrel=3
 pkgdesc="A Bluetooth penetration testing suite"
 url="http://bluediving.sourceforge.net/"
 license=('GPL')
 arch=('i686' 'x86_64')
-depends=(bluez-utils sox obexftp readline expat perl-xml-simple libxml2)
+depends=(bluez-utils sox obexftp readline expat perl-xml-simple libxml2 carwhisperer)
 groups=('archpwn' 'archpwn-bluetooth')
 install=bluediving.install
 source=(http://downloads.sourceforge.net/sourceforge/$pkgname/$pkgname-$pkgver.tgz)
@@ -27,15 +27,25 @@ build() {
   #change the sounds paths
   sed -i -e 's/sounds\//\/usr\/share\/bluediving\//g' bluedivingNG.conf || exit 1
   # fix libxml2 missing includes compilation error
-  sed -i -e 's/gcc/gcc `xml2-config --cflags`/g' tools/btftp_src/Makefile || exit 1
+  sed -i -e "s/gcc/gcc $CFLAGS \`xml2-config --cflags\`/g" tools/btftp_src/Makefile || exit 1
   # fix bss directory path
   sed -i -e 's/bss-0.6/bss-0.8/g' tools/make_tools.sh || exit 1
   cd tools
+
+  # Patching for CFLAGS
+  sed -i -e "s/gcc /gcc $CFLAGS /g" Makefile || return 1
+  sed -i -e "s/gcc /gcc $CFLAGS /g" make_tools.sh || exit 1
+
+  for i in bccmd_src btobex_src bss-0.8 carwhisperer-0.2 hidattack01; do
+    sed -i -e "s/gcc /gcc $CFLAGS /g" $i/Makefile || return 1
+  done
+
   sh make_tools.sh || return 1
 
   mkdir -p "${pkgdir}"/usr/bin/
 
-  install -m755 atshell attest bccmd bdaddr bss btobex btftp carwhisperer greenplaque \
+  # Don't install carwhisperer
+  install -m755 atshell attest bccmd bdaddr bss btobex btftp greenplaque \
 	hcidump-crash hstest l2cap-packet l2cap_headersize_overflow redfang \
 	rfcomm_shell hidattack "${pkgdir}"/usr/bin/ || return 1
   install -D -m755 "${srcdir}"/$pkgname-$pkgver/bluedivingNG.pl    "${pkgdir}"/usr/bin/bluedivingNG.pl || return 1
