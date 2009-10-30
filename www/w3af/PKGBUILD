@@ -5,7 +5,7 @@ pkgname=w3af
 pkgver=1.0_rc2
 pkgrel=1
 pkgdesc="Web Application Attack and Audit Framework"
-depends=('pyopenssl' 'python-soappy')
+depends=('python' 'fpconst' 'pygoogle' 'python-nltk' 'python-soappy' 'python-pypdf' 'beautiful-soup' 'pyopenssl' 'scapy')
 source=(http://dl.sourceforge.net/sourceforge/$pkgname/${pkgname}_${pkgver/_/-}.tar.bz2 $pkgname.desktop startscript.sh)
 url="http://w3af.sourceforge.net"
 groups=('archpwn' 'archpwn-www' 'archpwn-scanners')
@@ -16,10 +16,22 @@ md5sums=('e289878d444983c1b2859bedc764e50d'
          '7f95174761f155f266aab367a292331f')
 
 build() {
-	cd $startdir/src/w3af
-	mkdir -p $startdir/pkg/opt/w3af $startdir/pkg/usr/bin $startdir/pkg/usr/share/applications/
-	cp -r $startdir/src/w3af/* $startdir/pkg/opt/w3af/
-	ln -s $startdir/pkg/opt/w3af/w3af $startdir/pkg/usr/bin/w3af
-	cp $startdir/src/startscript.sh $startdir/pkg/opt/w3af/
-	cp $startdir/src/w3af.desktop $startdir/pkg/usr/share/applications/
+	cd $srcdir/w3af
+	mkdir -p $pkgdir/usr/share/w3af $pkgdir/usr/bin $pkgdir/usr/share/applications/
+	cp -r $srcdir/w3af/* $pkgdir/usr/share/w3af/
+
+    # Create launchers
+    cat > $pkgdir/usr/bin/w3af_gui << EOF
+#!/bin/sh
+cd /usr/share/w3af
+python w3af_gui
+EOF
+    cat > $pkgdir/usr/bin/w3af_console << EOF
+#!/bin/sh
+cd /usr/share/w3af
+python w3af_console
+EOF
+    chmod 0755 $pkgdir/usr/bin/w3af_{gui,console} || return 1
+	cp $srcdir/startscript.sh $pkgdir/usr/share/w3af/
+	cp $srcdir/w3af.desktop $pkgdir/usr/share/applications/
 }
