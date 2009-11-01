@@ -1,0 +1,49 @@
+# $Id$
+# Maintainer: Paul Mattal <pjmattal@elys.com>
+pkgname=aufs2
+pkgver=2.6.31_20090910
+pkgrel=1
+_kernver=${pkgver%_*}-ARCH
+pkgdesc="Another Unionfs Implementation"
+arch=('i686' 'x86_64')
+url="http://aufs.sourceforge.net/"
+license=('GPL2')
+depends=('kernel26>=2.6.31' 'kernel26<2.6.32')
+replaces=('aufs')
+install=${pkgname}.install
+source=(ftp://ftp.archlinux.org/other/aufs2/${pkgname}-${pkgver}.tar.bz2)
+options=(!makeflags)
+
+build() {
+  cd ${srcdir}/${pkgname}-${pkgver} || return 1
+  sed -i 's|CONFIG_AUFS_HINOTIFY =.*|CONFIG_AUFS_HINOTIFY = y|' \
+     config.mk || return 1
+  sed -i 's|CONFIG_AUFS_EXPORT =.*|CONFIG_AUFS_EXPORT = y|' \
+     config.mk || return 1
+  sed -i 's|CONFIG_AUFS_SHWH =.*|CONFIG_AUFS_SHWH = y|' \
+     config.mk || return 1
+  sed -i 's|CONFIG_AUFS_BDEV_LOOP =.*|CONFIG_AUFS_BDEV_LOOP = y|' \
+     config.mk || return 1
+  sed -i 's|CONFIG_AUFS_BR_RAMFS =.*|CONFIG_AUFS_BR_RAMFS = y|' \
+     config.mk || return 1
+  sed -i 's|CONFIG_AUFS_DEBUG =.*|CONFIG_AUFS_DEBUG =|' \
+     config.mk || return 1
+  if [ "${CARCH}" = "x86_64" ]; then
+    inot64=" y"
+  else
+    inot64=""
+  fi
+  sed -i "s|CONFIG_AUFS_INO_T_64 =.*|CONFIG_AUFS_INO_T_64 =${inot64}|" \
+     config.mk || return 1
+  # build
+  make KDIR=/usr/src/linux-${_kernver} || return 1
+  # install
+  install -D -m644 fs/aufs/aufs.ko \
+    $pkgdir/lib/modules/${_kernver}/kernel/fs/aufs/aufs.ko || return 1
+  # tweak the install script for the right kernel version
+  sed -i -e "s/KERNEL_VERSION=.*/KERNEL_VERSION=${_kernver}/g" \
+    $startdir/$pkgname.install || return 1
+  # install include files
+  install -D -m 644 include/linux/aufs_type.h $pkgdir/usr/src/linux-$_kernver/include/linux/aufs_type.h || return 1
+} 
+md5sums=('90af4ef41dcd68ba1171a2c562864c7c')

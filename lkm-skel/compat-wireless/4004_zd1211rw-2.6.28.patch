@@ -1,0 +1,37 @@
+diff -Naur linux-2.6.28-pentoo-r1-orig/drivers/net/wireless/zd1211rw/zd_mac.c linux-2.6.28-pentoo-r1-improved/drivers/net/wireless/zd1211rw/zd_mac.c
+--- linux-2.6.28-pentoo-r1-orig/drivers/net/wireless/zd1211rw/zd_mac.c	2009-01-18 17:49:00.000000000 -0500
++++ linux-2.6.28-pentoo-r1-improved/drivers/net/wireless/zd1211rw/zd_mac.c	2009-01-18 18:46:44.000000000 -0500
+@@ -191,14 +191,19 @@
+ static int set_rx_filter(struct zd_mac *mac)
+ {
+ 	unsigned long flags;
+-	u32 filter = STA_RX_FILTER;
++	struct zd_ioreq32 ioreqs[] = {
++		{CR_RX_FILTER, STA_RX_FILTER},
++		{ CR_SNIFFER_ON, 0U },
++	};
+ 
+ 	spin_lock_irqsave(&mac->lock, flags);
+-	if (mac->pass_ctrl)
+-		filter |= RX_FILTER_CTRL;
++	if (mac->pass_ctrl) {
++		ioreqs[0].value |= 0xFFFFFFFF;
++		ioreqs[1].value = 0x1;
++	}
+ 	spin_unlock_irqrestore(&mac->lock, flags);
+ 
+-	return zd_iowrite32(&mac->chip, CR_RX_FILTER, filter);
++	return zd_iowrite32a(&mac->chip, ioreqs, ARRAY_SIZE(ioreqs));
+ }
+ 
+ static int set_mc_hash(struct zd_mac *mac)
+@@ -657,7 +662,8 @@
+ 	/* Caller has to ensure that length >= sizeof(struct rx_status). */
+ 	status = (struct rx_status *)
+ 		(buffer + (length - sizeof(struct rx_status)));
+-	if (status->frame_status & ZD_RX_ERROR) {
++	if ((status->frame_status & ZD_RX_ERROR) || 
++		(status->frame_status & ~0x21)) {
+ 		if (mac->pass_failed_fcs &&
+ 				(status->frame_status & ZD_RX_CRC32_ERROR)) {
+ 			stats.flag |= RX_FLAG_FAILED_FCS_CRC;

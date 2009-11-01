@@ -1,0 +1,41 @@
+# Contributor: Jens Pranaitis <jens@jenux.homelinux.org>
+# Contributor: Thomas Schneider <blacklotus@jenux.homelinux.org>
+# Contributor: Shino <shino@jenux.homelinux.org>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+pkgname=com-on-air_cs
+pkgver=87
+pkgrel=14
+pkgdesc="Com on air linux driver, for dect pcmcia cards."
+url="https://dedected.org/cgi-bin/trac.cgi/wiki/COM-ON-AIR-Linux"
+arch=('i686' 'x86_64')
+license=('GPL2')
+depends=("kernel26-chaox=$kernpkgver" "bash")
+makedepends=('subversion' 'gcc')
+groups=("chaox-modules")
+conflicts=()
+provides=()
+source=(udev.rules load-dect.sh)
+md5sums=('e55af4d84214826a94438f99760bf1c7'
+         'ed8baaa634257ab07bd8d8fa27fcecc2')
+_kernver=2.6.31-ARCH
+
+_svntrunk=https://dedected.org/svn/trunk/com-on-air_cs-linux
+_svnmod=com-on-air_cs-linux
+
+build() {
+  cd ${srcdir}
+  if [ -d $_svnmod/.svn ]; then
+    (cd $_svnmod && svn up -r $pkgver)
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
+  fi
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+  cd $_svnmod
+  make KDIR=/usr/src/linux-$_kernver || return 1
+  mkdir -p ${pkgdir}/lib/modules/${_kernver}/kernel/drivers/pcmcia/
+  install com_on_air_cs.ko ${pkgdir}/lib/modules/${_kernver}/kernel/drivers/pcmcia/
+
+  install -D "${srcdir}/udev.rules" "${pkgdir}/etc/udev/rules.d/99-dect.rules"
+  install -D -m755 "${srcdir}/load-dect.sh" "${pkgdir}/lib/udev/load-dect.sh"
+}

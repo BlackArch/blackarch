@@ -1,0 +1,36 @@
+# Contributor: Jens Pranaitis <jens@jenux.homelinux.org>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+pkgname=portknocko-module
+pkgver=463
+pkgrel=2
+_kernver=2.6.31-ARCH
+pkgdesc="Netfilter module to support portknocking"
+arch=("i686")
+url="http://portknocko.berlios.de/"
+license=('GPL')
+makedepends=('subversion')
+depends=("kernel26-pwn")
+groups=("archpwn-modules")
+install=$pkgname.install
+_svntrunk=svn://svn.berlios.de/portknocko/trunk
+_svnmod=portknocko
+
+build()
+{
+  cd "${srcdir}"
+  if [ -d $_svnmod/.svn ]; then
+    msg "svn update.."
+    cd $_svnmod
+    svn up -r $pkgver || return 1
+  else
+    msg "svn checkout.."
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod || return 1
+    cd $_svnmod
+  fi
+  cd kernel
+  sed -ie "s|KERNEL_DIR=.*|KERNEL_DIR=/lib/modules/$_kernver/build|g" Makefile
+  sed -ie "s|DESTDIR_ROOT:=.*|DESTDIR_ROOT:=$pkgdir/lib/modules/$_kernver|g" Makefile
+  sed -ie 's|mkdir|mkdir -p|g' Makefile
+  make || return 1
+  make install || return 1
+}

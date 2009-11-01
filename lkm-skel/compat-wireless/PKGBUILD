@@ -1,0 +1,35 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+pkgname=compat-wireless
+pkgver=2.6.32_rc5
+pkgrel=1
+_kernver=2.6.31-ARCH
+pkgdesc="Backport of current wireless drivers"
+arch=(i686 x86_64)
+url="http://wireless.kernel.org/en/users/Download/stable"
+license=('GPL')
+depends=("kernel26-pwn" "bash")
+provides=("kernel26-chaox-wireless")
+install=$pkgname.install
+source=("http://www.orbit-lab.org/kernel/${pkgname}-2.6-stable/v2.6.32/${pkgname}-${pkgver/_/-}.tar.bz2"
+        # patches with kind permission from pentoo.ch
+        "4004_zd1211rw-2.6.28.patch")
+md5sums=('4fe01b4a624dc1ea4b878363e496e06f'
+         '9c474a07e0f6f7b7549fa562e8cee080')
+
+build() {
+  cd "${srcdir}"/${pkgname}-${pkgver/_/-}
+  patch -Np1 -i "$srcdir"/4004_zd1211rw-2.6.28.patch || return 1
+  KLIB="/lib/modules/$_kernver" KLIB_BUILD=/usr/src/linux-$_kernver make || return 1
+  # Workaround for fscked up Makefile, idea stolen from pentoo as usual ;)
+  for module in $(find . -name "*.ko")
+  do
+    install -D -m 644 "${module}" "${pkgdir}"/lib/modules/$_kernver/updates/${module} || return 1
+  done
+  install -D -m 644 scripts/modlib.sh "${pkgdir}"/usr/lib/compat-wireless/modlib.sh || return 1
+  install -D -m 755 scripts/madwifi-unload "${pkgdir}"/usr/sbin/madwifi-unload || return 1
+  for x in scripts/{*load,*enable}
+  do
+    install -m 755 $x "${pkgdir}"/usr/sbin/ || return 1
+  done
+}
