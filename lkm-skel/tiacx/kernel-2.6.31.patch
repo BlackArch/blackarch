@@ -1,0 +1,88 @@
+--- acx-20080210/pci.c	2008-02-10 21:06:42.000000000 +0100
++++ acx-20080210/pci.c	2009-09-11 22:27:28.000000000 +0200
+@@ -1437,6 +1437,19 @@
+ 
+ static void dummy_netdev_init(struct net_device *ndev) {}
+ 
++static const struct net_device_ops acx_netdev_ops = {
++	.ndo_open = &acxpci_e_open,
++	.ndo_stop = &acxpci_e_close,
++	.ndo_start_xmit = &acx_i_start_xmit,
++	.ndo_get_stats = &acx_e_get_stats,
++#if IW_HANDLER_VERSION <= 5
++	.ndo_get_wireless_stats = &acx_e_get_wireless_stats,
++#endif
++	.ndo_set_multicast_list = &acxpci_i_set_multicast_list,
++	.ndo_tx_timeout = &acxpci_i_tx_timeout,
++	.ndo_change_mtu = &acx_e_change_mtu,
++};
++	
+ #ifdef CONFIG_PCI
+ static int __devinit acxpci_e_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+ {
+@@ -1547,17 +1560,8 @@
+ 	}
+ 
+ 	ether_setup(ndev);
+-	ndev->open = &acxpci_e_open;
+-	ndev->stop = &acxpci_e_close;
+-	ndev->hard_start_xmit = &acx_i_start_xmit;
+-	ndev->get_stats = &acx_e_get_stats;
+-#if IW_HANDLER_VERSION <= 5
+-	ndev->get_wireless_stats = &acx_e_get_wireless_stats;
+-#endif
+-	ndev->wireless_handlers = (struct iw_handler_def *)&acx_ioctl_handler_def;
+-	ndev->set_multicast_list = &acxpci_i_set_multicast_list;
+-	ndev->tx_timeout = &acxpci_i_tx_timeout;
+-	ndev->change_mtu = &acx_e_change_mtu;
++	ndev->wireless_handlers = (struct iw_handler_def *)&acx_ioctl_handler_def;
++	ndev->netdev_ops = &acx_netdev_ops;
+ 	ndev->watchdog_timeo = 4 * HZ;
+ 	ndev->irq = pdev->irq;
+ 	ndev->base_addr = pci_resource_start(pdev, 0);
+--- acx-20080210/usb.c	2008-02-10 21:06:42.000000000 +0100
++++ acx-20080210/usb.c	2009-09-11 22:38:42.000000000 +0200
+@@ -778,6 +778,21 @@
+ static void
+ dummy_netdev_init(struct net_device *ndev) {}
+ 
++static const struct net_device_ops acxusb_netdev_ops = {
++	.ndo_open = &acxusb_e_open,
++	.ndo_stop = &acxusb_e_close,
++	.ndo_start_xmit = (void *)&acx_i_start_xmit,
++	.ndo_get_stats = (void *)&acx_e_get_stats,
++#if IW_HANDLER_VERSION <= 5
++	.ndo_get_wireless_stats = (void *)&acx_e_get_wireless_stats,
++#endif
++	.ndo_set_multicast_list = (void *)&acxusb_i_set_rx_mode,
++#ifdef HAVE_TX_TIMEOUT
++	.ndo_tx_timeout = &acxusb_i_tx_timeout,
++#endif
++	.ndo_change_mtu = &acx_e_change_mtu,
++};
++
+ static int
+ acxusb_e_probe(struct usb_interface *intf, const struct usb_device_id *devID)
+ {
+@@ -845,20 +860,11 @@
+ 	/* Register the callbacks for the network device functions */
+ 
+ 	ether_setup(ndev);
+-	ndev->open = &acxusb_e_open;
+-	ndev->stop = &acxusb_e_close;
+-	ndev->hard_start_xmit = (void *)&acx_i_start_xmit;
+-	ndev->get_stats = (void *)&acx_e_get_stats;
+-#if IW_HANDLER_VERSION <= 5
+-	ndev->get_wireless_stats = (void *)&acx_e_get_wireless_stats;
+-#endif
+ 	ndev->wireless_handlers = (struct iw_handler_def *)&acx_ioctl_handler_def;
+-	ndev->set_multicast_list = (void *)&acxusb_i_set_rx_mode;
++	ndev->netdev_ops = &acxusb_netdev_ops;
+ #ifdef HAVE_TX_TIMEOUT
+-	ndev->tx_timeout = &acxusb_i_tx_timeout;
+ 	ndev->watchdog_timeo = 4 * HZ;
+ #endif
+-	ndev->change_mtu = &acx_e_change_mtu;
+ #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)) && defined(SET_MODULE_OWNER)
+ 	SET_MODULE_OWNER(ndev);
+ #endif
