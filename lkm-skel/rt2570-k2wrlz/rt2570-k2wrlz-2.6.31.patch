@@ -1,0 +1,106 @@
+--- rt2570-k2wrlz-1.6.4/Module/Makefile	2009-11-03 20:13:19.521298391 +0100
++++ rt2570-k2wrlz-1.6.4.nopper/Module/Makefile	2009-11-03 20:13:27.333175826 +0100
+@@ -61,9 +61,7 @@
+ 
+ $(MODULE_NAME)-objs := $(RESMAN_CORE_OBJS) $(RESMAN_GLUE_OBJS)
+ 
+-ifdef TOPDIR
+ obj-m += $(MODULE_NAME).o
+-endif
+ 
+ EXTRA_CFLAGS += -I$(src)
+ ifneq ($(FCREV),)
+--- rt2570-k2wrlz-1.6.4/Module/rtusb_main.c	2009-05-19 22:01:14.000000000 +0200
++++ rt2570-k2wrlz-1.6.4.nopper/Module/rtusb_main.c	2009-11-03 20:11:29.114627228 +0100
+@@ -1540,6 +1540,17 @@
+ }
+ #endif
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31)
++static const struct net_device_ops rtusb_netdev_ops = {
++    .ndo_open       = usb_rtusb_open,
++    .ndo_stop       = usb_rtusb_close,
++    .ndo_do_ioctl   = usb_rt2570_ioctl,
++    .ndo_get_stats  = rt_getstats,
++    .ndo_start_xmit = RTUSBSendPackets,
++    .ndo_set_mac_address = rt2570_set_mac_address,
++};
++#endif
++
+ static void *usb_rtusb_probe(struct usb_device *dev, UINT interface,
+ 				const struct usb_device_id *id_table)
+ {
+@@ -1584,19 +1595,25 @@
+ #if LINUX_VERSION_CODE > KERNEL_VERSION(2,5,0)
+ 	SET_ETHTOOL_OPS(net_dev, &rt2x00_ethtool_ops);
+ #endif
++
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31)
++    netdev->netdev_ops = &rtusb_netdev_ops;
++#else
+ 	netdev->open = usb_rtusb_open;
+ 	netdev->hard_start_xmit = RTUSBSendPackets;
+ 	netdev->stop = usb_rtusb_close;
+ 	//netdev->priv = pAdapter; //This is not needed since they are already equal and furthermore this doesn't work on 2.6.29 anymore
+ 	netdev->get_stats = rt_getstats;
++	netdev->set_mac_address = rt2570_set_mac_address;
++	netdev->do_ioctl = usb_rt2570_ioctl;
++#endif
++
+ #if WIRELESS_EXT >= 12
+ #if WIRELESS_EXT < 17
+ 	netdev->get_wireless_stats = RTUSB_get_wireless_stats;
+ #endif
+ 	netdev->wireless_handlers = (struct iw_handler_def *) &rt2500usb_iw_handler_def;
+ #endif
+-	netdev->set_mac_address = rt2570_set_mac_address;
+-	netdev->do_ioctl = usb_rt2570_ioctl;
+ 	pAdapter->net->hard_header_len = 14;
+ 	pAdapter->net->mtu = 1500;
+ 	pAdapter->net->addr_len = 6;
+@@ -1747,6 +1764,17 @@
+ }
+ #endif
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31)
++static const struct net_device_ops rtusb_netdev_ops = {
++    .ndo_open       = usb_rtusb_open,
++    .ndo_stop       = usb_rtusb_close,
++    .ndo_do_ioctl   = usb_rt2570_ioctl,
++    .ndo_get_stats  = rt_getstats,
++    .ndo_start_xmit = RTUSBSendPackets,
++    .ndo_set_mac_address = rt2570_set_mac_address,
++};
++#endif
++
+ static int usb_rtusb_probe (struct usb_interface *intf,
+ 					  const struct usb_device_id *id)
+ {
+@@ -1790,21 +1818,23 @@
+ 	SET_MODULE_OWNER(pAdapter->net);
+ 	ether_setup(pAdapter->net);
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31)
++    netdev->netdev_ops = &rtusb_netdev_ops;
++#else
+ 	netdev->open = usb_rtusb_open;
+ 	netdev->stop = usb_rtusb_close;
+ 	//netdev->priv = pAdapter; //This is not needed since they are already equal and furthermore this doesn't work on 2.6.29 anymore
+ 	netdev->hard_start_xmit = RTUSBSendPackets;
+ 	netdev->get_stats = rt_getstats;
+-#if 1
++	netdev->do_ioctl = usb_rt2570_ioctl;
++#endif
++
+ #if WIRELESS_EXT >= 12
+ #if WIRELESS_EXT < 17
+ 	netdev->get_wireless_stats = RTUSB_get_wireless_stats;
+ #endif
+ 	netdev->wireless_handlers = (struct iw_handler_def *) &rt2500usb_iw_handler_def;
+ #endif
+-	netdev->do_ioctl = usb_rt2570_ioctl;
+-#endif
+-	pAdapter->net->set_mac_address = rt2570_set_mac_address;
+ 	pAdapter->net->hard_header_len = 14;
+ 	pAdapter->net->mtu = 1500;
+ 	pAdapter->net->addr_len = 6;
