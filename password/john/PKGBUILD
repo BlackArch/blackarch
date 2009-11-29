@@ -1,25 +1,27 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
 # Contributor: Francesco Piccinno <stack.box@gmail.com>
-# Contributor: Jens Pranaitis <jens@jenux.homelinux.org>
 # Contributor: Dale Blount <dale@archlinux.org>
 # Original Contributor: Tom Newsom <Jeepster@gmx.co.uk>
 # Portions from AUR john-devel PKGBUILD used with permission from Michal Krenek <mikos@sg1.cz>
 
 pkgname=john
 pkgver=1.7.3.4
-pkgrel=4
+pkgrel=5
 pkgdesc="John the Ripper is a fast password cracker. Additional patches (NTLM, MySQL, Kerberos V5, etc.) included."
 arch=(i686 x86_64)
 url="http://www.openwall.com/$pkgname/"
-url="http://www.openwall.com/john/=>john-"
 depends=('openssl')
 license=("GPL")
 groups=('archpwn' 'archpwn-password')
-source=(http://www.openwall.com/$pkgname/g/$pkgname-$pkgver.tar.bz2)
-md5sums=('2f2310c49961c3edea6f92b8dcd45ff4')
+source=(http://www.openwall.com/$pkgname/g/$pkgname-$pkgver.tar.bz2
+        ftp://ftp.openwall.com/pub/projects/john/contrib/john-1.7.3.4-jumbo-2.diff.gz)
+md5sums=('2f2310c49961c3edea6f92b8dcd45ff4'
+         'c27dbe12662a767c9803964c2c76a732')
 build() {
-	cd "${srcdir}"/john-$pkgver/src/
-
-	sed -i 's|CFLAGS = -c -Wall -O2|CFLAGS = -c -Wall -O2 -march=i686 -fomit-frame-pointer -pipe -mtune=generic -DJOHN_SYSTEMWIDE=1|' Makefile || return 1
+	cd "${srcdir}"/john-$pkgver
+	patch -Np1 -i "$srcdir"/$pkgname-$pkgver-jumbo-2.diff || return 1
+	cd src
+	sed -i "s|CFLAGS = -c -Wall -O2|CFLAGS = -c -Wall $CFLAGS -DJOHN_SYSTEMWIDE=1|" Makefile || return 1
 	make linux-x86-mmx || return 1
 
 	sed -i 's|$JOHN|/usr/share/john|g' "${srcdir}"/john-$pkgver/run/john.conf || return 1
