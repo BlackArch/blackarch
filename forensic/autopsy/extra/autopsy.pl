@@ -11,7 +11,7 @@ $CTIMEOUT = 15;
 # set to 1 to save the cookie value in a file (for scripting)
 $SAVE_COOKIE = 1;
 
-$INSTALLDIR = '/usr/lib/autopsy';
+$INSTALLDIR = '/usr/share/autopsy';
 
 # System Utilities
 $STRINGS_EXE = '/usr/bin/strings';
