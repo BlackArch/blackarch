@@ -1,28 +1,36 @@
+# Contributor: pootzko <pootzko@gmail.com>
+# Contributor: Michael P <ptchinster@archlinux.us>
 # Contributor: ice-man <icemanf@gmail.com>
+# Contributor: sergeantspoon <sergeantspoon@archlinux.us>
 # Contributor: Francesco Piccinno <stack.box@gmail.com>
+
 pkgname=hydra
-pkgver=5.4
-pkgrel="1"
-pkgdesc="A very fast network logon cracker which support many different services"
-depends=('gtk2' 'libdnet')
-makedepends=('make' 'gcc')
-url="http://www.thc.org/thc-hydra/"
-updateurl="http://www.thc.org/thc-hydra/=>hydra-"
+pkgver=5.7
+pkgrel=1
+pkgdesc="A very fast network logon cracker which support many different services."
 arch=('i686' 'x86_64')
 groups=('archpwn' 'archpwn-password' 'archpwn-bruteforce')
-license="GPL"
-source=("http://freeworld.thc.org/releases/$pkgname-$pkgver-src.tar.gz"
-	    "configure.patch")
-md5sums=('fa08b465d19321e77b1a0ef912eeecc1'
-         'b01a5e58a9cc4fd981c100b14d2e6e41')
+url="http://www.thc.org/thc-hydra/"
+updateurl="http://www.thc.org/thc-hydra/=>hydra-"
+license="GPLv3"
+depends=('openssl' 'postgresql-libs' 'subversion' 'apr' 'apr-util' 'libssh' 'flamerobin')
+source=("http://freeworld.thc.org/releases/$pkgname-$pkgver-src.tar.gz")
+md5sums=('a8ad06ed726208800ca9a3c09aaf9cf7')
 
 build() {
-  cd ${startdir}/src/${pkgname}-${pkgver}-src
-  patch -p0 < ../configure.patch || return 1
-  mkdir -p $startdir/pkg/usr/bin
+	mkdir -p $pkgdir/usr/bin
 
-  cd $startdir/src/$pkgname-$pkgver-src
-  ./configure --prefix=/usr
-  make OPTS="$CFLAGS" || return 1
-  make DESTDIR="$pkgdir" install
+	cd $srcdir/$pkgname-$pkgver-src
+
+	# Fixes some weird file-location stuff
+	sed -i s/apr-0/apr-1/g configure
+	sed -i s/aprutil-0/aprutil-1/g configure
+
+	./configure --prefix=$pkgdir/usr || return 1
+
+	# Adds some missing compiling options (caused by different hierarchy tree)
+	sed -i s#gcc#'gcc `/usr/bin/apr-1-config --cppflags --cflags`'# Makefile
+
+	make OPTS="$CFLAGS" || return 1
+	make install || return 1
 }
