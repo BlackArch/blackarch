@@ -1,31 +1,44 @@
+# $Id: PKGBUILD, 2010/03/6$
+# Maintainer: Maxime de Roucy <maxime.deroucy@gmail.com>
 # Contributor: Darwin Bautista <djclue917@gmail.com>
 
 pkgname=gsm
-pkgver=1.0.12
-pkgrel=6
+pkgver=1.0.13
+pkgrel=5
 pkgdesc="Shared libraries for GSM 06.10 lossy speech compression"
 arch=('i686' 'x86_64')
-url="http://kbs.cs.tu-berlin.de/~jutta/toast.html"
+url="http://www.quut.com/gsm/"
 license=('custom')
 depends=('glibc')
-source=(http://kbs.cs.tu-berlin.de/~jutta/gsm/${pkgname}-${pkgver}.tar.gz)
-md5sums=('8909828c601e82e842e6a0ceade60a4e')
+source=("http://www.quut.com/${pkgname}/${pkgname}-${pkgver}.tar.gz"
+        "gsm.patch")
+md5sums=('c1ba392ce61dc4aff1c29ea4e92f6df4'
+         '30f46c92d0a5e5654258e707a9e8b5a6')
 
 build() {
-  cd ${startdir}/src/${pkgname}-1.0-pl12/
+  cd "${srcdir}/${pkgname}-${pkgver%.*}-pl${pkgver##*.}/"
 
-  [ "${CARCH}" = "x86_64" ] && CFLAGS="${CFLAGS} -fPIC"
+  patch < "${srcdir}/${pkgname}.patch" || return 1
+
+  # flags for shared lib
+  CFLAGS="${CFLAGS} -fPIC"
+  make CCFLAGS="-c ${CFLAGS}" || return 1
+}
+
+package() {
+  cd "${srcdir}/${pkgname}-${pkgver%.*}-pl${pkgver##*.}/"
 
   # Prepare directories
-  install -d ${startdir}/pkg/usr/{bin,lib,include,share/man/man3}
+  install -d ${pkgdir}/usr/{bin,lib,include/gsm,share/man/man{1,3}}
 
-  make CCFLAGS="-c ${CFLAGS}" || return 1
-  make INSTALL_ROOT=${startdir}/pkg/usr \
-    GSM_INSTALL_INC=${startdir}/pkg/usr/include \
-    GSM_INSTALL_MAN=$startdir/pkg/usr/share/man/man3 install
+  make -j1 INSTALL_ROOT=${pkgdir}/usr \
+    GSM_INSTALL_INC=${pkgdir}/usr/include/gsm \
+    GSM_INSTALL_MAN=${pkgdir}/usr/share/man/man3 \
+    TOAST_INSTALL_MAN=${pkgdir}/usr/share/man/man1 \
+    install || return 1
 
   # Install license
-  install -D -m644 COPYRIGHT ${startdir}/pkg/usr/share/licenses/${pkgname}/license.txt
+  install -D -m644 COPYRIGHT ${pkgdir}/usr/share/licenses/${pkgname}/license.txt || return 1
 }
 
 # vim:set ts=2 sw=2 et:
