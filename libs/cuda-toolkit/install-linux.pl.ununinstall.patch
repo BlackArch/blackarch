@@ -1,0 +1,58 @@
+--- pkg/install-linux.pl	2010-03-29 19:57:40.000000000 +0900
++++ pkg/install-linux.pl.new	2010-03-29 20:01:08.000000000 +0900
+@@ -147,55 +147,6 @@
+ $prefix =~ s/~/$HOME/g;
+ 
+ 
+-### Uninstall if necessary
+-
+-### look for previous version by looking for nvcc in the path
+-my @paths = split /:/, $ENV{"PATH"};
+-my $pathdir;
+-my @files;
+-
+-### also include /usr/local just in case
+-push(@paths, "/usr/local/bin");
+-
+-### also include /usr/local/cuda just in case
+-push(@paths, "/usr/local/cuda/bin");
+-
+-### also push the requested path
+-push(@paths, $prefix);
+-
+-foreach $pathdir (@paths) {
+-
+-    opendir(DIR, $pathdir);
+-    @files = grep { /^nvcc$/ } readdir(DIR);
+-
+-    if ($#files == 0) {
+-    	if ($ARGV[0] eq "auto") {
+-		uninstallCuda($pathdir);
+-	} else {
+-		printf("A previous version of CUDA was found in $pathdir\n");
+-	
+-		my $yesno = "";
+-		while ($yesno ne "yes" &&
+-		       $yesno ne "no" &&
+-		       $yesno ne "abort") {
+-		    printf("Would you like to uninstall? (yes/no/abort): ");
+-		    $yesnoline = Term::ReadLine->new("foo");
+-		    $yesno = $yesnoline->readline();
+-		}
+-    
+-		if ($yesno eq "abort") {
+-		    exit(0);
+-		}
+-
+-		if ($yesno eq "yes") {
+-		    uninstallCuda($pathdir);
+-		}
+-	}
+-    }
+-
+-    closedir(DIR);
+-}
+-
+ 
+ ## make sure we can write the file
+ system("mkdir -p $prefix && chmod 0755 $prefix") unless (-d "$prefix");
