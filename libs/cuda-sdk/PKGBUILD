@@ -1,70 +1,43 @@
-# Contributor: Jens Pranaitis <jens@chaox.net>
-# Contributor: Carson Reynolds <carson@k2.t.u-tokyo.ac.jp>
-# Contributor: Lawrence Lee <valheru AT facticius DOT net>
 # Contributor: Francesco Piccinno <stack.box@gmail.com>
 
 pkgname=cuda-sdk
-pkgver=2.2
-pkgrel=8
+pkgver=3.0
+_pkgver=3.0
+pkgrel=1
 pkgdesc="NVIDIA's CUDA architecture can be programmed in the only C language environment that unlocks the processing power of GPUs to solve the most complex compute-intensive challenges."
 arch=('i686' 'x86_64')
-[ "$CARCH" = "i686"   ] && ARCH=x86
-[ "$CARCH" = "x86_64" ] && ARCH=x86_64
 url="http://www.nvidia.com/object/cuda_home.html"
 license=('custom')
 depends=('cuda-toolkit' 'freeglut')
-source=(http://developer.download.nvidia.com/compute/cuda/2_2/sdk/cudasdk_${pkgver}_linux.run)
-md5sums=('6ba1f419a88139530c0e82176bb1a8af')
+source=(http://developer.download.nvidia.com/compute/cuda/3_0/sdk/gpucomputingsdk_3.0_linux.run
+        nvidia-cuda-sdk-gcc45.patch)
+md5sums=('fc1183a3c9dae595e70a65260f9a9abd'
+         'cca4a8114794b1e3fead18b4ed2d8b76')
 
 build() {
-  #Make directories
-  mkdir -p "$pkgdir"/usr/share/licenses/cuda-sdk
-  mkdir -p "$pkgdir"/usr/share/doc/cuda-sdk
-  mkdir -p "$pkgdir"/opt/cuda/bin
-  mkdir -p "$pkgdir"/opt/cuda/lib
-  mkdir -p "$pkgdir"/opt/cuda/releaseNotesData
-  mkdir -p "$pkgdir"/opt/cuda/tools
+  # Make directories
+  mkdir -p $pkgdir/usr/share/licenses
+  mkdir -p $pkgdir/opt/cuda/sdk
 
-  #Create links for gcc-4.3 build environment
-  ln -s /usr/bin/gcc "$pkgdir"/opt/cuda/bin/gcc || return 1
-  ln -s /usr/bin/g++ "$pkgdir"/opt/cuda/bin/g++ || return 1
+  # Extract the SDK
+  cd $srcdir
+  sh gpucomputingsdk_${_pkgver}_linux.run --noexec --keep --nox11 &> /dev/null
 
-  #Extract the SDK
-  cd "$srcdir"
-  echo "extracting the SDK"
-  sh cudasdk_${pkgver}_linux.run --noexec --keep --nox11 || return 1
+  # Move license information
+  mv $srcdir/pkg/sdk/cudpp_license.txt $pkgdir/usr/share/licenses/cuda-sdk
+  mv $srcdir/pkg/sdk/license.txt $pkgdir/usr/share/licenses/cuda-sdk
 
-  # fix common.mk
-  sed -i 's|CUDA_INSTALL_PATH ?= .*|CUDA_INSTALL_PATH ?= /opt/cuda|' "$srcdir"/pkg/sdk/common/common.mk ||  return 1
-  sed -i 's|^NVCCFLAGS :=|NVCCFLAGS := --compiler-options -fno-inline|' "$srcdir"/pkg/sdk/common/common.mk ||  return 1
-  # fix Makefile clean to build with gcc-4.4
-  sed -i '/common clean/a\\t\@make -C common -f Makefile_paramgl clean\n\t\@make -C common -f Makefile_rendercheckgl clean' "$srcdir"/pkg/sdk/Makefile || return 1
-  #Copy over folders
-  cp -rf "$srcdir"/pkg/sdk/common "$pkgdir"/opt/cuda
-  cp -rf "$srcdir"/pkg/sdk/projects "$pkgdir"/opt/cuda
-  #TODO: data really belongs elsewhere, however many sdk samples would need a rewrite
-  cp -rf "$srcdir"/pkg/sdk/projects/*/data "$pkgdir"/opt/cuda/bin
+  cd $srcdir/pkg
+  patch -Np1 < ../nvidia-cuda-sdk-gcc45.patch
 
-  #Build the SDK
-  cd "$srcdir"/pkg/sdk
-  make clean
-  make || return 1
+  cd $srcdir/pkg/sdk/C/common/
+  make cuda-install=/opt/cuda
 
-  #Install the files
-  install -m 755 "$srcdir"/pkg/sdk/bin/linux/release/* "$pkgdir"/opt/cuda/bin || return 1
-  install -m 755 "$srcdir"/pkg/sdk/lib/* "$pkgdir"/opt/cuda/lib || return 1
-  install -m 644 "$srcdir"/pkg/sdk/releaseNotesData/* "$pkgdir"/opt/cuda/releaseNotesData || return 1
-  install -m 755 "$srcdir"/pkg/sdk/tools/* "$pkgdir"/opt/cuda/tools || return 1
-  mv "$srcdir"/pkg/sdk/doc/cudpp_license.txt "$pkgdir"/usr/share/licenses/cuda-sdk
-  mv "$srcdir"/pkg/sdk/doc/license.txt "$pkgdir"/usr/share/licenses/cuda-sdk
-  install -m 644 "$srcdir"/pkg/sdk/doc/* "$pkgdir"/usr/share/doc/cuda-sdk
-  sed -i 's|NVCCFLAGS += $(COMMONFLAGS)|NVCCFLAGS += $(COMMONFLAGS) -ccbin /opt/cuda/bin/|' "$pkgdir"/opt/cuda/common/common.mk || return 1
-  cat >> "$pkgdir"/opt/cuda/bin/ld << EOF
-#!/bin/bash
-/usr/bin/ld -L/opt/cuda/lib \@$
-EOF
-chmod 755 "$pkgdir"/opt/cuda/bin/ld
+  cd $srcdir/pkg/sdk/OpenCL
+  make
+
+  cd $srcdir/pkg/sdk
+  rm -rf bin tools doc releaseNotesData ReleaseNotes.html
+
+  cp -r * $pkgdir/opt/cuda/sdk/
 }
-
-#TODO: dxtc & simpleTexture must run as root since the data directory is not writable by default
-#TODO: matrixMulDrv & simpleTexture are not passing tests
