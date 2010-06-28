@@ -1,6 +1,6 @@
 # Contributor: Jens Pranaitis <jens@chaox.net>
 pkgname=winexe-git
-pkgver=20091213
+pkgver=20100628
 pkgrel=1
 pkgdesc="remotely execute commands on Windows NT/2000/XP/2003 systems, with lmhash passthrough support"
 arch=("i686")
@@ -23,24 +23,22 @@ build() {
     cd $_gitname && git pull origin
     msg "The local files are updated."
   else
-    git clone $_gitroot
+    git clone $_gitroot --depth 1
   fi
 
   msg "GIT checkout done or server timeout"
   msg "Starting make..."
 
   rm -rf "$srcdir/$_gitname-build"
-  git clone "$srcdir/$_gitname" "$srcdir/$_gitname-build"
+  cp -r "$srcdir/$_gitname" "$srcdir/$_gitname-build"
   cd "$srcdir/$_gitname-build"
 
   #
   # BUILD HERE
   #
-	patch -Np1 -i "$srcdir"/winexe-passthrough.patch || return 1
-	cd source4
+  cd source4
   ./autogen.sh
   ./configure --prefix=/usr --enable-fhs
-  #FIXME: find out a way to only build winexe
-  make || return 1
+  make
   install -D -m755 bin/winexe "$pkgdir"/usr/bin/winexe || return 1
-} 
+}
