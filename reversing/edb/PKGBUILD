@@ -3,36 +3,37 @@
 # Contributor: Francesco Piccinno <stack.box@gmail.com>
 
 pkgname=edb
-pkgver=0.9.13
+pkgver=0.9.15
 pkgrel=1
 pkgdesc="EDB (Evan's Debugger) is a QT4 based binary mode debugger with the goal of having usability on par with OllyDbg."
 arch=('i686' 'x86_64')
 url="http://www.codef00.com/projects.php#Debugger"
 updateurl="http://www.codef00.com/projects.php=>debugger-"
-license=('GPL-2')
-depends=('qt>=4.2')
-groups=('archpwn' 'archpwn-reversing')
+license=('GPL2')
+depends=('qt>=4.5')
+makedepends=('boost>=1.35.0')
+install=edb.install
 source=(http://www.codef00.com/projects/debugger-$pkgver.tgz
         edb.desktop)
-md5sums=('e8eda550e746ada0cc58fae89ef68022'
+md5sums=('dc2384432de9aa13439208e9932a2ac1'
          '2c81ed90147c578c3e35eace38b78a17')
 
 build() {
-  cd $startdir/src/debugger
+  cd $srcdir/debugger
 
-  # regenerate Makefiles
-  qmake -recursive DEFAULT_PLUGIN_PATH="/usr/lib/edb/" || return 1
+  qmake -makefile DEFAULT_PLUGIN_PATH="/usr/lib/edb/" || return 1
 
   # build and install to pkg dir
-  make INSTALL_ROOT=$startdir/pkg/usr install || return 1
+  make || return 1
+  make INSTALL_ROOT=$pkgdir/usr install || return 1
 
   # correct /usr/lib64 -> /usr/lib on x86_64
-  [ "$CARCH" = "x86_64" ] && (mv $startdir/pkg/usr/lib64 $startdir/pkg/usr/lib || return 1)
+  [ "$CARCH" = "x86_64" ] && (mv $pkgdir/usr/lib64 $pkgdir/usr/lib || return 1)
 
   # maybe post_install message about this script ?
-  install -m755 edb_make_symbolmap.sh $startdir/pkg/usr/bin || return 1
+  install -m755 edb_make_symbolmap.sh $pkgdir/usr/bin || return 1
 
   # install desktop file
   cd ..
-  install -D -m 644 edb.desktop $startdir/pkg/usr/share/applications/edb.desktop || return 1
+  install -D -m 644 edb.desktop $pkgdir/usr/share/applications/edb.desktop || return 1
 }
