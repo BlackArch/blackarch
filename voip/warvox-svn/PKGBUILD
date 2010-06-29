@@ -1,4 +1,6 @@
-# Contributor: Jens Pranaitis <jens@jenux.homelinux.org>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+# NB: gem install unit-test before building
+
 pkgname=warvox-svn
 pkgver=6585
 pkgrel=1
@@ -6,9 +8,12 @@ pkgdesc="telephone system auditing tool"
 arch=("i686")
 url="http://warvox.org/"
 license=('custom')
+groups=('archpwn' 'archpwn-voip')
 depends=("iaxclient" "rake" "ruby-sqlite3" "gnuplot" "rubygems")
-source=("warvox-launcher")
-md5sums=("b765c14171c0614901b83510d2b5aced")
+source=("warvox-launcher" "ruby19.patch")
+md5sums=('029f118a41f018ebc38c9a1ea3a165f4'
+         '6537a389a246ffc3dbdb6f08736c75a1')
+
 _svntrunk=http://metasploit.com/svn/warvox/trunk/
 _svnmod=warvox
 
@@ -31,13 +36,16 @@ build() {
   #
   # BUILD
   #
-  make || return 1
-  make install || return 1
+  patch -Np1 < $srcdir/ruby19.patch
+
+  make
+  make install
+
   # I know the permissions are ugly, but that's what hdm himself recommends Oo
   chmod 644 web/config/session.key
   chmod 666 web/log/production.log
-  mkdir -p "$pkgdir"/opt/warvox
-  cp -r {bin,data,docs,etc,lib,web} "$pkgdir"/opt/warvox/
+  mkdir -p "$pkgdir"/usr/share/warvox
+  cp -r {bin,data,docs,etc,lib,web} "$pkgdir"/usr/share/warvox/
   install -D -m 644 docs/LICENSE "$pkgdir"/usr/share/licenses/warvox-svn/COPYING
   install -D -m 755 "$srcdir"/warvox-launcher "$pkgdir"/usr/bin/warvox-launcher
 }
