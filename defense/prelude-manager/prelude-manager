@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# general config
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+case "$1" in
+    start)
+        stat_busy "Starting Prelude Manager"
+        /usr/bin/prelude-manager --daemon
+        if [ $? -gt 0 ]; then
+            stat_fail
+        else
+            add_daemon prelude-manager
+            stat_done
+        fi
+        ;;
+    stop)
+        stat_busy "Stopping Prelude Manager"
+        [ -f /var/run/prelude-manager.pid ] && kill `cat /var/run/prelude-manager.pid`
+        if [ $? -gt 0 ]; then
+            stat_fail
+        else
+            rm -f /var/run/prelude-manager.pid
+            rm_daemon prelude-manager
+            stat_done
+        fi
+        ;;
+    restart)
+        $0 stop
+        sleep 1
+        $0 start
+        ;;
+    *)
+        echo "usage: $0 {start|stop|restart}"
+        ;;
+esac
+exit 0
