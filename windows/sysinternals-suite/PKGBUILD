@@ -1,0 +1,37 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=sysinternals-suite
+pkgver=latest
+pkgrel=1
+pkgdesc="Sysinternals tools suite"
+url="http://sysinternals.com"
+groups=('archpwn' 'archpwn-windows')
+license=('sysinternals')
+arch=(any)
+source=(http://download.sysinternals.com/Files/SysinternalsSuite.zip)
+md5sums=('75fa9974a296e8828b1f3887d98f56ef')
+
+build() {
+  cd "$srcdir"
+  find . -type l -exec rm {} \;
+
+  # Transform all files to lowercase
+  for f in *; do
+    lc=$(echo $f | tr '[A-Z]' '[a-z]0')
+
+    if [ ! -f $f -o -f $lc ]; then
+      continue
+    fi
+    mv -i $f $lc
+  done
+
+  for f in *.exe *.sys; do
+    install -Dm755 $f $pkgdir/opt/windows/$pkgname/$f
+  done
+
+  for f in *.chm *.hlp *.txt *; do
+    install -Dm644 $f $pkgdir/opt/windows/$pkgname/$f
+  done
+}
+
+# vim:set ts=2 sw=2 et:
