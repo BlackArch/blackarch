@@ -1,0 +1,25 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=voipong
+pkgver=2.0
+pkgrel=1
+pkgdesc="VoIPong is a utility which detects all Voice Over IP calls on a pipeline, and for those which are G711 encoded, dumps actual conversation to seperate wave files. It supports SIP, H323, Cisco's Skinny Client Protocol, RTP and RTCP."
+arch=('i686' 'x86_64')
+url="http://www.enderunix.org/voipong/"
+updateurl="http://www.enderunix.org/voipong/index.php?sect=download=>voipong-"
+license=('GPL')
+groups=('archpwn' 'archpwn-voip')
+depends=('libpcap')
+makedepends=('gcc' 'make')
+source=(http://www.enderunix.org/$pkgname/$pkgname-$pkgver.tar.gz)
+md5sums=('4b3e16c5d8399bba86b3caf1887550ff')
+
+build() {
+  cd $srcdir/$pkgname-$pkgver
+  mkdir -p $pkgdir/{usr/bin,etc/}
+  sed -e "s:/usr/local/etc:/etc:g" -i voipctl.c
+  sed -e "s:/usr/local/etc:/etc:g" -i voipong.c
+  sed -e "s:/usr/local/etc:$pkgdir/etc:g" -e "s:/usr/local/:$pkgdir/usr/:g" -i Makefile.linux
+  make CFLAGS="$CFLAGS -Iinclude" -f Makefile.linux
+  make install -f Makefile.linux
+}
