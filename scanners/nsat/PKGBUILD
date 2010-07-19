@@ -1,0 +1,51 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=nsat
+pkgver=1.5
+pkgrel=1
+pkgdesc="NSAT is a fast, highly configurable, bulk network security scanner for over 50 different services and hundreds of vulnerabilities. It's main advantage is its flexibility and configurability."
+url="http://nsat.sourceforge.net"
+groups=('archpwn' 'archpwn-scanners')
+license=('GPL')
+makedepends=('gcc')
+depends=('libpcap' 'tk' 'gcc-libs')
+arch=(i686 x86_64)
+source=(http://downloads.sourceforge.net/$pkgname/$pkgname-$pkgver.tgz
+        nsat-1.5-configure.patch
+        nsat-1.5-lvalue-gcc4.patch
+        nsat-1.5-strip.patch)
+md5sums=('ba7f5bbc476bc937c16e3654a8e0a666'
+         'b535b5cf0efbeacd0527a0824255bd0e'
+         '86aa41aed572237c1f9c6795d59d22bd'
+         '0a554aa9d9ce8223552cc2cf6bc06324')
+
+build() {
+  cd "$srcdir/$pkgname"
+  cp -va configure.in{,orig}
+
+  patch -Np1 < "$srcdir"/nsat-1.5-configure.patch
+  patch -Np1 < "$srcdir"/nsat-1.5-lvalue-gcc4.patch
+  patch -Np1 < "$srcdir"/nsat-1.5-strip.patch
+
+  sed -i "s:^#CGIFile /usr/local/share/nsat/nsat.cgi$:#CGIFile /usr/share/nsat/nsat.cgi:g" nsat.conf
+  sed -i "s:/usr/local:/usr:g" Makefile.in
+  sed -i "s:/usr/local:/usr:g" tools/xnsat
+  sed -i -e "s:/usr/local/share/nsat/nsat.conf:/etc/nsat/nsat.conf:g" \
+         -e "s:/usr/local/share/nsat/nsat.cgi:/usr/share/nsat/nsat.cgi:g" src/lang.h
+
+  autoconf
+  ./configure --with-x
+  make
+
+  install -Dm755 nsat $pkgdir/usr/bin/nsat
+  install -Dm755 smb-ns $pkgdir/usr/bin/smb-ns
+  install -Dm755 tools/xnsat $pkgdir/usr/bin/xnsat
+
+  install -Dm644 nsat.cgi $pkgdir/usr/share/$pkgname/nsat.cgi
+  install -Dm644 README $pkgdir/usr/share/$pkgname/README
+
+  install -Dm644 nsat.conf $pkgdir/etc/nsat/nsat.conf
+  install -Dm644 doc/nsat.8 $pkgdir/usr/share/man/man8/nsat.8
+}
+
+# vim:set ts=2 sw=2 et:
