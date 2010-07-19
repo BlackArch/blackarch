@@ -1,0 +1,43 @@
+# Contributor: Your Name <youremail@domain.com>
+pkgname=sctpscan-git
+pkgver=20100719
+pkgrel=1
+pkgdesc="SCTP network scanner for discovery and security"
+arch=(i686 x86_64)
+url="http://github.com/philpraxis/sctpscan"
+license=('GPL')
+groups=('archpwn' 'archpwn-scanners')
+makedepends=('git' 'make' 'gcc' 'glib2')
+provides=('sctpscan')
+replaces=('sctpscan')
+
+_gitroot="git://github.com/philpraxis/sctpscan.git"
+_gitname="sctpscan"
+
+build() {
+  cd "$srcdir"
+  msg "Connecting to GIT server...."
+
+  if [ -d $_gitname ] ; then
+    cd $_gitname && git pull origin
+    msg "The local files are updated."
+  else
+    git clone $_gitroot $_gitname
+  fi
+
+  msg "GIT checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_gitname-build"
+  git clone "$srcdir/$_gitname" "$srcdir/$_gitname-build"
+  cd "$srcdir/$_gitname-build"
+
+  #
+  # BUILD HERE
+  #
+
+  sed -i "s/-g /$CFLAGS /g" Makefile
+  make
+  install -Dm755 sctpscan $pkgdir/usr/bin/sctpscan
+  install -Dm644 README $pkgdir/usr/share/doc/sctpscan/README
+}
