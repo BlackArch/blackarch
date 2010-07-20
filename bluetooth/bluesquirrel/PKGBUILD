@@ -1,0 +1,35 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=bluesquirrel
+pkgver=0.1
+pkgrel=1
+pkgdesc="Set of tools for bluetooth auditing/cracking"
+url="http://bluetooth-pentest.narod.ru/"
+updateurl="http://bluetooth-pentest.narod.ru/=>bluesquirrel_v"
+groups=('archpwn' 'archpwn-bluetooth')
+license=('GPL')
+arch=(i686 x86_64)
+makedepends=('gcc')
+depends=('bluez' 'bluediving')
+source=(http://bluetooth-pentest.narod.ru/software/${pkgname}_v$pkgver.tgz)
+md5sums=('344735f7fe03b8591c22e3ad4c19d121')
+
+build() {
+  cd "$srcdir/${pkgname}_v$pkgver"
+  gcc $CFLAGS -lbluetooth frontline.c -o frontline
+  install -Dm755 frontline $pkgdir/usr/bin/frontline
+
+  cd btpincrack-v0.3
+  make CFLAGS="$CFLAGS -funroll-loops"
+  install -Dm755 btpincrack $pkgdir/usr/bin/btpincrack
+
+  cd ..
+  sed -i 's:\.\/::g' bsqu.py
+  install -Dm755 bsqu.py $pkgdir/usr/share/$pkgname/bsqu.py
+  install -Dm644 README $pkgdir/usr/share/$pkgname/README
+
+  cd $pkgdir/usr/bin/
+  ln -sf /usr/share/$pkgname/bsqu.py bluesquirrel
+}
+
+# vim:set ts=2 sw=2 et:
