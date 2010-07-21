@@ -1,0 +1,58 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=sip-rogue
+pkgver=latest
+pkgrel=1
+pkgdesc="A tool to insert audio into a specified audio (i.e. RTP) stream"
+url="http://www.hackingexposedvoip.com/"
+updateurl="http://www.hackingvoip.com/sec_tools.html=>rtpmixsound_v"
+license=('GPL')
+arch=(i686 x86_64)
+groups=('archpwn' 'archpwn-voip')
+depends=('libpcap' 'gcc-libs' 'libnet')
+makedepends=('gcc' 'make')
+source=(http://www.hackingvoip.com/tools/${pkgname//-/_}.tar.gz
+        http://www.hackingvoip.com/tools/g711conversions.tar.gz)
+md5sums=('ff70b38768ecdb238f8c0180b4899133'
+         '96a3f7f6a068203b3d0659afb39a3d08')
+
+build() {
+  cd "$srcdir/g711conversions"
+  sed -i "s:gcc :gcc $CFLAGS :" Makefile
+  make
+
+  cd "$srcdir/${pkgname//-/_}/jrtplib-2.8"
+  chmod +x configure
+
+  ./configure --prefix=/usr
+  make FLAGS="$CFLAGS"
+
+  cd ..
+  ln -sf jrtplib-2.8 jrtplib
+  sed -i 's|ControlMessage::||g' ControlMessage.h
+
+  g++ $CFLAGS AttackAudio.cpp ControlMessage.cpp \
+              ControlPort.cpp hash.cpp main.cpp \
+              RtpHandler.cpp SdpMessage.cpp SipCall.cpp \
+              SipDispatcher.cpp SipEndPoint.cpp SipHeader.cpp \
+              SipIdentifier.cpp SipMessage.cpp SipProxyEndPoint.cpp \
+              SipRegistrarConnector.cpp SipRegistrar.cpp \
+              SipUdpPort.cpp SipUri.cpp util.cpp -I ../g711conversions \
+              -L jrtplib -ljrtp -lpcap -lpthread \
+              -lnet ../g711conversions/g711conversions.o \
+              -o sip_rogue
+  g++ $CFLAGS capture.cpp hash.cpp SdpMessage.cpp SipHeader.cpp \
+              SipIdentifier.cpp SipMessage.cpp SipUri.cpp util.cpp \
+              -o capture -lpcap -lnet
+  gcc $CFLAGS waitfor.c -o waitfor
+
+  for exe in 'sip_rogue' 'capture' 'waitfor'; do
+    install -Dm755 $exe $pkgdir/usr/share/$pkgname/$exe
+  done
+
+  for txt in 'CAVEATS' 'README' 'RESEARCH' 'SCENARIOS'; do
+    install -Dm644 $txt $pkgdir/usr/share/$pkgname/$txt
+  done
+}
+
+# vim:set ts=2 sw=2 et:
