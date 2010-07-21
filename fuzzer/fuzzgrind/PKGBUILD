@@ -1,0 +1,59 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=fuzzgrind
+pkgver=090622
+pkgrel=1
+pkgdesc="Fuzzgrind is a fully automatic fuzzing tool, generating test files with the purpose of discovering new execution paths likely to trigger bugs and potentially vulnerabilities."
+url="http://seclabs.org/fuzzgrind/"
+arch=(i686 x86_64)
+depends=('glibc')
+license=('GPL')
+groups=('archpwn' 'archpwn-fuzzer' 'archpwn-voip')
+source=("http://seclabs.org/$pkgname/files/${pkgname}_$pkgver.tar.gz"
+        "http://people.csail.mit.edu/vganesh/STP_files/stp.tar.gz"
+        "http://valgrind.org/downloads/valgrind-3.4.1.tar.bz2"
+        "glibc-2.12.patch"
+        "valgrind-3.5.0-stat_h.patch")
+noextract=('stp.tar.gz'
+           'valgrind-3.4.1.tar.bz2')
+md5sums=('d7562677b43cb10b288830b22bf9c423'
+         '84e8593560233bda15c269635c8a98ae'
+         'b5f039dd2271aaf9ae570ab4116f87c7'
+         '0ac843aecfc539a53ae88c48b1a17047'
+         'e435a0debedf207b279256eff50c68f6')
+
+build() {
+  cd "$srcdir/$pkgname/"
+  tar --ignore-failed-read -jkxf "$srcdir"/valgrind-3.4.1.tar.bz2
+
+  cd valgrind-3.4.1
+  patch -Np0 -i ${srcdir}/glibc-2.12.patch
+  patch -Np1 -i ${srcdir}/valgrind-3.5.0-stat_h.patch
+
+  autoreconf
+  ./configure --prefix="/usr/share/$pkgname/valgrind"
+  make
+
+  mkdir -p $pkgdir/usr/share/$pkgname/valgrind
+  make DESTDIR="$pkgdir" install
+
+  rm -rf $pkgdir/usr/share/$pkgname/valgrind/share/
+  rm -rf $pkgdir/usr/share/$pkgname/valgrind/lib/pkgconfig/
+  rm -rf $pkgdir/usr/share/$pkgname/valgrind/include/
+
+  cd "$srcdir/$pkgname/testcase"
+  make
+
+  cd "$srcdir/$pkgname/fault_detection"
+  make
+
+  cd "$srcdir/$pkgname/"
+  sed -i "s:./valgrind-3.4.1/build/bin/valgrind:/usr/share/$pkgname/valgrind/bin/valgrind:" fuzz/valgrind.py
+  cp -r testcase fault_detection fuzz session $pkgdir/usr/share/$pkgname/
+
+  cd $pkgdir/usr/share/$pkgname
+  mkdir -p stp/
+  tar -C stp/ -xzf "$srcdir"/stp.tar.gz
+
+  chown root:root stp -R
+}
