@@ -1,0 +1,32 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=xplico
+pkgver=0.5.8
+pkgrel=1
+pkgdesc="The goal of Xplico is extract from an internet traffic capture the applications data contained."
+url="http://sourceforge.net/projects/xplico/"
+license="GPL"
+groups=('archpwn' 'archpwn-forensic')
+makedepends=('make')
+depends=('geoip' 'php' 'sqlite3' 'libmysqlclient' 'libpcap')
+arch=('i686' 'x86_64')
+source=(http://downloads.sourceforge.net/$pkgname/$pkgname-$pkgver.tgz)
+md5sums=('c3c5a101497a0bfd6bb8871d5bc30956')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+  sed -i "s|-g -ggdb -O0|$CFLAGS|g" Makefile
+  find . -type f | xargs sed -i 's|/opt/xplico|/usr/share/xplico/|g'
+  sed -i "s|-g -ggdb|$CFLAGS|g" system/dema/Makefile
+  sed -i -e "s|GEOIP_LIB =.*|GEOIP_LIB = /usr/lib/libGeoIP.a|g" Makefile
+  sed -i "s|GeoLiteCity.dat|/usr/share/GeoIP/GeoIP.dat|" common/geoiploc.c
+  sed -i "s|-lpthread|-lpthread -lGeoIP|g" manipulators/www/Makefile \
+             manipulators/mfbc/Makefile manipulators/mwmail/Makefile \
+             manipulators/mfile/Makefile
+
+  make
+  make DESTDIR="$pkgdir" install
+
+  find $pkgdir -type d -exec chmod 755 {} \;
+  chmod 644 $pkgdir/usr/share/xplico/xplico.db
+}
