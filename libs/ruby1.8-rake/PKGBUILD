@@ -1,0 +1,37 @@
+# Contributor: Jacek Roszkowski <j.roszk@gmail.com>
+pkgname=ruby1.8-rake
+pkgver=0.8.7
+_realname="rake"
+pkgrel=1
+pkgdesc="A simple ruby build program with capabilities similar to make"
+arch=(any)
+url="http://rake.rubyforge.org"
+license=("MIT")
+depends=('ruby1.8')
+source=(http://gems.rubyforge.org/gems/$_realname-$pkgver.gem)
+noextract=($_realname-$pkgver.gem)
+md5sums=('d9eb83525310ad1a0e8a3eeddfe3c65f')
+
+build() {
+      cd $srcdir
+  # _gemdir is defined inside build() because if ruby[gems] is not installed on the system
+  # makepkg will exit with an error when sourcing the PKGBUILD
+  local _gemdir="$(ruby -rubygems -e'puts Gem.default_dir')"
+
+  gem install --ignore-dependencies -i "$pkgdir$_gemdir" rake-$pkgver.gem
+
+  mv -t $pkgdir/usr/ $pkgdir$_gemdir/bin
+
+  cd $srcdir
+  local _gemdir="$(ruby-1.8 -rubygems -e'puts Gem.default_dir')"
+  gem-1.8 install --ignore-dependencies -i "$pkgdir$_gemdir" ${_realname}-$pkgver.gem
+
+  mkdir -p $pkgdir/usr/bin
+  mkdir -p $pkgdir/opt/ruby1.8/bin/
+
+  cd $pkgdir/usr/bin
+  ln -sf /opt/ruby1.8/lib/ruby/gems/1.8/bin/rake rake-1.8
+
+  cd $pkgdir/opt/ruby1.8/bin/
+  ln -sf /opt/ruby1.8/lib/ruby/gems/1.8/bin/rake rake
+}
