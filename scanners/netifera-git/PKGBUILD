@@ -1,0 +1,59 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=netifera-git
+_pkgname=netifera
+pkgver=20100723
+pkgrel=1
+pkgdesc="Open Source Network Security Platform"
+url="http://netifera.com/"
+license=('MPL')
+arch=(i686 x86_64)
+groups=('archpwn' 'archpwn-scanners' 'archpwn-misc')
+#buildenv=('!fakeroot') # Seems to create problems with ant
+depends=('java-runtime' 'gtk2' 'libgl')
+makedepends=('git' 'apache-ant' 'java-environment')
+source=(http://netifera.com/buildpacks/buildpack-04122009.tar.bz2
+        http://netifera.com/imgs/file_mins/file_min.png
+        $_pkgname.desktop)
+md5sums=('10d6faf2941f8a7ef1d0dbb0c8c85839'
+         '157bfedc8c85d77e3d434b9fdd6f55f3'
+         '2e14938cae0a240cadf664edd8c53c83')
+noextract=('buildpack-04122009.tar.bz2')
+install='install.sh'
+
+_gitroot="git://github.com/netifera/netifera.git"
+_gitname="$_pkgname"
+
+build() {
+  cd "$srcdir"
+  msg "Connecting to GIT server...."
+
+  if [ -d $_gitname ] ; then
+    cd $_gitname && git pull origin
+    msg "The local files are updated."
+  else
+    git clone $_gitroot $_gitname
+  fi
+
+  msg "GIT checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_gitname-build"
+  git clone "$srcdir/$_gitname" "$srcdir/$_gitname-build"
+  cd "$srcdir/$_gitname-build"
+
+  mv "$srcdir"/buildpack-04122009.tar.bz2 build/archives/
+
+  . /etc/profile.d/apache-ant.sh
+  LD_PRELOAD="" ant
+
+  cd "netifera-build"
+  rm -rf jre
+  chmod +x backdoor_install.sh
+
+  mkdir -p $pkgdir/usr/share/$_pkgname/
+  cp -r * $pkgdir/usr/share/$_pkgname/
+
+  install -Dm644 $srcdir/$_pkgname.desktop $pkgdir/usr/share/applications/$_pkgname.desktop
+  install -Dm644 $srcdir/file_min.png $pkgdir/usr/share/pixmaps/$_pkgname.png
+}
