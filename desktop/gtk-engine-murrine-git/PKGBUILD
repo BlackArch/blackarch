@@ -1,0 +1,45 @@
+# Contributor: zhuqin <zhuqin83@gmail.com>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=gtk-engine-murrine-git
+pkgver=20100716
+pkgrel=1
+pkgdesc="GTK2 engine murrine from GIT"
+arch=('i686' 'x86_64')
+license=('GPL')
+depends=('gtk2')
+makedepends=('git' 'intltool')
+url="http://www.cimitan.com/murrine/"
+conflicts=('gtk-engine-murrine')
+provides=('gtk-engine-murrine')
+options=(!libtool)
+
+_gitroot="git://git.gnome.org/murrine"
+_gitname="gtk-engine-murrine"
+
+build() {
+  cd $srcdir
+  msg "Connecting to the GIT server...."
+
+  if [[ -d $srcdir/$_gitname ]] ; then
+    cd $_gitname
+    git pull origin
+    msg "The local files are updated."
+  else
+    git clone $_gitroot $_gitname
+  fi
+
+  msg "GIT checkout done"
+  msg "Starting make..."
+
+  git clone $srcdir/$_gitname $srcdir/$_gitname-build
+  cd $srcdir/$_gitname-build
+
+  ./autogen.sh --prefix=/usr --enable-animation || return 1
+    # uncomment those following line if needed
+    # --disable-rgba \
+  make || return 1
+  make DESTDIR=$pkgdir install || return 1
+
+  rm -rf $srcdir/$_gitname-build
+}
