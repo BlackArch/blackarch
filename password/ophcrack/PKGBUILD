@@ -3,12 +3,14 @@
 
 pkgname=ophcrack
 pkgver=3.3.1
-pkgrel=1
+pkgrel=2
 pkgdesc="A Windows password cracker based on the faster time-memory trade-off using rainbow tables"
 url="http://ophcrack.sourceforge.net"
 arch=('i686' 'x86_64')
 license="GPL"
-depends=('gtk2' 'openssl' 'bkhive' 'samdump2')
+depends=('openssl' 'bkhive' 'samdump2')
+optdepends=('qt')
+makedepends=('qt' 'make' 'gcc')
 groups=('archpwn' 'archpwn-forensic' 'archpwn-bruteforce' 'archpwn-password')
 install=ophcrack.install
 source=(http://downloads.sourceforge.net/ophcrack/$pkgname-$pkgver.tar.bz2 ophcrack.install ophcrack.desktop)
@@ -18,12 +20,17 @@ md5sums=('740eef54e9082f26851e15c1cb4ef55c'
 
 build() {
   # Change into the build directory
-  cd $startdir/src/$pkgname-$pkgver
+  cd "$srcdir/$pkgname-$pkgver"
 
   ./configure --prefix=/usr
-  make || return 1
-  make DESTDIR=$startdir/pkg install
+  make
+  install -Dm755 src/ophcrack $pkgdir/usr/bin/ophcrack-gui
 
-  # Install menu icon
-  install -D -m644 $startdir/src/ophcrack.desktop $startdir/pkg/usr/share/applications/ophcrack.desktop || return 1
+  ./configure --prefix=/usr --disable-gui
+  make
+  install -Dm755 src/ophcrack $pkgdir/usr/bin/ophcrack
+
+  # Desktop files
+  install -Dm644 src/gui/pixmaps/os.png $pkgdir/usr/share/$pkgname/pixmaps/os.png
+  install -Dm644 "$srcdir"/ophcrack.desktop "$pkgdir"/usr/share/applications/ophcrack.desktop
 }
