@@ -1,0 +1,45 @@
+# $Id: PKGBUILD 77280 2010-04-11 19:30:03Z ronald $
+# Maintainer: Ronald van Haren <ronald.archlinux.org>
+# Contributor: damir <damir@archlinux.org>
+# Contributor: Tom Newsom <Jeepster@gmx.co.uk>
+
+pkgname=gnuplot-nowx
+_pkgname=gnuplot
+pkgver=4.4.0
+pkgrel=1
+pkgdesc="Plotting package which outputs to X11, PostScript, PNG, GIF, and others"
+arch=('i686' 'x86_64')
+url="http://www.gnuplot.info"
+license=('custom')
+depends=('readline' 'gd' 'cairo' 'libjpeg')
+makedepends=('texinfo')
+install=gnuplot.install
+source=("http://downloads.sourceforge.net/sourceforge/$_pkgname/$_pkgname-$pkgver.tar.gz")
+provides=($_pkgname)
+replaces=($_pkgname)
+conflicts=($_pkgname)
+md5sums=('e708665bd512153ad5c35252fe499059')
+
+build() {
+  cd $srcdir/$_pkgname-$pkgver
+
+  # fix default source location; use the GDFONTPATH variable to modify at runtime
+  sed -i 's|/usr/X11R6/lib/X11/fonts/truetype|/usr/share/fonts/TTF|' src/variable.c
+  sed -i 's|/X11R6/lib/X11/fonts/Type1|/usr/share/fonts/Type1|' src/variable.c
+
+  ./configure --prefix=/usr --mandir=/usr/share/man \
+              --infodir=/usr/share/info \
+              --libexecdir=/usr/bin \
+              --with-texdir=/usr/share/texmf-dist/tex/latex/gnuplot/ \
+              --with-gihdir=/usr/share/gnuplot \
+              --datadir=/usr/share \
+              --with-readline=gnu \
+              --disable-wxwidgets
+  make
+  make pkglibexecdir=$pkgdir/usr/bin DESTDIR="$pkgdir/" install
+
+  install -Dm644 lisp/dotemacs $pkgdir/usr/share/emacs/site-lisp/dotemacs || return 1
+  install -Dm644 Copyright $pkgdir/usr/share/licenses/$_pkgname/Copyright || return 1
+
+  rm -f $pkgdir/usr/share/texmf-dist/ls-R
+}
