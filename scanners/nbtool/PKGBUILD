@@ -1,0 +1,40 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=nbtool
+pkgver=879
+pkgrel=1
+pkgdesc="Some tools for NetBIOS and DNS investigation, attacks, and communication."
+arch=('i686' 'x86_64')
+url="http://nixgeneration.com/~jaime/netdiscover/"
+license=('GPL3')
+groups=('archpwn' 'archpwn-scanners' 'archpwn-misc' 'archpwn-enumeration')
+depends=('libpcap')
+makedepends=('subversion' 'nasm')
+provides=('nbtool' 'dnscat')
+
+_svntrunk=http://svn.skullsecurity.org:81/ron/security/nbtool
+_svnmod=nbtool
+
+build() {
+  cd "$srcdir"
+
+  if [ -d $_svnmod/.svn ]; then
+    (cd $_svnmod && svn up -r $pkgver)
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
+  fi
+
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_svnmod-build"
+  cp -r "$srcdir/$_svnmod" "$srcdir/$_svnmod-build"
+  cd "$srcdir/$_svnmod-build"
+
+  #
+  # BUILD
+  #
+  make CFLAGS="$CFLAGS" || return 1
+  sed -i "s|/usr/local/|$pkgdir/usr/|g" Makefile
+  make install
+}

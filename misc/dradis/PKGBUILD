@@ -1,0 +1,45 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=dradis
+pkgver=2.5.2
+pkgrel=1
+pkgdesc="dradis is an open source framework to enable effective information sharing."
+url="http://dradisframework.org/"
+updateurl="http://dradisframework.org/download.html=>dradis-v"
+license=('GPL')
+depends=('ruby1.8' 'ruby1.8-sqlite3-ruby' 'rubygems1.8' 'ruby1.8-rake')
+groups=('archpwn' 'archpwn-misc')
+arch=(any)
+source=(http://downloads.sourceforge.net/$pkgname/$pkgname-v$pkgver.tar.bz2)
+md5sums=('dd8184df383c9b2abf201b16dc6202e5')
+
+build() {
+  cd "$srcdir/$pkgname-2.5/server"
+  rm README CHANGELOG
+
+  cd script
+  find . -type f | xargs sed -i 's:/usr/bin/env ruby:/usr/bin/env ruby-1.8:'
+
+  cd ..
+  mkdir -p $pkgdir/usr/share/$pkgname/
+  cp -r * $pkgdir/usr/share/$pkgname/
+
+  mkdir -p $pkgdir/usr/bin/
+  cd $pkgdir/usr/bin/
+  cat > $pkgname-configure << EOF
+#!/bin/sh
+export PATH="/opt/ruby1.8/bin:$PATH"
+cd /usr/share/$pkgname
+rake-1.8 dradis:reset
+EOF
+  cat > $pkgname-start << EOF
+#!/bin/sh
+export PATH="/opt/ruby1.8/bin:$PATH"
+cd /usr/share/$pkgname
+firefox https://localhost:3004/ &
+ruby-1.8 script/server
+EOF
+  chmod 755 $pkgname-start $pkgname-configure
+}
+
+# vim:set ts=2 sw=2 et:

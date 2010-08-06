@@ -1,0 +1,35 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+pkgname=hamster
+pkgver=2.0.0
+pkgrel=1
+pkgdesc="Hamster is a tool for HTTP session hijacking with passive sniffing"
+url="http://hamster.erratasec.com/"
+updateurl="http://hamster.erratasec.com/=>hamster-"
+groups=('archpwn' 'archpwn-sniffer' 'archpwn-misc')
+license=('GPL')
+depends=('lipcap')
+arch=('i686' 'x86_64')
+source=(http://hamster.erratasec.com/downloads/$pkgname-$pkgver.zip)
+md5sums=('0f302f3890225d9698bd9b964888d577')
+
+build() {
+  mkdir -p $pkgdir/usr/{bin,share/$pkgname/}
+
+  # First build ferret
+  cd $srcdir/ferret/build/gcc4dynamic/
+  make LIBS="-ldl -lpcap"
+  install -m 755 $srcdir/ferret/bin/ferret $pkgdir/usr/bin/ferret
+
+  # Then build hamster
+  cd $srcdir/hamster/build/gcc4
+  make
+
+  install -m755 $srcdir/hamster/bin/hamster $pkgdir/usr/share/$pkgname/hamster
+  install -m644 $srcdir/hamster/bin/{hamster.css,favicon.ico,hamster.js} $pkgdir/usr/share/$pkgname/
+
+  # Symbolic link
+  cd $pkgdir/usr/bin/
+  ln -sf /usr/share/$pkgname/hamster hamster
+}
+
+# vim:set ts=2 sw=2 et:

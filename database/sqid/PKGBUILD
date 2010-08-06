@@ -1,0 +1,34 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=sqid
+pkgver=0.3
+pkgrel=1
+pkgdesc="A SQL injection digger"
+arch=(any)
+url="http://sqid.rubyforge.org/"
+updateurl="http://rubyforge.org/frs/?group_id=2617=>sqid-"
+license=('GPL')
+depends=('ruby')
+groups=('archpwn' 'archpwn-database')
+source=(http://rubyforge.org/frs/download.php/30716/$pkgname-$pkgver.tar.gz)
+md5sums=('f09d8bd83176f2e4fbdd3d81bb3e712c')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+  sed -i -e 's:sqid.db:/usr/share/sqid/sqid.db:g' sqid.rb
+
+  mkdir -p $pkgdir/usr/share/sqid
+  install -Dm755 sqid.rb $pkgdir/usr/share/sqid/
+  install -Dm644 readme $pkgdir/usr/share/sqid/
+  install -Dm644 sqid.db $pkgdir/usr/share/sqid/
+
+  mkdir -p $pkgdir/usr/bin/
+  cat > $pkgdir/usr/bin/sqid << EOF
+#!/bin/sh
+cd /usr/share/sqid/
+ruby sqid.rb \$@
+EOF
+  chmod 755 $pkgdir/usr/bin/sqid
+}
+
+# vim:set ts=2 sw=2 et:

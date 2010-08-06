@@ -1,0 +1,40 @@
+# $Id: PKGBUILD 19152 2010-06-21 08:42:43Z spupykin $
+# Maintainer: Sergej Pupykin <pupykin.s+arch@gmail.com>
+# Contributor: Krzysztof Raczkowski <raczkow@gmail.com>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=open-vm-tools-modules
+pkgver=2010.06.16
+_pkgsubver=268169
+_kernver=2.6.34-ARCH
+pkgrel=1
+pkgdesc="The Open Virtual Machine Tools (open-vm-tools) are the open source implementation of VMware Tools."
+arch=('i686' 'x86_64')
+url="http://open-vm-tools.sourceforge.net/"
+license=('GPL')
+makedepends=('libdnet' 'icu' 'uriparser')
+depends=("kernel26>=2.6.${_kernver}" "kernel26<2.6.`expr ${_kernver} + 1`")
+install=$pkgname.install
+source=(http://easynews.dl.sourceforge.net/sourceforge/open-vm-tools/open-vm-tools-$pkgver-${_pkgsubver}.tar.gz)
+md5sums=('35c002f446a952e70cd1540dbb1d1fe5')
+
+build() {
+  msg "Kernel = $_kernver"
+
+  cd "$srcdir/open-vm-tools-${pkgver}-${_pkgsubver}"
+
+  sed -i 's#-lproc-3.2.7#-lproc-3.2.8#' configure
+
+  [ $NOEXTRACT -eq 1 ] || ./configure --prefix=/usr --with-kernel-release=$_kernver
+
+  (cd modules && make MODULES_DIR=/lib/modules/$_kernver/kernel modules) || return 1
+
+#  for MOD in vmblock vmhgfs vmmemctl vmsync vmxnet vmci vsock; do
+#  for MOD in vmblock vmci vmhgfs vmsync vmxnet vsock; do
+  mkdir -p $pkgdir/lib/modules/$_kernver/misc/
+  for MOD in `find -type f -name '*.ko'`; do
+    install -D -m644 $MOD $pkgdir/lib/modules/$_kernver/misc/ || return 1
+  done
+
+  sed -i -e "s/KERNEL_VERSION='.*'/KERNEL_VERSION='$_kernver'/" $startdir/$pkgname.install
+}

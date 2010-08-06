@@ -1,0 +1,39 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=smtpmap
+pkgver=0.8.234_BETA
+pkgrel=1
+pkgdesc="Smtpmap is able to identify the running smtp software on a given host. It shows the probability of the server version, and uses three different fingerprinting technologies to maximize the probabilities."
+url="http://www.projectiwear.org/~plasmahh/software.html"
+updateurl="http://www.projectiwear.org/~plasmahh/software.html=>smtpmap-"
+arch=(i686 x86_64)
+groups=('archpwn' 'archpwn-enumeration')
+license=('GPL')
+depends=('libpcap')
+source=(http://www.projectiwear.org/~plasmahh/$pkgname-${pkgver/_/-}.tar.bz2
+        gcc-3.4.patch
+        smtpmap-64bit.patch)
+md5sums=('ed748597a1368388844e8bba6e9d4721'
+         '5ae7a4a427926d64f31073470ababf66'
+         'f308cb4551391369224de6f4e51fbf81')
+
+build() {
+  cd "$srcdir/$pkgname-${pkgver/_/-}"
+
+  patch -Np1 < $srcdir/gcc-3.4.patch
+  patch -Np0 < $srcdir/smtpmap-64bit.patch
+  sed -i "s|-O -Wall|$CFLAGS|g" makefile.conf
+
+  ./configure --prefix=/usr
+  make
+
+  install -Dm755 src/smtpmap $pkgdir/usr/bin/smtmap
+
+  mkdir -p $pkgdir/usr/share/smtpmap
+  cp share/* $pkgdir/usr/share/smtpmap/
+
+  mkdir -p $pkgdir/usr/share/doc/smtpmap/
+  cp ChangeLog README TODO $pkgdir/usr/share/doc/smtpmap/
+}
+
+# vim:set ts=2 sw=2 et:

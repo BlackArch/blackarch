@@ -1,0 +1,42 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=fuzzdb-svn
+_pkgname=fuzzdb
+pkgver=139
+pkgrel=1
+pkgdesc="Attack and Discovery Pattern Database for Application Fuzz Testing"
+url="http://code.google.com/p/fuzzdb/"
+updateurl="http://code.google.com/p/fuzzdb/downloads/list=>fuzzdb-"
+groups=('archpwn' 'archpwn-fuzzer')
+license=('GPL')
+makedepends=('subversion')
+arch=(any)
+
+_svntrunk=http://fuzzdb.googlecode.com/svn/trunk/
+_svnmod=fuzzdb
+
+build() {
+  cd "$srcdir"
+
+  if [ -d $_svnmod/.svn ]; then
+    (cd $_svnmod && svn up -r $pkgver)
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
+  fi
+
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_svnmod-build"
+  cp -r "$srcdir/$_svnmod" "$srcdir/$_svnmod-build"
+  cd "$srcdir/$_svnmod-build"
+
+  #
+  # BUILD
+  #
+  mkdir -p $pkgdir/usr/share/$_pkgname/
+  find . -name .svn -type d -print0 | xargs -0 rm -rf
+  cp -r * $pkgdir/usr/share/$_pkgname/
+}
+
+# vim:set ts=2 sw=2 et:

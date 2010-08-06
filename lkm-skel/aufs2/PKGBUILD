@@ -1,23 +1,28 @@
-# $Id$
+# $Id: PKGBUILD 80414 2010-05-17 07:59:57Z tpowa $
 # Maintainer: Paul Mattal <pjmattal@elys.com>
+
 pkgname=aufs2
-pkgver=2.6.31_20090910
+pkgver=2.6.34_20100517
 pkgrel=1
-_kernver=${pkgver%_*}-ARCH
+#_kernver=${pkgver%_*}-ARCH
+_kernver=2.6.34-ARCH
 pkgdesc="Another Unionfs Implementation"
 arch=('i686' 'x86_64')
 url="http://aufs.sourceforge.net/"
 license=('GPL2')
-depends=('kernel26>=2.6.31' 'kernel26<2.6.32')
-groups=('archpwn-modules')
+depends=('kernel26>=2.6.34' 'kernel26<2.6.35')
+makedepends=('kernel26-headers>=2.6.34' 'kernel26-headers<2.6.35')
 replaces=('aufs')
 install=${pkgname}.install
-source=(ftp://ftp.archlinux.org/other/aufs2/${pkgname}-${pkgver}.tar.bz2)
-options=(!makeflags)
+source=("ftp://ftp.archlinux.org/other/aufs2/${pkgname}-${pkgver}.tar.gz")
+options=('!makeflags')
+md5sums=('271f07ac41e07cb7c30ff29bee8087fa')
 
 build() {
-  cd ${srcdir}/${pkgname}-${pkgver} || return 1
-  sed -i 's|CONFIG_AUFS_HINOTIFY =.*|CONFIG_AUFS_HINOTIFY = y|' \
+  cd ${srcdir}/${pkgname}-${pkgver}
+  sed -i 's|CONFIG_AUFS_HNOTIFY =.*|CONFIG_AUFS_HNOTIFY = y|' \
+     config.mk || return 1
+  sed -i 's|CONFIG_AUFS_HFSNOTIFY =.*|CONFIG_AUFS_HFSNOTIFY = y|' \
      config.mk || return 1
   sed -i 's|CONFIG_AUFS_EXPORT =.*|CONFIG_AUFS_EXPORT = y|' \
      config.mk || return 1
@@ -38,7 +43,10 @@ build() {
      config.mk || return 1
   # build
   make KDIR=/usr/src/linux-${_kernver} || return 1
-  # install
+}
+
+package() {
+  cd ${srcdir}/${pkgname}-${pkgver}
   install -D -m644 fs/aufs/aufs.ko \
     $pkgdir/lib/modules/${_kernver}/kernel/fs/aufs/aufs.ko || return 1
   # tweak the install script for the right kernel version
@@ -46,5 +54,5 @@ build() {
     $startdir/$pkgname.install || return 1
   # install include files
   install -D -m 644 include/linux/aufs_type.h $pkgdir/usr/src/linux-$_kernver/include/linux/aufs_type.h || return 1
-} 
-md5sums=('90af4ef41dcd68ba1171a2c562864c7c')
+}
+md5sums=('421c5ca3d4d917f92f7c0508a16f8177')

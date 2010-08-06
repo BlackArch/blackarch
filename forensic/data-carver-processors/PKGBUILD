@@ -1,0 +1,29 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=data-carver-processors
+pkgver=latest
+pkgrel=1
+pkgdesc="a forensics tool to examine Thumbs.db files"
+url="http://vinetto.sourceforge.net"
+license="GPL"
+arch=('i686' 'x86_64')
+groups=('archpwn' 'archpwn-forensic')
+depends=('file' 'imagemagick' 'libexif' 'file')
+optdepends=('stegdetect' 'mplayer')
+source=(http://www.citadelsystems.net/downloads/${pkgname//-/_}.tar.gz)
+md5sums=('6789b6ca68a98775dbf3ff692602c462')
+
+build() {
+  cd "$srcdir/${pkgname//-/_}"
+  sed -e '/stegdetectpath=/ s:local/::g' -i data_processor.ini image-processor.pl
+
+  install -Dm755 image-processor.pl $pkgdir/usr/share/$pkgname/image-processor.pl
+  install -Dm644 data_processor.ini $pkgdir/usr/share/$pkgname/data_processor.ini
+  install -Dm644 README.TXT $pkgdir/usr/share/$pkgname/README.TXT
+
+  cp -r image-plugins $pkgdir/usr/share/$pkgname/
+
+  mkdir -p $pkgdir/usr/bin
+  cd $pkgdir/usr/bin
+  ln -sf /usr/share/$pkgname/image-processor.pl image-processor
+}

@@ -1,0 +1,35 @@
+post_install() {
+  # add stunnel group
+  if [ ! `grep stunnel /etc/group` ]; then
+    groupadd -g 16 stunnel &>/dev/null
+  fi
+
+  # add stunnel user
+  id stunnel &>/dev/null || \
+    useradd -u 16 -g stunnel -d /var/run/stunnel -s /bin/false stunnel
+  
+  # create chroot dir if necessary.
+  if [ ! -d /var/run/stunnel ]; then
+    install -d -m 770 -o stunnel -g stunnel /var/run/stunnel
+  fi
+
+  cat << EOF
+
+NOTE
+----
+Copy /etc/stunnel/stunnel.conf-sample to /etc/stunnel/stunnel.conf
+& edit it to match your setup before invoking the daemon (/etc/rc.d/stunnel).
+
+EOF
+}
+
+post_upgrade() {
+  post_install $1
+}
+
+pre_remove() {
+  # remove users & groups
+  userdel stunnel &> /dev/null
+  groupdel stunnel &> /dev/null
+  rm -rf /var/run/stunnel
+}

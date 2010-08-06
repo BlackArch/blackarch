@@ -1,0 +1,95 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=bluemaho
+pkgver=090417
+pkgrel=1
+pkgdesc="BlueMaho is GUI-shell (interface) for suite of tools for testing security of bluetooth devices."
+arch=(i686 x86_64)
+url="http://wiki.thc.org/BlueMaho"
+updateurl="http://wiki.thc.org/BlueMaho=>bluemaho_v"
+license=('GPL3')
+depends=('wxpython' 'bluediving' 'bss' 'bt_audit' 'hidattack' 'glib')
+groups=('archpwn' 'archpwn-bluetooth')
+source=("${pkgname}_v$pkgver.tgz::http://wiki.thc.org/BlueMaho?action=AttachFile&do=get&target=${pkgname}_v$pkgver.tgz")
+md5sums=('f92f331337d36aa03acdad16f9aee83a')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver/tools"
+  chmod -x *
+  chmod +x *.py *.sh replay_packet
+
+  cd replay_packet
+  chmod -x *
+  chmod +x *.sh
+
+  mkdir -p $pkgdir/usr/share/$pkgname/tools
+
+  cd $pkgdir/usr/share/$pkgname/tools/
+  for tool in 'atshell' 'bccmd' 'bdaddr' 'psm_scan' 'rfcomm_scan' 'bss' 'btobex' \
+              'carwhisperer' 'l2cap-packet' 'redfang' 'ussp-push'; do
+    ln -sf /usr/bin/$tool .
+  done
+
+  cd "$srcdir/$pkgname-$pkgver/tools"
+  rm -rf sources/
+  cp -r * $pkgdir/usr/share/$pkgname/tools/
+
+  # Symlinks available exploits
+  mkdir -p $pkgdir/usr/share/$pkgname/exploits/
+  cd "$pkgdir/usr/share/$pkgname/exploits/"
+
+  ln -sf /usr/bin/hidattack .
+  ln -sf /usr/share/hidattack/ha.inp hidattack.inp
+
+  cd "$srcdir/$pkgname-$pkgver/exploits"
+  chmod -x *
+
+  # Build other exploits
+  msg "Building bluepimp"
+  cd sources/bluepimp
+  sed -i 's:hci_remote_name:hci_read_remote_name:' obex_socket.c
+  make CFLAGS="$CFLAGS" && mv ussp-push ../../bluepimp
+  cd ../..
+
+  msg "Building hcidump-dos"
+  cd sources/
+  gcc -lbluetooth $CFLAGS bluez_hcidump_v129_dos.c -o bluez_hcidump_v129_dos
+  mv bluez_hcidump_v129_dos ..
+  cd ..
+
+  msg "Building helomoto"
+  cd sources/helomoto/
+  sed -i "s:gcc :gcc $CFLAGS :g" Makefile
+  make CFLAGS="$CFLAGS"
+  mv helomoto ../..
+  cd ../..
+
+  msg "Building nokiaN70_l2cap_packet_dos"
+  cd sources/
+  gcc -lbluetooth $CFLAGS nokiaN70_l2cap_packet_dos.c -o nokiaN70_l2cap_packet_dos
+  mv nokiaN70_l2cap_packet_dos ..
+  cd ..
+
+  msg "Building sonyericsson_reset_display"
+  cd sources/
+  gcc -lbluetooth $CFLAGS sonyericsson_reset_display.c -o sonyericsson_reset_display
+  mv sonyericsson_reset_display ..
+  cd ..
+
+  chmod +x opush_abuse.sh mod3abuse.py
+  rm hidattack*
+
+  rm -rf sources/
+  cp * $pkgdir/usr/share/$pkgname/exploits/
+
+  cd ../config
+  rm build.sh
+  chmod -x *
+  chmod +x themes themes/maho
+  cd themes/maho
+  chmod -x *
+  cd ../../../
+
+  cp -r bluemaho.py config $pkgdir/usr/share/$pkgname/
+}
+# vim:set ts=2 sw=2 et:

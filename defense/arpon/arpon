@@ -1,0 +1,54 @@
+#!/bin/bash                                                                                                                                              
+
+daemon_name=arpon
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+. /etc/conf.d/$daemon_name
+
+get_pid() {
+        pidof -o %PPID $1
+}
+
+ARPON=/usr/sbin/arpon
+PID_FILE=/var/run/$daemon_name.pid
+PID=$(get_pid $ARPON)
+
+cd "$XRDP_DIR"
+
+case "$1" in
+  start)
+    stat_busy "Starting $daemon_name daemon"
+
+    # Remove stale PID files
+    [ -f "$PID_FILE" ] && [ -n "$PID" ] && rm -f "PID_FILE" &>/dev/null
+
+    $ARPON -q -i $INTERFACE $OPTIONS &>/dev/null
+
+    if [ $? -gt 0 ]; then
+            stat_fail
+            exit 1
+    fi
+
+    add_daemon $daemon_name
+    stat_done
+    ;;
+
+  stop)
+    stat_busy "Stopping $daemon_name daemon"
+    [ -n "$PID" ] && [ -f "$PID_FILE" ] && kill $(cat "$PID_FILE")
+    rm_daemon $daemon_name
+    stat_done
+    ;;
+
+  restart)
+    $0 stop
+    sleep 3
+    $0 start
+    ;;
+  *)
+    echo "usage: $0 {start|stop|restart}"  
+esac
+exit 0
+
+# vim:set ts=2 sw=2 et:

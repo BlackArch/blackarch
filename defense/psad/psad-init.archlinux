@@ -1,0 +1,52 @@
+#!/bin/sh
+#
+# Startup script for psad
+#
+# chkconfig: 345 99 05
+# description: The Port Scan Attack Detector (psad)
+# processname: psad
+# pidfile: /var/run/psad.pid
+# config: /etc/psad/psad.conf
+#
+# $Id: psad-init.archlinux
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+. /etc/conf.d/sshd
+
+PID="$(cat /var/run/psad/psad.pid 2>/dev/null)"
+# See how we were called.
+case "$1" in
+start)
+    stat_busy "Starting psad"
+    [ -z "$PID" ] && /usr/sbin/psad
+    if [ $? -gt 0 ]; then
+      stat_fail
+    else
+      #let psad take care of the pid; we don't need to
+      add_daemon psad
+      stat_done
+    fi
+    ;;
+stop)
+    stat_busy "Stopping psad"
+    /usr/sbin/psad --Kill
+    if [ $? -gt 0 ]; then
+      stat_fail
+    else
+      #let psad take care of the pid; we don't need to
+      rm_daemon psad
+      stat_done
+    fi
+    ;;
+status)
+    /usr/sbin/psad --Status
+    ;;
+restart)
+    $0 stop
+    $0 start
+    ;;
+*)
+    echo "Usage: psad {start|stop|status|restart}"
+    exit 1
+esac

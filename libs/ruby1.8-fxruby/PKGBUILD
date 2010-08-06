@@ -1,0 +1,46 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+# Dirty PKGBUILD
+
+pkgname=ruby1.8-fxruby
+pkgver=1.6.20
+pkgrel=1
+pkgdesc="FXRuby is a Ruby extension module that provides an interface to the FOX GUI library."
+url="http://www.fxruby.org/"
+license="LGPL"
+arch=(i686 x86_64)
+depends=('fox' 'ruby1.8')
+source=(http://rubyforge.org/frs/download.php/66842/fxruby-1.6.20.gem)
+md5sums=('da27b50cc0d3524982f45a59ee0472af')
+
+build() {
+  cd "$srcdir/"
+
+  mkdir fox16
+  tar xfz data.tar.gz -C fox16
+
+  cd fox16
+
+  sed -i -e '/\[:compile\]/d' Rakefile
+  sed -i -e 's:libs, "fxscintilla":libs, "fxscintilla-1.6":g' ext/fox16/extconf.rb
+  sed -i -e 's:-O0 -I./include:-I./include:g' ext/fox16/extconf.rb
+
+  ruby-1.8 -Cext/fox16 extconf.rb
+  make -Cext/fox16
+  cp ext/fox16/fox16.so lib/
+
+  local _gemdir="$(ruby-1.8 -rubygems -e'puts Gem.default_dir')"
+
+  mkdir -p $pkgdir/$_gemdir/gems/fxruby-$pkgver
+  cp -r lib $pkgdir/$_gemdir/gems/fxruby-$pkgver
+
+  mkdir -p $pkgdir/$_gemdir/specifications/
+  cat > $pkgdir/$_gemdir/specifications/fxruby-$pkgver.gemspec << EOF
+Gem::Specification.new do |s|
+  s.name = "fxruby"
+  s.version = "$pkgver"
+  s.summary = "$pkgdesc"
+  s.homepage = "$url"
+  s.require_paths = ["lib"]
+end
+EOF
+}

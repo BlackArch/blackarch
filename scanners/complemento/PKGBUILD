@@ -1,0 +1,57 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=complemento
+pkgver=0.7.6
+pkgrel=1
+pkgdesc="Complemento is a collection of tools for pentester: LetDown is a powerful tcp flooder ReverseRaider is a domain scanner that use wordlist scanning or reverse resolution scanning Httsquash is an http server scanner, banner grabber and data retriever"
+url="http://complemento.sourceforge.net"
+license="GPL"
+groups=('archpwn' 'archpwn-scanners')
+arch=(i686 x86_64)
+depends=('glibc' 'c-ares' 'libnet' 'python' 'libpcap' 'curl')
+source=(http://downloads.sourceforge.net/$pkgname/$pkgname-$pkgver.tar.gz)
+md5sums=('dbc1c22769109f27b04556314cf58968')
+
+build() {
+  cd "$srcdir/$pkgname/letdown/"
+  sed -i 's/python2.5/python2.6/g' Makefile
+
+  cd "$srcdir/$pkgname/httsquash/"
+  sed -i 's/python2.5/python2.6/g' Makefile
+
+  cd "$srcdir/$pkgname/reverseraider/"
+  sed -i 's/python2.5/python2.6/g' Makefile
+
+  cd "$srcdir/$pkgname"
+  make clean
+  make
+
+  # Multi stage installation
+  mkdir -p $pkgdir/usr/share/$pkgname/
+
+  cd "$srcdir/$pkgname"
+  install -Dm644 readme $pkgdir/usr/share/$pkgname/readme
+
+  cd "$srcdir/$pkgname/letdown/"
+  install -Dm755 letdown $pkgdir/usr/share/$pkgname/letdown/letdown
+  install -Dm644 readme $pkgdir/usr/share/$pkgname/letdown/readme
+
+  cd payloads
+  for pay in *; do
+    install -Dm644 $pay $pkgdir/usr/share/$pkgname/letdown/payloads/$pay
+  done
+
+  cd "$srcdir/$pkgname/httsquash/"
+  install -Dm755 httsquash $pkgdir/usr/share/$pkgname/httsquash/httsquash
+  install -Dm644 readme $pkgdir/usr/share/$pkgname/httsquash/readme
+
+  cd "$srcdir/$pkgname/reverseraider/"
+  install -Dm755 reverseraider $pkgdir/usr/share/$pkgname/reverseraider/reverseraider
+
+  cd wordlists
+  for lst in *; do
+    install -Dm644 $lst $pkgdir/usr/share/$pkgname/reverseraider/wordlists/$lst
+  done
+
+
+}

@@ -1,9 +1,8 @@
-# Maintainer: Nathan Owe <ndowens04+AUR at gmail.com>
 # Contributor: Francesco Piccinno <stack.box@gmail.com>
 
 pkgname=autoscan
 pkgver=1.50
-pkgrel=1
+pkgrel=2
 pkgdesc="Utility for network exploration"
 url="http://autoscan-network.com"
 updateurl="http://sourceforge.net/projects/autoscan/files/=>autoscan-network-"
@@ -13,18 +12,28 @@ arch=('i686' 'x86_64')
 license=('GPL')
 install=$pkgname.install
 groups=('archpwn' 'archpwn-scanners')
-source=(http://autoscan.fr/download_files/$pkgname-network-$pkgver.tar.gz 'autoscan-network')
+source=(http://autoscan.fr/download_files/$pkgname-network-$pkgver.tar.gz
+        'Makefile.patch'
+        'autoscan.install'
+        'autoscan-network')
 md5sums=('37b2a11f30acf89b72eb1eef3f0a5844'
+         '458a4b6ab829db037dc3ccfbe2325333'
+         'c1b368e2beb85072156dea6a1f57d8c3'
          '98583cd427e829b09035c7833fb0c294')
 
 build() {
   cd $srcdir/autoscan-network-$pkgver
-  install -d $pkgdir/{usr/sbin,etc/rc.d,etc/conf.d} || return 1
-  ./configure --distrib-Linux || return 1
-  make || return 1
+  install -d $pkgdir/{usr/sbin,etc/rc.d,etc/conf.d}
+
+  ./configure --distrib-Linux
+
+  make
+
+  patch -Np0 < ../Makefile.patch
   make DESTDIR=$pkgdir install
-  install -m755 $srcdir/autoscan-network $pkgdir/etc/rc.d/ || return 1
-  chmod -R a+r $pkgdir/usr/share/pixmaps/autoscan-network/ || return 1
-  chmod -R a+rx $pkgdir/usr/share/pixmaps/autoscan-network/{Onglet/,Network/,Modes/,Animation/,Equipment/,Type/,Modules/,Port} || return 1
-  install -m755 bin/{autoscan-network,autoscan-network-daemon} $pkgdir/usr/sbin/ || return 1
+
+  install -m755 $srcdir/autoscan-network $pkgdir/etc/rc.d/
+  chmod -R a+r $pkgdir/usr/share/pixmaps/autoscan-network/
+  chmod -R a+rx $pkgdir/usr/share/pixmaps/autoscan-network/{Onglet/,Network/,Modes/,Animation/,Equipment/,Type/,Modules/,Port}
+  install -m755 bin/{autoscan-network,autoscan-network-daemon} $pkgdir/usr/sbin/
 }

@@ -1,8 +1,7 @@
 # Contributor: Francesco Piccinno <stack.box@gmail.com>
-# Contributor: Valentin Churavy <v.churavy@gmail.com>
 
 pkgname=packetmanipulator-svn
-pkgver=5460
+pkgver=5756
 pkgrel=1
 pkgdesc="Packet manipulation made easy."
 arch=('i686' 'x86_64')
@@ -12,7 +11,7 @@ groups=('archpwn' 'archpwn-scanners')
 depends=('python' 'scapy' 'pygtk')
 makedepends=('gcc' 'make' 'gtk2' 'python-sphinx')
 
-_svntrunk=http://svn.umitproject.org/svnroot/umit/pm/trunk
+_svntrunk=http://svn.umitproject.org/svnroot/umit/packet-manipulator/trunk
 _svnmod=PacketManipulator
 
 build() {
@@ -33,7 +32,24 @@ build() {
 
   cd deps/pygtkhex
   python setup.py install --prefix=/usr --root=$pkgdir || return 1
+
   cd ../..
   rm -rf plugins/traceroute
   PM_DOCKING=1 python setup.py install --prefix=/usr --root=$pkgdir || return 1
+
+  # Build customized version of scapy
+  cd "$srcdir/$_svnmod-build/deps/scapy-patches"
+  ./build
+
+  cd scapy
+  mkdir -p $pkgdir/usr/share/PacketManipulator/libs/scapy
+  python setup.py install --home=$pkgdir/usr/share/PacketManipulator/libs/scapy/
+
+  cd $pkgdir/usr/bin
+  mv PacketManipulator PacketManipulator.orig
+  cat > PacketManipulator << EOF
+#!/bin/sh
+PYTHONPATH="/usr/share/PacketManipulator/libs/scapy/lib/python/scapy/:$PYTHONPATH" PacketManipulator.orig \$*
+EOF
+  chmod 755 PacketManipulator
 }

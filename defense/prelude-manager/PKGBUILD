@@ -1,0 +1,31 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=prelude-manager
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Prelude-IDS Manager"
+url="http://www.prelude-technologies.com"
+updateurl="http://www.prelude-technologies.com/en/development/download/index.html=>prelude-manager-"
+license="GPL"
+arch=('i686' 'x86_64')
+groups=('archpwn' 'archpwn-defense')
+depends=('libpreludedb' 'libprelude' 'libxml2' 'gnutls')
+source=(http://www.prelude-technologies.com/download/releases/$pkgname/$pkgname-$pkgver.tar.gz
+	    prelude-manager)
+md5sums=('d9236471bc7c0d420755249680261d18'
+         'f9202bcc774ef68478c09e2e92dfa001')
+
+build() {
+  cd $startdir/src/$pkgname-$pkgver
+  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --enable-libpreludedb --docdir=/usr/share/doc/$pkgname
+  make || return 1
+  make DESTDIR=$startdir/pkg install
+
+  install -D -m755 $startdir/src/prelude-manager \
+		   $startdir/pkg/etc/rc.d/prelude-manager
+
+  chmod 755 $startdir/pkg/etc/prelude-manager
+  chmod 644 $startdir/pkg/etc/prelude-manager/prelude-manager.conf
+  chmod 755 $startdir/pkg/etc
+  chmod 755 $startdir/pkg/var/*
+}

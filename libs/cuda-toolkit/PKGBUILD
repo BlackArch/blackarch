@@ -1,48 +1,44 @@
-# Contributor: Jens Pranaitis <jens@chaox.net>
-# Contributor: Carson Reynolds <carson@k2.t.u-tokyo.ac.jp>
-# Contributor: Lawrence Lee <valheru AT facticius DOT net>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
 pkgname=cuda-toolkit
-pkgver=2.2
-pkgrel=3.2
+pkgver=3.0
+pkgrel=1
 pkgdesc="NVIDIA's CUDA architecture can be programmed in the only C language environment that unlocks the processing power of GPUs to solve the most complex compute-intensive challenges."
 arch=('i686' 'x86_64')
-[ "$CARCH" = "i686"   ] && ARCH=x86
-[ "$CARCH" = "x86_64" ] && ARCH=x86_64
+
 url="http://www.nvidia.com/object/cuda_home.html"
 license=('custom')
-#depends=('gcc-libs' 'nvidia-drivers>=185.18.08-1' 'zlib')
-depends=('gcc-libs' 'zlib')
-replaces=("cuda")
-conflicts=("cuda")
-provides=("cuda")
-[ "$CARCH" = "i686" ] && source=(http://developer.download.nvidia.com/compute/cuda/2_2/toolkit/cudatoolkit_2.2_linux_32_suse11.1.run)
-[ "$CARCH" = "x86_64" ] && source=(http://developer.download.nvidia.com/compute/cuda/2_2/toolkit/cudatoolkit_2.2_linux_64_suse11.1.run)
-[ "$CARCH" = "i686" ] && md5sums=('d23cdec72cf18602cdb558b55578da1a')
-[ "$CARCH" = "x86_64" ] && md5sums=('db982d755516b8952475c92cb243e5cb')
+provides=('cuda')
+
+if [ "$CARCH" = "i686" ]; then
+   ARCH=x86
+   source=(http://developer.download.nvidia.com/compute/cuda/3_0/toolkit/cudatoolkit_3.0_linux_32_suse11.1.run install-linux.pl.ununinstall.patch)
+   depends=('gcc-libs' 'nvidia>=190.42-1' 'zlib')
+   md5sums=(718a8672d450e850371c921111536957 6d81b78719e35aaf7824a7310a3fb469)
+fi
+
+if [ "$CARCH" = "x86_64" ]; then
+   ARCH=x86_64
+   source=(http://developer.download.nvidia.com/compute/cuda/3_0/toolkit/cudatoolkit_3.0_linux_64_suse11.1.run install-linux.pl.ununinstall.patch)
+   depends=('gcc-libs' 'nvidia>=190.42-1' 'zlib' 'lib32-pcre')
+   md5sums=(18fb7060b70b1815b360f40c5c282265 6d81b78719e35aaf7824a7310a3fb469)
+fi
 
 build() {
-  mkdir -p "$pkgdir"/usr/share/doc/cuda-toolkit
-  mkdir -p "$pkgdir"/usr/share/doc/cuda-toolkit/html
-  mkdir -p "$pkgdir"/usr/share/licenses/cuda-toolkit
-  mkdir -p "$pkgdir"/opt/cuda
-  cd "$srcdir"
-  [ "$CARCH" = "i686" ] &&  sh cudatoolkit_2.2_linux_32_suse11.1.run --noexec --keep
-  [ "$CARCH" = "x86_64" ] &&  sh cudatoolkit_2.2_linux_64_suse11.1.run --noexec --keep
-  cd pkg
-  # HACK: these files conflict
-  mv "$srcdir"/pkg/man/man3/major.3 "$srcdir"/pkg/man/man3/cuda-major.3 
-  mv "$srcdir"/pkg/man/man3/minor.3 "$srcdir"/pkg/man/man3/cuda-minor.3 
-  ./install-linux.pl --prefix="$pkgdir"/opt/cuda || return 1
-  rm -rf "$pkgdir"/opt/cuda/cudaprof
-  install -m 755 "$pkgdir"/opt/cuda/open64/bin/* "$pkgdir"/opt/cuda/bin || return 1
-  install -m 755 "$pkgdir"/opt/cuda/open64/lib/* "$pkgdir"/opt/cuda/lib || return 1
-  install -m 644 "$srcdir"/pkg/doc/{*.pdf,*.txt} "$pkgdir"/usr/share/doc/cuda-toolkit || return 1
-  install -m 644 "$srcdir"/pkg/doc/html/* "$pkgdir"/usr/share/doc/cuda-toolkit/html || return 1
-  mv "$pkgdir"/usr/share/doc/cuda-toolkit/EULA.txt "$pkgdir"/usr/share/licenses/cuda-toolkit || return 1
-  mv "$pkgdir"/opt/cuda/man "$pkgdir"/usr/share || return 1
-  rm -rf "${pkgdir}"/opt/cuda/open64
-  rm -rf "${pkgdir}"/opt/cuda/src
-  rm -rf "${pkgdir}"/opt/cuda/doc
-}
+  cd $srcdir
 
-#TODO: will not install if cuda-toolkit is already installed
+  mkdir -p $pkgdir/opt/cuda/
+
+  [ "$CARCH" = "i686" ] &&  sh cudatoolkit_3.0_linux_32_suse11.1.run --noexec --keep
+  [ "$CARCH" = "x86_64" ] &&  sh cudatoolkit_3.0_linux_64_suse11.1.run --noexec --keep
+
+  patch -p0 -i install-linux.pl.ununinstall.patch || return 1
+  cd pkg
+  ./install-linux.pl --prefix=$pkgdir/opt/cuda
+
+  # We don't need profiler, documentation
+  rm -rf $pkgdir/opt/cuda/cudaprof
+  rm -rf $pkgdir/opt/cuda/openclprof
+  rm -rf $pkgdir/opt/cuda/doc
+  rm -rf $pkgdir/opt/cuda/man
+}

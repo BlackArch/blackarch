@@ -1,0 +1,40 @@
+#!/bin/bash
+
+OPTIONS=
+[ -f /etc/conf.d/prelude-lml ] && . /etc/conf.d/prelude-lml
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+PID="$(cat /var/run/prelude-lml.pid 2>/dev/null)"
+case "$1" in
+	start)
+		stat_busy "Starting prelude-lml"
+		[ -z "${PID}" ] && /usr/bin/prelude-lml -- ${WIFIZOO_ARGS} -d &> /dev/null &
+		if [ ! -z "$PID" -o $? -gt 0 ]; then
+			stat_fail
+		else
+			add_daemon preludelml
+			stat_done
+		fi
+		;;
+	stop)
+		stat_busy "Stopping prelude-lml"
+			[ ! -z "${PID}" ] && kill ${PID} &> /dev/null
+		if [ $? -gt 0 ]; then
+			stat_fail
+		else
+			rm_daemon preludelml
+			stat_done
+		fi
+		;;
+	restart)
+		$0 stop
+		sleep 1
+		$0 start
+		;;
+	*)
+		echo "usage: $0 {start|stop|restart}"
+		;;
+esac
+exit 0

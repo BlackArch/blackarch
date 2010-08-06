@@ -1,0 +1,33 @@
+pkgname=nmap
+pkgver=5.35DC1
+pkgrel=1
+pkgdesc="A network exploration tool and security/port scanner"
+arch=('i686' 'x86_64')
+url="http://nmap.org"
+license=('custom:GPL')
+depends=('pcre' 'openssl' 'libpcap>=1.0.0' 'lua')
+# python is needed for zenmap
+makedepends=('python')
+optdepends=('pygtk: gui for nmap')
+options=('!makeflags')
+source=(http://nmap.org/dist/${pkgname}-${pkgver}.tar.bz2)
+md5sums=('5bc2f8629f26716aa78d4bfe474a5d3a')
+
+build() {
+  cd ${srcdir}/${pkgname}-${pkgver}
+
+  echo "TryExec=/usr/bin/pygtk-demo" >> zenmap/install_scripts/unix/zenmap.desktop || return 1
+  echo "TryExec=/usr/bin/pygtk-demo" >> zenmap/install_scripts/unix/zenmap-root.desktop || return 1
+
+  ./configure --prefix=/usr --mandir=/usr/share/man \
+    --libexecdir=/usr/lib
+  make || return 1
+  make DESTDIR="${pkgdir}" install
+
+  # remove zenmap uninstall script
+  rm "${pkgdir}/usr/bin/uninstall_zenmap"
+
+  # install custom GPL2 license
+  install -D -m644 COPYING ${pkgdir}/usr/share/licenses/${pkgname}/LICENSE
+}
+

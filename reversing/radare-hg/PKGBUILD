@@ -2,7 +2,7 @@
 # Contributor: Shino <shino@jenux.homelinux.org>
 
 pkgname="radare-hg"
-pkgver=1254
+pkgver=1287
 pkgrel=1
 pkgdesc="A collection of tools with the aim to create a complete, portable, multi-architecture, unix-like toolchain for reverse engineering."
 arch=('i686' 'x86_64')
@@ -18,22 +18,25 @@ _hgroot="http://radare.org/hg"
 _hgrepo="radare"
 
 build() {
-	cd "${srcdir}/radare"
+  cd "$srcdir"
+  msg "Connecting to Mercurial server...."
 
-	local _fakerootkey
-	_fakerootkey=$FAKEROOTKEY
-	unset FAKEROOTKEY
+  if [ -d $_hgrepo ] ; then
+    cd $_hgrepo
+    hg pull -u || return 1
+    msg "The local files are updated."
+  else
+    hg clone $_hgroot $_hgrepo || return 1
+  fi
 
-	msg "Configuring..."
-	./waf configure || return 1
+  msg "Mercurial checkout done or server timeout"
+  msg "Starting make..."
 
-	msg "Building..."
-	./waf build || return 1
+  rm -rf "$srcdir/$_hgrepo-build"
+  cp -r "$srcdir/$_hgrepo" "$srcdir/$_hgrepo-build"
+  cd "$srcdir/$_hgrepo-build"
 
-	export FAKEROOTKEY=$_fakerootkey
-	msg "Installing..."
-	./waf --destdir="${pkgdir}" install || return 1
-
-	install -d "${pkgdir}/usr/share/man/man1"
-	install -m644 man/* "${pkgdir}/usr/share/man/man1" || return 1
+  ./configure --prefix=/usr
+  make
+  make DESTDIR="$pkgdir/" install
 }

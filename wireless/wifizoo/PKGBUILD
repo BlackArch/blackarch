@@ -1,4 +1,5 @@
 # Contributor: Jesus Lazaro Plaza <jesuslazaro84@gmail.com>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
 
 pkgname=wifizoo
 pkgver=1.3
@@ -12,18 +13,24 @@ depends=('python' 'scapy' 'graphviz')
 groups=('archpwn' 'archpwn-wireless')
 install=wifizoo.install
 source=(http://community.corest.com/~hochoa/wifizoo/${pkgname}_v${pkgver}.tgz
-	wifizoo.initscript
-	wifizoo.initscriptconf)
+        wifizoo.initscript
+        wifizoo.initscriptconf)
 md5sums=('9e6e4ff060eb92b4a75c07c744156df8'
-	'bbe2eeef3511a3f2ad0d989a6a84c34b'
-	'aa3783ad3ff877485816ffecf5133835')
+         '5a23e2898398730a0c19aad6544a016b'
+         'aa3783ad3ff877485816ffecf5133835')
 
 build() {
-  mkdir -p ${startdir}/pkg/opt
-  mkdir -p ${startdir}/pkg/usr/sbin
+  mkdir -p $pkgdir/usr/{sbin,share/$pkgname}
 
-  cp -R ${startdir}/src/${pkgname}_v${pkgver} ${startdir}/pkg/opt/wifizoo
+  cp -R $srcdir/$pkgname\_v$pkgver/* $pkgdir/usr/share/$pkgname
 
-  install -D -m755 ${startdir}/src/wifizoo.initscript ${startdir}/pkg/etc/rc.d/wifizoo
-  install -D -m755 ${startdir}/src/wifizoo.initscriptconf ${startdir}/pkg/etc/conf.d/wifizoo
+  # Dirty fix
+  sed -i 's:from scapy import *:from scapy.all import *:' $pkgdir/usr/share/$pkgname/*.py
+  chmod 755 $pkgdir/usr/share/$pkgname/$pkgname.py
+
+  install -D -m755 $srcdir/wifizoo.initscript $pkgdir/etc/rc.d/wifizoo
+  install -D -m644 $srcdir/wifizoo.initscriptconf $pkgdir/etc/conf.d/wifizoo
+
+  cd $pkgdir/usr/sbin
+  ln -sf /usr/share/$pkgname/$pkgname.py .
 }
