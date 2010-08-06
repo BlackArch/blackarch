@@ -1,0 +1,53 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+pkgname=lanmap2-git
+pkgver=20100719
+pkgrel=1
+pkgdesc="builds database/visualizations of LAN structure from passively sifted information"
+arch=(i686 x86_64)
+url="http://github.com/pizza/lanmap2"
+license=('GPL')
+groups=('archpwn' 'archpwn-misc')
+depends=('php' 'libpcap' 'graphviz' 'sqlite3' 'readline')
+makedepends=('git')
+provides=('lanmap2')
+replaces=('lanmap2')
+
+_gitroot="git://github.com/pizza/lanmap2.git"
+_gitname="lanmap2"
+
+build() {
+  cd "$srcdir"
+  msg "Connecting to GIT server...."
+
+  if [ -d $_gitname ] ; then
+    cd $_gitname && git pull origin
+    msg "The local files are updated."
+  else
+    git clone $_gitroot $_gitname
+  fi
+
+  msg "GIT checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_gitname-build"
+  git clone "$srcdir/$_gitname" "$srcdir/$_gitname-build"
+  cd "$srcdir/$_gitname-build"
+
+  #
+  # BUILD HERE
+  #
+
+  # Build the database
+  db/build-db.sh
+
+  cd src
+  make
+  rm *.*
+
+  cd ..
+  rm -rf refs
+
+  mkdir -p $pkgdir/usr/share/$pkgname/
+  cp -r * $pkgdir/usr/share/$pkgname/
+
+}
