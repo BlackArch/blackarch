@@ -2,9 +2,9 @@
 
 Through my experiences I've broken down tools I've used into four phases:
 
-Phase 1 => Discovery [GREEN]
-Phase 2 => Enumeration [BLUE]
-Phase 3 => Exploitation [RED]
+Phase 1 => Discovery [GREEN],
+Phase 2 => Enumeration [BLUE],
+Phase 3 => Exploitation [RED],
 Phase 4 => Post-Exploitation [YELLOW]
 
 Each tool falls into a different "color" which is evident in the XFCE menu design.  But even without the XFCE menu and without the color codes the root "blackarch" directory is the toolset.  This toolset continues to expand daily, please see any of the latest updates at http://www.blackarch.org.
