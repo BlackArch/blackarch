@@ -1,0 +1,53 @@
+/*
+Copyright (C) 2006 - 2011 Evan Teran
+                          eteran@alum.rit.edu
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#ifndef STATE_INTERFACE_20110315_H_
+#define STATE_INTERFACE_20110315_H_
+
+#include "Types.h"
+#include "API.h"
+#include "Register.h"
+
+class EDB_EXPORT StateInterface {
+public:
+	virtual ~StateInterface() {}
+
+public:
+	virtual StateInterface *copy() const = 0;
+
+public:
+	virtual QString flags_to_string() const = 0;
+	virtual QString flags_to_string(edb::reg_t flags) const = 0;
+	virtual Register value(const QString &reg) const = 0;
+	virtual edb::address_t frame_pointer() const = 0;
+	virtual edb::address_t instruction_pointer() const = 0;
+	virtual edb::address_t stack_pointer() const = 0;
+	virtual edb::reg_t debug_register(int n) const = 0;
+	virtual edb::reg_t flags() const = 0;
+	virtual long double fpu_register(int n) const = 0;
+	virtual void adjust_stack(int bytes) = 0;
+	virtual void clear() = 0;
+	virtual void set_debug_register(int n, edb::reg_t value) = 0;
+	virtual void set_flags(edb::reg_t flags) = 0;
+	virtual void set_instruction_pointer(edb::address_t value) = 0;
+	virtual void set_register(const QString &name, edb::reg_t value) = 0;
+	virtual quint64 mmx_register(int n) const = 0;
+	virtual QByteArray xmm_register(int n) const = 0;
+};
+
+#endif

@@ -1,0 +1,53 @@
+#master
+## dependencies ##
+pacman -S --noconfirm mysql mysql-clients libmysqlclient qt sqlitebrowser gdb graphviz
+## install the database ##
+$NETGLUBROOTPATH/master/tools/sql/netglub.sql => location of the SQL schema file
+## create the db and install ##
+bash~$ mysql -u ($MYSQL_USER (root)) -p($MYSQL_PASSWORD)
+mysql> create database netglub;
+mysql> use netglub;
+mysql> create user "netglub"@"localhost";
+mysql> set password for "netglub"@"localhost" = password("netglub");
+mysql> GRANT ALL ON netglub.* TO "netglub"@"localhost";
+mysql> quit
+bash~$ mysql -u ($MYSQL_USER (root)) -p netglub < $NETGLUBROOTPATH/trunk/master/tools/sql/netglub.sql
+
+
+FIXES:
+## compiling gui (qng)
+add -lz to LIBS= in Makefile
+## compiling master
+add #Include <unistd.h> to src/main.cpp
+## bad python shebangs
+from $NETGLUBROOTPATH/slave/data/transforms run find . -type f -exec sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python2/g' {} \;
+
+RUN:
+## run the master first
+## then run the slave
+## then run the client
+
+
+MYSQL:
+PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL root USER !
+To do so, start the server, then issue the following commands:
+
+/usr/bin/mysqladmin -u root password 'new-password'
+/usr/bin/mysqladmin -u root -h darkmatter password 'new-password'
+
+Alternatively you can run:
+/usr/bin/mysql_secure_installation
+
+which will also give you the option of removing the test
+databases and anonymous user created by default.  This is
+strongly recommended for production servers.
+
+AUTOFIX gui Makefile:
+#!/bin/bash
+
+SCRUB=$(awk '/LIBS.+=/' Makefile)
+sed -i 's,'"$SCRUB"',&-lz,' Makefile
+
+AUTOFIX main.cpp master source file:
+sed -i 's,'"#include <getopt.h>"',&\n#include <unistd.h>,' main.cpp
+

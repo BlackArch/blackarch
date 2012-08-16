@@ -1,0 +1,100 @@
+How to write a transform
+
+« We shall not fail or falter; we shall not weaken or tire…Give us the tools and we will finish the job. »
+Sir Winston Churchill, BBC radio broadcast, 1941
+1.What is a transform?
+
+Transform is basically a request that uses an input entity and gives out one ore more entities. These input and output entities can have basic or innovating relationships, for instance, have a look at a basic transform : IpToIpBlock[whois]
+
+2.Which langage
+
+The transform script can be yet written either in php or python, and you can also add any additional language by writing the appropriate api.
+
+a.Transform flexibility : you can either place your transform on a Netglub standalone client or on a separated slave (in the multitier architecture exposed in the general documentation).
+
+b.Current transforms list
+
+See reference guide.
+
+3.Transforms technical overview:
+
+a.Slave transforms directory tree:
+
+/netglub/slave/data/api : this is the place to put the apis needed to use different scripting languages in your transforms.
+Php and Python are yet available.
+/netglub/slave/data/plugins :this is the very place where plugins are compiled for each supported langage
+/netglub/slave/data/transforms : each transform is packaged in a directory (further information below)
+b.Transform structure:
+
+Each transform is packaged in this way:
+conf.xml : this is the configuration xml file (cf …)
+generic_transform.py : this is a symbolic link to the transform language’s api
+README.txt : short transform description and dependencies
+transform : the very script
+conf.xml:
+Hint : You will find standards input/output in a dedicated repository inside the master’s sources.
+
+./master/data/entities
+
+each entity must respect this tree:
+
+<?xml version='1.0'?>
+<!DOCTYPE TransformSchema>
+You must fill the transform name, its longname and transform type, you should set it up to generic
+
+<transform name="IpToPorts" longName="To Ports [Nmap]" type="generic" >
+Transform description
+
+<description>Transforms an IP or an IP range to a list of ports</description>
+You can add some optional parameters, you can typically use applications such as nmap with expected accuracy :
+we can use aggressiveness, and special options in this case:
+
+  <parameters>
+    <param name="aggressiveness" longName="Nmap aggressiveness" description="Nmap -T option's value" default="5" optional="true" level="advanced" format="int">
+      <int min="1" max="5"/>
+    </param>
+  </parameters>
+
+The expected entity in input
+  <input>
+    <entity type="ip-address" />
+  </input>
+
+The expected entities to output
+  <output>
+    <entity type="port" />
+  </output>
+</transform>
+====conf.xml==== ends
+
+
+generic_transform:
+You must create the symbolic link with the appropriate generic_transform inside the transform directory:
+
+hint : here we are using the python api.
+
+README.txt :
+You have to fill this file with a short description of what should do the transform, and above all you should clearly show its dependencies, in our example, it could be nmap...
+
+The very script “transform”:
+Php style
+Better than giving here the best programming practice, we recommend you to have a look at the IpToOsPhp transform. You should keep in mind that it must be as simple as possible, and use and provide the exacts input/output expected in conf.xml.
+
+Python style
+The same way as php style
+
+4.Testing your new transform
+
+Local testing
+Before any integration of your new transform into your Netglub architecture, you may test it locally.
+You simply need this command line in the transform directory:
+
+Transform deployment over Netglub architecture
+Once your transform works pretty good locally, you may test it over the Netglub architecture, you will have to deploy your source code and make some additionnal actions:
+
+1. Copy conf.xml of your transform repository in ./master/data/transforms/
+2. Create data in relatives fields:
+In table join_groups_transforms : create the association between a given groupname (community, fingerprinting,…) and the transform name.
+In table join_transforms_category_transforms : create the association between the category_name (default, dns_lookup,…) and the transform name.
+In table transforms, you must create your transform, and enable it with 1. For administrative reasons, you can disable this transform or any other with a null value there.
+3. You can now restart your master, your slave, the new transform should appear in the entities context menu.

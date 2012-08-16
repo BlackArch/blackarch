@@ -1,0 +1,57 @@
+# Maintainer: Ari Mizrahi <codemunchies@gmail.com>
+
+pkgname=netglub
+pkgver=1.0
+pkgrel=1
+pkgdesc="the really open source information gathering tool"
+arch=('i686' 'x86_64')
+url="http://www.netglub.org"
+license=('GPL')
+source=(
+  "http://www.blackarch.org/pkgs/$pkgname-$pkgver.tar.gz"
+  "http://www.blackarch.org/dsktp/blackarch-$pkgname.desktop"
+)
+depends=('mysql' 'mysql-clients' 'libmysqlclient' 'qt' 'sqlitebrowser' 'gdb' 'graphviz')
+md5sums=('
+  c91005ccbd1010b7883f07e2d0e08e0a
+  2a8876d5472290a267b0f738a7be39d8
+')
+
+build() {
+  # CHANGE TO MASTER PATH
+  cd "$srcdir/$pkgname-$pkgver/master"
+  # FIX MAIN.CPP
+  sed -i 's,'"#include <getopt.h>"',&\n#include <unistd.h>,' src/main.cpp
+  # GENERATE THE MAKEFILE
+  qmake
+  # BUILD IT
+  make
+
+  # CHANGE TO SLAVE PATH
+  cd "$srcdir/$pkgname-$pkgver/slave"
+  # GENERATE THE MAKEFILE
+  qmake
+  # BUILD IT
+  make
+  # FIX PYTHON SHEBANGS IN TRANSFORMS
+  find data/transforms -type f -exec sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python2/g' {} \;
+  
+  # CHANGE TO GUI PATH
+  cd "$srcdir/$pkgname-$pkgver/qng"
+  # GENERATE THE MAKEFILE
+  qmake
+  # FIX THE MAKEFILE
+  SCRUB=$(awk '/LIBS.+=/' Makefile)
+  sed -i 's,'"$SCRUB"',&-lz,' Makefile
+  # BUILD IT
+  make
+}
+
+package() {
+  cd "$srcdir"
+  install -Dm644 blackarch-${pkgname}.desktop ${pkgdir}/usr/share/applications/blackarch-${pkgname}.desktop
+
+  cd "$srcdir/$pkgname-$pkgver"
+  install -dm755 ${pkgdir}/blackarch/intelligence_gathering/netglub
+  cp --preserve=mode -r * ${pkgdir}/blackarch/intelligence_gathering/netglub
+}
