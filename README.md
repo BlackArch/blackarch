@@ -21,3 +21,5 @@ To install the entire BlackArch toolkit:
 First, run "blackarch_buildpkg.sh" with a NON-ROOT account.  This script finds all the PKGBUILD files, downloads the source, and builds the packages for you, it handles the dependencies.
 
 Second, run the "blackarch_installpkg.sh" as ROOT.  This script finds all the packages that were built with makepkg and installs them for you.
+
+** NOTE: When installing using the blackarch install script, please make sure the following repositories are enabled: "core" "extra" "community" "multilib" **
