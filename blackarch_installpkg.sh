@@ -11,7 +11,7 @@ function error_exit {
 [[ "$(/usr/bin/id -u)" -eq 0 ]] || error_exit "script must be run as root!"
 
 ## NOT REALLY DEPENDENCIES BUT PACKAGES THAT WE'LL USE FROM OFFICIAL REPOS INSTEAD OF CREATING OUR OWN PKGBUILD
-pacman -Syu --noconfirm mysql mysql-clients dnsutils wine winetricks wine_gecko arpwatch aircrack-ng arp-scan vidalia tcpreplay pv ddrescue stunnel hping nmap pygtk gdb wireshark-cli wireshark-gtk tcpdump rdesktop ngrep netcat openssl jre7-openjdk testdisk macchanger smbclient net-tools base-devel
+pacman -Syu --noconfirm mysql mysql-clients dnsutils wine winetricks wine_gecko arpwatch aircrack-ng arp-scan vidalia tcpreplay pv ddrescue stunnel hping nmap pygtk gdb wireshark-cli wireshark-gtk ettercap ettercap-gtk tcpdump rdesktop ngrep netcat openssl jre7-openjdk testdisk macchanger smbclient net-tools base-devel
 
 ## ADD OFFICIAL PACKAGES AS SOFTLINKS INTO THE BLACKARCH LAYOUT, INCLUDE THE DESKTOP FILES FOR THE MENU
 mkdir -p /blackarch/exploitation/aircrack-ng
@@ -68,6 +68,11 @@ cp _desktops/blackarch-netcat.desktop /usr/share/applications/blackarch-netcat.d
 mkdir -p /blackarch/post_exploitation/stunnel
 ln -s /usr/bin/stunnel /blackarch/post_exploitation/stunnel/stunnel
 cp _desktops/blackarch-stunnel.desktop /usr/share/applications/blackarch-stunnel.desktop
+
+mkdir -p /blackarch/post_exploitation/ettercap
+ln -s /usr/bin/ettercap /blackarch/post_exploitation/ettercap/ettercap
+ln -s /usr/bin/ettercap-gtk /blackarch/post_exploitation/ettercap/ettercap-gtk
+cp _desktops/blackarch-ettercap.desktop /usr/share/applications/blackarch-ettercap.desktop
 
 mkdir -p /blackarch/vulnerability_analysis/macchanger
 ln -s /usr/bin/macchanger /blackarch/vulnerability_analysis/macchanger/macchanger
