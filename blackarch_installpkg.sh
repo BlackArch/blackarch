@@ -71,7 +71,6 @@ cp _desktops/blackarch-stunnel.desktop /usr/share/applications/blackarch-stunnel
 
 mkdir -p /blackarch/post_exploitation/ettercap
 ln -s /usr/bin/ettercap /blackarch/post_exploitation/ettercap/ettercap
-ln -s /usr/bin/ettercap-gtk /blackarch/post_exploitation/ettercap/ettercap-gtk
 cp _desktops/blackarch-ettercap.desktop /usr/share/applications/blackarch-ettercap.desktop
 
 mkdir -p /blackarch/vulnerability_analysis/macchanger
