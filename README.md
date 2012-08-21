@@ -32,8 +32,14 @@ with a `NON-ROOT account`.  This script finds all the PKGBUILD files, downloads 
 
 Second, run:
 
-	base~$ blackarch_installpkg.sh
+	bash~$ blackarch_installpkg.sh
 
 `as ROOT`.  This script finds all the packages that were built with makepkg and installs them for you.
+
+Lastly, run:
+
+	bash~$ blackarch_menus.sh
+
+`as ROOT`.  This final script will install the menu items for XFCE.
 
 *NOTE: When installing using the blackarch install script, please make sure the following repositories are enabled: "core" "extra" "community" "multilib"*
