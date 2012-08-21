@@ -73,6 +73,10 @@ mkdir -p /blackarch/post_exploitation/ettercap
 ln -s /usr/bin/ettercap /blackarch/post_exploitation/ettercap/ettercap
 cp _desktops/blackarch-ettercap.desktop /usr/share/applications/blackarch-ettercap.desktop
 
+mkdir -p /blackarch/post_exploitation/socat
+ln -s /usr/bin/socat /blackarch/post_exploitation/socat/socat
+cp _desktops/blackarch-socat.desktop /usr/share/applications/blackarch-socat.desktop
+
 mkdir -p /blackarch/vulnerability_analysis/macchanger
 ln -s /usr/bin/macchanger /blackarch/vulnerability_analysis/macchanger/macchanger
 cp _desktops/blackarch-macchanger.desktop /usr/share/applications/blackarch-macchanger.desktop
