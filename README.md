@@ -36,4 +36,4 @@ Second, run
 
 `as ROOT`.  This script finds all the packages that were built with makepkg and installs them for you.
 
-`* NOTE: When installing using the blackarch install script, please make sure the following repositories are enabled: "core" "extra" "community" "multilib" *`
+*NOTE: When installing using the blackarch install script, please make sure the following repositories are enabled: "core" "extra" "community" "multilib"*
