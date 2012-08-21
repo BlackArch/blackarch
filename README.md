@@ -30,7 +30,7 @@ First, run:
 
 with a `NON-ROOT account`.  This script finds all the PKGBUILD files, downloads the source, and builds the packages for you, it handles the dependencies.
 
-Second, run 
+Second, run:
 
 	base~$ blackarch_installpkg.sh
 
