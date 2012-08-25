@@ -29,6 +29,36 @@ ln -s /usr/sbin/airserv-ng /blackarch/exploitation/aircrack-ng/airserv-ng
 ln -s /usr/sbin/airtun-ng /blackarch/exploitation/aircrack-ng/airtun-ng
 cp _desktops/blackarch-aircrack-ng.desktop /usr/share/applications/blackarch-aircrack-ng.desktop
 
+mkdir -p /blackarch/forensics/sleuthkit
+ln -s /usr/bin/sorter /blackarch/forensics/sleuthkit/sorter
+ln -s /usr/bin/mactime /blackarch/forensics/sleuthkit/mactime
+ln -s /usr/bin/img_cat /blackarch/forensics/sleuthkit/img_cat
+ln -s /usr/bin/img_stat /blackarch/forensics/sleuthkit/img_stat
+ln -s /usr/bin/mmls /blackarch/forensics/sleuthkit/mmls
+ln -s /usr/bin/mmstat /blackarch/forensics/sleuthkit/mmstat
+ln -s /usr/bin/mmcat /blackarch/forensics/sleuthkit/mmcat
+ln -s /usr/bin/blkcalc /blackarch/forensics/sleuthkit/blkcalc
+ln -s /usr/bin/blkcat /blackarch/forensics/sleuthkit/blkcat
+ln -s /usr/bin/blkls /blackarch/forensics/sleuthkit/blkls
+ln -s /usr/bin/blkstat /blackarch/forensics/sleuthkit/blkstat
+ln -s /usr/bin/ffind /blackarch/forensics/sleuthkit/ffind
+ln -s /usr/bin/fls /blackarch/forensics/sleuthkit/fls
+ln -s /usr/bin/fsstat /blackarch/forensics/sleuthkit/fsstat
+ln -s /usr/bin/icat /blackarch/forensics/sleuthkit/icat
+ln -s /usr/bin/ifind /blackarch/forensics/sleuthkit/ifind
+ln -s /usr/bin/ils /blackarch/forensics/sleuthkit/ils
+ln -s /usr/bin/istat /blackarch/forensics/sleuthkit/istat
+ln -s /usr/bin/jcat /blackarch/forensics/sleuthkit/jcat
+ln -s /usr/bin/jls /blackarch/forensics/sleuthkit/jls
+ln -s /usr/bin/hfind /blackarch/forensics/sleuthkit/hfind
+ln -s /usr/bin/srch_strings /blackarch/forensics/sleuthkit/srch_strings
+ln -s /usr/bin/sigfind /blackarch/forensics/sleuthkit/sigfind
+ln -s /usr/bin/tsk_recover /blackarch/forensics/sleuthkit/tsk_recover
+ln -s /usr/bin/tsk_loaddb /blackarch/forensics/sleuthkit/tsk_loaddb
+ln -s /usr/bin/tsk_comparedir /blackarch/forensics/sleuthkit/tsk_comparedir
+ln -s /usr/bin/tsk_gettimes /blackarch/forensics/sleuthkit/tsk_gettimes
+cp _desktops/blackarch-sleuthkit.desktop /usr/share/applications/blackarch-sleuthkit.desktop
+
 mkdir -p /blackarch/forensics/testdisk
 ln -s /usr/bin/testdisk /blackarch/forensics/testdisk/testdisk
 cp _desktops/blackarch-testdisk.desktop /usr/share/applications/blackarch-testdisk.desktop
