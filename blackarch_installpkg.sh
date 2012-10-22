@@ -11,7 +11,7 @@ function error_exit {
 [[ "$(/usr/bin/id -u)" -eq 0 ]] || error_exit "script must be run as root!"
 
 ## NOT REALLY DEPENDENCIES BUT PACKAGES THAT WE'LL USE FROM OFFICIAL REPOS INSTEAD OF CREATING OUR OWN PKGBUILD
-pacman -Syu --noconfirm mysql mysql-clients dnsutils wine winetricks wine_gecko arpwatch aircrack-ng arp-scan vidalia tcpreplay pv ddrescue stunnel hping nmap pygtk gdb wireshark-cli wireshark-gtk ettercap ettercap-gtk tcpdump rdesktop ngrep netcat openssl jre7-openjdk testdisk macchanger smbclient net-tools base-devel
+pacman -Syu --noconfirm mysql mysql-clients dnsutils wine winetricks wine_gecko arpwatch aircrack-ng arp-scan vidalia tcpreplay pv ddrescue stunnel hping nmap pygtk gdb wireshark-cli wireshark-gtk ettercap ettercap-gtk tcpdump rdesktop ngrep netcat openssl jre7-openjdk testdisk macchanger smbclient net-tools base-devel python python2
 
 ## ADD OFFICIAL PACKAGES AS SOFTLINKS INTO THE BLACKARCH LAYOUT, INCLUDE THE DESKTOP FILES FOR THE MENU
 mkdir -p /blackarch/exploitation/aircrack-ng
