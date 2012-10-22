@@ -22,7 +22,7 @@ Packages
 
 Some of the packages are not built from a PKGBUILD file, you'll see "ln2tool" file in the path it's because I install the tool from the ArchLinux official repositories instead of building a PKGBUILD file for it, and I softlink to it into the BlackArch toolset.  All tools get placed into the BlackArch path layout as you see in the github repository.  
 
-Some of the packages are not built from a PKGBUILD file, they're installed from the official repositories and softlinked into the BlackArch layout.  This is a little sloppy and we'll fix this in a later release but the _desktops directory contains the .desktop files for these packages to include them in the BlackArch xfce menu.
+Packages that are not built from a PKGBUILD file, they're installed from the official repositories and softlinked into the BlackArch layout.  This is a little sloppy and we'll fix this in a later release but the _desktops directory contains the .desktop files for these packages to include them in the BlackArch xfce menu.
 
 To install individually follow official AUR instructions and run "makepkg" command on all PKGBUILD files for tools you want installed.
 
