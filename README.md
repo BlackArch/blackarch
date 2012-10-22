@@ -1,6 +1,10 @@
 BlackArch
 =========
 
+*NOTE: When installing using the blackarch install script, please make sure the following repositories are enabled: "core" "extra" "community" "multilib"*
+
+*NOTE2: Not all tools have a GUI.  Since they are CLI based tools when you click on them in the menu you will find that sometimes a black terminal will appear and quickly disappear.  I placed the tools in the menu so they're easily visible and you know what is available in the toolset, if you see this happens just run the tool from a terminal.*
+
 The Low Down
 ------------
 
@@ -41,5 +45,3 @@ Lastly, run:
 	bash~$ blackarch_menus.sh
 
 `as ROOT`.  This final script will install the menu items for XFCE.
-
-*NOTE: When installing using the blackarch install script, please make sure the following repositories are enabled: "core" "extra" "community" "multilib"*
