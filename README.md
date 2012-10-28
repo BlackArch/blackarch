@@ -5,6 +5,8 @@ BlackArch
 
 *NOTE2: Not all tools have a GUI.  Since they are CLI based tools when you click on them in the menu you will find that sometimes a black terminal will appear and quickly disappear.  I placed the tools in the menu so they're easily visible and you know what is available in the toolset, if you see this happens just run the tool from a terminal.*
 
+*NOTE3: When all else fails, run `as ROOT` user! Most tools need to do manipulative computey stuff with packets and devices, these actions are only allowed to be performed by the ROOT user.*
+
 The Low Down
 ------------
 
