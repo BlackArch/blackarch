@@ -28,7 +28,8 @@ Packages that are not built from a PKGBUILD file, they're installed from the off
 
 To install individually follow official AUR instructions and run "makepkg" command on all PKGBUILD files for tools you want installed.
 
-To install the entire BlackArch toolkit:
+To install the entire BlackArch toolkit
+---------------------------------------
 
 First, run:
 
