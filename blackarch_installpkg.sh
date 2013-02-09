@@ -11,7 +11,43 @@ function error_exit {
 [[ "$(/usr/bin/id -u)" -eq 0 ]] || error_exit "script must be run as root!"
 
 ## NOT REALLY DEPENDENCIES BUT PACKAGES THAT WE'LL USE FROM OFFICIAL REPOS INSTEAD OF CREATING OUR OWN PKGBUILD
-pacman -Syu --noconfirm mysql mysql-clients dnsutils wine winetricks wine_gecko arpwatch aircrack-ng arp-scan vidalia tcpreplay pv ddrescue stunnel hping nmap pygtk gdb wireshark-cli wireshark-gtk ettercap ettercap-gtk tcpdump rdesktop ngrep netcat openssl jre7-openjdk testdisk macchanger smbclient net-tools base-devel python python2
+pacman -Syu --noconfirm \
+aircrack-ng \
+arp-scan \
+arpwatch \
+base-devel \
+ddrescue \
+dnsutils \
+ettercap \
+ettercap-gtk \
+gdb \
+hping \
+jre7-openjdk \
+macchanger \
+mysql \
+mysql-clients \
+net-tools \
+netcat \
+ngrep \
+nmap \
+openssl \
+pv \
+pygtk \
+python \
+python2 \
+rdesktop \
+smbclient \
+stunnel \
+tcpdump \
+tcpreplay \
+testdisk \
+vidalia \
+wine \
+wine_gecko \
+winetricks \
+wireshark-cli \
+wireshark-gtk \
+proxytunnel 
 
 ## FIX FOR BUG #1 THIS IS A DEPENDENCY
 cpan -i Net::Netmask
@@ -92,6 +128,10 @@ ln -s /usr/bin/wireshark /blackarch/intelligence_gathering/wireshark/wireshark
 ln -s /usr/bin/tshark /blackarch/intelligence_gathering/wireshark/tshark
 ln -s /usr/bin/editcap /blackarch/intelligence_gathering/wireshark/editcap
 cp _desktops/blackarch-wireshark.desktop /usr/share/applications/blackarch-wireshark.desktop
+
+mkdir -p /blackarch/post_exploitation/proxytunnel
+ln -s /usr/bin/proxytunnel /blackarch/post_exploitation/proxytunnel/proxytunnel
+cp _desktops/blackarch-proxytunnel.desktop /usr/share/applications/blackarch-proxytunnel.desktop
 
 mkdir -p /blackarch/post_exploitation/netcat
 ln -s /usr/bin/netcat /blackarch/post_exploitation/netcat/netcat
