@@ -47,7 +47,8 @@ wine_gecko \
 winetricks \
 wireshark-cli \
 wireshark-gtk \
-proxytunnel 
+proxytunnel \
+john
 
 ## FIX FOR BUG #1 THIS IS A DEPENDENCY
 cpan -i Net::Netmask
@@ -149,6 +150,10 @@ cp _desktops/blackarch-ettercap.desktop /usr/share/applications/blackarch-etterc
 mkdir -p /blackarch/post_exploitation/socat
 ln -s /usr/bin/socat /blackarch/post_exploitation/socat/socat
 cp _desktops/blackarch-socat.desktop /usr/share/applications/blackarch-socat.desktop
+
+mkdir -p /blackarch/vulnerability_analysis/john
+ln -s /usr/bin/john /blackarch/vulnerability_analysis/john/john
+cp _desktops/blackarch-john.desktop /usr/share/applications/blackarch-john.desktop
 
 mkdir -p /blackarch/vulnerability_analysis/macchanger
 ln -s /usr/bin/macchanger /blackarch/vulnerability_analysis/macchanger/macchanger
