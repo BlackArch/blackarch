@@ -53,6 +53,7 @@ ncrack
 
 ## FIX FOR BUG #1 THIS IS A DEPENDENCY
 cpan -i Net::Netmask
+cpan -i Crypt::SSLeay
 
 ## ADD OFFICIAL PACKAGES AS SOFTLINKS INTO THE BLACKARCH LAYOUT, INCLUDE THE DESKTOP FILES FOR THE MENU
 mkdir -p /blackarch/exploitation/aircrack-ng
