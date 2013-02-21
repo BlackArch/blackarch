@@ -22,19 +22,19 @@ ettercap \
 ettercap-gtk \
 gdb \
 hping \
+john \
 jre7-openjdk \
 macchanger \
 mysql \
 mysql-clients \
 net-tools \
 netcat \
+ncrack \
 ngrep \
 nmap \
 openssl \
 pv \
 pygtk \
-python \
-python2 \
 rdesktop \
 smbclient \
 stunnel \
@@ -47,12 +47,11 @@ wine_gecko \
 winetricks \
 wireshark-cli \
 wireshark-gtk \
-proxytunnel \
-john \
-ncrack
+proxytunnel
 
 ## FIX FOR BUG #1 THIS IS A DEPENDENCY
 cpan -i Net::Netmask
+## DEPENDENCY FOR NIKTO
 cpan -i Crypt::SSLeay
 
 ## ADD OFFICIAL PACKAGES AS SOFTLINKS INTO THE BLACKARCH LAYOUT, INCLUDE THE DESKTOP FILES FOR THE MENU
