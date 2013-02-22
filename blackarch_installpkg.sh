@@ -42,6 +42,7 @@ tcpdump \
 tcpreplay \
 testdisk \
 vidalia \
+wget \
 wine \
 wine_gecko \
 winetricks \
@@ -68,7 +69,7 @@ ln -s /usr/sbin/airmon-ng /blackarch/exploitation/aircrack-ng/airmon-ng
 ln -s /usr/sbin/airodump-ng /blackarch/exploitation/aircrack-ng/airodump-ng
 ln -s /usr/sbin/airserv-ng /blackarch/exploitation/aircrack-ng/airserv-ng
 ln -s /usr/sbin/airtun-ng /blackarch/exploitation/aircrack-ng/airtun-ng
-cp _desktops/blackarch-aircrack-ng.desktop /usr/share/applications/blackarch-aircrack-ng.desktop
+wget -O /usr/share/applications/blackarch-aircrack-ng.desktop http://www.blackarch.org/dsktp/blackarch-aircrack-ng.desktop
 
 mkdir -p /blackarch/forensics/sleuthkit
 ln -s /usr/bin/sorter /blackarch/forensics/sleuthkit/sorter
@@ -98,90 +99,90 @@ ln -s /usr/bin/tsk_recover /blackarch/forensics/sleuthkit/tsk_recover
 ln -s /usr/bin/tsk_loaddb /blackarch/forensics/sleuthkit/tsk_loaddb
 ln -s /usr/bin/tsk_comparedir /blackarch/forensics/sleuthkit/tsk_comparedir
 ln -s /usr/bin/tsk_gettimes /blackarch/forensics/sleuthkit/tsk_gettimes
-cp _desktops/blackarch-sleuthkit.desktop /usr/share/applications/blackarch-sleuthkit.desktop
+wget -O /usr/share/applications/blackarch-sleuthkit.desktop http://www.blackarch.org/dsktp/blackarch-sleuthkit.desktop
 
 mkdir -p /blackarch/forensics/testdisk
 ln -s /usr/bin/testdisk /blackarch/forensics/testdisk/testdisk
-cp _desktops/blackarch-testdisk.desktop /usr/share/applications/blackarch-testdisk.desktop
+wget -O /usr/share/applications/blackarch-testdisk.desktop http://www.blackarch.org/dsktp/blackarch-testdisk.desktop
 
 mkdir -p /blackarch/forensics/ddrescue
 ln -s /usr/bin/ddrescue /blackarch/forensics/ddrescue/ddrescue
-cp _desktops/blackarch-ddrescue.desktop /usr/share/applications/blackarch-ddrescue.desktop
+wget -O /usr/share/applications/blackarch-ddrescue.desktop http://www.blackarch.org/dsktp/blackarch-ddrescue.desktop
 
 mkdir -p /blackarch/intelligence_gathering/nmap
 ln -s /usr/bin/nmap /blackarch/intelligence_gathering/nmap/nmap
 ln -s /usr/bin/zenmap /blackarch/intelligence_gathering/nmap/zenmap
-cp _desktops/blackarch-nmap.desktop /usr/share/applications/blackarch-nmap.desktop
+wget -O /usr/share/applications/blackarch-nmap.desktop http://www.blackarch.org/dsktp/blackarch-nmap.desktop
 
 mkdir -p /blackarch/intelligence_gathering/arp-scan
 ln -s /usr/bin/arp-scan /blackarch/intelligence_gathering/arp-scan/arp-scan
-cp _desktops/blackarch-arp-scan.desktop /usr/share/applications/blackarch-arp-scan.desktop
+wget -O /usr/share/applications/blackarch-arp-scan.desktop http://www.blackarch.org/dsktp/blackarch-arp-scan.desktop
 
 mkdir -p /blackarch/intelligence_gathering/dig
 ln -s /usr/bin/dig /blackarch/intelligence_gathering/dig/dig
-cp _desktops/blackarch-dig.desktop /usr/share/applications/blackarch-dig.desktop
+wget -O /usr/share/applications/blackarch-dig.desktop http://www.blackarch.org/dsktp/blackarch-dig.desktop
 
 mkdir -p /blackarch/intelligence_gathering/tcpdump
 ln -s /usr/sbin/tcpdump /blackarch/intelligence_gathering/tcpdump/tcpdump
-cp _desktops/blackarch-tcpdump.desktop /usr/share/applications/blackarch-tcpdump.desktop
+wget -O /usr/share/applications/blackarch-tcpdump.desktop http://www.blackarch.org/dsktp/blackarch-tcpdump.desktop
 
 mkdir -p /blackarch/intelligence_gathering/wireshark
 ln -s /usr/bin/wireshark /blackarch/intelligence_gathering/wireshark/wireshark
 ln -s /usr/bin/tshark /blackarch/intelligence_gathering/wireshark/tshark
 ln -s /usr/bin/editcap /blackarch/intelligence_gathering/wireshark/editcap
-cp _desktops/blackarch-wireshark.desktop /usr/share/applications/blackarch-wireshark.desktop
+wget -O /usr/share/applications/blackarch-wireshark.desktop http://www.blackarch.org/dsktp/blackarch-wireshark.desktop
 
 mkdir -p /blackarch/post_exploitation/proxytunnel
 ln -s /usr/bin/proxytunnel /blackarch/post_exploitation/proxytunnel/proxytunnel
-cp _desktops/blackarch-proxytunnel.desktop /usr/share/applications/blackarch-proxytunnel.desktop
+wget -O /usr/share/applications/blackarch-proxytunnel.desktop http://www.blackarch.org/dsktp/blackarch-proxytunnel.desktop
 
 mkdir -p /blackarch/post_exploitation/netcat
 ln -s /usr/bin/netcat /blackarch/post_exploitation/netcat/netcat
 ln -s /usr/bin/ncat /blackarch/post_exploitation/netcat/ncat
-cp _desktops/blackarch-netcat.desktop /usr/share/applications/blackarch-netcat.desktop
+wget -O /usr/share/applications/blackarch-netcat.desktop http://www.blackarch.org/dsktp/blackarch-netcat.desktop
 
 mkdir -p /blackarch/post_exploitation/stunnel
 ln -s /usr/bin/stunnel /blackarch/post_exploitation/stunnel/stunnel
-cp _desktops/blackarch-stunnel.desktop /usr/share/applications/blackarch-stunnel.desktop
+wget -O /usr/share/applications/blackarch-stunnel.desktop http://www.blackarch.org/dsktp/blackarch-stunnel.desktop
 
 mkdir -p /blackarch/post_exploitation/ettercap
 ln -s /usr/bin/ettercap /blackarch/post_exploitation/ettercap/ettercap
-cp _desktops/blackarch-ettercap.desktop /usr/share/applications/blackarch-ettercap.desktop
+wget -O /usr/share/applications/blackarch-ettercap.desktop http://www.blackarch.org/dsktp/blackarch-ettercap.desktop
 
 mkdir -p /blackarch/post_exploitation/socat
 ln -s /usr/bin/socat /blackarch/post_exploitation/socat/socat
-cp _desktops/blackarch-socat.desktop /usr/share/applications/blackarch-socat.desktop
+wget -O /usr/share/applications/blackarch-socat.desktop http://www.blackarch.org/dsktp/blackarch-socat.desktop
 
 mkdir -p /blackarch/vulnerability_analysis/john
 ln -s /usr/bin/john /blackarch/vulnerability_analysis/john/john
-cp _desktops/blackarch-john.desktop /usr/share/applications/blackarch-john.desktop
+wget -O /usr/share/applications/blackarch-john.desktop http://www.blackarch.org/dsktp/blackarch-john.desktop
 
 mkdir -p /blackarch/vulnerability_analysis/ncrack
 ln -s /usr/bin/ncrack /blackarch/vulnerability_analysis/ncrack/ncrack
-cp _desktops/blackarch-ncrack.desktop /usr/share/applications/blackarch-ncrack.desktop
+wget -O /usr/share/applications/blackarch-ncrack.desktop http://www.blackarch.org/dsktp/blackarch-ncrack.desktop
 
 mkdir -p /blackarch/vulnerability_analysis/macchanger
 ln -s /usr/bin/macchanger /blackarch/vulnerability_analysis/macchanger/macchanger
-cp _desktops/blackarch-macchanger.desktop /usr/share/applications/blackarch-macchanger.desktop
+wget -O /usr/share/applications/blackarch-macchanger.desktop http://www.blackarch.org/dsktp/blackarch-macchanger.desktop
 
 mkdir -p /blackarch/vulnerability_analysis/hping
 ln -s /usr/sbin/hping /blackarch/vulnerability_analysis/hping/hping
-cp _desktops/blackarch-hping.desktop /usr/share/applications/blackarch-hping.desktop
+wget -O /usr/share/applications/blackarch-hping.desktop http://www.blackarch.org/dsktp/blackarch-hping.desktop
 
 mkdir -p /blackarch/vulnerability_analysis/tcpreplay
 ln -s /usr/bin/tcpreplay /blackarch/vulnerability_analysis/tcpreplay/tcpreplay
-cp _desktops/blackarch-tcpreplay.desktop /usr/share/applications/blackarch-tcpreplay.desktop
-
-mkdir -p /blackarch/miscellaneous/windows_binaries
-cp -R  $workingpath/miscellaneous/windows_binaries/* /blackarch/miscellaneous/windows_binaries
+wget -O /usr/share/applications/blackarch-tcpreplay.desktop http://www.blackarch.org/dsktp/blackarch-tcpreplay.desktop
 
 mkdir -p /blackarch/miscellaneous/arpwatch
 ln -s /usr/sbin/arpwatch /blackarch/miscellaneous/arpwatch/arpwatch
-cp _desktops/blackarch-arpwatch.desktop /usr/share/applications/blackarch-arpwatch.desktop
+wget -O /usr/share/applications/blackarch-arpwatch.desktop http://www.blackarch.org/dsktp/blackarch-arpwatch.desktop
 
 mkdir -p /blackarch/miscellaneous/vidalia
 ln -s /usr/bin/vidalia /blackarch/miscellaneous/vidalia/vidalia
-cp _desktops/blackarch-vidalia.desktop /usr/share/applications/blackarch-vidalia.desktop
+wget -O /usr/share/applications/blackarch-vidalia.desktop http://www.blackarch.org/dsktp/blackarch-vidalia.desktop
+
+mkdir -p /blackarch/miscellaneous/windows_binaries
+cp -R  $workingpath/miscellaneous/windows_binaries/* /blackarch/miscellaneous/windows_binaries
 
 ## FIND ALL THE PACKAGES WE BUILT RECURSIVELY AND STORE THE PATHS IN path.log
 find $workingpath -type f -name "*.tar.xz" >> path.log
