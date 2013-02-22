@@ -3,7 +3,7 @@ BlackArch
 
 *Not all tools have a GUI.  When you click on tools in the menu that are CLI based you will find that sometimes a black terminal will appear and quickly disappear.  Tools are placed in the menu so they're easily visible and you know what is available in the toolset, if you see this happens just run the tool from a terminal.*
 
-*Most tools will appear they don't run properly, when all else fails run `as ROOT` user! The toolset is designed to be used as the ROOT user since most tools need to do manipulative computey stuff with packets and devices, these actions are only allowed to be performed by the ROOT user.*
+*Most tools will appear they don't run properly, when all else fails run as `root` user! The toolset is designed to be used as the `root` user since most tools need to do manipulative computey stuff with packets and devices, these actions are only allowed to be performed by the `root` user.*
 
 Packages
 --------
@@ -30,6 +30,6 @@ Second, run:
 
 Lastly (and optionally), run:
 
-	bash~$ blackarch_installxfcemenus.sh
+	bash~$ blackarch_installxfcemenu.sh
 
 `as ROOT`.  This final script will install the menu items for XFCE.
