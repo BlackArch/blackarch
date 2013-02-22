@@ -18,7 +18,6 @@ arpwatch \
 base-devel \
 ddrescue \
 dnsutils \
-ettercap \
 ettercap-gtk \
 gdb \
 hping \
