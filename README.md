@@ -28,8 +28,8 @@ Second, run:
 
 `as ROOT`.  This script finds all the packages that were built with makepkg and installs them for you.
 
-Lastly, run:
+Lastly (and optionally), run:
 
-	bash~$ blackarch_menus.sh
+	bash~$ blackarch_installxfcemenus.sh
 
 `as ROOT`.  This final script will install the menu items for XFCE.
