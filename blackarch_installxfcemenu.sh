@@ -19,15 +19,12 @@ wget -O /usr/share/desktop-directories/xfce-blackarch-blackmodeling.directory ht
 
 
 ## COPY THE ICONS FOR THE MENU ITEMS
-wget -O /usr/share/pixmaps/blackarch.png http://www.blackarch.org/xfce/menu-items/icons/blackarch.png
-wget -O /usr/share/pixmaps/blackarch_001.png http://www.blackarch.org/xfce/menu-items/icons/blackarch_001.png
-wget -O /usr/share/pixmaps/blackarch_002.png http://www.blackarch.org/xfce/menu-items/icons/blackarch_002.png
-wget -O /usr/share/pixmaps/blackarch_003.png http://www.blackarch.org/xfce/menu-items/icons/blackarch_003.png
-wget -O /usr/share/pixmaps/blackarch_004.png http://www.blackarch.org/xfce/menu-items/icons/blackarch_004.png
-wget -O /usr/share/pixmaps/blackarch_005.png http://www.blackarch.org/xfce/menu-items/icons/blackarch_005.png
-wget -O /usr/share/pixmaps/blackarch_006.png http://www.blackarch.org/xfce/menu-items/icons/blackarch_006.png
-wget -O /usr/share/pixmaps/blackarch_007.png http://www.blackarch.org/xfce/menu-items/icons/blackarch_007.png
-wget -O /usr/share/pixmaps/blackarch_008.png http://www.blackarch.org/xfce/menu-items/icons/blackarch_008.png
-wget -O /usr/share/pixmaps/blackarch_009.png http://www.blackarch.org/xfce/menu-items/icons/blackarch_009.png
-wget -O /usr/share/pixmaps/blackarch_010.png http://www.blackarch.org/xfce/menu-items/icons/blackarch_010.png
-wget -O /usr/share/pixmaps/blackarch_011.png http://www.blackarch.org/xfce/menu-items/icons/blackarch_011.png
+wget -O /usr/share/pixmaps/blackarch-start.png http://www.blackarch.org/xfce/menu-items/icons/blackarch-start.png
+wget -O /usr/share/pixmaps/blackarch-main-black.png http://www.blackarch.org/xfce/menu-items/icons/blackarch-main-black.png
+wget -O /usr/share/pixmaps/blackarch-main-blue.png http://www.blackarch.org/xfce/menu-items/icons/blackarch-main-blue.png
+wget -O /usr/share/pixmaps/blackarch-main-brown.png http://www.blackarch.org/xfce/menu-items/icons/blackarch-main-brown.png
+wget -O /usr/share/pixmaps/blackarch-main-green.png http://www.blackarch.org/xfce/menu-items/icons/blackarch-main-green.png
+wget -O /usr/share/pixmaps/blackarch-main-grey.png http://www.blackarch.org/xfce/menu-items/icons/blackarch-main-grey.png
+wget -O /usr/share/pixmaps/blackarch-main-purple.png http://www.blackarch.org/xfce/menu-items/icons/blackarch-main-purple.png
+wget -O /usr/share/pixmaps/blackarch-main-red.png http://www.blackarch.org/xfce/menu-items/icons/blackarch-main-red.png
+wget -O /usr/share/pixmaps/blackarch-main-yellow.png http://www.blackarch.org/xfce/menu-items/icons/blackarch-main-yellow.png
