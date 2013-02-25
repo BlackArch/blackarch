@@ -11,7 +11,7 @@ do
 	## CHANGE TO THE DIRECTORY OF THE PKGBUILD
 	cd `dirname $pkgbuild`
 	## BUILD THE PACKAGE AND AUTOMATICALLY PULL ANY DEPENDENCIES
-    makepkg -s PKGBUILD
+	makepkg -s PKGBUILD
 done
 
 ## DELETE THE path.log
