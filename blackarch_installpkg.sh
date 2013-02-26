@@ -1,5 +1,7 @@
 #!/bin/bash
 workingpath=$PWD  ## STORE THE CURRENT PWD WE NEED IT LATER
+## IF path.log FILE EXISTS, GET RID OF IT
+[[ -f "path.log" ]] && rm path.log
 
 ## PRETTY COLORS
 function error_exit {

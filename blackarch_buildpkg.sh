@@ -1,5 +1,7 @@
 #!/bin/bash
 workingpath=$PWD  ## store the current path so we can use it later
+## IF path.log FILE EXISTS, GET RID OF IT
+[[ -f "path.log" ]] && rm path.log
 
 ## FIND ALL THE PKGBUILD FILES AND STORE THE PATHS IN path.log
 find $workingpath -type f -name "PKGBUILD" >> path.log
