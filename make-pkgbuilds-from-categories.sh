@@ -32,17 +32,12 @@ EOF
 
 cat <<\EOF
 #build() {
-#  cd "$srcdir/$pkgname-$pkgver"
-#
-#  ./configure --prefix=/usr
-#  make
+#	:
 #}
 
-#package() {
-#  cd "$srcdir/$pkgname-$pkgver"
-#
-#  make DESTDIR="$pkgdir/" install
-#}
+package() {
+	:
+}
 EOF
 ) >> pkgbuilds/PKGBUILD-$(basename $cat)
 done
