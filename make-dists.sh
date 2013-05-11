@@ -6,6 +6,6 @@ rm dists/*.gz
 
 mkdir dists
 cd dists
-for pkgbuild in ../pkgbuilds/PKGBUILD-* ; do
+for pkgbuild in ../pseudo-packages/PKGBUILD-* ; do
 	makepkg -f --source -p "$pkgbuild"
 done

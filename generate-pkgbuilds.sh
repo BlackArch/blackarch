@@ -1,7 +1,7 @@
 #!/bin/bash
 # Generates PKGBUILD files from the category lists.
 
-rm pkgbuilds/PKGBUILD-*
+rm pseudo-packages/PKGBUILD-*
 
 for cat in categories/* ; do
 (
@@ -43,5 +43,5 @@ package() {
 	:
 }
 EOF
-) > pkgbuilds/PKGBUILD-$(basename $cat)
+) > pseudo-packages/PKGBUILD-$(basename $cat)
 done
