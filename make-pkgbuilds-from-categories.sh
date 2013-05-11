@@ -39,5 +39,5 @@ package() {
 	:
 }
 EOF
-) >> pkgbuilds/PKGBUILD-$(basename $cat)
+) > pkgbuilds/PKGBUILD-$(basename $cat)
 done
