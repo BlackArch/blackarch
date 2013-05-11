@@ -3,7 +3,7 @@
 for cat in categories/* ; do
 (
 cat <<EOF
-pkgname=archtrack-$cat
+pkgname=archtrack-$(basename $cat)
 pkgver=0.0
 pkgrel=0
 pkgdesc="security pseudo-package"
