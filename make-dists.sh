@@ -2,6 +2,7 @@
 # Makes tarballs for uploading to the AUR.
 
 #set -e
+rm dists/*.gz
 
 mkdir dists
 cd dists

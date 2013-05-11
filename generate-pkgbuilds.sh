@@ -1,6 +1,8 @@
 #!/bin/bash
 # Generates PKGBUILD files from the category lists.
 
+rm pkgbuilds/PKGBUILD-*
+
 for cat in categories/* ; do
 (
 cat <<EOF
