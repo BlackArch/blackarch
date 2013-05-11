@@ -1,4 +1,5 @@
 #!/bin/bash
+# Generates PKGBUILD files from the category lists.
 
 for cat in categories/* ; do
 (
@@ -9,7 +10,7 @@ pkgrel=0
 pkgdesc="security pseudo-package"
 arch=('any')
 url="http://github.com/EvanTeitelman/archtrack"
-license=('Various')
+license=('BSD')
 groups=()
 EOF
 
@@ -31,6 +32,7 @@ md5sums=()
 EOF
 
 cat <<\EOF
+
 #build() {
 #	:
 #}
