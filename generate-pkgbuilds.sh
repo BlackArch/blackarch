@@ -7,6 +7,7 @@ mkdir pseudo-packages
 for cat in categories/* ; do
 (
 cat <<EOF
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
 pkgname=archtrack-$(basename $cat)
 pkgver=0.1
 pkgrel=1
