@@ -1,0 +1,33 @@
+pkgname=tuxcut
+pkgver=5.0
+pkgrel=1
+pkgdesc="Netcut-like program for Linux written in PyQt"
+url="http://bitbucket.org/a_atalla/tuxcut/"
+arch=('i686' 'x86_64')
+license="GPL2"
+depends=('python' 'pyqt' 'iproute2' 'dsniff' 'arp-scan' 'arptables')
+source=(https://bitbucket.org/a_atalla/${pkgname}/downloads/tuxcut_${pkgver}_all.deb)
+md5sums=('cf06438795b5671edfc97abc0302bcee')
+
+package() {
+	cd "$startdir/src"
+	tar xzf data.tar.gz
+
+	# Remove hidden files
+	rm -rf .??*                                
+	# Remove backup files
+	find . -name '*~' -type f -exec rm '{}' \;  
+	sed -i '1s/python/python2/' $startdir/src/opt/TuxCut/run.py
+	sed -i 's/^lang =.*$/lang = "English"/' $startdir/src/opt/TuxCut/run.py
+
+	install -dm755 $startdir/pkg/opt/TuxCut/{ui,i18n}
+	install -dm755 $startdir/pkg/usr/share/{applications,pixmaps,doc/tuxcut}
+
+	install -m755 $startdir/src/opt/TuxCut/run.py $startdir/pkg/opt/TuxCut/tuxcut
+	install -m644 $startdir/src/opt/TuxCut/{AboutDialog.py,pix_rc.py,TuxCut.py,pix.qrc,tuxcut.pro} $startdir/pkg/opt/TuxCut
+	install -m644 $startdir/src/opt/TuxCut/ui/* $startdir/pkg/opt/TuxCut/ui
+	install -m644 $startdir/src/opt/TuxCut/i18n/* $startdir/pkg/opt/TuxCut/i18n
+	install -m644 $startdir/src/usr/share/applications/* $startdir/pkg/usr/share/applications
+	install -m644 $startdir/src/usr/share/pixmaps/* $startdir/pkg/usr/share/pixmaps
+	install -m644 $startdir/src/usr/share/doc/tuxcut/* $startdir/pkg/usr/share/doc/tuxcut
+}
