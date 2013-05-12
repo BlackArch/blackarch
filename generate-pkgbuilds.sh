@@ -1,7 +1,8 @@
 #!/bin/bash
 # Generates PKGBUILD files from the category lists.
 
-rm pseudo-packages/PKGBUILD-*
+rm -rf pseudo-packages
+mkdir pseudo-packages
 
 for cat in categories/* ; do
 (
