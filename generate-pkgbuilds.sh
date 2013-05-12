@@ -9,7 +9,7 @@ for cat in categories/* ; do
 cat <<EOF
 pkgname=archtrack-$(basename $cat)
 pkgver=0.1
-pkgrel=0
+pkgrel=1
 pkgdesc="This pseudo-package is part of Archtrack, a project inspired by Backtrack and Kali. Archtrack is able to turn an Arch Linux system into a fully functional penetration testing system."
 arch=('any')
 url="http://github.com/EvanTeitelman/archtrack"
