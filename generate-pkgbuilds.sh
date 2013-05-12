@@ -14,24 +14,11 @@ pkgdesc="This pseudo-package is part of Archtrack, a project inspired by Backtra
 arch=('any')
 url="http://github.com/EvanTeitelman/archtrack"
 license=('BSD')
-groups=()
 EOF
 
 echo -e "depends=(\n$(< $cat)\n)"
 
 cat <<EOF
-makedepends=()
-optdepends=()
-provides=()
-conflicts=()
-replaces=()
-backup=()
-options=()
-install=
-changelog=
-source=()
-noextract=()
-md5sums=()
 EOF
 
 cat <<\EOF
