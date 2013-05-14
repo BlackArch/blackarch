@@ -1,6 +1,6 @@
 PSEUDO_PACKAGE_DIR=pseudo-packages
 
-.PHONY: all list-working list-broken list-todo pseudo-packages clean
+.PHONY:
 .SILENT:
 
 all: pseudo-packages pseudo-package-sources
@@ -52,7 +52,7 @@ pseudo-package-dists: pseudo-package-pkgbuilds
 test-pseudo-package:
 	pacman -U categories/all/archtrack-all.pkg.tar.xz
 
-upload-pseudo-packages:
+upload-pseudo-packages: pseudo-package-sources
 	burp $(wildcard pseudo-packages/*/*.src.tar.gz)
 
 # Packages
@@ -67,3 +67,6 @@ package-dists:
 		( cd "$$package"; \
 		makepkg -df; ) \
 	done
+
+upload-packages: package-sources
+	burp $(wildcard packages/*/*.src.tar.gz)
