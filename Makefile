@@ -19,7 +19,9 @@ list-working:
 	grep -v '\(^$$\|^all\|^#\)' *
 
 list-broken:
-	grep '^#[a-z]' categories/* | sed 's/^.*#//' | sort -u
+	grep '^#[a-z]' categories/* | \
+	sed 's/^.*#//' |              \
+	sort -u
 
 list-todo:
 	cd research/kali-menu/items-tofind; \
@@ -28,32 +30,36 @@ list-todo:
 # Pseudo-packages
 # Pseudo-package PKGBUILDs are generated from the PKGBUILD.in file.
 pseudo-package-pkgbuilds:
-	for cat in $(wildcard categories/*) ; do \
-		cat_name=$$(basename $$cat); \
-		echo "Generating $$cat_name PKGBUILD..."; \
-		mkdir -p ${PSEUDO_PACKAGE_DIR}/$$cat_name; \
-		sed -e "s|%DEPENDS%|$$(grep -v '^#' $$cat | tr '\n' '\1')|" \
+	for cat in $(wildcard categories/*) ; do                                     \
+		cat_name=$$(basename $$cat);                                              \
+		echo "Generating $$cat_name PKGBUILD...";                                 \
+		mkdir -p ${PSEUDO_PACKAGE_DIR}/$$cat_name;                                \
+		sed -e "s|%DEPENDS%|$$(grep -v '^#' $$cat | tr '\n' '\1')|"               \
 		    -e "s|%CATEGORY_DESCRIPTION%|$$(sed -n -e '1s|^# ||' -e '1p' $$cat)|" \
-		    -e "s|%CATEGORY%|$$cat_name|" PKGBUILD.in | \
-		    tr '\1' '\n' > \
-		    ${PSEUDO_PACKAGE_DIR}/$$cat_name/PKGBUILD; \
+		    -e "s|%CATEGORY%|$$cat_name|" PKGBUILD.in |                           \
+		    tr '\1' '\n' >                                                        \
+		    ${PSEUDO_PACKAGE_DIR}/$$cat_name/PKGBUILD;                            \
 	done
 	echo done.
 
 pseudo-package-sources: pseudo-package-pkgbuilds
 	for package in $(wildcard pseudo-packages/*) ; do \
-		( cd "$$package"; \
-		makepkg -f --source; ) \
+		( cd "$$package";                              \
+		makepkg -f --source; )                         \
 	done
 
 pseudo-package-dists: pseudo-package-pkgbuilds
 	for package in $(wildcard pseudo-packages/*) ; do \
-		( cd "$$package"; \
-		makepkg -df; ) \
+		( cd "$$package";                              \
+		makepkg -df; )                                 \
 	done
 
 test-pseudo-package:
 	pacman -U categories/all/archtrack-all.pkg.tar.xz
+
+test-aur:
+	yaourt -Sy
+	yaourt -S archtrack-all
 
 upload-pseudo-packages: pseudo-package-sources
 	burp $(wildcard pseudo-packages/*/*.src.tar.gz)
@@ -61,14 +67,14 @@ upload-pseudo-packages: pseudo-package-sources
 # Packages
 package-sources:
 	for package in $(wildcard packages/*) ; do \
-		( cd "$$package"; \
-		makepkg -f --source; ) \
+		( cd "$$package";                       \
+		makepkg -f --source; )                  \
 	done
 
 package-dists:
 	for package in $(wildcard packages/*) ; do \
-		( cd "$$package"; \
-		makepkg -df; ) \
+		( cd "$$package";                       \
+		makepkg -df; )                          \
 	done
 
 upload-packages: package-sources
