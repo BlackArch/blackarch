@@ -5,13 +5,14 @@ PSEUDO_PACKAGE_DIR=pseudo-packages
 
 all: pseudo-packages pseudo-package-sources
 
-clean:
-	echo "Removing 'pseudo-packages'..."
-	@rm -rf pseudo-packages
-
 clean-dist-only:
-	echo "Removing pseudo package distributions..."
-	@rm -rf $(wildcard pseudo-packages/*/{*.src.tar.gz,*.pkg.tar.xz,pkg,src})
+	echo "Removing all source and dist tarballs..."
+	@rm -vrf $(wildcard pseudo-packages/*/{*.src.tar.gz,*.pkg.tar.xz,pkg,src}) \
+	         $(wildcaard packages/*/{*.src.tar.gz,*.pkg.tar.xz})
+
+clean: clean-dist-only
+	echo "Removing pseudo packages..."
+	@rm -vrf pseudo-packages
 
 list-working:
 	cd categories; \
