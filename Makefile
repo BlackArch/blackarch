@@ -61,7 +61,7 @@ test-aur:
 	yaourt -Sy
 	yaourt -S archtrack-all
 
-upload-pseudo-packages: pseudo-package-sources
+upload-pseudo-packages: clean pseudo-package-sources
 	burp $(wildcard pseudo-packages/*/*.src.tar.gz)
 
 # Packages
