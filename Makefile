@@ -15,11 +15,11 @@ clean: clean-dist-only
 	@rm -vrf pseudo-packages
 
 list-working:
-	cd categories; \
-	grep -v '\(^$$\|^all\|^#\)' *
+	cd pseudo-dependency-lists; \
+	grep -v '\(^$$\|^archtrack$\|^#\)' *
 
 list-broken:
-	grep '^#[a-z]' categories/* | \
+	grep '^#[a-z]' pseudo-dependency-lists/* | \
 	sed 's/^.*#//' |              \
 	sort -u
 
@@ -30,7 +30,7 @@ list-todo:
 # Pseudo-packages
 # Pseudo-package PKGBUILDs are generated from the PKGBUILD.in file.
 pseudo-package-pkgbuilds:
-	for cat in $(wildcard categories/*) ; do                                     \
+	for cat in $(wildcard pseudo-dependency-lists/*) ; do                                     \
 		cat_name=$$(basename $$cat);                                              \
 		echo "Generating $$cat_name PKGBUILD...";                                 \
 		mkdir -p ${PSEUDO_PACKAGE_DIR}/$$cat_name;                                \
@@ -55,11 +55,11 @@ pseudo-package-dists: pseudo-package-pkgbuilds
 	done
 
 test-pseudo-package:
-	pacman -U categories/all/archtrack-all.pkg.tar.xz
+	pacman -U pseudo-packages/archtrack/archtrack.pkg.tar.xz
 
 test-aur:
 	yaourt -Sy
-	yaourt -S archtrack-all
+	yaourt -S archtrack
 
 upload-pseudo-packages: clean pseudo-package-sources
 	burp $(wildcard pseudo-packages/*/*.src.tar.gz)
