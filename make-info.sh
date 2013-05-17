@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#for package in aur-packages/* ; do
-for package in aur-packages/dnsmap ; do
+#for package in aur-packages/dnsmap ; do
+for package in aur-packages/* ; do
 	pkgbuild=$package/PKGBUILD
 	# categories               the package's archtrack categories
-	categories=($(egrep "^#?$(basename $package)" pseudo-dependency-lists/* |\
+	categories=(archtrack $(egrep "^#?$(basename $package)" pseudo-dependency-lists/* |\
 	cut -d':' -f1 | cut -d'/' -f2))
 
 	# description              a description of the package
@@ -18,13 +18,13 @@ for package in aur-packages/dnsmap ; do
 	name=$aur_package_name
 
 	# aur-maintainer           if applicable, the aur maintainer
-	aur_maintainer=$(grep -i '#.*maintainer' $pkgbuild | head -n1 | sed 's/^.*://')
+	aur_maintainer=$(grep -i '#.*maintainer' $pkgbuild | head -n1 | sed -r 's/^.*:\s?//')
 	if [[ -z $aur_maintainer ]] ; then
 		aur_maintainer=$(grep -i '#.*contributor' $pkgbuild | head -n1 | sed -r 's/^.*:\s?//')
 	fi
 
 	# working                   describes the status of the package (working, not working)
-	if grep -q "#$package" pseudo-dependency-lists/* ; then
+	if grep -q "#$(basename $package)" pseudo-dependency-lists/* ; then
 		working=false
 	else
 		working=true
@@ -33,8 +33,8 @@ for package in aur-packages/dnsmap ; do
 	# aur-working               describes the status of the package on the AUR (working, not working)
 	aur_working=$working
 
-	#cat > $package/info <<EOF
-	cat <<EOF
+	#cat <<EOF
+	cat > $package/info <<EOF
 pretty_name="${name}"
 aur_name="${aur_package_name}"
 aur_maintainer="${aur_maintainer}"
