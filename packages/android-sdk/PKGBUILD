@@ -1,0 +1,57 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Daniel Micay <danielmicay@gmail.com>
+# Contributor: Gordin <9ordin @t gmail dot com>
+pkgname=%PKGNAME%
+pkgver=r22
+pkgrel=1
+groups=(%CATEGORIES%)
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url="http://developer.android.com/sdk/index.html"
+license=('custom')
+depends=('java-runtime' 'alsa-lib' 'openal' 'libstdc++5' 'libxv'
+         'ncurses' 'sdl' 'swt' 'zlib')
+if [[ $CARCH = x86_64 ]]; then
+  depends=('java-runtime' 'lib32-alsa-lib' 'lib32-openal' 'lib32-libstdc++5'
+           'lib32-libxv' 'lib32-ncurses' 'lib32-sdl' 'lib32-zlib' 'swt')
+fi
+install=$pkgname.install
+optdepends=('android-udev: udev rules for Android devices'
+            'android-sdk-platform-tools: adb, aapt, aidl, dexdump and dx')
+source=(http://dl.google.com/android/${pkgname}_$pkgver-linux.tgz
+        $pkgname.png
+        $pkgname.desktop
+        $pkgname.sh
+        $pkgname.csh
+        $pkgname.conf
+        license.html)
+sha1sums=('cbf9d0db997bf88459cf29843dc6702502980624'
+          'c249134310ae91dccce1ad839b3985211674ab71'
+          'e834f53e13d5926ec7be3fd775fa80aa6f328eb6'
+          '78f8574e651c9bf8b7515ecb30c7ef93edbc4a96'
+          '08c85aab7523e22b298891c7047bc0e7adbf3437'
+          '145bdf3eb41a56574b289c1577a24bc47097ec83'
+          'bfb91be7e0b602d765b7a1fcaf0ce1b7e1a93faa')
+
+package() {
+  cd "$pkgdir"
+  install -Dm755 "$srcdir/$pkgname.sh" etc/profile.d/$pkgname.sh
+  install -Dm755 "$srcdir/$pkgname.csh" etc/profile.d/$pkgname.csh
+  install -Dm644 "$srcdir/$pkgname.conf" etc/ld.so.conf.d/$pkgname.conf
+  mkdir -p opt
+  cp -a "$srcdir/$pkgname-linux" opt/$pkgname
+  install -Dm655 "$srcdir/$pkgname.png" usr/share/pixmaps/$pkgname.png
+  install -Dm655 "$srcdir/$pkgname.desktop" \
+    usr/share/applications/$pkgname.desktop
+  install -Dm644 "$srcdir/license.html" \
+    usr/share/licenses/$pkgname/license.html
+
+  if [[ $CARCH = i686 ]]; then
+    rm -rf ${pkgdir}/opt/android-sdk/tools/lib/{monitor-,}x86_64 \
+      ${pkgdir}/opt/android-sdk/tools/lib/lib64* \
+      ${pkgdir}/opt/android-sdk/tools/emulator64-*
+  fi
+
+  # Fix broken permissions
+  chmod -R o=g opt/$pkgname
+}

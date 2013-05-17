@@ -1,0 +1,60 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Max Roder <maxroder@web.de>
+
+# To port this PKGBUILD to another language of tor-browser you 
+# have to change $pkgname, $_language, $pkgdesc and $url in PKGBUILD
+# AND (!) the first line in the .install file!
+groups=(%CATEGORIES%)
+
+pkgname=%PKGNAME%
+pkgver='2.3.25_8'
+_realpkgver='2.3.25-8'
+_language='en-US'
+pkgrel='1'
+pkgdesc=%PKGDESC%
+url='https://www.torproject.org/projects/torbrowser.html.en'
+arch=('x86_64' 'i686')
+license=('GPL')
+#depends=('java-runtime')
+depends=()
+optdepends=('zenity: simple dialog boxes'
+			'kdialog: KDE dialog boxes'
+			'notify-send: Gnome dialog boxes')
+install="${pkgname}.install"
+source=("https://www.torproject.org/dist/torbrowser/linux/tor-browser-gnu-linux-${CARCH}-${_realpkgver}-dev-${_language}.tar.gz"
+		"https://www.torproject.org/dist/torbrowser/linux/tor-browser-gnu-linux-${CARCH}-${_realpkgver}-dev-${_language}.tar.gz.asc"
+		"${pkgname}.desktop"
+		"${pkgname}.png"
+		"${pkgname}.sh")
+if [[ "$CARCH" == 'x86_64' ]]; then
+	sha256sums=('d6a00e00292dfb9763f4f56b50ca26f93a53bcc7302205147b3f8b74a73709d0'
+				'13209323a1adefb62166666e15c67e4e469dbd52cefee639ac5b687e25396081')
+else
+	sha256sums=('251af2915f808f20d05ec5dac5d1ee639598532bcfbc13dbba7479d33d41cdc9'
+				'8cabb94dd59d436a5ecde6fcdaf78c273597fb0ef66da161e8b1fa9efdf0b538')
+fi
+sha256sums+=('3d5fc01f2cfbae0a00b7117b0b0a24028d1686e6f81a347809f74de2d8522ff7'
+			'17fc2f5784d080233aca16e788d62ab6fe3e57cf781b123cfe32767de97d6d3b'
+			'7fc947b8ae1483c5abb4545f6e26b315ff1fb16eb7ae8837f7afb10a9277383b')
+noextract=("tor-browser-gnu-linux-${CARCH}-${_realpkgver}-dev-${_language}.tar.gz")
+
+package() {
+	cd "${srcdir}"
+
+	sed -i "s/REPL_NAME/${pkgname}/g"			${pkgname}.sh
+	sed -i "s/REPL_VERSION/${_realpkgver}/g"	${pkgname}.sh
+	sed -i "s/REPL_LANGUAGE/${_language}/g"		${pkgname}.sh
+
+	sed -i "s/REPL_NAME/${pkgname}/g"			${pkgname}.desktop
+	sed -i "s/REPL_LANGUAGE/${_language}/g"		${pkgname}.desktop
+	sed -i "s/REPL_COMMENT/${pkgdesc}/g"		${pkgname}.desktop
+
+	install -Dm 644 ${pkgname}.desktop	${pkgdir}/usr/share/applications/${pkgname}.desktop
+	install -Dm 644 ${pkgname}.png		${pkgdir}/usr/share/pixmaps/${pkgname}.png
+	install -Dm 755 ${pkgname}.sh		${pkgdir}/usr/bin/${pkgname}
+
+	install -Dm 644 tor-browser-gnu-linux-${CARCH}-${_realpkgver}-dev-${_language}.tar.gz \
+		${pkgdir}/opt/${pkgname}/tor-browser-gnu-linux-${CARCH}-${_realpkgver}-${_language}.tar.gz
+}
+
+# vim:set ts=2 sw=2 et:

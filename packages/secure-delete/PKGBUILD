@@ -1,0 +1,37 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Federico Quagliata (quaqo) <linux@quaqo.org>
+
+pkgname=%PKGNAME%
+pkgver=3.1
+pkgfile="secure_delete-$pkgver"
+groups=(%CATEGORIES%)
+pkgrel=4
+pkgdesc=%PKGDESC%
+url="http://www.thc.org/"
+depends=('glibc' 'sh')
+conflicts=('srm')
+license=('GPL')
+arch=('i686' 'x86_64')
+source=(http://freeworld.thc.org/releases/$pkgfile.tar.gz)
+sha256sums=('a9d846d1dce3f1bdf13bbb306e8596bc1f263198a086f6beecd90ccf7bddf8d5')
+
+build()
+{
+  cd "${srcdir}/${pkgfile}"
+  sed -i -e 's/mktemp/mkstemp/g' sfill.c
+  sed -i -e "s/sswap smem sdel-mod.o/sswap smem/" -e '/test.*sdel-mod/d' \
+	-e "s/^srm: /srm: sdel-lib.o /" -e "s/^sfill: /sfill: sdel-lib.o /" \
+	-e "s/^sswap: /sswap: sdel-lib.o /" -e "s/^smem: /smem: sdel-lib.o /" \
+	Makefile
+  make
+}
+
+package()
+{
+  cd "${srcdir}/${pkgfile}"
+  make INSTALL_DIR="${pkgdir}/usr/bin" \
+    MAN_DIR="${pkgdir}/usr/share/man" \
+    DOC_DIR="${pkgdir}/usr/share/doc/secure_delete" \
+    install
+  chmod a+r "${pkgdir}/usr/bin"/*
+}

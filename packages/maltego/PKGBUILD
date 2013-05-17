@@ -1,0 +1,50 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: fnord0 < fnord0 AT riseup DOT net >
+
+pkgname=%PKGNAME%
+pkgver=3.3.0
+pkgrel=1
+groups=(%CATEGORIES%)
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url="http://www.paterva.com/web5"
+license=('GPL')
+depends=('java-runtime')
+source=("https://www.paterva.com/malv32/community/maltego-radium-CE.community-2012-12-20.zip"
+	"http://www.paterva.com/malv3/303/M3GuideGUI.pdf")
+md5sums=('7fb837580bda3c6db35e024d463f77e6'
+	 'baa2896367542f25d5588049bc4add37')
+sha1sums=('960707952ade6a07f87dbee6a76bcc3a2c804739'
+	  'b3d496acaa2fbd5a0fd0409aafc0af05280db736')
+
+build() {
+  #maltego.dependencies
+  cd ${srcdir}/v3.0
+  install -d ${pkgdir}/usr/share/${pkgname} || return 1
+  install -d ${pkgdir}/usr/share/${pkgname}/doc || return 1
+  install -d ${pkgdir}/usr/bin || return 1
+}
+
+package() {
+  cd ${srcdir}/v3.0
+  #install -d ${pkgdir}/usr/share/licenses/${pkgname} || return 1
+  # the COMMERCIAL client license resides @ https://www.paterva.com/web5/server/MaltegoServerAgreement.pdf
+  cp -pR bin etc groovy ide java maltego maltego-core-platform maltego-ui platform ${pkgdir}/usr/share/maltego || return 1
+  install -Dm644 ${startdir}/M3GuideGUI.pdf ${pkgdir}/usr/share/${pkgname}/doc/M3GuideGUI.pdf || return 1
+
+  #create startup app
+  echo "#!/bin/sh" > ${pkgdir}/usr/bin/${pkgname}
+  echo "cd /usr/share/maltego/bin" >> ${pkgdir}/usr/bin/${pkgname}
+  echo "./maltego \"\$@\"" >> ${pkgdir}/usr/bin/${pkgname}
+  echo "cd -" >> ${pkgdir}/usr/bin/${pkgname}
+  chmod +x ${pkgdir}/usr/bin/${pkgname}
+
+  #notify user
+  echo ""
+  echo "[+] run '/usr/bin/maltego' to call the application (make SURE 'java' is in your \$PATH)"
+  echo ">>> documentation resides @ '/usr/share/maltego/doc/M3GuideGUI.pdf', also check online @ 'https://www.paterva.com/web6/documentation/'"
+  echo ""
+  echo ">>> this application is non-functional until you obtain a Maltego Community Edition activation code and account"
+  echo ">>> REGISTER a FREE ACCOUNT for Maltego Community Editon @ 'https://www.paterva.com/web6/community/maltego/'"
+  echo ""
+}

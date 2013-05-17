@@ -1,0 +1,51 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: fnord0 < fnord0 AT riseup DOT net >
+
+pkgname=%PKGNAME%
+pkgver=324
+pkgrel=1
+groups=(%CATEGORIES%)
+pkgdesc=%PKGDESC%
+arch=('any')
+url="http://code.google.com/p/fimap/"
+license=('GPL2')
+depends=('python2' 'python-urllib3' 'python2-httplib2')
+makedepends=('subversion')
+options=('!emptydirs')
+_svnmod="fimap"
+_svntrunk="http://fimap.googlecode.com/svn/trunk/"
+provides=('fimap')
+
+build() {
+	# fetch latest svn build
+	if [ -d ${srcdir}/.svn ]; then
+	  msg 'Updating fimap SVN...'
+	  svn up ${srcdir} || return 1
+	else
+	  msg 'Checking out fimap SVN...'
+	  svn co ${_svntrunk} ${srcdir} || return 1
+	fi
+	msg "fimap SVN checkout complete, or the server timed out"
+
+        mkdir -p ${pkgdir}/usr/{src,bin} || return 1
+        cd ${pkgdir}/usr/src
+        cp -R ${srcdir} ${_svnmod} || return 1
+
+	# archlinux fixes
+	cd ${pkgdir}/usr/src/${_svnmod}
+	grep -rl python ${pkgdir}/usr/src/${_svnmod}/ | xargs sed -i 's|python|python2|g' || return 1
+
+	# create startup app
+	echo "#!/bin/sh" > ${pkgdir}/usr/bin/fimap || return 1
+	echo "cd /usr/src/fimap/src" >> ${pkgdir}/usr/bin/fimap || return 1
+	echo "python2 ./fimap.py \"\$@\"" >> ${pkgdir}/usr/bin/fimap || return 1
+	echo "cd -" >> ${pkgdir}/usr/bin/fimap || return 1
+	chmod +x ${pkgdir}/usr/bin/fimap || return 1
+
+	# user notification
+	echo -e ""
+	echo -e "\e[1;31m[\e[0m\e[1;34m*\e[0m\e[1;31m]\e[0m \e[1;31mrun '\e[0m\e[1;34m/usr/bin/fimap -h\e[0m\e[1;31m' for an explanation of fimap startup options\e[0m"
+	echo -e "\e[1;34m>>>\e[0m \e[1;31mfimap project homepage @ \e[0m\e[1;32mhttp://code.google.com/p/fimap\e[0m"
+	echo -e ""
+}
+# vim:syntax=sh

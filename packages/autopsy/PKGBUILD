@@ -1,0 +1,53 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Autopsy: Installer: Arch
+# Contributor: Chris Giles <Chris.G.27 (at) Gmail.com> & daschu117
+# Contributor: m4xm4n <max@maxfierke.com>
+
+pkgname=%PKGNAME%
+groups=(%CATEGORIES%)
+pkgver=2.24
+pkgrel=4
+pkgdesc=%PKGDESC%
+arch=("any")
+url="http://www.sleuthkit.org/${pkgname}"
+license=("GPL2")
+depends=("perl" "sleuthkit")
+options=(!emptydirs)
+
+source=(http://downloads.sourceforge.net/${pkgname}/${pkgname}-${pkgver}.tar.gz ${pkgname}.pl)
+md5sums=('4ed18aa9f79453d74957b5db220d0d59'
+         'e5c67fdd92c6203c0c34ff5b07269aef')
+
+build() {
+  cd ${srcdir}/${pkgname}-${pkgver}
+
+  echo "#!/usr/bin/perl -wT" > ${pkgname}
+  echo "use lib '/usr/lib/${pkgname}/';" >> ${pkgname}
+  echo "use lib '/usr/lib/${pkgname}/lib/';" >> ${pkgname}
+  cat base/${pkgname}.base >> ${pkgname} || return 1
+  sed -i 's:conf.pl:/etc/autopsy.pl:' ${pkgname} lib/Main.pm || return 1
+
+  mkdir -p ${pkgdir}/usr/lib/${pkgname}
+  cp ${pkgname} ${pkgdir}/usr/lib/${pkgname}/
+  chmod +x ${pkgdir}/usr/lib/${pkgname}/${pkgname}
+
+  mkdir -p ${pkgdir}/etc
+  cp ${srcdir}/${pkgname}.pl ${pkgdir}/etc
+
+  mkdir -p ${pkgdir}/usr/lib/${pkgname}/help
+  cp -r help ${pkgdir}/usr/lib/${pkgname}/
+
+  mkdir -p ${pkgdir}/usr/lib/${pkgname}/lib
+  cp -r lib ${pkgdir}/usr/lib/${pkgname}/
+
+  mkdir -p ${pkgdir}/usr/man/man1
+  cp -r man ${pkgdir}/usr/
+
+  mkdir -p ${pkgdir}/usr/lib/${pkgname}/pict
+  cp -r pict ${pkgdir}/usr/lib/${pkgname}/
+
+  mkdir -p ${pkgdir}/usr/bin
+  cd ${pkgdir}/usr/bin
+  ln -s /usr/lib/${pkgname}/${pkgname} ${pkgname}
+}
+

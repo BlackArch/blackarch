@@ -1,0 +1,49 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# $Id: PKGBUILD 51749 2011-07-14 06:47:41Z spupykin $
+# Contributor: Sergej Pupykin <pupykin.s+arch@gmail.com>
+# Contributor: Jason R Begley (jayray@digitalgoat.com>
+# Contributor: Dan Fuhry <dan@fuhry.us>
+
+groups=(%CATEGORIES%)
+pkgname=%PKGNAME%
+_pkgbase=freeradius
+pkgver=2.0.2
+pkgrel=1
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url="http://www.freeradius.org/"
+license=("GPL")
+provides=('freeradius')
+depends=('openssl' 'pth' 'libldap>=2.4.18' 'net-snmp' 'pam'
+	 'postgresql-libs>=9.0.3' 'libtool' 'libmysqlclient' 'gdbm' 'shadow')
+optdepends=('libpcap' 'unixodbc' 'python2')
+options=('!libtool' 'emptydirs' '!makeflags')
+conflicts=('freeradius')
+install=${_pkgbase}.install
+source=(http://ftp.cc.uoc.gr/mirrors/ftp.freeradius.org/old/freeradius-server-2.0.2.tar.gz
+	http://www.willhackforsushi.com/code/freeradius-wpe/freeradius-wpe-2.0.2.patch
+	radiusd)
+md5sums=('45c244281c84d38d90a12384a1f29652'
+	 '6671917d602373d8010fe38de66377e4'
+	 'f1a6530b1b69d2fa793aa45b2de379bb')
+build() {
+  cd $srcdir/freeradius-server-$pkgver
+  export CFLAGS="$CFLAGS -fno-strict-aliasing"
+  sed -i 's/ -DKRB5_DEPRECATED//' src/modules/rlm_krb5/Makefile.in
+  patch -p1 <$srcdir/freeradius-wpe-2.0.2.patch
+  ./configure --with-system-libtool --with-system-libltdl \
+	      --prefix=/usr \
+	      --localstatedir=/var \
+	      --sysconfdir=/etc \
+	      --libdir=/usr/lib/freeradius
+  make
+}
+
+package() {
+  cd $srcdir/freeradius-server-$pkgver
+  make install R=$pkgdir
+  install -D -m755 ../radiusd $pkgdir/etc/rc.d/radiusd
+  chmod o+r $pkgdir/etc/raddb/*
+  mv $pkgdir/etc/raddb $pkgdir/etc/raddb.default
+  rm -rf $pkgdir/var/run
+}

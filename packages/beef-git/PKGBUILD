@@ -1,0 +1,53 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: fnord0 <fnord0 AT riseup DOT net>
+
+pkgname=%PKGNAME%
+pkgver=20120720
+pkgrel=1
+groups=(%CATEGORIES%)
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url=('http://beefproject.com/')
+license=('Apache')
+makedepends=('git')
+depends=('ruby' 'ruby-sqlite3' 'ruby-bundler' 'ruby-thin' 'ruby-sinatra' 'ruby-ansi' 'ruby-term-ansicolor' 'ruby-dm-core' 'ruby-json' 'ruby-data_objects' 'ruby-dm-sqlite-adapter' 'ruby-parseconfig' 'ruby-erubis' 'ruby-dm-migrations' 'ruby-msfrpc-client' 'ruby-eventmachine' 'ruby-em-websocket' 'ruby-addressable' 'ruby-rack-protection' 'ruby-dm-do-adapter' 'ruby-do_sqlite3' 'ruby-librex' 'ruby-jsmin' 'ruby-msgpack')
+provides=('beef')
+_gitroot="https://github.com/beefproject/beef"
+_gitname=('beef')
+
+build() {
+  cd ${srcdir}
+  msg "Connecting to GIT server...."
+
+  if [[ -d ${srcdir}/${_gitname} ]]; then
+    msg "Git checkout:  Updating existing tree"
+    cd ${_gitname} && git pull origin || return 1
+    msg "Git checkout:  Tree has been updated"
+  else
+    msg "Git checkout:  Retrieving sources"
+    git clone ${_gitroot} ${_gitname} || return 1
+  fi
+
+  msg "GIT checkout done or server timeout"
+  msg "Starting build..."
+
+  rm -rf ${srcdir}/${_gitname}-build
+  install -d ${pkgdir}/usr/bin || return 1
+  install -d ${pkgdir}/usr/src/${_gitname} || return 1
+  git clone ${srcdir}/${_gitname} ${pkgdir}/usr/src/${_gitname} || return 1
+  
+  ## archlinux fix
+   # we're CHANGING => gem "eventmachine", "0.12.10"
+   # TO             => gem "eventmachine", "1.0.0beta4"
+  sed -i 's|0.12.10|1.0.0beta4|' ${pkgdir}/usr/src/${_gitname}/Gemfile || return 1
+}
+
+package() {
+  #create startup app
+  echo "#!/bin/sh" > ${pkgdir}/usr/bin/${_gitname}
+  echo "cd /usr/src/beef" >> ${pkgdir}/usr/bin/${_gitname}
+  echo "./beef \"\$@\"" >> ${pkgdir}/usr/bin/${_gitname}
+  echo "cd -" >> ${pkgdir}/usr/bin/${_gitname}
+  chmod +x ${pkgdir}/usr/bin/${_gitname}
+}
+# vim:set ts=2 sw=2 et:
