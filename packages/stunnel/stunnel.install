@@ -1,0 +1,31 @@
+post_install() {
+  # add stunnel group
+  if ! getent group stunnel >/dev/null 2>&1; then
+    groupadd -g 16 stunnel
+  fi
+
+  # add stunnel user
+  if ! getent passwd stunnel >/dev/null 2>&1; then
+    useradd -u 16 -g stunnel -d /var/run/stunnel -s /bin/false stunnel
+  fi
+
+  # create chroot dir if necessary.
+  if [ ! -d /var/run/stunnel ]; then
+    install -dm770 -o stunnel -g stunnel /var/run/stunnel
+  fi
+}
+
+post_upgrade() {
+  post_install "$@"
+}
+
+pre_remove() {
+  # remove users & groups
+  if getent passwd stunnel >/dev/null 2>&1; then
+    userdel stunnel
+  fi
+
+  if getent group stunnel >/dev/null 2>&1; then
+    groupdel stunnel
+  fi
+}

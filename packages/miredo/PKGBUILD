@@ -1,0 +1,45 @@
+# $Id: PKGBUILD 90687 2013-05-13 14:29:09Z spupykin $
+# Maintainer: Sergej Pupykin <pupykin.s+arch@gmail.com>
+
+pkgname=miredo
+pkgver=1.2.5
+pkgrel=4
+pkgdesc="Teredo client and server."
+arch=('i686' 'x86_64')
+url="http://www.remlab.net/miredo/"
+license=('GPL')
+depends=('judy' 'iproute2' 'libcap')
+backup=('etc/miredo/miredo.conf'
+        'etc/miredo/client-hook')
+options=('!libtool')
+source=(http://www.remlab.net/files/${pkgname}/${pkgname}-${pkgver}.tar.xz
+	miredo.install
+	miredo.service)
+md5sums=('5114debbf9fcab5d292176e4548f8cd1'
+         'd1b655d7a851cdb46c91c3418ed1962f'
+         'abd7d8831cab7f3ea6d0d4e51b8f8f6a')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  ./configure \
+	--prefix=/usr \
+	--sysconfdir=/etc \
+	--localstatedir=/var \
+	--libexecdir=/usr/lib \
+	--with-Judy
+  make
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  sed -i 's#/sbin/ip#/usr/sbin/ip#' $pkgdir/etc/miredo/client-hook
+
+  # avoid conflict with filesystem>=2012.06
+  rmdir "$pkgdir/var/run" "$pkgdir/var"
+
+  install -Dm644 "$srcdir/miredo.service" "$pkgdir/usr/lib/systemd/system/miredo.service"
+}

@@ -1,0 +1,51 @@
+# $Id: PKGBUILD 171369 2012-11-17 11:36:42Z eric $
+# Maintainer: Paul Mattal <paul.archlinux.org>
+
+pkgname=truecrypt
+pkgver=7.1a
+pkgrel=1
+epoch=1
+pkgdesc="Free open-source cross-platform disk encryption software"
+url="http://www.truecrypt.org/"
+arch=('i686' 'x86_64')
+license=('custom') # TrueCrypt License v2.6
+depends=('fuse>=2.8.0' 'wxgtk>=2.8.9' 'libsm' 'device-mapper')
+makedepends=('nasm')
+optdepends=('sudo: mounting encrypted volumes as nonroot users')
+conflicts=('truecrypt-utils')
+replaces=('truecrypt-utils')
+# N.B. Truecrypt's web-based source download is incompatible with
+# makepkg. Source has been placed on ftp.archlinux.org instead
+source=(ftp://ftp.archlinux.org/other/tc/truecrypt-${pkgver}.tar.gz{,.sig} \
+        'ftp://ftp.archlinux.org/other/tc/pkcs-2.20.tar.gz' \
+        "${pkgname}.desktop" \
+	"${pkgname}-arch-detection.patch") 
+md5sums=('102d9652681db11c813610882332ae48'
+         '5bca3d15b35d0725ff3317e568062ad8'
+         'ce6a707b79411e82e8e558aa03e764b0'
+         '183b9bf04a943454d4e216130bcbac01'
+         '00ea70fa8437de877b31b027ac2b4060')
+
+build() {
+  cd "${srcdir}/${pkgname}-${pkgver}-source"
+
+  # Work around buggy CPU type detection
+  patch -Np1 -i ../${pkgname}-arch-detection.patch
+  
+  # Build
+  make PKCS11_INC="${srcdir}/pkcs-2.20" LFLAGS+="-ldl"
+}
+
+package() {
+  cd "${srcdir}/${pkgname}-${pkgver}-source"
+
+  # Install Binary
+  install -D -m755 Main/${pkgname} "${pkgdir}/usr/bin/${pkgname}"
+
+  # Install Desktop file and Icon
+  install -D -m644 "${srcdir}/${pkgname}.desktop" "${pkgdir}/usr/share/applications/${pkgname}.desktop"
+  install -D -m644 Resources/Icons/TrueCrypt-48x48.xpm "${pkgdir}/usr/share/pixmaps/truecrypt.xpm"
+
+  # Install License
+  install -D -m644 License.txt "${pkgdir}/usr/share/licenses/${pkgname}/License.txt"
+}

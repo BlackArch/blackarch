@@ -1,0 +1,48 @@
+# Maintainer: Daniel Micay <danielmicay@gmail.com>
+# Contributor: Nicolas Pouillard <nicolas.pouillard@gmail.com>
+# Contributor: Rorschach <r0rschach@lavabit.com>
+
+pkgname=torsocks
+pkgver=1.3
+pkgrel=3
+pkgdesc='Wrapper to safely torify applications'
+arch=('i686' 'x86_64')
+url='http://code.google.com/p/torsocks'
+license=('GPL2')
+depends=('tor')
+makedepends=('git')
+options=(!libtool)
+backup=("etc/${pkgname}.conf")
+
+__gitroot=https://git.torproject.org/torsocks
+__gitname=torsocks
+
+build() {
+  cd "$srcdir"
+  msg "Connecting to GIT server...."
+
+  if [[ -d "$__gitname" ]]; then
+    cd "$__gitname" && git pull origin
+    msg "The local files are updated."
+  else
+    git clone "$__gitroot" "$__gitname"
+  fi
+
+  msg "GIT checkout done or server timeout"
+  msg "Starting build..."
+
+  rm -rf "$srcdir/$__gitname-build"
+  git clone "$srcdir/$__gitname" "$srcdir/$__gitname-build"
+  cd "$srcdir/$__gitname-build"
+
+  git checkout $pkgver
+
+  ./autogen.sh
+  ./configure --prefix=/usr --sysconfdir=/etc
+  make
+}
+
+package() {
+  cd "$srcdir/$__gitname-build"
+  make DESTDIR="$pkgdir/" install
+}
