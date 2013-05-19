@@ -1,0 +1,59 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# $Id: PKGBUILD 171085 2012-11-16 14:51:57Z allan $
+# Contributor:
+# Contributor: Angel Velasquez <angvp@archlinux.org> 
+# Contributor: Jason Chu <jason@archlinux.org>
+# Contributor: Juergen Hoetzel <jason@archlinux.org>
+groups=(%CATEGORIES%)
+
+pkgname=%PKGNAME%
+pkgver=2011_03_R2
+_realver="${pkgver//_/-}"
+pkgrel=5
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url="http://www.kismetwireless.net/"
+license=('GPL')
+depends=('libcap' 'libnl1' 'pcre' 'ncurses' 'libpcap>=1.0.0' 'bluez' 'openssl' 'libusb-compat')
+optdepends=('gpsd: log coordinates of detected networks'
+            'wireshark-cli: provide OUI files used to determine device manufacturer'
+            'wireshark-cli: mergecap, to merge multiple capture files'
+            'sox: provide the default kismet sound playback binary'
+            'festival: text-to-speech support'
+            'flite:  alternative/lightweight text-to-speech support'
+            'ruby: ruby interface')
+backup=('etc/kismet.conf' 'etc/kismet_drone.conf')
+install=kismet.install
+changelog=kismet.changelog
+source=("http://www.kismetwireless.net/code/${pkgname}-${_realver}.tar.gz"{,.asc})
+md5sums=('8bf077e8111e6dc8c12cadefdf40aadd'
+         '500deff918ede6d0bc392a0419322833')
+
+build() {
+    cd "${srcdir}/${pkgname}-${_realver}"
+
+    ./configure --prefix=/usr \
+                --sysconfdir=/etc \
+                --localstatedir=/var
+    make dep
+    make
+
+    # Include plugins bundled with kismet
+    make plugins
+}
+
+package() {
+    cd "${srcdir}/${pkgname}-${_realver}"
+
+    # Install kismet
+    make DESTDIR="$pkgdir" install
+
+    # Install plugins
+    make plugins-install DESTDIR="$pkgdir"
+
+    # the README is very comprehensive, a good idea to include it
+    install -D -m 644 "${srcdir}/kismet-${_realver}/README" "${pkgdir}/usr/share/kismet/README"
+
+    # Our own suid-install, first half (see kismet.install)
+    install -o "root" -g "root" -m 4550 kismet_capture "${pkgdir}/usr/bin/"
+}

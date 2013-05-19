@@ -1,0 +1,34 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# $Id: PKGBUILD 90651 2013-05-13 14:19:19Z spupykin $
+# Contributor: Sergej Pupykin <pupykin.s+arch@gmail.com>
+
+pkgname=%PKGNAME%
+pkgver=3.0.715
+groups=(%CATEGORIES%)
+pkgrel=9
+pkgdesc=%PKGDESC%
+url="http://dmr.ath.cx/net/darkstat/"
+license=("GPL")
+arch=(i686 x86_64)
+depends=('libpcap' 'zlib' 'gcc-libs')
+backup=('etc/conf.d/darkstat.conf')
+source=(http://dmr.ath.cx/net/darkstat/darkstat-$pkgver.tar.bz2
+	darkstat.service
+	darkstat.conf)
+install=darkstat.install
+md5sums=('5b7abc7538dcd8e30667dac150e81d77'
+         '91dd1cf9d01c2b37896f01b4570b5521'
+         'aa9a9effd1e8f08860afcd6439fc94c5')
+
+build() {
+  cd $srcdir/darkstat-$pkgver
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd $srcdir/darkstat-$pkgver
+  make DESTDIR=$pkgdir install
+  install -D -m644 "$srcdir"/darkstat.conf "$pkgdir"/etc/conf.d/darkstat.conf
+  install -Dm0644 $srcdir/$pkgname.service $pkgdir/usr/lib/systemd/system/$pkgname.service
+}

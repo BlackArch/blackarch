@@ -1,0 +1,48 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# $Id: PKGBUILD 90563 2013-05-13 08:20:47Z lfleischer $
+# Contributor: Lukas Fleischer <archlinux at cryptocrack dot de>
+# Contributor: simo <simo@archlinux.org>
+
+pkgname=%PKGNAME%
+groups=(%CATEGORIES%)
+pkgver=0.2.3.25
+pkgrel=2
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url='http://www.torproject.org/'
+license=('BSD')
+depends=('openssl' 'libevent' 'tsocks' 'bash')
+makedepends=('ca-certificates')
+backup=('etc/tor/torrc'
+        'etc/tor/torrc-dist'
+        'etc/tor/tor-tsocks.conf')
+install='tor.install'
+source=("http://www.torproject.org/dist/${pkgname}-${pkgver}.tar.gz"{,.asc}
+        'torrc'
+        'tor.service')
+md5sums=('a1c364189a9a66ed9daa8e6436489daf'
+         'a4c12795ffb8f68550a5dab4a9eb0654'
+         '56c75d4e8a66f34167d31e38c43793dd'
+         'b8989a7b3ab39d697624b243f7fc255d')
+
+build() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+
+  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var
+  make
+}
+
+package() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+
+  make DESTDIR="${pkgdir}" install
+
+  install -dm0700 "${pkgdir}/var/lib/tor"
+
+  mv "${pkgdir}/etc/tor/torrc.sample" "${pkgdir}/etc/tor/torrc-dist"
+  install -Dm0644 "${srcdir}/torrc" "${pkgdir}/etc/tor/torrc"
+
+  install -Dm0644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+
+  install -Dm0644 "${srcdir}/tor.service" "${pkgdir}/usr/lib/systemd/system/tor.service"
+}
