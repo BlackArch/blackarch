@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #for package in aur-packages/hamster ; do
-for package in aur-packages/* ; do
+for package in ../packages/* ; do
 	pkgbuild=$package/PKGBUILD
 
 	# categories               the package's archtrack categories
@@ -9,7 +9,7 @@ for package in aur-packages/* ; do
 		sed -i '/^groups/s/(.*)/(%CATEGORIES%)/' $pkgbuild
 	else
 		sed -i '5a\
-groups=(%CATEGORIES%)' $pkgbuild
+groups=%GROUPS%' $pkgbuild
 	fi
 
 	# description              a description of the package
