@@ -2,31 +2,41 @@
 
 usage() {
 	cat <<EOF
-$(basename "$0") a[ur]|r[epo]
+$(basename "$0") n[ormal]|a[archtrack]
 EOF
-	exit
 }
 
 if [[ $# = 0 ]] ; then
 	usage
+	exit 1
 fi
 
 for package in ../packages/* ; do
 	info="$package/info"
 
 	case "$1" in
-		a|aur)
-			outdir=aur
-			pkgname=$(grep '^aur_name=' "$info" | cut -d'=' -f2)
+		n|normal)
+			outdir=normal
+			pkgname=$(grep '^upstream_name=' "$info" | cut -d'=' -f2)
 			groups="()"
+			name_suffix=
 			;;
-		r|repo)
-			outdir=repo
+		a|archtrack)
+			outdir=archtrack
 			pkgname=$(basename "$package")
-			groups=$(grep '^categories=' "$info" | cut -d'=' -f2)
+			groups=$(grep '^groups=' "$info" | cut -d'=' -f2)
+
+			# We add the '-archtrack' suffix to package names if they exist in the
+			#  official repositories.
+			if ! grep -q 'upstream_repo=aur' $info ; then
+				name_suffix='-archtrack'
+			else
+				name_suffix=
+			fi
 			;;
 		*)
 			usage
+			exit 1
 			;;
 	esac
 	pkgdesc=$(grep '^description=' "$info" | cut -d'=' -f2)
@@ -34,7 +44,7 @@ for package in ../packages/* ; do
 	rm -rf "$package/$outdir"
 	mkdir "$package/$outdir"
 
-	sed -e "s|%PKGNAME%|$pkgname|" \
+	sed -e "s|%PKGNAME%|$pkgname$name_suffix|" \
 	    -e "s|%PKGDESC%|$pkgdesc|" \
 	    -e "s|%GROUPS%|$groups|" \
 	    "$package/PKGBUILD.in" > "$package/$outdir/PKGBUILD"
@@ -42,8 +52,9 @@ for package in ../packages/* ; do
 	# Sorry for parsing ls output like this. extglob wasn't working for some
 	#  reason. I made sure no source files contained strange characters in their
 	#  names.
-	ls "$package" | grep -Ev '^(aur|repo|PKGBUILD.in|info)$' |
+	ls "$package" | grep -Ev '^(normal|archtrack|PKGBUILD.in|info)$' |
 	while read src ; do
-		ln -fs "$src" "$package/$outdir/$(basename "$src")"
+		ln -fs "../$src" "$package/$outdir/$(basename "$src")"
+		#cp "$package/$src" "$package/$outdir"
 	done
 done
