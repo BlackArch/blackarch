@@ -11,7 +11,18 @@ if [[ $# = 0 ]] ; then
 	exit 1
 fi
 
-for package in ../packages/* ; do
+if (( $# > 1 )) ; then
+	packages=("${@:2}")
+else
+	packages=(../packages/*)
+fi
+
+for package in ${packages[@]} ; do
+	if [[ ! -d $package ]] ; then
+		echo >&2 "'$package' not found."
+		continue
+	fi
+
 	info="$package/info"
 
 	case "$1" in
