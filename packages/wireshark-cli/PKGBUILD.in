@@ -1,0 +1,61 @@
+# $Id: PKGBUILD 182116 2013-04-07 20:47:05Z guillaume $
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Guillaume ALAUX <guillaume@archlinux.org>
+# Contributor: Florian Pritz <bluewind at jabber dot ccc dot de>
+
+pkgname=%PKGNAME%
+pkgdesc=%PKGDESC%
+groups=%GROUPS%
+pkgver=1.8.6
+pkgrel=2
+arch=('i686' 'x86_64')
+license=('GPL2')
+makedepends=('bison' 'flex' 'gtk2' 'krb5' 'libcap' 'libpcap' 'bash' 'gnutls'
+             'libgcrypt' 'lua51' 'python')
+depends=('krb5' 'libcap' 'libpcap' 'bash' 'gnutls' 'libgcrypt' 'glib2' 'lua51')
+url='http://www.wireshark.org/'
+options=(!libtool)
+source=(http://www.wireshark.org/download/src/${pkgbase}-${pkgver}.tar.bz2
+        01_patch-automake-1.13.diff
+        02_enable-version.diff)
+sha256sums=('2722ed3e926c26648faec31a81b7881d829df85762c21794b9dd9e4f227331ea'
+            '388a9cf4c924c32a0f7ee8ffeaae060cdbf0c712bcc0032d5dfaa5717b217b80'
+            'dd71a9fc3443b5e586d9e50c31208d031f20d7b96cf72d9e4e0f02f2f175d00b')
+install=wireshark-cli.install
+conflicts=(wireshark)
+provides=(wireshark-cli)
+
+build() {
+  cd "${srcdir}/${pkgbase}-${pkgver}"
+
+# https://bugs.wireshark.org/bugzilla/show_bug.cgi?id=8202
+  patch -p0 < ${srcdir}/01_patch-automake-1.13.diff
+  patch -p0 < ${srcdir}/02_enable-version.diff
+
+  ./autogen.sh
+  ./configure \
+      --prefix=/usr \
+      --with-ssl \
+      --with-zlib=yes \
+      --with-lua
+  make all
+}
+
+package() {
+  cd "${srcdir}/${pkgbase}-${pkgver}"
+
+  make DESTDIR="${pkgdir}" install
+
+  #wireshark uid group is 150
+  chgrp 150 "${pkgdir}/usr/bin/dumpcap"
+  chmod 754 "${pkgdir}/usr/bin/dumpcap"
+  rm "${pkgdir}/usr/bin/wireshark"
+
+  # Headers
+  install -dm755 ${pkgdir}/usr/include/${pkgbase}/{epan/{crypt,dfilter,dissectors,ftypes},wiretap,wsutil}
+
+  install -m644 color.h config.h register.h "${pkgdir}/usr/include/${pkgbase}"
+  for d in epan epan/crypt epan/dfilter epan/dissectors epan/ftypes wiretap wsutil; do
+    install -m644 ${d}/*.h ${pkgdir}/usr/include/${pkgbase}/${d}
+  done
+}

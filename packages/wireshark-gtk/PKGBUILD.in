@@ -2,15 +2,19 @@
 # Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
 # Contributor: Guillaume ALAUX <guillaume@archlinux.org>
 # Contributor: Florian Pritz <bluewind at jabber dot ccc dot de>
+
 pkgname=%PKGNAME%
-pkgbase=wireshark
 groups=%GROUPS%
+pkgdesc=%PKGDESC%
 pkgver=1.8.6
 pkgrel=2
 arch=('i686' 'x86_64')
 license=('GPL2')
 makedepends=('bison' 'flex' 'gtk2' 'krb5' 'libcap' 'libpcap' 'bash' 'gnutls'
              'libgcrypt' 'lua51' 'python')
+# Note the archtrack-wireshark-cli dependency. This is an unfortuante
+#  consequence of our current package system.
+depends=('gtk2' 'archtrack-wireshark-cli' 'desktop-file-utils' 'hicolor-icon-theme')
 url='http://www.wireshark.org/'
 options=(!libtool)
 source=(http://www.wireshark.org/download/src/${pkgbase}-${pkgver}.tar.bz2
@@ -19,6 +23,10 @@ source=(http://www.wireshark.org/download/src/${pkgbase}-${pkgver}.tar.bz2
 sha256sums=('2722ed3e926c26648faec31a81b7881d829df85762c21794b9dd9e4f227331ea'
             '388a9cf4c924c32a0f7ee8ffeaae060cdbf0c712bcc0032d5dfaa5717b217b80'
             'dd71a9fc3443b5e586d9e50c31208d031f20d7b96cf72d9e4e0f02f2f175d00b')
+# This is outrageously confusing.
+provides=(wireshark-gtk)
+install=wireshark-gtk.install
+replaces=(wireshark)
 
 build() {
   cd "${srcdir}/${pkgbase}-${pkgver}"
@@ -36,37 +44,7 @@ build() {
   make all
 }
 
-package_wireshark-cli() {
-  pkgdesc='a free network protocol analyzer for Unix/Linux and Windows - CLI version'
-  depends=('krb5' 'libcap' 'libpcap' 'bash' 'gnutls' 'libgcrypt' 'glib2' 'lua51')
-  install=wireshark.install
-  conflicts=(wireshark)
-
-  cd "${srcdir}/${pkgbase}-${pkgver}"
-
-  make DESTDIR="${pkgdir}" install
-
-  #wireshark uid group is 150
-  chgrp 150 "${pkgdir}/usr/bin/dumpcap"
-  chmod 754 "${pkgdir}/usr/bin/dumpcap"
-  rm "${pkgdir}/usr/bin/wireshark"
-
-  # Headers
-  install -dm755 ${pkgdir}/usr/include/${pkgbase}/{epan/{crypt,dfilter,dissectors,ftypes},wiretap,wsutil}
-
-  install -m644 color.h config.h register.h "${pkgdir}/usr/include/${pkgbase}"
-  for d in epan epan/crypt epan/dfilter epan/dissectors epan/ftypes wiretap wsutil; do
-    install -m644 ${d}/*.h ${pkgdir}/usr/include/${pkgbase}/${d}
-  done
-}
-
-package_wireshark-gtk() {
-  pkgdesc='a free network protocol analyzer for Unix/Linux and Windows - GTK frontend'
-  depends=('gtk2' 'wireshark-cli' 'desktop-file-utils' 'hicolor-icon-theme')
-  install=wireshark-gtk.install
-  replaces=(wireshark)
-  conflicts=(wireshark)
-
+package() {
   cd "${srcdir}/${pkgbase}-${pkgver}"
 
   install -Dm755 .libs/wireshark "${pkgdir}/usr/bin/wireshark"
