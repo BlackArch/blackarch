@@ -1,4 +1,6 @@
 #!/bin/bash
+# TODO: only add to 'archtrack' group if it's in a group
+# TODO: warn if it isn't working
 
 usage() {
 	cat <<EOF
@@ -17,13 +19,26 @@ else
 	packages=(../packages/*)
 fi
 
-for package in ${packages[@]} ; do
+for package in "${packages[@]}" ; do
 	if [[ ! -d $package ]] ; then
 		echo >&2 "'$package' not found."
 		continue
 	fi
 
 	info="$package/info"
+
+	if [[ ! -r $info ]] ; then
+		echo >&2 "'$package' info file unreadable."
+		continue
+	fi
+	if [[ ! -r $package/PKGBUILD.in ]] ; then
+		echo >&2 "'$package' PKGBUILD.in file unreadable."
+		continue
+	fi
+
+	if grep -q "^working=true" $info ; then
+		echo >&2 "Warning: '$package' is not working."
+	fi
 
 	case "$1" in
 		n|normal)
