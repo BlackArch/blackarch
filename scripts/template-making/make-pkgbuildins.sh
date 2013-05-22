@@ -1,27 +1,41 @@
 #!/bin/bash
+# Generates PKGBUILD.in files from PKGBUILD files
+# Use 'make-info' to generate info files for the PKGBUILD files.
+# TODO: merge with 'make-info'
 
-#for package in aur-packages/hamster ; do
-for package in ../packages/* ; do
-	pkgbuild=$package/PKGBUILD
+if [[ $# = 0 ]] ; then
+	cat <EOF
+	$(basename "$0") FILE...
+EOF
+	exit 1
+fi
 
-	# categories               the package's archtrack categories
-	if grep -q '^groups' $pkgbuild ; then
-		sed -i '/^groups/s/(.*)/(%CATEGORIES%)/' $pkgbuild
+for pkgbuild ; do
+	pkgbuildin="$(dirname "$pkgbuild")/$(basename "$pkgbuild").in"
+	cp "$pkgbuild" "$pkgbuildin"
+	echo "Creating '$pkgbuildin' from '$pkgbuild'..."
+
+	# groups
+	if grep -q '^groups' $pkgbuildin ; then
+		echo "Substituting package groups..."
+		sed -i '/^groups/s/(.*)/(%GROUPS%)/' $pkgbuildin
 	else
-		sed -i '5a\
-groups=%GROUPS%' $pkgbuild
+		echo "Adding package groups..."
+		sed -i '5a\groups=%GROUPS%' $pkgbuildin
 	fi
 
-	# description              a description of the package
-	sed -i '/^pkgdesc/s/=.*$/=%PKGDESC%/' $pkgbuild
+	# description
+	echo "Substituting package description"
+	sed -i '/^pkgdesc/s/=.*$/=%PKGDESC%/' $pkgbuildin
 
-	# package-name         if applicable, the name of the package on the aur
-	sed -i '/^pkgname/s/=.*$/=%PKGNAME%/' $pkgbuild
+	# package name
+	echo "Substituting package name..."
+	sed -i '/^pkgname/s/=.*$/=%PKGNAME%/' $pkgbuildin
 
-	# maintainer
-	if ! grep -q 'Evan Teitelman' $pkgbuild ; then
-		sed -ri 's/^#\s?[Mm]aintainer/# Contributor/' $pkgbuild
-		sed -i '1i\
-# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>' $pkgbuild
+	# maintainer (we maintain this package now)
+	echo "Changing maintainer..."
+	if ! grep -q 'Evan Teitelman' $pkgbuildin ; then
+		sed -ri 's/^#\s?[Mm]aintainer/# Contributor/' $pkgbuildin
+		sed -i '1i\# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>' $pkgbuildin
 	fi
 done
