@@ -1,6 +1,4 @@
 #!/bin/bash
-# TODO: only add to 'archtrack' group if it's in a group
-# TODO: warn if it isn't working
 
 usage() {
 	cat <<EOF
@@ -27,6 +25,7 @@ for package in "${packages[@]}" ; do
 
 	info="$package/info"
 
+	# File existence checks
 	if [[ ! -r $info ]] ; then
 		echo >&2 "'$package' info file unreadable."
 		continue
@@ -67,14 +66,16 @@ for package in "${packages[@]}" ; do
 	esac
 	pkgdesc=$(grep '^description=' "$info" | cut -d'=' -f2)
 
-	rm -rf "$package/$outdir"
-	mkdir "$package/$outdir"
+	#rm -rf "$package/$outdir"
+	[[ -d "$package/$outdir" ]] || mkdir "$package/$outdir"
 
+	# Field substitutions
 	sed -e "s|%PKGNAME%|$pkgname$name_suffix|" \
 	    -e "s|%PKGDESC%|$pkgdesc|" \
 	    -e "s|%GROUPS%|$groups|" \
 	    "$package/PKGBUILD.in" > "$package/$outdir/PKGBUILD"
 
+	# Link source files
 	# Sorry for parsing ls output like this. extglob wasn't working for some
 	#  reason. I made sure no source files contained strange characters in their
 	#  names.
