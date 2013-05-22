@@ -1,0 +1,48 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: fnord0 <fnord0 at riseup dot net>
+
+pkgname=%PKGNAME%
+pkgver=1
+pkgrel=1
+groups=%GROUPS%
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url="http://www.scrypt.net"
+license=('GPL')
+depends=('perl')
+source=(http://dl.packetstormsecurity.net/cisco/CiscoAuditingTool-v$pkgver.tar.gz CAT)
+md5sums=('8d3a3e32c04648d29469a9f37e65caf3'
+	 'f6dc3fdd2fab1182a5f5e65a6f878180')
+
+build() {
+	cd $srcdir/CiscoAuditingTool
+
+	install -d $pkgdir/usr/bin || return 1
+	install -d $pkgdir/usr/share/${pkgname}/lib || return 1
+	install -d $pkgdir/usr/share/${pkgname}/lib/Net || return 1
+	install -d $pkgdir/usr/share/${pkgname}/plugins || return 1
+	install -d $pkgdir/usr/share/${pkgname}/lists || return 1
+	install -Dm755 $srcdir/CAT $pkgdir/usr/bin/CAT || return 1
+	install -Dm755 CAT $pkgdir/usr/share/${pkgname}/CAT || return 1
+	install -Dm644 TODO $pkgdir/usr/share/${pkgname}/${doc} || return 1
+
+	cd $srcdir/CiscoAuditingTool/lib/Net
+
+	for lib in SNMP.pm Telnet.pm; do
+		install -Dm644 ${lib} $pkgdir/usr/share/${pkgname}/lib/Net/${lib} || return 1
+	done
+
+	cd $srcdir/CiscoAuditingTool/lists
+
+	for lists in passwords community; do
+		install -Dm644 ${lists} $pkgdir/usr/share/${pkgname}/lists/${lists} || return 1
+	done
+
+	cd $srcdir/CiscoAuditingTool/plugins
+
+	for plugins in snmp brute ihist usage; do
+		install -Dm644 ${plugins} $pkgdir/usr/share/${pkgname}/plugins/${plugins} || return 1
+	done
+
+	msg "CiscoAuditingTool avaiable on '/usr/share/cisco-auditing-tool' and, is called from '/usr/bin/CAT'"
+}

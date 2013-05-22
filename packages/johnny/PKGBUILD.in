@@ -1,0 +1,49 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Sebastian Benvenuti <sebastianbenvenuti@gmail.com>
+pkgname=%PKGNAME%
+pkgver=20120424
+pkgrel=2
+pkgdesc=%PKGDESC%
+groups=%GROUPS%
+url="http://openwall.info/wiki/john/johnny"
+arch=('any')
+license="GPL"
+depends=('qt>=4.7.0' 'john')
+makedepends=('git')
+source=('johnny-128.png' 'johnny.desktop')
+md5sums=('24db229679d72a303ad1c9dd8c238cab'
+         '1650c897ad0fa04aebc29d9ab5a1a879')
+
+_gitroot="git://github.com/AlekseyCherepanov/johnny.git"
+_gitname="johnny"
+
+build() {
+  cd "${srcdir}"
+  msg "Connecting to github..."
+
+  if [ -d "${srcdir}"/${_gitname} ] ; then
+    cd ${_gitname} && git pull origin
+    msg "The local files are updated."
+  else
+    git clone --depth 1 ${_gitroot}
+  fi
+
+  msg "GIT checkout done or server timeout"
+  msg "Starting make..."
+
+  cd "${srcdir}/$_gitname"
+  qmake
+  make
+}
+
+package() {
+  cd "${srcdir}/$_gitname"
+  mkdir -p "${pkgdir}/opt/$_gitname"
+  mkdir -p "${pkgdir}/usr/bin"
+  mkdir -p "${pkgdir}/usr/share/applications"
+  mv ${srcdir}/$_gitname/*.o "${pkgdir}/opt/$_gitname/"
+  mv ${srcdir}/$_gitname/johnny* "${pkgdir}/opt/$_gitname/"
+  mv "${srcdir}/johnny-128.png" "${pkgdir}/opt/$_gitname/"
+  cat "${srcdir}/johnny.desktop" > "${pkgdir}/usr/share/applications/johnny.desktop"
+  chmod 777 "${pkgdir}/usr/share/applications/johnny.desktop"
+}

@@ -1,0 +1,35 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Ryon Sherman <ryon.sherman@gmail.com>
+
+pkgname=%PKGNAME%
+pkgver=1.3
+pkgrel=1
+groups=%GROUPS%
+pkgdesc=%PKGDESC%
+arch=('any')
+url="https://github.com/pentestgeek/jigsaw"
+license=('unknown')
+makedepends=('git')
+depends=('ruby')
+provides=('jigsaw')
+
+_gitroot="https://github.com/pentestgeek/jigsaw.git"
+_gitname="jigsaw"
+
+build() {
+    cd $srcdir
+
+    msg "Connecting to GIT server...."
+    if [ -d $_gitname ]; then
+        msg "Updating local files..."
+        cd $_gitname && git pull origin &> /dev/null && cd .. || return 1
+    else
+        git clone --depth=1 $_gitroot $_gitname &> /dev/null || return 1
+    fi
+    msg "GIT checkout complete or server timeout."
+}
+
+package() {
+    mkdir -p "$pkgdir/usr/bin"
+    cp "$srcdir/$_gitname/$_gitname.rb" "$pkgdir/usr/bin/$_gitname"
+}

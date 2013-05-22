@@ -1,0 +1,41 @@
+# $Id: PKGBUILD 169712 2012-10-27 01:52:51Z stephane $
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Allan McRae <allan@archlinux.org>
+# Contributor: Judd Vinet <jvinet@zeroflux.org>
+
+pkgname=%PKGNAME%
+realname=wget
+groups=%GROUPS%
+pkgver=1.14
+pkgrel=2
+provides=("wget=$pkgver")
+conflicts=(wget)
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url="http://www.gnu.org/software/wget/wget.html"
+license=('GPL3')
+depends=('openssl' 'libidn' 'pcre' 'util-linux')
+optdepends=('ca-certificates: HTTPS downloads')
+backup=('etc/wgetrc')
+install=wget.install
+source=(ftp://ftp.gnu.org/gnu/${realname}/${realname}-${pkgver}.tar.xz{,.sig})
+md5sums=('316f6f59292c9098ad81fd54f658c579'
+         '3e121933d69f32fa58776bff76bcebd0')
+
+build() {
+  cd "${srcdir}/${realname}-${pkgver}"
+
+  ./configure -with-ssl=openssl --prefix=/usr --sysconfdir=/etc --enable-nls
+  make
+}
+
+package() {
+  cd "${srcdir}/${realname}-${pkgver}"
+  make DESTDIR="${pkgdir}" install
+
+  cat >> "$pkgdir/etc/wgetrc" <<EOF
+
+# default root certs location
+ca_certificate=/etc/ssl/certs/ca-certificates.crt
+EOF
+}

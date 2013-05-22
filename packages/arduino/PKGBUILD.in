@@ -1,0 +1,49 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: PyroPeter <googlemail.com@abi1789>
+
+pkgname=%PKGNAME%
+epoch=1
+pkgver=1.0.4
+groups=%GROUPS%
+pkgrel=1
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url="http://arduino.cc/en/Main/Software"
+options=(!strip)
+license=('GPL')
+depends=('avr-libc' 'libusb-compat' 'java-runtime')
+install="arduino.install"
+source=("http://arduino.googlecode.com/files/arduino-$pkgver-linux32.tgz"
+	"http://arduino.googlecode.com/files/arduino-$pkgver-linux64.tgz"
+	'arduino'
+	'arduino.png'
+	'arduino.desktop')
+md5sums=('e4fa37eebdfa175f0a0ca6e3ce5179a4' '7b234ad9ceca1af27162c93d66e49a62' '551304dc658224c867513f6099075f0e' '9e36d33891d5e68d38ec55d1494499a5' 'eebc4d6495864bea99ad057af801afb9')
+
+if   [ "$CARCH" == 'i686' ]; then
+  unset source[1]
+  unset md5sums[1]
+elif [ "$CARCH" == 'x86_64' ]; then
+  unset source[0]
+  unset md5sums[0]
+fi
+
+package() {
+  cd "$srcdir/arduino-$pkgver"
+
+  # arduino excutable should accept arguments
+  sed -i 's/^java .* processing.app.Base$/\0 "$*"/' arduino
+
+  mkdir -p "$pkgdir"/usr/{bin,share/{doc,applications,pixmaps}}
+
+  # copy the whole SDK to /usr/share/arduino/
+  cp -r . "$pkgdir/usr/share/arduino"
+
+  # at least support the FHS a little bit:
+  install -m755 "$srcdir/arduino" "$pkgdir/usr/bin/arduino"
+  ln -s /usr/share/arduino/reference "$pkgdir/usr/share/doc/arduino"
+
+  # desktop icon
+  install -m644 "$srcdir/arduino.desktop" "$pkgdir/usr/share/applications/"
+  install -m644 "$srcdir/arduino.png" "$pkgdir/usr/share/pixmaps/"
+}

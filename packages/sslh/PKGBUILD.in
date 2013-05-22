@@ -1,0 +1,50 @@
+# $Id: PKGBUILD 83699 2013-02-04 14:24:41Z seblu $
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Sébastien Luttringer <seblu@archlinux.org>
+# Contributor: Le_suisse <lesuisse.dev+aur at gmail dot com>
+# Contributor: Jason Rodriguez <jason-aur@catloaf.net>
+
+groups=%GROUPS%
+pkgname=%PKGNAME%
+realname=sslh
+pkgver=1.14
+provides=("sslh=$pkgver")
+conflicts=(sslh)
+pkgrel=2
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url='http://www.rutschle.net/tech/sslh.shtml'
+license=('GPL2')
+depends=('libconfig')
+backup=('etc/sslh.conf')
+install=$realname.install
+source=("http://www.rutschle.net/tech/$realname-$pkgver.tar.gz"
+       'sslh-select.service'
+       'sslh-fork.service')
+md5sums=('36e64bd6c7d0a299d5acd1109988099b'
+         '67e8c9511508673254afa3e1ca61ff89'
+         'a4402244a4d819beb3c6dc7ff031084e')
+
+build() {
+  cd $realname-$pkgver
+  make VERSION=\"v$pkgver\"
+}
+
+package() {
+  # manually install to have both ssl-fork and ssl-select
+  cd $realname-$pkgver
+  install -Dm 0755 sslh-fork "$pkgdir/usr/bin/sslh-fork"
+  install -Dm 0755 sslh-select "$pkgdir/usr/bin/sslh-select"
+  ln -s sslh-fork "$pkgdir/usr/bin/sslh"
+  # install manpage
+  install -Dm 0644 sslh.8.gz "$pkgdir/usr/share/man/man8/sslh.8.gz"
+  # install example file
+  install -Dm 0644 example.cfg "$pkgdir/etc/sslh.conf"
+  # systemd
+  install -Dm 644 $srcdir/sslh-fork.service \
+    "$pkgdir/usr/lib/systemd/system/sslh-fork.service"
+  install -Dm 644 $srcdir/sslh-select.service \
+    "$pkgdir/usr/lib/systemd/system/sslh-select.service"
+}
+
+# vim:set ts=2 sw=2 et:

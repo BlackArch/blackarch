@@ -1,0 +1,63 @@
+# $Id: PKGBUILD 185694 2013-05-17 11:13:03Z stephane $
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Stéphane Gaudreault <stephane@archlinux.org>
+# Contributor: Tobias Powalowski <tpowa@archlinux.org>
+# Contributor: Aaron Griffin <aaron@archlinux.org>
+
+pkgname=%PKGNAME%
+realname=iputils
+pkgver=20121221
+pkgrel=2
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+license=('GPL' 'BSD')
+url="http://www.skbuff.net/iputils/"
+groups=%GROUPS%
+depends=('openssl' 'sysfsutils' 'libcap')
+optdepends=('xinetd: for tftpd')
+makedepends=('docbook2x' 'opensp')
+conflicts=('netkit-base' 'arping' 'netkit-tftpd' 'iputils')
+replaces=('netkit-base')
+provides=("iputils=$pkgver")
+backup=(etc/xinetd.d/tftp)
+install=${realname}.install
+source=(http://www.skbuff.net/${realname}/${realname}-s${pkgver}.tar.bz2
+        tftp.xinetd)
+sha1sums=('4d56d8c75d6a5d58f052e4056e975f01ebab9ba9'
+          'fc2ae26f5609725e3f4aeaf4ab82dfa6d2e378fd')
+
+build() {
+  cd "${srcdir}/${realname}-s${pkgver}"
+
+  make USE_GNUTLS=no CCOPTOPT="$CFLAGS"
+
+  cd doc
+  for file in *.sgml; do
+    xf=${file/.sgml/.xml}
+    osx -xlower -xno-nl-in-tag $file > $xf || true
+    sed -i "s|<refname>\(.*\), \(.*\)</refname>|<refname>\1</refname>, <refname>\2</refname>|g" $xf
+    docbook2man $xf
+  done
+}
+
+package() {
+  cd "${srcdir}/${realname}-s${pkgver}"
+
+  install -dm755 "${pkgdir}"/usr/bin
+
+  install -m755 arping clockdiff rarpd rdisc tftpd tracepath tracepath6 "${pkgdir}"/usr/bin/
+
+  install -m755 ping{,6} "${pkgdir}"/usr/bin/
+
+  install -dm755 "${pkgdir}"/usr/share/man/man8
+  install -m644 doc/{arping,clockdiff,ping,rarpd,rdisc,tftpd,tracepath}.8 \
+     "${pkgdir}"/usr/share/man/man8/
+
+  cd "${pkgdir}"/usr/share/man/man8
+  ln -sf ping.8.gz  ping6.8.gz
+  ln -sf tracepath.8.gz tracepath6.8.gz
+
+  # FS#24768
+  install -dm755 "${pkgdir}"/etc/xinetd.d/
+  install -m644 "${srcdir}"/tftp.xinetd "${pkgdir}"/etc/xinetd.d/tftp
+}

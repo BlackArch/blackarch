@@ -1,0 +1,41 @@
+# $Id: PKGBUILD 61947 2012-01-11 15:21:36Z stephane $
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Sergej Pupykin <pupykin.s+arch@gmail.com>
+# Contributor: ViNS <gladiator@fastwebnet.it>
+
+pkgname=%PKGNAME%
+realname=dsniff
+groups=%GROUPS%
+pkgver=2.4b1
+pkgrel=21
+provides=("dsniff=$pkgver")
+conflicts=(dsniff)
+pkgdesc=%PKGDESC%
+url="http://www.monkey.org/~dugsong/dsniff/"
+arch=('i686' 'x86_64')
+license=('BSD')
+depends=('libpcap' 'openssl' 'libxmu' 'glib2' 'libnet' 'libnids')
+source=("http://www.monkey.org/~dugsong/${realname}/beta/$realname-$pkgver.tar.gz"
+        "http://ftp.de.debian.org/debian/pool/main/d/${realname}/${realname}_2.4b1+debian-18.diff.gz")
+md5sums=('2f761fa3475682a7512b0b43568ee7d6'
+         'fbc9f62f9ab2f98f24f53ad497c1ce5d')
+
+build() {
+  cd $srcdir/$realname-2.4
+  patch -N < "${srcdir}"/dsniff_2.4b1+debian-18.diff
+  for i in *.dpatch; do
+    patch -N < "$i"
+  done
+
+  CPPFLAGS= LDFLAGS="-lresolv -lglib-2.0 -lgthread-2.0 $LDFLAGS" ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd "$srcdir"/$realname-2.4
+  make prefix="$pkgdir"/usr install
+  install -D -m0644 LICENSE "$pkgdir"/usr/share/licenses/${realname}/LICENSE
+
+  install -d "$pkgdir"/usr/share
+  mv "$pkgdir"/usr/man "$pkgdir"/usr/share/
+}

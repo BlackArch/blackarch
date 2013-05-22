@@ -1,0 +1,41 @@
+# Maintainer: Evan Teitelman <teitelmanevan@gmail.com>
+# Contributor: fnord0 < fnord0 AT riseup DOT net >
+
+pkgname=%PKGNAME%
+pkgver=2.04
+groups=%GROUPS%
+pkgrel=1
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url="http://voiphopper.sourceforge.net/"
+license=('GPLv3')
+depends=('libpcap' 'gcc')
+source=("http://downloads.sourceforge.net/sourceforge/${pkgname}/${pkgname}-${pkgver}.tar.gz")
+md5sums=('561acddff336d0408ad7bf663fe274d7')
+sha1sums=('262b3e88e3a58adc351aacaadb0e32eca60a9d61')
+
+build() {
+	cd ${srcdir}/${pkgname}-${pkgver}
+	./configure --prefix=/usr --mandir=/usr/share/man --libexecdir=/usr/lib || return 1
+
+	# Thanks to	Olivier Médoc for these patches.
+	sed -i "s%<linux/if_ether.h>%<netinet/if_ether.h>%" -i src/dhcpclient.h
+	sed -i "s%<linux/if_tr.h>%<netinet/if_tr.h>%" -i src/dhcpclient.h 
+
+	make || return 1
+}
+
+package() {
+	cd ${srcdir}/${pkgname}-${pkgver}
+
+	install -d ${pkgdir}/usr/share/voiphopper || return 1
+	install -d ${pkgdir}/usr/share/licenses/voiphopper || return 1
+	install -d ${pkgdir}/usr/bin || return 1
+	install -Dm644 LICENSE ${pkgdir}/usr/share/licenses/voiphopper/LICENSE || return 1
+
+	for doc in INSTALL README BUGS; do
+		install -Dm644 ${doc} ${pkgdir}/usr/share/voiphopper/${doc} || return 1
+	done
+
+	make DESTDIR="${pkgdir}" install || return 1
+}

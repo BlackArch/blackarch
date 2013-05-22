@@ -1,0 +1,67 @@
+# $Id: PKGBUILD 87349 2013-03-30 09:40:31Z lfleischer $
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Kaiting Chen <kaitocracy@gmail.com>
+# Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
+# Contributor: Kevin Piche <kevin@archlinux.org>
+
+groups=%GROUPS%
+pkgname=%PKGNAME%
+realname=stunnel
+pkgver=4.56
+provides=("stunnel=$pkgver")
+conflicts=(stunnel)
+pkgrel=1
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url="http://www.stunnel.org"
+license=('GPL')
+depends=('openssl')
+install=$realname.install
+options=('!libtool')
+source=("ftp://ftp.stunnel.org/stunnel/$realname-$pkgver.tar.gz"{,.asc}
+        'Makefile.patch'
+        'stunnel.rc.d'
+        'stunnel.tmpfiles.conf')
+
+md5sums=('ac4c4a30bd7a55b6687cbd62d864054c'
+         'd68c7dd65d515c678cdde15bbf0ce344'
+         'f15398497e10e080c2406d2fc541660c'
+         '4c7e3634a9d4dc040102f5d4160fb123'
+         '2e065a39998e57727ee79887bbd1751e')
+
+build() {
+  cd "$srcdir/$realname-$pkgver"
+
+  # don't create a certificate...
+  patch -p0 < "$srcdir/Makefile.patch"
+
+  ./configure --prefix=/usr \
+    --sysconfdir=/etc \
+    --localstatedir=/var \
+    --enable-ipv6 \
+    --disable-libwrap
+
+  make
+}
+
+package() {
+  cd "$srcdir/$realname-$pkgver"
+  make DESTDIR="$pkgdir" install
+
+  for i in ca.pl importCA.sh; do
+    install -Dm755 "tools/$i" "$pkgdir/usr/share/stunnel/$i"
+  done
+
+  install -Dm644 tools/stunnel.cnf "$pkgdir/etc/stunnel/stunnel.cnf"
+  install -Dm755 "$srcdir/stunnel.rc.d" "$pkgdir/etc/rc.d/stunnel"
+  install -Dm644 "$srcdir/stunnel.tmpfiles.conf" "$pkgdir/usr/lib/tmpfiles.d/stunnel.conf"
+
+  # move systemd service into place
+  install -dm755 "$pkgdir/usr/lib/systemd/system"
+  mv "tools/stunnel.service" "$pkgdir/usr/lib/systemd/system/"
+
+  sed -e "s:/usr/var/lib/stunnel/:/var/run/stunnel:g" \
+      -e "s:/usr/etc/stunnel/:/etc/stunnel/:g" \
+      -e "s:no\(body\|group\):stunnel:g" \
+      -i "$pkgdir/etc/stunnel/stunnel.conf-sample"
+}

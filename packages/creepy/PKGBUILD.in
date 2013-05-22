@@ -1,0 +1,59 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: fnord0 <fnord0 AT riseup DOT net>
+
+pkgname=%PKGNAME%
+pkgver=20121023
+pkgrel=1
+groups=%GROUPS%
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url=("http://github.com/ilektrojohn/creepy")
+license=('GPL3')
+provides=('creepy')
+makedepends=('git')
+depends=('python2' 'python2-tweepy-git' 'python-osmgpsmap' 'python2-flickrapi' 'python2-beautifulsoup3' 'pyexiv2' 'python2-configobj' 'python2-simplejson')
+_gitroot=("https://github.com/ilektrojohn/creepy.git")
+_gitname=("creepy")
+
+build() {
+  cd ${srcdir}
+
+ ## Git checkout
+  if [ -d ${srcdir}/${_gitname} ] ; then
+    msg "Git checkout:  Updating existing tree"
+    cd ${_gitname} && git pull origin
+    msg "Git checkout:  Tree has been updated"
+  else
+    msg "Git checkout:  Retrieving sources"
+    git clone ${_gitroot}
+  fi
+  msg "Checkout completed"
+
+ ## Build
+  rm -rf ${srcdir}/${_gitname}-build
+  cp -r ${srcdir}/${_gitname} ${srcdir}/${_gitname}-build
+  cd ${srcdir}/${_gitname}-build
+}
+
+package() {
+  cd ${srcdir}/${_gitname}-build
+  install -d ${pkgdir}/usr/share/${_gitname} || return 1
+  install -d ${pkgdir}/usr/bin || return 1
+  install -d ${pkgdir}/usr/share/${_gitname}/doc || return 1
+  cp -a  ${srcdir}/${_gitname}-build/* \
+    ${pkgdir}/usr/share/${_gitname}/ || return 1
+  chmod -R 755 ${pkgdir}/usr/share/${_gitname}/${_gitname}/*.py || return 1
+
+  ## create startup app /usr/bin/creepy
+  echo "#!/bin/sh" > ${pkgdir}/usr/bin/${_gitname}
+  echo "cd /usr/share/creepy/creepy" >> ${pkgdir}/usr/bin/${_gitname}
+  echo "python2 ./creepymap.py \"\$@\"" >> ${pkgdir}/usr/bin/${_gitname}
+  echo "cd -" >> ${pkgdir}/usr/bin/${_gitname}
+  chmod +x ${pkgdir}/usr/bin/${_gitname}
+
+  ## user notification
+  echo -e ""
+  echo -e "\e[1;31m[\e[0m\e[1;34m*\e[0m\e[1;31m]\e[0m \e[1;31mrun '\e[0m\e[1;34m/usr/bin/creepy\e[0m\e[1;31m' to start the application\e[0m"
+  echo -e "\e[1;34m>>>\e[0m \e[1;31mcreepy homepage @ \e[0m\e[1;32mhttps://github.com/ilektrojohn/creepy\e[0m"
+  echo -e ""
+}

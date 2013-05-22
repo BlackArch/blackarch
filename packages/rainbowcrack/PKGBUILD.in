@@ -1,0 +1,56 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: SpepS <dreamspepser at yahoo dot it>
+# Contributor: Geoffroy Carrier <geoffroy.carrier@koon.fr>
+# Contributor: Michal Krenek <mikos@sg1.cz>
+
+pkgname=%PKGNAME%
+groups=%GROUPS%
+pkgver=1.2
+pkgrel=4
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url="http://project-rainbowcrack.com/"
+license=('custom')
+depends=('openssl')
+source=("$pkgname-$pkgver-src.tar.xz"
+        "http://www.oxid.it/downloads/rc_patch_mysql_pix.zip")
+md5sums=('60137c06b727d6d3ca50340ff2c68292'
+         '71845ac352ff888a9cfcff6c1ea4184b')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver-src/src"
+
+  # MySQL and Cisco PIX Algorithm patches
+  install -Dm644 ${srcdir}/*.{h,cpp} .
+
+  # missing headers
+  sed -i "11i#include <stdlib.h>\n#include <string.h>" Public.h
+
+  # DSO link fix for crypto
+  sed -i "s/-lssl/& -lcrypto/" makefile.linux
+
+  make -f makefile.linux
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver-src/src"
+
+  # bin
+  install -d "$pkgdir/usr/bin"
+  install -Dm755 r{t,c}* "$pkgdir/usr/bin"
+
+  # data
+  install -Dm644 "$srcdir/readme.txt" \
+    "$pkgdir/usr/share/$pkgname/patches.txt"
+  install -Dm644 charset.txt ../readme.txt \
+    "$pkgdir/usr/share/$pkgname"
+
+  # docs
+  install -d "$pkgdir/usr/share/doc/$pkgname"
+  install -Dm644 ../doc/* \
+    "$pkgdir/usr/share/doc/$pkgname"
+
+  # license
+  install -Dm644 ../disclaimer.txt \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENCE"
+}

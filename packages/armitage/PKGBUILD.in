@@ -1,0 +1,48 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: MatToufoutu <mattoufootu[at]gmail.com>
+# Contributor: Thorsten Töpper <atsutane-aur@freethoughts.de>
+
+pkgname=%PKGNAME%
+pkgver=841
+groups=%GROUPS%
+pkgrel=1
+pkgdesc=%PKGDESC%
+url="http://www.fastandeasyhacking.com/"
+arch=('any')
+license=('GPL')
+depends=('metasploit' 'java-environment')
+makedepends=('apache-ant' 'zip' 'unzip' 'subversion')
+provides=('armitage')
+install='armitage.install'
+
+source=('armitage.install')
+md5sums=('5234326f9ff41ff8694cb35a557af895')
+
+_svntrunk=http://armitage.googlecode.com/svn/trunk/
+_svnmod=armitage
+
+build() {
+	cd ${srcdir}
+	if [ -d ${_svnmod}/.svn ]; then
+		svn up ${_svnmod}
+	else
+		svn co ${_svntrunk} ${_svnmod}
+	fi
+
+	rm -rf ${_svnmod}-build
+	cp -r ${_svnmod} ${_svnmod}-build
+	cd ${_svnmod}-build
+
+	sed -i s+/usr/share/java/apache-ant/bin/++g package.sh
+	bash package.sh
+	echo "#!/bin/bash" > ${_svnmod}.sh
+	echo "java -jar /opt/${_svnmod}/${_svnmod}.jar" >> ${_svnmod}.sh
+}
+
+package() {
+	mkdir -p ${pkgdir}/{opt/${_svnmod},usr/bin}
+	tar -C ${pkgdir}/opt/ -xzf ${srcdir}/${_svnmod}-build/${_svnmod}.tgz
+	install -m755 ${srcdir}/${_svnmod}-build/${_svnmod}.sh ${pkgdir}/usr/bin/${_svnmod}
+}
+
+# vim:set ts=2 sw=2 et:

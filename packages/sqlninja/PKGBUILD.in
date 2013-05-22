@@ -1,0 +1,49 @@
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: fnord0 < fnord0 AT riseup DOT net >
+
+pkgname=%PKGNAME%
+pkgver=0.2.5
+pkgrel=2
+groups=%GROUPS%
+pkgdesc=%PKGDESC%
+arch=('i686' 'x86_64')
+url="http://sqlninja.sourceforge.net/"
+license=('GPLv2')
+depends=('perl' 'perl-netpacket' 'perl-net-pcap' 'perl-net-dns' 'perl-net-rawip' 'perl-io-socket-ssl')
+optdepends=('metasploit: to use the metasploit attack mode' 
+	    'vnc: a VNC client, vncviewer, to use the VNC payload')
+conflicts=('sqlninja-svn')
+source=(http://downloads.sourceforge.net/sourceforge/sqlninja/${pkgname}-${pkgver}.tgz)
+md5sums=('95acfd9c5bc2305f239596c613d4ffc7')
+sha1sums=('ea33352a336d8ce18f5001c79d7bb94583a46f5d')
+install="sqlninja.install"
+
+build() {
+  cd ${srcdir}/${pkgname}-${pkgver}
+  install -d ${pkgdir}/usr/share/sqlninja || return 1
+  install -d ${pkgdir}/usr/share/sqlninja/doc || return 1
+  install -d ${pkgdir}/usr/share/licenses/sqlninja || return 1
+  install -d ${pkgdir}/usr/bin || return 1
+  for doc in ChangeLog README sqlninja-howto.html; do
+    install -Dm644 ${doc} ${pkgdir}/usr/share/sqlninja/doc/${doc} || return 1
+  done
+  cp -pR apps scripts sources sqlninja sqlninja.conf ${pkgdir}/usr/share/sqlninja || return 1
+  install -D -m644 LICENSE ${pkgdir}/usr/share/licenses/sqlninja/LICENSE || return 1
+
+  # archlinux fixes
+  cd ${pkgdir}/usr/share/${pkgname}
+  #check if metasploit-svn or metasploit stable is installed (-svn takes presidence)
+  #apply archlinux metasploit home directory to sqlninja.conf
+  if [ -d /usr/src/metasploit ]; then
+    sed -i 's|/home/sqlninja/trunk/|/usr/src/metasploit|g' ./sqlninja.conf || return 1
+  else
+    sed -i 's|/home/sqlninja/trunk/|/opt/metasploit|g' ./sqlninja.conf || return 1
+  fi
+
+  #create startup app
+  echo "#!/bin/bash" > ${pkgdir}/usr/bin/${pkgname}
+  echo "cd /usr/share/sqlninja" >> ${pkgdir}/usr/bin/${pkgname}
+  echo "./sqlninja \"\$@\"" >> ${pkgdir}/usr/bin/${pkgname}
+  echo "cd -" >> ${pkgdir}/usr/bin/${pkgname}
+  chmod +x ${pkgdir}/usr/bin/${pkgname}
+}

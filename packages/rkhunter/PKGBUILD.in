@@ -1,0 +1,50 @@
+# $Id: PKGBUILD 70436 2012-05-06 13:53:34Z lfleischer $
+# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Lukas Fleischer <archlinux at cryptocrack dot de>
+# Contributor: Jaroslav Lichtblau <dragonlord@aur.archlinux.org>
+# Contributor: Pierre Schmitz <pierre@archlinux.de>
+
+groups=%GROUPS%
+pkgname=%PKGNAME%
+realname=rkhunter
+pkgver=1.4.0
+provides=("rkhunter=$pkgver")
+conflicts=(rkhunter)
+pkgrel=1
+pkgdesc=%PKGDESC%
+arch=('any')
+url='http://rkhunter.sourceforge.net/'
+license=('GPL')
+depends=('bash' 'perl' 'wget')
+optdepends=('unhide')
+backup=('etc/rkhunter.conf')
+source=("http://downloads.sourceforge.net/sourceforge/${realname}/${realname}-${pkgver}.tar.gz"{,.asc})
+md5sums=('37b1ceb79a5ff3debca335d6550ac6b0'
+         'e83221c3eb3f417357059731c809a9de')
+
+package() {
+  cd "${srcdir}/${realname}-${pkgver}"
+
+  # fix installer for x86_64
+  sed -i -e "s/lib64/lib/g" installer.sh
+
+  # install to "/usr"
+  install -dm0755 "${pkgdir}/usr"
+  ./installer.sh --layout custom "${pkgdir}/usr" --striproot "${pkgdir}" --install
+
+  # fix paths
+  mv "${pkgdir}/usr/etc" "${pkgdir}"
+  mv "${pkgdir}/usr/var" "${pkgdir}"
+
+  sed -i -e "s#/usr/etc/rkhunter.conf#/etc/rkhunter.conf#g" "${pkgdir}/usr/bin/${realname}"
+  sed -i -e "s#/usr/etc/rkhunter.conf#/etc/rkhunter.conf#g" "${pkgdir}/etc/${realname}.conf"
+  sed -i -e "s#/usr/var/lib/rkhunter/db#/var/lib/rkhunter/db#g" "${pkgdir}/etc/${realname}.conf"
+  sed -i -e "s#/usr/var/lib/rkhunter/tmp#/var/lib/rkhunter/tmp#g" "${pkgdir}/etc/${realname}.conf"
+
+  # cleanup
+  rm -f "${pkgdir}/var/lib/${realname}/tmp/"{group,passwd}
+
+  # we trust in udev
+  sed -i 's|^#ALLOWHIDDENDIR=/dev/.udev$|ALLOWHIDDENDIR=/dev/.udev|' \
+    "${pkgdir}/etc/${realname}.conf"
+}
