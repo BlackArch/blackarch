@@ -1,10 +1,14 @@
 #!/bin/bash
+# Gets package source archives from the AUR or ABS.
 
-# Get packages from the official repos
-mkdir ../official-packages
+root="$(dirname "$0")/../.."
+get_dir="$root/new-packages"
 
-grep -v 'aur$' ../package-repos |
-cut -d' ' -f1 |
-while read package ; do
-	cp -nr /var/abs/*/$package ../official-packages
+echo "Saving packages to '$get_dir'..."
+
+for package ; do
+	packer -G $(basename "$package") ||
+	{ abs $package;
+	  cp -nr /var/abs/*/$package "$get_dir" ||
+     echo "Could not find '$package'."; }
 done
