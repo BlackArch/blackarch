@@ -1,20 +1,33 @@
 #!/bin/bash
 
-#for package in aur-packages/dnsmap ; do
-for package in ../packages/* ; do
+if (( $# == 0 )) ; then
+	packages=("$(dirname "$0")"/../../packages/*)
+else
+	packages=("$@")
+fi
+
+for package in "${packages[@]}" ; do
 	pkgbuild=$package/PKGBUILD
 
 	# Skip if PKGBUILD doesn't exist.
 	if ! [[ -f $pkgbuild ]] ; then
 		continue
+	else
+		echo "Generating info for '$package'..."
 	fi
 
 	# upstream repo
 	upstream_repo=$(grep "^$(basename $package)\s" ../package-repos | cut -d' ' -f2)
 
 	# groups               the package's archtrack groups
-	groups=(archtrack $(egrep "^#?$(basename $package)" ../pseudo-dependency-lists/* |\
+	groups=($(grep -E "^#?$(basename $package)" ../pseudo-dependency-lists/* | \
 	cut -d':' -f1 | cut -d'/' -f3))
+
+	if (( ${#groups[@]} != 0 )) ; then
+		groups=(archtrack ${groups[@]})
+	else
+		echo "Warning: package does not list any groups."
+	fi
 
 	# description              a description of the package
 	description=$(grep '^pkgdesc' $pkgbuild | cut -d'=' -f2)
