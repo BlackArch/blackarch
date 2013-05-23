@@ -15,19 +15,21 @@ This script makes distributions for packages and pseudo-packages.
 EOF
 }
 
+root="$(dirname "$0")/../../"
+
 make_source=false
 make_package=false
 make_depends=false
 
 case "$1" in
 	n|normal|packages)
-		packages=("$(dirname "$0")"/../../packages/*/normal)
+		packages=("$root"/packages/*/normal)
 		;;
 	a|archtrack)
-		packages=("$(dirname "$0")"/../../packages/*/archtrack)
+		packages=("$root"/packages/*/archtrack)
 		;;
 	p|pseudo)
-		packages=("$(dirname "$0")"/../../pseudo-packages/archtrack*)
+		packages=("$root"/pseudo-packages/archtrack*)
 		;;
 	*)
 		usage
