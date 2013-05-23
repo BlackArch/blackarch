@@ -5,7 +5,7 @@ usage() {
 	echo >&2 "Help will come soon. For now, look at the source."
 }
 
-cd "$(dirname "$0")/../../packages"
+cd "$(dirname "$0")/../packages"
 case "$1" in
 	p|packages)
 		ls -1
