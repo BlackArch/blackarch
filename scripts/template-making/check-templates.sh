@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for package in "$(dirname "$0")"/../../packages/* ; do
+for package in "$(dirname "$0")"/../../new-packages/* ; do
 	pkgbuild=$package/PKGBUILD.in
 
 	if ! [[ -f $pkgbuild ]] ; then

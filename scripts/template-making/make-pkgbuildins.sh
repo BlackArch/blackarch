@@ -20,7 +20,7 @@ for pkgbuild ; do
 		echo "Substituting package groups..."
 		sed -i '/^groups/s/(.*)/(%GROUPS%)/' $pkgbuildin
 	else
-		echo "Adding package groups..."
+		echo "Adding package groups (Warning: this addition needs to be checked manually)..."
 		sed -i '5a\groups=%GROUPS%' $pkgbuildin
 	fi
 
@@ -36,6 +36,6 @@ for pkgbuild ; do
 	echo "Changing maintainer..."
 	if ! grep -q 'Evan Teitelman' $pkgbuildin ; then
 		sed -ri 's/^#\s?[Mm]aintainer/# Contributor/' $pkgbuildin
-		sed -i '1i\# Maintainer: Evan Teitelman <teitelmanevan at gmail dot com>' $pkgbuildin
+		sed -i '1i\# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>' $pkgbuildin
 	fi
 done
