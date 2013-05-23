@@ -36,12 +36,18 @@ case "$1" in
 			done
 		done | sort -u
 		;;
-	g|groupings)
+	s|straight-associations)
 		for package in * ; do
-			source "$package/info"
+			( source "$package/info"
 			for group in ${groups[@]} ; do
 				[[ $group = archtrack ]] || echo "$group $package"
-			done
+			done )
+		done | sort
+		;;
+	g|groupings)
+		for package in * ; do
+			( source "$package/info"
+			  echo "$package ${groups[@]}" )
 		done | sort
 		;;
 	*)
