@@ -1,0 +1,37 @@
+# $Id: PKGBUILD 148886 2012-02-05 11:54:15Z ibiru $
+# Maintainer: Jan de Groot <jgc@archlinux.org>
+# Contributor: Sarah Hay <sarahhay@mb.sympatico.ca>
+
+pkgname=pygtk
+pkgver=2.24.0
+pkgrel=3
+pkgdesc="Python bindings for the GTK widget set"
+arch=('i686' 'x86_64')
+license=('LGPL')
+depends=('libglade' 'python2-cairo' 'pygobject')
+makedepends=('python2-numpy' 'pygobject2-devel')
+optdepends=('python2-numpy')
+options=('!libtool')
+url="http://www.pygtk.org/"
+source=(http://ftp.gnome.org/pub/gnome/sources/${pkgname}/${pkgver%.*}/${pkgname}-${pkgver}.tar.bz2
+        python27.patch)
+sha256sums=('cd1c1ea265bd63ff669e92a2d3c2a88eb26bcd9e5363e0f82c896e649f206912'
+            '39a30456cba055a452bb55c74ef1ff2f5f7bfaad22855b4dd569ab009b56b682')
+
+build() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+
+  #https://bugzilla.gnome.org/show_bug.cgi?id=623965
+  patch -Np1 -i "${srcdir}/python27.patch"
+
+  PYTHON=/usr/bin/python2 ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+  make DESTDIR="${pkgdir}" install
+  install -m644 gtk/gtk-extrafuncs.defs "${pkgdir}/usr/share/pygtk/2.0/defs/"
+
+  sed -i -e 's#env python$#env python2#' "${pkgdir}"/usr/lib/pygtk/2.0/{,demos/}*.py
+}

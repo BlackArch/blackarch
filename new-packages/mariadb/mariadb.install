@@ -1,0 +1,47 @@
+if [[ $(command -v my_print_defaults >/dev/null 2>&1) ]]; then
+  datadir=$(my_print_defaults mysqld | sed -n "s/^--datadir=//p")
+fi
+[[ -z $datadir ]] && datadir=/var/lib/mysql
+
+post_install(){
+  groupadd -g 89 mysql &>/dev/null
+  useradd -u 89 -g mysql -d $datadir -s /bin/false mysql &>/dev/null
+
+  if [[ ! -e $datadir ]]; then
+    install -dm700 $datadir
+    usr/bin/mysql_install_db --user=mysql --basedir=/usr --datadir=$datadir
+    chown -R mysql:mysql var/lib/mysql &>/dev/null
+  fi
+
+  usr/bin/systemd-tmpfiles --create mysql.conf
+
+  echo ">> If you are migrating from MySQL, don't forget to run 'mysql_upgrade'"
+  echo "     after mysqld.service restart." 
+}
+
+post_upgrade(){
+  getent group mysql >/dev/null 2>&1 || groupadd -g 89 mysql &>/dev/null
+  getent passwd mysql >/dev/null 2>&1 || useradd -u 89 -g mysql -d $datadir -s /bin/false mysql &>/dev/null
+
+  if [[ "$(vercmp $2 5.5.25-4)" -lt 0 ]] && [[ -d /data ]]; then
+    for x in data/*; do
+      cp -r $x $datadir/
+    done
+    rm -rf data
+  fi
+
+  if [[ "$(vercmp $2 5.5.25-5)" -lt 0 ]]; then
+    echo ">> mysql.service has been renamed to mysqld.service to keep"
+    echo "    consistency with MySQL package." 
+  fi
+}
+
+post_remove(){
+  if getent passwd mysql >/dev/null 2>&1; then
+    userdel mysql
+
+  fi
+  if getent group mysql >/dev/null 2>&1; then
+    groupdel mysql
+  fi
+}
