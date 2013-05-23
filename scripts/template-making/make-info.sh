@@ -19,7 +19,7 @@ echo "$package"
 
 	upstream_package_name=$(basename "$package")
 
-	upstream_repo=$(yaourt -Si $upstream_package_name | sed '/^Repository/s/^.*: //')
+	upstream_repo=$(yaourt -Si $upstream_package_name | sed -n '/^Repository/s/^.*: //')
 
 	#groups=($(grep -E "^#?$(basename $package)" ../pseudo-dependency-lists/* | \
 	#          cut -d':' -f1 | cut -d'/' -f3))
