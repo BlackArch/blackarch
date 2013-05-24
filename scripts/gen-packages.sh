@@ -37,21 +37,26 @@ for package in "${packages[@]}" ; do
 	fi
 
 	if [[ "$1" = p ]] ; then
+			echo "Generating $(basename $package)..."
+			depends=
 			if [[ $(basename "$package") = archtrack ]] ; then
 				# The 'archtrack' pseudo-package depends on all of the other
 				#  archtrack pseudo-packages.
 				depends=$(basename -a "$root"/pseudo-packages/archtrack-*)
 			else
-				depends=$(grep -l "^groups.*\<$(basename "$package")\>" "$root"/packages/*/info |
-				sed -e 's#/info$##' -e 's#^.*/##g')
-				fi
+				# TODO: find a simpler way to do this.
+				while read dep ; do
+					depends="$(grep '^upstream_name' $(dirname $dep)/info |
+					           sed 's/^.*=//') $depends"
+				done < <(grep -l "^groups.*\<$(basename "$package")\>" "$root"/packages/*/PKGBUILD | tee /dev/stderr)
+			fi
 
-				sed \
-				-e "/%DEPENDS%/r "<(echo "$depends") \
-				-e "/%DEPENDS%/d" \
-				-e "s|%PKGNAME%|$(basename "$package")|" \
-				-e "s|%PKGDESC%|$(< "$package/description")|" \
-				"$root/pseudo-packages/PKGBUILD.in" > "$package/PKGBUILD"
+			sed \
+			-e "/%DEPENDS%/r "<(echo "$depends" | tr ' ' $'\n' | sed '$d') \
+			-e "/%DEPENDS%/d" \
+			-e "s|%PKGNAME%|$(basename "$package")|" \
+			-e "s|%PKGDESC%|$(< "$package/description")|" \
+			"$root/pseudo-packages/PKGBUILD.in" > "$package/PKGBUILD"
 		else
 			info="$package/info"
 			# File existence checks
