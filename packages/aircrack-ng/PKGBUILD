@@ -5,28 +5,29 @@
 # Contributor: Corrado Primier <bardo@aur.archlinux.org>
 # Contributor: ice-man <icemanf@gmail.com>
 
-pkgname=aircrack-ng-archtrack
-_realname=aircrack-ng
+pkgbase=aircrack-ng
+pkgname=(aircrack-ng aircrack-ng-scripts)
+groups=(archtrack archtrack-wireless-attacks)
 pkgver=1.1
 pkgrel=8
-groups=(archtrack archtrack-wireless-attacks)
 arch=('i686' 'x86_64')
 url="http://www.aircrack-ng.org"
 license=('GPL2')
-source=("http://download.aircrack-ng.org/${_realname}-${pkgver}.tar.gz")
+source=("http://download.aircrack-ng.org/${pkgname}-${pkgver}.tar.gz")
 md5sums=('f7a24ed8fad122c4187d06bfd6f998b4')
-depends=('openssl' 'sqlite3' 'iw' 'net-tools' 'python2' 'graphviz' 'python2-pylorcon')
-provides=("aircrack-ng=$pkgver" "aircrack-ng-scripts=$pkgver")
-conflicts=('aircrack-ng' 'aircrack-ng-scripts')
-pkgdesc="A key cracker for the 802.11 WEP and WPA-PSK protocols"
+depends=('openssl' 'sqlite3' 'iw' 'net-tools')
 
 build() {
-   cd ${srcdir}/${_realname}-${pkgver}
+   cd ${srcdir}/${pkgbase}-${pkgver}
    make SQLITE=true unstable=true
 }
 
-package() {
-  	cd ${srcdir}/${_realname}-${pkgver}
+package_aircrack-ng() {
+	pkgdesc="A key cracker for the 802.11 WEP and WPA-PSK protocols"
+	conflicts=('aircrack-ng')
+	provides=("aircrack-ng=$pkgver")
+
+  	cd ${srcdir}/${pkgname}-${pkgver}
 	make DESTDIR=${pkgdir} SQLITE=true unstable=true bindir=/usr/bin  \
 		mandir=/usr/share/man/man1 sbindir=/usr/sbin install
 
@@ -37,6 +38,13 @@ package() {
 	# Man pages
 	mkdir -p ${srcdir}/tmp/
 	mv ${pkgdir}/usr/share/man/man1/airdriver-ng.1 ${srcdir}/tmp/
+}
+
+package_aircrack-ng-scripts() {
+	pkgdesc="Included scripts for a key cracker for the 802.11 WEP and WPA-PSK protocols"
+	depends=('python2' 'graphviz' 'python2-pylorcon')
+	conflicts=('aircrack-ng-scripts')
+	provides=("aircrack-ng-scripts=$pkgver")
 
 	cd ${srcdir}/aircrack-ng-${pkgver}/scripts
 	mkdir -p ${pkgdir}/usr/share/man/man1/ \
@@ -85,4 +93,5 @@ package() {
 	# Script
 	install -Dm644 airodump-ng-oui-update ${pkgdir}/usr/sbin/
 	chmod +x ${pkgdir}/usr/sbin/airodump-ng-oui-update
+
 }
