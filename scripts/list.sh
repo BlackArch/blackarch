@@ -10,6 +10,11 @@ case "$1" in
 	p|packages)
 		ls -1
 		;;
+	o|official-packages)
+		for package in * ; do
+			grep -q 'upstream_repo=aur' $package/info || echo $package
+		done
+		;;
 	w|working)
 		for package in * ; do
 			grep -q '^working=true' "$package/info" && echo "$package"
