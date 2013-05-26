@@ -1,9 +1,9 @@
 # $Id: PKGBUILD 180833 2013-03-26 15:59:12Z bpiotrowski $
-# Maintainer: Bartłomiej Piotrowski <nospam@bpiotrowski.pl>
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Bartłomiej Piotrowski <nospam@bpiotrowski.pl>
 
 pkgbase=mariadb
-pkgname=('libmariadbclient' 'mariadb-clients' 'mariadb')
-pkgname=mariadb-archtrack
+pkgname=('libmariadbclient-archtrack' 'mariadb-clients-archtrack' 'mariadb-archtrack')
 pkgver=5.5.30
 pkgrel=2
 arch=('i686' 'x86_64')
@@ -65,12 +65,12 @@ build() {
   make
 }
 
-package_libmariadbclient() {
+package_libmariadbclient-archtrack() {
   pkgdesc='MariaDB client libraries'
   depends=('openssl')
-  conflicts=('libmysqlclient')
-  provides=("libmysqlclient=$pkgver")
-  
+  conflicts=('libmysqlclient' 'libmariadbclient')
+  provides=("libmysqlclient=$pkgver" "libmariadbclient=$pkgver")
+
   cd "$srcdir"/build
   for dir in include libmysql libmysqld libservices; do
     make -C $dir DESTDIR="$pkgdir" install
@@ -84,12 +84,12 @@ package_libmariadbclient() {
   done
 }
 
-package_mariadb-clients() {
+package_mariadb-clients-archtrack() {
   pkgdesc='MariaDB client tools'
   depends=('libmariadbclient')
-  conflicts=('mysql-clients')
-  provides=("mysql-clients=$pkgver")
-  
+  conflicts=('mysql-clients' 'mariadb-clients')
+  provides=("mysql-clients=$pkgver" "mariadb-clients=$pkgver")
+
   cd "$srcdir"/build
   make -C client DESTDIR="$pkgdir" install
 
@@ -103,16 +103,17 @@ package_mariadb-clients() {
   rm "$pkgdir"/usr/bin/{mysql_{plugin,upgrade},mysqlbinlog,mysqltest}
 }
 
-package_mariadb() {
+package_mariadb-archtrack() {
   pkgdesc='Fast SQL database server, drop-in replacement for MySQL'
   backup=('etc/mysql/my.cnf')
   install=mariadb.install
   depends=('mariadb-clients')
-  conflicts=('mysql' 'mytop')
-  provides=("mysql=$pkgver" 'mytop')
   optdepends=('perl-dbd-mysql: mytop dependency'
               'perl-term-readkey: mytop dependency')
   options=('emptydirs')
+  conflicts=('mysql' 'mytop' 'mariadb')
+  provides=("mysql=$pkgver" 'mytop' "mariadb=$pkgver")
+  groups=('archtrack' 'archtrack-info-gathering')
 
   cd "$srcdir"/build
   make DESTDIR="$pkgdir" install
@@ -127,7 +128,7 @@ package_mariadb() {
   rm "$pkgdir"/usr/lib/libmysql*
   rm -r "$pkgdir"/usr/include/
   rm "$pkgdir"/usr/share/man/man1/{mysql_config,mysql_client_test_embedded,mysqltest_embedded}.1
-  
+
   # provided by mariadb-clients
   rm "$pkgdir"/usr/bin/{mysql,mysqladmin,mysqlcheck,mysqldump,mysqlimport,mysqlshow,mysqlslap}
   rm "$pkgdir"/usr/share/man/man1/{mysql,mysqladmin,mysqlcheck,mysqldump,mysqlimport,mysqlshow,mysqlslap}.1
