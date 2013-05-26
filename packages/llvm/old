@@ -10,15 +10,17 @@
 # Contributor: Roberto Alsina <ralsina@kde.org>
 # Contributor: Gerardo Exequiel Pozzi <vmlinuz386@yahoo.com.ar>
 
-pkgname=('llvm' 'llvm-ocaml' 'clang' 'clang-analyzer')
-pkgbase='llvm'
+pkgname=clang-analyzer-archtrack
 pkgver=3.2
 pkgrel=6
 arch=('i686' 'x86_64')
 url="http://llvm.org/"
 license=('custom:University of Illinois/NCSA Open Source License')
 makedepends=('libffi' 'python2' 'ocaml' 'python-sphinx')
-source=(http://llvm.org/releases/$pkgver/$pkgbase-$pkgver.src.tar.gz
+pkgdesc='A source code analysis framework'
+url="http://clang-analyzer.llvm.org/"
+depends=("clang=$pkgver-$pkgrel" 'python2')
+source=(http://llvm.org/releases/$pkgver/$_realname-$pkgver.src.tar.gz
         http://llvm.org/releases/$pkgver/clang-$pkgver.src.tar.gz
         http://dev.archlinux.org/~foutrelis/sources/compiler-rt/compiler-rt-$pkgver.src.tar.xz
         llvm-Config-config.h
@@ -40,7 +42,7 @@ sha256sums=('125090c4d26740f1d5e9838477c931ed7d9ad70d599ba265f46f3a42cb066343'
             '0d32ad283566357ca1bfbeb4cbe6b0b961943b79d3d718ed0435101c05629137')
 
 prepare() {
-  cd "$srcdir/$pkgbase-$pkgver.src"
+  cd "$srcdir/$_realname-$pkgver.src"
 
   # At the present, clang must reside inside the LLVM source code tree to build
   # See http://llvm.org/bugs/show_bug.cgi?id=4840
@@ -94,7 +96,7 @@ prepare() {
 }
 
 build() {
-  cd "$srcdir/$pkgbase-$pkgver.src"
+  cd "$srcdir/$_realname-$pkgver.src"
 
   # Apply strip option to configure
   _optimized_switch="enable"
@@ -126,115 +128,8 @@ build() {
   make -C docs -f Makefile.sphinx html
 }
 
-package_llvm() {
-  pkgdesc="Low Level Virtual Machine"
-  depends=('perl' 'libffi')
-  provides=('llvm')
-  conflicts=('llvm')
-
-  cd "$srcdir/$pkgbase-$pkgver.src"
-
-  # We move the clang directory out of the tree so it won't get installed and
-  # then we bring it back in for the clang package
-  mv tools/clang "$srcdir"
-
-  # -j1 is due to race conditions during the installation of the OCaml bindings
-  make -j1 DESTDIR="$pkgdir" install
-  mv "$srcdir/clang" tools
-
-  # OCaml bindings go to a separate package
-  rm -rf "$srcdir"/{ocaml,ocamldoc}
-  mv "$pkgdir"/usr/{lib/ocaml,share/doc/llvm/ocamldoc} "$srcdir"
-
-  # Remove duplicate files installed by the OCaml bindings
-  rm "$pkgdir"/usr/{lib/llvm/libllvm*,share/doc/llvm/ocamldoc.tar.gz}
-
-  # Fix permissions of static libs
-  chmod -x "$pkgdir"/usr/lib/llvm/*.a
-
-  # Get rid of example Hello transformation
-  rm "$pkgdir"/usr/lib/llvm/*LLVMHello.*
-
-  # Add ld.so.conf.d entry
-  install -d "$pkgdir/etc/ld.so.conf.d"
-  echo /usr/lib/llvm >"$pkgdir/etc/ld.so.conf.d/llvm.conf"
-
-  # Symlink LLVMgold.so into /usr/lib/bfd-plugins
-  # (https://bugs.archlinux.org/task/28479)
-  install -d "$pkgdir/usr/lib/bfd-plugins"
-  ln -s ../llvm/LLVMgold.so "$pkgdir/usr/lib/bfd-plugins/LLVMgold.so"
-
-  if [[ $CARCH == x86_64 ]]; then
-    # Needed for multilib (https://bugs.archlinux.org/task/29951)
-    # Header stubs are taken from Fedora
-    for _header in config llvm-config; do
-      mv "$pkgdir/usr/include/llvm/Config/$_header"{,-64}.h
-      cp "$srcdir/llvm-Config-$_header.h" \
-        "$pkgdir/usr/include/llvm/Config/$_header.h"
-    done
-  fi
-
-  # Install man pages
-  install -d "$pkgdir/usr/share/man/man1"
-  cp docs/_build/man/*.1 "$pkgdir/usr/share/man/man1/"
-
-  # Install html docs
-  cp -r docs/_build/html/* "$pkgdir/usr/share/doc/llvm/html/"
-  rm -r "$pkgdir/usr/share/doc/llvm/html/_sources"
-
-  install -Dm644 LICENSE.TXT "$pkgdir/usr/share/licenses/$pkgbase/LICENSE"
-}
-
-package_llvm-ocaml() {
-  pkgdesc="OCaml bindings for LLVM"
-  depends=("llvm=$pkgver-$pkgrel" 'ocaml')
-  provides=('llvm-ocaml')
-  conflicts=('llvm-ocaml')
-
-  cd "$srcdir/llvm-$pkgver.src"
-
-  install -d "$pkgdir"/{usr/lib,usr/share/doc/llvm}
-  cp -r "$srcdir/ocaml" "$pkgdir/usr/lib"
-  cp -r "$srcdir/ocamldoc" "$pkgdir/usr/share/doc/llvm"
-
-  # Remove execute bit from static libraries
-  chmod -x "$pkgdir"/usr/lib/ocaml/libllvm*.a
-
-  install -Dm644 LICENSE.TXT "$pkgdir/usr/share/licenses/llvm-ocaml/LICENSE"
-}
-
-package_clang() {
-  pkgdesc="C language family frontend for LLVM"
-  url="http://clang.llvm.org/"
-  depends=("llvm=$pkgver-$pkgrel" 'gcc')
-  provides=('clang')
-  conflicts=('clang')
-
-  # Fix installation path for clang docs
-  sed -i 's:$(PROJ_prefix)/share/doc/llvm:$(PROJ_prefix)/share/doc/clang:' \
-    "$srcdir/llvm-$pkgver.src/Makefile.config"
-
-  cd "$srcdir/llvm-$pkgver.src/tools/clang"
-  make DESTDIR="$pkgdir" install
-
-  # Fix permissions of static libs
-  chmod -x "$pkgdir"/usr/lib/llvm/*.a
-
-  # Revert the path change in case we want to do a repackage later
-  sed -i 's:$(PROJ_prefix)/share/doc/clang:$(PROJ_prefix)/share/doc/llvm:' \
-    "$srcdir/llvm-$pkgver.src/Makefile.config"
-
-  install -Dm644 LICENSE.TXT "$pkgdir/usr/share/licenses/clang/LICENSE"
-}
-
-package_clang-analyzer() {
-  pkgdesc="A source code analysis framework"
-  url="http://clang-analyzer.llvm.org/"
-  depends=("clang=$pkgver-$pkgrel" 'python2')
-  provides=('clang-analyzer')
-  conflicts=('clang-analyzer')
-  groups=(archtrack archtrack-forensics)
-
+# We removed the other parts of the official clang package.
+package() {
   cd "$srcdir/llvm-$pkgver.src/tools/clang"
 
   install -d "$pkgdir"/usr/{bin,lib/clang-analyzer}
