@@ -20,6 +20,16 @@ case "$1" in
 			grep -q '^working=true' "$package/info" && echo "$package"
 		done
 		;;
+	h|has-been-built)
+		for package in */*.pkg.tar.xz ; do
+			echo "$(dirname "$package")"
+		done
+		;;
+	n|not-built)
+		for package in * ; do
+			ls $package/*.pkg.tar.xz &>/dev/null || echo "$(basename "$package")"
+		done
+		;;
 	b|broken)
 		for package in * ; do
 			grep -q '^working=false' "$package/info" && echo "$package"
