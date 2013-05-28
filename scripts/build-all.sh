@@ -1,5 +1,10 @@
 #!/bin/bash
 
+[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon)
+
+# Syntax fix
+#)
+
 echo "Note: this must be run from the root of the repository."
 
 ls -1 packages > all-packages

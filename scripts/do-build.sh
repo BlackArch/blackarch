@@ -1,6 +1,11 @@
 #!/bin/bash
 
-eval $(gpg-agent --daemon)
+[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon)
+
+# Syntax fix
+#)
+
+ls -1 packages > all-packages
 
 while read pack ; do
 		(
