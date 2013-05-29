@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installs all package dependencies.
+# Installs all package dependencies from the AUR and official repos.
 
 for pack in "$(dirname "$0")"/packages/* ; do
 	(

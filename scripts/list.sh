@@ -1,8 +1,11 @@
 #!/bin/bash
 # Provides some informative lists.
 
+this=$(realpath "$0")
+
 usage() {
 	echo >&2 "Help will come soon. For now, look at the source."
+	cat "$this"
 }
 
 cd "$(dirname "$0")/../packages"
