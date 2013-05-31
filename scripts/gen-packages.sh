@@ -46,8 +46,19 @@ for package in "${packages[@]}" ; do
 			else
 				# TODO: find a simpler way to do this.
 				while read dep ; do
-					depends="$(grep '^upstream_name' $(dirname $dep)/info |
-					           sed 's/^.*=//') $depends"
+					if grep -q '^working=true' $(dirname "$dep")/info ; then
+						depname=$(grep '^upstream_name' $(dirname $dep)/info |
+						          sed 's/^.*=//')
+
+						case $depname in
+							aircrack-ng) depname="aircrack-ng aircrack-ng-scripts" ;;
+							ettercap) depname="ettercap ettercap-gtk" ;;
+							#llvm) depname="clang-analyzer" ;;
+							#libmariadbclient) depname="mariadb" ;;
+							wireshark) depname="wireshark-cli wireshark-gtk" ;;
+						esac
+						depends="$depname $depends"
+					fi
 				done < <(grep -l "^groups.*\<$(basename "$package")\>" "$root"/packages/*/PKGBUILD | tee /dev/stderr)
 			fi
 
