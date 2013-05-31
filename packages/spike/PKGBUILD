@@ -3,7 +3,7 @@
 pkgname='spike'
 pkgver=2.9
 pkgrel=2
-pkgdesc='IMMUNITYsec's fuzzer creation kit in C'
+pkgdesc="IMMUNITYsec's fuzzer creation kit in C"
 groups=(archtrack archtrack-vulnerability-analysis)
 arch=('i686' 'x86_64')
 url="http://www.immunitysec.com/resources-freesoftware.shtml"
@@ -15,20 +15,25 @@ source=("http://www.immunitysec.com/downloads/SPIKE${pkgver}.tgz")
 md5sums=(5e41c40904db2b3da06f181e8815aedd) 
 sha1sums=(efc403a5f48f7172402f8896f398d2b1b9881f29)
 
+# TODO: swap startdir/src with srcdir
+prepare() {
+	cd ${startdir}/src/SPIKE/SPIKE/src
+	sed -i 's|/usr/bin/python|/usr/bin/python2|g' SPIKE_Console.py || return 1
+}
+
 build() {
-	install -d ${pkgdir}/usr/lib || return 1
-  	install -d ${pkgdir}/usr/share/${pkgname} || return 1
-	install -d ${pkgdir}/usr/share/${pkgname}/doc || return 1
 	cd ${startdir}/src/SPIKE/SPIKE/src
 	aclocal || return 1
 	automake || return 1
    	./configure --prefix=/usr || return 1
+  	make || return 1
 }
 
 package() {
 	cd ${startdir}/src/SPIKE/SPIKE/src
-	sed -i 's|/usr/bin/python|/usr/bin/python2|g' SPIKE_Console.py || return 1
-  	make || return 1
+	install -d ${pkgdir}/usr/lib || return 1
+  	install -d ${pkgdir}/usr/share/${pkgname} || return 1
+	install -d ${pkgdir}/usr/share/${pkgname}/doc || return 1
 	install -m755 libdlrpc.so "${pkgdir}/usr/lib/" || return 1
 	mv README* ${pkgdir}/usr/share/${pkgname}/doc/ || return 1
 	mv ChangeLog ${pkgdir}/usr/share/${pkgname}/doc/ || return 1
@@ -51,6 +56,7 @@ package() {
 	mv backups ${pkgdir}/usr/share/${pkgname}/ || return 1
   	install -Dm644 AUTHOR ${pkgdir}/usr/share/${pkgname}/doc/AUTHOR || return 1
   	install -Dm644 dave_immunitysec_com.asc ${pkgdir}/usr/share/${pkgname}/doc/dave_immunitysec_com.asc || return 1
+	# TODO: use msg
 	echo -e ""
 	echo -e "\e[1;34m[\e[0m\e[1;31m*\e[0m\e[1;34m]\e[0m \e[1;31mthe SPIKE fuzzer creation kit resides in the directory \e[1;34m'\e[0m\e[1;31m/usr/share/spike\e[1;34m'\e[0m"
 	echo -e "\e[1;34m>>>\e[0m \e[1;31mthe documentation resides in the directory \e[1;34m'\e[0m\e[1;31m/usr/share/spike/doc\e[1;34m'\e[0m"
