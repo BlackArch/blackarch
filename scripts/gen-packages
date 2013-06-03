@@ -13,6 +13,7 @@ if (( $# == 0 )) ; then
 	exit 1
 fi
 
+# TODO: clean this up
 if (( $# > 1 )) ; then
 	packages=("${@:2}")
 else
@@ -36,20 +37,22 @@ for package in "${packages[@]}" ; do
 		continue
 	fi
 
+	# Pseudo-packages
 	if [[ "$1" = p ]] ; then
-			echo "Generating $(basename $package)..."
-			depends=
-			if [[ $(basename "$package") = archtrack ]] ; then
-				# The 'archtrack' pseudo-package depends on all of the other
-				#  archtrack pseudo-packages.
-				depends=$(basename -a "$root"/pseudo-packages/archtrack-*)
-			else
-				# TODO: find a simpler way to do this.
-				while read dep ; do
-					if grep -q '^working=true' $(dirname "$dep")/info ; then
-						depname=$(grep '^upstream_name' $(dirname $dep)/info |
-						          sed 's/^.*=//')
+		echo "Generating $(basename $package)..."
+		depends=
+		if [[ $(basename "$package") = archtrack ]] ; then
+			# The 'archtrack' pseudo-package depends on all of the other
+			#  archtrack pseudo-packages.
+			depends=$(basename -a "$root"/pseudo-packages/archtrack-*)
+		else
+			# TODO: find a simpler way to do this.
+			while read dep ; do
+				if grep -q '^working=true' $(dirname "$dep")/info ; then
+					depname=$(grep '^upstream_name' $(dirname $dep)/info |
+					sed 's/^.*=//')
 
+						# Special cases
 						case $depname in
 							aircrack-ng) depname="aircrack-ng aircrack-ng-scripts" ;;
 							ettercap) depname="ettercap ettercap-gtk" ;;
@@ -59,7 +62,8 @@ for package in "${packages[@]}" ; do
 						esac
 						depends="$depname $depends"
 					fi
-				done < <(grep -l "^groups.*\<$(basename "$package")\>" "$root"/packages/*/PKGBUILD | tee /dev/stderr)
+				done < <(grep -l "^groups.*\<$(basename "$package")\>" \
+				         "$root"/packages/*/PKGBUILD | tee /dev/stderr)
 			fi
 
 			sed \
@@ -68,6 +72,7 @@ for package in "${packages[@]}" ; do
 			-e "s|%PKGNAME%|$(basename "$package")|" \
 			-e "s|%PKGDESC%|$(< "$package/description")|" \
 			"$root/pseudo-packages/PKGBUILD.in" > "$package/PKGBUILD"
+		# Normal packages
 		else
 			info="$package/info"
 			# File existence checks
