@@ -1,0 +1,47 @@
+#!/bin/bash
+
+cd "$(dirname "$0")/../alt"
+
+(( $EUID == 0 )) || { echo "Must be root."; exit 1; }
+
+make_mounts() {
+	mount --bind /dev archtrack/dev
+	mount --bind /dev/pts archtrack/dev/pts
+	mount --bind /etc/gshadow archtrack/etc/gshadow
+	mount --bind /etc/makepkg.conf archtrack/etc/makepkg.conf
+	mount --bind /etc/pacman.conf archtrack/etc/pacman.conf
+	mount --bind /etc/passwd archtrack/etc/passwd
+	mount --bind /etc/resolv.conf archtrack/etc/resolv.conf
+	mount --bind /etc/shadow archtrack/etc/shadow
+	mount --bind /proc archtrack/proc
+	mount --bind /sys archtrack/sys
+	mount --bind profile archtrack/etc/profile
+	mount /dev/sdb3 archtrack/home
+}
+
+remove_mounts() {
+	umount archtrack/dev
+	umount archtrack/dev/pts
+	umount archtrack/etc/gshadow
+	umount archtrack/etc/makepkg.conf
+	umount archtrack/etc/pacman.conf
+	umount archtrack/etc/passwd
+	umount archtrack/etc/resolv.conf
+	umount archtrack/etc/shadow
+	umount archtrack/proc
+	umount archtrack/sys
+	umount archtrack/etc/profile
+	umount archtrack/home
+}
+
+error_trap() {
+	echo >&2 "An error has occurred. Removing mounts..."
+	remove_mounts
+}
+trap error_trap ERR
+
+if [[ $1 != u ]] ; then
+	make_mounts
+	chroot archtrack /bin/bash
+fi
+remove_mounts
