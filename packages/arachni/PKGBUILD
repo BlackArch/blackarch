@@ -1,29 +1,35 @@
 # Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Maintainer: Evan Teitelman <teitelmanevan at gmail.com>
 # Contributor: Vlatko Kosturjak <kost@linux.hr>
 # Taken from arachni-git from: Rickey Visinski <rickeyvisinski@gmail.com>
 
 pkgname='arachni'
-pkgver=0.2.3
-groups=(archtrack archtrack-web-applications)
+_gemname=${pkgname#ruby-}
+pkgver=0.4.2
 pkgrel=1
-pkgdesc='Arachni - Web Application Security Scanner Framework'
+pkgdesc="Web Application Security Scanner Framework"
 arch=('any')
-url="https://github.com/Zapotek/arachni"
+url="http://www.arachni-scanner.com/"
 license=('GPL')
-depends=('ruby' 'ruby-typhoeus' 'ruby-awesome_print' 'ruby-yard' 'ruby-nokogiri' 'ruby-robots' 'ruby-liquid')
-makedepends=('git')
+groups=(archtrack archtrack-web-applications)
 conflicts=('arachni-git')
-source=("http://github.com/Zapotek/arachni/tarball/v$pkgver")
-md5sums=('3ee0e36514e0a18f97db4af2a210e531')
+# This is insane.
+# ???
+# 'ruby-yard' 'ruby-robots'  'ruby-liquid' 'ruby-redcarpet' 
+depends=('ruby' 'ruby-typhoeus' 'ruby-awesome_print'
+         'ruby-nokogiri' 'ruby-sinatra'
+         'ruby-rspec' 'ruby-highline' 'ruby-sys-proctable'
+         'ruby-typhoeus' 'ruby-terminal-table' 'ruby-pony'
+         'ruby-rb-readline' 'ruby-rack-test' 'ruby-backports'
+         'ruby-arachni-rpc-em' 'ruby-arachni-rpc' 'ruby-em-synchrony'
+         'ruby-ffi')
+source=(http://rubygems.org/downloads/${_gemname}-${pkgver}.gem)
+noextract=(${_gemname}-${pkgver}.gem)
+md5sums=('1fe4c77aaa0cb6f57f7322109535e44e')
 
-build() {
-  mkdir -p $pkgdir/usr/{bin,src}
-  cd $pkgdir/usr/src
-  tar xzf $startdir/v$pkgver # && rm $startdir/v$pkgver
-  cp -R $srcdir/Zapotek-arachni-08b05bb $pkgname
-  mkdir $pkgname/scans
-  cd $pkgdir/usr/bin
-  echo '#!/bin/sh' > arachni
-  echo "cd  /usr/src/$pkgname/scans && ruby /usr/src/$pkgname/arachni.rb $*" >> arachni
-  chmod +x $pkgdir/usr/bin/$pkgname
-} 
+package() {
+  cd "${srcdir}"
+  export HOME=/tmp
+  local _gemdir="$(ruby -rubygems -e'puts Gem.default_dir')"
+  gem install --no-user-install --ignore-dependencies -i "${pkgdir}${_gemdir}" ${_gemname}-${pkgver}.gem
+}
