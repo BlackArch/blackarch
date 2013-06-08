@@ -1,47 +1,48 @@
 #!/bin/bash
 
 cd "$(dirname "$0")/../alt"
+chroot=archtrack
 
 (( $EUID == 0 )) || { echo "Must be root."; exit 1; }
 
+track_mount() {
+	mount "$@" && mounts=("$2" "${mounts[@]}")
+}
+
 make_mounts() {
-	mount --bind /dev archtrack/dev
-	mount --bind /dev/pts archtrack/dev/pts
-	mount --bind /etc/gshadow archtrack/etc/gshadow
-	mount --bind /etc/makepkg.conf archtrack/etc/makepkg.conf
-	mount --bind /etc/pacman.conf archtrack/etc/pacman.conf
-	mount --bind /etc/passwd archtrack/etc/passwd
-	mount --bind /etc/resolv.conf archtrack/etc/resolv.conf
-	mount --bind /etc/shadow archtrack/etc/shadow
-	mount --bind /proc archtrack/proc
-	mount --bind /sys archtrack/sys
-	mount --bind profile archtrack/etc/profile
-	mount /dev/sdb3 archtrack/home
+	mounts=()
+	trap 'remove_mounts' EXIT
+	{ mountpoint -q "$chroot" || track_mount "$chroot" "$chroot" --bind; } &&
+	track_mount proc "$chroot/proc" -t proc -o nosuid,noexec,nodev &&
+	track_mount sys "$chroot/sys" -t sysfs -o nosuid,noexec,nodev &&
+	track_mount udev "$chroot/dev" -t devtmpfs -o mode=0755,nosuid &&
+	track_mount devpts "$chroot/dev/pts" -t devpts -o mode=0620,gid=5,nosuid,noexec &&
+	track_mount shm "$chroot/dev/shm" -t tmpfs -o mode=1777,nosuid,nodev &&
+	track_mount run "$chroot/run" -t tmpfs -o nosuid,nodev,mode=0755 &&
+	track_mount tmp "$chroot/tmp" -t tmpfs -o mode=1777,strictatime,nodev,nosuid
+	track_mount /etc/gshadow      archtrack/etc/gshadow      --bind 
+	track_mount /etc/makepkg.conf archtrack/etc/makepkg.conf --bind 
+	track_mount /etc/pacman.conf  archtrack/etc/pacman.conf  --bind 
+	track_mount /etc/passwd       archtrack/etc/passwd       --bind 
+	track_mount /etc/resolv.conf  archtrack/etc/resolv.conf  --bind 
+	track_mount /etc/shadow       archtrack/etc/shadow       --bind 
+	track_mount profile           archtrack/etc/profile      --bind 
+	track_mount /dev/sdb3         archtrack/home
 }
 
 remove_mounts() {
-	umount archtrack/dev
-	umount archtrack/dev/pts
-	umount archtrack/etc/gshadow
-	umount archtrack/etc/makepkg.conf
-	umount archtrack/etc/pacman.conf
-	umount archtrack/etc/passwd
-	umount archtrack/etc/resolv.conf
-	umount archtrack/etc/shadow
-	umount archtrack/proc
-	umount archtrack/sys
-	umount archtrack/etc/profile
-	umount archtrack/home
+	umount "${mounts[@]}"
 }
 
 error_trap() {
 	echo >&2 "An error has occurred. Removing mounts..."
 	remove_mounts
+	exit 1
 }
 trap error_trap ERR
 
 if [[ $1 != u ]] ; then
 	make_mounts
-	chroot archtrack /bin/bash
+	chroot archtrack /su.sh
 fi
 remove_mounts
