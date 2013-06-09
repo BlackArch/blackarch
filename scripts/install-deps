@@ -1,12 +1,21 @@
 #!/bin/bash
 # Installs all package dependencies from the AUR and official repos.
 
+if [[ $# == 0 ]] ; then
+	packages=("$(dirname "$0")"/packages/*)
+else
+	packages=("$@")
+fi
+
 asdeps=true
-for pack in "$(dirname "$0")"/packages/* ; do
+for pack in "${packages[@]}" ; do
 	(
 	source "$pack/PKGBUILD"
 	deps=(${makedepends[@]} ${depends[@]})
-	yaourt --noconfirm -S ${deps[@]}
-	$asdeps && sudo pacman -D --asdep ${deps[@]}
+	if $asdeps ; then
+		yaourt --asdeps --needed --noconfirm -S ${deps[@]}
+	else
+		yaourt --needed --noconfirm -S ${deps[@]}
+	fi
 	)
 done
