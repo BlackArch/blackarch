@@ -5,7 +5,9 @@ penetration testing system.
 
 ------------------------------------------------------------------------------------
 
-## Installing from the Archtrack unofficial user repository
+## Installation
+
+### From the Archtrack unofficial user repository (recommended)
 
 You can install Archtrack from the Archtrack unofficial user repository.
    1. Add this to your '/etc/pacman.conf' file:
@@ -37,9 +39,7 @@ You can install Archtrack from the Archtrack unofficial user repository.
    take a look at the 'extra/devtools' and 'extra/arch-install-scripts'
    packages.
 
-------------------------------------------------------------------------------------
-
-## Installing from the AUR
+### From the AUR
 
 You can also install archrack from the AUR (see https://aur.archlinux.org/packages/archtrack/)
 
