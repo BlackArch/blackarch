@@ -11,9 +11,11 @@ You can install Archtrack from the Archtrack unofficial user repository.
 
 1. Add this to your '/etc/pacman.conf' file:
 
+    ```
     [archtrack]
     SigLevel = Optional TrustAll
     Server = http://tixod.com
+    ```
 
 2. The repository has category groups. Run 'pacman -Sg | grep archtrack-' to
    see them all. The 'archtrack' group contains all of the archtrack
