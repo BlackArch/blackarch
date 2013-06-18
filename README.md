@@ -3,8 +3,6 @@
 Archtrack is able to turn an Arch Linux system into a fully functional
 penetration testing system.
 
-------------------------------------------------------------------------------------
-
 ## Installation
 
 ### From the Archtrack unofficial user repository (recommended)
