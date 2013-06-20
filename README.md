@@ -8,7 +8,8 @@ package repository.
 
 ### From the Archtrack unofficial user repository (recommended)
 
-You can install Archtrack from the Archtrack unofficial user repository.
+You can install the latest Archtrack pre-release from the Archtrack unofficial
+user repository.
 
 1. Add this to your `/etc/pacman.conf` file:
 
@@ -31,6 +32,9 @@ You can install Archtrack from the Archtrack unofficial user repository.
 6. Run `yaourt --noconfirm -S archtrack`. Yaourt has to build an insane
    number of dependencies from the AUR, so you will almost definitely want to
    pass it the `--noconfirm` flag.
+
+We're working on making the installation smoother. We plan on making an
+Archtrack ISO as well.
 
 Note that the tixod.com URL is temporary. We are working on obtaining the
 archtrack.org domain name. These instructions are subject to change as well.
