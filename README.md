@@ -14,7 +14,7 @@ To install any of the tools individually follow official <a href="https://wiki.a
 
 To install the entire BlackArch toolkit
 ---------------------------------------
-*NOTE: When installing using the blackarch install script, please make sure the following repositories are enabled: `core` `extra` `community` `multilib` and lastly make sure to synchronize your pacman database with `pacman -Sy` or be fully up-to-date with your packages with `pacman -Syu`*
+*NOTE: When installing using the blackarch install script, please make sure the following repositories are enabled: `core` `extra` `community` `multilib` and lastly make sure to synchronize your pacman database and be fully up-to-date with your packages with `pacman -Syu`*
 
 First, run:
 
