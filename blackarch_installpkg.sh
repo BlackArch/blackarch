@@ -13,7 +13,7 @@ function error_exit {
 [[ "$(/usr/bin/id -u)" -eq 0 ]] || error_exit "script must be run as root!"
 
 ## NOT REALLY DEPENDENCIES BUT PACKAGES THAT WE'LL USE FROM OFFICIAL REPOS INSTEAD OF CREATING OUR OWN PKGBUILD
-pacman -Sy --noconfirm \
+pacman -Syu --noconfirm \
 aircrack-ng \
 arp-scan \
 arpwatch \
