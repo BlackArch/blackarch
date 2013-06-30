@@ -22,10 +22,11 @@ It's also recommended to add `/blackarch` to your $PATH
 
 Package Groups
 --------------
-# BlackArch Exploitation
+- BlackArch Exploitation
 ```
 $ pacman -S blackarch-exploitation
 ```
+Included packages:
 ```
 aircrack-ng
 beef
@@ -39,9 +40,11 @@ sqlninja
 websploit
 xsser
 ```
-# BlackArch Forensics
+- BlackArch Forensics
 ```
 $ pacman -S blackarch-forensics
+```
+Included packages:
 ```
 ddrescue
 pdf-parser
@@ -51,10 +54,11 @@ sleuthkit
 testdisk
 volatility
 ```
-# BlackArch Intelligence Gathering
+- BlackArch Intelligence Gathering
 ```
 $ pacman -S blackarch-intel
 ```
+Included packages:
 ```
 arp-scan
 blindelephant
@@ -76,20 +80,22 @@ theharvester
 wireshark
 zaproxy
 ```
-# BlackArch Miscellaneous
+- BlackArch Miscellaneous
 ```
 $ pacman -S blackarch-misc
 ```
+Included packages:
 ```
 arpwatch
 artillery
 geoipgen
 vidalia
 ```
-# BlackArch Post-Exploitation
+- BlackArch Post-Exploitation
 ```
 $ pacman -S blackarch-post
 ```
+Included packages:
 ```
 chownat
 ettercap
@@ -101,17 +107,19 @@ socat
 sslstrip
 stunnel
 ```
-# BlackArch Threat Modeling
+- BlackArch Threat Modeling
 ```
 $ pacman -S threat-model
 ```
+Included packages:
 ```
 magictree
 ```
-# BlackArch Vulnerability Analysis
+- BlackArch Vulnerability Analysis
 ```
 $ pacman -S blackarch-analysis
 ```
+Included packages:
 ```
 edb
 fang
