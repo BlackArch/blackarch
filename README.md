@@ -1,4 +1,19 @@
 BlackArch
 =========
 
-Please visit http://www.blackarch.org for the latest news on upcoming updates!
+To make use of the pentest set of tools available in the BlackArch toolset please add the BlackArch repository to `/etc/pacman.conf`
+
+# 32-bit
+
+```
+[blackarch]
+SigLevel = Optional TrustAll
+Server = http://www.blackarch.org/pub/blackarch/i686
+```
+
+# 64-bit
+```
+[blackarch]
+SigLevel = Optional TrustAll
+Server = http://www.blackarch.org/pub/blackarch/x86_64
+```
