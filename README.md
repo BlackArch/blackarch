@@ -12,6 +12,7 @@ Server = http://www.blackarch.org/pub/blackarch/i686
 ```
 
 - 64-bit
+
 ```
 [blackarch]
 SigLevel = Optional TrustAll
@@ -23,10 +24,12 @@ It's also recommended to add `/blackarch` to your $PATH
 Package Groups
 --------------
 - BlackArch Exploitation
+
 ```
 $ pacman -S blackarch-exploitation
 ```
 Included packages:
+
 ```
 aircrack-ng
 beef
@@ -40,11 +43,15 @@ sqlninja
 websploit
 xsser
 ```
+
 - BlackArch Forensics
+
 ```
 $ pacman -S blackarch-forensics
 ```
+
 Included packages:
+
 ```
 ddrescue
 pdf-parser
@@ -54,11 +61,15 @@ sleuthkit
 testdisk
 volatility
 ```
+
 - BlackArch Intelligence Gathering
+
 ```
 $ pacman -S blackarch-intel
 ```
+
 Included packages:
+
 ```
 arp-scan
 blindelephant
@@ -80,22 +91,30 @@ theharvester
 wireshark
 zaproxy
 ```
+
 - BlackArch Miscellaneous
+
 ```
 $ pacman -S blackarch-misc
 ```
+
 Included packages:
+
 ```
 arpwatch
 artillery
 geoipgen
 vidalia
 ```
+
 - BlackArch Post-Exploitation
+
 ```
 $ pacman -S blackarch-post
 ```
+
 Included packages:
+
 ```
 chownat
 ettercap
@@ -107,19 +126,27 @@ socat
 sslstrip
 stunnel
 ```
+
 - BlackArch Threat Modeling
+
 ```
 $ pacman -S threat-model
 ```
+
 Included packages:
+
 ```
 magictree
 ```
+
 - BlackArch Vulnerability Analysis
+
 ```
 $ pacman -S blackarch-analysis
 ```
+
 Included packages:
+
 ```
 edb
 fang
