@@ -3,7 +3,7 @@ BlackArch
 
 To make use of the pentest set of tools available in the BlackArch toolset please add the BlackArch repository to `/etc/pacman.conf`
 
-# 32-bit
+- 32-bit
 
 ```
 [blackarch]
@@ -11,7 +11,7 @@ SigLevel = Optional TrustAll
 Server = http://www.blackarch.org/pub/blackarch/i686
 ```
 
-# 64-bit
+- 64-bit
 ```
 [blackarch]
 SigLevel = Optional TrustAll
