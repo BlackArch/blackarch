@@ -23,6 +23,9 @@ It's also recommended to add `/blackarch` to your $PATH
 
 Package Groups
 --------------
+
+To see all available packages follow http://www.blackarch.org/packages.html and install any tool individually.  For quicker installs leverage the package groups:
+
 - BlackArch Exploitation
 
 ```
