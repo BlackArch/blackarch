@@ -17,3 +17,5 @@ Server = http://www.blackarch.org/pub/blackarch/i686
 SigLevel = Optional TrustAll
 Server = http://www.blackarch.org/pub/blackarch/x86_64
 ```
+
+It's also recommended to add `/blackarch` to your $PATH
