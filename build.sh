@@ -14,9 +14,9 @@ do
 	# CHANGE TO THE DIRECTORY OF THE PKGBUILD
 	cd `dirname $pkgbuild`
 	# BUILD THE PACKAGE AND AUTOMATICALLY PULL ANY DEPENDENCIES
-	makepkg -s PKGBUILD
-	# MOVE THE .tar.xz
-	mv *.tar.xz $workingpath/buildpkgs
+	makepkg -s --sign PKGBUILD
+	# MOVE THE .tar.xz and tar.xz.sig
+	mv *.tar.xz* $workingpath/buildpkgs
 done
 
 # DELETE THE path.log
