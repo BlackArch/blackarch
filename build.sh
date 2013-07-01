@@ -14,10 +14,14 @@ do
 	# CHANGE TO THE DIRECTORY OF THE PKGBUILD
 	cd `dirname $pkgbuild`
 	# BUILD THE PACKAGE AND AUTOMATICALLY PULL ANY DEPENDENCIES
-	makepkg -s --sign PKGBUILD
+	makepkg -s --noconfirm --sign PKGBUILD
 	# MOVE THE .tar.xz and tar.xz.sig
 	mv *.tar.xz* $workingpath/buildpkgs
 done
 
 # DELETE THE path.log
 rm $workingpath/path.log
+
+# BUILD THE REPOSITORY
+cd $workingpath/buildpkgs
+repo-add blackarch.db.tar.gz *.tar.xz
