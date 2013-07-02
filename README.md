@@ -25,7 +25,6 @@ $ pacman -S blackarch-exploitation
 Included packages:
 
 ```
-aircrack-ng
 beef
 fern-wifi-cracker
 fimap
@@ -47,12 +46,9 @@ $ pacman -S blackarch-forensics
 Included packages:
 
 ```
-ddrescue
 pdf-parser
 pdfid
 peepdf
-sleuthkit
-testdisk
 volatility
 ```
 
@@ -65,24 +61,18 @@ $ pacman -S blackarch-intel
 Included packages:
 
 ```
-arp-scan
 blindelephant
 burpsuite
 cms-explorer
-dig
-dirbuster
 dnsbf
 dnsenum
 dnsmap
 hashid
 netglub
 nikto
-nmap
 snmpcheck
 ssldump
-tcpdump
 theharvester
-wireshark
 zaproxy
 ```
 
@@ -95,10 +85,8 @@ $ pacman -S blackarch-misc
 Included packages:
 
 ```
-arpwatch
 artillery
 geoipgen
-vidalia
 ```
 
 - BlackArch Post-Exploitation
@@ -111,20 +99,15 @@ Included packages:
 
 ```
 chownat
-ettercap
-netcat
 netcommander
-proxytunnel
 pwnat
-socat
 sslstrip
-stunnel
 ```
 
 - BlackArch Threat Modeling
 
 ```
-$ pacman -S threat-model
+$ pacman -S blackarch-threat-model
 ```
 
 Included packages:
@@ -144,17 +127,12 @@ Included packages:
 ```
 edb
 fang
-hping
-john
-macchanger
-ncrack
 pentbox
 scapy
 sipvicious
 slowhttptest
 sslscan
 tcpjunk
-tcpreplay
 ```
 
 To learn more about each package visit http://www.blackarch.org/packages.html
