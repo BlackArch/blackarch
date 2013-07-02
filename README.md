@@ -17,7 +17,7 @@ Package Groups
 
 To see all available packages follow http://www.blackarch.org/packages.html and install any tool individually.  For quicker installs leverage the package groups:
 
-#### BlackArch Exploitation
+#### Exploitation
 
 ```
 $ pacman -S blackarch-exploitation
@@ -34,7 +34,7 @@ $ pacman -S blackarch-exploitation
   - websploit
   - xsser
 
-#### BlackArch Forensics
+#### Forensics
 
 ```
 $ pacman -S blackarch-forensics
@@ -46,7 +46,7 @@ $ pacman -S blackarch-forensics
   - peepdf
   - volatility
 
-#### BlackArch Intelligence Gathering
+#### Intelligence Gathering
 
 ```
 $ pacman -S blackarch-intel
@@ -67,7 +67,7 @@ $ pacman -S blackarch-intel
   - theharvester
   - zaproxy
 
-#### BlackArch Miscellaneous
+#### Miscellaneous
 
 ```
 $ pacman -S blackarch-misc
@@ -77,7 +77,7 @@ $ pacman -S blackarch-misc
   - artillery
   - geoipgen
 
-#### BlackArch Post-Exploitation
+#### Post-Exploitation
 
 ```
 $ pacman -S blackarch-post
@@ -89,7 +89,7 @@ $ pacman -S blackarch-post
   - pwnat
   - sslstrip
 
-#### BlackArch Threat Modeling
+#### Threat Modeling
 
 ```
 $ pacman -S blackarch-threat-model
@@ -98,7 +98,7 @@ $ pacman -S blackarch-threat-model
 - Included packages:
   - magictree
 
-#### BlackArch Vulnerability Analysis
+#### Vulnerability Analysis
 
 ```
 $ pacman -S blackarch-analysis
