@@ -17,122 +17,101 @@ Package Groups
 
 To see all available packages follow http://www.blackarch.org/packages.html and install any tool individually.  For quicker installs leverage the package groups:
 
-- BlackArch Exploitation
+#### BlackArch Exploitation
 
 ```
 $ pacman -S blackarch-exploitation
 ```
-Included packages:
+- Included packages:
+  - beef
+  - fern-wifi-cracker
+  - fimap
+  - metasploit
+  - reaver-wps
+  - set
+  - sqlmap
+  - sqlninja
+  - websploit
+  - xsser
 
-```
-beef
-fern-wifi-cracker
-fimap
-metasploit
-reaver-wps
-set
-sqlmap
-sqlninja
-websploit
-xsser
-```
-
-- BlackArch Forensics
+#### BlackArch Forensics
 
 ```
 $ pacman -S blackarch-forensics
 ```
 
-Included packages:
+- Included packages:
+  - pdf-parser
+  - pdfid
+  - peepdf
+  - volatility
 
-```
-pdf-parser
-pdfid
-peepdf
-volatility
-```
-
-- BlackArch Intelligence Gathering
+#### BlackArch Intelligence Gathering
 
 ```
 $ pacman -S blackarch-intel
 ```
 
-Included packages:
+- Included packages:
+  - blindelephant
+  - burpsuite
+  - cms-explorer
+  - dnsbf
+  - dnsenum
+  - dnsmap
+  - hashid
+  - netglub
+  - nikto
+  - snmpcheck
+  - ssldump
+  - theharvester
+  - zaproxy
 
-```
-blindelephant
-burpsuite
-cms-explorer
-dnsbf
-dnsenum
-dnsmap
-hashid
-netglub
-nikto
-snmpcheck
-ssldump
-theharvester
-zaproxy
-```
-
-- BlackArch Miscellaneous
+#### BlackArch Miscellaneous
 
 ```
 $ pacman -S blackarch-misc
 ```
 
-Included packages:
+- Included packages:
+  - artillery
+  - geoipgen
 
-```
-artillery
-geoipgen
-```
-
-- BlackArch Post-Exploitation
+#### BlackArch Post-Exploitation
 
 ```
 $ pacman -S blackarch-post
 ```
 
-Included packages:
+- Included packages:
+  - chownat
+  - netcommander
+  - pwnat
+  - sslstrip
 
-```
-chownat
-netcommander
-pwnat
-sslstrip
-```
-
-- BlackArch Threat Modeling
+#### BlackArch Threat Modeling
 
 ```
 $ pacman -S blackarch-threat-model
 ```
 
-Included packages:
+- Included packages:
+  - magictree
 
-```
-magictree
-```
-
-- BlackArch Vulnerability Analysis
+#### BlackArch Vulnerability Analysis
 
 ```
 $ pacman -S blackarch-analysis
 ```
 
-Included packages:
-
-```
-edb
-fang
-pentbox
-scapy
-sipvicious
-slowhttptest
-sslscan
-tcpjunk
-```
+- Included packages:
+  - edb
+  - fang
+  - pentbox
+  - scapy
+  - sipvicious
+  - slowhttptest
+  - sslscan
+  - tcpjunk
 
 To learn more about each package visit http://www.blackarch.org/packages.html
