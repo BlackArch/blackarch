@@ -10,8 +10,6 @@ SigLevel = Optional TrustAll
 Server = http://www.blackarch.org/pub/blackarch/$arch
 ```
 
-It's also recommended to add `/blackarch` to your $PATH
-
 Package Groups
 --------------
 
