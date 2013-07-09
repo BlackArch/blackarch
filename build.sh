@@ -1,27 +1,22 @@
 #!/bin/bash
-workingpath=$PWD # store the current path so we can use it later
-mkdir buildpkgs # store the .tar.xz files here after build
-# IF path.log FILE EXISTS, GET RID OF it
-[[ -f "path.log" ]] && rm path.log
+# usage: build.sh [package_directory] [build_directory]
+# TODO: Report a summary of failures
 
-# FIND ALL THE PKGBUILD FILES AND STORE THE PATHS IN path.log
-find $workingpath -type f -name "PKGBUILD" >> path.log
-# SAVE THE PATHS WE FOUND IN AN ARRAY
-logfile=( `cat "path.log"` )
-# LOOP THROUGH EACH PATH IN THE ARRAY
-for pkgbuild in "${logfile[@]}"
+pkgdir=$(realpath "${1:-.}")
+builddir=$(realpath "${2:-build}")
+mkdir -p "$builddir"
+cd "$builddir"
+
+# Initialize gpg-agent
+[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon)
+
+# Build all packages under the current directory
+find "$pkgdir" -type f -name "PKGBUILD" |
+while read pkgbuild
 do
-	# CHANGE TO THE DIRECTORY OF THE PKGBUILD
-	cd `dirname $pkgbuild`
-	# BUILD THE PACKAGE AND AUTOMATICALLY PULL ANY DEPENDENCIES
-	makepkg -s --noconfirm --sign PKGBUILD
-	# MOVE THE .tar.xz and tar.xz.sig
-	mv *.tar.xz* $workingpath/buildpkgs
+	makepkg -cs --noconfirm --sign -p "$pkgbuild"
+	mv *.pkg.tar.xz* "$builddir"
 done
 
-# DELETE THE path.log
-rm $workingpath/path.log
-
-# BUILD THE REPOSITORY
-cd $workingpath/buildpkgs
-repo-add blackarch.db.tar.gz *.tar.xz
+# Put together a database
+repo-add blackarch.db.tar.gz *.pkg.tar.xz
