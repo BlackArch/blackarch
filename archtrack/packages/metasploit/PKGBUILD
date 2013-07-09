@@ -1,0 +1,39 @@
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Maintainer: Sabart Otto - Seberm <seberm[at]gmail[dot]com>
+# Editor: Tobias Veit - nIcE <m.on.key.tobi[at]gmail[dot]com>
+
+pkgname=metasploit
+pkgver=4.6.2
+pkgrel=2
+pkgdesc="An advanced open-source platform for developing, testing, and using exploit code"
+depends=('ruby1.9' 'libpcap' 'postgresql-libs')
+optdepends=('java-runtime: msfgui' 'dradis') #sqlite
+provides=('metasploit')
+conflicts=('metasploit-git')
+options=('!strip')
+makedepends=('subversion' 'ruby1.9-bundler')
+source=('http://updates.metasploit.com/data/releases/framework-latest.tar.bz2')
+install="${pkgname}.install"
+url="http://www.metasploit.com/"
+license=('BSD')
+arch=('any')
+
+md5sums=('d558c30a31c52b8e588f317cb516a408')
+
+package() {
+	mkdir -p "$pkgdir/usr/share" "$pkgdir/usr/bin"
+	install -Dm644 "$srcdir/msf3/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	install -Dm644 "$srcdir/msf3/COPYING" "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+
+	mv "$srcdir/msf3" "$pkgdir/usr/share/$pkgname"
+
+	for f in $pkgdir/usr/share/$pkgname/msf*; do
+      local _msffile="$pkgdir/usr/bin/`basename "$f"`"
+      echo "ruby-1.9 /usr/share/$pkgname/`basename "$f"`" > $_msffile
+      chmod 755 $_msffile
+	done;
+
+	# Removes all .svn directories - but after it is not possible to use msfupdate tool
+	#echo "Removing all .svn directories..."
+	#find $pkgdir/opt/$pkgname -name ".svn" -type d -exec rm -fr {} +
+}

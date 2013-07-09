@@ -1,0 +1,65 @@
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: fnord0 < fnord0 AT riseup DOT net >
+pkgname='spike'
+pkgver=2.9
+pkgrel=2
+pkgdesc="IMMUNITYsec's fuzzer creation kit in C"
+groups=(archtrack archtrack-vulnerability-analysis)
+arch=('i686' 'x86_64')
+url="http://www.immunitysec.com/resources-freesoftware.shtml"
+license=('GPL2')
+depends=('gcc' 'automake' 'openssl')
+optdepends=('python2: needed to run SPIKE_Console.py python GUI'
+      'wxpython: needed to run SPIKE_Console.py python GUI')
+source=("http://www.immunitysec.com/downloads/SPIKE${pkgver}.tgz")
+md5sums=(5e41c40904db2b3da06f181e8815aedd)
+sha1sums=(efc403a5f48f7172402f8896f398d2b1b9881f29)
+
+# TODO: swap srcdir with srcdir
+prepare() {
+  cd ${srcdir}/SPIKE/SPIKE/src
+  sed -i 's|/usr/bin/python|/usr/bin/python2|g' SPIKE_Console.py
+}
+
+build() {
+  cd ${srcdir}/SPIKE/SPIKE/src
+  aclocal
+  automake
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd ${srcdir}/SPIKE/SPIKE/src
+  install -d ${pkgdir}/usr/lib
+    install -d ${pkgdir}/usr/share/${pkgname}
+  install -d ${pkgdir}/usr/share/${pkgname}/doc
+  install -m755 libdlrpc.so "${pkgdir}/usr/lib/"
+  mv README* ${pkgdir}/usr/share/${pkgname}/doc/
+  mv ChangeLog ${pkgdir}/usr/share/${pkgname}/doc/
+  mv COPYING ${pkgdir}/usr/share/${pkgname}/doc/
+  mv NEWS ${pkgdir}/usr/share/${pkgname}/doc/
+  mv INSTALL ${pkgdir}/usr/share/${pkgname}/doc/
+  mv AUTHORS ${pkgdir}/usr/share/${pkgname}/doc/
+  mv *.txt ${pkgdir}/usr/share/${pkgname}/doc/
+  mv * ${pkgdir}/usr/share/${pkgname}/
+  cd ${srcdir}/SPIKE/SPIKE
+    for doc in *.txt; do
+          install -Dm644 ${doc} ${pkgdir}/usr/share/${pkgname}/doc/${doc}
+    done
+  mv ${srcdir}/SPIKE/SPIKE/data ${pkgdir}/usr/share/${pkgname}/
+  mv ${srcdir}/SPIKE/SPIKE/dcedump ${pkgdir}/usr/share/${pkgname}/
+  mv ${srcdir}/SPIKE/SPIKE/encrypted ${pkgdir}/usr/share/${pkgname}/
+  mv ${srcdir}/SPIKE/SPIKE/include ${pkgdir}/usr/share/${pkgname}/
+  mv ${srcdir}/SPIKE/SPIKE/documentation ${pkgdir}/usr/share/${pkgname}/doc/
+        cd ${srcdir}/SPIKE
+  mv backups ${pkgdir}/usr/share/${pkgname}/
+    install -Dm644 AUTHOR ${pkgdir}/usr/share/${pkgname}/doc/AUTHOR
+    install -Dm644 dave_immunitysec_com.asc ${pkgdir}/usr/share/${pkgname}/doc/dave_immunitysec_com.asc
+  # TODO: use msg
+  echo -e ""
+  echo -e "\e[1;34m[\e[0m\e[1;31m*\e[0m\e[1;34m]\e[0m \e[1;31mthe SPIKE fuzzer creation kit resides in the directory \e[1;34m'\e[0m\e[1;31m/usr/share/spike\e[1;34m'\e[0m"
+  echo -e "\e[1;34m>>>\e[0m \e[1;31mthe documentation resides in the directory \e[1;34m'\e[0m\e[1;31m/usr/share/spike/doc\e[1;34m'\e[0m"
+  echo -e "\e[1;34m>>>\e[0m \e[1;31mfurther SPIKE documentation can be obtained @ \e[1;34m'\e[0m\e[1;31mhttp://www.immunitysec.com/resources-papers.shtml\e[1;34m'\e[0m"
+  echo -e ""
+}

@@ -1,0 +1,37 @@
+# $Id: PKGBUILD 57877 2011-11-04 07:45:07Z lfleischer $
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Lukas Fleischer <archlinux at cryptocrack dot de>
+# Contributor: Kevin Piche <kevin@archlinux.org>
+
+pkgname=hping-archtrack
+pkgver=3.0.0
+pkgrel=2
+pkgdesc='A command-line oriented TCP/IP packet assembler/analyzer.'
+arch=('i686' 'x86_64')
+url='http://www.hping.org'
+license=('GPL2' 'BSD')
+depends=('libpcap')
+source=("http://www.hping.org/hping3-20051105.tar.gz"
+        'Makefile.patch'
+        'bytesex.h.patch')
+md5sums=('ca4ea4e34bcc2162aedf25df8b2d1747'
+         '3c6f920201fc980d377408917a28df93'
+         '8af8e336819df1447b0c1b879a704be9')
+
+build() {
+  cd "${srcdir}/hping3-20051105"
+
+  [[ "$CARCH" == "x86_64" ]] && patch -Np1 -i ../bytesex.h.patch
+
+  MANPATH=/usr/share/man ./configure --no-tcl
+  make
+}
+
+package() {
+  cd "${srcdir}/hping3-20051105"
+
+  patch -p1 < ../Makefile.patch
+
+  make DESTDIR="${pkgdir}" install
+  install -Dm0644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}

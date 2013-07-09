@@ -1,0 +1,56 @@
+# $Id: PKGBUILD 183696 2013-04-27 07:01:47Z allan $
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Maintainer: Allan McRae <allan@archlinux.org>
+# Contributor: Jan de Groot <jgc@archlinux.org>
+
+pkgname=gdb-archtrack
+_realname=gdb
+pkgver=7.6
+pkgrel=1
+pkgdesc="The GNU Debugger"
+arch=('i686' 'x86_64')
+url="http://www.gnu.org/software/gdb/"
+license=('GPL3')
+depends=('ncurses' 'expat' 'python2')
+makedepends=('texinfo')
+backup=('etc/gdb/gdbinit')
+options=('!libtool')
+install=gdb.install
+source=(http://ftp.gnu.org/gnu/gdb/${_realname}-${pkgver}.tar.bz2{,.sig})
+md5sums=('fda57170e4d11cdde74259ca575412a8'
+         'SKIP')
+
+groups=(archtrack archtrack-reverse-engineering)
+provides=(gdb)
+conflicts=(gdb)
+
+prepare() {
+  cd ${srcdir}/${_realname}-${pkgver}
+
+  # hack! - libiberty configure tests for header files using "$CPP $CPPFLAGS"
+  sed -i "/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/" libiberty/configure
+}
+
+build() {
+  cd ${srcdir}/${_realname}-${pkgver}
+
+  ./configure --prefix=/usr --disable-nls \
+    --with-system-readline \
+    --with-python=/usr/bin/python2 \
+    --with-system-gdbinit=/etc/gdb/gdbinit
+  make
+}
+
+package() {
+  cd ${srcdir}/${_realname}-${pkgver}
+  make DESTDIR=${pkgdir} install
+
+  # install "custom" system gdbinit
+  install -dm755 $pkgdir/etc/gdb
+  touch $pkgdir/etc/gdb/gdbinit
+
+  # resolve conflicts with binutils
+  rm ${pkgdir}/usr/include/{ansidecl,bfd,bfdlink,dis-asm,symcat}.h
+  rm ${pkgdir}/usr/lib/{libbfd,libiberty,libopcodes}.a
+  rm ${pkgdir}/usr/share/info/{bfd,configure,standards}.info
+}

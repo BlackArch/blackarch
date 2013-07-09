@@ -1,0 +1,197 @@
+diff -ruN a/enchant/checker/__init__.py b/enchant/checker/__init__.py
+--- a/enchant/checker/__init__.py	2010-12-14 01:22:06.000000000 +0100
++++ b/enchant/checker/__init__.py	2013-03-08 17:56:40.446560564 +0100
+@@ -47,12 +47,11 @@
+ import array
+ import warnings
+ 
+-import enchant
+-from enchant.errors import *
+-from enchant.tokenize import get_tokenizer
+-from enchant.utils import bytes, unicode, basestring, next
+-from enchant.utils import get_default_language
+-
++from pack import enchant
++from pack.enchant.errors import *
++from pack.enchant.tokenize import get_tokenizer
++from pack.enchant.utils import bytes, unicode, basestring, next
++from pack.enchant.utils import get_default_language
+ 
+ class SpellChecker:
+     """Class implementing stateful spellchecking behaviour.
+diff -ruN a/enchant/checker/tests.py b/enchant/checker/tests.py
+--- a/enchant/checker/tests.py	2010-12-14 01:22:06.000000000 +0100
++++ b/enchant/checker/tests.py	2013-03-08 17:57:24.329894126 +0100
+@@ -35,11 +35,11 @@
+ 
+ import unittest
+ 
+-import enchant
+-import enchant.tokenize
+-from enchant.utils import *
+-from enchant.errors import *
+-from enchant.checker import *
++from pack import enchant
++from pack import enchant.tokenize
++from pack.enchant.utils import *
++from pack.enchant.errors import *
++from pack.enchant.checker import *
+ 
+ 
+ class TestChecker(unittest.TestCase):
+@@ -196,7 +196,7 @@
+ 
+     def test_pwl(self):
+         """Test checker loop with PWL."""
+-        from enchant import DictWithPWL
++        from pack.enchant import DictWithPWL
+         d = DictWithPWL("en_US",None,None)
+         txt = "I am sme text to be cheked with personal list of cheked words"
+         chkr = SpellChecker(d,txt)
+diff -ruN a/enchant/_enchant.py b/enchant/_enchant.py
+--- a/enchant/_enchant.py	2010-12-14 01:22:06.000000000 +0100
++++ b/enchant/_enchant.py	2013-03-08 18:02:25.169895691 +0100
+@@ -52,9 +52,9 @@
+ from ctypes import *
+ from ctypes.util import find_library
+ 
+-from enchant import utils
+-from enchant.errors import *
+-from enchant.utils import unicode
++from pack.enchant import utils
++from pack.enchant.errors import *
++from pack.enchant.utils import unicode
+ 
+ # Locate and load the enchant dll.
+ # We've got several options based on the host platform.
+diff -ruN a/enchant/__init__.py b/enchant/__init__.py
+--- a/enchant/__init__.py	2010-12-14 12:14:53.000000000 +0100
++++ b/enchant/__init__.py	2013-03-08 18:01:58.119895550 +0100
+@@ -87,10 +87,10 @@
+ 
+ import os
+ 
+-from enchant import _enchant as _e
+-from enchant.errors import *
+-from enchant.utils import EnchantStr, get_default_language
+-from enchant.pypwl import PyPWL
++from pack.enchant import _enchant as _e
++from pack.enchant.errors import *
++from pack.enchant.utils import EnchantStr, get_default_language
++from pack.enchant.pypwl import PyPWL
+ 
+ #  Due to the unfortunate name collision between the enchant "tokenize" module
+ #  and the stdlib "tokenize" module, certain values of sys.path can cause
+@@ -849,8 +849,8 @@
+ # Run unit tests when called from comand-line
+ if __name__ == "__main__":
+     import sys
+-    import enchant.tests
+-    res = enchant.tests.runtestsuite()
++    import pack.enchant.tests
++    res = pack.enchant.tests.runtestsuite()
+     if len(res.errors) > 0 or len(res.failures) > 0:
+         sys.exit(1)
+     sys.exit(0)
+diff -ruN a/enchant/tests.py b/enchant/tests.py
+--- a/enchant/tests.py	2010-12-14 01:22:06.000000000 +0100
++++ b/enchant/tests.py	2013-03-08 17:59:15.743228039 +0100
+@@ -41,10 +41,10 @@
+ except ImportError:
+     subprocess is None
+ 
+-import enchant
+-from enchant import *
+-from enchant import _enchant as _e
+-from enchant.utils import unicode, raw_unicode, printf
++from pack import enchant
++from pack.enchant import *
++from pack.enchant import _enchant as _e
++from pack.enchant.utils import unicode, raw_unicode, printf
+ 
+ 
+ def runcmd(cmd):
+@@ -418,19 +418,19 @@
+ 
+     def test_docstrings(self):
+         """Test that all our docstrings are error-free."""
+-        import enchant
+-        import enchant.utils
+-        import enchant.pypwl
+-        import enchant.tokenize
+-        import enchant.tokenize.en
+-        import enchant.checker
+-        import enchant.checker.CmdLineChecker
++        from pack import enchant
++        from pack import enchant.utils
++        from pack import enchant.pypwl
++        from pack import enchant.tokenize
++        from pack import enchant.tokenize.en
++        from pack import enchant.checker
++        import pack.enchant.checker.CmdLineChecker
+         try:
+-            import enchant.checker.GtkSpellCheckerDialog
++            import pack.enchant.checker.GtkSpellCheckerDialog
+         except ImportError:
+             pass
+         try:
+-            import enchant.checker.wxSpellCheckerDialog
++            import pack.enchant.checker.wxSpellCheckerDialog
+         except ImportError:
+             pass
+         errors = []
+@@ -565,9 +565,9 @@
+ 
+ 
+ def buildtestsuite(recurse=True):
+-    from enchant.checker.tests import TestChecker
+-    from enchant.tokenize.tests import TestTokenization, TestFilters
+-    from enchant.tokenize.tests import TestTokenizeEN
++    from pack.enchant.checker.tests import TestChecker
++    from pack.enchant.tokenize.tests import TestTokenization, TestFilters
++    from pack.enchant.tokenize.tests import TestTokenizeEN
+     suite = unittest.TestSuite()
+     if recurse:
+         suite.addTest(unittest.makeSuite(TestInstallEnv))
+diff -ruN a/enchant/tokenize/en.py b/enchant/tokenize/en.py
+--- a/enchant/tokenize/en.py	2010-12-14 01:22:06.000000000 +0100
++++ b/enchant/tokenize/en.py	2013-03-08 17:54:44.063226626 +0100
+@@ -38,8 +38,8 @@
+ 
+ import unicodedata
+ 
+-import enchant.tokenize
+-from enchant.utils import unicode
++from pack import enchant.tokenize
++from pack.enchant.utils import unicode
+ 
+ 
+ class tokenize(enchant.tokenize.tokenize):
+diff -ruN a/enchant/tokenize/__init__.py b/enchant/tokenize/__init__.py
+--- a/enchant/tokenize/__init__.py	2010-12-14 01:22:06.000000000 +0100
++++ b/enchant/tokenize/__init__.py	2013-03-08 17:56:15.809893770 +0100
+@@ -101,9 +101,9 @@
+ import re
+ import warnings
+ 
+-import enchant
+-from enchant.utils import next, xrange
+-from enchant.errors import *
++from pack import enchant
++from pack.enchant.utils import next, xrange
++from pack.enchant.errors import *
+ 
+ #  For backwards-compatability.  This will eventually be removed, but how
+ #  does one mark a module-level constant as deprecated?
+diff -ruN a/enchant/utils.py b/enchant/utils.py
+--- a/enchant/utils.py	2010-12-14 01:22:06.000000000 +0100
++++ b/enchant/utils.py	2013-03-08 18:02:49.859895818 +0100
+@@ -46,7 +46,7 @@
+ import sys
+ import codecs
+ 
+-from enchant.errors import *
++from pack.enchant.errors import *
+ 
+ # Attempt to access local language information
+ try:

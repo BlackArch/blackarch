@@ -1,0 +1,50 @@
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+# Contributor: Valentin Churavy <v.churavy@gmail.com>
+
+pkgname=cisco-torch
+pkgver=0.4b
+pkgrel=1
+pkgdesc="Cisco Torch mass scanning, fingerprinting, and exploitation tool."
+url="http://www.arhont.com"
+license=('LGPL')
+depends=('perl' 'perl-net-telnet' 'perl-net-snmp' 'perl-net-ssh' 'perl-net-ssleay')
+arch=(any)
+source=(http://www.arhont.com/en/wp-content/uploads/2010/01/$pkgname-$pkgver.tar.gz)
+md5sums=('88a88396e37e07a84a2a314ceb9b8fe8')
+
+groups=(archtrack archtrack-info-gathering archtrack-exploitation-tools)
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  install -d $pkgdir/usr/bin
+  install -d $pkgdir/usr/share/$pkgname/
+  install -d $pkgdir/usr/share/doc/$pkgname/
+
+  install -Dm644 CHANGELOG.txt $pkgdir/usr/share/doc/$pkgname/
+  install -Dm644 README.txt $pkgdir/usr/share/doc/$pkgname/
+  install -Dm644 TODO $pkgdir/usr/share/doc/$pkgname/
+
+  install -Dm644 brutefile.txt $pkgdir/usr/share/$pkgname/
+  install -Dm644 community.txt $pkgdir/usr/share/$pkgname/
+  install -Dm644 torch.conf $pkgdir/usr/share/$pkgname/
+  install -Dm644 fingerprint.db $pkgdir/usr/share/$pkgname/
+
+  for f in brutefile.txt community.txt fingerprint.db password.txt \
+           tfingerprint.db torch.conf users.txt; do
+    install -Dm644 $f $pkgdir/usr/share/$pkgname/
+  done
+
+  install -Dm755 cisco-torch.pl $pkgdir/usr/share/$pkgname/
+  cp -r include $pkgdir/usr/share/$pkgname/
+  cp -r tftproot $pkgdir/usr/share/$pkgname/
+
+  # Let's create a link to the perl script
+  cat > $pkgdir/usr/bin/cisco-torch << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/
+perl cisco-torch.pl \$*
+EOF
+  chmod 0755 $pkgdir/usr/bin/cisco-torch
+}

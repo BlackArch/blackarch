@@ -1,0 +1,44 @@
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Maintainer: Jaroslav Lichtblau <dragonlord@aur.archlinux.org>
+
+pkgname=tiger
+pkgver=3.2.3
+pkgrel=2
+pkgdesc="A security scanner, that checks computer for known problems. Can also use tripwire, aide and chkrootkit."
+arch=('i686' 'x86_64')
+url="http://www.nongnu.org/tiger/"
+license=('GPL')
+depends=('perl')
+makedepends=('patch')
+backup=('opt/tiger/config' 'etc/tiger/tigerrc' 'etc/tiger/cronrc')
+source=(http://download.savannah.gnu.org/releases/$pkgname/$pkgname-$pkgver.tar.gz \
+        $pkgname-makefile.diff)
+md5sums=('f41076f645da9de937819bf6d516e546'
+         'aadd12186c717dfe202d55d1192851c2')
+
+groups=(archtrack archtrack-forensics)
+
+build() {
+  cd ${srcdir}/$pkgname-$pkgver
+
+  patch -Np0 -i ${srcdir}/$pkgname-makefile.diff
+
+  install -d ${pkgdir}/usr/share/tiger ${pkgdir}/usr/sbin
+
+  # For some reason, this doesn't build correctly the first time.
+  # This is probably the sketchiest fix I have ever applied to a build script.
+  # Please don't judge me.
+  # FIXME: Remove this... really.
+  for i in 1 2 ; do
+    ./configure --prefix=/usr \
+            --mandir=/usr/share/man \
+            --with-tigerhome=/usr/share/tiger \
+            --with-tigerconfig=/etc/tiger \
+            --with-tigerwork=/var/run/tiger \
+            --with-tigerlog=/var/log/tiger \
+            --with-tigerbin=/usr/sbin
+
+    make || true
+    make DESTDIR=${pkgdir} install || true
+  done
+}

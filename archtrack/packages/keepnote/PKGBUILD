@@ -1,0 +1,36 @@
+# $Id: PKGBUILD 68671 2012-03-31 08:34:57Z bgyorgy $
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Balló György <ballogyor+arch at gmail dot com>
+
+pkgname=keepnote-archtrack
+_realname=keepnote
+pkgver=0.7.8
+groups=(archtrack archtrack-reporting)
+pkgrel=1
+pkgdesc='GTK+ note taking application'
+provides=("keepnote=$pkgver")
+conflicts=(keepnote)
+arch=('any')
+url="http://keepnote.org/"
+license=('GPL')
+depends=('pygtk' 'hicolor-icon-theme' 'xdg-utils')
+optdepends=('python2-gtkspell: spell shecking support')
+install=$_realname.install
+source=(http://keepnote.org/download/$_realname-$pkgver.tar.gz)
+md5sums=('c1e765bb8a07630f717d04117bc1dc58')
+
+build() {
+  cd "$srcdir/$_realname-$pkgver"
+  sed -i 's|^#!/usr/bin/env python$|#!/usr/bin/env python2|' keepnote/tarfile.py
+
+  # Fix l10n support
+  rename '.UTF8' '' keepnote/rc/locale/*
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/$_realname-$pkgver"
+
+  python2 setup.py install --root=$pkgdir/ --optimize=1
+}

@@ -1,0 +1,34 @@
+## arg 1:  the new package version
+post_install() {
+  post_upgrade
+
+  cat << EOP
+  If you have not done so already, read the README file and the FAQ file.
+	You MUST edit /etc/kismet.conf and configure Kismet for your system, or
+  it will NOT run properly!"
+
+  Kismet has been installed with a SUID ROOT CAPTURE HELPER executeable by 
+  users in the group ' kismet '.  This WILL ALLOW USERS IN THIS GROUP 
+  TO ALTER YOUR NETWORK INTERACE STATES, but is more secure than running 
+  all of Kismet as root.  ONLY users in this group will be able to 
+  run Kismet and capture from physical network devices.
+EOP
+}
+
+## arg 1:  the new package version
+## arg 2:  the old package version
+post_upgrade() {
+  # Add the group needed to use the limited-functionality binary "kismet_capture"
+  # Change group ownership of "kismet_capture" to this new group
+  # Preserve the file mode bits of "kismet_capture"
+  getent group "kismet" &>/dev/null || /usr/sbin/groupadd -r -g 315 kismet &>/dev/null
+  chown root:kismet "/usr/bin/kismet_capture"
+  chmod 4550 "/usr/bin/kismet_capture"
+}
+
+## arg 1:  the old package version
+post_remove() {
+  getent group "kismet" &>/dev/null && /usr/sbin/groupdel kismet &>/dev/null
+}
+
+# vim:set ts=2 sw=2 et:

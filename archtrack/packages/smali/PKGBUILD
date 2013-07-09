@@ -1,0 +1,32 @@
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: sh0 <mee@sh0.org>
+# Contributor: Lekensteyn <lekensteyn@gmail.com>
+pkgname='smali'
+pkgver=1.4.1
+pkgrel=1
+groups=(archtrack archtrack-hardware-hacking)
+pkgdesc="An assembler/disassembler for Android's dex format"
+arch=(any)
+url="http://code.google.com/p/smali/"
+license=("BSD")
+depends=("java-runtime" "bash")
+source=("http://smali.googlecode.com/files/baksmali"
+        "http://smali.googlecode.com/files/baksmali-$pkgver.jar"
+        "http://smali.googlecode.com/files/smali"
+        "http://smali.googlecode.com/files/smali-$pkgver.jar")
+sha1sums=('f7c1899e133d1f826da1b169ec62fd47a6b3629e'
+          '234d81df98b11018ddbcffe3eb8f326cae55c0ba'
+          '29d9df50ab18a327153a91e0018145008771c040'
+          '7a0aea9f691a2ac1948e0a6d6bbb187dc88401be')
+
+package() {
+  install -d -m755 "$pkgdir/usr/bin"
+  for file in baksmali smali; do
+    install -D -m755 "$srcdir/$file" "$pkgdir/usr/share/smali/$file"
+    # prevent from printing path on launch
+    sed '/echo ${newProg}/d' -i "$pkgdir/usr/share/smali/$file"
+    install -D -m644 "$srcdir/$file-$pkgver.jar" "$pkgdir/usr/share/smali/$file.jar"
+    ln -s /usr/share/smali/$file "$pkgdir/usr/bin/$file"
+  done
+}
+

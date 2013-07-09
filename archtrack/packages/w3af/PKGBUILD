@@ -1,0 +1,49 @@
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: nblock <nblock [/at\] archlinux DOT us>
+# Contributor: Mech <tiago.bmp@gmail.com>
+# Contributor: Ermak <ermak@email.it>
+
+pkgname='w3af'
+groups=(archtrack archtrack-web-applications)
+pkgver=1.1
+pkgrel=5
+pkgdesc='Web Application Attack and Audit Framework'
+arch=('i686' 'x86_64')
+url="http://w3af.sourceforge.net/"
+license=('GPL')
+depends=('python2' 'python2-fpconst' 'python2-pyopenssl' 'python2-lxml' 'python2-soappy' 'python2-nltk' 'scapy' 'python2-pysqlite' 'python2-pysvn' 'python2-pybloomfiltermmap' 'python2-beautifulsoup3')
+optdepends=(
+      'graphviz: Needed to run the GTK User Interface'
+      'pygtk: Needed to run the GTK User Interface'
+      'gtk2: Needed to run the GTK User Interface'
+      'pygtksourceview2: Needed to run the GTK User Interface'
+)
+source=(http://downloads.sourceforge.net/sourceforge/${pkgname}/${pkgname}-${pkgver//_/-}.tar.bz2 w3af.desktop)
+options=(!strip)
+md5sums=('b67ba4ac19a5bcd7dc1e43cdf59c5688'
+         '68fde1a829b8392fa4db4fa606c1cbe7')
+
+build() {
+  #delete some of the stuff from w3af-extlib (stuff that needs to be installed) -> dependencies
+  rm -r ${srcdir}/${pkgname}/extlib/{fpconst-0.7.2,SOAPpy}
+
+  #enforce python2
+  sed -i -e 's|#!\s*/usr/bin/python[^\d.]*$|#!/usr/bin/python2|' \
+   -e 's|#!\s*/usr/bin/env python[^\d.]*$|#!/usr/bin/env python2|' \
+    $(find ${srcdir} -name '*.py') ${pkgname}/w3af_{console,gui}
+
+  mkdir -p ${pkgdir}/opt/w3af ${pkgdir}/usr/bin ${pkgdir}/usr/share/applications/
+  cp -r ${srcdir}/${pkgname}/* ${pkgdir}/opt/${pkgname}/
+  cp ${srcdir}/w3af.desktop ${pkgdir}/usr/share/applications/
+
+  #create startup for w3af_console
+  echo "#!/bin/sh" > ${pkgdir}/usr/bin/w3af_console
+  echo "exec python2 /opt/w3af/w3af_console \$*" >> ${pkgdir}/usr/bin/w3af_console
+
+  #create startup for w3af_gui
+  echo "#!/bin/sh" > ${pkgdir}/usr/bin/w3af_gui
+  echo "exec python2 /opt/w3af/w3af_gui \$*" >> ${pkgdir}/usr/bin/w3af_gui
+
+  chmod +x ${pkgdir}/{opt/w3af,usr/bin}/w3af_{console,gui}
+}
+

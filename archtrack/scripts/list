@@ -1,0 +1,75 @@
+#!/bin/bash
+# Provides some informative lists.
+
+this=$(realpath "$0")
+
+usage() {
+	echo >&2 "Help will come soon. For now, look at the source."
+	cat "$this"
+}
+
+cd "$(dirname "$0")/../packages"
+case "$1" in
+	p|packages)
+		ls -1
+		;;
+	o|official-packages)
+		for package in * ; do
+			grep -q 'upstream_repo=aur' $package/info || echo $package
+		done
+		;;
+	w|working)
+		for package in * ; do
+			grep -q '^working=true' "$package/info" && echo "$package"
+		done
+		;;
+	b|broken)
+		for package in * ; do
+			grep -q '^working=false' "$package/info" && echo "$package"
+		done
+		;;
+	u|upstream-broken)
+		for package in * ; do
+			grep -q '^upstream_working=false' "$package/info" && echo "$package"
+		done
+		;;
+	h|has-been-built)
+		for package in */*.pkg.tar.xz ; do
+			echo "$(dirname "$package")"
+		done
+		;;
+	n|not-built)
+		for package in * ; do
+			ls $package/*.pkg.tar.xz &>/dev/null || echo "$(basename "$package")"
+		done
+		;;
+	t|to-find)
+		ls -1 ../research/kali/items-tofind
+		;;
+	a|all-groups)
+		for package in * ; do
+			source "$package/PKGBUILD" &>/dev/null
+			for group in ${groups[@]} ; do
+				echo $group
+			done
+		done | sort -u
+		;;
+	s|straight-associations)
+		for package in * ; do
+			( source "$package/PKGBUILD" &>/dev/null
+			for group in ${groups[@]} ; do
+				[[ $group == archtrack ]] || echo "$group $package"
+			done )
+		done | sort
+		;;
+	g|groupings)
+		for package in * ; do
+			( source "$package/PKGBUILD" &>/dev/null
+			  echo "$package ${groups[@]}" )
+		done | sort
+		;;
+	*)
+		usage
+		exit 1
+		;;
+esac

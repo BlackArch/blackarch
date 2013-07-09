@@ -1,0 +1,34 @@
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+pkgname='blindelephant'
+pkgver=6
+pkgrel=1
+pkgdesc='The BlindElephant Web Application Fingerprinter attempts to discover the version of a (known) web application by comparing static files at known locations '
+url="http://blindelephant.sourceforge.net/"
+groups=(archtrack archtrack-web-applications)
+arch=('i686' 'x86_64')
+makedepends=(svn)
+depends=('python2')
+license=(LGPL)
+_svnmod="blindelephant"
+_svntrunk="https://blindelephant.svn.sourceforge.net/svnroot/blindelephant/trunk"
+
+build() {
+  cd $srcdir
+  mkdir -p ~/.subversion; touch ~/.subversion/servers
+  msg "Connecting to $_svnmod.sf.net SVN server..."
+
+  # svn co $_svntrunk $_svnmod
+
+  if [ -d $_svnmod ] ; then
+    (cd $_svnmod && svn update)
+    msg "The local files are updated."
+  else
+    svn co ${_svntrunk} ${_svnmod}
+  fi
+
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+  cd ${_svnmod}/src
+  python2 setup.py install --root=$pkgdir
+
+}

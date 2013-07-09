@@ -1,0 +1,36 @@
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Pranay Kanwar <pranay.kanwar@gmail.com>
+
+pkgname='fragroute'
+pkgver=1.2
+pkgrel=4
+groups=(archtrack archtrack-info-gathering)
+pkgdesc='A network intrusion detection evasion toolkit.'
+url="http://www.monkey.org/~dugsong/fragroute/"
+depends=('libpcap' 'libdnet' 'libevent')
+license="GPL"
+arch=(i686 x86_64)
+
+source=(http://www.monkey.org/~dugsong/fragroute/$pkgname-$pkgver.tar.gz
+        fragroute-1.2-libevent.patch
+      configure.patch)
+md5sums=('7e4de763fae35a50e871bdcd1ac8e23a'
+         '91845ba1704906b1d028877f423d0cf1'
+         '5c11ac97296ef4e3ac7297b5e13fbc64')
+
+prepare() {
+  cd $srcdir/$pkgname-$pkgver
+  patch -Np1 < $srcdir/fragroute-1.2-libevent.patch
+  patch -N < $srcdir/configure.patch
+}
+
+build() {
+  cd $srcdir/$pkgname-$pkgver
+  CPPFLAGS= ./configure --prefix=/usr --sysconfdir=/etc
+  make
+}
+
+package() {
+  cd $srcdir/$pkgname-$pkgver
+  make DESTDIR=$pkgdir install
+}

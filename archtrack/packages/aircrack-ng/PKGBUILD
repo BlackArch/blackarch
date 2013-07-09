@@ -1,0 +1,97 @@
+# $Id: PKGBUILD 92023 2013-05-30 23:34:33Z seblu $
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Maintainer: Brad Fanella <bradfanella@archlinux.us>
+# Contributor:  Daenyth <Daenyth+Arch [at] gmail [dot] com>
+# Contributor: Corrado Primier <bardo@aur.archlinux.org>
+# Contributor: ice-man <icemanf@gmail.com>
+
+pkgbase=aircrack-ng-archtrack
+pkgname=(aircrack-ng-archtrack aircrack-ng-scripts-archtrack)
+_realname=aircrack-ng
+pkgver=1.1
+pkgrel=9
+arch=('i686' 'x86_64')
+url="http://www.aircrack-ng.org"
+license=('GPL2')
+source=("http://download.aircrack-ng.org/${_realname}-${pkgver}.tar.gz")
+md5sums=('f7a24ed8fad122c4187d06bfd6f998b4')
+depends=('openssl' 'sqlite' 'iw' 'net-tools')
+groups=(archtrack archtrack-wireless-attacks)
+
+build() {
+  cd ${srcdir}/${_realname}-${pkgver}
+  make SQLITE=true unstable=true
+}
+
+package_aircrack-ng-archtrack() {
+  pkgdesc="A key cracker for the 802.11 WEP and WPA-PSK protocols"
+  conflicts=('aircrack-ng')
+  provides=("aircrack-ng=$pkgver")
+
+  cd ${srcdir}/${_realname}-${pkgver}
+  make DESTDIR=${pkgdir} SQLITE=true unstable=true bindir=/usr/bin  \
+    mandir=/usr/share/man/man1 sbindir=/usr/bin install
+
+  ### Remove installed scripts/corresponding man pages (installed in aircrack-ng-scripts) ###
+  # Scripts
+  rm ${pkgdir}/usr/bin/airdriver-ng
+  rm ${pkgdir}/usr/bin/airodump-ng-oui-update
+  # Man pages
+  mkdir -p ${srcdir}/tmp/
+  mv ${pkgdir}/usr/share/man/man1/airdriver-ng.1 ${srcdir}/tmp/
+}
+
+package_aircrack-ng-scripts-archtrack() {
+  pkgdesc="Included scripts for a key cracker for the 802.11 WEP and WPA-PSK protocols"
+   depends=('python2' 'graphviz' 'python2-pylorcon')
+  conflicts=('aircrack-ng-scripts')
+  provides=("aircrack-ng-scripts=$pkgver")
+
+  cd ${srcdir}/aircrack-ng-${pkgver}/scripts
+  mkdir -p ${pkgdir}/usr/share/man/man1/ \
+    ${pkgdir}/usr/bin
+
+  ### AIRDRIVER-NG ###
+  # Script
+  install -Dm644 airdriver-ng ${pkgdir}/usr/bin/
+  # Libs
+  mkdir -p ${pkgdir}/usr/lib/airdrop-ng/
+  install -Dm644 airdrop-ng/lib/{colorize.py,libDumpParse.py,libOuiParse.py} \
+    ${pkgdir}/usr/lib/airdrop-ng/
+  # Man page
+  mv ${srcdir}/tmp/airdriver-ng.1 ${pkgdir}/usr/share/man/man1/
+
+  ### AIRDROP-NG ###
+  # Man page
+  install -Dm644 airdrop-ng/docs/airdrop-ng.1 ${pkgdir}/usr/share/man/man1/
+  # Script
+  sed s/python/python2/ -i airdrop-ng/airdrop-ng.py
+  install -Dm644 airdrop-ng/airdrop-ng.py ${pkgdir}/usr/bin/airdrop-ng
+  chmod +x ${pkgdir}/usr/bin/airdrop-ng
+
+  ### AIRGRAPH-NG ###
+  # Libs
+  mkdir -p ${pkgdir}/usr/lib/airgraph-ng/
+  install -Dm644 airgraph-ng/lib/lib_Airgraphviz.py \
+    ${pkgdir}/usr/lib/airgraph-ng/
+  # Man page
+  install -Dm644 airgraph-ng/man/airgraph-ng.1 ${pkgdir}/usr/share/man/man1/
+  # Script
+  sed s/python/python2/ -i airgraph-ng/airgraph-ng.py
+  sed s_/usr/local/bin/lib_/usr/lib_ -i airgraph-ng/airgraph-ng.py
+  install -Dm644 airgraph-ng/airgraph-ng.py ${pkgdir}/usr/bin/airgraph-ng
+  chmod +x ${pkgdir}/usr/bin/airgraph-ng
+
+  ### DUMP-JOIN.PY ###
+  # Man page
+  install -Dm644 airgraph-ng/man/dump-join.1 ${pkgdir}/usr/share/man/man1/
+  # Script
+  sed s/python/python2/ -i airgraph-ng/dump-join.py
+  install -Dm644 airgraph-ng/dump-join.py ${pkgdir}/usr/bin/dump-join.py
+  chmod +x ${pkgdir}/usr/bin/dump-join.py
+
+  ### AIRODUMP-NG-OUI-UPDATE ###
+  # Script
+  install -Dm644 airodump-ng-oui-update ${pkgdir}/usr/bin/
+  chmod +x ${pkgdir}/usr/bin/airodump-ng-oui-update
+}

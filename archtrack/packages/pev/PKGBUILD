@@ -1,0 +1,36 @@
+# Archtrack maintainer: Evan Teitelman <teitelmanevan at gmail dot com>
+# Contributor: Fabiano Furtado - fusca < fusca14 *at* gmail *dot* com >
+
+pkgname='pev'
+pkgver=0.60
+pkgrel=1
+groups=(archtrack archtrack-forensics)
+pkgdesc='Command line based tool for PE32/PE32+ file analysis'
+arch=('i686' 'x86_64')
+url='http://pev.sourceforge.net/'
+license=('GPL')
+depends=('glibc')
+#source=(http://downloads.sourceforge.net/sourceforge/${pkgname}/${pkgname}-${pkgver}.tar.gz)
+source=(http://sourceforge.net/projects/${pkgname}/files/${pkgname}-${pkgver}/${pkgname}-${pkgver}.tar.gz)
+md5sums=('9eb79416be853c697228975a12280507')
+
+build() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+  #./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+  install -d ${pkgdir}/usr/bin
+  install -d ${pkgdir}/usr/lib
+  install -d ${pkgdir}/usr/share/man/man1
+
+  # Changes to correct hard coded destdir in Makefiles (bad practice from upstream)
+  sed -i "s|\$(DESTDIR)/\$(PREFIX)/bin|\$(DESTDIR)\$(PREFIX)/bin|" src/Makefile
+  sed -i "s|/usr/share/pev|${pkgdir}/usr/share/pev|" src/Makefile
+  sed -i "s|/usr/share/man/man1|${pkgdir}/usr/share/man/man1|" src/Makefile
+  sed -i "s|\$(DESTDIR)/\$(PREFIX)/lib|\$(DESTDIR)\$(PREFIX)/lib|" lib/libpe/Makefile
+
+  make DESTDIR=${pkgdir} install
+}
