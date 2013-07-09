@@ -1,8 +1,9 @@
 #!/bin/bash
 # usage: build.sh [package_directory] [build_directory]
+# Must be run from the project root
 # TODO: Report a summary of failures
 
-pkgdir=$(realpath "${1:-.}")
+pkgdir=$(realpath "${1:-packages}")
 builddir=$(realpath "${2:-build}")
 mkdir -p "$builddir"
 cd "$builddir"
@@ -15,7 +16,6 @@ find "$pkgdir" -type f -name "PKGBUILD" |
 while read pkgbuild
 do
 	makepkg -cs --noconfirm --sign -p "$pkgbuild"
-	mv *.pkg.tar.xz* "$builddir"
 done
 
 # Put together a database
