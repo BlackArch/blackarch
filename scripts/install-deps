@@ -1,21 +1,9 @@
 #!/bin/bash
-# Installs all package dependencies from the AUR and official repos.
+# Installs all package dependencies.
+# Must be run from the repo root.
 
-if [[ $# == 0 ]] ; then
-	packages=("$(dirname "$0")"/packages/*)
-else
-	packages=("$@")
-fi
-
-asdeps=true
-for pack in "${packages[@]}" ; do
-	(
-	source "$pack/PKGBUILD"
+find . -name PKGBUILD | while read pack ; do
+	source "$pack"
 	deps=(${makedepends[@]} ${depends[@]})
-	if $asdeps ; then
-		yaourt --asdeps --needed --noconfirm -S ${deps[@]}
-	else
-		yaourt --needed --noconfirm -S ${deps[@]}
-	fi
-	)
+	yaourt --asdeps --needed --noconfirm -S "${deps[@]}"
 done
