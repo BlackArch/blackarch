@@ -2,68 +2,49 @@
 # Preps a package for use in the Archtrack project
 # Spots that need manually checking are marked with 'TODO'
 
-for arg ; do
-	dir=$arg
-	pkg=$(basename "$dir")
-
-	cd "$dir" || exit 1
-	echo "checking '$pkg'..."
-
-	# Make info file
-	if [[ ! -e info ]] ; then
-		cat > info <<-EOF
-		# TODO: check package name
-		pretty_name=$pkg
-		upstream_name=$pkg
-		working=true
-		upstream_working=true
-		# TODO: check ui
-		ui=term
-		EOF
+for pkgbuild ; do
+	if [[ ! -r "$pkgbuild" ]] ; then
+		echo >&2 "could not read '$pkgbuild'."
+		exit 1
 	fi
+	echo "cleaning '$pkgbuild'..."
 
 	# Expand tabs
-	if grep -q $'^\t' PKGBUILD ; then
-		echo "expanding tabs..."
-		expand -i -t2 PKGBUILD | sponge PKGBUILD
-	fi
+	echo "expanding tabs..."
+	expand -it2 "$pkgbuild" | sponge "$pkgbuild"
 
 	# Remove vim modeline
-	if grep -q '#.?vim:' PKGBUILD ; then
-		echo "removing vim modeline..."
-		sed -i '/#.?vim:/d' PKGBUILD
-	fi
+	echo "removing vim modeline..."
+	sed -i '/#\s*vim:/d' "$pkgbuild"
+
+	# Remove maintainer and contributor comments
+	echo 'removing contributor and maintainer comments...'
+	sed -i '/#\s*\([Cc]ontributor\|[Mm]aintainer\)/d'
 
 	# Squeeze extra blank lines (why does cat have this feature?)
-	cat -s PKGBUILD | sponge PKGBUILD
-
-	# Add maintainer comment
-	sed -i '1i\# Evan Teitelman <teitelmanevan at gmail dot com>' PKGBUILD
-	sed -i '1i\# TODO: check maintainer line' PKGBUILD
-	sed -i '1i\# TODO: check package' PKGBUILD
+	echo 'squeezing extra blank lines...'
+	cat -s "$pkgbuild" | sponge "$pkgbuild"
 
 	# Remove '|| return'
-	if grep '||.?return' PKGBUILD ; then
-		echo "removing '|| return'..."
-		sed -i 's/||.?return.*//' PKGBUILD
-	fi
+	echo "removing '|| return'..."
+	sed -i 's/||\s*return.*//' "$pkgbuild"
 
 	# Check for package function
-	if ! grep -q 'package()' PKGBUILD ; then
-		sed -i '1i\# TODO: make package function' PKGBUILD
+	if ! grep -q 'package()' "$pkgbuild" ; then
+		sed -i '1i\# TODO: make package function' "$pkgbuild"
 		echo "warning: no package function"
 	fi
 
 	# Remove trailing whitespace
-	if grep -Eq '[[:space:]]*$' PKGBUILD ; then
+	if grep -Eq '[[:space:]]+$' "$pkgbuild" ; then
 		echo "removing trailing whitespace..."
-		sed -i 's/[[:space:]]*$//' PKGBUILD
+		sed -i 's/[[:space:]]+$//' "$pkgbuild"
 	fi
 
 	# Check for startdir
 	# This is too difficult to fix automatically
-	if grep -q 'startdir' PKGBUILD ; then
+	if grep -q 'startdir' "$pkgbuild" ; then
 		echo 'warning: has startdir'
-		sed -i '1i\# TODO: check startdir' PKGBUILD
+		sed -i '1i\# TODO: remove startdir' "$pkgbuild"
 	fi
 done
