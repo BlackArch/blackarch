@@ -17,6 +17,10 @@ for pkgbuild ; do
 	echo "removing vim modeline..."
 	sed -i '/#\s*vim:/d' "$pkgbuild"
 
+	# Remove Id comment
+	echo "removing id comment..."
+	sed -i '/#\s*\$\s*Id:/d' "$pkgbuild"
+
 	# Remove maintainer and contributor comments
 	echo 'removing contributor and maintainer comments...'
 	sed -i '/#\s*\([Cc]ontributor\|[Mm]aintainer\)/d'
@@ -40,6 +44,16 @@ for pkgbuild ; do
 		echo "removing trailing whitespace..."
 		sed -i 's/[[:space:]]+$//' "$pkgbuild"
 	fi
+
+	# Remove blank line at top
+	# This also adds a trailing newline if there isn't one already.
+	echo 'removing leading blank line...'
+	awk 'BEGIN{ i=0 } {
+	        if (!(/^$/ && i==0)) {
+	           print
+	        }
+	        i++
+	     }' "$pkgbuild" | sponge "$pkgbuild"
 
 	# Check for startdir
 	# This is too difficult to fix automatically
