@@ -2,23 +2,32 @@
 # usage: build.sh [package_directory] [build_directory]
 # Must be run from the project root
 
-# Run the script with gpg-agent.
-# This isn't as bad as it looks.
+trap_exit() {
+	# Kill gpg-agent
+	kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")"
+}
+trap trap_exit EXIT
+
+# Start gpg-agent.
 [[ -z "$GPG_TTY" ]] && GPG_TTY=$(tty)
-[[ -z "$GPG_AGENT_INFO" ]] && { gpg-agent --daemon "$0"; exit; }
+[[ -z "$GPG_AGENT_INFO" ]] && gpg-agent --daemon
 
 pkgdir=$(realpath "${1:-packages}")
 builddir=$(realpath "${2:-build}")
 mkdir -p "$builddir"
 
-# Build all packages under the current directory
+# Build all packages under the package directory.
 find "$pkgdir" -type f -name "PKGBUILD" |
 while read pkgbuild ; do
 	cd "$(dirname "$pkgbuild")"
 	makepkg -cs --noconfirm --sign 2>&1
+	if [[ $? != 0 ]] ; then
+		echo >&2 "'$pkgbuild' failed with error code $?"
+		continue
+	fi
 	mv *.pkg.tar.xz* "$builddir"
 done
 
-# Put together a database
+# Put together a database.
 cd "$builddir"
 repo-add blackarch.db.tar.gz *.pkg.tar.xz
