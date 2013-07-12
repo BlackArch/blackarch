@@ -1,22 +1,24 @@
 #!/bin/bash
 # usage: build.sh [package_directory] [build_directory]
 # Must be run from the project root
-# TODO: Report a summary of failures
+
+# Run the script with gpg-agent.
+# This isn't as bad as it looks.
+[[ -z "$GPG_TTY" ]] && GPG_TTY=$(tty)
+[[ -z "$GPG_AGENT_INFO" ]] && { gpg-agent --daemon "$0"; exit; }
 
 pkgdir=$(realpath "${1:-packages}")
 builddir=$(realpath "${2:-build}")
 mkdir -p "$builddir"
-cd "$builddir"
-
-# Initialize gpg-agent
-[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon)
 
 # Build all packages under the current directory
 find "$pkgdir" -type f -name "PKGBUILD" |
-while read pkgbuild
-do
-	makepkg -cs --noconfirm --sign -p "$pkgbuild"
+while read pkgbuild ; do
+	cd "$(dirname "$pkgbuild")"
+	makepkg -cs --noconfirm --sign 2>&1
+	mv *.pkg.tar.xz* "$builddir"
 done
 
 # Put together a database
+cd "$builddir"
 repo-add blackarch.db.tar.gz *.pkg.tar.xz
