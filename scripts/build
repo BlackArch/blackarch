@@ -2,31 +2,36 @@
 # usage: build.sh [package_directory] [build_directory]
 # Must be run from the project root
 
-# Start gpg-agent.
-[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
-[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon)
-
 trap_exit() {
 	# Kill gpg-agent.
 	kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")"
 }
 trap trap_exit EXIT
 
-pkgdir=$(realpath "${1:-packages}")
-builddir=$(realpath "${2:-build}")
-repodir=$(realpath "${2:-repo}")
-mkdir -p "$builddir"
+# Start gpg-agent.
+[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
+[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon)
+
+pkgdir=$(realpath packages)
+repodir=$(realpath repo)
+builddir=$(realpath build)
 mkdir -p "$repodir"
+mkdir -p "$builddir"
 
 # Build all packages under the package directory.
 find "$pkgdir" -type f -name "PKGBUILD" |
 while read pkgbuild ; do
-	cd "$(dirname "$pkgbuild")"
-	makepkg -cs --noconfirm --sign 2>&1
+	# packages/**/<package> -> build/<package>
+	cp -r "$(dirname "$pkgbuild")" "$builddir"
+	cd "$builddir/$(basename "$(dirname "$pkgbuild")")"
+
+	makepkg -s --noconfirm --sign 2>&1
 	if [[ $? != 0 ]] ; then
 		echo >&2 "'$pkgbuild' failed with error code $?"
 		continue
 	fi
+
+	# Move the finished build to the repo.
 	mv *.pkg.tar.xz* "$repodir"
 done
 
