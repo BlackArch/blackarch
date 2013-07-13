@@ -9,7 +9,7 @@ for pkgbuild ; do
 	fi
 	echo "cleaning '$pkgbuild'..."
 
-	# Expand tabs
+	# Expand tabs to two spaces
 	echo "expanding tabs..."
 	expand -it2 "$pkgbuild" | sponge "$pkgbuild"
 
@@ -17,6 +17,20 @@ for pkgbuild ; do
 	echo "removing vim modeline..."
 	sed -i '/#\s*vim:/d' "$pkgbuild"
 
+	# Check license
+	echo "checking license..."
+	(
+	source "$pkgbuild"
+	for lic in "${license[@]}" ; do
+		if [[ ! "$lic" =~ \
+			   ^([Uu]nknown|[Oo]ther|[Cc]ustom|BSD|MIT|ZLIB|[Pp]ython)$ ]] ; then
+			[[ -z "$lic" ]] && echo >&2 "'$pkgbuild' has no license."
+			[[ -e /usr/share/licenses/common/$lic ]] ||
+			echo >&2 "'$pkgbuild' has invalid license: '$lic'"
+		fi
+	done
+	)
+	
 	# Remove Id comment
 	echo "removing id comment..."
 	sed -i '/#\s*\$\s*Id:/d' "$pkgbuild"
