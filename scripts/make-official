@@ -1,5 +1,7 @@
 #!/bin/bash
 # Gets and modifies official-repo packages from a list
+# You must disable the blackarch repository before running this.
+
 # usage: make-official <directory>
 # The list is read in on stdin.
 # The list format is as follows.
@@ -15,7 +17,7 @@ cleanup() {
 	rm -rf "$tmp"
 
 	# Kill gpg-agent.
-	kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")"
+	[[ -n "$GPG_AGENT_INFO" ]] && kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")"
 }
 trap cleanup EXIT
 
@@ -39,7 +41,7 @@ while read line ; do
 	pack_ver="${pack_name}-$(pacman -Si "$pack_name" | sed -n '/^Version/s/^Version\s*:\s*//p')"
 
 	# Get the file.
-	sudo pacman --noconfirm -Sdw "$pack_name"
+	sudo pacman --noconfirm -Sdw "$pack_name" > /dev/null
 
 	pack_file=$(basename /var/cache/pacman/pkg/${pack_ver}-*.pkg.tar.xz)
 
