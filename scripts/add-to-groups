@@ -1,0 +1,22 @@
+#!/bin/bash
+# Adds a built package to BlackArch groups.
+# usage: add-to-groups <package> <groups...>
+# where <package> is has a '.pkg.tar.xz' extension.
+
+pkg=$1
+shift
+
+# We can't update compressed archives.
+xz -d "$pkg"
+pkg=${pkg%.xz}
+
+# I couldn't find a way to do this in a single pipeline.
+{ tar xf "$pkg" .PKGINFO -O
+	for group ; do
+		printf "group = %s\n" "$group"
+	done } > .PKGINFO
+
+tar --delete -f "$pkg" .PKGINFO 
+tar -rf "$pkg" .PKGINFO
+
+xz "$pkg"
