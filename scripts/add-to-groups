@@ -3,22 +3,27 @@
 # usage: add-to-groups <package> <groups...>
 # where <package> has a '.pkg.tar.xz' extension.
 
-pkg=$1
+cleanup() {
+	rm -rf "$tmp"
+}
+trap cleanup EXIT
+
+pkg=$(realpath "$1")
 shift
 
-# We can't update compressed archives.
-xz -d "$pkg"
-pkg=${pkg%.xz}
+tmp=$(mktemp -d)
+cd "$tmp"
 
-tar xf "$pkg" .PKGINFO
+# Extract.
+# GNU tar gave us a bunch of warnings and poisoned some of the extracted files.
+fakeroot tar xJpf "$pkg" -C "$tmp"
+
+# Make a new mtree file.
+bsdtar czf .MTREE --format=mtree \
+   --options='!all,use-set,type,uid,gid,mode,size,time,md5' *
 
 # Add the groups.
-for group ; do
-	printf "group = %s\n" "$group"
-done >> .PKGINFO
+printf "group = %s\n" "$@" >> .PKGINFO
 
-# Swap out with the new file.
-tar --delete -f "$pkg" .PKGINFO 
-tar -rf "$pkg" .PKGINFO
-
-xz "$pkg"
+# Re-create archive.
+fakeroot tar cJpf "$pkg" * .??*
