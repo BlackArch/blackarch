@@ -36,7 +36,11 @@ cd "$tmp"
 while read line ; do
 	pack_name=$(cut -d' ' -f1 <<< "$line")
 	groups=( $(cut -d' ' -f2- <<< "$line") )
-	pack_ver=$(sudo pacman --noconfirm -Sdw "$pack_name" | grep Packages | cut -d' ' -f3)
+	pack_ver="${pack_name}-$(pacman -Si "$pack_name" | sed -n '/^Version/s/^Version\s*:\s*//p')"
+
+	# Get the file.
+	sudo pacman --noconfirm -Sdw "$pack_name"
+
 	pack_file=$(basename /var/cache/pacman/pkg/${pack_ver}-*.pkg.tar.xz)
 
 	# Debugging information
