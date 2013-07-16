@@ -1,0 +1,50 @@
+#!/bin/bash
+# Gets and modifies 
+
+if [[ $# == 0 ]] ; then
+	echo >&2 'Please specify a directory to put the packages in.'
+	exit 1
+fi
+
+cleanup() {
+	rm -rf "$tmp"
+}
+trap cleanup EXIT
+
+# Directory for the packages.
+dir=$(realpath "$1")
+mkdir -p "$dir"
+
+# Directory with dependencies.
+deps=$(dirname "$(realpath "$0")")
+
+# We need root privledges for pacman.
+sudo -v
+
+sudo pacman -Sy || exit 1
+tmp=$(mktemp -d)
+cd "$tmp"
+
+while read line ; do
+	pack_name=$(cut -d' ' -f1 <<< "$line")
+	groups=( $(cut -d' ' -f2- <<< "$line") )
+	pack_ver=$(sudo pacman --noconfirm -Sdw "$pack_name" | grep Packages | cut -d' ' -f3)
+	pack_file=$(basename /var/cache/pacman/pkg/${pack_ver}-*.pkg.tar.xz)
+
+	# Debugging information
+	echo Name: $pack_name
+	echo Groups: ${groups[@]}
+	echo Name + Version: $pack_ver
+	echo File: $pack_file
+
+	# cache -> temporary
+	cp "/var/cache/pacman/pkg/$pack_file" .
+	# Add the groups.
+	$deps/add-to-groups "$pack_file" "${groups[@]}"
+	# temporary -> final dir
+	cp "$pack_file" "$dir"
+
+	echo
+done
+
+rm -rf "$tmp"
