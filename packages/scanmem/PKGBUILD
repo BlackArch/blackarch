@@ -1,5 +1,3 @@
-# TODO: Add to package groups.
-# old groups: archtrack archtrack-reverse-engineering
 pkgname=scanmem
 pkgver=0.13
 pkgrel=1
@@ -7,19 +5,17 @@ pkgdesc="A utility used to locate the address of a variable in an executing proc
 arch=('i686' 'x86_64')
 url="http://code.google.com/p/scanmem/"
 license=('GPL3')
+groups=(blackarch blackarch-reversing)
 depends=('python2' 'pygtk')
-optdepends=('gksu: needed for the GameConqueror GUI.')
+optdepends=('gksu: for the GameConqueror GUI.')
 source=(http://scanmem.googlecode.com/files/$pkgname-$pkgver.tar.gz)
 md5sums=('1c23eda15db242ff0aac96d94be11db1')
-
-groups=(blackarch)
 
 build() {
   cd "$srcdir/$pkgname-$pkgver"
   chmod 755 configure
   ./configure --enable-gui --prefix=/usr
-  msg2 "Building..."
-  make -s
+  make
 }
 
 package() {
@@ -27,7 +23,7 @@ package() {
 
   make -s DESTDIR="$pkgdir" install
 
-  # Replacing calls to the Python 3.x interpreter to the Python 2.x one:
+  # Fix Python shebang lines.
   sed 's|python|python2|g' -i "$pkgdir/usr/bin/gameconqueror"
   sed 's|#!/usr/bin/env python|#!/usr/bin/env python2|g' -i \
       "$pkgdir/usr/share/gameconqueror/"{backend.py,GameConqueror.py,hexview.py}
