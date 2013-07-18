@@ -1,27 +1,29 @@
-# TODO: Add to package groups.
-# old groups: 
 pkgname='tuxcut'
 pkgver=5.0
 pkgrel=1
-groups=(blackarch)
+groups=(blackarch blackarch-intel)
 pkgdesc='Netcut-like program for Linux written in PyQt'
 url="http://bitbucket.org/a_atalla/tuxcut/"
 arch=('i686' 'x86_64')
-license="GPL2"
+license=('GPL2')
 depends=('python' 'pyqt' 'iproute2' 'dsniff' 'arp-scan' 'arptables')
 source=(https://bitbucket.org/a_atalla/${pkgname}/downloads/tuxcut_${pkgver}_all.deb)
 md5sums=('cf06438795b5671edfc97abc0302bcee')
 
-package() {
+prepare() {
   cd "$srcdir"
   tar xzf data.tar.gz
 
-  # Remove hidden files
+  # Remove hidden files.
   rm -rf .??*
-  # Remove backup files
-  find . -name '*~' -type f -exec rm '{}' \;
+  # Remove backup files.
+  find . -name '*~' -type f -delete
   sed -i '1s/python/python2/' $srcdir/opt/TuxCut/run.py
   sed -i 's/^lang =.*$/lang = "English"/' $srcdir/opt/TuxCut/run.py
+}
+
+package() {
+  cd "$srcdir"
 
   install -dm755 $pkgdir/opt/TuxCut/{ui,i18n}
   install -dm755 $pkgdir/usr/share/{applications,pixmaps,doc/tuxcut}
