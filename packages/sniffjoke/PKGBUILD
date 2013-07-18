@@ -1,0 +1,33 @@
+pkgname='sniffjoke'
+pkgver=0.4.1
+pkgrel=1
+license=(GPL)
+groups=(blackarch blackarch-defensive)
+pkgdesc='Injects packets in the transmission flow that are able to seriously disturb passive analysis like sniffing, interception and low level information theft'
+arch=('i686' 'x86_64')
+url=http://www.delirandom.net/sniffjoke/
+depends=('cmake' 'gcc' 'iptables' 'tcpdump')
+source=('http://www.delirandom.net/sniffjoke/sniffjoke-0.4.1.tar.bz2' )
+md5sums=('5a916a830abef8b5c26d4f0e38941b40')
+
+build() {
+  cd $srcdir/$pkgname-0.4.1
+  [[ -d build ]] || mkdir build
+  cd build
+
+  cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+  make
+}
+
+package() {
+  cd $srcdir/$pkgname-0.4.1
+  cd build
+
+  make DESTDIR=$pkgdir install
+
+  # Conform to the FHS.
+  install -dm755 "$pkgdir/usr/bin"
+  mv "$pkgdir"/usr/var "$pkgdir/etc"
+  mv "$pkgdir"/usr/local/{bin,sbin}/* "$pkgdir/usr/bin"
+  rm -rf "$pkgdir"/usr/local
+}
