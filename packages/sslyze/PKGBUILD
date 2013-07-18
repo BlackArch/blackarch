@@ -1,9 +1,7 @@
-# TODO: Add to package groups.
-# old groups: archtrack archtrack-info-gathering
 pkgname='sslyze'
 pkgver=0.6
-pkgrel=1
-groups=(blackarch)
+pkgrel=2
+groups=(blackarch blackarch-intel)
 pkgdesc='Python tool for analyzing the configuration of SSL servers and for identifying misconfigurations'
 
 arch=('any')
@@ -15,16 +13,16 @@ source=(https://dl.dropbox.com/s/h4cc7q68jdmxay3/${pkgname}-${pkgver}_src.zip)
 md5sums=('d86b75faacb069a02c829fab2f45193c')
 
 package() {
-  # Install files in /opt
-  mkdir -p "$pkgdir/opt"
-  mv $srcdir/${pkgname}-${pkgver}_src $pkgdir/opt/sslyze
-  # Create an indirect launcher in /usr/bin
-  mkdir -p $pkgdir/usr/bin
-  cat > "$pkgdir/usr/bin/sslyze" << EOF
-#!/bin/bash
-cd /opt/sslyze
-python2 sslyze.py \$@
-cd \$OLDPWD
+  # Install files.
+  install -dm755 "$pkgdir/usr/share"
+  cp --no-preserve=ownership -r $srcdir/${pkgname}-${pkgver}_src $pkgdir/usr/share/sslyze
+
+  # Create an indirect launcher.
+  install -dm755 $pkgdir/usr/bin
+  cat > "$pkgdir/usr/bin/sslyze" <<\EOF
+#!/bin/sh
+cd /usr/share/sslyze
+python2 sslyze.py $@
 EOF
   chmod 755 "$pkgdir/usr/bin/sslyze"
 }
