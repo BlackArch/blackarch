@@ -1,0 +1,38 @@
+pkgname=python2-pyscard
+pkgver=1.6.16
+pkgrel=1
+pkgdesc="A Python module adding smart card support to Python"
+arch=('i686' 'x86_64')
+url="http://pyscard.sourceforge.net/"
+license=('LGPL')
+depends=('pcsclite')
+makedepends=('swig' 'python2')
+conflicts=('pyscard')
+provides=('pyscard')
+
+_svnurl=https://pyscard.svn.sourceforge.net/svnroot/pyscard
+_svn_ver=612
+
+build() {
+  cd "$srcdir"
+
+  if [ -d $pkgname/.svn ]; then
+    (cd $pkgname && svn up -r $_svn_ver)
+  else
+    svn co $_svnurl --config-dir ./ -r $_svn_ver $pkgname
+  fi
+
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$pkgname-build"
+  cp -r "$srcdir/$pkgname" "$srcdir/$pkgname-build"
+  cd "$srcdir/$pkgname-build/trunk/$pkgname/src"
+
+  python2 setup.py build_ext
+}
+
+package() {
+  cd "$srcdir/$pkgname-build/trunk/$pkgname/src"
+  python2 setup.py install --prefix=$pkgdir/usr
+}
