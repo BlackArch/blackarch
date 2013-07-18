@@ -1,0 +1,66 @@
+pkgname='spike'
+pkgver=2.9
+pkgrel=2
+pkgdesc="IMMUNITYsec's fuzzer creation kit in C"
+groups=(blackarch blackarch-analysis)
+arch=('i686' 'x86_64')
+url="http://www.immunitysec.com/resources-freesoftware.shtml"
+license=('GPL2')
+depends=('gcc' 'automake' 'openssl')
+optdepends=('python2: needed to run SPIKE_Console.py python GUI'
+            'wxpython: needed to run SPIKE_Console.py python GUI')
+source=("http://www.immunitysec.com/downloads/SPIKE${pkgver}.tgz")
+md5sums=(5e41c40904db2b3da06f181e8815aedd)
+sha1sums=(efc403a5f48f7172402f8896f398d2b1b9881f29)
+
+prepare() {
+  cd $srcdir/SPIKE/SPIKE/src
+  sed -i 's|/usr/bin/python|/usr/bin/python2|g' SPIKE_Console.py
+}
+
+build() {
+  cd $srcdir/SPIKE/SPIKE/src
+  aclocal
+  automake --add-missing
+  autoconf
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd $srcdir/SPIKE/SPIKE/src
+
+  # Create directory structure.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/lib"
+  install -dm755 "$pkgdir/usr/include/$pkgname"
+  install -dm755 "$pkgdir/usr/share/$pkgname"
+  install -dm755 "$pkgdir/usr/share/doc/$pkgname"
+
+  # Install binaries.
+  # The package doesn't provide a decent method of installation.
+  for bin in citrix closed_source_web_server_fuzz dceoversmb dltest do_post \
+    generic_chunked generic_listen_tcp generic_send_tcp generic_send_udp \
+    generic_web_server_fuzz generic_web_server_fuzz2 gopherd halflife \
+    line_send_tcp msrpcfuzz msrpcfuzz_udp ntlm2 ntlm_brute pmspike post_fuzz \
+    post_spike quake quakeserver sendmsrpc ss_spike statd_spike sunrpcfuzz \
+    webfuzz x11_spike
+  do
+    install -m755 "$bin" "$pkgdir/usr/bin/${pkgname}-${bin/_/-}"
+  done
+
+  # Install libraries.
+  install -m755 *.so "$pkgdir/usr/lib/"
+
+  cd $srcdir/SPIKE/SPIKE
+
+  # Install includes.
+  install -m644 include/* "$pkgdir/usr/include/spike"
+
+  # Install documentation.
+  install -m644 *.txt documentation/* \
+          $pkgdir/usr/share/doc/$pkgname
+
+  # Install data.
+  cp --no-preserve=ownership -R dcedump data encrypted "$pkgdir/usr/share/$pkgname"
+}
