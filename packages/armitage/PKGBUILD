@@ -1,8 +1,6 @@
-# TODO: Add to package groups.
-# old groups: archtrack archtrack-exploitation-tools
 pkgname='armitage'
 pkgver=841
-groups=(blackarch)
+groups=(blackarch blackarch-exploitation)
 pkgrel=1
 pkgdesc='A graphical cyber attack management tool for Metasploit'
 url="http://www.fastandeasyhacking.com/"
@@ -11,7 +9,7 @@ license=('GPL')
 depends=('metasploit' 'java-environment')
 makedepends=('apache-ant' 'zip' 'unzip' 'subversion')
 provides=('armitage')
-install='armitage.install'
+nstall='armitage.install'
 
 source=('armitage.install')
 md5sums=('5234326f9ff41ff8694cb35a557af895')
@@ -19,8 +17,9 @@ md5sums=('5234326f9ff41ff8694cb35a557af895')
 _svntrunk=http://armitage.googlecode.com/svn/trunk/
 _svnmod=armitage
 
-build() {
-  cd ${srcdir}
+prepare() {
+  cd $srcdir
+
   if [ -d ${_svnmod}/.svn ]; then
     svn up ${_svnmod}
   else
@@ -29,16 +28,26 @@ build() {
 
   rm -rf ${_svnmod}-build
   cp -r ${_svnmod} ${_svnmod}-build
+
   cd ${_svnmod}-build
 
   sed -i s+/usr/share/java/apache-ant/bin/++g package.sh
+}
+
+build() {
+  cd $srcdir/${_svnmod}-build
+
   bash package.sh
   echo "#!/bin/bash" > ${_svnmod}.sh
   echo "java -jar /opt/${_svnmod}/${_svnmod}.jar" >> ${_svnmod}.sh
 }
 
 package() {
-  mkdir -p ${pkgdir}/{opt/${_svnmod},usr/bin}
-  tar -C ${pkgdir}/opt/ -xzf ${srcdir}/${_svnmod}-build/${_svnmod}.tgz
+  cd ${srcdir}
+
+  install -dm755 $pkgdir/opt/${_svnmod}
+  install -dm755 $pkgdir/usr/bin
+
+  tar -C ${pkgdir}/opt -xzf ${srcdir}/${_svnmod}-build/${_svnmod}.tgz
   install -m755 ${srcdir}/${_svnmod}-build/${_svnmod}.sh ${pkgdir}/usr/bin/${_svnmod}
 }
