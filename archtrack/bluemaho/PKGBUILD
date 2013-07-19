@@ -1,23 +1,29 @@
-# TODO: Add to package groups.
-# old groups: archtrack archtrack-bluetooth
-# TODO: make package function
 pkgname=bluemaho
 pkgver=090417
 pkgrel=1
-pkgdesc="BlueMaho is GUI-shell (interface) for suite of tools for testing security of bluetooth devices."
+pkgdesc="A GUI-shell (interface) for suite of tools for testing security of bluetooth devices"
 arch=(i686 x86_64)
 url="http://wiki.thc.org/BlueMaho"
-updateurl="http://wiki.thc.org/BlueMaho=>bluemaho_v"
 license=('GPL3')
 depends=('wxpython' 'bluediving' 'bss' 'bt_audit' 'hidattack' 'glib')
-groups=(blackarch)
+groups=(blackarch blackarch-wireless)
 source=("${pkgname}_v$pkgver.tgz::http://wiki.thc.org/BlueMaho?action=AttachFile&do=get&target=${pkgname}_v$pkgver.tgz")
 md5sums=('f92f331337d36aa03acdad16f9aee83a')
 
+prepare() {
+  cd sources/bluepimp
+  sed -i 's:hci_remote_name:hci_read_remote_name:' obex_socket.c
+
+  cd sources/helomoto/
+  sed -i "s:gcc :gcc $CFLAGS :g" Makefile
+}
+
 build() {
   cd "$srcdir/$pkgname-$pkgver/tools"
-  chmod -x *
-  chmod +x *.py *.sh replay_packet
+
+  chmod -R -x *
+  chmod -R +X *
+  find . -name '*.sh' -o -name '*.py' -exec chmod +x '{}' \;
 
   cd replay_packet
   chmod -x *
@@ -45,10 +51,10 @@ build() {
   cd "$srcdir/$pkgname-$pkgver/exploits"
   chmod -x *
 
+
   # Build other exploits
   msg "Building bluepimp"
   cd sources/bluepimp
-  sed -i 's:hci_remote_name:hci_read_remote_name:' obex_socket.c
   make CFLAGS="$CFLAGS" && mv ussp-push ../../bluepimp
   cd ../..
 
@@ -60,7 +66,6 @@ build() {
 
   msg "Building helomoto"
   cd sources/helomoto/
-  sed -i "s:gcc :gcc $CFLAGS :g" Makefile
   make CFLAGS="$CFLAGS"
   mv helomoto ../..
   cd ../..
@@ -76,7 +81,9 @@ build() {
   gcc -lbluetooth $CFLAGS sonyericsson_reset_display.c -o sonyericsson_reset_display
   mv sonyericsson_reset_display ..
   cd ..
+}
 
+package() {
   chmod +x opush_abuse.sh mod3abuse.py
   rm hidattack*
 
