@@ -1,0 +1,31 @@
+pkgname='dirb'
+pkgver=2.04
+pkgrel=3
+pkgdesc='A web content scanner, brute forceing for hidden files'
+url="http://dirb.sourceforge.net/"
+groups=(blackarch blackarch-web-apps)
+arch=('i686' 'x86_64')
+license=("GPL2")
+depends=('curl')
+source=("http://open-labs.org/${pkgname}204.tar.gz")
+md5sums=('2b2b2caacfff87d14b9fa39365eb25e9')
+
+prepare() {
+  sed -i 's|wordlists/|/usr/share/dirb/wordlists/|' "$srcdir/dirb/src/dirb.c"
+}
+
+build () {
+  cd $srcdir/dirb
+  ./configure
+  make
+}
+
+package() {
+  cd $srcdir/dirb
+
+  make DESTDIR="$pkgdir" install
+  install -dm755 "$pkgdir/usr/share/$pkgname"
+  cp --no-preserve=ownership -r "$srcdir/$pkgname/wordlists" "$pkgdir/usr/share/$pkgname/"
+  chmod -R 644 "$pkgdir/usr/share/$pkgname/wordlists"
+  chmod +X "$pkgdir/usr/share/$pkgname/wordlists"
+}
