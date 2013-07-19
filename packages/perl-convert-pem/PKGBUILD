@@ -1,0 +1,40 @@
+pkgname='perl-convert-pem'
+pkgver='0.08'
+pkgrel='2'
+pkgdesc="Read/write encrypted ASN.1 PEM files"
+arch=('any')
+license=('PerlArtistic' 'GPL')
+options=('!emptydirs')
+depends=('perl>=5.8.1' 'perl-class-errorhandler' 'perl-convert-asn1>=0.10' 'perl-crypt-des_ede3')
+makedepends=('perl-test-exception')
+url='http://search.cpan.org/dist/Convert-PEM'
+source=('http://search.cpan.org/CPAN/authors/id/B/BT/BTROTT/Convert-PEM-0.08.tar.gz')
+md5sums=('a55c927457035806228e62b403551f13')
+_distdir="Convert-PEM-0.08"
+
+build() {
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""                 \
+      PERL_AUTOINSTALL=--skipdeps                            \
+      PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'"     \
+      PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+      MODULEBUILDRC=/dev/null
+
+    cd "$srcdir/$_distdir"
+    /usr/bin/perl Makefile.PL
+    make
+  )
+}
+
+check() {
+  cd "$srcdir/$_distdir"
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""
+    make test
+  )
+}
+
+package() {
+  cd "$srcdir/$_distdir"
+  make install
+
+  find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}
