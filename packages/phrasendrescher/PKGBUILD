@@ -1,9 +1,6 @@
-# TODO: Add to package groups.
-# old groups: archtrack archtrack-password-attacks
-# TODO: make package function
 pkgname='phrasendrescher'
 pkgver=1.2.2
-groups=(blackarch)
+groups=(blackarch blackarch-password-attacks)
 pkgrel=1
 pkgdesc='A modular and multi processing pass phrase cracking tool'
 arch=('i686' 'x86_64')
@@ -11,16 +8,27 @@ url="http://www.leidecker.info/projects/phrasendrescher/"
 license=('BSD')
 depends=('openssl' 'libssh2' 'gpgme')
 options=('!libtool')
-source=(http://www.leidecker.info/projects/$pkgname/$pkgname-$pkgver.tar.gz \
-  $pkgname.patch)
+source=(http://www.leidecker.info/projects/$pkgname/$pkgname-$pkgver.tar.gz
+        $pkgname.patch)
 md5sums=('3f2093c3415dcaea2110db55c58cecb6'
          'aaa7018d8c9ca036bc706cb4a8b4c428')
 
-build() {
-  cd $srcdir/$pkgname-$pkgver
+prepare() {
+  cd "$srcdir/$pkgname-$pkgver"
+
   patch -p0 -i ../$pkgname.patch
+}
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+
   ./configure --prefix=/usr --with-plugins
   make
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+
   make DESTDIR=$pkgdir install
-  install -Dm644 COPYING $pkgdir/usr/share/licenses/$pkgname/COPYING
+  mv "$pkgdir/usr/bin/pd" "$pkgdir/usr/bin/phrasendrescher"
 }
