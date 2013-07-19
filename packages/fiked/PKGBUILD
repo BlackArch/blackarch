@@ -1,28 +1,32 @@
-# TODO: Add to package groups.
-# old groups: archtrack archtrack-sniffing-spoofing
-# TODO: make package function
 pkgname=fiked
 pkgver=0.0.5
 pkgrel=1
-pkgdesc="fake IDE daemon"
+pkgdesc="Fake IDE daemon"
+groups=(blackarch blackarch-intel)
 arch=("i686" "x86_64")
 url="http://www.roe.ch/FakeIKEd"
-updateurl="http://www.roe.ch/FakeIKEd=>fiked-"
 license=('GPL')
-depends=("libgcrypt" "libdnet")
+depends=("libgcrypt" "libnet")
 source=(http://mirror.roe.ch/rel/$pkgname/$pkgname-$pkgver.tar.bz2)
 md5sums=('2313cf2e13c0d516caea72bf4b57a7e4')
 
-groups=(blackarch)
-
-build() {
+prepare() {
   cd "$srcdir/$pkgname-$pkgver"
+
   sed -i "s|libnet11-config|libnet-config|g" GNUmakefile 
   sed -i "s|/usr/local|/usr|g" GNUmakefile 
   sed -i "s|man/man1|share/man/man1|g" GNUmakefile 
   sed -i "s|CFLAGS?=.*|CFLAGS=$CFLAGS|" GNUmakefile 
+}
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
   PREFIX="/usr" make 
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+
   install -D -m755 $pkgname "$pkgdir"/usr/bin/$pkgname 
   install -D -m644 $pkgname.1 "$pkgdir"/usr/share/man/man1/$pkgname.1 
 }
-
