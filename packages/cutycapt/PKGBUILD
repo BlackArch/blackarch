@@ -1,31 +1,31 @@
-# TODO: Add to package groups.
-# old groups: 
-pkgname=cutycapt-svn
+pkgname=cutycapt
 pkgver=6
 pkgrel=2
 pkgdesc="A Qt and WebKit based command-line utility that captures WebKit's rendering of a web page."
+groups=(blackarch blackarch-intel)
 arch=('any')
 url="http://cutycapt.sourceforge.net/"
 license=('GPL')
 depends=('qt4')
-makedepends=('subversion' 'gcc' 'make' 'patch')
+makedepends=('subversion' 'dos2unix')
 provides=('cutycapt' 'cutycapt-svn')
 conflicts=('cutycapt')
 source=('cutycapt.patch')
-md5sums=('de407faedbe09fd22ea6fcb599d522a6')
+md5sums=('46e077ffa4bec6845c458032eb917cba')
 _svntrunk="https://cutycapt.svn.sourceforge.net/svnroot/cutycapt"
 _svnmod="cutycapt"
 
-build() {
+prepare() {
   svn co $_svntrunk "${srcdir}/$_svnmod"
   msg "SVN checkout done or server timeout"
-  cd "${srcdir}/${_svnmod}/CutyCapt"
 
-  # The file we are patching has crlf line endings so we gave the patch file
-  #  CRLF line endings and tell patch to not convert the patch line endings
-  #  back to LF by passing it the '--binary' flag. There may be a better way
-  #  to do this.
-  patch --binary -Np0 < "${srcdir}/cutycapt.patch"
+  cd "${srcdir}/${_svnmod}/CutyCapt"
+  dos2unix CutyCapt.cpp
+  patch -Np0 < "${srcdir}/cutycapt.patch"
+}
+
+build() {
+  cd "${srcdir}/${_svnmod}/CutyCapt"
 
   qmake-qt4
   make
@@ -33,6 +33,6 @@ build() {
 
 package() {
   cd "${srcdir}/${_svnmod}/CutyCapt"
-  install -m755 -d "${pkgdir}/usr/bin"
+  install -dm755 "${pkgdir}/usr/bin"
   install -m755 "CutyCapt" "${pkgdir}/usr/bin/"
 }
