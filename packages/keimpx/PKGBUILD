@@ -1,12 +1,10 @@
-# TODO: Add to package groups.
-# old groups: archtrack archtrack-password-attacks
 pkgname='keimpx'
 pkgver=0.2
 pkgrel=2
-pkgdesc='tool to verify the usefulness of credentials across a network over SMB'
-groups=(blackarch)
+pkgdesc='Tool to verify the usefulness of credentials across a network over SMB'
+groups=(blackarch blackarch-password-attacks)
 url="http://code.google.com/p/keimpx/"
-license="APACHE"
+license=("Apache")
 depends=('impacket' 'pycrypto')
 makedepends=('unzip')
 arch=('i686' 'x86_64')
@@ -15,6 +13,13 @@ source=("http://keimpx.googlecode.com/files/keimpx-${pkgver}.zip"
 md5sums=('f7451a4481e82f55d819437de9577f42'
          'bc2032ee6b40d21c15e151b4a487775a')
 
+prepare() {
+  cd $srcdir/$pkgname-$pkgver
+
+  sed -i 's/\/usr\/bin\/env python/\/usr\/bin\/env python2/' keimpx.py
+  sed -i 's/keimpx_path =/keimpx_path = \"\/usr\/share\/keimpx\" #/' keimpx.py
+}
+
 build() {
   cd $srcdir/$pkgname-$pkgver
   patch setup.py < $srcdir/setup.py-remove_py2exe.patch
@@ -22,11 +27,10 @@ build() {
 
 package() {
   cd $srcdir/$pkgname-$pkgver
-  python2 setup.py install --prefix=$pkgdir/usr
-  sed 's/\/usr\/bin\/env python/\/usr\/bin\/env python2/' -i keimpx.py
-  sed 's/keimpx_path =/keimpx_path = \"\/usr\/share\/keimpx\" #/' -i keimpx.py
-  install -D -m 755 keimpx.py $pkgdir/usr/bin/keimpx
 
-  mkdir -p $pkgdir/usr/share/keimpx
-  mv $pkgdir/usr/contrib $pkgdir/usr/share/keimpx
+  python2 setup.py install --prefix=$pkgdir/usr
+  install -Dm 755 keimpx.py $pkgdir/usr/bin/keimpx
+
+  install -dm755 $pkgdir/usr/share/$pkgname
+  mv $pkgdir/usr/contrib $pkgdir/usr/share/$pkgname
 }
