@@ -1,18 +1,14 @@
-# TODO: Add to package groups.
-# old groups: archtrack archtrack-web-applications
-# TODO: make package function
 pkgname='plecost'
 pkgver=2
 pkgrel=2
 pkgdesc='Wordpress finger printer tool search and retrieve information about the plugins versions installed in Wordpress systems.'
-groups=(blackarch)
+groups=(blackarch blackarch-web-apps)
 arch=('i686' 'x86_64')
 url="http://code.google.com/p/plecost/"
 license=('GPL3')
 depends=('python2')
 makedepends=('subversion')
 provides=('plecost')
-md5sums=()
 
 _svntrunk=http://plecost.googlecode.com/svn/trunk/
 _svnmod=plecost
@@ -32,18 +28,26 @@ build() {
 
   rm -rf "$srcdir/$_svnmod-build"
   cp -r "$srcdir/$_svnmod" "$srcdir/$_svnmod-build"
+}
+
+package() {
   cd "$srcdir/$_svnmod-build"
 
-  #
-  # BUILD
-  #
+  # Make base directory structure.
+  install -dm755 "$pkgdir/usr/share"
+  install -dm755 "$pkgdir/usr/bin"
 
-  mkdir -p "$pkgdir/usr/share/"
-  cp -r "$srcdir/$_svnmod" "$pkgdir/usr/share/"
-  sed -i "s#!/usr/bin/python#!/usr/bin/python2#g" "$pkgdir/usr/share/plecost/plecost-0.2.2-8-beta.py"
+  # Install docs.
+  cp --no-preserve=ownership -r "$srcdir/$_svnmod" "$pkgdir/usr/share"
 
-  mkdir -p "$pkgdir/usr/bin/"
+  # Install bin.
+  sed -i "s|!/usr/bin/python|!/usr/bin/python2|g" "$pkgdir/usr/share/plecost/plecost-0.2.2-8-beta.py"
+
+  # Make joint script.
   touch "$pkgdir/usr/bin/plecost"
-  echo "/usr/share/plecost/plecost-0.2.2-8-beta.py" > "$pkgdir/usr/bin/plecost"
-  chmod 777 "$pkgdir/usr/bin/plecost"
+  cat > "$pkgdir/usr/bin/plecost" <<EOF
+#!/bin/sh
+"/usr/share/plecost/plecost-0.2.2-8-beta.py" 
+EOF
+  chmod 755 "$pkgdir/usr/bin/plecost"
 }
