@@ -1,10 +1,7 @@
-# TODO: Add to package groups.
-# old groups: archtrack archtrack-forensics
-# TODO: make package function
 pkgname='magicrescue'
 pkgver=1.1.9
 pkgrel=1
-groups=(blackarch)
+groups=(blackarch blackarch-forensics)
 pkgdesc='Find and recover deleted files on block devices'
 arch=('i686' 'x86_64')
 url="http://freshmeat.net/projects/magicrescue/"
@@ -12,13 +9,21 @@ license=('GPL')
 source=(http://www.itu.dk/people/jobr/$pkgname/release/$pkgname-$pkgver.tar.gz)
 md5sums=('093ac491bc5f70c4b050e57e3437ab07')
 
+prepare() {
+  cd ${srcdir}/$pkgname-$pkgver
+
+  sed -i 's|$(PREFIX)/man/man1|$(PREFIX)/share/man/man1|' Makefile
+}
+
 build() {
   cd ${srcdir}/$pkgname-$pkgver
-  install -d ${pkgdir}/usr
 
   ./configure --prefix=/usr
   make PREFIX=${pkgdir}/usr
+}
 
-  sed -i 's|$(PREFIX)/man/man1|$(PREFIX)/share/man/man1|' Makefile
+package() {
+  cd ${srcdir}/$pkgname-$pkgver
+
   make PREFIX=${pkgdir}/usr install
 }
