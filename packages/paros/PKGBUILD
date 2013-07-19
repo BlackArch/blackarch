@@ -1,0 +1,38 @@
+pkgname='paros'
+pkgver=3.2.13
+pkgrel=2
+groups=(blackarch blackarch-web-apps)
+pkgdesc='Java-based HTTP/HTTPS proxy for assessing web app vulnerabilities. Supports editing/viewing HTTP messages on-the-fly, spiders, client certificates, proxy-chaining, intelligent scanning for XSS and SQLi, etc.'
+arch=('any')
+url="http://www.parosproxy.org"
+license=('GPL2')
+depends=('java-runtime')
+source=("http://downloads.sourceforge.net/sourceforge/${pkgname}/${pkgname}-${pkgver}-unix.zip"
+        "http://www.parosproxy.org/${pkgname}_user_guide.pdf")
+md5sums=('41233a331b9f951ee40fc140074d30c0'
+         '803113d7764f2e603793133e7e4e7735')
+
+package() {
+
+  # Make base directories.
+  install -d ${pkgdir}/usr/share/${pkgname}
+  install -d ${pkgdir}/usr/share/doc/${pkgname}
+  install -d ${pkgdir}/usr/share/licenses/${pkgname}
+  install -d ${pkgdir}/usr/bin
+
+  install -m644 ${pkgname}_user_guide.pdf "$pkgdir/usr/share/doc/$pkgname"
+
+  cd "${srcdir}/${pkgname}"
+  install -m644 release.txt "$pkgdir/usr/share/doc/$pkgname"
+  cp -pR * $pkgdir/usr/share/$pkgname/
+  cp -p $pkgdir/usr/share/$pkgname/license/* $pkgdir/usr/share/licenses/$pkgname/
+
+  # Create joint script.
+  cat > $pkgdir/usr/bin/$pkgname <<EOF
+#!/bin/sh
+cd /usr/share/paros
+\$JAVA_HOME/bin/java -jar '/usr/share/paros/paros.jar'
+EOF
+  chmod +x $pkgdir/usr/bin/$pkgname
+}
+
