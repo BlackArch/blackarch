@@ -1,0 +1,51 @@
+pkgname='creepy'
+pkgver=20121023
+pkgrel=1
+groups=(blackarch blackarch-exploitation blackarch-intel)
+pkgdesc='A geolocation information gatherer. Offers geolocation information gathering through social networking platforms.'
+arch=('i686' 'x86_64')
+url=("http://github.com/ilektrojohn/creepy")
+license=('GPL3')
+provides=('creepy')
+makedepends=('git')
+depends=('python2' 'python2-tweepy' 'python-osmgpsmap' 'python2-flickrapi'
+         'python2-beautifulsoup3' 'python2-pyexiv2' 'python2-configobj'
+         'python2-simplejson')
+source=('git+https://github.com/ilektrojohn/creepy.git')
+md5sums=('SKIP')
+
+prepare() {
+  # Fix a spacing error. This should be fixed by the upstream in the near future.
+  sed -i '127s/^ //' "$srcdir/$pkgname/$pkgname/creepymap.py"
+}
+
+build() {
+  cd "$srcdir"
+
+  rm -rf $srcdir/$pkgname-build
+  cp -r $srcdir/$pkgname $srcdir/$pkgname-build
+  cd $srcdir/$pkgname-build
+}
+
+package() {
+  cd $srcdir/$pkgname-build
+
+  # Make base directories.
+  install -d $pkgdir/usr/share/$pkgname
+  install -d $pkgdir/usr/bin
+  install -d $pkgdir/usr/share/$pkgname/doc
+
+  cp --no-preserve=ownership -a  $srcdir/$pkgname-build/* \
+    $pkgdir/usr/share/$pkgname/
+
+  cd "$pkgdir"
+  chmod -R 755 usr/share/$pkgname/$pkgname/*.py
+
+  # Make joint script.
+  cat > "usr/bin/$pkgname" <<EOF
+#!/bin/sh
+cd /usr/share/creepy/creepy
+python2 ./creepymap.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
