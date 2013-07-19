@@ -1,23 +1,29 @@
-# TODO: Add to package groups.
-# old groups: archtrack archtrack-stress-testing archtrack-wireless-attacks
-# TODO: make package function
 pkgname='mdk3'
 pkgver=v6
 pkgdesc='WLAN penetration tool'
 pkgrel=2
-groups=(blackarch)
+groups=(blackarch blackarch-stress-testing blackarch-wireless)
 arch=("i686" "x86_64")
 license=('GPL')
 url="http://homepages.tu-darmstadt.de/~p_larbig/wlan/"
 makedepends=('sed')
 source=(http://homepages.tu-darmstadt.de/~p_larbig/wlan/$pkgname-$pkgver.tar.bz2)
 md5sums=('67705a814ded2a2e6f70522ca0dc6da9')
-build() {
+
+prepare() {
   cd "${srcdir}"/$pkgname-$pkgver
   sed -i -e "s:/usr/local:/usr:" Makefile
   sed -i "s|-g -O3|$CFLAGS|g" Makefile
   sed -i "s|/sbin|/bin|" Makefile
+}
+
+build() {
+  cd "${srcdir}"/$pkgname-$pkgver
   make -C osdep 
   make
+}
+
+package() {
+  cd "${srcdir}"/$pkgname-$pkgver
   make DESTDIR="${pkgdir}" install 
 }
