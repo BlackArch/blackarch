@@ -1,0 +1,36 @@
+pkgname=inguma
+pkgver=0.1.1
+pkgrel=1
+pkgdesc="A free penetration testing and vulnerability discovery toolkit entirely written in python. Framework includes modules to discover hosts, gather information about, fuzz targets, brute force usernames and passwords, exploits, and a disassembler."
+url="http://inguma.sourceforge.net"
+groups=(blackarch blackarch-intel)
+license=('GPL')
+depends=('python2' 'python2-paramiko' 'python2-pyqt')
+optdepends=('cx_oracle: Access to Oracle databases'
+            'pysnmp-devel: SNMP support'
+            'pyqt3: GUI')
+arch=(any)
+source=(http://downloads.sourceforge.net/$pkgname/${pkgname}-${pkgver}.tar.gz)
+md5sums=('e49d1c82498dbbe01b810cdab40f25bf')
+
+prepare() {
+  # python -> python2
+  find . -type f -name '*.py' -exec sed -i 's|usr/bin/python|usr/bin/env python2|' '{}' \;
+}
+
+package() {
+  cd "$srcdir/$pkgname"
+
+  install -dm755 $pkgdir/usr/share/$pkgname
+  install -dm755 $pkgdir/usr/bin
+
+  cp --no-preserve=ownership -r * "$pkgdir/usr/share/$pkgname"
+  find "$pkgdir/usr/share" -executable -exec chmod 755 '{}' \;
+
+  cat > "$pkgdir/usr/bin/$pkgname" <<EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+./$pkgname.py
+EOF
+  chmod +x "$pkgdir/usr/bin/$pkgname" 
+}
