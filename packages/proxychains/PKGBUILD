@@ -1,0 +1,36 @@
+pkgname='proxychains'
+groups=(blackarch blackarch-intel)
+pkgver=3.1
+pkgrel=5
+pkgdesc='A program proxifier: Runs programs from behind a proxy server, similar to tsocks. TCP DNS tunneling. HTTP, SOCKS4 SOCKS5.'
+url='http://proxychains.sourceforge.net/'
+arch=('i686' 'x86_64')
+license=('GPL')
+depends=('dnsutils')
+options=('!libtool')
+backup=('etc/proxychains.conf')
+source=("http://downloads.sourceforge.net/sourceforge/proxychains/proxychains-${pkgver}.tar.gz")
+md5sums=('4629c156001ab70aa7e98960eb513148')
+
+prepare() {
+  cd proxychains-${pkgver}
+
+  sed -i 's/servlen, unsigned int/servlen, int/' proxychains/libproxychains.c
+}
+
+build() {
+  cd proxychains-${pkgver}
+
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd proxychains-${pkgver}
+
+  make DESTDIR="${pkgdir}" install
+
+  # Move 'etc' to its correct location.
+  cd "$pkgdir"
+  mv usr/etc .
+}
