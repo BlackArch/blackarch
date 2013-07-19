@@ -1,0 +1,34 @@
+pkgname='maltego'
+pkgver=3.3.0
+pkgrel=1
+groups=(blackarch blackarch-intel blackarch-defensive blackarch-analysis)
+pkgdesc='An open source intelligence and forensics application, enabling to easily gather information about DNS, domains, IP addresses, websites, persons, etc.'
+arch=('i686' 'x86_64')
+url="http://www.paterva.com/web5"
+license=('GPL')
+depends=('java-runtime')
+source=("https://www.paterva.com/malv32/community/maltego-radium-CE.community-2012-12-20.zip"
+        "http://www.paterva.com/malv3/303/M3GuideGUI.pdf")
+md5sums=('7fb837580bda3c6db35e024d463f77e6'
+         'baa2896367542f25d5588049bc4add37')
+
+package() {
+  cd ${srcdir}/v3.0
+
+  # Create base directories.
+  install -d ${pkgdir}/usr/share/${pkgname}
+  install -d ${pkgdir}/usr/share/doc/${pkgname}
+  install -d ${pkgdir}/usr/bin
+
+  cp -pR bin etc groovy ide java maltego maltego-core-platform maltego-ui \
+         platform ${pkgdir}/usr/share/maltego
+  install -Dm644 ${srcdir}/M3GuideGUI.pdf ${pkgdir}/usr/share/doc/${pkgname}/M3GuideGUI.pdf
+
+  # Create joint script.
+  cat > ${pkgdir}/usr/bin/${pkgname} <<EOF
+#!/bin/sh
+cd /usr/share/maltego/bin
+./maltego \"\$@\"
+EOF
+  chmod +x ${pkgdir}/usr/bin/${pkgname}
+}
