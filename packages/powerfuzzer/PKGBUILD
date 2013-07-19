@@ -1,0 +1,39 @@
+pkgname=powerfuzzer
+pkgver=1_beta
+pkgrel=1
+pkgdesc="A highly automated web fuzzer based on many other Open Source fuzzers available (incl. cfuzzer, fuzzled, fuzzer.pl, jbrofuzz, webscarab, wapiti, Socket Fuzzer). It can detect XSS, Injections (SQL, LDAP, commands, code, XPATH) and others."
+groups=(blackarch blackarch-analysis blackarch-web-apps)
+url="http://www.powerfuzzer.com"
+arch=(any)
+depends=('python' 'wxpython' 'python-utidylib')
+license=('GPL')
+source=(http://downloads.sourceforge.net/$pkgname/${pkgname}_v${pkgver}_patched.zip)
+md5sums=('2c7fa861f7f17b68640f5ae5c75b781a')
+
+prepare() {
+  cd "$srcdir/${pkgname}_v${pkgver}_patched"
+
+  # Convert tabs to spaces to fix python tab/space inconsistency errors.
+  expand $pkgname.py | sed 's/env python$/env python2/' > $pkgname
+}
+
+package() {
+  cd "$srcdir/${pkgname}_v${pkgver}_patched"
+
+  rm COPYING
+  rm $pkgname.py
+
+  # Docs.
+  install -dm755 "$pkgdir/usr/share/doc/$pkgname"
+  install -m644 *.txt "$pkgdir/usr/share/doc"
+
+  # Data.
+  install -dm755 "$pkgdir/usr/share/$pkgname"
+  install -m644 *.py "$pkgdir/usr/share/$pkgname"
+  install -m755 $pkgname "$pkgdir/usr/share/$pkgname"
+
+  # Bin.
+  install -dm755 "$pkgdir/usr/bin"
+  # Unfortuantely, this is necessary.
+  ln -s ../share/$pkgname/$pkgname "$pkgdir/usr/bin/$pkgname"
+}
