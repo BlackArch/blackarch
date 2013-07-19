@@ -1,23 +1,27 @@
-# TODO: Add to package groups.
-# old groups: archtrack archtrack-forensics
 pkgname='binwalk'
 pkgver=1.2.1
-groups=(blackarch)
+groups=(blackarch blackarch-forensics)
 pkgrel=1
 pkgdesc='A tool for searching a given binary image for embedded files'
 arch=('i686' 'x86_64')
 url="http://code.google.com/p/binwalk/"
 license=('MIT')
-depends=('python-magic' 'python2-matplotlib')
+depends=('python2' 'python-magic' 'python2-matplotlib')
 provides=('binwalk')
 source=(http://binwalk.googlecode.com/files/${pkgname}-${pkgver}.tar.gz
-  setup.patch)
+        setup.patch)
 md5sums=('c6d3901f594923a2674575d1d566de01'
          '8cde5e931bf75bf2b7b383f49e4f9911')
 
-package() {
+prepare() {
   cd ${srcdir}/${pkgname}-${pkgver}/src
   patch -p0 -i ../../setup.patch
+
+  sed -i 's/env python$/env python2/' bin/binwalk
+}
+
+package() {
+  cd ${srcdir}/${pkgname}-${pkgver}/src
+
   python2 setup.py install --root=${pkgdir}
-  install -m 644 -D ${srcdir}/${pkgname}-${pkgver}/docs/LICENSE ${pkgdir}/usr/share/licenses/${pkgname}/LICENSE
 }
