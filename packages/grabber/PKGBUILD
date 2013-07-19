@@ -1,0 +1,42 @@
+pkgname=grabber
+pkgver=0.1
+pkgrel=1
+pkgdesc="A web application scanner. Basically it detects some kind of vulnerabilities in your website."
+groups=(blackarch blackarch-web-apps)
+arch=('any')
+url="http://rgaucher.info/beta/grabber/"
+license=('BSD')
+depends=('python')
+makedepends=('dos2unix')
+source=(http://rgaucher.info/beta/$pkgname/Grabber.zip)
+md5sums=('29c34fabf5658d2246b03b1b790eedbf')
+
+prepare() {
+  cd "$srcdir/Grabber"
+  # Fix line endings.
+  dos2unix *
+
+  # Fix log file location.
+  sed -i "s|LogHandler('grabber.log')|LogHandler(os.getenv('HOME') + '/.grabber.log')|" grabber.py
+}
+
+package() {
+  cd "$srcdir/Grabber"
+
+  # Make base directories.
+  install -dm755 "$pkgdir/usr/share/$pkgname"
+  install -dm755 "$pkgdir/usr/bin"
+
+  cp --no-preserve=ownership -r * "$pkgdir/usr/share/$pkgname"
+
+  # The package's setup script is not adequate.
+  rm "$pkgdir/usr/share/$pkgname/setup.py"
+
+  # Make joint script.
+  cat > "$pkgdir/usr/bin/$pkgname" <<EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+python2 $pkgname.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
