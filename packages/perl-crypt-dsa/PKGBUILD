@@ -1,0 +1,40 @@
+pkgname='perl-crypt-dsa'
+pkgver='1.17'
+pkgrel='3'
+pkgdesc="DSA Signatures and Key Generation"
+arch=('any')
+license=('PerlArtistic' 'GPL')
+options=('!emptydirs')
+depends=('perl>=5.006' 'perl-data-buffer>=0.01' 'perl-digest-sha1' 'perl-file-which>=0.05')
+makedepends=()
+url='http://search.cpan.org/dist/Crypt-DSA'
+source=('http://search.cpan.org/CPAN/authors/id/A/AD/ADAMK/Crypt-DSA-1.17.tar.gz')
+md5sums=('0a64dcd77e796ebacad4c6af2df74b57')
+_distdir="Crypt-DSA-1.17"
+
+build() {
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""                 \
+      PERL_AUTOINSTALL=--skipdeps                            \
+      PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'"     \
+      PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+      MODULEBUILDRC=/dev/null
+
+    cd "$srcdir/$_distdir"
+    /usr/bin/perl Makefile.PL
+    make
+  )
+}
+
+check() {
+  cd "$srcdir/$_distdir"
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""
+    make test
+  )
+}
+
+package() {
+  cd "$srcdir/$_distdir"
+  make install
+
+  find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}
