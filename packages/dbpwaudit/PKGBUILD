@@ -1,0 +1,31 @@
+pkgname=dbpwaudit
+pkgver=0.8
+pkgrel=1
+pkgdesc="A Java tool that allows you to perform online audits of password quality for several database engines"
+groups=(blackarch blackarch-analysis blackarch-password-attacks)
+url="http://www.cqure.net/wp/dbpwaudit/"
+license=('GPL')
+depends=('java-runtime')
+arch=(i686 x86_64)
+source=(http://www.cqure.net/tools/${pkgname}_${pkgver//./_}.zip)
+md5sums=('74b2ab5d0a142f0f03d6c67452dba6b2')
+
+prepare() {
+  cd "$srcdir/DBPwAudit"
+  sed -i "1a\cd /usr/share/$pkgname" *.sh
+}
+
+package() {
+  cd "$srcdir/DBPwAudit"
+
+  # Make base directories.
+  install -dm755 "$pkgdir/usr/share/$pkgname"
+  install -dm755 "$pkgdir/usr/bin"
+
+  cp --no-preserve=ownership -r * "$pkgdir/usr/share/$pkgname"
+  install -m755 $pkgname.sh "$pkgdir/usr/bin/$pkgname"
+
+  # This isn't Windows.
+  rm "$pkgdir/usr/share/$pkgname"/*.cmd
+  chmod -x "$pkgdir/usr/share/$pkgname"/*.conf
+}
