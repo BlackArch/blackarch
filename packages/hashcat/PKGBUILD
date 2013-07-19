@@ -1,8 +1,6 @@
-# TODO: Add to package groups.
-# old groups: archtrack archtrack-password-attacks
 pkgname='hashcat'
-pkgver=0.44
-groups=(blackarch)
+pkgver=0.46
+groups=(blackarch blackarch-password-attacks)
 pkgrel=5
 pkgdesc='A multithreaded cross platform hash cracker.'
 arch=('i686' 'x86_64')
@@ -10,16 +8,10 @@ url='http://hashcat.net/hashcat/'
 license=('custom')
 makedepends=('p7zip')
 depends=('glibc')
-install="${pkgname}.install"
-source=("https://hashcat.net/files/${pkgname}-${pkgver}.7z"
-        "${pkgname}.install")
-sha256sums=('69c1d71ed4d46cc04b798b1ea1cd09b32398eef683445d8ad94a0cf083efed73'
-            '22d30b179f3f4e287c1e757ddf371941f1e934d0356a1a3a4fde1333dfbf7045')
-noextract=("${pkgname}-${pkgver}.7z")
+source=("https://hashcat.net/files/${pkgname}-${pkgver}.7z")
+md5sums=('0721adddc809b3b08332ee50ae325774')
 
 prepare() {
-  7z x "${pkgname}-${pkgver}.7z"
-
   cd "${srcdir}/${pkgname}-${pkgver}"
 
   if [[ "$CARCH" == 'x86_64' ]]; then
@@ -34,18 +26,17 @@ package() {
 
   rm *.{exe,bin,app}
 
-  mkdir -p "${pkgdir}/usr/share/doc/${pkgname}"
-  mkdir -p "${pkgdir}/etc/${pkgname}"
+  install -dm755 "${pkgdir}/usr/share/doc/${pkgname}"
+  install -dm755 "${pkgdir}/etc/${pkgname}"
 
   install -Dm755 hashcat "${pkgdir}/usr/bin/${pkgname}"
 
   cp -dpr --no-preserve=ownership "${srcdir}/${pkgname}-${pkgver}"/{rules,salts,tables} "${pkgdir}"/etc/"${pkgname}"/
   cp -dpr --no-preserve=ownership "${srcdir}/${pkgname}-${pkgver}"/examples "${pkgdir}"/usr/share/doc/"${pkgname}"/
 
-  # Needed because 7z fails to preserve the correct permissions
+  # Fix permissions.
   cd "${pkgdir}"
   find . -type d -exec chmod 755 {} \+
   find . -type f -exec chmod 644 {} \+
   chmod a+x "${pkgdir}/usr/bin/hashcat"
 }
-
