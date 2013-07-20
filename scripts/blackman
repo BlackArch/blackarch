@@ -28,10 +28,10 @@ for arg ; do
 				exit
 				;;
 			-S) action=sync ;;
-			-Sd) action=sync ; no_deps=true ;;
-			-Sp) action=sync ; print_only=true ;;
+			-Sd) action=sync; no_deps=true ;;
+			-Sp) action=sync; print_only=true ;;
 			-Sdp|-Spd) action=sync ; print_only=true ; no_deps=true ;;
-			#-Ss) action=search ;;
+			-Ss) action=search ;;
 			-Sg) action=groups ;;
 			-Sgg) action=groupings ;;
 			#-Sb) action=buildonly ;;
@@ -52,14 +52,6 @@ if [[ $action == none ]] ; then
 	error 'no action specified'
 	exit 1
 fi
-
-# Make sure the packages exist.
-for pack in "${targets[@]}" ; do
-	if [[ ! -d packages/$pack ]] ; then
-		error "could not find '$pack'"
-		exit 2
-	fi
-done
 
 # Recursively prints a package's BlackArch dependencies.
 # Offical repo dependencies are not printed.
@@ -121,6 +113,14 @@ case $action in
 			exit 3
 		fi
 
+		# Make sure the packages exist.
+		for pack in "${targets[@]}" ; do
+			if [[ ! -d packages/$pack ]] ; then
+				error "could not find '$pack'"
+				exit 2
+			fi
+		done
+
 		for pack in "${targets[@]}" ; do (
 			if ! $no_deps ; then
 				while read dep <&3 ; do
@@ -147,6 +147,19 @@ case $action in
 			fi
 		) done
 		;;
+	search)
+		# TODO: narrow down searches for each word instead
+		for pattern in "${targets[@]}" ; do
+			for pack in packages/* ; do (
+				source $pack/PKGBUILD
+				if [[ "$pkgname $pkgdesc" =~ "$pattern" ]] ; then
+					is_installed "$pkgname" && status='[installed]'
+					printf 'blackarch/%s %s-%s (%s) %s\n' "$pkgname" "$pkgver" "$pkgrel" "${groups[*]}" "$status"
+					printf '    %s\n' "$pkgdesc"
+				fi
+			) ; done
+		done
+		;;
 	groups)
 		for pack in packages/* ; do (
 			source $pack/PKGBUILD
@@ -160,7 +173,7 @@ case $action in
 				printf "%s $pkgname\n" "${groups[@]}"
 			fi
 		) ; done | LC_ALL=C sort
-		# Many locales ignore punctuation, including hyphens.
+		# Many locales cause sort to ignore punctuation, including hyphens.
 		;;
 	info)
 		for pack in "${targets[@]}" ; do (
