@@ -28,7 +28,7 @@ for arg ; do
 				exit
 				;;
 			-S) action=sync ;;
-			#-Sd) action=sync-nodeps no_deps=true ;;
+			-Sd) action=sync ; no_deps=true ;;
 			-Sp) action=sync ; print_only=true ;;
 			#-Sdp|-Spd) action=sync ; print_only=true ; no_deps=true ;;
 			#-Ss) action=search ;;
@@ -55,7 +55,7 @@ fi
 # Make sure the packages exist.
 for pack in "${targets[@]}" ; do
 	if [[ ! -d packages/$pack ]] ; then
-		error "could not find $pack"
+		error "could not find '$pack'"
 		exit 2
 	fi
 done
@@ -98,12 +98,14 @@ get_blackarch_deps() {
 
 do_sync() { (
 	local pack=$1
+	shift
+
 	cd packages/$pack
-	makepkg -fs
+	makepkg "$@" -fs
 	# TODO: improve this sort.
 	local file=$(find . -maxdepth 1 -name '*.pkg.tar.xz' | sort -n | head -n1)
 	# xargs doesn't work here.
-	sudo pacman "${@:2}" -U "$file"
+	sudo pacman "$@" -U "$file"
 ) }
 
 is_installed() {
@@ -119,22 +121,28 @@ case $action in
 		fi
 
 		for pack in "${targets[@]}" ; do (
-			while read dep <&3 ; do
-				if ! is_installed $dep ; then
-					if $print_only ; then
-						echo $dep
-					else
-						do_sync $dep --asdeps 
+			if ! $no_deps ; then
+				while read dep <&3 ; do
+					if ! is_installed $dep ; then
+						if $print_only ; then
+							echo $dep
+						else
+							do_sync $dep --asdeps 
+						fi
 					fi
-				fi
-			done 3< <(get_blackarch_deps "$pack" |
-			         sort -n |
-			         cut -d' ' -f2)
+				done 3< <(get_blackarch_deps "$pack" |
+							sort -n |
+							cut -d' ' -f2)
+			fi
 
 			if $print_only ; then
 				echo "$pack"
 			else
-				do_sync "$pack"
+				if $no_deps ; then
+					do_sync "$pack" -d -d
+				else
+					do_sync "$pack"
+				fi
 			fi
 		) done
 		;;
