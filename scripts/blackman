@@ -100,7 +100,7 @@ do_sync() { (
 ) }
 
 is_installed() {
-	pacman -Qi "$pack" &> /dev/null
+	pacman -Qi "$1" &> /dev/null
 }
 
 case $action in
@@ -160,10 +160,18 @@ case $action in
 		echo >&2 'Not supported yet.'
 		;;
 	upgrade)
-		echo >&2 'Not supported yet.'
+		for pack in packages/* ; do (
+			source "$pack/PKGBUILD"
+			echo $pkgname
+			if is_installed $pkgname ; then
+				do_sync "$pkgname"
+			fi
+		) done
 		;;
 	*)
 		error 'action error'
 		exit 3
 		;;
 esac
+# Too many subshells.
+# vim: set ft=zsh:
