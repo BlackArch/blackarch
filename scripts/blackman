@@ -25,21 +25,11 @@ for arg ; do
 				usage
 				exit
 				;;
-			-S)
-				action=sync
-				;;
-			-Ss)
-				action=search
-				;;
-			-Si)
-				action=info
-				;;
-			-Sl)
-				action=list
-				;;
-			-Syu|-Su)
-				action=upgrade
-				;;
+			-S) action=sync ;;
+			-Ss) action=search ;;
+			-Si) action=info ;;
+			-Sl) action=list ;;
+			-Syu|-Su) action=upgrade ;;
 			*)
 				error "unsupported: $arg"
 				exit 1
@@ -136,7 +126,35 @@ case $action in
 		echo >&2 'Not supported yet.'
 		;;
 	info)
-		echo >&2 'Not supported yet.'
+		for pack in "${targets[@]}" ; do (
+			source packages/$pack/PKGBUILD
+
+			size=$(du -hs packages/$pack/*.pkg.tar.xz | cut -d$'\t' -f1)
+
+			[[ ${#md5sums[@]} != 0 ]] && validation+='MD5 Sum'
+			[[ ${#sha256sums[@]} != 0 ]] && validation+='SHA256 Sum'
+			[[ ${#sha1sums[@]} != 0 ]] && validation+='SHA1 Sum'
+			[[ ${#sha384sums[@]} != 0 ]] && validation+='SHA384 Sum'
+			[[ ${#sha512sums[@]} != 0 ]] && validation+='SHA512 Sum'
+
+			cat <<-INFO
+			Repository     : blackarch
+			Name           : ${pack}
+			Version        : ${pkgver:-0.0.0}-${pkgrel:-1}
+			Description    : ${pkgdesc:-None}
+			Architecture   : ${arch[@]:-None}
+			URL            : ${url:-None}
+			Licenses       : ${license[@]:-None}
+			Groups         : ${groups[@]:-None}
+			Provides       : ${provides[@]:-None}
+			Depends On     : ${depends[@]:-None}
+			Optional Deps  : ${optdepends[@]:-None}
+			Conflicts With : ${conflicts[@]:-None}
+			Replaces       : ${replaces[@]:-None}
+			Download Size  : ${size:-Unknown}
+			Validated By   : ${validation:-None}
+			INFO
+		) ; done
 		;;
 	list)
 		echo >&2 'Not supported yet.'
