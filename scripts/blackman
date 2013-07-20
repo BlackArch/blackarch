@@ -17,6 +17,8 @@ cd "$(dirname "$0")/.."
 
 targets=()
 action=none
+print_only=false
+no_deps=false
 
 for arg ; do
 	if [[ $arg == -* ]] ; then
@@ -26,7 +28,12 @@ for arg ; do
 				exit
 				;;
 			-S) action=sync ;;
-			-Ss) action=search ;;
+			#-Sd) action=sync-nodeps no_deps=true ;;
+			-Sp) action=sync ; print_only=true ;;
+			#-Sdp|-Spd) action=sync ; print_only=true ; no_deps=true ;;
+			#-Ss) action=search ;;
+			#-Sg) action=groups ;;
+			#-Sb) action=buildonly ;;
 			-Si) action=info ;;
 			-Sl) action=list ;;
 			-Syu|-Su) action=upgrade ;;
@@ -114,16 +121,22 @@ case $action in
 		for pack in "${targets[@]}" ; do (
 			while read dep <&3 ; do
 				if ! is_installed $dep ; then
-					do_sync $dep --asdeps 
+					if $print_only ; then
+						echo $dep
+					else
+						do_sync $dep --asdeps 
+					fi
 				fi
 			done 3< <(get_blackarch_deps "$pack" |
 			         sort -n |
 			         cut -d' ' -f2)
-			do_sync "$pack"
+
+			if $print_only ; then
+				echo "$pack"
+			else
+				do_sync "$pack"
+			fi
 		) done
-		;;
-	search)
-		echo >&2 'Not supported yet.'
 		;;
 	info)
 		for pack in "${targets[@]}" ; do (
