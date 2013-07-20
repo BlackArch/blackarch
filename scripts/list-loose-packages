@@ -1,0 +1,35 @@
+#!/bin/bash
+# Finds packages that aren't in groups and aren't dependencies for any other
+#  packages.
+
+cd "$(dirname "$0")/.."
+
+# Make a list of dependencies.
+all_depends=($(for pack in packages/* archtrack/* ; do
+	unset optdepends depends
+	source "$pack/PKGBUILD"
+	printf '%s\n' "${depends[@]}" "${optdepends[@]}"
+done | sed 's/\(>\|<\|:\).*//' | sort -u))
+
+for pack in packages/* archtrack/* ; do
+	unset groups pkgname
+	source "$pack/PKGBUILD"
+
+	# Ignore if in groups.
+	if [[ ${#groups[@]} != 0 ]] ; then
+		continue
+	fi
+
+	# Check to see if the package is a dependency.
+	is_dep=false
+	for dep in "${all_depends[@]}" ; do
+		if [[ $dep == $pkgname ]] ; then
+			is_dep=true
+			break
+		fi
+	done
+
+	if ! $is_dep ; then
+		echo "$pkgname is loose."
+	fi
+done
