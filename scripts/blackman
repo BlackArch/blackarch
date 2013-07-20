@@ -110,7 +110,7 @@ do_sync() { (
 ) }
 
 is_installed() {
-	pacman -Si "$pack" &> /dev/null
+	pacman -Qi "$pack" &> /dev/null
 }
 
 case $action in
@@ -123,7 +123,9 @@ case $action in
 
 		for pack in "${targets[@]}" ; do (
 			while read dep <&3 ; do
-				do_sync $dep --asdeps 
+				if ! is_installed $dep ; then
+					do_sync $dep --asdeps 
+				fi
 			done 3< <(get_blackarch_deps "$pack" |
 			         sort -n |
 			         cut -d' ' -f2)
