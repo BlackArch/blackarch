@@ -1,0 +1,94 @@
+#!/bin/bash
+# Acts sort of like pacman.
+# This script may called from any location but the script itself must
+#  live in '$projectroot/scripts'.
+
+usage() {
+	cat >&2 <<-USAGE
+	blackman [-h|--help] action
+	USAGE
+}
+
+error() {
+	echo >&2 "blackman: $@ (use -h for help)"
+}
+
+cd "$(dirname "$0")/.."
+
+targets=()
+action=none
+
+for arg ; do
+	if [[ $arg == -* ]] ; then
+		case $arg in
+			-h|--help)
+				usage
+				exit
+				;;
+			-S)
+				action=sync
+				;;
+			-Ss)
+				action=search
+				;;
+			-Si)
+				action=info
+				;;
+			-Sl)
+				action=list
+				;;
+			-Syu|-Su)
+				action=upgrade
+				;;
+			*)
+				error "unsupported: $arg"
+				exit 1
+				;;
+		esac
+	else
+		targets+=($arg)
+	fi
+done
+
+if [[ $action == none ]] ; then
+	error 'no action specified'
+	exit 1
+fi
+
+# Make sure the packages exist.
+for pack in "${targets[@]}" ; do
+	if [[ ! -d packages/$pack ]] ; then
+		error "could not find $pack"
+		exit 2
+	fi
+done
+
+case $action in
+	sync)
+		# Check for targets.
+		if [[ ${#targets[@]} == 0 ]] ; then
+			error 'no targets specified'
+			exit 3
+		fi
+
+		for target in "${targets[@]}" ; do
+			:
+		done
+		;;
+	search)
+		echo >&2 'Not supported yet.'
+		;;
+	info)
+		echo >&2 'Not supported yet.'
+		;;
+	list)
+		echo >&2 'Not supported yet.'
+		;;
+	upgrade)
+		echo >&2 'Not supported yet.'
+		;;
+	*)
+		error 'action error'
+		exit 3
+		;;
+esac
