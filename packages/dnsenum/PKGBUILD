@@ -1,19 +1,34 @@
-pkgname=dnsenum
-pkgver=1.2.2
+pkgname='dnsenum'
+pkgver=1.2
 pkgrel=2
-pkgdesc="enumerate dns information about domains"
+groups=(blackarch blackarch-intel)
+pkgdesc='Perl script that enumerates DNS information from a domain, attempts zone transfers, performs a brute force dictionary style attack, and then performs reverse look-ups on the results'
 arch=('i686' 'x86_64')
-groups=('blackarch-intel' 'blackarch')
-url="http://code.google.com/p/dnsenum"
-license=('GPL2')
-depends=('perl' 'perl-net-ip' 'perl-net-dns' 'perl-xml-writer' 'perl-net-netmask')
-md5sums=('')
-
-_svntrunk=('http://dnsenum.googlecode.com/svn/trunk/')
+url="http://www2.packetstormsecurity.org/cgi-bin/search/search.cgi?searchvalue=dnsenum"
+license=('GPL')
+depends=('perl' 'perl-net-dns' 'perl-net-ip' 'perl-net-netmask')
+optdepends=('perl-www-mechanize: google scraping support'
+            'perl-net-whois-ip: whois query support')
+source=(http://dl.packetstormsecurity.net/UNIX/scanners/${pkgname}${pkgver}.tar.gz)
+md5sums=('59d92826d06119a21f197ea7fd8bcb17')
+sha1sums=('ceee37fb9e9e019eb1c0b55177d521ae48e321a4')
 
 package() {
-  # CHECKOUT CODEBASE
-  svn co ${_svntrunk} ${pkgname}
+  cd ${srcdir}/${pkgname}${pkgver}
 
-  cd "${srcdir}"/${pkgname}
+  # Base directories.
+  install -dm755 ${pkgdir}/usr/bin
+  install -dm755 ${pkgdir}/usr/share/doc/${pkgname}
+
+  # Docs.
+  install -Dm644 README.txt ${pkgdir}/usr/share/doc/${pkgname}/README.txt
+
+  # Script.
+  install -Dm755 ${srcdir}/${pkgname}${pkgver}/${pkgname}.pl ${pkgdir}/usr/share/${pkgname}/${pkgname}.pl
+
+  # Brute-force list.
+  install -Dm644 dns.txt ${pkgdir}/usr/share/${pkgname}/dns.txt
+
+  # Link.
+  ln -sf ../share/${pkgname}/${pkgname}.pl ${pkgdir}/usr/bin/${pkgname}.pl
 }
