@@ -1,19 +1,38 @@
-pkgname=theharvester
+pkgname='theharvester'
+_pkgname=theHarvester
 pkgver=2.2a
+groups=(blackarch blackarch-intel)
 pkgrel=2
-pkgdesc="a tool for gathering e-mail accounts, user names, and hostnames/subdomains from different public sources"
+pkgdesc='Python tool for gathering e-mail accounts and subdomain names from different public sources (search engines, pgp key servers)'
+url="http://www.edge-security.com/theHarvester.php"
 arch=('i686' 'x86_64')
-groups=('blackarch-intel' 'blackarch')
-url=('https://code.google.com/p/theharvester/')
 license=('GPL2')
-makedepends=('subversion')
-depends=('python2')
-md5sums=('')
+depends=('python')
+source=("https://theharvester.googlecode.com/files/${_pkgname}-${pkgver}.tar.gz")
+md5sums=('5b1d9f3e71c801dfb109e8c35ec32f27')
 
-_svntrunk=('http://theharvester.googlecode.com/svn/trunk/')
+prepare() {
+  cd ${srcdir}/${_pkgname}-$pkgver
+
+  sed -i 's|env python$|env python2|' ${_pkgname}.py
+}
 
 package() {
-  svn co ${_svntrunk} ${pkgname}
+  cd ${srcdir}/${_pkgname}-$pkgver
 
-  cd "${srcdir}"/${pkgname}
+  # Make base directories.
+  install -d $pkgdir/usr/bin
+  install -d $pkgdir/usr/share/$pkgname
+  install -d $pkgdir/usr/share/doc/$pkgname
+  install -d $pkgdir/usr/share/licenses/$pkgname
+
+  # Install docs.
+  install -m644 README ${pkgdir}/usr/share/doc/${pkgname}/README
+
+  # Install sharable.
+  cp --no-preserve=ownership -r discovery lib *.txt $pkgdir/usr/share/$pkgname
+  install -m755 *.py $pkgdir/usr/share/$pkgname
+
+  # Link to bin.
+  ln -s ../share/$pkgname/theHarvester.py $pkgdir/usr/bin/$pkgname
 }
