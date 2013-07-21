@@ -1,24 +1,27 @@
-pkgname=sslscan
-pkgver=1.9.0
+pkgname='sslscan'
+pkgver=1.8.2
 pkgrel=2
-pkgdesc="SSLScan queries SSL services, such as HTTPS, in order to determine the ciphers that are supported"
+pkgdesc='A fast tools to scan SSL services, such as HTTPS.'
+groups=(blackarch blackarch-intel)
 arch=('i686' 'x86_64')
-groups=('blackarch-analysis' 'blackarch')
-url=('http://sourceforge.net/projects/sslscan/')
+url="http://sourceforge.net/projects/sslscan/"
 license=('GPL')
-md5sums=('')
-
-_svntrunk=('svn://svn.code.sf.net/p/sslscan/code/')
+depends=('openssl')
+source=("http://sourceforge.net/projects/sslscan/files/$pkgname/$pkgname-$pkgver.tgz")
+md5sums=('1a890d031996ab252efb535511bd58db')
 
 build() {
-  svn co ${_svntrunk} ${pkgname}
-
-  cd "${srcdir}"/${pkgname}/trunk
-  # add -lcrypto to linker
+  cd "$srcdir/$pkgname-$pkgver"
   sed -i 's/-lssl/-lssl -lcrypto/g' Makefile
   make
 }
 
 package() {
-  cd "${srcdir}"/${pkgname}/trunk
+  cd "$srcdir/$pkgname-$pkgver"
+
+  # Make base directories.
+  install -dm755 $pkgdir/usr/bin
+  install -dm755 $pkgdir/usr/share/man/man1
+
+  make BINPATH="$pkgdir/usr/bin/" MANPATH="$pkgdir/usr/share/man/" install
 }
