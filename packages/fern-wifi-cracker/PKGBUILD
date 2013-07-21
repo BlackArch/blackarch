@@ -1,19 +1,35 @@
-pkgname=fern-wifi-cracker
-pkgver=1.9
-pkgrel=2
-pkgdesc="gui based wireless security auditing application that uses the aircrack-ng suite of tools"
+pkgname='fern-wifi-cracker'
+pkgver=133
+pkgrel=1
+groups=(blackarch blackarch-wireless)
+pkgdesc='WEP, WPA wifi cracker for wireless penetration testing'
 arch=('i686' 'x86_64')
-groups=('blackarch-exploitation' 'blackarch')
-url=('http://code.google.com/p/fern-wifi-cracker')
-license=('GPL3')
+url="http://code.google.com/p/fern-wifi-cracker/"
+license=('GPL2')
+#'macchanger' 
+depends=('python2' 'python2-pyqt' 'aircrack-ng' 'xterm' 'subversion')
 makedepends=('subversion')
-depends=('aircrack-ng' 'python2' 'python2-pyqt4' 'xterm' 'subversion')
-md5sums=('')
-
-_svntrunk=('http://fern-wifi-cracker.googlecode.com/svn/Fern-Wifi-Cracker/')
+_svnmod="fern-wifi-cracker"
+source=("svn+http://fern-wifi-cracker.googlecode.com/svn/Fern-Wifi-Cracker/")
+md5sums=('SKIP')
 
 package() {
-  svn co ${_svntrunk} ${pkgname}
+  cd $srcdir/Fern-Wifi-Cracker
 
-  cd "${srcdir}"/${pkgname}
+  install -dm755 $pkgdir/usr/bin
+  # This program's disregard for my filesystem makes me want to die.
+  install -dm755 $pkgdir/usr/opt/$pkgname
+
+  cp -R --no-preserve=ownership * $pkgdir/usr/share/$pkgname
+
+  sed -i 's|python$|python2|g' execute.py
+
+  # Make joint script.
+  cat > $pkgdir/usr/bin/fern <<EOF
+#!/bin/sh
+cd /usr/share/fern-wifi-cracker
+python2 ./execute.py "\$@"
+EOF
+
+  chmod +x $pkgdir/usr/bin/fern
 }
