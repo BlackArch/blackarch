@@ -17,30 +17,35 @@ install="sqlninja.install"
 
 package() {
   cd ${srcdir}/${pkgname}-${pkgver}
-  install -d ${pkgdir}/usr/share/sqlninja
-  install -d ${pkgdir}/usr/share/sqlninja/doc
-  install -d ${pkgdir}/usr/share/licenses/sqlninja
-  install -d ${pkgdir}/usr/bin
-  for doc in ChangeLog README sqlninja-howto.html; do
-    install -Dm644 ${doc} ${pkgdir}/usr/share/sqlninja/doc/${doc}
-  done
+
+  # Make base directories.
+  install -dm755 ${pkgdir}/usr/share/sqlninja
+  install -dm755 ${pkgdir}/usr/share/doc/sqlninja
+  install -dm755 ${pkgdir}/usr/share/licenses/sqlninja
+  install -dm755 ${pkgdir}/usr/bin
+
+  install -m644 ChangeLog README sqlninja-howto.html $pkgdir/usr/share/doc/sqlninja
+
   cp -pR apps scripts sources sqlninja sqlninja.conf ${pkgdir}/usr/share/sqlninja
   install -D -m644 LICENSE ${pkgdir}/usr/share/licenses/sqlninja/LICENSE
 
-  # archlinux fixes
+  # Archlinux fixes
   cd ${pkgdir}/usr/share/${pkgname}
-  #check if metasploit-svn or metasploit stable is installed (-svn takes presidence)
-  #apply archlinux metasploit home directory to sqlninja.conf
-  if [ -d /usr/src/metasploit ]; then
-    sed -i 's|/home/sqlninja/trunk/|/usr/src/metasploit|g' ./sqlninja.conf
+
+  # TODO: Is this still relevant?
+  # Check if metasploit-svn or metasploit stable is installed (-svn takes precedence)
+  # Apply Archlinux metasploit home directory to sqlninja.conf.
+  if [[ -d /usr/src/metasploit ]] ; then
+    sed -i 's|/home/sqlninja/trunk/|/usr/src/metasploit|g' sqlninja.conf
   else
-    sed -i 's|/home/sqlninja/trunk/|/opt/metasploit|g' ./sqlninja.conf
+    sed -i 's|/home/sqlninja/trunk/|/opt/metasploit|g' sqlninja.conf
   fi
 
-  #create startup app
-  echo "#!/bin/bash" > ${pkgdir}/usr/bin/${pkgname}
-  echo "cd /usr/share/sqlninja" >> ${pkgdir}/usr/bin/${pkgname}
-  echo "./sqlninja \"\$@\"" >> ${pkgdir}/usr/bin/${pkgname}
-  echo "cd -" >> ${pkgdir}/usr/bin/${pkgname}
+  # Make joint script.
+  cat > ${pkgdir}/usr/bin/${pkgname} <<EOF
+#!/bin/bash
+cd /usr/share/sqlninja
+./sqlninja "\$@"
+EOF
   chmod +x ${pkgdir}/usr/bin/${pkgname}
 }
