@@ -1,16 +1,33 @@
-pkgname=burpsuite
+pkgname='burpsuite'
+groups=(blackarch blackarch-password-attacks blackarch-web-apps)
 pkgver=1.5
-pkgrel=2
-pkgdesc="an integrated platform for performing security testing of web applications"
-arch=('i686' 'x86_64')
-groups=('blackarch-intel' 'blackarch')
-url=('http://portswigger.net/burp/')
+pkgrel=1
+pkgdesc='Burp Suite is an integrated platform for attacking web applications (free edition).'
+url="http://portswigger.net/burp/"
+depends=('java-runtime')
+arch=('any')
 license=('custom')
-source=("http://portswigger.net/burp/${pkgname}_free_v${pkgver}.jar")
-depends=('jre7-openjdk')
-md5sums=('2d1af3b6bd7842977747984b7c37b190')
-noextract=("${pkgname}_free_v${pkgver}.jar")
+noextract=("${pkgname}.jar")
+source=("${pkgname}.jar::http://portswigger.net/burp/${pkgname}_free_v${pkgver}.jar" LICENSE)
+md5sums=('2d1af3b6bd7842977747984b7c37b190'
+         'dbd98d6f92f66558bd52295028bf28fd')
 
 package() {
-  cd "${srcdir}"
+  cd ${srcdir}
+
+  # Make base directories.
+  install -dm755 $pkgdir/usr/share/licenses/$pkgname
+  install -dm755 $pkgdir/usr/share/$pkgname
+  install -dm755 $pkgdir/usr/bin
+
+  install -m644 $pkgname.jar $pkgdir/usr/share/$pkgname/$pkgname.jar
+  install -m644 LICENSE $pkgdir/usr/share/licenses/$pkgname
+
+  # Make joint script.
+  cat > ${pkgdir}/usr/bin/${pkgname} <<EOF
+#!/bin/sh
+exec \$JAVA_HOME/bin/java -jar /usr/share/burpsuite/burpsuite.jar "\$@"
+EOF
+  chmod +x ${pkgdir}/usr/bin/${pkgname}
 }
+
