@@ -1,19 +1,36 @@
-pkgname=fimap
-pkgver=09
-pkgrel=2
-pkgdesc="a tool which can find, prepare, audit, exploit and google automatically for local and remote file inclusion bugs in webapps like sqlmap for LFI/RFI bugs"
-arch=('i686' 'x86_64')
-groups=('blackarch-exploitation' 'blackarch')
-url=('http://code.google.com/p/fimap')
+pkgname='fimap'
+pkgver=324
+pkgrel=1
+groups=(blackarch blackarch-web-apps)
+pkgdesc='A little tool for local and remote file inclusion auditing and exploitation'
+arch=('any')
+url="http://code.google.com/p/fimap/"
 license=('GPL2')
+depends=('python2' 'python-urllib3' 'python2-httplib2')
 makedepends=('subversion')
-depends=('python2')
-md5sums=('')
+options=('!emptydirs')
+source=("svn+http://fimap.googlecode.com/svn/trunk/")
+md5sums=('SKIP')
 
-_svntrunk=('http://fimap.googlecode.com/svn/trunk/')
+prepare() {
+  # Fix python shebang lines.
+  grep -rl 'python$' $srcdir/trunk/src | xargs sed -i 's|python$|python2|'
+}
 
 package() {
-  svn co ${_svntrunk} ${pkgname}
+  cd $srcdir/trunk/src
 
-  cd "${srcdir}"/${pkgname}
+  # Base directories.
+  install -dm755 $pkgdir/usr/share/$pkgname
+  install -dm755 $pkgdir/usr/bin
+
+  cp --no-preserve=ownership -R * $pkgdir/usr/share/$pkgname
+
+  # Make joint script.
+  cat > $pkgdir/usr/bin/fimap <<EOF
+#!/bin/sh
+cd /usr/share/fimap
+python2 ./fimap.py "\$@"
+EOF
+  chmod +x $pkgdir/usr/bin/fimap
 }
