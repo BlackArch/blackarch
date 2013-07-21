@@ -1,16 +1,36 @@
-pkgname=beef
-pkgver=0.4.4.5
-pkgrel=2
-pkgdesc="the browser exploitation framework is a penetration testing tool that focuses on the web browser"
+pkgname='beef'
+pkgver=20120720
+pkgrel=1
+groups=(blackarch blackarch-exploitation)
+pkgdesc='The Browser Exploitation Framework. It is a penetration testing tool that focuses on the web browser'
 arch=('i686' 'x86_64')
-groups=('blackarch-exploitation' 'blackarch')
-url=('http://www.beefproject.com')
-license=('BSD')
-source=("https://github.com/beefproject/beef/archive/${pkgname}-${pkgver}.zip")
-depends=('ruby' 'sqlite')
-md5sums=('cc97a4cad3501006bce0df7735681c79')
-options=('!strip')
+url=('http://beefproject.com/')
+license=('Apache')
+makedepends=('git')
+optdepends=('ruby' 'ruby-sqlite3' 'ruby-bundler' 'ruby-thin' 'ruby-sinatra'
+            'ruby-ansi' 'ruby-term-ansicolor' 'ruby-dm-core' 'ruby-json'
+            'ruby-data_objects' 'ruby-dm-sqlite-adapter' 'ruby-parseconfig'
+            'ruby-erubis' 'ruby-dm-migrations' 'ruby-msfrpc-client'
+            'ruby-eventmachine' 'ruby-em-websocket' 'ruby-addressable'
+            'ruby-rack-protection' 'ruby-dm-do-adapter' 'ruby-do_sqlite3'
+            'ruby-librex' 'ruby-jsmin' 'ruby-msgpack')
+provides=('beef')
+source=("git+https://github.com/beefproject/beef")
+md5sums=('SKIP')
 
 package() {
-  cd "${srcdir}"/${pkgname}-${pkgname}-${pkgver}
+  cd ${srcdir}
+  install -dm755 ${pkgdir}/usr/bin
+  install -dm755 ${pkgdir}/usr/share/${pkgname}
+
+  # eventmachine 0.12.10 -> eventmachine 1.0.0beta4
+  #sed -i 's|0.12.10|1.0.0beta4|' ${pkgdir}/usr/src/${pkgname}/Gemfile
+
+  # Make joint script.
+  cat > ${pkgdir}/usr/bin/${pkgname} <<EOF
+#!/bin/sh
+cd /usr/share/beef
+./beef "\$@"
+EOF
+  chmod +x ${pkgdir}/usr/bin/${pkgname}
 }
