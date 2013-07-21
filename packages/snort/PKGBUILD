@@ -1,0 +1,56 @@
+pkgname=snort
+pkgver=2.9.5
+pkgrel=2
+pkgdesc='A lightweight network intrusion detection system.'
+arch=('i686' 'x86_64')
+url='http://www.snort.org'
+license=('GPL')
+depends=('libdaq' 'libdnet' 'libpcap' 'openssl' 'pcre' 'zlib')
+makedepends=('ca-certificates')
+backup=('etc/conf.d/snort'
+        'etc/snort/snort.conf'
+        'etc/snort/threshold.conf'
+        'etc/snort/reference.config'
+        'etc/snort/classification.config')
+options=('!makeflags' '!libtool')
+install='snort.install'
+source=("http://www.snort.org/dl/snort-current/${pkgname}-${pkgver}.tar.gz"
+        "http://rules.emergingthreats.net/open/${pkgname}-2.9.0/emerging.rules.tar.gz"
+        'snort'
+        'snort.conf.d'
+        'snort.service')
+md5sums=('f5fc0e176afca5989d47509478758fc7'
+         'SKIP'
+         '361b8b9e40b9af0164f6b3e3da2e8277'
+         'b4fb8a68490589cd34df93de7609bfac'
+         '0d898dfe906fe45ad8562c500c36facb')
+
+build() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+
+  ./configure --prefix=/usr --sysconfdir=/etc/snort --with-libpcap-includes=/usr/include/pcap \
+              -with-daq-includes=/usr/include --with-daq-libraries=/usr/lib \
+              --enable-zlib
+  make
+}
+
+package() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+
+  make DESTDIR="${pkgdir}" install
+
+  mkdir -p "${pkgdir}/"{etc/rc.d,etc/snort/rules}
+
+  install -d -m755 "${pkgdir}/var/log/snort"
+  install -D -m644 etc/{*.conf*,*.map} "${pkgdir}/etc/snort/"
+  install -D -m644 "${srcdir}/snort.conf.d" "${pkgdir}/etc/conf.d/snort"
+  install -D -m755 "${srcdir}/snort" "${pkgdir}/etc/rc.d/snort"
+
+  # Init service file.
+  install -D -m644 ../snort.service $pkgdir/usr/lib/systemd/system/snort.service
+
+  sed -i 's#/usr/local/lib/#/usr/lib/#' "${pkgdir}/etc/snort/snort.conf"
+  # Emerging threats rules.
+  echo 'include $RULE_PATH/emerging.conf' >> "${pkgdir}/etc/snort/snort.conf"
+  cp ${srcdir}/rules/* "${pkgdir}/etc/snort/rules"
+}
