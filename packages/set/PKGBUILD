@@ -1,20 +1,93 @@
 pkgname=set
 pkgver=5.2
 pkgrel=2
-pkgdesc='social-engineer toolkit (SET) is aimed at penetration testing around Social-Engineering'
-arch=("$CARCH")
+pkgdesc='Social-engineer toolkit. Aimed at penetration testing around Social-Engineering'
+arch=('any')
 groups=('blackarch-exploitation' 'blackarch')
 url='https://www.trustedsec.com/downloads/social-engineer-toolkit'
 license=('BSD')
 makedepends=('git')
-depends=('python2' 'python2-pexpect' 'python2-beautifulsoup3' 'python2-crypto')
-md5sums=('')
+depends=('python2' 'python2-beautifulsoup3' 'python2-pexpect')
+optdepends=('ettercap: DNS spoofing and ARP cache poisoning capabilities'
+            'sendmail: email address spoofing'
+            'java-runtime: create self-signed JAVA applets and spoof publisher'
+            'python2-pefile: advanced AV evasion via hijacking a legit digital certificate'
+            'apache: increase speed of web attack vectors'
+            'openssl: create self-signed SSL certificates'
+            'xterm: default terminal for SET command center'
+            'upx: executable packer for better AV evasion'
+            'aircrack-ng: rouge access point capabilities'
+            'dsniff: DNS spoofing capabilities'
+            'metasploit: metasploit exploitation payloads')
 options=('!strip')
+source=('git+https://github.com/trustedsec/social-engineer-toolkit/')
+md5sums=('SKIP')
+backup=('usr/share/set/config/set_config')
 
-_gitrepo=('https://github.com/trustedsec/social-engineer-toolkit/')
+prepare() {
+  cd "$srcdir/social-engineer-toolkit"
+
+  # Fix shebangs.
+  sed -i 's/python$/python2/g' se-* set-*
+
+  # Fix tab-space inconsistencies.
+  sed -i 's/\t/    /g' se-* set-*
+
+  # Fix file locations.
+  # This is better than writing within a static directory.
+  find . -type f -exec sed -i 's|src/logs|" + os.getenv("HOME") + "/.set/logs|g' '{}' \;
+  find . -type f -exec sed -i '/%s\/config/s|definepath\(()\)\?|os.getenv("HOME") + "/.set"|g' '{}' \;
+}
 
 package() {
-  git clone ${_gitrepo} ${pkgname}
+  cd "$srcdir/social-engineer-toolkit"
 
-  cd "${srcdir}"/${pkgname}
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/set"
+  install -dm755 "$pkgdir/usr/share/doc/set"
+
+  # Sharable.
+  cp --no-preserve=ownership -R config modules src "$pkgdir/usr/share/set"
+  cp --no-preserve=ownership -R readme/* README.txt "$pkgdir/usr/share/doc/set"
+
+  # Bin.
+  install -m755 set-* se-* "$pkgdir/usr/share/set"
+
+  cat > "$pkgdir/usr/bin/set-automate" <<EOF
+#!/bin/sh
+cd /usr/share/set
+python2 set-automate
+EOF
+
+  cat > "$pkgdir/usr/bin/se-toolkit" <<EOF
+#!/bin/sh
+cd /usr/share/set
+
+# Sorry.
+mkdir -p "$HOME/.set/config"
+cp config/set_config "$HOME/.set/config"
+
+python2 se-toolkit
+EOF
+
+  cat > "$pkgdir/usr/bin/set-proxy" <<EOF
+#!/bin/sh
+cd /usr/share/set
+python2 set-proxy
+EOF
+
+  cat > "$pkgdir/usr/bin/set-update" <<EOF
+#!/bin/sh
+cd /usr/share/set
+python2 set-update
+EOF
+
+  cat > "$pkgdir/usr/bin/set-web" <<EOF
+#!/bin/sh
+cd /usr/share/set
+python2 set-web
+EOF
+
+  chmod +x "$pkgdir"/usr/bin/*
 }
