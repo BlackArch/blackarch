@@ -1,0 +1,31 @@
+pkgname=python2-pefile
+pkgver=1.2.10_114
+pkgrel=3
+pkgdesc="This is a Python library for PE file support and investigation."
+arch=('any')
+url="http://code.google.com/p/pefile/"
+license=('MIT')
+depends=('python2')
+makedepends=('python2-distribute')
+source=("http://pefile.googlecode.com/files/pefile-${pkgver//_/-}.tar.gz"
+        "https://reverse-engineering-scripts.googlecode.com/files/UserDB.TXT"
+        "http://research.pandasecurity.com/blogs/images/userdb.txt" )
+md5sums=("c41988b09a9d68610387074f74d8523d" 
+         "cabeb4d94f3588c46cce6d793e263c44"
+         "ff90392a3682a5e3fe5aa2cdde5c759e" )
+
+build() {
+  cd "${srcdir}/pefile-${pkgver//_/-}"
+  python2 setup.py build
+}
+
+package() {
+  cd "${srcdir}/pefile-${pkgver//_/-}"
+
+  python2 setup.py install -O1 --skip-build --root="${pkgdir}" --prefix="/usr"
+  install -Dm644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/COPYING"
+
+  cd ../..
+  cat userdb.txt UserDB.TXT > UserDB-concat.txt
+  install -Dm644 UserDB-concat.txt ${pkgdir}/usr/share/pefile/UserDB.TXT
+}
