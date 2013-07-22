@@ -1,19 +1,28 @@
 pkgname=hashid
 pkgver=1.1
 pkgrel=2
-pkgdesc='software to identify the different types of hashes used to encrypt data and especially passwords'
+pkgdesc='Identifies the different types of hashes used to encrypt data, especially passwords'
 arch=(any)
 groups=('blackarch-intel' 'blackarch')
 url='http://code.google.com/p/hash-identifier'
 license=('GPL3')
-makedepends=('subversion')
+makedepends=('subversion' 'dos2unix')
 depends=('python2')
-md5sums=('')
+source=('svn+http://hash-identifier.googlecode.com/svn/trunk/')
+md5sums=('SKIP')
 
-_svntrunk=('http://hash-identifier.googlecode.com/svn/trunk/')
+prepare() {
+  cd "$srcdir/trunk/Hash_ID_v$pkgver"
+
+  # Fix line endings.
+  dos2unix Hash_ID.py
+
+  # Fix shebang.
+  sed -i 's/env python$/env python2/' Hash_ID.py
+}
 
 package() {
-  svn co ${_svntrunk} ${pkgname}
+  cd "$srcdir/trunk/Hash_ID_v$pkgver"
 
-  cd "${srcdir}"/${pkgname}/Hash_ID_v${pkgver}
+  install -Dm755 Hash_ID.py "$pkgdir/usr/bin/hashid"
 }
