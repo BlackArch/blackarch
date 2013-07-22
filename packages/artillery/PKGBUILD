@@ -1,19 +1,41 @@
 pkgname=artillery
 pkgver=0.7.3
 pkgrel=2
-pkgdesc='a combination of a honeypot, file-system monitoring, system hardening, and overall health of a server to create a comprehensive way to secure a system'
-arch=("$CARCH")
+pkgdesc='A combination of a honeypot, file-system monitoring, system hardening, and overall health of a server to create a comprehensive way to secure a system'
+arch=('any')
 groups=('blackarch-defensive' 'blackarch')
 url='https://www.trustedsec.com/downloads/artillery/'
 license=('BSD')
 makedepends=('git')
 depends=('python2')
-md5sums=('')
+source=('git+https://github.com/trustedsec/artillery/')
+md5sums=('SKIP')
 
-_gitrepo=('https://github.com/trustedsec/artillery/')
+prepare() {
+  cd "$srcdir/artillery"
+
+  # Fix incompetence.
+  sed -i "s|/var|$pkgdir/var|g" setup.py
+  sed -i "s|/etc|$pkgdir/etc|g" setup.py
+}
 
 package() {
-  git clone ${_gitrepo} ${pkgname}
+  cd "$srcdir/artillery"
 
-  cd "${srcdir}"
+  # Who does this?
+  python2 setup.py <<< $'y\nn\nn' 
+
+  rm "$pkgdir/var/artillery/setup.py"
+
+  install -dm755 "$pkgdir/usr/bin"
+  cat > "$pkgdir/usr/bin/artillery" <<EOF
+#!/bin/sh
+cd /var/artillery
+if test \$EUID != 0 ; then
+  echo 'Must be run as root.' 
+  exit 1
+fi
+python2 artillery.py
+EOF
+  chmod +x "$pkgdir/usr/bin/artillery"
 }
