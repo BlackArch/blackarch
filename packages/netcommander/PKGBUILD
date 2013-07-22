@@ -1,18 +1,28 @@
 pkgname=netcommander
 pkgver=1.3
 pkgrel=2
-pkgdesc='an easy to use arp spoofing tool'
+pkgdesc='An easy-to-use arp spoofing tool'
 arch=(any)
 groups=('blackarch-intel' 'blackarch')
 url='https://github.com/evilsocket/netcommander'
 license=('GPL3')
-depeds=('python2' 'scapy')
-md5sums=('')
+depends=('python2' 'scapy')
+source=('git+https://github.com/evilsocket/NetCommander')
+md5sums=('SKIP')
 
-_gitrepo=('https://github.com/evilsocket/NetCommander')
+prepare() {
+  cd "$srcdir/NetCommander"
+
+  # Fix file location.
+  sed -i 's|mac-prefixes|/usr/share/netcommander/mac-prefixes|' netcmd.py
+
+  # Fix shebang.
+  sed -i 's/python$/python2/' netcmd.py
+}
 
 package() {
-  git clone ${_gitrepo} ${pkgname}
+  cd "$srcdir/NetCommander"
 
-  cd "${srcdir}"
+  install -Dm755 "netcmd.py" "$pkgdir/usr/bin/netcmd"
+  install -Dm644 "mac-prefixes" "$pkgdir/usr/share/mac-prefixes"
 }
