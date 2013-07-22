@@ -1,46 +1,58 @@
 pkgname=netglub
 pkgver=1.0
 pkgrel=2
-pkgdesc='the really open source information gathering tool'
-arch=("$CARCH")
+pkgdesc='The really open source information gathering tool'
+arch=(x86_64 i686)
 groups=('blackarch-intel' 'blackarch')
 url='http://www.netglub.org'
-license=('Unknown')
+license=('GPL')
 source=("http://redmine.lab.diateam.net/attachments/download/1/${pkgname}-${pkgver}.tar.gz")
 depends=('mariadb' 'qt4' 'sqlitebrowser' 'gdb' 'graphviz')
 md5sums=('c91005ccbd1010b7883f07e2d0e08e0a')
 options=('!strip')
 
-build() {
-  # CHANGE TO MASTER PATH
+prepare() {
   cd "${srcdir}"/${pkgname}-${pkgver}/master
-  # FIX MAIN.CPP
   sed -i 's,'"#include <getopt.h>"',&\n#include <unistd.h>,' src/main.cpp
-  # GENERATE THE MAKEFILE
+
+  cd "${srcdir}"/${pkgname}-${pkgver}/slave
+  find data/transforms -type f -exec sed -i 's|#!/usr/bin/python|#!/usr/bin/python2|g' '{}' \;
+}
+
+build() {
+  cd "${srcdir}"/${pkgname}-${pkgver}/master
   qmake-qt4
-  # BUILD IT
   make
 
-  # CHANGE TO SLAVE PATH
   cd "${srcdir}"/${pkgname}-${pkgver}/slave
-  # GENERATE THE MAKEFILE
   qmake-qt4
-  # BUILD IT
   make
-  # FIX PYTHON SHEBANGS IN TRANSFORMS
-  find data/transforms -type f -exec sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python2/g' {} \;
-  
-  # CHANGE TO GUI PATH
+
   cd "${srcdir}"/${pkgname}-${pkgver}/qng
-  # GENERATE THE MAKEFILE
   qmake-qt4
-  # FIX THE MAKEFILE
-  SCRUB=$(awk '/LIBS.+=/' Makefile)
-  sed -i 's,'"$SCRUB"',&-lz,' Makefile
-  # BUILD IT
+  scrub=$(awk '/LIBS.+=/' Makefile)
+  sed -i 's,'"$scrub"',&-lz,' Makefile
   make
 }
 
 package() {
   cd "${srcdir}"/${pkgname}-${pkgver}
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/etc/init.d"
+  install -dm755 "$pkgdir/etc/"rc{2,3,4,5}.d
+
+  # Qng.
+  install -m755 qng/bin/*/* "$pkgdir/usr/bin"
+
+  # Fix install location.
+  sed -i "s|/usr/local|$pkgdir/usr|g" {master,slave}/tools/install.sh
+  sed -i "s|/etc|$pkgdir/etc|g" {master,slave}/tools/install.sh
+
+  # Install.
+  cd master/tools
+  ./install.sh
+  cd ../../slave/tools
+  ./install.sh
 }
