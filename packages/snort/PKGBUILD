@@ -39,17 +39,20 @@ package() {
 
   make DESTDIR="${pkgdir}" install
 
-  mkdir -p "${pkgdir}/"{etc/rc.d,etc/snort/rules}
+  # Base directories.
+  install -dm755 "${pkgdir}/etc/rc.d"
+  install -dm755 "${pkgdir}/etc/snort/rules"
 
-  install -d -m755 "${pkgdir}/var/log/snort"
-  install -D -m644 etc/{*.conf*,*.map} "${pkgdir}/etc/snort/"
-  install -D -m644 "${srcdir}/snort.conf.d" "${pkgdir}/etc/conf.d/snort"
-  install -D -m755 "${srcdir}/snort" "${pkgdir}/etc/rc.d/snort"
+  install -dm755 "${pkgdir}/var/log/snort"
+  install -Dm644 etc/{*.conf*,*.map} "${pkgdir}/etc/snort/"
+  install -Dm644 "${srcdir}/snort.conf.d" "${pkgdir}/etc/conf.d/snort"
+  install -Dm755 "${srcdir}/snort" "${pkgdir}/etc/rc.d/snort"
 
-  # Init service file.
-  install -D -m644 ../snort.service $pkgdir/usr/lib/systemd/system/snort.service
+  # Service file.
+  install -Dm644 ../snort.service $pkgdir/usr/lib/systemd/system/snort.service
 
   sed -i 's#/usr/local/lib/#/usr/lib/#' "${pkgdir}/etc/snort/snort.conf"
+
   # Emerging threats rules.
   echo 'include $RULE_PATH/emerging.conf' >> "${pkgdir}/etc/snort/snort.conf"
   cp ${srcdir}/rules/* "${pkgdir}/etc/snort/rules"
