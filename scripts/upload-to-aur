@@ -1,0 +1,33 @@
+#!/bin/bash
+# Uploads a package to the AUR.
+
+if (( $# < 3 )) ; then
+	cat >&2 <<-HELP
+	usage: upload-to-aur MAINTAINER CATEGORY PKGBUILD
+	where MAINTAINER is a string such as 'Evan Teitelman <teitelmanevan at gmail dot com>'.
+	      CATEGORY is the AUR category.
+			PKGBUILD is the PKGBUILD file.
+	HELP
+	exit 1
+fi
+
+maintainer=$1
+category=$2
+pkgbuild=$3
+
+cleanup() {
+	rm -f "$tmp"
+}
+trap cleanup EXIT
+
+tmp=$(mktemp)
+
+cat > "$tmp" <<EOF
+# Maintainer: $maintainer
+
+EOF
+
+cat "$arg" >> "$tmp"
+makepkg -Sp "$tmp"
+( source "$tmp"
+  burp -c "$category" "$pkgname-$pkgver-$pkgrel.src.tar.gz" )
