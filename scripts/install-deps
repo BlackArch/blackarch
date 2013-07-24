@@ -2,7 +2,11 @@
 # Installs all package dependencies.
 # Must be run from the repo root.
 
+echo 'generating dependency list...'
 for pack in packages/*/PKGBUILD ; do (
 	source "$pack"
 	printf '%s\n' ${makedepends[@]} ${depends[@]}
-) done | sort -u | xargs pacman --asdeps --needed --noconfirm -S
+) done | sort -u | while read dep ; do
+	pacman -Si $dep &> /dev/null &&
+	  printf '%s\n' $dep
+done | xargs pacman --asdeps --noconfirm --needed -S
