@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# I'm leaving the debug prints in there for now.
+exec 2> /dev/null
+
+# Recursively prints a package's BlackArch dependencies.
+# Offical repo dependencies are not printed.
+# Output is as such:
+#  <depth> <package>
+# TODO: clean this up a bit.
+get_blackarch_deps() {
+	local pack=$1
+	(( n++ ))
+
+	# Don't do anything if maximum depth reached or no package passed.
+	if [[ $n == 10 || $# == 0 ]] ; then
+		echo >&2 "$n base on $pack"
+		return
+	fi
+
+	{
+	if source "packages/$pack/PKGBUILD" &> /dev/null ; then
+		# Don't print the first package.
+		if [[ $n != 1 ]] ; then
+			echo $n $pack
+			echo >&2 $n $pack
+		else
+			echo >&2 "$n $pack is original"
+		fi
+
+		val=$n
+		for dep in "${depends[@]}" ; do
+			echo >&2 $n get_blackarch_deps "$(sed 's/\(>\|<\|=\).*//' <<< $dep)"
+			get_blackarch_deps "$(sed 's/\(>\|<\|=\).*//' <<< $dep)"
+			n=$val
+		done
+	else
+		# Don't do anything if the package couldn't be sourced.
+		echo >&2 "$n no source for $pack"
+	fi
+	} | sort -n | sort -k2 -u
+}
+
+n=0
+get_blackarch_deps "$@" | sort -nr
