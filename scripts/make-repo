@@ -26,6 +26,8 @@ pkgdir=$(realpath packages)
 repodir=$(realpath repo)
 builddir=$(realpath build)
 mkdir -p "$repodir"
+mkdir -p "$repodir/signatures"
+mkdir -p "$builddir"
 mkdir -p "$builddir"
 
 cd packages
@@ -66,22 +68,30 @@ while read item ; do (
 	rm -f *.pkg.tar.xz
 
 	# Build.
-	makepkg -s --noconfirm --sign 2>&1
+	yes | makepkg -s --noconfirm --sign 2>&1
 
+	# Move the signatures.
+	# These may interfere with package installation.
+	mv *.pkg.tar.xz.sig "$repodir/signatures"
+
+	# Log errors.
 	ret=$?
 	if [[ $ret != 0 ]] ; then
-		# Log errors.
 		echo >&2 "'$pack' failed with error code $ret"
 		continue
-	elif [[ $depth != 1 ]] ; then
-		# Install if necessary.
-		sudo pacman --asdeps --noconfirm -U *.pkg.tar.xz
+	fi
+
+	# Install if necessary.
+	if [[ $depth != 1 ]] ; then
+		yes | sudo pacman --asdeps --noconfirm -U *.pkg.tar.xz ||
+		  echo "'$pack' failed to install"
 	fi
 
 	# Move package into the repo.
-	mv *.pkg.tar.xz* "$repodir"
+	mv *.pkg.tar.xz "$repodir"
 ) done
 
 # Put together a database.
 cd "$repodir"
+mv signatures/* .
 repo-add blackarch.db.tar.gz *.pkg.tar.xz
