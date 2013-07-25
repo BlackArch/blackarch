@@ -1,6 +1,6 @@
 #!/bin/bash
 # usage: make-repo [package_directory] [build_directory]
-# Must be run from the project root
+# May be run from anywhere. Must live in '$projectroot/scripts'.
 
 trap_exit() {
 	# Kill gpg-agent.
@@ -12,29 +12,75 @@ trap trap_exit EXIT
 [[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
 [[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 4000)
 
+# Cache keys/rights.
+gpg -s < /dev/null > /dev/null
+sudo -v
+
+# Don't use the X passphrase prompt.
+#unset DISPLAY
+
+basedir=$(realpath "$(dirname "$0")")
+cd "$basedir/.."
+
 pkgdir=$(realpath packages)
 repodir=$(realpath repo)
 builddir=$(realpath build)
 mkdir -p "$repodir"
 mkdir -p "$builddir"
 
-# Build all packages under the package directory.
-find "$pkgdir" -type f -name "PKGBUILD" |
-while read pkgbuild ; do
-	# packages/**/<package> -> build/<package>
-	cp -r "$(dirname "$pkgbuild")" "$builddir"
-	cd "$builddir/$(basename "$(dirname "$pkgbuild")")"
+cd packages
 
+# Some of the sorts are sensitive. We don't want changing locales to mess
+#  things up.
+export LC_ALL=POSIX
+
+comm -3 <(for pack in * ; do (
+              source $pack/PKGBUILD
+              for dep in ${depends[@]} ; do
+                  [[ -d $dep ]] && echo $dep
+              done
+          ) done | sed 's/\(>\|<\|=\).*//' | sort -u) <(ls | sort) | 
+while read item ; do
+	echo 1 $item
+	"$basedir/get-blackarch-deps" $item
+done | sort -nr | sort -uk2 | sort -nr |
+while read item ; do (
+	# Extend cache timeout.
+	sudo -v
+
+	read depth pack <<< "$item"
+	echo >&2 "Depth: $depth"
+	echo >&2 "Name: $pack"
+
+	echo >&2 'copying...'
+
+	# packages/*/<package> -> build/<package>
+	cp -fr "$pack" "$builddir"
+
+	# Change into the build dir.
+	cd "$builddir/$pack"
+
+	echo >&2 'building...'
+
+	# Remove old packages.
+	rm -f *.pkg.tar.xz
+
+	# Build.
 	makepkg -s --noconfirm --sign 2>&1
+
 	ret=$?
 	if [[ $ret != 0 ]] ; then
-		echo >&2 "'$pkgbuild' failed with error code $ret"
+		# Log errors.
+		echo >&2 "'$pack' failed with error code $ret"
 		continue
+	elif [[ $depth != 1 ]] ; then
+		# Install if necessary.
+		sudo pacman --asdeps --noconfirm -U *.pkg.tar.xz
 	fi
 
-	# Move the finished build to the repo.
+	# Move package into the repo.
 	mv *.pkg.tar.xz* "$repodir"
-done
+) done
 
 # Put together a database.
 cd "$repodir"
