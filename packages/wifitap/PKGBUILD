@@ -5,11 +5,11 @@ pkgrel=2
 pkgdesc="WiFi injection tool through tun/tap device"
 groups=(blackarch blackarch-wireless)
 arch=('any')
-url="https://github.com/${_gitname}/${pkgname}/"
+url="https://github.com/GDSSecurity/wifitap"
 license=('GPL2')
 depends=('python2' 'scapy')
-optdepends=('pysco2 JIT optimization')
-source=("git+https://github.com/${_gitname}/${pkgname}.git")
+optdepends=('pysco2: JIT optimization')
+source=("git+https://github.com/GDSSecurity/wifitap.git")
 md5sums=('SKIP')
 
 pkgver() {
@@ -17,11 +17,29 @@ pkgver() {
   git describe --always | sed 's|-|.|g'
 }
 
+prepare() {
+  cd "$srcdir/$pkgname"
+
+  # Fix python shebangs.
+  sed -i 's|env python|env python2|' *.py
+
+  # Fix imports.
+  sed -i 's|import IP,ICMP|import *|' wifiping.py
+  sed -i 's|import ARP|import *|' wifiarp.py
+}
+
 package() {
-  cd "${srcdir}/${pkgname}"
-  find . -name '*.py' -print |
-  while read file ; do
-    sed -i 's|#! /usr/bin/env python|#!/usr/bin/env python2|' "$file"
-    install -Dm755 "$file" "${pkgdir}/usr/bin/${file%.*}"
+  cd "$srcdir/$pkgname"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/wifitap"
+
+  # Bin.
+  for file in *.py ; do
+    install -m755 "$file" "$pkgdir/usr/bin/${file%.*}"
   done
+
+  # Docs.
+  install -m644 README TODO BUGS "$pkgdir/usr/share/wifitap"
 }
