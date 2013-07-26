@@ -10,7 +10,7 @@ trap trap_exit EXIT
 
 # Start gpg-agent.
 [[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
-[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 4000)
+[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
 
 # Cache keys/rights.
 gpg -s < /dev/null > /dev/null
@@ -68,11 +68,7 @@ while read item ; do (
 	rm -f *.pkg.tar.xz
 
 	# Build.
-	yes | makepkg -s --noconfirm --sign 2>&1
-
-	# Move the signatures.
-	# These may interfere with package installation.
-	mv *.pkg.tar.xz.sig "$repodir/signatures"
+	makepkg -s --noconfirm --sign 2>&1
 
 	# Log errors.
 	ret=$?
@@ -81,9 +77,14 @@ while read item ; do (
 		continue
 	fi
 
+	# Move the signatures.
+	# These may interfere with package installation.
+	mv *.pkg.tar.xz.sig "$repodir/signatures" ||
+	  echo >&2 "'$pack' signing failed"
+
 	# Install if necessary.
 	if [[ $depth != 1 ]] ; then
-		yes | sudo pacman --asdeps --noconfirm -U *.pkg.tar.xz ||
+		sudo pacman --asdeps --noconfirm -U *.pkg.tar.xz ||
 		  echo "'$pack' failed to install"
 	fi
 
