@@ -9,45 +9,33 @@ license=('GPL')
 depends=('metasploit' 'java-environment')
 makedepends=('apache-ant' 'zip' 'unzip' 'subversion')
 provides=('armitage')
-nstall='armitage.install'
-
-source=('armitage.install')
-md5sums=('5234326f9ff41ff8694cb35a557af895')
-
-_svntrunk=http://armitage.googlecode.com/svn/trunk/
-_svnmod=armitage
+install=armitage.install
+source=('armitage.install'
+        'svn+http://armitage.googlecode.com/svn/trunk/')
+md5sums=('5234326f9ff41ff8694cb35a557af895'
+         'SKIP')
 
 prepare() {
-  cd $srcdir
-
-  if [ -d ${_svnmod}/.svn ]; then
-    svn up ${_svnmod}
-  else
-    svn co ${_svntrunk} ${_svnmod}
-  fi
-
-  rm -rf ${_svnmod}-build
-  cp -r ${_svnmod} ${_svnmod}-build
-
-  cd ${_svnmod}-build
-
-  sed -i s+/usr/share/java/apache-ant/bin/++g package.sh
+  cd "$srcdir/trunk"
+  sed -i 's|/usr/share/java/apache-ant/bin/||g' package.sh
 }
 
 build() {
-  cd $srcdir/${_svnmod}-build
-
+  cd "$srcdir/trunk"
   bash package.sh
-  echo "#!/bin/bash" > ${_svnmod}.sh
-  echo "java -jar /opt/${_svnmod}/${_svnmod}.jar" >> ${_svnmod}.sh
 }
 
 package() {
-  cd ${srcdir}
+  # Base directories.
+  install -dm755 "$pkgdir/opt/$pkgname"
+  install -dm755 "$pkgdir/usr/bin"
 
-  install -dm755 $pkgdir/opt/${_svnmod}
-  install -dm755 $pkgdir/usr/bin
+  # Joint script.
+  cat > "$pkgdir/usr/bin/$pkgname" <<EOF
+#!/bin/sh
+java -jar /opt/$pkgname/$pkgname.jar
+EOF
 
-  tar -C ${pkgdir}/opt -xzf ${srcdir}/${_svnmod}-build/${_svnmod}.tgz
-  install -m755 ${srcdir}/${_svnmod}-build/${_svnmod}.sh ${pkgdir}/usr/bin/${_svnmod}
+  # Everything else.
+  tar -xzf "$srcdir/trunk/$pkgname.tgz" -C "$pkgdir/opt"
 }
