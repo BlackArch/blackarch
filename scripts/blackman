@@ -17,13 +17,14 @@ basedir=$(realpath "$(dirname "$0")")
 cd "$basedir/.."
 
 targets=()
+pacman_args=()
 action=none
 print_only=false
 no_deps=false
 
 for arg ; do
-	if [[ $arg == -* ]] ; then
-		case $arg in
+	if [[ "$arg" == -* ]] ; then
+		case "$arg" in
 			-h|--help) usage; exit ;;
 			-S) action=sync ;;
 			-Sd) action=sync; no_deps=true ;;
@@ -35,6 +36,7 @@ for arg ; do
 			-Si) action=info ;;
 			-Sl) action=list ;;
 			-Syu|-Su) action=upgrade ;;
+			--asdeps|--asdep|--noconfirm) pacman_args+=("$arg") ;;
 			*) error "unsupported: $arg"; exit 1 ;;
 		esac
 	else
@@ -52,11 +54,11 @@ do_sync() { (
 	shift
 
 	cd packages/$pack
-	makepkg "$@" -fs
+	makepkg "${pacman_args[@]}" "$@" -fs
 	# TODO: improve this sort.
 	local file=$(find . -maxdepth 1 -name '*.pkg.tar.xz' | sort -n | head -n1)
 	# xargs doesn't work here.
-	sudo pacman "$@" -U "$file"
+	sudo pacman "${pacman_args[@]}" "$@" -U "$file"
 ) }
 
 is_installed() {
