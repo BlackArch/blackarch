@@ -4,13 +4,24 @@ What is BlackArch Linux?
 **BlackArch Linux** is a lightweight expansion to Arch Linux for penetration
 testers.
 
-The toolset is distributed in an Arch Linux unofficial user repository so you
+The toolset is distributed as an Arch Linux unofficial user repository so you
 can install BlackArch Linux on top of an existing Arch Linux installation.
 Packages may be installed individually or by category.
 
 We currently have over 60 tools in our toolset. We are expanding the repository
 to include over 200 tools. All tools are thoroughly tested before being added
 to the codebase to maintain the quality of the repository.
+
+Get Involved
+------------
+
+You can get in touch with the BlackArch team. Just check out the following:
+
+**Web:** http://blackarch.org/
+
+**Mail:** blackarch@gmail.com
+
+**IRC:** irc://irc.genscripts.net/blackarch
 
 Quick Start
 -----------
@@ -39,14 +50,12 @@ Enter a selection (default=all):
 ```
 
 Select the packages that you wish to install. By default, all of the packages
-in the group will be installed.
+in the toolset will be installed.
 
 Package Groups
 --------------
 
-To see all available packages, follow http://www.blackarch.org/packages.html and
-install any tool individually.  For quicker installs leverage the package
-groups:
+Tools may be installed by category. The category groups are listed below.
 
 #### Exploitation
 
