@@ -1,5 +1,5 @@
 What is BlackArch Linux?
-=========
+------------------------
 
 **BlackArch Linux** is a lightweight expansion to Arch Linux for penetration
 testers.
