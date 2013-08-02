@@ -15,21 +15,20 @@ optdepends=('tk: for Ruby/TK')
 source=("ftp://ftp.ruby-lang.org/pub/ruby/1.8/$_pkgname-$_pkgver.tar.bz2" "fix.patch")
 md5sums=('1e4c3194537dd8ff92e756993e55a29d' 'f560402603b3dca36d4a6abfcb180cb9')
 
+prepare() {
+	cd "$srcdir/$_pkgname-$_pkgver"
+	patch -Np1 < "$srcdir/fix.patch"
+}
+
 build() {
 	cd "$srcdir/$_pkgname-$_pkgver"
 
-	msg 'Running configure...'
 	./configure \
 		--prefix=/usr/share/ruby1.8 \
 		--disable-rpath \
 		--enable-shared \
 		--enable-pthread \
 		CFLAGS="-O2 -fno-tree-dce -fno-optimize-sibling-calls"
-
-	msg 'Applying patch...'
-	patch -Np1 < "$srcdir/fix.patch"
-
-	msg 'Running make...'
 	make
 }
 
@@ -38,12 +37,18 @@ package() {
 
 	make DESTDIR="$pkgdir" install
 
-	install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
-
+  # Base directories.
 	install -dm755 "$pkgdir/usr/bin"
 	install -dm755 "$pkgdir/usr/lib"
+
+  # License.
+	install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+
+  # Bin.
 	for i in erb irb rdoc ri ruby testrb; do
 		ln -s "/usr/share/ruby1.8/bin/$i" "$pkgdir/usr/bin/$i-1.8"
 	done
+
+  # Lib.
 	ln -s /usr/share/ruby1.8/lib/libruby.so.1.8 "$pkgdir/usr/lib/libruby.so.1.8"
 }
