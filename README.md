@@ -1,8 +1,21 @@
-BlackArch
+What is BlackArch Linux?
 =========
 
-To make use of the pentest set of tools available in the BlackArch toolset please add the BlackArch repository to `/etc/pacman.conf`
+**BlackArch Linux** is a lightweight expansion to Arch Linux for penetration
+testers.
 
+The toolset is distributed in an Arch Linux unofficial user repository so you
+can install BlackArch Linux on top of an existing Arch Linux installation.
+Packages may be installed individually or by category.
+
+We currently have over 60 tools in our toolset. We are expanding the repository
+to include over 200 tools. All tools are thoroughly tested before being added
+to the codebase to maintain the quality of the repository.
+
+Quick Start
+-----------
+
+Add the following to `/etc/pacman.conf`.
 
 ```
 [blackarch]
@@ -10,10 +23,30 @@ SigLevel = Optional TrustAll
 Server = http://www.blackarch.org/pub/blackarch/$arch
 ```
 
+To install the toolset, run
+
+```
+$ pacman -S blackarch
+```
+
+You will see a prompt:
+
+```
+:: There are 62 members in group blackarch:
+:: Repository blackarch
+...
+Enter a selection (default=all):
+```
+
+Select the packages that you wish to install. By default, all of the packages
+in the group will be installed.
+
 Package Groups
 --------------
 
-To see all available packages follow http://www.blackarch.org/packages.html and install any tool individually.  For quicker installs leverage the package groups:
+To see all available packages, follow http://www.blackarch.org/packages.html and
+install any tool individually.  For quicker installs leverage the package
+groups:
 
 #### Exploitation
 
