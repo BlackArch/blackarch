@@ -17,6 +17,8 @@ Get Involved
 
 You can get in touch with the BlackArch team. Just check out the following:
 
+**Please, send us pull requests!**
+
 **Web:** http://blackarch.org/
 
 **Mail:** blackarch@gmail.com
