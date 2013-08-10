@@ -64,17 +64,6 @@ Tools may be installed by category. The category groups are listed below.
 ```
 $ pacman -S blackarch-exploitation
 ```
-- Included packages:
-  - beef
-  - fern-wifi-cracker
-  - fimap
-  - metasploit
-  - reaver-wps
-  - set
-  - sqlmap
-  - sqlninja
-  - websploit
-  - xsser
 
 #### Forensics
 
@@ -82,32 +71,11 @@ $ pacman -S blackarch-exploitation
 $ pacman -S blackarch-forensics
 ```
 
-- Included packages:
-  - pdf-parser
-  - pdfid
-  - peepdf
-  - volatility
-
 #### Intelligence Gathering
 
 ```
 $ pacman -S blackarch-intel
 ```
-
-- Included packages:
-  - blindelephant
-  - burpsuite
-  - cms-explorer
-  - dnsbf
-  - dnsenum
-  - dnsmap
-  - hashid
-  - netglub
-  - nikto
-  - snmpcheck
-  - ssldump
-  - theharvester
-  - zaproxy
 
 #### Miscellaneous
 
@@ -115,21 +83,11 @@ $ pacman -S blackarch-intel
 $ pacman -S blackarch-misc
 ```
 
-- Included packages:
-  - artillery
-  - geoipgen
-
 #### Post-Exploitation
 
 ```
 $ pacman -S blackarch-post
 ```
-
-- Included packages:
-  - chownat
-  - netcommander
-  - pwnat
-  - sslstrip
 
 #### Threat Modeling
 
@@ -137,23 +95,10 @@ $ pacman -S blackarch-post
 $ pacman -S blackarch-threat-model
 ```
 
-- Included packages:
-  - magictree
-
 #### Vulnerability Analysis
 
 ```
 $ pacman -S blackarch-analysis
 ```
 
-- Included packages:
-  - edb
-  - fang
-  - pentbox
-  - scapy
-  - sipvicious
-  - slowhttptest
-  - sslscan
-  - tcpjunk
-
-To learn more about each package visit http://www.blackarch.org/packages.html
+To learn more about what the groups and each included tool visit http://www.blackarch.org/packages.html
