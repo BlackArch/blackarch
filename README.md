@@ -101,4 +101,4 @@ $ pacman -S blackarch-threat-model
 $ pacman -S blackarch-analysis
 ```
 
-To learn more about what the groups and each included tool visit http://www.blackarch.org/packages.html
+To learn more about the groups and each included tool visit http://www.blackarch.org/packages.html
