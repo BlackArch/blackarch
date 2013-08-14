@@ -1,0 +1,47 @@
+pkgname=webslayer
+pkgver=5
+pkgrel=1
+pkgdesc="A tool designed for brute forcing Web Applications"
+arch=('any')
+url="https://code.google.com/p/webslayer/"
+license=('GPL')
+groups=(blackarch blackarch-web-apps)
+depends=('python2-pycurl' 'python2-pyqt4')
+source=("svn+http://webslayer.googlecode.com/svn/trunk/")
+md5sums=('SKIP')
+
+prepare() {
+  cd "$srcdir/trunk"
+
+  # Fix shebangs.
+  sed -i 's|bin/python$|bin/python2|' *.py
+}
+
+pkgver() {
+  cd trunk
+  svnversion | tr -d [A-z]
+}
+
+package() {
+	cd "$srcdir/trunk"
+
+	# Base directories.
+	install -dm755 "$pkgdir/usr/bin"
+	install -dm755 "$pkgdir/usr/share/webslayer"
+  install -dm755 "$pkgdir/usr/share/doc/webslayer"
+
+	cp -R --no-preserve=ownership * "$pkgdir/usr/share/webslayer"
+
+  # These are redundant.
+  rm "$pkgdir/usr/share/webslayer"/{COPYING,LICENSES}
+
+  mv "$pkgdir/usr/share/webslayer/README" "$pkgdir/usr/share/doc/webslayer"
+
+	# Joint script.
+	cat > "$pkgdir/usr/bin/webslayer" <<\EOF
+#!/bin/sh
+cd /usr/share/webslayer
+./WebSlayer.py "$@"
+EOF
+	chmod +x "$pkgdir/usr/bin/webslayer" 
+}
