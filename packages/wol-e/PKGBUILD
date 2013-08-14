@@ -1,0 +1,33 @@
+pkgname=wol-e
+pkgver=2.0
+pkgrel=1
+pkgdesc="A suite of tools for the Wake on LAN feature of network attached computers"
+groups=(blackarch blackarch-intel)
+arch=('any')
+url='http://code.google.com/p/wol-e/'
+license=('GPL3')
+depends=('impacket' 'scapy' 'python2-pcapy')
+source=("http://wol-e.googlecode.com/files/wol-e-$pkgver.tar")
+md5sums=('4a67aed6965cafe56ed8762fb72af647')
+
+prepare() {
+  cd "$srcdir/wol-e"
+  sed -i 's|bin/python$|bin/python2|' *.py
+}
+
+package() {
+  cd "$srcdir/wol-e"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/share/wol-e"
+  install -dm755 "$pkgdir/usr/bin"
+
+  cp --no-preserve=ownership * "$pkgdir/usr/share/wol-e"
+
+  cat > "$pkgdir/usr/bin/wol-e" <<\EOF
+#!/bin/sh
+cd /usr/share/wol-e
+python2 wol-e.py "$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/wol-e"
+}
