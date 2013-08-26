@@ -1,7 +1,7 @@
 diff -ruN a/enchant/checker/__init__.py b/enchant/checker/__init__.py
---- a/enchant/checker/__init__.py	2010-12-14 01:22:06.000000000 +0100
-+++ b/enchant/checker/__init__.py	2013-03-08 17:56:40.446560564 +0100
-@@ -47,12 +47,11 @@
+--- a/enchant/checker/__init__.py	2011-10-13 17:17:12.000000000 -0400
++++ b/enchant/checker/__init__.py	2013-08-23 11:07:40.349947665 -0400
+@@ -48,11 +48,11 @@
  import array
  import warnings
  
@@ -10,18 +10,17 @@ diff -ruN a/enchant/checker/__init__.py b/enchant/checker/__init__.py
 -from enchant.tokenize import get_tokenizer
 -from enchant.utils import bytes, unicode, basestring, next
 -from enchant.utils import get_default_language
--
 +from pack import enchant
 +from pack.enchant.errors import *
 +from pack.enchant.tokenize import get_tokenizer
 +from pack.enchant.utils import bytes, unicode, basestring, next
 +from pack.enchant.utils import get_default_language
  
+ 
  class SpellChecker:
-     """Class implementing stateful spellchecking behaviour.
 diff -ruN a/enchant/checker/tests.py b/enchant/checker/tests.py
---- a/enchant/checker/tests.py	2010-12-14 01:22:06.000000000 +0100
-+++ b/enchant/checker/tests.py	2013-03-08 17:57:24.329894126 +0100
+--- a/enchant/checker/tests.py	2011-10-13 17:17:12.000000000 -0400
++++ b/enchant/checker/tests.py	2013-08-23 11:09:44.166604575 -0400
 @@ -35,11 +35,11 @@
  
  import unittest
@@ -49,8 +48,8 @@ diff -ruN a/enchant/checker/tests.py b/enchant/checker/tests.py
          txt = "I am sme text to be cheked with personal list of cheked words"
          chkr = SpellChecker(d,txt)
 diff -ruN a/enchant/_enchant.py b/enchant/_enchant.py
---- a/enchant/_enchant.py	2010-12-14 01:22:06.000000000 +0100
-+++ b/enchant/_enchant.py	2013-03-08 18:02:25.169895691 +0100
+--- a/enchant/_enchant.py	2011-10-13 17:17:12.000000000 -0400
++++ b/enchant/_enchant.py	2013-08-23 11:10:20.949934534 -0400
 @@ -52,9 +52,9 @@
  from ctypes import *
  from ctypes.util import find_library
@@ -65,24 +64,29 @@ diff -ruN a/enchant/_enchant.py b/enchant/_enchant.py
  # Locate and load the enchant dll.
  # We've got several options based on the host platform.
 diff -ruN a/enchant/__init__.py b/enchant/__init__.py
---- a/enchant/__init__.py	2010-12-14 12:14:53.000000000 +0100
-+++ b/enchant/__init__.py	2013-03-08 18:01:58.119895550 +0100
-@@ -87,10 +87,10 @@
- 
+--- a/enchant/__init__.py	2011-10-13 17:17:12.000000000 -0400
++++ b/enchant/__init__.py	2013-08-23 11:12:14.009930870 -0400
+@@ -89,15 +89,15 @@
  import os
  
--from enchant import _enchant as _e
+ try:
+-    from enchant import _enchant as _e
++    from pack.enchant import _enchant as _e
+ except ImportError:
+     if not os.environ.get("PYENCHANT_IGNORE_MISSING_LIB",False):
+         raise
+     _e = None
+ 
 -from enchant.errors import *
 -from enchant.utils import EnchantStr, get_default_language
 -from enchant.pypwl import PyPWL
-+from pack.enchant import _enchant as _e
 +from pack.enchant.errors import *
 +from pack.enchant.utils import EnchantStr, get_default_language
 +from pack.enchant.pypwl import PyPWL
  
  #  Due to the unfortunate name collision between the enchant "tokenize" module
  #  and the stdlib "tokenize" module, certain values of sys.path can cause
-@@ -849,8 +849,8 @@
+@@ -890,8 +890,8 @@
  # Run unit tests when called from comand-line
  if __name__ == "__main__":
      import sys
@@ -94,24 +98,24 @@ diff -ruN a/enchant/__init__.py b/enchant/__init__.py
          sys.exit(1)
      sys.exit(0)
 diff -ruN a/enchant/tests.py b/enchant/tests.py
---- a/enchant/tests.py	2010-12-14 01:22:06.000000000 +0100
-+++ b/enchant/tests.py	2013-03-08 17:59:15.743228039 +0100
-@@ -41,10 +41,10 @@
+--- a/enchant/tests.py	2011-10-13 17:17:12.000000000 -0400
++++ b/enchant/tests.py	2013-08-23 11:14:40.589929203 -0400
+@@ -42,10 +42,10 @@
  except ImportError:
-     subprocess is None
+     subprocess = None
  
 -import enchant
 -from enchant import *
 -from enchant import _enchant as _e
--from enchant.utils import unicode, raw_unicode, printf
+-from enchant.utils import unicode, raw_unicode, printf, trim_suggestions
 +from pack import enchant
 +from pack.enchant import *
 +from pack.enchant import _enchant as _e
-+from pack.enchant.utils import unicode, raw_unicode, printf
++from pack.enchant.utils import unicode, raw_unicode, printf, trim_suggestions
  
  
  def runcmd(cmd):
-@@ -418,19 +418,19 @@
+@@ -443,19 +443,19 @@
  
      def test_docstrings(self):
          """Test that all our docstrings are error-free."""
@@ -140,7 +144,7 @@ diff -ruN a/enchant/tests.py b/enchant/tests.py
          except ImportError:
              pass
          errors = []
-@@ -565,9 +565,9 @@
+@@ -590,9 +590,9 @@
  
  
  def buildtestsuite(recurse=True):
@@ -154,8 +158,8 @@ diff -ruN a/enchant/tests.py b/enchant/tests.py
      if recurse:
          suite.addTest(unittest.makeSuite(TestInstallEnv))
 diff -ruN a/enchant/tokenize/en.py b/enchant/tokenize/en.py
---- a/enchant/tokenize/en.py	2010-12-14 01:22:06.000000000 +0100
-+++ b/enchant/tokenize/en.py	2013-03-08 17:54:44.063226626 +0100
+--- a/enchant/tokenize/en.py	2011-10-13 17:17:12.000000000 -0400
++++ b/enchant/tokenize/en.py	2013-08-23 11:15:12.396590168 -0400
 @@ -38,8 +38,8 @@
  
  import unicodedata
@@ -168,9 +172,9 @@ diff -ruN a/enchant/tokenize/en.py b/enchant/tokenize/en.py
  
  class tokenize(enchant.tokenize.tokenize):
 diff -ruN a/enchant/tokenize/__init__.py b/enchant/tokenize/__init__.py
---- a/enchant/tokenize/__init__.py	2010-12-14 01:22:06.000000000 +0100
-+++ b/enchant/tokenize/__init__.py	2013-03-08 17:56:15.809893770 +0100
-@@ -101,9 +101,9 @@
+--- a/enchant/tokenize/__init__.py	2011-10-13 17:17:12.000000000 -0400
++++ b/enchant/tokenize/__init__.py	2013-08-23 11:15:32.069926469 -0400
+@@ -103,9 +103,9 @@
  import re
  import warnings
  
@@ -184,9 +188,9 @@ diff -ruN a/enchant/tokenize/__init__.py b/enchant/tokenize/__init__.py
  #  For backwards-compatability.  This will eventually be removed, but how
  #  does one mark a module-level constant as deprecated?
 diff -ruN a/enchant/utils.py b/enchant/utils.py
---- a/enchant/utils.py	2010-12-14 01:22:06.000000000 +0100
-+++ b/enchant/utils.py	2013-03-08 18:02:49.859895818 +0100
-@@ -46,7 +46,7 @@
+--- a/enchant/utils.py	2011-10-13 17:17:12.000000000 -0400
++++ b/enchant/utils.py	2013-08-23 11:15:46.596592753 -0400
+@@ -47,7 +47,7 @@
  import sys
  import codecs
  
@@ -195,3 +199,62 @@ diff -ruN a/enchant/utils.py b/enchant/utils.py
  
  # Attempt to access local language information
  try:
+diff -ruN a/maskgen.py b/maskgen.py
+--- a/maskgen.py	2013-08-06 20:52:09.000000000 -0400
++++ b/maskgen.py	2013-08-23 11:05:24.616611099 -0400
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # MaskGen - Generate Password Masks
+ #
+ # This tool is part of PACK (Password Analysis and Cracking Kit)
+@@ -269,4 +269,4 @@
+             sorting_mode = "optindex"
+ 
+         print "[*] Sorting masks by their [%s]." % sorting_mode
+-        maskgen.generate_masks(sorting_mode)
+\ No newline at end of file
++        maskgen.generate_masks(sorting_mode)
+diff -ruN a/policygen.py b/policygen.py
+--- a/policygen.py	2013-07-26 19:49:02.000000000 -0400
++++ b/policygen.py	2013-08-23 11:05:18.306610828 -0400
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # PolicyGen - Analyze and Generate password masks according to a password policy
+ #
+ # This tool is part of PACK (Password Analysis and Cracking Kit)
+@@ -203,4 +203,4 @@
+     print "    Max strength: l:%s u:%s d:%s s:%s" % (policygen.maxlower, policygen.maxupper, policygen.maxdigit, policygen.maxspecial)
+ 
+     print "[*] Generating [%s] masks." % ("compliant" if not options.noncompliant else "non-compliant")
+-    policygen.generate_masks(options.noncompliant)
+\ No newline at end of file
++    policygen.generate_masks(options.noncompliant)
+diff -ruN a/rulegen.py b/rulegen.py
+--- a/rulegen.py	2013-08-08 12:35:40.000000000 -0400
++++ b/rulegen.py	2013-08-23 11:05:59.746610197 -0400
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ # Rulegen.py - Advanced automated password rule and wordlist generator for the 
+ #              Hashcat password cracker using the Levenshtein Reverse Path 
+ #              algorithm and Enchant spell checking library.
+@@ -16,7 +16,7 @@
+ import re
+ import time
+ import operator
+-import enchant
++from pack import enchant
+ 
+ from optparse import OptionParser, OptionGroup
+ 
+diff -ruN a/statsgen.py b/statsgen.py
+--- a/statsgen.py	2013-08-07 21:38:47.000000000 -0400
++++ b/statsgen.py	2013-08-23 11:05:01.166609591 -0400
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ # StatsGen - Password Statistical Analysis tool
+ #
+ # This tool is part of PACK (Password Analysis and Cracking Kit)
