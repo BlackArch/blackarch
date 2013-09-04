@@ -1,0 +1,54 @@
+pkgname=subterfuge
+pkgver=PublicBeta5.0
+groups=(blackarch blackarch-exploitation)
+pkgrel=1
+pkgdesc="Automated Man-in-the-Middle Attack Framework"
+url='http://kinozoa.com'
+arch=(i686 x86_64)
+license=('GPL3')
+makedepends=('arptables' 'twisted' 'scapy' 'sqlite3' 'python2'
+             'python2-virtualenv' 'net-tools' 'dhcpcd' 'dhcp' 'dhclient' 'nmap'
+             'subversion' 'iptables' 'xterm' 'aircrack-ng')
+optdepends=('metasploit: browser_autopwn support')
+source=("https://subterfuge.googlecode.com/files/${pkgname//s/S}$pkgver.tar.gz"
+        'ifconfig.parsing.patch')
+md5sums=('bcd8c74769e6113e3c76a7678eba26c5'
+         'b001b2914fa4293a12b22a2a5074f83a')
+
+package() {
+
+  # Create virtualenv and use it
+  virtualenv2 --system-site-packages $pkgdir/usr/share/subterfuge/virtualenv
+  source $pkgdir/usr/share/subterfuge/virtualenv/bin/activate
+
+  # Install special Django version in virtualenv
+  tar -xvf $srcdir/subterfuge/dependencies/Django-1.3.1.tar.gz
+  python $srcdir/Django-1.3.1/setup.py install
+
+  # Move subterfuge python files to share
+  tar -xvf $srcdir/subterfuge/subterfuge_packages.tar.gz
+  mv $srcdir/subterfuge/* $pkgdir/usr/share/subterfuge/
+
+  # Wrap subterfuge "binary" to always execute in virtualenv
+  mkdir -p $pkgdir/usr/bin
+  cat > $pkgdir/usr/bin/subterfuge <<EOF
+#!/bin/sh
+source /usr/share/subterfuge/virtualenv/bin/activate
+python /usr/share/subterfuge/subterfuge \$@
+EOF
+  chmod +x $pkgdir/usr/bin/subterfuge
+
+  # Remove .svn files left by sloppy developers
+  find $pkgdir -name ".svn" | xargs rm -rf
+
+  #Patch ifconfig output parsing
+  cd $pkgdir/usr/share/subterfuge
+  patch -p0 < $srcdir/ifconfig.parsing.patch
+
+  # TODO: Some files are left behind in /usr/share/subterfuge after removing the package
+  # TODO: Ctrl-C will leave forked os.system(python ...) processes running
+  #       * there's a stop-button in the UI, but harvester.py is not stopped
+  #         ** BUG in subterfuge: harvester.py is not stopped
+  # TODO: Make Subterfuge work with newer Django version (to avoid virtualenv)
+
+}
