@@ -33,10 +33,10 @@ prepare() {
   cd "$srcdir/social-engineer-toolkit"
 
   # Fix shebangs.
-  sed -i 's/python$/python2/g' se-* set-*
+  sed -i 's/python$/python2/g' se*
 
   # Fix tab-space inconsistencies.
-  sed -i 's/\t/    /g' se-* set-*
+  sed -i 's/\t/    /g' se*
 
   # Fix file locations.
   # This is better than writing within a static directory.
@@ -57,42 +57,41 @@ package() {
   cp --no-preserve=ownership -R readme/* README.txt "$pkgdir/usr/share/doc/set"
 
   # Bin.
-  install -m755 set-* se-* "$pkgdir/usr/share/set"
+  for bin in se* ; do
+    install -m755 $bin "$pkgdir/usr/share/set"
+    ln -s /usr/share/set/$bin "$pkgdir/usr/bin/$bin"
+  done
 
-  cat > "$pkgdir/usr/bin/set-automate" <<EOF
-#!/bin/sh
-cd /usr/share/set
-python2 set-automate "\$@"
-EOF
+  # Remove `setup.py`.
+  rm "$pkgdir/usr/share/set/setup.py" "$pkgdir/usr/bin/setup.py"
 
+  # Remove the set-provided se-toolkit transition script.
+  rm "$pkgdir/usr/bin/se-toolkit"
+
+  # We provide our own transition script. The set-provided one is annoying and
+  #  incompatible with our directory set-up.
   cat > "$pkgdir/usr/bin/se-toolkit" <<EOF
 #!/bin/sh
-cd /usr/share/set
+cat >&2 <<INFO
+[!] SET is changing to just ./setoolkit instead
+[!] se-toolkit is going away, beware.
+[!] Use: ./setoolkit from now on.
+INFO
 
-# Sorry.
-mkdir -p "$HOME/.set/config"
-cp config/set_config "$HOME/.set/config"
-
-python2 se-toolkit "\$@"
+/usr/bin/setoolkit
 EOF
+  chmod +x "$pkgdir/usr/bin/se-toolkit"
 
-  cat > "$pkgdir/usr/bin/set-proxy" <<EOF
+  # Joint script to handle default configuration.
+  rm "$pkgdir/usr/bin/setoolkit"
+  cat > "$pkgdir/usr/bin/setoolkit" <<\EOF
 #!/bin/sh
-cd /usr/share/set
-python2 set-proxy "\$@"
-EOF
+if ! [ -f "$HOME/.set/config/set_config" ] ; then
+  mkdir -p "$HOME/.set/config"
+  cp /usr/share/set/config/set_config "$HOME/.set/config/set_config"
+fi
 
-  cat > "$pkgdir/usr/bin/set-update" <<EOF
-#!/bin/sh
-cd /usr/share/set
-python2 set-update "\$@"
+/usr/share/set/setoolkit
 EOF
-
-  cat > "$pkgdir/usr/bin/set-web" <<EOF
-#!/bin/sh
-cd /usr/share/set
-python2 set-web "\$@"
-EOF
-
-  chmod +x "$pkgdir"/usr/bin/*
+  chmod +x "$pkgdir/usr/bin/setoolkit"
 }
