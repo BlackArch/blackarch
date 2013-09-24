@@ -1,0 +1,35 @@
+pkgname=masscan
+pkgver=1.0
+pkgrel=1
+pkgdesc="TCP port scanner, spews SYN packets asynchronously, scanning entire Internet in under 5 minutes"
+arch=('i686' 'x86_64')
+url='https://github.com/robertdavidgraham/masscan'
+license=('AGPL')
+depends=('libpcap')
+makedepends=('git')
+conflicts=('masscan-git')
+provides=('masscan-git')
+source=("$pkgname"::'git://github.com/robertdavidgraham/masscan.git')
+md5sums=('SKIP')
+
+build() {
+  cd "$pkgname"
+
+  git checkout "kali_$(sed 's/\./_/' <<< "$pkgver")"
+
+  make
+}
+
+package() {
+  cd "$pkgname"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/man/man8"
+  install -dm755 "$pkgdir/usr/share/licenses/masscan"
+
+  install -m755 bin/masscan "$pkgdir/usr/bin"
+
+  gzip -c doc/masscan.8 > "$pkgdir/usr/share/man/man8/masscan.8.gz"
+
+  install -m644 LICENSE "$pkgdir/usr/share/licenses/masscan"
+}
