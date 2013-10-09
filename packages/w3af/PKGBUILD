@@ -20,34 +20,40 @@ md5sums=('b67ba4ac19a5bcd7dc1e43cdf59c5688'
 options=(!strip)
 
 prepare() {
+  cd "$srcdir/w3af"
+
   # Delete some of the stuff from w3af-extlib (stuff that needs to be installed) -> dependencies
-  rm -rf "$srcdir/$pkgname/extlib"/{fpconst-0.7.2,SOAPpy}
+  rm -rf w3af/extlib/{fpconst-0.7.2,SOAPpy}
 
   # Enforce python2
   sed -i -e 's|#!\s*/usr/bin/python[^\d.]*$|#!/usr/bin/python2|' \
          -e 's|#!\s*/usr/bin/env python[^\d.]*$|#!/usr/bin/env python2|' \
-         $(find "$srcdir" -name '*.py') $pkgname/w3af_{console,gui}
+         $(find . -name '*.py') w3af_{console,gui}
 
   # Change the default metasploit location.
   sed -i 's|/opt/metasploit3|/usr/share/metasploit|' core/controllers/miscSettings.py
 }
 
 package() {
-  install -dm755 $pkgdir/opt/w3af ${pkgdir}/usr/bin ${pkgdir}/usr/share/applications/
-  cp --no-preserve=ownership -r ${srcdir}/${pkgname}/* ${pkgdir}/opt/${pkgname}/
-  install -Dm644 $srcdir/w3af.desktop ${pkgdir}/usr/share/applications/
+  install -dm755 "$pkgdir/usr/share/w3af"
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/applications/"
 
-  # Create startup for w3af_console
+  cp --no-preserve=ownership -r "$srcdir/w3af"/* "$pkgdir/usr/share/w3af"
+
+  install -Dm644 "$srcdir/w3af.desktop" "$pkgdir/usr/share/applications"
+
+  # Joint script for w3af_console.
   cat > $pkgdir/usr/bin/w3af <<EOF
 #!/bin/sh
-exec python2 /opt/w3af/w3af_console "\$@"
+exec python2 /usr/share/w3af/w3af_console "\$@"
 EOF
 
-  # Create startup for w3af_gui
+  # Joint script for w3af_gui.
   cat > $pkgdir/usr/bin/w3af-gui <<EOF
 #!/bin/sh
-exec python2 /opt/w3af/w3af_gui "\$@"
+exec python2 /usr/share/w3af/w3af_gui "\$@"
 EOF
 
-  chmod +x $pkgdir/opt/w3af/w3af_{console,gui} $pkgdir/usr/bin/{w3af,w3af-gui}
+  chmod +x "$pkgdir/usr/share/w3af"/w3af_{console,gui} "$pkgdir/usr/bin"/{w3af,w3af-gui}
 }
