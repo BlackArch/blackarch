@@ -1,0 +1,48 @@
+pkgname=dnsrecon
+pkgver=latest
+pkgrel=1
+pkgdesc="Python script for enumeration of hosts, subdomains and emails from a given domain using google."
+url="https://github.com/darkoperator/dnsrecon"
+groups=(blackarch blackarch-intel)
+license=('custom')
+arch=(any)
+#depends=('ruby' 'ruby-ip' 'ruby-pnet-dns')
+depends=('python' 'git' 'python-netaddr' 'python-dnspython')
+
+_gitroot="https://github.com/darkoperator/dnsrecon"
+_gitname=dnsrecon
+
+
+
+package() {
+  cd "${srcdir}"
+  msg "Connecting to git server...."
+
+  if [ -d ${srcdir}/${_gitname} ] ; then
+      cd ${_gitname} && git pull origin
+      msg "The local files are updated."
+  else
+      git clone ${_gitroot}
+  fi
+
+  msg "GIT checkout done or server timeout"
+
+  install -d $pkgdir/usr/share/
+  
+  cd $srcdir
+
+  cp -a * $pkgdir/usr/share/dnsrecon/
+  #find $pkgdir/usr/share/wpscan -type f -exec chmod 644 {} +
+
+  mkdir -p "${pkgdir}"/usr/bin
+
+cat > "${pkgdir}"/usr/bin/dnsrecon << EOF
+#!/bin/bash
+cd /usr/share/dnsrecon
+python ./dnsrecon.py \$@
+cd \$OLDPWD
+EOF
+
+  chmod 755 "${pkgdir}"/usr/bin/dnsrecon
+  #install -Dm755 dnsrecon.py "$pkgdir/usr/bin/dnsrecon"
+}
