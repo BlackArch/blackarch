@@ -9,6 +9,7 @@ repository](https://wiki.archlinux.org/index.php/Unofficial_User_Repositories)
 so you can install BlackArch Linux on top of an existing Arch Linux
 installation. Packages may be installed individually or by category.
 
+<!-- Count tools: pacman -Sgg | grep blackarch | cut -d' ' -f2 | sort -u | wc -l -->
 We currently have over 185 tools in our toolset and the repository is
 constantly expanding. All tools are thoroughly tested before being added to the
 codebase to maintain the quality of the repository.
@@ -165,7 +166,7 @@ $ pacman -S blackarch-intel
  - ptunnel
  - pwnat
  - rtpbreak
- - sdb
+ - sbd
  - sipp
  - sipsak
  - sipvicious
@@ -178,12 +179,15 @@ $ pacman -S blackarch-intel
  - thc-ipv6
  - theharvester
  - tuxcut
- - updtunnel
+ - udptunnel
  - urlcrazy
  - voiphopper
  - waffit
+ - weevely
+ - wol-e
  - xprobe2
  - zaproxy
+
 
 #### Threat Modeling
 
@@ -207,7 +211,7 @@ $ pacman -S blackarch-analysis
  - cisco-global-exploiter
  - dbpwaudit
  - fang
- - lynix
+ - lynis
  - maltego
  - mdbtools
  - nikto
