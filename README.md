@@ -9,9 +9,9 @@ repository](https://wiki.archlinux.org/index.php/Unofficial_User_Repositories)
 so you can install BlackArch Linux on top of an existing Arch Linux
 installation. Packages may be installed individually or by category.
 
-We currently have over 175 tools in our toolset. We are expanding the repository
-to include over 200 tools. All tools are thoroughly tested before being added
-to the codebase to maintain the quality of the repository.
+We currently have over 185 tools in our toolset and the repository is
+constantly expanding. All tools are thoroughly tested before being added to the
+codebase to maintain the quality of the repository.
 
 Get Involved
 ------------
@@ -22,7 +22,7 @@ You can get in touch with the BlackArch team. Just check out the following:
 
 **Web:** http://blackarch.org/
 
-**Mail:** blackarch@gmail.com
+**Mail:** blackarchlinux@gmail.com
 
 **IRC:** irc://irc.genscripts.net/blackarch
 
