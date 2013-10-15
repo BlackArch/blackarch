@@ -1,48 +1,35 @@
 pkgname=dnsrecon
-pkgver=latest
+pkgver=0.8.5
 pkgrel=1
+epoch=2
 pkgdesc="Python script for enumeration of hosts, subdomains and emails from a given domain using google."
 url="https://github.com/darkoperator/dnsrecon"
 groups=(blackarch blackarch-intel)
 license=('custom')
 arch=(any)
-#depends=('ruby' 'ruby-ip' 'ruby-pnet-dns')
 depends=('python' 'git' 'python-netaddr' 'python-dnspython')
+source=("git+https://github.com/darkoperator/dnsrecon")
+md5sums=('SKIP')
 
-_gitroot="https://github.com/darkoperator/dnsrecon"
-_gitname=dnsrecon
+pkgver() {
+  cd "$srcdir/dnsrecon"
 
-
+  # We have to get the version number from the README file. It's better than nothing.
+  grep -m1 'Version ' README.md | sed 's/.* //'
+}
 
 package() {
-  cd "${srcdir}"
-  msg "Connecting to git server...."
+  cd "$srcdir"
 
-  if [ -d ${srcdir}/${_gitname} ] ; then
-      cd ${_gitname} && git pull origin
-      msg "The local files are updated."
-  else
-      git clone ${_gitroot}
-  fi
+  install -dm755 "$pkgdir/usr/share"
+  install -dm755 "$pkgdir/usr/bin"
 
-  msg "GIT checkout done or server timeout"
+  cp -a * "$pkgdir/usr/share/dnsrecon"
 
-  install -d $pkgdir/usr/share/
-  
-  cd $srcdir
-
-  cp -a * $pkgdir/usr/share/dnsrecon/
-  #find $pkgdir/usr/share/wpscan -type f -exec chmod 644 {} +
-
-  mkdir -p "${pkgdir}"/usr/bin
-
-cat > "${pkgdir}"/usr/bin/dnsrecon << EOF
-#!/bin/bash
+cat > "$pkgdir/usr/bin/dnsrecon" << EOF
+#!/bin/sh
 cd /usr/share/dnsrecon
-python ./dnsrecon.py \$@
-cd \$OLDPWD
+python dnsrecon.py \$@
 EOF
-
-  chmod 755 "${pkgdir}"/usr/bin/dnsrecon
-  #install -Dm755 dnsrecon.py "$pkgdir/usr/bin/dnsrecon"
+  chmod +x "$pkgdir/usr/bin/dnsrecon"
 }
