@@ -1,34 +1,35 @@
 pkgname=sqlmap
-pkgver=0.9
+pkgver=1.0dev
 groups=(blackarch blackarch-web-apps blackarch-analysis)
-pkgrel=2
+pkgrel=1
 pkgdesc="An automatic SQL injection tool developed in Python"
 url='http://sqlmap.sourceforge.net'
 license=('GPL')
 arch=(i686 x86_64)
 depends=('python2')
-source=("https://github.com/sqlmapproject/sqlmap/archive/$pkgver.tar.gz")
-md5sums=('e1fbb448379b1bc3af5b0be31fc505c4')
+options=(!strip)
+source=("git+https://github.com/sqlmapproject/sqlmap")
+md5sums=('SKIP')
 
 package() {
-  install -dm755 "${pkgdir}"/opt/$pkgname
+  cd "$srcdir/sqlmap"
 
-  cp --no-preserve=ownership -R "$srcdir/$pkgname"/* "$pkgdir/opt/$pkgname"
+  install -dm755 "$pkgdir/usr/share/sqlmap"
+  install -dm755 "$pkgdir/usr/bin"
+
+  cp --no-preserve=ownership -R * "$pkgdir/usr/share/sqlmap"
 
   if [ $CARCH == i686 ]; then
-    rm "$pkgdir/opt/$pkgname/udf/mysql/linux/64/lib_mysqludf_sys.so"
-    rm "$pkgdir/opt/$pkgname/udf/postgresql/linux/64/8.2/lib_postgresqludf_sys.so"
-    rm "$pkgdir/opt/$pkgname/udf/postgresql/linux/64/8.3/lib_postgresqludf_sys.so"
-    rm "$pkgdir/opt/$pkgname/udf/postgresql/linux/64/8.4/lib_postgresqludf_sys.so"
+    rm "$pkgdir/usr/share/sqlmap/udf/mysql/linux/64/lib_mysqludf_sys.so"
+    rm "$pkgdir/usr/share/sqlmap/udf/postgresql/linux/64/8.2/lib_postgresqludf_sys.so"
+    rm "$pkgdir/usr/share/sqlmap/udf/postgresql/linux/64/8.3/lib_postgresqludf_sys.so"
+    rm "$pkgdir/usr/share/sqlmap/udf/postgresql/linux/64/8.4/lib_postgresqludf_sys.so"
   fi
 
-  install -dm755 "${pkgdir}"/usr/bin
-
-  cat > "${pkgdir}"/usr/bin/sqlmap << EOF
+  cat > "$pkgdir/usr/bin/sqlmap" << EOF
 #!/bin/bash
-cd /opt/sqlmap
+cd /usr/share/sqlmap
 python2 ./sqlmap.py "\$@"
 EOF
-
-  chmod +x "${pkgdir}"/usr/bin/sqlmap
+  chmod +x "$pkgdir/usr/bin/sqlmap"
 }
