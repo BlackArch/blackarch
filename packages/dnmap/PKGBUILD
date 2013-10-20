@@ -6,29 +6,29 @@ url="http://sourceforge.net/projects/dnmap/"
 license=('GPL3')
 arch=('any')
 depends=('twisted' 'python2-pyopenssl')
-source=("http://downloads.sourceforge.net/project/dnmap/${pkgname}_v$pkgver.tgz")
+install=dnmap.install
+source=("http://downloads.sourceforge.net/project/dnmap/dnmap_v$pkgver.tgz")
 md5sums=('5d45a7307406dc039b7e06a3c5c46995')
+
+prepare() {
+  cd "$srcdir/dnmap_v$pkgver"
+  sed -i 's/env python/env python2/' *.py
+}
 
 package() {
   cd "$srcdir/dnmap_v$pkgver"
 
   # Base directories.
-  install -dm755 "$pkgdir/usr/share/dnmap"
   install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/dnmap"
+  install -dm755 "$pkgdir/usr/share/doc/dnmap"
 
-  cp -a * "$pkgdir/usr/share/dnmap"
+  # Docs.
+  install -m644 README "$pkgdir/usr/share/doc/dnmap"
 
-  cat > "$pkgdir/usr/bin/dnmap_client" << EOF
-#!/bin/sh
-cd /usr/share/dnmap
-python2 dnmap_client.py "\$@"
-EOF
-   chmod +x "$pkgdir/usr/bin/dnmap_client"
+  install -m644 server.pem "$pkgdir/usr/share/dnmap"
 
-  cat > "$pkgdir/usr/bin/dnmap_server" << EOF
-#!/bin/sh
-cd /usr/share/dnmap
-python2 dnmap_server.py "\$@"
-EOF
-   chmod +x "$pkgdir/usr/bin/dnmap_server"
+  # Bin.
+  install -m755 dnmap_client.py "$pkgdir/usr/bin/dnmap_client"
+  install -m755 dnmap_server.py "$pkgdir/usr/bin/dnmap_server"
 }
