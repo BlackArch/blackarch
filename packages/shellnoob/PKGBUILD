@@ -5,26 +5,31 @@ pkgdesc="A toolkit that eases the writing and debugging of shellcode"
 url="https://github.com/reyammer/shellnoob"
 arch=('any')
 license=('MIT')
-depends=('python2' 'binutils' 'gcc')
-source=(https://github.com/reyammer/${pkgname}/archive/v${pkgver}.tar.gz)
-sha256sums=('2849afc4d650157678d532005ab105c99cb4b14da286e5bad32ea00bf5310ea7')
+depends=('python2')
+source=("https://github.com/reyammer/shellnoob/archive/v$pkgver.tar.gz")
+md5sums=('0bcc95a8eccab0c73e98b3bb4e445999')
 
 prepare() {
-  cd ${pkgname}-${pkgver}
+  cd "shellnoob-$pkgver"
+
   sed -e 's/env python$/env python2/g' -i shellnoob.py
-  sed -e "s|README|/usr/share/doc/${pkgname}/README.md|g" -i shellnoob.py
+  sed -e "s|README|/usr/share/doc/shellnoob/README.md|g" -i shellnoob.py
 }
 
 package() {
-  cd ${pkgname}-${pkgver}
+  cd "shellnoob-$pkgver"
 
-  install -Dm 755 shellnoob.py "${pkgdir}/usr/lib/python2.7/site-packages/shellnoob.py"
-  install -d "${pkgdir}/usr/bin"
-  ln -s "/usr/lib/python2.7/site-packages/shellnoob.py" "${pkgdir}/usr/bin/snoob"
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/lib/python2.7/site-packages"
+  install -dm755 "$pkgdir/usr/share/doc/shellnoob/samples/x86-linux"
 
-  install -Dm 644 COPYRIGHT "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
-  install -Dm 644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
-  install -d "${pkgdir}/usr/share/doc/${pkgname}/samples/x86-linux"
-  install -Dm 644 samples/x86-linux/* "${pkgdir}/usr/share/doc/${pkgname}/samples/x86-linux"
+  # Bin.
+  install -m755 shellnoob.py "$pkgdir/usr/lib/python2.7/site-packages/shellnoob.py"
+  ln -s "/usr/lib/python2.7/site-packages/shellnoob.py" "$pkgdir/usr/bin/shellnoob"
+
+  # Docs.
+  install -m644 README.md "$pkgdir/usr/share/doc/shellnoob/README.md"
+  install -d "$pkgdir/usr/share/doc/shellnoob/samples/x86-linux"
+  install -m644 samples/x86-linux/* "$pkgdir/usr/share/doc/shellnoob/samples/x86-linux"
 }
-
