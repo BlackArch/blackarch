@@ -1,0 +1,34 @@
+pkgname=responder
+pkgver='1.9'
+pkgrel=1
+pkgdesc="Responder is a LLMNR and NBT-NS poisoner, with built-in HTTP/SMB/MSSQL/FTP/LDAP rogue authentication server supporting NTLMv1/NTLMv2/LMv2, Extended Security NTLMSSP and Basic HTTP authentication."
+url="https://github.com/SpiderLabs/Responder"
+license=('custom')
+arch=(any)
+depends=('python2')
+source=("git+https://github.com/SpiderLabs/Responder")
+md5sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Responder"
+
+  # We have to get the version number from the CHANGELOG file. It's better than nothing. This is an ugly line, it could probably be cleaned up, but it works.
+
+   grep -m1 'ChangeLog ' CHANGELOG.txt | sed 's/.* //'|cut -d':' -f1
+}
+
+package() {
+  cd "$srcdir"
+
+  install -dm755 "$pkgdir/usr/share"
+  install -dm755 "$pkgdir/usr/bin"
+
+  cp -a * "$pkgdir/usr/share/responder"
+
+cat > "$pkgdir/usr/bin/responder" << EOF
+#!/bin/sh
+cd /usr/share/responder
+python Responder.py \$@
+EOF
+  chmod +x "$pkgdir/usr/bin/responder"
+}
