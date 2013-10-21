@@ -69,6 +69,7 @@ To see the BlackArch categories, run
  # pacman -Sg | grep blackarch
  ```
 
+<!-- Run `scripts/make-category-list` to generate this list. -->
 Package Groups
 --------------
 
