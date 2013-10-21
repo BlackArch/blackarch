@@ -74,168 +74,314 @@ Package Groups
 
 Tools may be installed by category. The category groups are listed below.  To learn more about each included tool visit http://www.blackarch.org/packages.html
 
-#### Exploitation
+#### Intelligence Gathering
+ ```
+ # pacman -S blackarch-intel
+ ```
 
-```
-$ pacman -S blackarch-exploitation
-```
+Tools in this group:
 
-- Tools in exploitation group:
- - armitage
- - cisco-auditing-tool
- - cisco-global-exploiter
- - creepy
- - exploit-db
- - metasploit
- - miranda-upnp
- - reaver
- - set
- - thc-ipv6
- - websploit
- - yersinia
+  - ace
+  - braa
+  - chownat
+  - cisco-auditing-tool
+  - cms-explorer
+  - creepy
+  - cryptcat
+  - cutycapt
+  - dmitry
+  - dns2tcp
+  - dnsbf
+  - dnsenum
+  - dnsmap
+  - dnswalk
+  - enumiax
+  - evilgrade
+  - fierce
+  - fiked
+  - fragroute
+  - hamster
+  - hashid
+  - hexinject
+  - iaxflood
+  - ike-scan
+  - inguma
+  - intrace
+  - iodine
+  - irpas
+  - lbd
+  - maltego
+  - metagoofil
+  - miranda-upnp
+  - mitmproxy
+  - netcommander
+  - netdiscover
+  - netglub
+  - netmask
+  - netsniff-ng
+  - onesixtyone
+  - p0f
+  - proxychains
+  - ptunnel
+  - pwnat
+  - rtpbreak
+  - sbd
+  - sipp
+  - sipsak
+  - sipvicious
+  - snmpcheck
+  - ssldump
+  - sslscan
+  - sslsniff
+  - sslstrip
+  - sslyze
+  - thc-ipv6
+  - theharvester
+  - tuxcut
+  - udptunnel
+  - urlcrazy
+  - voiphopper
+  - waffit
+  - weevely
+  - wol-e
+  - xprobe2
+  - zaproxy
 
 #### Forensics
+ ```
+ # pacman -S blackarch-forensics
+ ```
 
-```
-$ pacman -S blackarch-forensics
-```
+Tools in this group:
 
-- Tools in forensics group:
- - afflib
- - autopsy
- - binwalk
- - bulk-extractor
- - dc3dd
- - foremost
- - galleta
- - guymager
- - magicrescue
- - md5deep
- - p0f
- - pasco
- - pdf-parser
- - pdfid
- - peepdf
- - pev
- - radare2
- - recoverjpeg
- - reglookup
- - rifiuti
- - safecopy
- - scrounge-ntfs
- - tiger
- - vinetto
- - volatility
+  - afflib
+  - autopsy
+  - binwalk
+  - bulk-extractor
+  - dc3dd
+  - foremost
+  - galleta
+  - guymager
+  - magicrescue
+  - md5deep
+  - p0f
+  - pasco
+  - pdf-parser
+  - pdfid
+  - peepdf
+  - pev
+  - radare2
+  - recoverjpeg
+  - reglookup
+  - rifiuti
+  - safecopy
+  - scrounge-ntfs
+  - tiger
+  - vinetto
+  - volatility
 
-#### Intelligence Gathering
+#### Exploitation
+ ```
+ # pacman -S blackarch-exploitation
+ ```
 
-```
-$ pacman -S blackarch-intel
-```
+Tools in this group:
 
-- Tools in intelligence gathering group:
- - ace
- - braa
- - chownat
- - cisco-auditing-tool
- - cms-explorer
- - creepy
- - cryptcat
- - cutycapt
- - dmitry
- - dns2tcp
- - dnsbf
- - dnsenum
- - dnsmap
- - dnswalk
- - enumiax
- - evilgrade
- - fierce
- - fiked
- - fragroute
- - hamster
- - hashid
- - hexinject
- - iaxflood
- - ike-scan
- - inguma
- - intrace
- - iodine
- - irpas
- - lbd
- - maltego
- - metagoofil
- - miranda-upnp
- - mitmproxy
- - netcommander
- - netdiscover
- - netglub
- - netmask
- - netsniff-ng
- - onesixtyone
- - p0f
- - proxychains
- - ptunnel
- - pwnat
- - rtpbreak
- - sbd
- - sipp
- - sipsak
- - sipvicious
- - snmpcheck
- - ssldump
- - sslscan
- - sslsniff
- - sslstrip
- - sslyze
- - thc-ipv6
- - theharvester
- - tuxcut
- - udptunnel
- - urlcrazy
- - voiphopper
- - waffit
- - weevely
- - wol-e
- - xprobe2
- - zaproxy
+  - armitage
+  - cisco-auditing-tool
+  - cisco-global-exploiter
+  - creepy
+  - exploit-db
+  - metasploit
+  - miranda-upnp
+  - reaver
+  - set
+  - thc-ipv6
+  - websploit
+  - yersinia
 
+#### Defensive
+ ```
+ # pacman -S blackarch-defensive
+ ```
+
+Tools in this group:
+
+  - artillery
+  - inundator
+  - maltego
+  - metagoofil
+  - secure-delete
+  - sniffjoke
+
+#### Wireless Attacks
+ ```
+ # pacman -S blackarch-wireless
+ ```
+
+Tools in this group:
+
+  - asleap
+  - bluelog
+  - bss
+  - bt_audit
+  - btscanner
+  - cowpatty
+  - fern-wifi-cracker
+  - freeradius-wpe
+  - giskismet
+  - hidattack
+  - killerbee
+  - mdk3
+  - mfcuk
+  - mfoc
+  - redfang
+  - rfidiot
+  - rfidtool
+  - spooftooph
+  - wifi-honey
+  - wifitap
+  - wifite
+
+#### Threat Analysis
+ ```
+ # pacman -S blackarch-analysis
+ ```
+
+Tools in this group:
+
+  - bed
+  - cflow
+  - cisco-auditing-tool
+  - cisco-global-exploiter
+  - dbpwaudit
+  - fang
+  - lynis
+  - maltego
+  - mdbtools
+  - nikto
+  - oscanner
+  - pentbox
+  - powerfuzzer
+  - scapy
+  - sfuzz
+  - slowhttptest
+  - spike
+  - sqlmap
+  - sqlninja
+  - sqlsus
+  - tcpjunk
+  - yersinia
+
+#### Web Applications
+ ```
+ # pacman -S blackarch-web-apps
+ ```
+
+Tools in this group:
+
+  - blindelephant
+  - burpsuite
+  - davtest
+  - dirb
+  - dirbuster
+  - fimap
+  - grabber
+  - joomscan
+  - mfcuk
+  - mfoc
+  - nikto
+  - paros
+  - plecost
+  - powerfuzzer
+  - skipfish
+  - sqlmap
+  - sqlninja
+  - sqlsus
+  - w3af
+  - wapiti
+  - webscarab
+  - webslayer
+  - wfuzz
+  - whatweb
+  - xsser
+  - zaproxy
+
+#### Password Attacks
+ ```
+ # pacman -S blackarch-password-attacks
+ ```
+
+Tools in this group:
+
+  - burpsuite
+  - cisco-auditing-tool
+  - cmospwd
+  - crunch
+  - dbpwaudit
+  - findmyhash
+  - hash-identifier
+  - hashcat
+  - hydra
+  - johnny
+  - keimpx
+  - medusa
+  - onesixtyone
+  - pack
+  - patator
+  - rcracki_mt
+  - samdump2
+  - sipcrack
+  - sucrack
+  - thc-pptp-bruter
+  - webscarab
+  - zaproxy
+
+#### Hardawre Hacking
+ ```
+ # pacman -S blackarch-hardware-hacking
+ ```
+
+Tools in this group:
+
+  - dex2jar
+  - smali
+
+#### Reverse Engineering
+ ```
+ # pacman -S blackarch-reversing
+ ```
+
+Tools in this group:
+
+  - dex2jar
+  - edb-debugger
+  - flasm
+  - ollydbg
+  - pev
+  - radare2
+  - recstudio
+  - scanmem
+
+#### Stress Testing
+ ```
+ # pacman -S blackarch-stress-testing
+ ```
+
+Tools in this group:
+
+  - iaxflood
+  - mdk3
+  - t50
+  - thc-ipv6
+  - thc-ssl-dos
 
 #### Threat Modeling
+ ```
+ # pacman -S blackarch-threat-model
+ ```
 
-```
-$ pacman -S blackarch-threat-model
-```
+Tools in this group:
 
-- Tools in threat modeling group:
- - magictree
+  - magictree
 
-#### Vulnerability Analysis
-
-```
-$ pacman -S blackarch-analysis
-```
-
-- Tools in vulnerability analysis group:
- - bed
- - cflow
- - cisco-auditing-tool
- - cisco-global-exploiter
- - dbpwaudit
- - fang
- - lynis
- - maltego
- - mdbtools
- - nikto
- - oscanner
- - pentbox
- - powerfuzzer
- - scapy
- - sfuzz
- - slowhttptest
- - spike
- - sqlmap
- - sqlninja
- - sqlsus
- - tcpjunk
- - yersinia
