@@ -5,7 +5,7 @@ pkgdesc="A software suite for simulating common internet services in a lab envir
 url="http://www.inetsim.org"
 arch=('any')
 license=('GPLv3')
-depends=('perl' 'perl-net-server' 'perl-ipc-shareable')
+depends=('perl' 'perl-net-server' 'perl-ipc-shareable' 'openssl')
 install=inetsim.install
 source=("http://www.inetsim.org/downloads/inetsim-$pkgver.tar.gz")
 md5sums=('1e5d5666b3d5cd750166c0fbbeb735b5')
@@ -19,6 +19,23 @@ package() {
 
   cp -a * "$pkgdir/usr/share/inetsim"
 
+  # Permissions.
+  # This is pretty much copypasted from the upstream-provided `setup.sh`.
+  msg2 'setting file permissions...'
+
+  cd "$pkgdir/usr/share/inetsim"
+  chgrp -R inetsim log
+  chmod 770 log
+
+  chgrp inetsim report
+  chmod 770 report
+
+  chgrp -R inetsim ./data
+  chmod g+w data/http/postdata
+  chmod g+w data/ftp/upload
+  chmod g+w data/tftp/upload
+
+  # Joint script.
   cat > "$pkgdir/usr/bin/inetsim" <<EOF
 #!/bin/sh
 cd /usr/share/inetsim
