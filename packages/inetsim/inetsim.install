@@ -1,5 +1,31 @@
 post_install() {
-  groupadd inetsim
+  local key=/usr/share/inetsim/data/certs/default_key.pem
+  local cert=/usr/share/inetsim/data/certs/default_cert.pem
+
+  if [ ! -f "$key" ]; then
+    if openssl version >/dev/null 2>&1; then
+      echo "Creating '$key'..."
+      if openssl req -new -x509 -days 3650 -nodes -sha1 \
+           -keyout "$key" -out "$cert" \
+           -subj "/O=INetSim/OU=Development/CN=inetsim.org" 2>/dev/null
+      then
+        echo 'done.'
+      else
+        echo 'failed.'
+      fi
+    else
+      cat <<EOF
+Unable to generate default cert/key. OpenSSL not found. You should
+install OpenSSL and run something along the lines of this:
+
+    if openssl req -new -x509 -days 3650 -nodes -sha1 \
+         -keyout "$key" -out "$cert" \
+         -subj "/O=INetSim/OU=Development/CN=inetsim.org" 2>/dev/null
+EOF
+    fi
+  fi
+
+  grep -q 'inetsim' /etc/group || groupadd inetsim
 }
 
 post_upgrade() {
@@ -8,4 +34,5 @@ post_upgrade() {
 
 post_remove() {
   groupdel inetsim
+  echo "Deleting '/usr/share/inetsim/data/certs/default_key.pem' is up to you."
 }
