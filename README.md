@@ -41,23 +41,33 @@ Server = http://www.blackarch.org/pub/blackarch/$arch
 
 and run
 
-    # pacman -Sy
+ ```
+ # pacman -Sy
+ ```
 
 You may now install tools from the BlackArch repository. To list all of the available tools, run
 
-   # pacman -Sgg | grep blackarch
+ ```
+ # pacman -Sgg | grep blackarch
+ ```
 
 To install all of the tools, run
 
-   # pacman -S blackarch
+ ```
+ # pacman -S blackarch
+ ```
 
 To install a category of tools, run
 
-   # pacman -S blackarch-<category>
+ ```
+ # pacman -S blackarch-<category>
+ ```
 
 To see the BlackArch categories, run
 
-   # pacman -Sg | grep blackarch
+ ```
+ # pacman -Sg | grep blackarch
+ ```
 
 Package Groups
 --------------
