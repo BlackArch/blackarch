@@ -1,0 +1,40 @@
+pkgname=volafox
+pkgver=0.8
+pkgrel=1
+pkgdesc="Mac OS X & BSD Memory Analysis Toolkit"
+arch=('any')
+url="http://code.google.com/p/volafox/"
+license=('GPL')
+groups=('blackarch blackarch-forensics')
+depends=()
+makedepends=('unzip')
+source=("http://volafox.googlecode.com/files/volafox-${pkgver}_svn_removed.zip")
+md5sums=('f6b6ce61ceba46c813fb50434a99d99a')
+noextract=("volafox-${pkgver}_svn_removed.zip")
+
+package() {
+  cd "$srcdir"
+
+  # bsdtar doesn't work for some reason.
+  unzip -o *.zip || true
+
+  find -name *.py -exec sed -i 's/\t/        /g' {} +
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/volafox"
+
+  # TODO: Fine tune this.
+  cp -R --no-preserve=ownership * "$pkgdir/usr/share/volafox"
+
+  # Joint script.
+  cat > "$pkgdir/usr/bin/volafox" <<\EOF
+#!/bin/sh
+cd /usr/share/volafox
+./volafox "$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/volafox" 
+
+  # Might need this instead.
+  #ln -s /usr/share/volafox/PKGNAME "$pkgdir/usr/bin/PKGNAME"
+}
