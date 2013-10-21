@@ -30,8 +30,8 @@ You can get in touch with the BlackArch team. Just check out the following:
 Quick Start
 -----------
 
-Add the following to
-[`/etc/pacman.conf`](https://www.archlinux.org/pacman/pacman.conf.5.html).
+Add this to
+[`/etc/pacman.conf`](https://www.archlinux.org/pacman/pacman.conf.5.html):
 
 ```
 [blackarch]
@@ -39,23 +39,25 @@ SigLevel = Optional TrustAll
 Server = http://www.blackarch.org/pub/blackarch/$arch
 ```
 
-To install the toolset, run
+and run
 
-```
-$ pacman -S blackarch
-```
+    # pacman -Sy
 
-You will see a prompt:
+You may now install tools from the BlackArch repository. To list all of the available tools, run
 
-```
-:: There are 179 members in group blackarch:
-:: Repository blackarch
-...
-Enter a selection (default=all):
-```
+   # pacman -Sgg | grep blackarch
 
-Select the packages that you wish to install. By default, all of the packages
-in the toolset will be installed.
+To install all of the tools, run
+
+   # pacman -S blackarch
+
+To install a category of tools, run
+
+   # pacman -S blackarch-<category>
+
+To see the BlackArch categories, run
+
+   # pacman -Sg | grep blackarch
 
 Package Groups
 --------------
