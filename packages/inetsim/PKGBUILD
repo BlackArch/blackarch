@@ -11,37 +11,46 @@ source=("http://www.inetsim.org/downloads/inetsim-$pkgver.tar.gz")
 md5sums=('1e5d5666b3d5cd750166c0fbbeb735b5')
 
 package() {
-  cd "$srcdir/$pkgname-$pkgver"
+  cd "$srcdir/inetsim-$pkgver"
 
   # Base directories.
-  install -dm755 "$pkgdir/usr/share/inetsim"
+  install -dm755 "$pkgdir/etc"
   install -dm755 "$pkgdir/usr/bin"
-  install -dm755 "$pkgdir/var/lib/inetsim"
+  install -dm755 "$pkgdir/var/lib"
+  install -dm755 "$pkgdir/usr/share/inetsim"
+  install -dm755 "$pkgdir/usr/share/doc/inetsim"
   install -dm755 "$pkgdir/var/log/inetsim"
 
-  cp -a * "$pkgdir/usr/share/inetsim"
+  # Program.
+  cp -R --no-preserve=ownership contrib lib inetsim "$pkgdir/usr/share/inetsim"
 
-  # Logs go to '/var/log/inetsim'.
-  rmdir "$pkgdir/usr/share/inetsim/log"
-  rmdir "$pkgdir/usr/share/inetsim/report"
+  # Logs.
   ln -s /var/log/inetsim "$pkgdir/usr/share/inetsim/report"
   ln -s /var/log/inetsim "$pkgdir/usr/share/inetsim/log"
 
-  # Data goes to '/var/lib/inetsim'.
-  mv "$pkgdir/usr/share/inetsim/data"/* "$pkgdir/var/lib/inetsim"
-  rmdir "$pkgdir/usr/share/inetsim/data"
-
+  # Data.
+  cp -R --no-preserve=ownership data "$pkgdir/var/lib/inetsim"
   ln -s /var/lib/inetsim "$pkgdir/usr/share/inetsim/data"
+
+  # Configuration.
+  cp -R --no-preserve=ownership conf "$pkgdir/etc/inetsim"
+  ln -s /etc/inetsim "$pkgdir/usr/share/inetsim/conf"
+
+  # Man pages.
+  cp -R --no-preserve=ownership man "$pkgdir/usr/share"
+
+  # Documentation.
+  install -m644 CHANGES README doc/* "$pkgdir/usr/share/doc/inetsim"
 
   # Permissions.
   # This is pretty much copypasted from the upstream-provided `setup.sh`.
-  msg2 'setting file permissions...'
-
+  # Group ownership is set in the install file.
   chmod 770 "$pkgdir/var/log/inetsim"
   chmod g+w "$pkgdir/var/lib/inetsim/http/postdata"
   chmod g+w "$pkgdir/var/lib/inetsim/ftp/upload"
   chmod g+w "$pkgdir/var/lib/inetsim/tftp/upload"
 
+  # TODO: install cleanup.sh?
   # Joint script.
   cat > "$pkgdir/usr/bin/inetsim" <<EOF
 #!/bin/sh
