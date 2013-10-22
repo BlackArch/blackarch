@@ -15,21 +15,32 @@ package() {
 
   # Base directories.
   install -dm755 "$pkgdir/usr/share/inetsim"
-  install -dm755 "$pkgdir/usr/bin/"
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/var/lib/inetsim"
+  install -dm755 "$pkgdir/var/log/inetsim"
 
   cp -a * "$pkgdir/usr/share/inetsim"
+
+  # Logs go to '/var/log/inetsim'.
+  rmdir "$pkgdir/usr/share/inetsim/log"
+  rmdir "$pkgdir/usr/share/inetsim/report"
+  ln -s /var/log/inetsim "$pkgdir/usr/share/inetsim/report"
+  ln -s /var/log/inetsim "$pkgdir/usr/share/inetsim/log"
+
+  # Data goes to '/var/lib/inetsim'.
+  mv "$pkgdir/usr/share/inetsim/data"/* "$pkgdir/var/lib/inetsim"
+  rmdir "$pkgdir/usr/share/inetsim/data"
+
+  ln -s /var/lib/inetsim "$pkgdir/usr/share/inetsim/data"
 
   # Permissions.
   # This is pretty much copypasted from the upstream-provided `setup.sh`.
   msg2 'setting file permissions...'
 
-  # TODO: move out of `/usr/share`.
-  cd "$pkgdir/usr/share/inetsim"
-  chmod 770 log
-  chmod 770 report
-  chmod g+w data/http/postdata
-  chmod g+w data/ftp/upload
-  chmod g+w data/tftp/upload
+  chmod 770 "$pkgdir/var/log/inetsim"
+  chmod g+w "$pkgdir/var/lib/inetsim/http/postdata"
+  chmod g+w "$pkgdir/var/lib/inetsim/ftp/upload"
+  chmod g+w "$pkgdir/var/lib/inetsim/tftp/upload"
 
   # Joint script.
   cat > "$pkgdir/usr/bin/inetsim" <<EOF
