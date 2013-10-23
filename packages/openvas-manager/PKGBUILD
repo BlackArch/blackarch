@@ -1,0 +1,35 @@
+pkgname=openvas-manager
+pkgver=4.0.3
+pkgrel=1
+pkgdesc="The OpenVAS Manager is a layer between the OpenVAS Scanner and various client applications"
+arch=('i686' 'x86_64')
+url="http://www.openvas.org/"
+license=('GPL')
+# TODO: some of these belong in makedepends... double check though.
+# check other packages as well.
+depends=('glib2' 'openvas-libraries' 'cmake')
+options=('!makeflags !buildflags')
+# The file downloaded is determined by the `/1421/` part. Changing `pkgver`
+#  does not change the file downloaded so we hard code the version number to
+#  avoid confusion.
+source=('http://wald.intevation.org/frs/download.php/1421/openvas-manager-4.0.3.tar.gz')
+md5sums=('047971864e810e1d933ad9b0bc41d0e0')
+
+prepare() {
+  cd "$srcdir/openvas-manager-$pkgver"
+
+  find . -name 'CMakeLists.txt' -exec sed -i 's/-Werror//' {} \;
+}
+
+build() {
+  cd "$srcdir/openvas-manager-$pkgver"
+
+  cmake -DSBINDIR=/usr/bin -DCMAKE_INSTALL_PREFIX=/usr -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var .
+  make
+}
+
+package() {
+  cd "$srcdir/openvas-manager-$pkgver"
+
+  make DESTDIR="$pkgdir/" install
+}
