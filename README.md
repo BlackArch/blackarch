@@ -338,7 +338,7 @@ Tools in this group:
   - webscarab
   - zaproxy
 
-#### Hardawre Hacking
+#### Hardware Hacking
  ```
  # pacman -S blackarch-hardware-hacking
  ```
