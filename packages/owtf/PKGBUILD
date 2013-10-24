@@ -1,32 +1,35 @@
-pkgname='owtf'
-pkgver='0.40'
+pkgname=owtf
+pkgver=0.40
 pkgrel=1
-pkgdesc="OWASP OWTF, the Offensive (Web) Testing Framework"
+pkgdesc="The Offensive (Web) Testing Framework"
 url="https://www.owasp.org/index.php/OWASP_OWTF"
-groups=(blackarch blackarch-webapps)
+groups=('blackarch' 'blackarch-webapps')
 license=('custom')
-arch=(any)
-depends=('python2' 'git' 'python2-jinja' 'python2-tornado')
+arch=('any')
+depends=('python2' 'python2-jinja' 'python2-tornado' 'python2-pycurl'
+         'python2-pexpect' 'python2-lxml')
+makedepends=('git')
+options=('!strip')
 source=("git+https://github.com/7a/owtf")
 md5sums=('SKIP')
 
 pkgver() {
-	cd "$srcdir/$pkgname"
+	cd "$srcdir/owtf"
 	grep -m1 'Version ' README | sed 's/.* //'
 }
 
 package() {
-  cd "$srcdir/$pkgname"
+  cd "$srcdir/owtf"
+
+  # Base directories.
   install -dm755 "$pkgdir/usr/share/$pkgname"
   install -dm755 "$pkgdir/usr/bin"
 
   cp -a * "$pkgdir/usr/share/owtf"
-    
-cat > "$pkgdir/usr/bin/owtf" << EOF
-#!/bin/sh
-cd /usr/share/owtf
-python2 owtf.py \$@
-EOF
 
-chmod +x "$pkgdir/usr/bin/owtf"
+  cat > "$pkgdir/usr/bin/owtf" << EOF
+#!/bin/sh
+python2 /usr/share/owtf/owtf.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/owtf"
 }

@@ -1,0 +1,61 @@
+pkgname=inetsim
+pkgver=1.2.4
+pkgrel=1
+pkgdesc="A software suite for simulating common internet services in a lab environment, e.g. for analyzing the network behaviour of unknown malware samples"
+url="http://www.inetsim.org"
+arch=('any')
+license=('GPLv3')
+depends=('perl' 'perl-net-server' 'perl-ipc-shareable' 'openssl')
+install=inetsim.install
+source=("http://www.inetsim.org/downloads/inetsim-$pkgver.tar.gz")
+md5sums=('1e5d5666b3d5cd750166c0fbbeb735b5')
+
+package() {
+  cd "$srcdir/inetsim-$pkgver"
+
+  # Base directories.
+  install -dm755 "$pkgdir/etc"
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/var/lib"
+  install -dm755 "$pkgdir/usr/share/inetsim"
+  install -dm755 "$pkgdir/usr/share/doc/inetsim"
+  install -dm755 "$pkgdir/var/log/inetsim"
+
+  # Program.
+  cp -R --no-preserve=ownership contrib lib inetsim "$pkgdir/usr/share/inetsim"
+
+  # Logs.
+  ln -s /var/log/inetsim "$pkgdir/usr/share/inetsim/report"
+  ln -s /var/log/inetsim "$pkgdir/usr/share/inetsim/log"
+
+  # Data.
+  cp -R --no-preserve=ownership data "$pkgdir/var/lib/inetsim"
+  ln -s /var/lib/inetsim "$pkgdir/usr/share/inetsim/data"
+
+  # Configuration.
+  cp -R --no-preserve=ownership conf "$pkgdir/etc/inetsim"
+  ln -s /etc/inetsim "$pkgdir/usr/share/inetsim/conf"
+
+  # Man pages.
+  cp -R --no-preserve=ownership man "$pkgdir/usr/share"
+
+  # Documentation.
+  install -m644 CHANGES README doc/* "$pkgdir/usr/share/doc/inetsim"
+
+  # Permissions.
+  # This is pretty much copypasted from the upstream-provided `setup.sh`.
+  # Group ownership is set in the install file.
+  chmod 770 "$pkgdir/var/log/inetsim"
+  chmod g+w "$pkgdir/var/lib/inetsim/http/postdata"
+  chmod g+w "$pkgdir/var/lib/inetsim/ftp/upload"
+  chmod g+w "$pkgdir/var/lib/inetsim/tftp/upload"
+
+  # TODO: install cleanup.sh?
+  # Joint script.
+  cat > "$pkgdir/usr/bin/inetsim" <<EOF
+#!/bin/sh
+cd /usr/share/inetsim
+perl -T inetsim "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/inetsim"
+}
