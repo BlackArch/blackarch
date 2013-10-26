@@ -1,0 +1,57 @@
+#!/bin/bash
+
+blackarch=$HOME/cod/blackarch
+chroot=$HOME/alt/base
+running=$HOME/alt/running
+
+if [[ $UID != 0 ]] ; then
+	echo >&2 'must be root'
+	exit 1
+fi
+
+mounts=()
+clear_mounts() {
+	for mount in "${mounts[@]}" ; do
+		umount "$mount"
+	done
+}
+trap clear_mounts EXIT
+
+bind_mount() {
+	mounts+=("$2")
+	mount --bind "$1" "$2"
+}
+
+case "$1" in
+	init)
+		if [[ -d "$chroot" ]] ; then
+			echo >&2 'chroot already exists'
+			exit 1
+		fi
+
+		mkdir -p "$chroot"
+		pacstrap -d "$chroot" base base-devel namcap zsh tmux sudo
+		arch-chroot "$chroot" groupadd test
+		arch-chroot "$chroot" useradd -s /bin/zsh -g test -m test
+		;;
+
+	clean)
+		rm -rf "$running"
+		;;
+
+	*)
+		if [[ ! -d "$running" ]] ; then
+			echo 'cloning...'
+			cp -a "$chroot" "$running"
+		fi
+
+		echo 'diving into chroot...'
+
+		echo 'mounting...'
+		# TODO: pacman.conf
+		# TODO: mirrorlist
+		bind_mount "$blackarch" "$running/home/test"
+
+		arch-chroot "$running" su - test
+		;;
+esac
