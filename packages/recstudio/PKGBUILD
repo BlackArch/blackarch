@@ -2,41 +2,42 @@ pkgname=recstudio
 pkgver=4.0_20130717
 pkgrel=2
 groups=('blackarch' 'blackarch-reversing')
-pkgdesc="Cross platform interactive decompiler."
+pkgdesc="Cross platform interactive decompiler"
 arch=('i686' 'x86_64')
 url='http://www.backerstreet.com/rec/rec.htm'
-license=(custom)
-depends=(gtk2)
-[[ $CARCH == x86_64 ]] && depends=(lib32-gtk2)
-
-source=(http://www.backerstreet.com/rec/RecStudioLinux.tgz
-        recstudio
-        recstudio.desktop
-        recstudio.png
-        LICENSE)
+license=('custom')
+depends=('gtk2')
+[[ $CARCH == x86_64 ]] && depends=('lib32-gtk2')
+source=('http://www.backerstreet.com/rec/RecStudioLinux.tgz'
+        'LICENSE')
 md5sums=('SKIP'
-         'a0bf6af995ed3ef282dec056d1330698'
-         '8d7e21187611fe192789663e9b9ca92b'
-         'b0e43f834bd7405a36f29c0213413ba3'
          '639152ef5ee75ce32fd1df8a72968961')
-options=(!strip)
+options=('!strip')
 
 package() {
-  cd $srcdir
+  cd "$srcdir"
 
-  # Create directories.
-  install -dm 755 $pkgdir/opt/recstudio/{bin,support}
-  install -dm 755 $pkgdir/opt/recstudio/support/{Prototypes,win32api}
+  # Base directories.
+  install -dm755 "$pkgdir/opt/recstudio/bin"
+  install -dm755 "$pkgdir/opt/recstudio/support"
+  install -dm755 "$pkgdir/opt/recstudio/support/Prototypes"
+  install -dm755 "$pkgdir/opt/recstudio/support/win32api"
+  install -dm755 "$pkgdir/usr/share/licenses/recstudio"
+  install -dm755 "$pkgdir/usr/bin"
 
-  # Copy files.
-  install -Dm 755 bin/* $pkgdir/opt/recstudio/bin
-  install -Dm 644 support/{*.rse,*.txt,*h} $pkgdir/opt/recstudio/support
-  install -Dm 644 support/Prototypes/* $pkgdir/opt/recstudio/support/Prototypes
-  install -Dm 644 support/win32api/* $pkgdir/opt/recstudio/support/win32api
+  # Bin.
+  install -m755 bin/* "$pkgdir/opt/recstudio/bin"
 
-  install -Dm 755 recstudio $pkgdir/usr/bin/recstudio
-  install -Dm 644 recstudio.desktop $pkgdir/usr/share/applications/recstudio.desktop
-  install -Dm 644 recstudio.png $pkgdir/usr/share/pixmaps/recstudio.png
-  install -Dm 644 LICENSE $pkgdir/usr/share/licenses/recstudio/LICENSE
+  # Support.
+  cp --no-preserve=ownership -R support/* "$pkgdir/opt/recstudio/support"
+
+  # License.
+  install -m644 LICENSE "$pkgdir/usr/share/licenses/recstudio/LICENSE"
+
+  cat > "$pkgdir/usr/bin/recstudio" <<EOF
+#!/bin/sh
+cd /opt/recstudio/bin
+./RecStudioLinux
+EOF
+  chmod +x "$pkgdir/usr/bin/recstudio"
 }
-
