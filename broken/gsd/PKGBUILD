@@ -1,0 +1,34 @@
+pkgname=gsd
+pkgver=1.2.2
+pkgrel=1
+arch=('i686' 'x86_64')
+pkgdesc="OpenVAS GUI frontend"
+url='http://www.openvas.org/'
+license=('GPL')
+depends=('glib2' 'gnutls' 'openvas-libraries' 'qt4' 'qtwebkit')
+makedepends=('cmake' 'doxygen')
+backup=('etc/openvas/gsd_log.conf')
+options=('!buildflags' '!makeflags')
+source=('http://wald.intevation.org/frs/download.php/1084/gsd-1.2.2.tar.gz'
+        'gsd-enum-fix.patch')
+md5sums=('12fcf80fc377e2d13c715d8162489e79'
+         'b5069fbede143de008c1b5a10e33e29c')
+
+prepare() {
+  cd "$srcdir/gsd-$pkgver"
+
+  patch -p1 < "$srcdir/gsd-enum-fix.patch"
+}
+
+build() {
+  cd "$srcdir/gsd-$pkgver"
+
+  cmake -DCMAKE_INSTALL_PREFIX=/usr -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var .
+  make
+}
+
+package() {
+  cd "$srcdir/gsd-$pkgver"
+
+  make DESTDIR="$pkgdir/" install
+}
