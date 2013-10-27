@@ -1,13 +1,12 @@
 pkgname=hashcat-utils
-pkgver=0.9
 groups=('blackarch' 'blackarch-password-attacks')
+pkgver=0.9
 pkgrel=1
 pkgdesc="Utilites for Hashcat"
 arch=('i686' 'x86_64')
 url='http://hashcat.net/wiki/doku.php?id=hashcat_utils'
 license=('custom')
 makedepends=('p7zip')
-depends='glibc'
 if [[ "$CARCH" == 'x86_64' ]]; then
       source=("http://hashcat.net/files/hashcat-utils-$pkgver-64.7z")
 elif [[ "$CARCH" == 'i686' ]]; then
@@ -17,10 +16,10 @@ md5sums=('7199585f9e5bc8fafee0c67a3f44fb74')
 
 prepare() {
   cd "$srcdir/hashcat-utils-$pkgver"
+
   sed -i 's/release: posix windows/release: posix/' Makefile
   sed -i '/WINDOWS/d' Makefile
   sed -i '/*.exe/d' Makefile
-  
 }
 
 build() {
@@ -31,22 +30,14 @@ build() {
 package() {
   cd "$srcdir/hashcat-utils-$pkgver"
 
-  #Base directories 
-  install -dm755 "$pkgdir/usr/bin/hashcat-utils"
- 
-  #Binaries - lots and lots of binaries 
-  install -m755 combinator.bin  "$pkgdir/usr/bin/hashcat-utils/combinator"
-  install -m755 cutb.bin "$pkgdir/usr/bin/hashcat-utils/cutb"
-  install -m755 expander.bin "$pkgdir/usr/bin/hashcat-utils/expander"
-  install -m755 gate.bin "$pkgdir/usr/bin/hashcat-utils/gate"
-  install -m755 hcstatgen.bin "$pkgdir/usr/bin/hashcat-utils/hcstatgen"
-  install -m755 len.bin "$pkgdir/usr/bin/hashcat-utils/len"
-  install -m755 morph.bin "$pkgdir/usr/bin/hashcat-utils/morph"
-  install -m755 permute.bin "$pkgdir/usr/bin/hashcat-utils/permute"
-  install -m755 prepare.bin "$pkgdir/usr/bin/hashcat-utils/prepare"
-  install -m755 req.bin "$pkgdir/usr/bin/hashcat-utils/req"
-  install -m755 rli.bin "$pkgdir/usr/bin/hashcat-utils/reli"
-  install -m755 rli2.bin "$pkgdir/usr/bin/hashcat-utils/rli2"
-  install -m755 splitlen.bin "$pkgdir/usr/bin/hashcat-utils/splitlen"
-   
+  # Base directory.
+  install -dm755 "$pkgdir/usr/bin"
+
+  # Bin.
+  for bin in combinator.bin cutb.bin expander.bin gate.bin hcstatgen.bin \
+    len.bin morph.bin permute.bin prepare.bin req.bin rli.bin rli2.bin \
+    splitlen.bin 
+  do
+    install -m755 "$bin" "$pkgdir/usr/bin/hashcat-${bin%.bin}"
+  done
 }
