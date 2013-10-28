@@ -25,7 +25,7 @@ You can get in touch with the BlackArch team. Just check out the following:
 
 **Mail:** blackarchlinux@gmail.com
 
-**IRC:** irc://irc.genscripts.net/blackarch
+**IRC:** [irc://irc.genscripts.net:6667/blackarch](irc://irc.genscripts.net:6667/blackarch)
 
 Setup
 -----------
