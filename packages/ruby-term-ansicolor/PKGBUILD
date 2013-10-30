@@ -1,19 +1,29 @@
 pkgname=ruby-term-ansicolor
-_gemname=term-ansicolor
 pkgver=1.2.2
-pkgrel=1
-pkgdesc="Ruby library that colors strings using ANSI escape sequences"
+pkgrel=2
+pkgdesc="A ruby library that colors strings using ANSI escape sequences"
 arch=('any')
-license=('')
-makedepends=('ruby')
+url="https://rubygems.org/gems/term-ansicolor"
+license=('GPL2')
 depends=('ruby-tins')
-url='http://flori.github.com/term-ansicolor'
-source=("http://rubygems.org/downloads/term-ansicolor-$pkgver.gem")
-md5sums=('4c875a6efa46099beb41bb175471c7d4')
-noextract=("term-ansicolor-$pkgver.gem")
+source=("https://rubygems.org/downloads/${pkgname#*-}-${pkgver}.gem")
+noextract=("${pkgname#*-}-${pkgver}.gem")
+sha256sums=('b9534713ba4c2a48f2291fadf9ce2edae9f2dc96157ee812fe8fe16a70c081ac')
+
+prepare() {
+  gem install --no-{document,user-install} --ignore-dependencies -i . ${pkgname#*-}-${pkgver}.gem
+}
 
 package() {
-  cd "$srcdir"
-  local _gemdir=$(ruby -e 'puts Gem.default_dir')
-  gem install --ignore-dependencies --no-user-install -i "$pkgdir$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
+  cd gems/${pkgname#*-}-${pkgver}
+
+  local _rubyver="$(ruby --version | sed 's/.* \(.*\..*\..*\)p.*/\1/')"
+
+  install -dm 755 "${pkgdir}"/usr/lib/ruby/{gems/${_rubyver},vendor_ruby}
+  mv bin "${pkgdir}"/usr/
+  mv lib "${pkgdir}"/usr/lib/ruby/vendor_ruby/${_rubyver}
+
+# Gem compatibility
+  mv ../../specifications "${pkgdir}"/usr/lib/ruby/gems/${_rubyver}/
 }
+
