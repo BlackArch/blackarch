@@ -1,0 +1,28 @@
+_gemname=activesupport
+pkgname=ruby-activesupport
+pkgver=4.0.0
+pkgrel=3
+pkgdesc="Utility classes and extension to the standard library that were required by Rails, but found of general use."
+arch=(any)
+url="http://www.rubyonrails.org"
+license=('MIT')
+depends=('ruby' 'ruby-i18n' 'ruby-multi_json' 'ruby-minitest' 'ruby-thread_safe' 'ruby-tzinfo')
+makedepends=('rubygems')
+source=(http://rubygems.org/downloads/${_gemname}-${pkgver}.gem
+        'tzinfo-1.0.patch')
+noextract=(${_gemname}-${pkgver}.gem)
+md5sums=('ef0727e4446ab141dfe3d350ec663c03'
+         '3e74855478175fb0717aa53cde3e3483')
+
+package() {
+  cd "${srcdir}"
+  # _gemdir is defined inside package() because if ruby[gems] is not installed on
+  # the system, makepkg will exit with an error when sourcing the PKGBUILD.
+  local _gemdir="$(ruby -rubygems -e'puts Gem.default_dir')"
+
+  gem install --no-user-install --ignore-dependencies -i "${pkgdir}${_gemdir}" -n "$pkgdir/usr/bin" \
+    "${_gemname}-${pkgver}.gem"
+
+  cd "${pkgdir}${_gemdir}/specifications"
+  patch -Np1 <"${srcdir}/tzinfo-1.0.patch"
+}
