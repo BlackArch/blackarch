@@ -1,27 +1,41 @@
 pkgname=w3af
 groups=('blackarch' 'blackarch-web-apps')
-pkgver=1.1
-pkgrel=6
+pkgver=1.5
+pkgrel=1
 pkgdesc="Web Application Attack and Audit Framework"
 arch=('i686' 'x86_64')
 url='http://w3af.sourceforge.net/'
 license=('GPL')
-depends=('python2' 'python2-fpconst' 'python2-pyopenssl' 'python2-lxml'
-         'python2-soappy' 'python2-nltk' 'scapy' 'python2-pysqlite'
-         'python2-pysvn' 'python2-pybloomfiltermmap' 'python2-beautifulsoup3'
-         'graphviz' 'pygtk' 'gtk2' 'pygtksourceview2')
-
-source=(http://downloads.sourceforge.net/sourceforge/w3af/w3af-${pkgver//_/-}.tar.bz2
-        w3af.desktop)
-md5sums=('b67ba4ac19a5bcd7dc1e43cdf59c5688'
+#depends=('python2' 'python2-fpconst' 'python2-pyopenssl' 'python2-lxml'
+         #'python2-soappy' 'python2-nltk' 'scapy' 'python2-pysqlite'
+         #'python2-pysvn' 'python2-pybloomfiltermmap' 'python2-beautifulsoup3'
+         #'graphviz' 'pygtk' 'gtk2' 'pygtksourceview2')
+depends=('python2-clamd' 'python2-pybloomfiltermmap' 'python2-esmre'
+         'python2-phply' 'python2-pysqlite' 'python2-nltk' 'python2-chardet'
+         'python2-pdfminer' 'python2-futures' 'python2-pyopenssl' 'python2-lxml'
+         'scapy' 'python2-guess-language' 'python2-cluster' 'python2-msgpack'
+         'python2-ntlm' 'python2-pygithub' 'python2-gitpython')
+options=('!strip')
+source=('git+https://github.com/andresriancho/w3af'
+        'w3af.desktop')
+md5sums=('SKIP'
          '68fde1a829b8392fa4db4fa606c1cbe7')
-options=(!strip)
+
+_checkout() {
+  cd "$srcdir/w3af"
+  if [[ $(git describe --tags) != $pkgver ]] ; then
+    git checkout $pkgver
+  fi
+}
 
 prepare() {
   cd "$srcdir/w3af"
 
+  _checkout
+
   # Delete some of the stuff from w3af-extlib (stuff that needs to be installed) -> dependencies
-  rm -rf w3af/extlib/{fpconst-0.7.2,SOAPpy}
+  rm -rf w3af/extlib/fpconst-0.7.2
+  rm -rf w3af/extlib/SOAPpy
 
   # Enforce python2
   sed -i -e 's|#!\s*/usr/bin/python[^\d.]*$|#!/usr/bin/python2|' \
@@ -29,10 +43,15 @@ prepare() {
          $(find . -name '*.py') w3af_{console,gui}
 
   # Change the default metasploit location.
-  sed -i 's|/opt/metasploit3|/usr/share/metasploit|' core/controllers/miscSettings.py
+  #sed -i 's|/opt/metasploit3|/usr/share/metasploit|' core/controllers/miscSettings.py
 }
 
 package() {
+  cd "$srcdir/w3af"
+
+  _checkout
+
+  # Base directories.
   install -dm755 "$pkgdir/usr/share/w3af"
   install -dm755 "$pkgdir/usr/bin"
   install -dm755 "$pkgdir/usr/share/applications/"
