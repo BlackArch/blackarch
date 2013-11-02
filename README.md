@@ -25,9 +25,9 @@ You can get in touch with the BlackArch team. Just check out the following:
 
 **Mail:** blackarchlinux@gmail.com
 
-**IRC:** irc://irc.genscripts.net/blackarch
+**IRC:** [irc://irc.genscripts.net:6667/blackarch](irc://irc.genscripts.net:6667/blackarch)
 
-Quick Start
+Setup
 -----------
 
 Add this to
@@ -35,15 +35,26 @@ Add this to
 
 ```
 [blackarch]
-SigLevel = Optional TrustAll
 Server = http://www.blackarch.org/pub/blackarch/$arch
 ```
 
-and run
+For package signing, pull in and sign the package signing keys:
+
+```
+ # pacman-key -r 12135932909A15567BCC2AA91FA5B9C987E7BDF3
+ # pacman-key --lsign-key 12135932909A15567BCC2AA91FA5B9C987E7BDF3
+ # pacman-key -r 4345771566D76038C7FEB43863EC0ADBEA87E4E3
+ # pacman-key --lsign-key 4345771566D76038C7FEB43863EC0ADBEA87E4E3
+```
+
+Now run
 
  ```
  # pacman -Sy
  ```
+
+Installing packages
+-------------------
 
 You may now install tools from the BlackArch repository. To list all of the available tools, run
 

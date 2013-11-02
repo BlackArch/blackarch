@@ -3,26 +3,28 @@ pkgver=1.9.5
 pkgrel=1
 pkgdesc="A Python tool written to automate SOAP pentesting of web services"
 url="https://www.owasp.org/index.php/Category:OWASP_WSFuzzer_Project"
-arch=(any)
+arch=('any')
 license=('LGPL')
 depends=('python2' 'python2-pyxml' 'java-runtime')
 source=("http://downloads.sourceforge.net/project/wsfuzzer/wsfuzzer/version1.9.5/wsfuzzer-$pkgver.tar.gz")
 md5sums=('43d96bf35eb1d61d6e99ffd228d8114b')
 
+prepare() {
+  cd "$srcdir"
+
+  sed -i '1i\#!/usr/bin/env python2' *.py
+}
+
 package() {
   cd "$srcdir"
   
   # Base directories.
-  install -dm755 "$pkgdir/usr/share/wsfuzzer"
   install -dm755 "$pkgdir/usr/bin/"
+  install -dm755 "$pkgdir/usr/share/wsfuzzer"
 
   cp -a --no-preserve=ownership * "$pkgdir/usr/share/wsfuzzer"
 
-cat > "$pkgdir/usr/bin/wsfuzzer" << EOF
-#!/bin/sh
-cd /usr/share/wsfuzzer
-python2 ./WSFuzzer.py \$@
-EOF
- chmod +x "$pkgdir/usr/bin/wsfuzzer"
-}
+  find "$pkgdir" -name .svn -exec rm -rf {} +
 
+  ln -s /usr/share/wsfuzzer/WSFuzzer.py "$pkgdir/usr/bin/wsfuzzer"
+}

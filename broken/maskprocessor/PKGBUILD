@@ -1,0 +1,36 @@
+pkgname=maskprocessor
+pkgver=0.69
+groups=('blackarch' 'blackarch-password-attacks')
+pkgrel=1
+pkgdesc="A High-Performance word generator with a per-position configurable charset"
+arch=('i686' 'x86_64')
+url='http://hashcat.net/wiki/doku.php?id=maskprocessor'
+license=('custom')
+makedepends=('p7zip')
+source=("http://hashcat.net/files/maskprocessor-$pkgver.7z")
+md5sums=('60fb7ac55650dba9d60d9a16e32ffef8')
+
+prepare() {
+  cd "$srcdir/maskprocessor-$pkgver"
+
+  sed -i 's|dicts/|"$1"/|' generate.sh
+  sed -i 's|./mp64.bin|/usr/bin/maskprocessor|' generate.sh
+}
+
+package() {
+  cd "$srcdir/maskprocessor-$pkgver"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/maskprocessor"
+
+  # Bin.
+  if [[ "$CARCH" == 'x86_64' ]]; then
+    install -m755 mp64.bin "$pkgdir/usr/bin/mp64"
+    ln -s mp64 "$pkgdir/usr/bin/maskprocessor"
+  elif [[ "$CARCH" == 'i686' ]]; then
+    install -m755 mp32.bin "$pkgdir/usr/bin/mp32"
+    ln -s mp32 "$pkgdir/usr/bin/maskprocessor"
+  fi
+  install -m755 generate.sh "$pkgdir/usr/share/maskprocessor"
+}
