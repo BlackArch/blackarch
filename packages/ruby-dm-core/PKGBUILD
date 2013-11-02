@@ -1,19 +1,21 @@
 pkgname=ruby-dm-core
-_gemname=dm-core
+_gemname=${pkgname#ruby-}
 pkgver=1.2.1
 pkgrel=1
 pkgdesc="DataMapper core library"
 arch=('any')
-license=('')
-makedepends=('ruby')
-depends=('ruby-addressable')
-url='https://github.com/datamapper/dm-core'
-source=("http://rubygems.org/downloads/dm-core-$pkgver.gem")
+url="http://github.com/datamapper/dm-core"
+license=('custom')
+depends=('ruby' 'rubygems')
+source=(http://rubygems.org/downloads/${_gemname}-${pkgver}.gem)
+noextract=(${_gemname}-${pkgver}.gem)
 md5sums=('ae4da482e5a28bda18c37ec00fdf3912')
-noextract=("dm-core-$pkgver.gem")
 
 package() {
-  cd "$srcdir"
-  local _gemdir=$(ruby -e 'puts Gem.default_dir')
-  gem install --ignore-dependencies --no-user-install -i "$pkgdir$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
+  cd "${srcdir}"
+  export HOME=/tmp
+  local _gemdir="$(ruby -rubygems -e'puts Gem.default_dir')"
+  gem install --no-user-install --ignore-dependencies -i "${pkgdir}${_gemdir}" -n "${pkgdir}/usr/bin" ${_gemname}-${pkgver}.gem
+  install -d ${pkgdir}/usr/share/licenses/${pkgname} 
+  install -D -m644 ${pkgdir}/usr/lib/ruby/gems/*/gems/${_gemname}-${pkgver}/LICENSE ${pkgdir}/usr/share/licenses/${pkgname}/LICENSE 
 }
