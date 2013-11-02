@@ -50,7 +50,7 @@ For package signing, pull in and sign the package signing keys:
 Now run
 
  ```
- # pacman -Sy
+ # pacman -Syyu
  ```
 
 Installing packages
