@@ -1,0 +1,43 @@
+pkgname=hashcat-utils
+groups=('blackarch' 'blackarch-password-attacks')
+pkgver=0.9
+pkgrel=1
+pkgdesc="Utilites for Hashcat"
+arch=('i686' 'x86_64')
+url='http://hashcat.net/wiki/doku.php?id=hashcat_utils'
+license=('custom')
+makedepends=('p7zip')
+if [[ "$CARCH" == 'x86_64' ]]; then
+      source=("http://hashcat.net/files/hashcat-utils-$pkgver-64.7z")
+elif [[ "$CARCH" == 'i686' ]]; then
+      source=("http://hashcat.net/files/hashcat-utils-$pkgver-32.7z")
+fi
+md5sums=('7199585f9e5bc8fafee0c67a3f44fb74')
+
+prepare() {
+  cd "$srcdir/hashcat-utils-$pkgver"
+
+  sed -i 's/release: posix windows/release: posix/' Makefile
+  sed -i '/WINDOWS/d' Makefile
+  sed -i '/*.exe/d' Makefile
+}
+
+build() {
+  cd "$srcdir/hashcat-utils-$pkgver"
+  make
+}
+
+package() {
+  cd "$srcdir/hashcat-utils-$pkgver"
+
+  # Base directory.
+  install -dm755 "$pkgdir/usr/bin"
+
+  # Bin.
+  for bin in combinator.bin cutb.bin expander.bin gate.bin hcstatgen.bin \
+    len.bin morph.bin permute.bin prepare.bin req.bin rli.bin rli2.bin \
+    splitlen.bin 
+  do
+    install -m755 "$bin" "$pkgdir/usr/bin/hashcat-${bin%.bin}"
+  done
+}

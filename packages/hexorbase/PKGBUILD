@@ -1,0 +1,35 @@
+pkgname=hexorbase
+pkgver=6
+pkgrel=1
+pkgdesc="A database application designed for administering and auditing multiple database servers simultaneously from a centralized location. It is capable of performing SQL queries and bruteforce attacks against common database servers (MySQL, SQLite, Microsoft SQL Server, Oracle, PostgreSQL)."
+url='https://code.google.com/p/hexorbase/'
+arch=('any')
+license=('GPL3')
+depends=('python2' 'python2-pyqt4' 'python2-mysqldb' 'python2-psycopg2' 'pymssql' 'python2-qscintilla')
+optdepends=('python2-cx_oracle: Oracle database')
+source=('svn+http://hexorbase.googlecode.com/svn/HexorBase/')
+md5sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/HexorBase"
+
+  _ver=$(svnversion)
+  printf "%s" "${_ver//[[:alpha:]]}"
+}
+
+package() {
+  cd "$srcdir/HexorBase"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/share/hexorbase"
+  install -dm755 "$pkgdir/usr/bin/"
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/hexorbase"
+
+  cat > "$pkgdir/usr/bin/hexorbase" << EOF
+#!/bin/sh
+cd /usr/share/hexorbase
+python2 /usr/share/hexorbase/execute.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/hexorbase"
+}

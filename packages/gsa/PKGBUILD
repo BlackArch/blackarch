@@ -1,0 +1,32 @@
+pkgname=gsa
+pkgver=4.0.2
+pkgrel=1
+pkgdesc="OpenVAS web frontend"
+arch=('i686' 'x86_64')
+url='http://www.openvas.org/'
+license=('GPL')
+depends=('glibc' 'libmicrohttpd' 'libxml2' 'glib2' 'libxslt' 'gnutls' 'openvas-libraries')
+makedepends=('gcc' 'automake' 'cmake' 'doxygen')
+backup=('etc/openvas/gsad_log.conf')
+options=('!buildflags')
+source=('http://wald.intevation.org/frs/download.php/1422/greenbone-security-assistant-4.0.2.tar.gz')
+md5sums=('d0c81070cb58cad1b7b41e51d69d3288')
+
+prepare() {
+  cd "$srcdir/greenbone-security-assistant-$pkgver"
+
+  find . -name 'CMakeLists.txt' -exec sed -i 's/-Werror//' {} \;
+}
+
+build() {
+  cd "$srcdir/greenbone-security-assistant-$pkgver"
+
+  cmake -DSBINDIR=/usr/bin -DCMAKE_INSTALL_PREFIX=/usr -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var .
+  make
+}
+
+package() {
+  cd "$srcdir/greenbone-security-assistant-$pkgver"
+
+  make DESTDIR="$pkgdir/" install
+}

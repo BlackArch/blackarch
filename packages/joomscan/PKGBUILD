@@ -7,23 +7,30 @@ arch=('i686' 'x86_64')
 depends=('perl-switch' 'perl-www-mechanize')
 license=('LGPL3')
 url='http://joomscan.sourceforge.net/'
-source=("joomscan.sh"
-        "http://sourceforge.net/projects/$pkgname/files/$pkgname/2012-03-10/$pkgname-latest.zip")
-md5sums=('70ff2078f474b98f094be3bf5df94de8'
-         '82a8610dbee65bc587c05870910b545d')
+source=("http://sourceforge.net/projects/joomscan/files/joomscan/${pkgver//./-}/joomscan-latest.zip")
+md5sums=('82a8610dbee65bc587c05870910b545d')
 
 package() {
-    install -d $pkgdir/usr/bin
-    install -d $pkgdir/usr/share/$pkgname
-    install -d $pkgdir/usr/share/doc/$pkgname
-    install -Dm755 $srcdir/$pkgname.sh $pkgdir/usr/share/$pkgname/$pkgname.sh
-    install -Dm755 $srcdir/$pkgname.pl $pkgdir/usr/share/$pkgname/$pkgname.pl
-    install -Dm755 $srcdir/${pkgname}db.txt $pkgdir/usr/share/$pkgname/${pkgname}db.txt 
-    install -Dm755 $srcdir/${pkgname}db-info.txt $pkgdir/usr/share/$pkgname/${pkgname}db-info.txt
+  cd "$srcdir"
 
-    cp --no-preserve=ownership -r $srcdir/doc/* $pkgdir/usr/share/doc/$pkgname/
-    cp --no-preserve=ownership -r $srcdir/report $pkgdir/usr/share/$pkgname/
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/joomscan"
+  install -dm755 "$pkgdir/usr/share/doc/joomscan"
 
-    ln -s ../share/$pkgname/$pkgname.sh "$pkgdir/usr/bin/$pkgname"
-    ln -s ../doc/$pkgname "$pkgdir/usr/share/$pkgname/doc"
+  install -m755 joomscan.pl "$pkgdir/usr/share/joomscan"
+  install -m755 joomscandb.txt "$pkgdir/usr/share/joomscan"
+  install -m755 joomscandb-info.txt "$pkgdir/usr/share/joomscan"
+
+  cp --no-preserve=ownership -R doc/* "$pkgdir/usr/share/doc/joomscan"
+  cp --no-preserve=ownership -R report "$pkgdir/usr/share/joomscan"
+
+  # This is necessary to stop a warning from appearing.
+  ln -s /usr/share/doc/joomscan "$pkgdir/usr/share/joomscan/doc"
+
+  cat > "$pkgdir/usr/bin/joomscan" <<EOF
+#!/bin/sh
+cd /usr/share/joomscan && ./joomscan.pl "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/joomscan"
 }

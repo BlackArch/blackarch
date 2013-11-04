@@ -1,0 +1,35 @@
+pkgname=openvas-libraries
+pkgver=6.0.1
+pkgrel=1
+pkgdesc="The OpenVAS libraries"
+arch=('i686' 'x86_64')
+url="http://www.openvas.org/"
+license=('GPL')
+depends=('gnutls' 'libpcap' 'gpgme' 'cmake' 'bison')
+makedepends=('pkg-config')
+options=('!makeflags')
+# The file downloaded is determined by the `/1417/` part. Changing `pkgver`
+#  does not change the file downloaded so we hard code the version number to
+#  avoid confusion.
+# Here's a list of downloads for future reference: http://wald.intevation.org/frs/?group_id=29
+source=("http://wald.intevation.org/frs/download.php/1417/openvas-libraries-6.0.1.tar.gz")
+md5sums=('ece48f91998597d4ad700ce3fb1d5fa3')
+
+prepare() {
+  cd "$srcdir/openvas-libraries-$pkgver"
+
+  find . -name 'CMakeLists.txt' -exec sed -i 's/-Werror//' {} \;
+}
+
+build() {
+  cd "$srcdir/openvas-libraries-$pkgver"
+
+  cmake -DCMAKE_INSTALL_PREFIX=/usr -DLIBDIR=/usr/lib -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var .
+  make CFLAGS=-Wno-error CC=--disable-werror
+}
+
+package() {
+  cd "$srcdir/openvas-libraries-$pkgver"
+
+  make "DESTDIR=$pkgdir/" install
+}

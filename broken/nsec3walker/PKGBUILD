@@ -1,0 +1,40 @@
+pkgname=nsec3walker
+pkgver=20101223
+pkgrel=1
+pkgdesc="Enumerates domain names using DNSSEC"
+url='http://dnscurve.org/nsec3walker.html'
+arch=('any')
+license=('custom')
+source=("http://dnscurve.org/nsec3walker-$pkgver.tar.gz")
+md5sums=('4ab591a5bb0c89bcd87a93c1e03bcd39')
+
+prepare() {
+  cd "$srcdir/nsec3walker-$pkgver"
+
+  sed -i 's|env python|env python2|' *
+  sed -i 's|collect.todo|/tmp/collect.todo|' collect
+}
+
+build() {
+  cd "$srcdir/nsec3walker-$pkgver"
+
+  make
+}
+
+package() {
+  cd "$srcdir/nsec3walker-$pkgver"
+
+  # Base directory.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/nsec3walker"
+
+  for bin in collect dicthashes query randomhashes unhash ; do
+    install -m755 $bin "$pkgdir/usr/share/nsec3walker"
+    cat > "$pkgdir/usr/bin/nsec3walker-$bin" <<EOF
+#!/bin/sh
+cd /usr/share/nsec3walker
+./$bin "\$@"
+EOF
+    chmod +x "$pkgdir/usr/bin/nsec3walker-$bin" 
+  done
+}

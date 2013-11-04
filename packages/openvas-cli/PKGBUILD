@@ -1,0 +1,27 @@
+pkgname=openvas-cli
+pkgver=1.2.0
+pkgrel=1
+pkgdesc="The OpenVAS Command-Line Interface"
+arch=('i686' 'x86_64')
+url="http://www.openvas.org/"
+license=('GPL')
+depends=('gtk2' 'openvas-libraries' 'cmake')
+options=('!makeflags' '!buildflags')
+# The file downloaded is determined by the `/1323/` part. Changing `pkgver`
+#  does not change the file downloaded so we hard code the version number to
+#  avoid confusion.
+source=('http://wald.intevation.org/frs/download.php/1323/openvas-cli-1.2.0.tar.gz')
+md5sums=('e712eb71f3a13cc1b70b50f696465f8e')
+
+build() {
+  cd "$srcdir/openvas-cli-$pkgver"
+
+  cmake -DCMAKE_INSTALL_PREFIX=/usr -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var .
+  make
+}
+
+package() {
+  cd "$srcdir/openvas-cli-$pkgver"
+
+  make DESTDIR="$pkgdir/" install
+}
