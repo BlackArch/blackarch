@@ -1,0 +1,36 @@
+pkgname=conscan
+pkgver=0.5
+pkgrel=1
+pkgdesc="Concrete5 blackbox vulnerability scanner"
+groups=('blackarch' 'blackarch-intel')
+arch=('any')
+url='https://github.com/TheXerocouk/conscan'
+license=('GPL')
+source=('git+https://github.com/TheXerocouk/conscan')
+sha1sums=('SKIP')
+
+prepare() {
+  cd "$srcdir/conscan"
+
+  sed -i 's|/bin/python|/bin/python2|' conscan.py
+}
+
+package() {
+  cd "$srcdir/conscan"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/share/conscan"
+  install -dm755 "$pkgdir/usr/bin"
+
+  cp -R --no-preserve=ownership data modules "$pkgdir/usr/share/conscan"
+  chmod -R 644 "$pkgdir/usr/share/conscan"
+  chmod -R a+X "$pkgdir/usr/share/conscan"
+
+  install -m755 conscan.py "$pkgdir/usr/share/conscan"
+
+  cat > "$pkgdir/usr/bin/conscan" <<EOF
+cd /usr/share/conscan
+./conscan.py "\$@"
+EOF
+chmod +x "$pkgdir/usr/bin/conscan"
+}
