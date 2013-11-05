@@ -1,64 +1,46 @@
 pkgname=peach
-_pkgname=Peach
 pkgver=3.0.202
-_shortver=3.0
 pkgrel=1
 pkgdesc="A SmartFuzzer that is capable of performing both generation and mutation based fuzzing"
 arch=('i686' 'x86_64')
 url=('http://peachfuzzer.com/')
 license=('MIT')
 depends=('mono' 'python2' 'giflib')
-if test "$CARCH" == x86_64; then
-  depends+=(gcc-multilib)
+if [[ "$CARCH" == x86_64 ]] ; then
+  depends+=('gcc-multilib')
 fi
-source=("http://downloads.sourceforge.net/project/peachfuzz/$_pkgname/$_shortver/$pkgname-$pkgver-source.zip")
+source=("http://downloads.sourceforge.net/project/peachfuzz/Peach/${pkgver%.*}/peach-$pkgver-source.zip")
 md5sums=('dfe208dca3ca777968f16e49f2e7e2f5')
 
 prepare() {
-  cd "$srcdir/$pkgname-$pkgver-source"
+  cd "$srcdir/peach-$pkgver-source"
 
-  sed -i "s|'win32', 'linux', 'darwin'|'linux'|" "$srcdir/$pkgname-$pkgver-source/build/config/doc.py"
+  sed -i "s|'win32', 'linux', 'darwin'|'linux'|" "$srcdir/peach-$pkgver-source/build/config/doc.py"
 
-  if [ "$CARCH" == "i686" ]; then
-    sed -i "s|'x86', 'x86_64'|'x86'|" "$srcdir/$pkgname-$pkgver-source/build/config/linux.py"
+  if [ "$CARCH" == i686 ]; then
+    sed -i "s|'x86', 'x86_64'|'x86'|" "$srcdir/peach-$pkgver-source/build/config/linux.py"
   else
-    sed -i "s|'x86', 'x86_64'|'x86_64'|" "$srcdir/$pkgname-$pkgver-source/build/config/linux.py"
+    sed -i "s|'x86', 'x86_64'|'x86_64'|" "$srcdir/peach-$pkgver-source/build/config/linux.py"
   fi
-
 }
 
 package() {
-  cd "$srcdir/$pkgname-$pkgver-source"
+  cd "$srcdir/peach-$pkgver-source"
   python2 ./waf configure
   python2 ./waf build --variant=release
-  python2 ./waf install --variant=release --destdir="$pkgdir/usr/share/$pkgname"
+  python2 ./waf install --variant=release --destdir="$pkgdir/usr/share/peach"
 
-  # Base directories
+  # Base directories.
   install -dm755 "$pkgdir/usr/bin"
-  install -dm755 "$pkgdir/usr/share/$pkgname"
+  install -dm755 "$pkgdir/usr/share/peach"
 
-  cd "$pkgdir"
-
-  if [ "$CARCH" == "i686" ]; then
-    mv usr/share/peach/output/linux_x86_release/bin/* "$pkgdir/usr/share/$pkgname/"
+  if [ "$CARCH" == i686 ]; then
+    mv "$pkgdir/usr/share/peach/output/linux_x86_release/bin"/* "$pkgdir/usr/share/peach/"
   else
-    mv usr/share/peach/output/linux_x86_64_release/bin/* "$pkgdir/usr/share/$pkgname/"
+    mv "$pkgdir/usr/share/peach/output/linux_x86_64_release/bin"/* "$pkgdir/usr/share/peach/"
   fi
 
-  rm -rf "$pkgdir/usr/share/$pkgname/output"
+  rm -rf "$pkgdir/usr/share/peach/output"
 
-  # Make joint script.
-  cat > "$pkgdir/usr/bin/peach" <<EOF
-#!/bin/sh
-cd /usr/share/peach
-./peach "\$@"
-cd -
-EOF
-  chmod +x "$pkgdir/usr/bin/peach"
-
-  #notify user
-  echo ""
-  echo "[+] run '/usr/bin/peach' to call the peach fuzzer" 
-  echo "[+] run 'peach samples/HelloWorld.xml' to verify your peach installation."
-  echo ""
+  ln -s /usr/share/peach/peach "$pkgdir/usr/bin/peach"
 }
