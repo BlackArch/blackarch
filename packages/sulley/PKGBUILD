@@ -1,0 +1,29 @@
+pkgname=sulley
+pkgver=1.0.b139d7c
+pkgrel=1
+pkgdesc="A pure-python fully automated and unattended fuzzing framework"
+arch=('any')
+url=('https://github.com/OpenRCE/sulley/')
+license=('GPL2')
+makedepends=('git')
+depends=('python2' 'libpcap' 'python2-pcapy' 'impacket')
+_gitname=('sulley')
+source=("$_gitname"::'git://github.com/OpenRCE/sulley.git')
+md5sums=('SKIP')
+
+pkgver() {
+  cd "${srcdir}/${_gitname}"
+  # grabbing major-version from install script
+  printf "%s.%s" $(grep -i 'define PRODUCT_VERSION' installer/Nullsoft\ Installer\ Script.nsi | cut -d'"' -f2) "$(git rev-parse --short HEAD)"
+}
+
+prepare() {
+  cd "${srcdir}/${_gitname}"
+  grep -iRl '/usr/bin/python' "${srcdir}/${_gitname}" | xargs sed -i 's|#!.*/usr/bin/python$|#!/usr/bin/python2|'
+}
+
+package() {
+  cd "${srcdir}/${_gitname}"
+  install -d -m755 "${pkgdir}/usr/share/sulley"
+  cp -a * "${pkgdir}/usr/share/sulley/"
+}
