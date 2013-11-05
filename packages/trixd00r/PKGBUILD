@@ -5,20 +5,28 @@ pkgdesc="An advanced and invisible userland backdoor based on TCP/IP for UNIX sy
 url='http://nullsecurity.net/tools/backdoor.html'
 arch=('x86_64' 'i686')
 license=('custom')
+depends=('libpcap')
 source=("http://nullsecurity.net/tools/backdoor/trixd00r-$pkgver.tar.gz")
 md5sums=('01d679c8bdbcea9db29455669165e216')
+
+prepare() {
+  cd "$srcdir/trixd00r-$pkgver"
+
+  # Fix typo.
+  sed -i 's/LDFLGAS_IRIX/LDFLAGS_IRIX/' Makefile
+}
 
 build() {
   cd "$srcdir/trixd00r-$pkgver"
 
   # We can't build the solaris client.
-  # The server should be built for Linux so the 'linux' arch must be last in the list.
+  # The client should be built for Linux so the 'linux' arch must be last in the list.
   for arch in freebsd netbsd openbsd macos aix hpux irix linux ; do
     msg2 "building $arch client..."
     rm -rf $arch
     make MAKE=make $arch
     mkdir $arch
-    mv trixd00r trixd00r-$arch
+    mv trixd00rd trixd00rd-$arch
   done
 }
 
@@ -31,8 +39,8 @@ package() {
   install -dm755 "$pkgdir/usr/share/doc/trixd00r"
 
   # Bin.
-  install -m755 trixd00r-* "$pkgdir/usr/share/trixd00r"
-  install -m755 trixd00rd "$pkgdir/usr/bin"
+  install -m755 trixd00rd-* "$pkgdir/usr/share/trixd00r"
+  install -m755 trixd00r "$pkgdir/usr/bin"
 
   # Docs.
   install -m644 docs/* "$pkgdir/usr/share/doc/trixd00r"
