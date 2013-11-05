@@ -17,9 +17,9 @@ clear_mounts() {
 }
 trap clear_mounts EXIT
 
-bind_mount() {
+track_mount() {
 	mounts+=("$2")
-	mount --bind "$1" "$2"
+	mount "$@"
 }
 
 case "$1" in
@@ -29,6 +29,8 @@ case "$1" in
 			exit 1
 		fi
 
+		# TODO: pacman.conf
+		# TODO: mirrorlist
 		mkdir -p "$chroot"
 		pacstrap -d "$chroot" base base-devel namcap zsh tmux sudo
 		arch-chroot "$chroot" groupadd test
@@ -48,9 +50,8 @@ case "$1" in
 		echo 'diving into chroot...'
 
 		echo 'mounting...'
-		# TODO: pacman.conf
-		# TODO: mirrorlist
-		bind_mount "$blackarch" "$running/home/test"
+		track_mount "$blackarch" "$running/home/test" --bind
+		track_mount "$running" "$running" --rbind
 
 		arch-chroot "$running" su - test
 		;;
