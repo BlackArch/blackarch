@@ -1,0 +1,44 @@
+pkgname=casefile
+pkgver=1.0.1
+pkgrel=1
+groups=('blackarch' 'blackarch-intel' 'blackarch-analysis')
+pkgdesc="The little brother to Maltego without transforms, but combines graph and link analysis to examine links between manually added data to mind map your information"
+arch=('i686' 'x86_64')
+url='http://www.paterva.com/web6/products/casefile.php'
+license=('GPL')
+depends=('java-runtime')
+install='casefile.install'
+source=("https://www.paterva.com/cf10/community/maltego-CF.${pkgver}_community-2012-03-14.zip"
+        'http://www.paterva.com/web6/products/casefile_entities.mtz'
+        'http://www.packetninjas.net/storage/socialnet/SocialNetEntityPackage.mtz'
+        'http://ctas.paterva.com/TDSTransforms/GraphAPI/facebookObject.mtz'
+        'http://ctas.paterva.com/TDSTransforms/BuiltWith/BuiltWithTechnology.mtz')
+md5sums=('8d009eae5c899d74458712fe0e1458e1'
+         '0e927eb7dbc8ee6ecf055fe4a61a125d'
+         '96a1579e80d6b06e63263dfea0ff2121'
+         '9b3a2a76d41d93954ff35c7e95b9c819'
+         '2e36262439ff6610e3e78d38014df680')
+
+package() {
+  cd "$srcdir/v3.0"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/share/casefile"
+  install -dm755 "$pkgdir/usr/share/casefile/entities"
+  install -dm755 "$pkgdir/usr/bin"
+
+  cp -a --no-preserve=ownership bin etc ide maltego maltego-core-platform maltego-ui platform \
+         "$pkgdir/usr/share/casefile"
+  install -Dm644 "$srcdir/casefile_entities.mtz" "$pkgdir/usr/share/casefile/entities/"
+  install -Dm644 "$srcdir/SocialNetEntityPackage.mtz" "$pkgdir/usr/share/casefile/entities/"
+  install -Dm644 "$srcdir/facebookObject.mtz" "$pkgdir/usr/share/casefile/entities/"
+  install -Dm644 "$srcdir/BuiltWithTechnology.mtz" "$pkgdir/usr/share/casefile/entities/"
+
+  # Create joint script.
+  cat > "$pkgdir/usr/bin/casefile" <<EOF
+#!/bin/sh
+cd /usr/share/casefile/bin
+./maltego "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/casefile"
+}
