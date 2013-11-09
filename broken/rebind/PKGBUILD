@@ -1,0 +1,42 @@
+pkgname=rebind
+pkgver=0.3.4
+pkgrel=1
+pkgdesc="DNS Rebinding Tool"
+arch=('i686' 'x86_64')
+url="http://code.google.com/p/rebind/"
+license=('MIT')
+depends=('sqlite3' 'readline')
+makedepends=('subversion')
+source=("https://rebind.googlecode.com/files/rebind_0-3-4.tar.gz")
+md5sums=('aadb50e55ebb25827c075949c3808276')
+
+
+prepare(){
+  cd "$srcdir/rebind/dev"
+  sed -i 's/env python/env python2/' *.py
+  chmod +x *.py
+}
+
+build(){
+  cd "$srcdir/rebind/src"
+  make
+}
+
+package(){
+  cd "$srcdir/rebind"
+
+  #cleaning binaries from bin dir
+  rm -rf bin/rebind_{i686,"x86-64"}
+ 
+  
+  #Base directories
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/rebind"
+ 
+  for i in docs dev src/www bin src; do
+      cp -ar --no-preserve=ownership $i "$pkgdir/usr/share/rebind"
+  done
+  
+  install -m755 src/rebind "$pkgdir/usr/bin/rebind"
+}
+
