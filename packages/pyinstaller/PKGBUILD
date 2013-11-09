@@ -1,0 +1,36 @@
+pkgname=pyinstaller
+pkgver=2.1
+pkgrel=1
+epoch=2
+pkgdesc="A program that converts (packages) Python programs into stand-alone executables, under Windows, Linux, Mac OS X, Solaris and AIX."
+arch=('any')
+url="http://www.pyinstaller.org/"
+license=('GPL')
+depends=('python2')
+source=("https://pypi.python.org/packages/source/P/PyInstaller/PyInstaller-$pkgver.tar.gz")
+md5sums=('248531f6fc94b0ffb02473321496d6d0')
+options=('!strip' '!emptydirs')
+
+prepare() {
+  cd "$srcdir/PyInstaller-$pkgver"
+  grep -RIl '^#!.*python' . | xargs sed -i '/^#!/ s,.*,#! /usr/bin/env python2,'
+}
+
+
+package() {
+  cd "$srcdir/PyInstaller-$pkgver"
+   
+  # Clean up
+  rm -rf "bootloader" "old" "tests" "PKG-INFO" "setup.py"
+
+  # Base directories
+  install -d -m 755 "$pkgdir/usr/bin"
+  install -d -m 755 "$pkgdir/usr/share/doc/pyinstaller"
+  install -d -m 755 "$pkgdir/usr/share/pyinstaller"
+
+  mv "doc/Manual.pdf" "$pkgdir/usr/share/doc/pyinstaller" && rm -rf "doc"
+  cp -ra --no-preserve=ownership . "$pkgdir/usr/share/pyinstaller"
+
+  ln -s "/usr/share/pyinstaller/pyinstaller.py" "$pkgdir/usr/bin/pyinstaller"
+}
+
