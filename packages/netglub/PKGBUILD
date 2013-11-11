@@ -6,37 +6,38 @@ arch=('i686' 'x86_64')
 groups=('blackarch-intel' 'blackarch')
 url='http://www.netglub.org'
 license=('GPL')
-source=("http://redmine.lab.diateam.net/attachments/download/1/netglub-${pkgver}.tar.gz")
+source=("http://redmine.lab.diateam.net/attachments/download/1/netglub-$pkgver.tar.gz")
 depends=('mariadb' 'qt4' 'sqlitebrowser' 'gdb' 'graphviz')
 md5sums=('c91005ccbd1010b7883f07e2d0e08e0a')
 options=('!strip')
 
 prepare() {
-  cd "${srcdir}"/netglub-${pkgver}/master
-  sed -i 's,'"#include <getopt.h>"',&\n#include <unistd.h>,' src/main.cpp
+  cd "$srcdir/netglub-$pkgver"
 
-  cd "${srcdir}"/netglub-${pkgver}/slave
-  find data/transforms -type f -exec sed -i 's|#!/usr/bin/python|#!/usr/bin/python2|g' '{}' \;
+  sed -i 's,'"#include <getopt.h>"',&\n#include <unistd.h>,' master/src/main.cpp
+
+  find slave/data/transforms -type f -exec sed -i 's|#!/usr/bin/python|#!/usr/bin/python2|g' '{}' \;
 }
 
 build() {
-  cd "${srcdir}"/netglub-${pkgver}/master
+  cd "$srcdir/netglub-$pkgver/master"
   qmake-qt4
   make
 
-  cd "${srcdir}"/netglub-${pkgver}/slave
+  cd "$srcdir/netglub-$pkgver/slave"
   qmake-qt4
   make
 
-  cd "${srcdir}"/netglub-${pkgver}/qng
+  cd "$srcdir/netglub-$pkgver/qng"
   qmake-qt4
   scrub=$(awk '/LIBS.+=/' Makefile)
-  sed -i 's,'"$scrub"',&-lz,' Makefile
+  sed -i 's|'"$scrub"'|&-lz|' Makefile
+  sed -i '/^INCPATH/s|=|= -I/usr/include/graphviz|' Makefile
   make
 }
 
 package() {
-  cd "${srcdir}"/netglub-${pkgver}
+  cd "$srcdir/netglub-$pkgver"
 
   # Base directories.
   install -dm755 "$pkgdir/usr/bin"
