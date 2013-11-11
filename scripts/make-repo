@@ -2,18 +2,35 @@
 # usage: make-repo [package_directory] [build_directory]
 # May be run from anywhere. Must live in '$projectroot/scripts'.
 
-trap_exit() {
-	# Kill gpg-agent.
-	kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")"
-}
-trap trap_exit EXIT
+sign=true
+for arg ; do
+	case "$arg" in
+		--nosign|--test)
+			sign=false
+			;;
+		*)
+			echo >&2 "'$arg' not recognized."
+			exit 1
+			;;
+	esac
+done
 
-# Start gpg-agent.
-[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
-[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
+if $sign ; then
+	trap_exit() {
+		# Kill gpg-agent.
+		kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")"
+	}
+	trap trap_exit EXIT
 
-# Cache keys/rights.
-gpg -s < /dev/null > /dev/null
+	# Start gpg-agent.
+	[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
+	[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
+
+	# Cache keys
+	gpg -s < /dev/null > /dev/null
+fi
+
+# Rights cache
 sudo -v
 
 # Don't use the X passphrase prompt.
@@ -68,7 +85,11 @@ while read item ; do (
 	rm -f *.pkg.tar.xz
 
 	# Build.
-	makepkg -s --nocheck --noconfirm --sign 2>&1
+	if $sign ; then
+		makepkg -s --nocheck --noconfirm --sign 2>&1
+	else
+		makepkg -s --nocheck --noconfirm 2>&1
+	fi
 
 	# Log errors.
 	ret=$?
@@ -77,10 +98,12 @@ while read item ; do (
 		continue
 	fi
 
-	# Move the signatures.
-	# These may interfere with package installation.
-	mv *.pkg.tar.xz.sig "$repodir/signatures" ||
-	  echo >&2 "<-!-> '$pack' signing failed"
+	if $sign ; then
+		# Move the signatures.
+		# These may interfere with package installation.
+		mv *.pkg.tar.xz.sig "$repodir/signatures" ||
+		  echo >&2 "<-!-> '$pack' signing failed"
+	fi
 
 	# Install if necessary.
 	if [[ $depth != 1 ]] ; then
@@ -94,5 +117,8 @@ while read item ; do (
 
 # Put together a database.
 cd "$repodir"
-mv signatures/* .
+
+if $sign ; then
+	mv signatures/* .
+fi
 repo-add blackarch.db.tar.gz *.pkg.tar.xz
