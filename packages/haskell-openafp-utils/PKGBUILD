@@ -1,0 +1,35 @@
+pkgname=haskell-openafp-utils
+pkgver=1.3.1.2
+pkgrel=1
+pkgdesc="Assorted utilities to work with AFP data streams"
+arch=('x86_64' 'i686')
+url="http://hackage.haskell.org/package/OpenAFP-Utils"
+license=('custom:PublicDomain')
+depends=('haskell-openafp' 'haskell-iconv' 'haskell-line2pdf' 'haskell-xhtml')
+makedepends=('ghc')
+#install=haskell-openafp-utils.install
+source=(http://hackage.haskell.org/packages/archive/OpenAFP-Utils/$pkgver/OpenAFP-Utils-$pkgver.tar.gz)
+md5sums=('12092abbfbbe0e0456000a44b0f9402b')
+
+build() {
+  cd "$srcdir/OpenAFP-Utils-$pkgver"
+
+  runhaskell Setup configure -O -p --enable-split-objs --enable-shared \
+    --prefix=/usr --docdir="/usr/share/doc/haskell-openafp-utils" \
+    --libsubdir=\$compiler/site-local/\$pkgid
+  runhaskell Setup build
+  runhaskell Setup haddock
+  #runhaskell Setup register --gen-script
+  #runhaskell Setup unregister --gen-script
+  #sed -i -r -e "s|ghc-pkg.*unregister[^ ]* |&'--force' |" unregister.sh
+}
+
+package() {
+  cd "$srcdir/OpenAFP-Utils-$pkgver"
+
+  #install -Dm744 register.sh "$pkgdir/usr/share/haskell/haskell-openafp-utils/register.sh"
+  #install -m744 unregister.sh "$pkgdir/usr/share/haskell/haskell-openafp-utils/unregister.sh"
+  install -dm755 "$pkgdir/usr/share/doc/ghc/html/libraries"
+  ln -s "/usr/share/doc/haskell-openafp-utils/html" "$pkgdir/usr/share/doc/ghc/html/libraries/OpenAFP-Utils"
+  runhaskell Setup copy --destdir="$pkgdir"
+}

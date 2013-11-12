@@ -1,0 +1,35 @@
+pkgname=haskell-line2pdf
+pkgver=0.0.7
+pkgrel=1
+pkgdesc="Simple command-line utility to convert text into PDF"
+arch=('x86_64' 'i686')
+url="http://hackage.haskell.org/package/line2pdf"
+license=('GPL')
+makedepends=('ghc')
+depends=('haskell-regex-compat' 'haskell-mtl')
+install=haskell-line2pdf.install
+source=(http://hackage.haskell.org/packages/archive/line2pdf/$pkgver/line2pdf-$pkgver.tar.gz)
+md5sums=('6679da82457c94f4052cf9ae1b560f10')
+
+build() {
+  cd "$srcdir/line2pdf-$pkgver"
+
+  runhaskell Setup configure -O -p --enable-split-objs --enable-shared \
+    --prefix=/usr --docdir="/usr/share/doc/haskell-line2pdf" \
+    --libsubdir=\$compiler/site-local/\$pkgid
+  runhaskell Setup build
+  runhaskell Setup haddock
+  runhaskell Setup register   --gen-script
+  runhaskell Setup unregister --gen-script
+  sed -i -r -e "s|ghc-pkg.*unregister[^ ]* |&'--force' |" unregister.sh
+}
+
+package() {
+  cd "$srcdir/line2pdf-$pkgver"
+
+  install -Dm744 register.sh "$pkgdir/usr/share/haskell/haskell-line2pdf/register.sh"
+  install -m744 unregister.sh "$pkgdir/usr/share/haskell/haskell-line2pdf/unregister.sh"
+  install -dm755 "$pkgdir/usr/share/doc/ghc/html/libraries"
+  ln -s "/usr/share/doc/haskell-line2pdf/html" "$pkgdir/usr/share/doc/ghc/html/libraries/line2pdf"
+  runhaskell Setup copy --destdir="$pkgdir"
+}
