@@ -1,0 +1,35 @@
+diff -ur orig/CMakeLists.txt nfqueue-bindings-0.4/CMakeLists.txt
+--- orig/CMakeLists.txt	2013-10-20 21:41:59.091133488 -0400
++++ nfqueue-bindings-0.4/CMakeLists.txt	2013-10-20 21:42:10.147800633 -0400
+@@ -26,7 +26,7 @@
+ SET( LIB_INSTALL_DIR  "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}" )
+ 
+ ADD_SUBDIRECTORY(python)
+-ADD_SUBDIRECTORY(perl)
++#ADD_SUBDIRECTORY(perl)
+ 
+ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/nfq_version.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/nfq_version.h)
+ 
+diff -ur orig/Makefile nfqueue-bindings-0.4/Makefile
+--- orig/Makefile	2013-10-20 21:41:59.091133488 -0400
++++ nfqueue-bindings-0.4/Makefile	2013-10-20 21:43:01.631136193 -0400
+@@ -1,5 +1,6 @@
+ PREFIX = /usr/local
+-CMAKE_OPTIONS = -DDEBUG=1 -DCMAKE_VERBOSE_MAKEFILE=0 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(PREFIX)
++PYTHON_EXE=`which python2`
++CMAKE_OPTIONS = -DDEBUG=1 -DCMAKE_VERBOSE_MAKEFILE=0 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(PREFIX) -DPYTHON_EXECUTABLE=$(PYTHON_EXE)
+ CMAKE_EXTRA_OPTIONS =
+ BUILD_DIR = build
+ 
+diff -ur orig/nfq_common.c nfqueue-bindings-0.4/nfq_common.c
+--- orig/nfq_common.c	2013-10-20 21:41:59.091133488 -0400
++++ nfqueue-bindings-0.4/nfq_common.c	2013-10-20 21:43:48.434471551 -0400
+@@ -46,7 +46,7 @@
+ 
+ int queue_unbind(struct queue *self, int af_family)
+ {
+-        if (nfq_unbind_pf(self->_h, af_family)) {
++        if (nfq_unbind_pf(self->_h, af_family) < 0) {
+                 throw_exception("error during nfq_unbind_pf()");
+                 return -1;
+         }
