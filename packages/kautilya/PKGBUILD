@@ -1,0 +1,41 @@
+pkgname=kautilya
+pkgver=0.4.4
+pkgrel=1
+pkgdesc="Pwnage with Human Interface Devices using Teensy++2.0 and Teensy 3.0 devices"
+arch=('i686' 'x86_64')
+groups=('blackarch-exploitation' 'blackarch')
+url='http://code.google.com/p/kautilya'
+license=('GPL3')
+makedepends=('subversion')
+depends=('libpcap' 'ruby-colored' 'ruby-highline')
+source=('svn+http://kautilya.googlecode.com/svn/trunk/')
+md5sums=('SKIP')
+
+prepare() {
+  cd "$srcdir/trunk"
+  sed -i 's|Now copy the generated #{fileout}|Now copy the generated ~/.kautilya/#{fileout}|g' \
+    "$srcdir/trunk/lib/src/methods.rb"
+}
+
+package() {
+  cd "$srcdir/trunk"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/opt/kautilya"
+
+  cp --no-preserve=ownership -R * "$pkgdir/opt/kautilya"
+
+  cat > "$pkgdir/usr/bin/kautilya" <<\EOF
+#!/bin/bash
+
+dir=$HOME/.kautilya
+echo >&2 "Creating '$dir'..."
+mkdir -p "$dir"
+cp -aru /opt/kautilya/* "$dir"
+
+cd "$dir"
+exec ruby "$dir"/kautilya.rb "$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/kautilya"
+}
