@@ -1,0 +1,44 @@
+pkgname=veil
+pkgver=2.1.2.r109
+pkgrel=1
+pkgdesc="A tool designed to generate metasploit payloads that bypass common anti-virus solutions."
+url="https://github.com/veil-evasion/Veil"
+arch=(any)
+license=('GPL2')
+depends=('python2' 'python2-crypto' 'metasploit')
+## 
+# 'setup/setup.sh' wants to run the following to install deps ::
+#
+#  apt-get install mingw-w64 monodoc-browser monodevelop mono-mcs wine python python-crypto
+#
+#  wget https://www.veil-evasion.com/InstallMe/requiredfiles.zip --no-check-certificate
+#  wget https://www.veil-evasion.com/InstallMe/pyinstaller-2.0.zip --no-check-certificate
+##
+source=("git+https://github.com/veil-evasion/Veil")
+md5sums=('SKIP')
+ 
+pkgver() {
+  cd "$srcdir/Veil"
+  printf "%s.r%s" $(grep -i "\[Version\]:" "$srcdir/Veil/modules/common/messages.py" | cut -d" " -f6 | sed -e "s|'||") "$(git rev-list --count HEAD)"
+}
+prepare() {
+  cd "$srcdir/Veil"
+  grep -iRl 'python' "$srcdir/Veil" | xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
+  sed -i 's|python update.py|python2 update.py|' "$srcdir/Veil/setup/setup.sh"
+}
+ 
+package() {
+  cd "$srcdir/Veil"
+  # Base directories.
+  install -dm755 "$pkgdir/usr/share/veil"
+  install -dm755 "$pkgdir/usr/bin/"
+ 
+  cp -a * "$pkgdir/usr/share/veil"
+ 
+  cat > "$pkgdir/usr/bin/veil" << EOF
+#!/bin/sh
+cd /usr/share/veil/
+python2 Veil.py \$@
+EOF
+  chmod +x "$pkgdir/usr/bin/veil"
+}
