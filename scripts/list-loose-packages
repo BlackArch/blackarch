@@ -5,14 +5,15 @@
 cd "$(dirname "$0")/.."
 
 # Make a list of dependencies.
-all_depends=($(for pack in packages/* broken/* ; do
-	unset optdepends depends
+all_depends=($(for pack in packages/* broken/* ; do (
+	[[ ! -r "$pack/PKGBUILD" ]] && continue
 	source "$pack/PKGBUILD"
 	printf '%s\n' "${depends[@]}" "${optdepends[@]}"
-done | sed 's/\(>\|<\|:\).*//' | sort -u))
+) done | sed 's/\(>\|<\|:\).*//' | sort -u))
 
-for pack in packages/* archtrack/* ; do
-	unset groups pkgname
+for pack in packages/* broken/* ; do (
+	[[ ! -r "$pack/PKGBUILD" ]] && continue
+
 	source "$pack/PKGBUILD"
 
 	# Ignore if in groups.
@@ -32,4 +33,4 @@ for pack in packages/* archtrack/* ; do
 	if ! $is_dep ; then
 		echo "$pkgname"
 	fi
-done
+) done
