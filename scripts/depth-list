@@ -1,0 +1,22 @@
+#!/bin/bash
+# Gets an ordered list of packages to build.
+
+export LC_ALL=POSIX
+
+basedir=$(realpath "$(dirname "$0")")
+cd "$basedir/../packages"
+
+comm -3 <(for pack in * ; do (
+              source "$pack/PKGBUILD"
+              for dep in "${depends[@]}" "${makedepends[@]}" ; do
+                  [[ -d $dep ]] && echo $dep
+              done
+          ) done | sed 's/\(>\|<\|=\).*//' | sort -u) \
+		<(printf '%s\n' * | sort) |
+while read item ; do
+	echo 1 $item
+	"$basedir/get-blackarch-deps" $item
+done |
+sort -nr |  # Sort by depth high -> low
+sort -uk2 | # Sort by name, remove duplicates
+sort -nr    # Sort by depth high -> low
