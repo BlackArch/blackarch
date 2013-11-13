@@ -108,11 +108,24 @@ while read item ; do (
 cd "$repodir"
 
 if $sign ; then
+	msg 'starting gpg agent...'
+
+	# Kill gpg-agent on exit.
+	trap_exit() {
+		kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")"
+	}
+	trap trap_exit EXIT
+
+	# Start gpg-agent.
+	[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
+	[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
+
 	msg 'signing packages...'
 	for pack in *.pkg.tar.xz ; do
 		gpg -b "$pack"
 	done
 fi
+
 msg 'creating database...'
 repo-add blackarch.db.tar.gz *.pkg.tar.xz 2>&1
 
