@@ -30,8 +30,9 @@ if $sign ; then
 	gpg -s < /dev/null > /dev/null
 fi
 
+echo >&2 'attempting to cache rights...'
 # Rights cache
-sudo -v
+sudo -v || echo >&2 'sudo fails. continuing build anyways.'
 
 # Don't use the X passphrase prompt.
 #unset DISPLAY
@@ -53,16 +54,8 @@ cd packages
 #  things up.
 export LC_ALL=POSIX
 
-comm -3 <(for pack in * ; do (
-              source $pack/PKGBUILD
-              for dep in ${depends[@]} ${makedepends[@]} ; do
-                  [[ -d $dep ]] && echo $dep
-              done
-          ) done | sed 's/\(>\|<\|=\).*//' | sort -u) <(printf '%s\n' * | sort) | 
-while read item ; do
-	echo 1 $item
-	"$basedir/get-blackarch-deps" $item
-done | sort -nr | sort -uk2 | sort -nr |
+echo >&2 'generating depth list...'
+"$basedir/depth-list" |
 while read item ; do (
 	# Extend cache timeout.
 	sudo -v
