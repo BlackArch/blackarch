@@ -4,15 +4,16 @@ pkgrel=2
 pkgdesc="A Bluetooth penetration testing suite"
 url='http://bluediving.sourceforge.net/'
 license=('GPL')
-arch=(i686 x86_64)
-depends=(bluez-utils sox obexftp readline expat perl-xml-simple)
-makedepends=()
+arch=('i686' 'x86_64')
+depends=('bluez-utils' 'sox' 'obexftp' 'readline' 'expat' 'perl-xml-simple')
 install=bluediving.install
-source=(http://downloads.sourceforge.net/sourceforge/$pkgname/$pkgname-$pkgver.tgz)
-md5sums=('53365a068e7e65a2b047b96998ad3f9d')
+source=("http://downloads.sourceforge.net/sourceforge/bluediving/bluediving-$pkgver.tgz"
+        'btftp.patch')
+md5sums=('53365a068e7e65a2b047b96998ad3f9d'
+         '377e88f992f4e0ea45b0fb888899bd93')
 
 prepare() {
-  cd "${srcdir}"/$pkgname-$pkgver
+  cd "$srcdir/bluediving-$pkgver"
 
   # Change the bluedivingNG.conf path to /etc.
   sed -i -e 's/bluedivingNG.conf/\/etc\/bluedivingNG.conf/g' bluedivingNG.pl
@@ -31,25 +32,34 @@ prepare() {
 
   # Fix bss directory path.
   sed -i -e 's/bss-0.6/bss-0.8/g' tools/make_tools.sh
+
+  cd tools/btftp_src
+  patch < "$srcdir/btftp.patch"
+
+  cp -f obex.c ../btobex_src
 }
 
 build() {
-  cd "${srcdir}"/$pkgname-$pkgver/tools
+  cd "$srcdir/bluediving-$pkgver/tools"
   sh make_tools.sh
 }
 
 package() {
-  cd "${srcdir}"/$pkgname-$pkgver/tools
+  cd "$srcdir/bluediving-$pkgver/tools"
 
-  install -dm755 "${pkgdir}"/usr/bin
+  # Base directories.
+  install -dm755 "$pkgdir/etc"
+  install -dm755 "$pkgdir/usr/bin"
 
-  install -m755 atshell attest bccmd bdaddr bss btobex btftp carwhisperer greenplaque \
-                hcidump-crash hstest l2cap-packet l2cap_headersize_overflow redfang \
-                rfcomm_shell hidattack "${pkgdir}"/usr/bin
-  install -Dm755 "${srcdir}"/$pkgname-$pkgver/bluedivingNG.pl "${pkgdir}"/usr/bin/bluedivingNG.pl
-  install -Dm644 "${srcdir}"/$pkgname-$pkgver/bluedivingNG.conf "${pkgdir}"/etc/bluedivingNG.conf
-  install -Dm644 "${srcdir}"/$pkgname-$pkgver/vcards/AAAAA*.vcf \
-          "${pkgdir}"/usr/share/bluediving/AAA.vcf
-  install -Dm644 "${srcdir}"/$pkgname-$pkgver/sounds/explosion.wav "${pkgdir}"/usr/share/bluediving/explosion.wav
-  install -Dm644 "${srcdir}"/$pkgname-$pkgver/tools/carwhisperer-0.2/out.raw "${pkgdir}"/usr/share/bluediving/out.raw
+  install -m755 atshell attest bdaddr btobex btftp carwhisperer greenplaque \
+                hcidump-crash hstest l2cap-packet l2cap_headersize_overflow \
+                rfcomm_shell "$pkgdir/usr/bin"
+
+  install -Dm755 "$srcdir/bluediving-$pkgver/bluedivingNG.pl" "$pkgdir/usr/bin/bluedivingNG.pl"
+  install -Dm644 "$srcdir/bluediving-$pkgver/bluedivingNG.conf" "$pkgdir/etc/bluedivingNG.conf"
+  install -Dm644 "$srcdir/bluediving-$pkgver/vcards"/AAAAA*.vcf \
+          "$pkgdir/usr/share/bluediving/AAA.vcf"
+
+  install -Dm644 "$srcdir/bluediving-$pkgver/sounds/explosion.wav" "$pkgdir/usr/share/bluediving/explosion.wav"
+  install -Dm644 "$srcdir/bluediving-$pkgver/tools/carwhisperer-0.2/out.raw" "$pkgdir/usr/share/bluediving/out.raw"
 }
