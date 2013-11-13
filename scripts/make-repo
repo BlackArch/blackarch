@@ -2,7 +2,22 @@
 # usage: make-repo [package_directory] [build_directory]
 # May be run from anywhere. Must live in '$projectroot/scripts'.
 
+# Default settings.
 sign=true
+
+# The sorts are sensitive.
+export LC_ALL=POSIX
+
+cache_keys() {
+	echo >&2 'attempting to cache keys...'
+	gpg -s < /dev/null > /dev/null || echo >&2 'gpg failed. continuing build anyways.'
+}
+
+cache_rights() {
+	echo >&2 'attempting to cache rights...'
+	sudo -v || echo >&2 'sudo failed. continuing build anyways.'
+}
+
 for arg ; do
 	case "$arg" in
 		--nosign|--test)
@@ -26,13 +41,10 @@ if $sign ; then
 	[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
 	[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
 
-	# Cache keys
-	gpg -s < /dev/null > /dev/null
+	cache_keys
 fi
 
-echo >&2 'attempting to cache rights...'
-# Rights cache
-sudo -v || echo >&2 'sudo fails. continuing build anyways.'
+cache_rights
 
 # Don't use the X passphrase prompt.
 #unset DISPLAY
@@ -50,15 +62,10 @@ mkdir -p "$builddir"
 
 cd packages
 
-# Some of the sorts are sensitive. We don't want changing locales to mess
-#  things up.
-export LC_ALL=POSIX
-
 echo >&2 'generating depth list...'
 "$basedir/depth-list" |
 while read item ; do (
-	# Extend cache timeout.
-	sudo -v
+	cache_rights
 
 	read depth pack <<< "$item"
 	echo >&2 "Depth: $depth"
@@ -67,16 +74,18 @@ while read item ; do (
 	echo >&2 'copying...'
 
 	# packages/*/<package> -> build/<package>
-	cp -fr "$pack" "$builddir"
-
-	# Change into the build dir.
+	cp -vfr "$pack" "$builddir"
 	cd "$builddir/$pack"
 
-	echo >&2 'building...'
+	echo >&2 'cleaning...'
 
-	# Remove old packages.
-	rm -rf */
-	rm -f *.{xz,gz,zip,bzip2,gunzip2,tgz,tar}
+	# Better than nothing cleaning.
+	# It is preferable to run 'git clean -dXf packages' or work with a fresh
+	# clone.
+	rm -vrf */
+	rm -vf *.{xz,gz,zip,bzip2,gunzip2,tgz,tar}
+
+	echo >&2 'building...'
 
 	# Build.
 	if $sign ; then
