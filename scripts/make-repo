@@ -8,11 +8,6 @@ sign=true
 # The sorts are sensitive.
 export LC_ALL=POSIX
 
-cache_keys() {
-	echo >&2 'attempting to cache keys...'
-	gpg -s < /dev/null > /dev/null || echo >&2 'gpg failed. continuing build anyways.'
-}
-
 cache_rights() {
 	echo >&2 'attempting to cache rights...'
 	sudo -v || echo >&2 'sudo failed. continuing build anyways.'
@@ -30,20 +25,6 @@ for arg ; do
 	esac
 done
 
-if $sign ; then
-	trap_exit() {
-		# Kill gpg-agent.
-		kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")"
-	}
-	trap trap_exit EXIT
-
-	# Start gpg-agent.
-	[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
-	[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
-
-	cache_keys
-fi
-
 cache_rights
 
 # Don't use the X passphrase prompt.
@@ -56,7 +37,6 @@ pkgdir=$(realpath packages)
 repodir=$(realpath repo)
 builddir=$(realpath build)
 mkdir -p "$repodir"
-$sign && mkdir -p "$repodir/signatures"
 mkdir -p "$builddir"
 mkdir -p "$builddir"
 
@@ -88,24 +68,13 @@ while read item ; do (
 	echo >&2 'building...'
 
 	# Build.
-	if $sign ; then
-		makepkg -s --nocheck --noconfirm --sign 2>&1
-	else
-		makepkg -s --nocheck --noconfirm 2>&1
-	fi
+	makepkg -s --nocheck --noconfirm 2>&1
 
 	# Log errors.
 	ret=$?
 	if [[ $ret != 0 ]] ; then
 		echo >&2 "<-!-> '$pack' failed with error code $ret"
 		continue
-	fi
-
-	if $sign ; then
-		# Move the signatures.
-		# These may interfere with package installation.
-		mv *.pkg.tar.xz.sig "$repodir/signatures" ||
-		  echo >&2 "<-!-> '$pack' signing failed"
 	fi
 
 	# Install if necessary.
@@ -122,8 +91,9 @@ while read item ; do (
 cd "$repodir"
 
 if $sign ; then
-	mv signatures/* .
-	rmdir signatures
+	for pack in *.pkg.tar.xz ; do
+		gpg -b "$pack"
+	done
 fi
 repo-add blackarch.db.tar.gz *.pkg.tar.xz
 
