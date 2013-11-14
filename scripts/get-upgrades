@@ -16,14 +16,23 @@ trap "rm -rf '$tmp'" EXIT
 git clone . "$tmp"
 cd "$tmp"
 
-tag=$(git tag | grep build | sort | head -n1)
-head=$()
+if [[ -z "$1" ]] ; then
+	start=$(git tag | grep build | sort -nr | head -n1)
+else
+	start=$1
+fi
 
-echo >&2 "searching for updates and new packages from $tag ($(git rev-parse $tag | head -c8)) to HEAD ($(git rev-parse HEAD | head -c8))..."
+if [[ -z "$2" ]] ; then
+	end=HEAD
+else
+	end=$2
+fi
+
+echo >&2 "searching for updates and new packages from $start ($(git rev-parse "$start" | head -c8)) to $end ($(git rev-parse "$end" | head -c8))..."
 
 packages_now=$(packages)
 
-git checkout $tag >&2
+git checkout $start >&2
 
 packages_then=$(packages)
 
