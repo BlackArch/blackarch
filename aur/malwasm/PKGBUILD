@@ -1,0 +1,30 @@
+pkgname=malwasm
+pkgver=0.2
+pkgrel=1
+pkgdesc="Offline debugger for malware's reverse engineering"
+url="https://code.google.com/p/malwasm/"
+license=('GPL2')
+arch=('any')
+depends=('python2' 'python2-psycopg2' 'python2-flask' 'python2-progressbar' 'cuckoo' 'postgresql')
+install='malwasm.install'
+optdepens=('pintool')
+source=("https://malwasm.googlecode.com/files/malwasm-v$pkgver.tar.gz"
+        "malwasm.install")
+md5sums=('dcc888f24f540f38ca09e07c103dd3f2'
+         '31fb55d7936ac9a436c74c078722fec7')
+
+package() {
+  cd "$srcdir/malwasm-v$pkgver"
+
+  install -dm755 "$pkgdir/usr/share/malwasm"
+  install -dm755 "$pkgdir/usr/bin"
+
+  cp -a * "$pkgdir/usr/share/malwasm"
+
+cat > "$pkgdir/usr/bin/malwasm" << EOF
+#!/bin/sh
+cd /usr/share/malwasm
+python2 web/malwasm_web.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/malwasm"
+}
