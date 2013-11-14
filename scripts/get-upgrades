@@ -1,0 +1,44 @@
+#!/bin/bash
+# This script must live in 'scripts/'.
+
+packages() {
+	git ls-files packages/*/PKGBUILD |
+	while read p ; do
+		. "$p"
+		echo "$pkgname $pkgver-$pkgrel"
+	done | sort
+}
+
+cd "$(dirname "$0")/.."
+
+tmp=/tmp/blackarch.$RANDOM$RANDOM
+trap "rm -rf '$tmp'" EXIT
+git clone . "$tmp"
+cd "$tmp"
+
+tag=$(git tag | grep build | sort | head -n1)
+head=$()
+
+echo >&2 "searching for updates and new packages from $tag ($(git rev-parse $tag | head -c8)) to HEAD ($(git rev-parse HEAD | head -c8))..."
+
+packages_now=$(packages)
+
+git checkout $tag >&2
+
+packages_then=$(packages)
+
+# Removed
+comm -32 <(echo "$packages_then" | cut -d' ' -f1) <(echo "$packages_now" | cut -d' ' -f1) |
+  sed 's/^/removed: /'
+
+# Added
+comm -31 <(echo "$packages_then" | cut -d' ' -f1) <(echo "$packages_now" | cut -d' ' -f1) |
+  sed 's/^/added: /'
+
+# Updated
+comm -21 <(echo "$packages_then" | cut -d' ' -f1) <(echo "$packages_now" | cut -d' ' -f1) |
+while read p ; do
+	version_then=$(echo "$packages_then" | grep "^$p " | cut -d' ' -f2)
+	version_now=$(echo "$packages_now" | grep "^$p " | cut -d' ' -f2)
+	[[ "$version_now" != "$version_then" ]] && echo "updated: $p"
+done
