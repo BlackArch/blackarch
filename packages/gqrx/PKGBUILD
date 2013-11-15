@@ -8,29 +8,35 @@ license=('GPL')
 depends=('qt4>=4.6' 'boost-libs' 'fftw' 'libusb' 'gsl' 'alsa-lib' 'libpulse' 'libuhd' 'pulseaudio' 'gnuradio' 'gr-osmosdr')
 makedepends=('boost')
 install='gqrx.install'
-source=("$pkgname-$pkgver.tar.gz::https://codeload.github.com/csete/gqrx/tar.gz/v$pkgver" "${pkgname}.png" "${pkgname}.desktop")
-
-build() {
-	cd "$srcdir/$pkgname-$pkgver"
-	mkdir build
-	cd build
-	qmake-qt4 PREFIX=/usr/ ..
-	make
-}
-
-package() {
-	install -m755 -d $pkgdir/usr/{bin,share/applications,share/pixmaps}
-
-	cd $srcdir
-
-	install -D -m644 $pkgname.desktop $pkgdir/usr/share/applications
-	install -D -m644 $pkgname.png $pkgdir/usr/share/pixmaps
-
-	cd "$pkgname-$pkgver/build"
-
-	make install INSTALL_ROOT=$pkgdir
-}
-
+source=("gqrx-$pkgver.tar.gz::https://codeload.github.com/csete/gqrx/tar.gz/v$pkgver"
+        'gqrx.png'
+        'gqrx.desktop')
 md5sums=('ff771b9c31ee17f704859398362b8cc0'
          'f7032a8883c89bd80e0d0fd36f861c59'
          '810f89195231c18f32af92522aade721')
+
+build() {
+  cd "$srcdir/gqrx-$pkgver"
+
+  mkdir build
+  cd build
+
+  qmake-qt4 PREFIX=/usr/ ..
+  make
+}
+
+package() {
+  cd "$srcdir"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/applications"
+  install -dm755 "$pkgdir/usr/share/pixmaps"
+
+  install -Dm644 gqrx.desktop "$pkgdir/usr/share/applications"
+  install -Dm644 gqrx.png "$pkgdir/usr/share/pixmaps"
+
+  cd "gqrx-$pkgver/build"
+
+  make install "INSTALL_ROOT=$pkgdir"
+}
