@@ -3,6 +3,8 @@
 # This script may called from any location but the script itself must
 #  live in '$projectroot/scripts'.
 
+export LC_ALL=C
+
 usage() {
 	cat >&2 <<-USAGE
 	blackman [-h|--help] action
@@ -53,7 +55,7 @@ do_sync() { (
 	local pack=$1
 	shift
 
-	cd packages/$pack
+	cd packages/$pack || cd aur/$pack
 	makepkg "${pacman_args[@]}" "$@" -fs
 	# TODO: improve this sort.
 	local file=$(find . -maxdepth 1 -name '*.pkg.tar.xz' | sort -n | head -n1)
@@ -75,7 +77,7 @@ case $action in
 
 		# Make sure the packages exist.
 		for pack in "${targets[@]}" ; do
-			if [[ ! -d packages/$pack ]] ; then
+			if [[ ! -d packages/$pack && ! -d aur/$pack ]] ; then
 				error "could not find '$pack'"
 				exit 2
 			fi
@@ -109,7 +111,7 @@ case $action in
 	search)
 		# TODO: narrow down searches for each word instead
 		for pattern in "${targets[@]:-^}" ; do
-			for pack in packages/* ; do (
+			for pack in packages/*/ aur/*/ ; do (
 				source $pack/PKGBUILD
 				if [[ "$pkgname $pkgdesc" =~ $pattern ]] ; then
 					printf 'blackarch/%s %s-%s' "$pkgname" "$pkgver" "$pkgrel"
@@ -122,26 +124,34 @@ case $action in
 		done
 		;;
 	groups)
-		for pack in packages/* ; do (
+		for pack in packages/*/ aur/*/ ; do (
 			source $pack/PKGBUILD
 			printf '%s\n' "${groups[@]}"
 		) ; done | sort -u | sed '1d'
 		;;
 	groupings)
-		for pack in packages/* ; do (
+		for pack in packages/*/ aur/*/ ; do (
 			source $pack/PKGBUILD
 			if [[ -n "${groups[@]}" ]] ; then
 				printf "%s $pkgname\n" "${groups[@]}"
 			fi
-		) ; done | LC_ALL=C sort
+		) ; done | sort
 		# Many locales cause sort to ignore punctuation, including hyphens.
 		;;
 	info)
-		[[ -z "${targets[@]}" ]] && targets=($(basename -a packages/*))
+		[[ -z "${targets[@]}" ]] && targets=($(basename -a packages/*/ aur/*/))
 		for pack in "${targets[@]}" ; do (
-			source packages/$pack/PKGBUILD
+			if [[ -d aur/$pack ]] ; then
+				dir=aur/$pack
+			elif [[ -d packages/$pack ]] ; then
+				dir=packages/$pack
+			else
+				echo >&2 "$pack no found"
+			fi
 
-			size=$(du -hs packages/$pack/*.pkg.tar.xz 2> /dev/null | cut -d$'\t' -f1)
+			source $dir/PKGBUILD
+
+			size=$(du -hs $dir/*.pkg.tar.xz 2> /dev/null | head -n1 | cut -d$'\t' -f1)
 
 			[[ ${#md5sums[@]} != 0 ]] && validation+='MD5 Sum'
 			[[ ${#sha256sums[@]} != 0 ]] && validation+='SHA256 Sum'
@@ -151,7 +161,7 @@ case $action in
 
 			cat <<-INFO
 			Repository     : blackarch
-			Name           : ${pack}
+			Name           : ${pkgname:-Error}
 			Version        : ${pkgver:-0.0.0}-${pkgrel:-1}
 			Description    : ${pkgdesc:-None}
 			Architecture   : ${arch[@]:-None}
@@ -179,13 +189,13 @@ case $action in
 		) ; done
 		;;
 	list)
-		for pack in packages/* ; do (
+		for pack in packages/*/ aur/*/ ; do (
 			source "$pack/PKGBUILD"
 			printf 'blackarch %s %s-%s\n' "$pkgname" "$pkgver" "$pkgrel"
 		) ; done
 		;;
 	upgrade)
-		for pack in packages/* ; do (
+		for pack in packages/*/ aur/*/ ; do (
 			source "$pack/PKGBUILD"
 			if is_installed $pkgname ; then
 				do_sync "$pkgname"
