@@ -1,0 +1,116 @@
+diff -Naur libwhisker2-2.5.orig/Makefile libwhisker2-2.5/Makefile
+--- libwhisker2-2.5.orig/Makefile	2010-01-24 05:35:26.000000000 +0100
++++ libwhisker2-2.5/Makefile	2010-02-01 11:52:36.495699604 +0100
+@@ -10,6 +10,7 @@
+ 
+ install:
+ 	export DESTDIR
++	export MAN3PATH
+ 	perl Makefile.pl install
+ 
+ clean:
+@@ -20,4 +21,5 @@
+ 
+ uninstall:
+ 	export DESTDIR
++	export MAN3PATH
+ 	perl Makefile.pl uninstall
+diff -Naur libwhisker2-2.5.orig/Makefile.pl libwhisker2-2.5/Makefile.pl
+--- libwhisker2-2.5.orig/Makefile.pl	2010-01-24 05:35:26.000000000 +0100
++++ libwhisker2-2.5/Makefile.pl	2010-02-01 12:24:51.045033735 +0100
+@@ -29,6 +29,8 @@
+ # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ # POSSIBILITY OF SUCH DAMAGE.
+ 
++use File::Path;
++
+ $VERSION	=	'2.5';		# version of the app
+ $PACKAGE	=	'LW2';		# name of the app
+ $TARGET		=	'LW2.pm';	# target build filename
+@@ -42,6 +44,7 @@
+ $HASPOD		=	 1;		# does it have embedded POD?
+ 
+ $DESTDIR	= '';		# installation directory prefix
++$MAN3PATH	= '';		# man page installation prefix
+ 
+ #### supported build options #########################################
+ 
+@@ -131,6 +134,8 @@
+ 
+ # adjust DESTDIR, if needed
+ $DESTDIR = $ENV{DESTDIR} if(defined $ENV{DESTDIR});
++# adjust MAN3PATH, if needed
++$MAN3PATH = $ENV{MAN3PATH} if(defined $ENV{MAN3PATH});
+ 
+ # parse command line build options
+ while($COMMAND = shift @ARGV){
+@@ -171,7 +176,7 @@
+ 	command_build() if(!-e $TARGET);
+ 	die("Can not install without Config.pm") if($MODULES{Config}==0);
+ 	$CWD=&cwd if($MODULES{Cwd}>0);
+-	my $where=$DESTDIR . $Config{'man3direxp'};
++	my $where=$DESTDIR . $MAN3PATH;
+ 	my $t = $TARGET;
+ 	if($LIBRARY){
+ 		$t="$PACKAGE.3pm";
+@@ -182,8 +187,8 @@
+ 	if(!-e $where){
+ 	  print STDOUT "WARNING!\n\n",
+ 		"The local man3 site directory does not exist:\n",
+-		"$where\n\nPlease create this directory and try again.\n\n";
+-		exit;
++		"$where\n\n";
++	  mkpath $where;
+ 	}
+ 
+ 	my $parser = Pod::Man->new (
+@@ -219,7 +224,7 @@
+ sub command_uninstall_pod {
+ 	die("Can not uninstall without Config.pm") if($MODULES{Config}==0);
+ 	$CWD=&cwd if($MODULES{Cwd}>0);
+-	my $where=$DESTDIR . $Config{'man3direxp'};
++	my $where=$DESTDIR . $MAN3PATH;
+ 	my $t = $TARGET;
+ 	if($LIBRARY){
+ 		$t="$PACKAGE.3pm";
+@@ -243,12 +248,12 @@
+ 	command_build() if(!-e $TARGET);
+ 	die("Can not install without Config.pm") if($MODULES{Config}==0);
+ 	$CWD=&cwd if($MODULES{Cwd}>0);
+-	my $where=$DESTDIR . $Config{'installsitelib'};
++	my $where=$DESTDIR . $Config{'installvendorlib'};
+ 	if(!-e $where){
+ 	  print STDOUT "WARNING!\n\n",
+ 		"The local perl site directory does not exist:\n",
+-		"$where\n\nPlease create this directory and try again.\n\n";
+-		exit;	
++		"$where\n\n";
++	  mkpath $where;
+ 	}
+ 	open(IN,'<'.$TARGET)||puke($TARGET);
+ 	chdir($where);
+@@ -271,7 +276,7 @@
+ sub command_uninstall_library {
+ 	die("Can not uninstall without Config.pm") if($MODULES{Config}==0);
+ 	$CWD=&cwd if($MODULES{Cwd}>0);
+-	my $where=$DESTDIR . $Config{'installsitelib'};
++	my $where=$DESTDIR . $Config{'installvendorlib'};
+ 	chdir($where);
+ 	if(-e $TARGET){
+ 		unlink $TARGET;
+@@ -401,12 +406,12 @@
+ sub command_install_compat {
+ 	die("Can not install without Config.pm") if($MODULES{Config}==0);
+ 	$CWD=&cwd if($MODULES{Cwd}>0);
+-	my $where=$DESTDIR . $Config{'installsitelib'};
++	my $where=$DESTDIR . $Config{'installvendorlib'};
+ 	if(!-e $where){
+ 	  print STDOUT "WARNING!\n\n",
+ 		"The local perl site directory does not exist:\n",
+-		"$where\n\nPlease create this directory and try again.\n\n";
+-		exit;	
++		"$where\n\n";
++	  mkpath $where;
+ 	}
+ 	open(IN,'<'.'compat/LW.pm')||puke('compat/LW.pm');
+ 	chdir($where);
