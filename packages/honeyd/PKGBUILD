@@ -2,43 +2,40 @@ pkgname=honeyd
 pkgver=1.6.7
 pkgrel=5
 pkgdesc="A small daemon that creates virtual hosts on a network."
+url="https://github.com/DataSoft/Honeyd/"
+arch=('i686' 'x86_64')
+license=("GPL")
 depends=('libdnet' 'libevent' 'libedit' 'libpcap' 'pcre' 'zlib')
 source=("https://github.com/DataSoft/Honeyd/archive/honeyd-$pkgver.tar.gz"
         "python.patch")
 md5sums=('SKIP'
          '0c368bf26c779cb3d04207fed34a2d55')
-arch=('i686' 'x86_64')
-url="https://github.com/DataSoft/Honeyd/"
-license=("GPL")
 
-build(){
-  cd "$srcdir/Honeyd-$pkgname-$pkgver"
+build() {
+  cd "$srcdir/Honeyd-honeyd-$pkgver"
+
   ./autogen.sh
   ./configure --prefix=/usr
   patch -p1 -i ../python.patch
   make
 
-  #I dont feel like editing the patch file
   sed -i 's/python/python2/' Makefile
-
 }
 
-package()
-{
-	cd "$srcdir/Honeyd-$pkgname-$pkgver"
-  
-        # Base directories
+package() {
+	cd "$srcdir/Honeyd-honeyd-$pkgver"
+
+  # Base directories
 	install -dm755 "$pkgdir/usr/share/honeyd"
 
-        #Binaries
-        make prefix=$pkgdir/usr install
-  
+  # Bin.
+  make "prefix=$pkgdir/usr" install
 
 	# Fix permissions on webserver dirs
 	for dir in webserver webserver/htdocs webserver/htdocs/graphs \
-	webserver/htdocs/images webserver/htdocs/styles webserver/htdocs/templates \
-	webserver/htdocs/templates/inc
-	         do chmod 755 $pkgdir/usr/share/honeyd/$dir
+	  webserver/htdocs/images webserver/htdocs/styles webserver/htdocs/templates \
+	  webserver/htdocs/templates/inc ; do
+      chmod 755 "$pkgdir/usr/share/honeyd/$dir"
 	done
 }
 
