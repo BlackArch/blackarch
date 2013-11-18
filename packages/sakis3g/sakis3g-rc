@@ -1,0 +1,42 @@
+#!/bin/bash
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+DAEMON=sakis3g
+
+[ -r /etc/conf.d/$DAEMON ] && . /etc/conf.d/$DAEMON
+
+PID=$(get_pid $DAEMON)
+
+case "$1" in
+ start)
+   stat_busy "Connecting with 3G"
+   $DAEMON connect --console &>/dev/null
+   if [ $? = 0 ]; then
+     add_daemon $DAEMON
+     stat_done
+   else
+     stat_fail
+     exit 1
+   fi
+   ;;
+ stop)
+   stat_busy "Disconnecting from 3G"
+   $DAEMON disconnect --console &>/dev/null
+   if [ $? = 0 ]; then
+     rm_daemon $DAEMON
+     stat_done
+   else
+     stat_fail
+     exit 1
+   fi
+   ;;
+ restart)
+   $0 stop
+   sleep 1
+   $0 start
+   ;;
+ *)
+   echo "usage: $0 {start|stop|restart}"  
+esac

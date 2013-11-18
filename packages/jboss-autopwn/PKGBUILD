@@ -1,0 +1,47 @@
+pkgname=jboss-autopwn
+pkgver=0.r1.3bc2d29
+pkgrel=1
+pkgdesc="A JBoss script for obtaining remote shell access"
+url="https://github.com/SpiderLabs/jboss-autopwn"
+arch=(any)
+license=('GPL3')
+depends=('metasploit' 'sbd' 'curl')
+source=("git+https://github.com/SpiderLabs/jboss-autopwn.git")
+md5sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/$pkgname"
+  printf "0.r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+package() {
+  cd "$srcdir/$pkgname"
+
+  msg "Updating jboss-autopwn to use sbd"
+  sed -i 's/nc/sbd/' *.sh
+
+  msg "Updating jboss-autopwn to use metasploit"
+  sed -i 's|framework3|/usr/share/metasploit|' *.sh
+  
+  # Base directories.
+  install -dm755 "$pkgdir/usr/share/$pkgname"
+  install -dm755 "$pkgdir/usr/bin/"
+
+  cp -a * "$pkgdir/usr/share/$pkgname"
+
+cat > "$pkgdir/usr/bin/unix-jboss-autopwn" << EOF
+#!/bin/sh
+/usr/share/jboss-autopwn/e.sh "\$@"
+EOF
+
+chmod +x "$pkgdir/usr/bin/unix-jboss-autopwn"
+
+cat > "$pkgdir/usr/bin/win-jboss-autopwn" << EOF
+#!/bin/sh
+/usr/share/jboss-autopwn/e2.sh "\$@"
+EOF
+
+chmod +x "$pkgdir/usr/bin/win-jboss-autopwn"
+
+}
+
