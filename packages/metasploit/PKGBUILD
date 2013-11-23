@@ -1,45 +1,19 @@
 pkgname=metasploit
-pkgver=4.8.0.RC2.13.g62102dd
-epoch=1
-pkgrel=1
+pkgver=4.6.2
+pkgrel=2
 pkgdesc="An open source platform that supports vulnerability research, exploit development and the creation of custom security tools representing the largest collection of quality-assured exploits"
-depends=('ruby1.9' 'libpcap' 'postgresql-libs' 'ruby-mini_portile'
-         'ruby-activesupport>=3.0.0-1' 'ruby-json' 'ruby-nokogiri'
-         'ruby-robots' 'ruby-packetfu' 'ruby-arel' 'ruby-activerecord>=3.2.13-1'
-         'ruby-metasploit_data_models' 'ruby-pg>=0.11-1' 'ruby-bundler'
-         'ruby-network_interface>=0.0.1-1' 'ruby-pcaprub' 'ruby-redcarpet>=3.0.0-1'
-         'ruby-yard=0.8.7-1' 'ruby-factory_girl>=4.1.0-1' 'ruby-fivemat=1.2.1-1'
-         'ruby-rake>=10.0.0-1' 'ruby-database_cleaner' 'ruby-rspec'
-         'ruby-rspec-core=2.14.5-1' 'ruby-rspec-expectations=2.14.2-1' 
-         'ruby-rspec-mocks=2.14.3-1' 'ruby-shoulda-matchers' 'ruby-timecop' 
-         'ruby-msgpack' 'ruby-simplecov=0.5.4' 'ruby-simplecov-html=0.5.3')
-##
-# :: NEED TO CREATE ::
-# ruby-fivemat
-# ruby-shoulda-matchers
-# ruby-timecop
-#
-# :: NEED TO MODIFY ::
-# ruby-yard 0.8.7
-# ruby-redcarpet 3.0.0
-# ruby-simplecov 0.5.4
-# ruby-simplecov-html 0.5.3
-##
+depends=('ruby1.9' 'libpcap' 'postgresql-libs')
 arch=('i686' 'x86_64')
 optdepends=('java-runtime: msfgui'
             'dradis: dradisis database system'
             'postgresql: database')
 makedepends=('git')
+groups=('blackarch-exploitation' 'blackarch')
 url='http://www.metasploit.com'
 license=('BSD')
 options=('!strip')
 source=('git+https://github.com/rapid7/metasploit-framework')
 md5sums=('SKIP')
-
-pkgver() {
-  cd "$srcdir/metasploit-framework"
-  git describe --tags | sed 's/-/./g;s/_/./g'
-}
 
 package() {
   cd "$srcdir/metasploit-framework"
@@ -55,14 +29,12 @@ package() {
   cp --no-preserve=ownership README.md "$pkgdir/usr/share/doc/metasploit"
 
   # Source + Bin.
-  git clone "$srcdir/metasploit-framework" "$pkgdir/usr/share/metasploit"
+  cp --no-preserve=ownership -R * "$pkgdir/usr/share/metasploit"
   rm -rf "$pkgdir/usr/share/metasploit"/{README.md,documentation}
 
   # Conform to the FHS.
   mv "$pkgdir/usr/share/metasploit/config" "$pkgdir/etc/metasploit"
   ln -s /etc/metasploit "$pkgdir/usr/share/metasploit/config"
-
-  cd "$pkgdir/usr/bin"
 
   cat > "$pkgdir/usr/bin/msfbinscan" <<EOF
 #!/bin/sh
