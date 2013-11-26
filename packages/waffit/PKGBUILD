@@ -6,26 +6,29 @@ groups=('blackarch' 'blackarch-intel')
 arch=('i686' 'x86_64')
 url='http://code.google.com/p/waffit/'
 license=('GPL')
-depends=('python2')
-makedepends=('subversion')
-source=('waffit')
-md5sums=('cea94cd2ba1cf02abe00ab53afc4054f')
+depends=('python2' 'subversion')
+source=('svn+http://waffit.googlecode.com/svn/trunk')
+md5sums=('SKIP')
 
-_svntrunk=http://waffit.googlecode.com/svn/trunk
-
-build() {
-  if [ -d ${srcdir}/.svn ]; then
-    msg 'Updating...'
-    svn up ${srcdir}
-  else
-    msg 'Checking out...'
-    svn co ${_svntrunk} ${srcdir}
-  fi
+prepare(){
+  cd "$srcdir/trunk"
+  grep -iRl 'python' "$srcdir/trunk" | xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
 }
 
+
+
 package() {
-  install -dm755 ${pkgdir}/usr/{bin,share}
-  cd ${pkgdir}/usr/share
-  svn export ${srcdir} waffit
-  install -Dm755 ${startdir}/waffit ${pkgdir}/usr/bin/waffit
+  cd "$srcdir/trunk"
+  
+  #Base directories
+  install -dm755 $pkgdir/usr/bin
+  install -dm755 $pkgdir/usr/share/waffit
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/waffit"
+
+  #Bin
+  chmod +x "$pkgdir/usr/share/waffit/wafw00f.py"
+  ln -s $pkgdir/usr/share/waffit/wafw00f.py $pkgdir/usr/bin/wafw00f
+  
+
 }
