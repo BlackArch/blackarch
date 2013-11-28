@@ -1,0 +1,48 @@
+# Contributor: xRemaLx <anton.komolov@gmail.com>
+
+pkgname='perl-extutils-helpers'
+_pkgname='ExtUtils-Helpers'
+pkgver=0.021
+pkgrel=1
+pkgdesc="ExtUtils::Helpers - Various portability utilities for module builders"
+arch=(any)
+license=('perl')
+url="http://search.cpan.org/dist/ExtUtils-Helpers/"
+options=(!emptydirs)
+
+depends=('perl>=5.10.1')
+makedepends=('perl')
+
+provides=("extutils-helpers=${pkgver}" "ExtUtils::Helpers=${pkgver}" "perl-extutils-helpers=${pkgver}")
+
+source=("http://search.cpan.org/CPAN/authors/id/L/LE/LEONT/${_pkgname}-${pkgver}.tar.gz")
+md5sums=('94aa8eaf92def26d9af0cb25fcb1570f')
+sha512sums=('3bb2e00d36b604d944e813e31400292fdef7841d03c65d198aa86a6852f3910e1f1ad4afc5275ff9953078cd080d8dec14d8c31780724697686adb23cac01a14')
+
+build() {
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""                 \
+      PERL_AUTOINSTALL=--skipdeps                            \
+      PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'"     \
+      PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+      MODULEBUILDRC=/dev/null
+
+    cd "${srcdir}/${_pkgname}-${pkgver}"
+    /usr/bin/perl Makefile.PL
+    make
+  )
+}
+
+check() {
+  cd "${srcdir}/${_pkgname}-${pkgver}"
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""
+    make test
+  )
+}
+
+package() {
+  cd "${srcdir}/${_pkgname}-${pkgver}"
+  make install
+  find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}
+
+# vim:set ts=2 sw=2 et:

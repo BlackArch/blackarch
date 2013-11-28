@@ -1,0 +1,40 @@
+pkgname='perl-test-checkdeps'
+pkgver='0.006'
+pkgrel='2'
+pkgdesc="Check for presence of dependencies"
+arch=('any')
+license=('PerlArtistic' 'GPL')
+options=('!emptydirs')
+depends=('perl' 'perl-cpan-meta-check' 'perl-module-build-tiny')
+makedepends=()
+url='http://search.cpan.org/dist/Test-CheckDeps'
+source=('http://search.cpan.org/CPAN/authors/id/L/LE/LEONT/Test-CheckDeps-0.006.tar.gz')
+md5sums=('94d84c68a262ca97ecadbb0ff6d215e1')
+sha512sums=('7b1541dc33bfd33aaafd6a5128c3ff25ad2d376f8eed3a41731b0223a2955a0c19fec9cb9df0a6f80fa51c31b46911f009b26bb916d4e344321157d044a0bf08')
+_distdir="Test-CheckDeps-0.006"
+
+build() {
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""                 \
+      PERL_AUTOINSTALL=--skipdeps                            \
+      PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'"     \
+      MODULEBUILDRC=/dev/null
+
+    cd "$srcdir/$_distdir"
+    /usr/bin/perl Build.PL --installdirs vendor --destdir "$pkgdir"
+    /usr/bin/perl Build
+  )
+}
+
+check() {
+  cd "$srcdir/$_distdir"
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""
+    /usr/bin/perl Build test
+  )
+}
+
+package() {
+  cd "$srcdir/$_distdir"
+  /usr/bin/perl Build install
+
+  find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}

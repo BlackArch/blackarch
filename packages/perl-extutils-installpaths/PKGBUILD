@@ -1,0 +1,43 @@
+pkgname='perl-extutils-installpaths'
+_pkgname='ExtUtils-InstallPaths'
+pkgver=0.009
+pkgrel=2
+pkgdesc="ExtUtils::InstallPaths - Build.PL install path logic made easy"
+arch=(any)
+license=('perl')
+url="http://search.cpan.org/dist/ExtUtils-InstallPaths/"
+options=(!emptydirs)
+
+depends=('perl>=5.10.1' 'perl-extutils-config>=0.002')
+makedepends=('perl')
+
+provides=("extutils-installpaths=${pkgver}" "ExtUtils::InstallPaths=${pkgver}" "perl-extutils-installpaths=${pkgver}")
+
+source=("http://search.cpan.org/CPAN/authors/id/L/LE/LEONT/${_pkgname}-${pkgver}.tar.gz")
+sha512sums=('efe46bddedddc95482e4a50399bfc5cad2c0b7ffd2f8f4bf3d6bcba2d2987fd97a1ac02474a0c9937d23c22f87f7cc8af3dbc078b16c1cb7eb5ba73225b02475')
+
+build() {
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""                 \
+      PERL_AUTOINSTALL=--skipdeps                            \
+      PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'"     \
+      PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+      MODULEBUILDRC=/dev/null
+
+    cd "${srcdir}/${_pkgname}-${pkgver}"
+    /usr/bin/perl Makefile.PL
+    make
+  )
+}
+
+check() {
+  cd "${srcdir}/${_pkgname}-${pkgver}"
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""
+    make test
+  )
+}
+
+package() {
+  cd "${srcdir}/${_pkgname}-${pkgver}"
+  make install
+  find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}
