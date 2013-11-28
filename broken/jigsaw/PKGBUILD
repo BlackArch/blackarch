@@ -1,32 +1,26 @@
-pkgname='jigsaw'
+pkgname=jigsaw
 pkgver=1.3
 pkgrel=1
 pkgdesc="A simple ruby script for enumerating information about a company's employees. It is useful for Social Engineering or Email Phishing."
-groups=(blackarch blackarch-intel)
+groups=('blackarch' 'blackarch-intel')
 arch=('any')
 url="https://github.com/pentestgeek/jigsaw"
 license=('unknown')
 makedepends=('git')
-depends=('ruby')
-provides=('jigsaw')
-
-_gitroot="https://github.com/pentestgeek/jigsaw.git"
-_gitname="jigsaw"
-
-build() {
-  cd $srcdir
-
-  msg "Connecting to GIT server...."
-  if [ -d $_gitname ]; then
-    msg "Updating local files..."
-    cd $_gitname && git pull origin &> /dev/null && cd ..
-  else
-    git clone --depth=1 $_gitroot $_gitname &> /dev/null
-  fi
-  msg "GIT checkout complete or server timeout."
-}
+depends=('ruby' 'ruby-record')
+source=('git+https://github.com/pentestgeek/jigsaw.git')
+md5sums=('SKIP')
 
 package() {
-  mkdir -p "$pkgdir/usr/bin"
-  cp "$srcdir/$_gitname/$_gitname.rb" "$pkgdir/usr/bin/$_gitname"
+  cd "$srcdir/jigsaw"
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/jigsaw"
+  install -dm755 "$pkgdir/usr/share/doc/jigsaw"
+
+  cp -a --no-preserve=ownership lib jigsaw.rb "$pkgdir/usr/share/jigsaw"
+  cat > "$pkgdir/usr/bin/jigsaw" <<EOF
+ruby /usr/share/jigsaw/jigsaw.rb 
+EOF
+  chmod +x "$pkgdir/usr/bin/jigsaw"
 }
