@@ -1,35 +1,61 @@
-diff -ur orig/CMakeLists.txt nfqueue-bindings-0.4/CMakeLists.txt
---- orig/CMakeLists.txt	2013-10-20 21:41:59.091133488 -0400
-+++ nfqueue-bindings-0.4/CMakeLists.txt	2013-10-20 21:42:10.147800633 -0400
-@@ -26,7 +26,7 @@
+diff -ur ../../../python2-nfqueue/src/nfqueue-bindings-0.4/CMakeLists.txt nfqueue-bindings-0.4/CMakeLists.txt
+--- ../../../python2-nfqueue/src/nfqueue-bindings-0.4/CMakeLists.txt	2012-04-16 21:21:05.000000000 +1200
++++ nfqueue-bindings-0.4/CMakeLists.txt	2013-11-16 01:06:51.588853469 +1300
+@@ -26,7 +26,6 @@
  SET( LIB_INSTALL_DIR  "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}" )
  
  ADD_SUBDIRECTORY(python)
 -ADD_SUBDIRECTORY(perl)
-+#ADD_SUBDIRECTORY(perl)
  
  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/nfq_version.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/nfq_version.h)
  
-diff -ur orig/Makefile nfqueue-bindings-0.4/Makefile
---- orig/Makefile	2013-10-20 21:41:59.091133488 -0400
-+++ nfqueue-bindings-0.4/Makefile	2013-10-20 21:43:01.631136193 -0400
-@@ -1,5 +1,6 @@
+diff -ur ../../../python2-nfqueue/src/nfqueue-bindings-0.4/Makefile nfqueue-bindings-0.4/Makefile
+--- ../../../python2-nfqueue/src/nfqueue-bindings-0.4/Makefile	2012-04-16 21:21:05.000000000 +1200
++++ nfqueue-bindings-0.4/Makefile	2013-11-16 01:21:51.323709417 +1300
+@@ -1,5 +1,8 @@
  PREFIX = /usr/local
 -CMAKE_OPTIONS = -DDEBUG=1 -DCMAKE_VERBOSE_MAKEFILE=0 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(PREFIX)
 +PYTHON_EXE=`which python2`
-+CMAKE_OPTIONS = -DDEBUG=1 -DCMAKE_VERBOSE_MAKEFILE=0 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(PREFIX) -DPYTHON_EXECUTABLE=$(PYTHON_EXE)
++CMAKE_OPTIONS = -DDEBUG=1 -DCMAKE_VERBOSE_MAKEFILE=0 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(PREFIX)  -DPYTHON_INCLUDE_DIR=/usr/include/python2.7 -DPYTHON_LIBRARY=/usr/lib/libpython2.7.so  -DPYTHON_EXECUTABLE=$(PYTHON_EXE)
++
++
  CMAKE_EXTRA_OPTIONS =
  BUILD_DIR = build
  
-diff -ur orig/nfq_common.c nfqueue-bindings-0.4/nfq_common.c
---- orig/nfq_common.c	2013-10-20 21:41:59.091133488 -0400
-+++ nfqueue-bindings-0.4/nfq_common.c	2013-10-20 21:43:48.434471551 -0400
+diff -ur ../../../python2-nfqueue/src/nfqueue-bindings-0.4/nfq_common.c nfqueue-bindings-0.4/nfq_common.c
+--- ../../../python2-nfqueue/src/nfqueue-bindings-0.4/nfq_common.c	2012-04-16 21:21:05.000000000 +1200
++++ nfqueue-bindings-0.4/nfq_common.c	2013-11-16 01:08:45.258239228 +1300
 @@ -46,7 +46,7 @@
  
  int queue_unbind(struct queue *self, int af_family)
  {
 -        if (nfq_unbind_pf(self->_h, af_family)) {
-+        if (nfq_unbind_pf(self->_h, af_family) < 0) {
++        if (nfq_unbind_pf(self->_h, af_family) < 0 ) {
                  throw_exception("error during nfq_unbind_pf()");
                  return -1;
          }
+diff -ur ../../../python2-nfqueue/src/nfqueue-bindings-0.4/nfq.h nfqueue-bindings-0.4/nfq.h
+--- ../../../python2-nfqueue/src/nfqueue-bindings-0.4/nfq.h	2012-04-16 21:21:05.000000000 +1200
++++ nfqueue-bindings-0.4/nfq.h	2013-11-16 01:08:00.753841302 +1300
+@@ -1,6 +1,6 @@
+ #ifndef __NFQ_H__
+ #define __NFQ_H__
+-
++#include <stdint.h>
+ #include <libnetfilter_queue/libnetfilter_queue.h>
+ 
+ struct queue {
+diff -ur ../../../python2-nfqueue/src/nfqueue-bindings-0.4/python/CMakeLists.txt nfqueue-bindings-0.4/python/CMakeLists.txt
+--- ../../../python2-nfqueue/src/nfqueue-bindings-0.4/python/CMakeLists.txt	2012-04-16 21:21:05.000000000 +1200
++++ nfqueue-bindings-0.4/python/CMakeLists.txt	2013-11-16 01:11:01.928175185 +1300
+@@ -20,8 +20,8 @@
+ SWIG_LINK_LIBRARIES(nfqueue ${PYTHON_LIBRARIES} ${LIBNFQ_LDFLAGS})
+ 
+ INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/nfqueue.py
+-	DESTINATION ${LIB_INSTALL_DIR}/python${PYTHON_VERSION}/dist-packages/)
++	DESTINATION ${LIB_INSTALL_DIR}/python${PYTHON_VERSION}/site-packages/)
+ 
+ INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/_nfqueue.so
+-	DESTINATION ${LIB_INSTALL_DIR}/python${PYTHON_VERSION}/dist-packages/)
++	DESTINATION ${LIB_INSTALL_DIR}/python${PYTHON_VERSION}/site-packages/)
+ 

@@ -1,0 +1,31 @@
+pkgname=backdoor-factory
+pkgver=0.r33.879fcbd
+pkgrel=1
+pkgdesc="Patch win32/64 binaries with shellcode"
+url="https://github.com/secretsquirrel/the-backdoor-factory"
+arch=('any')
+license=('GPL3')
+depends=('python2')
+source=("git+https://github.com/secretsquirrel/the-backdoor-factory.git")
+md5sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/the-backdoor-factory"
+  printf "0.r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+package() {
+  cd "$srcdir/the-backdoor-factory"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/share/backdoor-factory"
+  install -dm755 "$pkgdir/usr/bin/"
+
+  cp -a * "$pkgdir/usr/share/backdoor-factory"
+
+  cat > "$pkgdir/usr/bin/backdoor-factory" <<EOF
+#!/bin/sh
+python2 /usr/share/backdoor-factory/backdoor.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/backdoor-factory"
+}

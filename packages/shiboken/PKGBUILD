@@ -1,0 +1,60 @@
+pkgname=shiboken
+pkgver=1.2.1
+pkgrel=3
+pkgdesc="Python bindings generator that uses API Extractor and outputs CPython code."
+arch=('i686' 'x86_64')
+license=('LGPL')
+url="http://www.pyside.org"
+depends=("python2" "python3" "qt4>=4.8" 'libxslt')
+optdepends=("python-sphinx: Documentation")
+makedepends=('cmake')
+conflicts=("libshiboken")
+provides=("libshiboken" "shiboken")
+source=("http://download.qt-project.org/official_releases/pyside/$pkgname-$pkgver.tar.bz2"
+        "FindPython3Libs.cmake.patch")
+md5sums=('06100e2c91ab4433dbf15c26f5bb6c17'
+         'e21f354434c2c43b8ebdcf582d512de5')
+
+prepare() {
+  cd "$srcdir"
+  patch $srcdir/shiboken-$pkgver/cmake/Modules/FindPython3Libs.cmake FindPython3Libs.cmake.patch
+}
+
+build(){
+  cd "$srcdir/shiboken-$pkgver"
+  mkdir -p build_python2 && cd build_python2
+  cmake ../ -DCMAKE_INSTALL_PREFIX=/usr  \
+            -DCMAKE_BUILD_TYPE=Release   \
+            -DBUILD_TESTS=OFF            \
+            -DPYTHON_EXECUTABLE=/usr/bin/python2 \
+            -DPYTHON_LIBRARY=/usr/lib/libpython2.7.so \
+            -DPYTHON_INCLUDE_DIR=/usr/include/python2.7 \
+            -DQT_QMAKE_EXECUTABLE=qmake4
+  make
+
+  cd "$srcdir/shiboken-$pkgver"
+  mkdir -p build && cd build
+  cmake ../ -DCMAKE_INSTALL_PREFIX=/usr  \
+  -DCMAKE_BUILD_TYPE=Release   \
+  -DBUILD_TESTS=OFF            \
+  -DUSE_PYTHON3=yes            \
+  -DQT_QMAKE_EXECUTABLE=qmake4
+  make
+}
+
+package(){
+  cd "$srcdir/shiboken-$pkgver/build"
+  make DESTDIR="$pkgdir" install
+
+  cd data
+  install -D -m 755 ShibokenConfig.cmake "$pkgdir/usr/lib/cmake/Shiboken-$pkgver"
+  install -D -m 755 ShibokenConfigVersion.cmake "$pkgdir/usr/lib/cmake/Shiboken-$pkgver/"
+  install -D -m 755 ShibokenConfig.cpython-33m.cmake "$pkgdir/usr/lib/cmake/Shiboken-$pkgver/"
+  install -D -m 755 shiboken.pc "$pkgdir/usr/lib/pkgconfig/"
+
+  cd "$srcdir/shiboken-$pkgver/build_python2"
+  make DESTDIR="$pkgdir" install
+
+  cd data
+  install -D -m 755 ShibokenConfig-python2.7.cmake "$pkgdir/usr/lib/cmake/Shiboken-$pkgver/"
+}
