@@ -1,0 +1,33 @@
+_author=C/CO/CORION
+_perlmod=Test-Without-Module
+pkgname=perl-test-without-module
+pkgver=0.17
+pkgrel=3
+pkgdesc='Test::Without::Module - Test fallback behaviour in absence of modules'
+arch=('any')
+url="http://search.cpan.org/dist/Test-Without-Module/"
+license=('GPL' 'PerlArtistic')
+depends=('perl')
+makedepends=('perl')
+options=(!emptydirs)
+source=(http://search.cpan.org/CPAN/authors/id/$_author/$_perlmod-$pkgver.tar.gz)
+md5sums=('4480ece707cb6bbedaae8fbe41320927')
+
+build(){
+  cd "$srcdir/$_perlmod-$pkgver"
+
+  # Install module in vendor directories.
+  PERL_MM_USE_DEFAULT=1 perl Makefile.PL INSTALLDIRS=vendor
+  make
+}
+check(){
+  cd "$srcdir/$_perlmod-$pkgver"
+  make test
+}
+package(){
+  cd "$srcdir/$_perlmod-$pkgver"
+  make install DESTDIR="$pkgdir/"
+
+  # remove perllocal.pod and .packlist
+  find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}
