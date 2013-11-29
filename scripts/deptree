@@ -1,0 +1,20 @@
+#!/bin/bash
+
+pack=$1
+prefix=$2
+
+this=$(realpath "$0")
+cd "$(dirname "$0")/.."
+
+if ! . "packages/$pack/PKGBUILD" &> /dev/null ; then
+	exit 1
+fi
+
+echo "$prefix$pkgname"
+
+prefix="    $prefix"
+
+for dep in "${depends[@]}" "${makedepends[@]}" ; do
+	# Yep. This script calls itself recursively...
+	"$this" "$dep" "$prefix"
+done
