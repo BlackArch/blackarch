@@ -17,13 +17,17 @@ exec 2> /dev/null
 
 get_blackarch_deps() {
 	local pack=$1
-	(( n++ ))
+	local n=${2:-1}
 
 	# Don't do anything if maximum depth reached or no package passed.
 	if [[ $n == 10 || $# == 0 ]] ; then
 		echo >&2 "$n base on $pack"
 		return
 	fi
+
+	unset depends
+	unset makedepends
+	unset pkgname
 
 	{
 	if source "packages/$pack/PKGBUILD" &> /dev/null ; then
@@ -35,11 +39,9 @@ get_blackarch_deps() {
 			echo >&2 "$n $pack is original"
 		fi
 
-		val=$n
 		for dep in "${depends[@]}" "${makedepends[@]}" ; do
-			echo >&2 $n get_blackarch_deps "$(sed 's/\(>\|<\|=\).*//' <<< $dep)"
-			get_blackarch_deps "$(sed 's/\(>\|<\|=\).*//' <<< $dep)"
-			n=$val
+			echo >&2 $n "($pkgname)" get_blackarch_deps "$(sed 's/\(>\|<\|=\).*//' <<< $dep)" $(( n + 1 ))
+			get_blackarch_deps "$(sed 's/\(>\|<\|=\).*//' <<< $dep)" $(( n + 1 ))
 		done
 	else
 		# Don't do anything if the package couldn't be sourced.
@@ -48,5 +50,4 @@ get_blackarch_deps() {
 	} | sort -n | sort -k2 -u
 }
 
-n=0
 get_blackarch_deps "$@" | sort -nr
