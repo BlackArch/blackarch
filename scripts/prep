@@ -6,7 +6,7 @@ pkgbuild=$1
 
 if [[ ! -r "$pkgbuild" ]] ; then
 	echo >&2 "could not read '$pkgbuild'."
-	continue
+	exit 1
 fi
 echo "cleaning '$pkgbuild'..."
 
@@ -54,12 +54,6 @@ if ! grep -q 'package.*()' "$pkgbuild" ; then
 	echo >&2 "warning: no package function"
 fi
 
-# Remove trailing whitespace
-if grep -Eq '[[:space:]]+$' "$pkgbuild" ; then
-	echo "removing trailing whitespace..."
-	sed -i 's/[[:space:]]+$//' "$pkgbuild"
-fi
-
 # Remove blank line at top
 # This also adds a trailing newline if there isn't one already.
 echo 'removing leading blank line...'
@@ -75,4 +69,10 @@ awk 'BEGIN{ i=0 } {
 if grep -q 'startdir' "$pkgbuild" ; then
 	echo 'warning: has startdir'
 	sed -i '1i\# TODO: remove startdir' "$pkgbuild"
+fi
+
+# Remove trailing whitespace
+if grep -Eq '[[:space:]]+$' "$pkgbuild" ; then
+	echo "removing trailing whitespace..."
+	sed -i 's/[[:space:]]+$//' "$pkgbuild"
 fi
