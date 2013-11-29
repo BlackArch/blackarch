@@ -1,26 +1,33 @@
-pkgname='scalpel'
+pkgname=scalpel
 pkgver=2.0
 pkgrel=3
 pkgdesc='A frugal, high performance file carver'
-groups=(blackarch blackarch-forensics)
+groups=('blackarch' 'blackarch-forensics')
 url="http://www.digitalforensicssolutions.com/Scalpel/"
+arch=('i686' 'x86_64')
 license=('GPL2')
 depends=('glibc' 'tre')
-source=(http://www.digitalforensicssolutions.com/Scalpel/$pkgname-$pkgver.tar.gz
-        conf-location.patch)
-md5sums=('b0da813bf34941e79209d7fafe86a6e6'
+source=('git+http://github.com/BlackArch/Scalpel-2.0'
+        'conf-location.patch')
+md5sums=('SKIP'
          '2a6d0cab099b10a599208ec1081bdab3')
-arch=(i686 x86_64)
+
+prepare() {
+  cd "$srcdir/Scalpel-$pkgver"
+
+  patch -Np1 -i $srcdir/conf-location.patch
+}
 
 build() {
-  cd ${srcdir}/${pkgname}-${pkgver}
-  patch -Np1 -i ${srcdir}/conf-location.patch
+  cd "$srcdir/Scalpel-$pkgver"
+
   ./configure --prefix=/usr
   make
 }
 
 package() {
-  cd ${srcdir}/${pkgname}-${pkgver}
-  make DESTDIR=${pkgdir} install
-  install -Dm644 scalpel.conf ${pkgdir}/etc/${pkgname}/scalpel.conf
+  cd "$srcdir/Scalpel-$pkgver"
+
+  make "DESTDIR=$pkgdir" install
+  install -Dm644 conf/scalpel.conf "$pkgdir/etc/scalpel/scalpel.conf"
 }
