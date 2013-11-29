@@ -1,0 +1,80 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=psad
+pkgver=2.1.7
+pkgrel=1
+pkgdesc="A collection of three lightweight system daemons (two main daemons and one helper daemon) that run on Linux machines and analyze iptables log messages to detect port scans and other suspicious traffic"
+arch=('i686')
+url="http://cipherdyne.org/psad/"
+updateurl="http://www.cipherdyne.com/psad/download/=>psad-"
+license=('GPL')
+groups=('archpwn' 'archpwn-defense')
+depends=('perl-bit-vector' 'perl-date-calc' 'perl-iptables-chainmgr' 'perl-iptables-parse' 'perl-net-ipv4addr' 'perl-storable' 'perl-unix-syslog')
+source=("http://cipherdyne.org/psad/download/$pkgname-$pkgver.tar.gz"
+        "psad-init.archlinux"
+        "psad.install"
+        "psad.patch1")
+md5sums=('c5e4a8d1bba6b5026ebada0084970e47'
+         '577507421fcac7ba0614d78fe3412d49'
+         '18fccaee5f6150f1b93852bb9d2419cf'
+         '9d72e2e5af8a06b7c85973b927fc12ae')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver/deps/Net-IPv4Addr"
+  PERL_MM_USE_DEFAULT=1 perl Makefile.PL INSTALLDIRS=vendor
+  make
+
+  cd "$srcdir/$pkgname-$pkgver/deps/IPTables-Parse"
+  PERL_MM_USE_DEFAULT=1 perl Makefile.PL INSTALLDIRS=vendor
+  make
+
+  cd "$srcdir/$pkgname-$pkgver/deps/IPTables-ChainMgr"
+  PERL_MM_USE_DEFAULT=1 perl Makefile.PL INSTALLDIRS=vendor
+  make
+
+  cd "$srcdir/$pkgname-$pkgver"
+  make
+  patch -p1 -i $srcdir/psad.patch1
+
+  mkdir -p $pkgdir/usr/sbin/
+  mkdir -p $pkgdir/usr/bin
+  mkdir -p $pkgdir/usr/share/doc/$pkgname/
+  mkdir -p $pkgdir/etc/rc.d/
+  mkdir -p $pkgdir/etc/psad/snort_rules/
+  install -dm500 $pkgdir/var/run/psad
+  install -dm500 $pkgdir/var/lib/psad
+  install -dm500 $pkgdir/var/log/psad
+
+  for f in kmsgsd psad psadwatchd; do
+    install -Dm755 $f $pkgdir/usr/sbin/$f
+  done
+
+  install -Dm755 fwcheck_psad.pl $pkgdir/usr/sbin/fwcheck_psad
+  install -Dm755 pscan $pkgdir/usr/sbin/psad-pscan
+
+  for f in *.conf psad_* auto_dl icmp_types ip_options posf signatures pf.os; do
+    install -Dm644 $f $pkgdir/etc/psad/
+  done
+
+  install -Dm755 $srcdir/psad-init.archlinux $pkgdir/etc/rc.d/psad
+
+  for f in BENCHMARK CREDITS Change* FW_EXAMPLE_RULES README SCAN_LOG; do
+    install -Dm644 $f $pkgdir/usr/share/doc/$pkgname/$f
+  done
+
+  cd $srcdir/$pkgname-$pkgver/deps/snort_rules/
+  for f in *.rules; do
+    install -Dm644 $f $pkgdir/etc/psad/snort_rules/$f
+  done
+
+  local PSADCONF="$pkgdir/etc/psad/psad.conf"
+  local mydomain=
+  local myhostname=
+
+  sed -i "s:HOSTNAME\(.\+\)\_CHANGEME\_;:HOSTNAME\1${myhostname}${mydomain};:" "${PSADCONF}"
+  sed -i "s:/sbin/syslogd:/usr/sbin/syslogd:g" "${PSADCONF}"
+  sed -i "s:/sbin/syslog-ng:/usr/sbin/syslog-ng:g" "${PSADCONF}"
+  sed -i "s:/usr/bin/whois_psad:/usr/bin/whois:g" "${PSADCONF}"
+}
+
+# vim:set ts=2 sw=2 et:

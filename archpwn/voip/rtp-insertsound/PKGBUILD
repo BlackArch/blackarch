@@ -1,0 +1,44 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=rtp-insertsound
+pkgver=3.0
+pkgrel=1
+pkgdesc="A tool to insert audio into a specified audio (i.e. RTP) stream"
+url="http://www.hackingexposedvoip.com/"
+updateurl="http://www.hackingvoip.com/sec_tools.html=>rtpmixsound_v"
+license=('GPL')
+arch=(i686 x86_64)
+depends=('libfindrtp' 'libpcap' 'libnet' 'rtp-mixsound')
+groups=('archpwn' 'archpwn-voip')
+makedepends=('gcc' 'make')
+source=(http://www.hackingexposedvoip.com/tools/${pkgname//-/}_v$pkgver.tar.gz
+        http://www.hackingexposedvoip.com/tools/hack_library.tar.gz
+        http://www.hackingvoip.com/tools/g711conversions.tar.gz)
+md5sums=('a4fbf48a83ce4f88701ebd2a5818778b'
+         'f198da341418289389a5d4b49abbfa1e'
+         '96a3f7f6a068203b3d0659afb39a3d08')
+
+build() {
+  cd "$srcdir/hack_library"
+  sed -i "s:gcc :gcc $CFLAGS :" Makefile
+  make
+
+  cd "$srcdir/g711conversions"
+  sed -i "s:gcc :gcc $CFLAGS :" Makefile
+  make
+
+  cd "$srcdir/${pkgname//-/}_v$pkgver"
+  sed -i "s:gcc :gcc $CFLAGS :" Makefile
+  make
+
+  mkdir -p $pkgdir/usr/share/$pkgname/
+  install -Dm755 rtpinsertsound $pkgdir/usr/bin/rtpinsertsound
+  install -Dm644 Readme.txt $pkgdir/usr/share/$pkgname/
+
+  cd $pkgdir/usr/share/$pkgname/
+  ln -sf /usr/share/rtp-mixsound/stapler.wav .
+  ln -sf /usr/share/rtp-mixsound/helzart.wav .
+  ln -sf /usr/share/rtp-mixsound/g711RTPCaptureAllClearToBlow.pcap .
+}
+
+# vim:set ts=2 sw=2 et:

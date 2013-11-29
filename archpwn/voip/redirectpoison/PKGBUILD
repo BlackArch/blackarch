@@ -1,0 +1,32 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=redirectpoison
+pkgver=1.1
+pkgrel=1
+pkgdesc="A tool to poison a targeted issuer of SIP INVITE requests with 301 (i.e. Moved Permanently) redirection responses."
+url="http://www.hackingexposedvoip.com/"
+updateurl="http://www.hackingvoip.com/sec_tools.html=>redirectpoison_v"
+groups=('archpwn' 'archpwn-voip')
+license=('GPL')
+arch=(i686 x86_64)
+depends=('libnet' 'libpcap')
+makedepends=('gcc' 'make')
+source=(http://www.hackingvoip.com/tools/${pkgname}_v$pkgver.tar.gz
+        http://www.hackingexposedvoip.com/tools/hack_library.tar.gz)
+md5sums=('e897922422b5e2c752fab42852e13288'
+         'f198da341418289389a5d4b49abbfa1e')
+
+build() {
+  cd "$srcdir/hack_library"
+  sed -i "s:gcc :gcc $CFLAGS :" Makefile
+  make
+
+  cd "$srcdir/${pkgname}_v$pkgver"
+  sed -i "s:gcc :gcc $CFLAGS :" Makefile
+  make
+
+  install -Dm755 redirectpoison $pkgdir/usr/bin/redirectpoison
+  install -Dm644 Readme.txt $pkgdir/usr/share/$pkgname/Readme.txt
+}
+
+# vim:set ts=2 sw=2 et:

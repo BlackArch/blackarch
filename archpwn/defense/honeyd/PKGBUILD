@@ -1,0 +1,32 @@
+# Contributor: Michael P <ptchinster@archlinux.us>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=honeyd
+pkgver=1.5c
+pkgrel=3
+pkgdesc="A small daemon that creates virtual hosts on a network."
+depends=('libdnet' ' libevent' 'libpcap' 'pcre' 'zlib')
+source=(http://www.honeyd.org/uploads/$pkgname-$pkgver.tar.gz)
+md5sums=('9887b44333e380a2205f64fa245cb727')
+arch=(i686 x86_64)
+url="http://www.honeyd.org"
+groups=('archpwn' 'archpwn-defense')
+updateurl="http://www.honeyd.org/release.php"
+license="GPL"
+
+build() {
+  cd $startdir/src/$pkgname-$pkgver
+
+  mkdir -p $startdir/pkg/usr/share/honeyd
+
+  ./configure --prefix=/usr
+  make || return 1
+  make prefix=$startdir/pkg/usr install
+
+  # Fix permissions on webserver dirs
+  for dir in webserver webserver/htdocs webserver/htdocs/graphs \
+  webserver/htdocs/images webserver/htdocs/styles webserver/htdocs/templates \
+  webserver/htdocs/templates/inc
+  	do chmod 755 $startdir/pkg/usr/share/honeyd/$dir
+  done
+}

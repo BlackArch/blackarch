@@ -1,0 +1,34 @@
+# Contributor: Jonathan Liu <net147@gmail.com>
+pkgname=arpon
+_realpkgname=ArpON
+pkgver=2.0
+pkgrel=2
+pkgdesc="ArpON (Arp handler inspectiON) is a portable Arp handler"
+arch=(i686 x86_64)
+url="http://arpon.sourceforge.net/"
+license=('custom')
+depends=('bash' 'libnet>=1.1.2.1' 'libpcap>=0.9.8')
+makedepends=('libdnet>=1.11')
+backup=('etc/conf.d/arpon')
+groups=('archpwn' 'archpwn-defense')
+source=("http://downloads.sourceforge.net/sourceforge/$pkgname/$_realpkgname-$pkgver.tar.gz"
+        "Makefile.patch"
+        "arpon"
+        "arpon.conf.d")
+md5sums=('b9bd79347961b575c88168e25a07715b'
+         '76ed831ce60aab85e8e580745346928d'
+         'd0cc06154737aa9817b8c4eb10f08c5d'
+         'f4ae37f8907bb24e3084725c9c66532c')
+
+build() {
+  cd "$srcdir/$_realpkgname-$pkgver"
+  patch -Np1 -i "$srcdir/Makefile.patch" || return 1
+
+  make || return 1
+  make DESTDIR="$pkgdir" install
+  install -D -m644 LICENSE "$startdir/pkg/usr/share/licenses/$pkgname/LICENSE"
+  install -D -m755 "$srcdir/arpon" "$pkgdir/etc/rc.d/arpon"
+  install -D -m644 "$srcdir/arpon.conf.d" "$pkgdir/etc/conf.d/arpon"
+}
+
+# vim:set ts=2 sw=2 et:

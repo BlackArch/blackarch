@@ -1,0 +1,29 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=3proxy
+pkgver=0.7
+pkgrel=2
+pkgdesc="3proxy tiny free proxy server"
+url="http://3proxy.ru/"
+updateurl="http://3proxy.ru/download/=>3proxy-(\\\d\\\.\\\d)-devel\\\."
+groups=('archpwn' 'archpwn-misc')
+depends=('glibc')
+license=('GPL')
+arch=(i686 x86_64)
+source=(http://3proxy.ru/current/$pkgname-$pkgver-devel.tgz)
+md5sums=('c6480ddf9680d504a1f4f51eca38ff36')
+
+build() {
+  cd $srcdir/$pkgname-$pkgver-devel
+
+  sed -i "s|/usr/bin/install|/bin/install|g" Makefile.Linux || return 1
+  sed -i "s|/usr/local|/usr|g" Makefile.Linux || return 1
+  sed -i "s|-s ||g" Makefile.Linux || return 1
+  sed -i "s|-Wall -g -O2|$CFLAGS|g" Makefile.Linux || return 1
+  sed -i "s|\$(prefix)/etc/|/etc/|g" Makefile.Linux || return 1
+
+  make -f Makefile.Linux prefix=/usr || return 1
+  make -j1 -f Makefile.Linux install DESTDIR=$pkgdir/ || return 1
+}
+
+# vim:set ts=2 sw=2 et:

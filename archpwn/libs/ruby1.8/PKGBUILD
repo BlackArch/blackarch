@@ -1,0 +1,32 @@
+# Contributor: v01d
+pkgname='ruby1.8'
+pkgver=1.8.7_p299
+_pkgver=$(echo $pkgver | tr '_' '-')
+pkgrel=1
+pkgdesc="An object-oriented language for quick and easy programming"
+arch=('i686' 'x86_64')
+license=('custom')
+url="http://www.ruby-lang.org/en/"
+makedepends=('tk>=8.5')
+provides=('ruby=1.8.7')
+source=(ftp://ftp.ruby-lang.org/pub/ruby/stable/ruby-${_pkgver}.tar.bz2)
+options=('!emptydirs')
+depends=('gdbm>=1.8.3' 'db>=4.7.25' 'openssl>=0.9.8k' 'zlib>=1.2.3.3' 'readline>=5.2.013')
+optdepends=('tk: for Ruby/TK')
+
+build() {
+  cd "${srcdir}/ruby-${_pkgver}"
+  #patch -p1 < ${srcdir}/openssl-1.0.patch || return 1
+  ./configure --prefix=/opt/ruby1.8 --enable-shared --enable-pthread || return 1
+  make || return 1
+  make DESTDIR="${pkgdir}" install || return 1
+
+  install -Dm644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/COPYING" || return 1
+
+  mkdir -p $pkgdir/usr/bin
+  for i in erb irb rdoc ri ruby testrb; do
+    ln -s /opt/ruby1.8/bin/$i $pkgdir/usr/bin/$i-1.8
+  done
+}
+
+md5sums=('244439a87d75ab24170a9c2b451ce351')

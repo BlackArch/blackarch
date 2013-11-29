@@ -1,0 +1,48 @@
+# Contributor: Kevin Piche <kevin@archlinux.org>
+# Contributor: Manolis Tzanidakis
+# Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=stunnel
+pkgver=4.33
+pkgrel=1
+pkgdesc="A program that allows you to encrypt arbitrary TCP connections inside SSL."
+arch=('i686' 'x86_64')
+url="http://www.stunnel.org"
+updateurl="http://www.stunnel.org/download/source.html=>stunnel-"
+license=('GPL')
+groups=('archpwn' 'archpwn-tunneling')
+depends=('openssl' 'tcp_wrappers')
+install=stunnel.install
+options=('!libtool')
+source=(http://www.stunnel.org/download/stunnel/src/${pkgname}-${pkgver}.tar.gz
+        'Makefile.patch'
+        'stunnel')
+md5sums=('559a864066d8cc4afd8a97682c90d41c'
+         'f15398497e10e080c2406d2fc541660c'
+         'cb647c71ff4cb1e035b6e515d5f13ebf')
+
+build() {
+  cd ${srcdir}/${pkgname}-${pkgver}
+
+  # don't create a certificate...
+  patch -p0 < ${srcdir}/Makefile.patch || return 1
+
+  ./configure --prefix=/usr \
+              --sysconfdir=/etc \
+              --with-tcp-wrappers \
+              --localstatedir=/var
+  make || return 1
+  make DESTDIR=${pkgdir} install
+
+  for i in ca.pl importCA.sh; do
+      install -Dm755 tools/$i ${pkgdir}/usr/share/stunnel/$i
+  done
+  install -Dm755 ${srcdir}/stunnel ${pkgdir}/etc/rc.d/stunnel
+  sed -e "s:/usr/var/lib/stunnel/:/var/run/stunnel:g" \
+      -e "s:/usr/etc/stunnel/:/etc/stunnel/:g" \
+      -e "s:nobody:stunnel:g" -e "s:nogroup:stunnel:g" \
+      -i ${pkgdir}/etc/stunnel/stunnel.conf-sample
+  install -Dm644 tools/stunnel.cnf \
+      ${pkgdir}/etc/stunnel/stunnel.cnf || return 1
+}

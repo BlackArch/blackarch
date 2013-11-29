@@ -1,0 +1,37 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+pkgname=miredo
+pkgver=1.2.3
+pkgrel=1
+pkgdesc="Teredo client and server."
+arch=('i686' 'x86_64')
+url="http://www.remlab.net/miredo/"
+updateurl="http://www.remlab.net/files/miredo/=>miredo-"
+license=('GPL')
+depends=('judy' 'libcap' 'bash')
+groups=('archpwn' 'archpwn-tunneling')
+source=(http://www.remlab.net/files/${pkgname}/${pkgname}-${pkgver}.tar.bz2
+        isatapd.rc.d
+        miredo.install
+        miredo.rc.d
+        miredo-server.rc.d)
+backup=('etc/miredo/miredo.conf'
+        'etc/miredo/miredo-server.conf'
+        'etc/miredo/isatapd.conf')
+md5sums=('6ba484ad5e331514a8a3452da2b144e7'
+         '51ab6d091192605ee9206944869cb2ab'
+         '6af64a8d730898b2a860a33a4c7b1699'
+         'c5a9be5c3175fecec387f1710bfd2788'
+         '319aba1ae06349b76cb25fda0dba60a9')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --with-Judy
+  make || return 1
+  make DESTDIR="$pkgdir" install
+
+  install -D -m755 $startdir/miredo.rc.d $pkgdir/etc/rc.d/miredo || return 1
+  install -D -m755 $startdir/miredo-server.rc.d $pkgdir/etc/rc.d/miredo-server || return 1
+  install -D -m755 $startdir/isatapd.rc.d $pkgdir/etc/rc.d/isatapd || return 1
+}

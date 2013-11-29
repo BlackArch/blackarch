@@ -1,0 +1,28 @@
+# Contributor: Jens Pranaitis <jens@jenux.homelinux.org>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+pkgname=bob-the-butcher
+pkgver=0.7.1
+pkgrel=1
+pkgdesc="a distributed password cracker package"
+arch=("i686")
+url="http://btb.banquise.net"
+updateurl="http://btb.banquise.net/=>bob-the-butcher-"
+license=('GPL')
+depends=("libevent")
+groups=('archpwn' 'archpwn-password' 'archpwn-bruteforce')
+source=(http://www.packetstormsecurity.org/Crackers/$pkgname-$pkgver.tar.gz)
+md5sums=('c76fcbcf87e229fa6f1ec06d0eeac759')
+build() {
+  cd "${srcdir}/$pkgname-$pkgver"
+  # first we build without sse2 support
+  ./configure --prefix=/usr --disable-sse2
+  make CFLAGS="$CFLAGS" || return 1
+  make DESTDIR="${pkgdir}/" install
+  # now with sse2 support
+  make clean
+  ./configure --prefix=/usr --program-suffix="-sse2"
+  make CFLAGS="$CFLAGS" || return 1
+  make DESTDIR="${pkgdir}/" install
+}
+
+# vim:set ts=2 sw=2 et:

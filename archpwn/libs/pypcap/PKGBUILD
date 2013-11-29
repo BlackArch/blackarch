@@ -1,0 +1,23 @@
+# Contributor: Jens Pranaitis <jens@chaox.net>
+# Contributor: Pranay Kanwar <warl0ck@metaeye.org>
+pkgname=pypcap
+pkgver=1.1
+pkgrel=3
+pkgdesc="Python extension module for libpcap."
+url="http://code.google.com/p/pypcap/"
+license=('BSD')
+arch=('i686')
+depends=(python libpcap)
+makedepends=(python libpcap pyrex)
+source=(http://$pkgname.googlecode.com/files/$pkgname-$pkgver.tar.gz pypcap-fix-includes.patch)
+md5sums=('034c3cbbfa81aa19e8f685b767c65764'
+         '899dd411fca8752ccca2a6ed4ac57e96')
+build() {
+  cd "${srcdir}"/$pkgname-$pkgver
+  patch -Np1 -i "${srcdir}"/pypcap-fix-includes.patch || return 1
+  python setup.py config || return 1
+  pyrexc pcap.pyx || return 1 
+  python setup.py build || return 1
+  python setup.py install --root="${pkgdir}" || return 1
+  install -m 644 -D LICENSE "${pkgdir}"/usr/share/licenses/$pkgname/LICENSE
+}

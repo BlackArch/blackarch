@@ -1,0 +1,66 @@
+diff -ur rt73-k2wrlz-3.0.3/Module/Makefile rt73-k2wrlz-3.0.3.nopper/Module/Makefile
+--- rt73-k2wrlz-3.0.3/Module/Makefile	2009-05-14 17:22:37.000000000 +0200
++++ rt73-k2wrlz-3.0.3.nopper/Module/Makefile	2009-11-03 14:51:07.733377454 +0100
+@@ -63,9 +63,7 @@
+ 			rtmp_init.o  sanity.o rtmp_wep.o rtmp_info.o \
+ 			rtmp_tkip.o wpa.o md5.o rt2x00debug.o
+ 
+-ifdef TOPDIR
+ obj-m += $(MODULE_NAME).o
+-endif
+ 
+ EXTRA_CFLAGS += -I$(src)
+ ifneq ($(FCREV),)
+diff -ur rt73-k2wrlz-3.0.3/Module/rtmp_main.c rt73-k2wrlz-3.0.3.nopper/Module/rtmp_main.c
+--- rt73-k2wrlz-3.0.3/Module/rtmp_main.c	2009-05-19 21:23:26.000000000 +0200
++++ rt73-k2wrlz-3.0.3.nopper/Module/rtmp_main.c	2009-11-03 15:11:30.683079855 +0100
+@@ -2070,6 +2070,16 @@
+ }
+ #endif
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31)
++static const struct net_device_ops rt73_netdev_ops = {
++    .ndo_open       = usb_rtusb_open,
++    .ndo_stop       = usb_rtusb_close,
++    .ndo_do_ioctl   = rt73_ioctl,
++    .ndo_get_stats  = rt73_get_ether_stats,
++    .ndo_start_xmit = RTMPSendPackets,
++};
++#endif
++
+ static int usb_rtusb_probe (struct usb_interface *intf,
+ 					  const struct usb_device_id *id)
+ {
+@@ -2123,10 +2133,15 @@
+ 	SET_MODULE_OWNER(netdev);
+ 	ether_setup(netdev);
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31)
++    netdev->netdev_ops = &rt73_netdev_ops;
++#else
+ 	netdev->open = usb_rtusb_open;
+ 	netdev->stop = usb_rtusb_close;
+ 	netdev->hard_start_xmit = RTMPSendPackets;
+ 	netdev->get_stats = rt73_get_ether_stats;
++	netdev->do_ioctl = rt73_ioctl;
++#endif
+ 
+ #if WIRELESS_EXT >= 12
+ #if WIRELESS_EXT < 17
+@@ -2134,7 +2149,6 @@
+ #endif
+ 	netdev->wireless_handlers = (struct iw_handler_def *) &rt73_iw_handler_def;
+ #endif
+-	netdev->do_ioctl = rt73_ioctl;
+ 
+ 	netdev->hard_header_len = 14;
+ 	netdev->mtu = 1500;
+@@ -2295,7 +2309,7 @@
+ 	#else
+ 	if (debug) {}	// keep compiler from complaining
+ 	#endif
+-	if ( strlen(firmName)  > FIRMWARE_NAME_MAX ) {
++	if ( strlen(firmName)  > NAME_MAX ) {
+ 		DBGPRINT(RT_DEBUG_ERROR,"Firmware name too long\n");
+ 		return -E2BIG;
+ 	}

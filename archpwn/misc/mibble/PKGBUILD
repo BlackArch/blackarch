@@ -1,0 +1,54 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=mibble
+pkgver=2.9.2
+pkgrel=1
+pkgdesc="Mibble is an open-source SNMP MIB parser (or SMI parser) written in Java. It can be used to read SNMP MIB files as well as simple ASN.1 files."
+url="http://www.mibble.org"
+updateurl="http://www.mibble.org/download/index.html=>mibble-"
+groups=('archpwn' 'archpwn-misc')
+license=('GPL')
+depends=('java-runtime' 'bash')
+arch=(any)
+source=(http://www.mibble.org/download/stable/$pkgver/$pkgname-$pkgver.tar.gz)
+md5sums=('2efba156f00dc0d79b81033915a05143')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  install -d $pkgdir/usr/bin
+  install -d $pkgdir/usr/share/doc/$pkgname
+
+  for bin in bin/*.sh; do
+    install -Dm755 $bin $pkgdir/usr/share/$pkgname/$bin || return 1
+  done
+
+  for lib in lib/*; do
+    install -Dm644 $lib $pkgdir/usr/share/$pkgname/$lib || return 1
+  done
+
+  cp -r doc/* $pkgdir/usr/share/doc/$pkgname/ || return 1
+  install -Dm644 README.txt $pkgdir/usr/share/doc/$pkgname/ || return 1
+
+  cat > $pkgdir/usr/bin/MibbleBrowser << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/bin/
+./MibbleBrowser.sh \$*
+EOF
+  cat > $pkgdir/usr/bin/MibblePrinter << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/bin/
+./MibblePrinter.sh \$*
+EOF
+  cat > $pkgdir/usr/bin/MibbleValidator << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/bin/
+./MibbleValidator.sh \$*
+EOF
+
+  for bin in Browser Printer Validator; do
+    chmod 0755 $pkgdir/usr/bin/Mibble$bin || return 1
+  done
+}
+
+# vim:set ts=2 sw=2 et:

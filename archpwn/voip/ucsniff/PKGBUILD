@@ -1,0 +1,43 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=ucsniff
+pkgver=3.08
+pkgrel=1
+pkgdesc="UCSniff is a VoIP & IP Video Security Assessment tool that integrates existing open source software into several useful features, allowing VoIP and IP Video owners and security professionals to rapidly test for the threat of unauthorized VoIP and Video Eavesdropping"
+arch=('i686' 'x86_64')
+url="http://sourceforge.net/projects/ucsniff/"
+license=('GPL')
+depends=('libpcap' 'pcre' 'libnet' 'alsa-lib' 'openssl' 'libtool'
+         'jack' 'ffmpeg' 'x264')
+makedepends=('make' 'gcc' 'autoconf')
+groups=('archpwn' 'archpwn-sniffer' 'archpwn-voip')
+source=(http://downloads.sourceforge.net/$pkgname/$pkgname-$pkgver.tar.gz
+        ucsniff-as-needed.patch
+        ucsniff-rename-config.patch)
+md5sums=('14f09515d4a4ea122b65c1402a1afe2c'
+         '3fc1902e0febeda886da9b396bf2aff3'
+         '150d553b1238990fde43d45624cb9c15')
+
+build() {
+  cd "${srcdir}"/$pkgname-$pkgver
+  patch -Np1 < "$srcdir"/ucsniff-as-needed.patch
+  patch -Np0 < "$srcdir"/ucsniff-rename-config.patch
+
+  libtoolize --install --copy
+  autoreconf || echo "Reconfigured."
+
+  export CFLAGS="$CFLAGS -DLTDL_SHLIB_EXT='\".so\"'"
+
+  ./configure --prefix=/usr --sysconfdir=/etc \
+              --enable-ffmpeg \
+              --enable-x264 \
+              --enable-compression
+
+
+  make LDFLAGS="-lncurses"
+  make DESTDIR="$pkgdir" install
+
+  rm -rf $pkgdir/usr/share/man/man8/
+  mv $pkgdir/usr/share/man/man5/etter.conf.5 $pkgdir/usr/share/man/man5/ucsniff.conf.5
+  mv $pkgdir/etc/etter.conf $pkgdir/etc/ucsniff.conf
+}

@@ -1,0 +1,53 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=wafp-svn
+_pkgname=wafp
+pkgver=8
+pkgrel=1
+pkgdesc="WAFP is a Web Application Finger Printer written in ruby using a SQLite3 DB."
+arch=('any')
+url="http://mytty.org/wafp/"
+license=('GPL')
+depends=('ruby1.8' 'ruby1.8-sqlite3-ruby')
+provides=('wafp')
+replaces=('wafp')
+makedepends=('subversion')
+groups=('archpwn' 'archpwn-scanners' 'archpwn-www')
+
+_svntrunk=http://webapplicationfingerprinter.googlecode.com/svn/trunk/
+_svnmod=wafp
+
+build() {
+  cd "$srcdir"
+
+  if [ -d $_svnmod/.svn ]; then
+    (cd $_svnmod && svn up -r $pkgver)
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
+  fi
+
+  msg "SVN checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_svnmod-build"
+  cp -r "$srcdir/$_svnmod" "$srcdir/$_svnmod-build"
+  cd "$srcdir/$_svnmod-build"
+
+  #
+  # BUILD
+  #
+  rm CREDITS LICENSE
+  sed -i 's:/usr/bin/ruby:/usr/bin/env ruby-1.8:' wafp.rb
+
+  mkdir -p $pkgdir/usr/share/$_pkgname
+  cp -r * $pkgdir/usr/share/$_pkgname
+
+  mkdir -p $pkgdir/usr/bin/
+  cd $pkgdir/usr/bin
+  cat > $_pkgname << EOF
+#!/bin/sh
+cd /usr/share/$_pkgname
+ruby-1.8 wafp.rb \$@
+EOF
+  chmod 755 $pkgdir/usr/bin/$_pkgname
+}

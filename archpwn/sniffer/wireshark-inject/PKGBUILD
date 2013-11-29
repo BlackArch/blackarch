@@ -1,0 +1,40 @@
+# Maintainer: Hugo Doria <hugo@archlinux.org>
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=wireshark-inject
+_pkgname=wireshark
+pkgver=1.3.1
+pkgrel=1
+pkgdesc="A free network protocol analyzer for Unix/Linux and Windows"
+arch=('i686' 'x86_64')
+license=('GPL2')
+depends=('gtk2' 'heimdal' 'libpcap' 'bash' 'gnutls' 'libcap' 'ghex' 'lorcon-old-svn' 'geoip' 'lua')
+makedepends=('bison' 'flex' 'patch')
+url="http://www.wireshark.org/"
+replaces=('ethereal')
+groups=('archpwn' 'archpwn-sniffer')
+options=(!libtool)
+source=(http://downloads.sourceforge.net/$_pkgname/${_pkgname}-${pkgver}.tar.gz
+        lorcon-autotooling-1.3.1.patch
+        wireshark-except-double-free.diff
+        wishark.diff)
+md5sums=('a44fd44d6a778850baeb61a0951025d3'
+         '82ced2ede8642e527631baaec484cfac'
+         '81d414ffae4323c3d36afb14ea0377b8'
+         'e9fbd718d47926914a7a7eb6d77d2dfd')
+
+build() {
+  cd ${srcdir}/${_pkgname}-${pkgver}/epan
+  patch -Np0 < ../../wireshark-except-double-free.diff || return 1
+
+  cd ../
+  patch -Np0 < ../lorcon-autotooling-1.3.1.patch || return 1
+  patch -Np0 < ../wishark.diff || return 1
+
+  ./autogen.sh || return 1
+  ./configure --prefix=/usr/share/wireshark-inject/ \
+              --with-ssl --enable-warnings-as-errors=no || return 1
+
+  make all || return 1
+  make DESTDIR=${pkgdir} install || return 1
+}

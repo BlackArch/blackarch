@@ -1,0 +1,43 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=airoscript-git
+pkgver=20100805
+pkgrel=1
+pkgdesc="Script to simplify the use of aircrack-ng tools"
+arch=(i686 x86_64)
+url="http://midnightresearch.com/projects/wicrawl/"
+groups=('archpwn' 'archpwn-wireless')
+license=('GPL')
+depends=('mdk3' 'aircrack-ng' 'bash' 'dhclient')
+makedepends=('gcc')
+source=(Makefile.patch)
+md5sums=('441dd3a5f804f3c65c4da93b367199c1')
+
+_gitroot="git://github.com/XayOn/Airoscript.git"
+_gitname="Airoscript"
+
+build() {
+  cd "$srcdir"
+  msg "Connecting to GIT server...."
+
+  if [ -d $_gitname ] ; then
+    cd $_gitname && git pull origin
+    msg "The local files are updated."
+  else
+    git clone $_gitroot
+  fi
+
+  msg "GIT checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_gitname-build"
+  cp -r "$srcdir/$_gitname" "$srcdir/$_gitname-build"
+  cd "$srcdir/$_gitname-build"
+
+  patch -Np1 < $srcdir/Makefile.patch
+  rm -rf src/locale/* 
+  make prefix=$pkgdir/usr aircrack_prefix=$pkgdir/usr etcdir=$pkgdir/etc install
+  sed -i 's:/local::' $pkgdir/etc/*
+  sed -i 's:/minimal.theme:defaul.theme:' $pkgdir/etc/*
+# TODO: wordlist
+}

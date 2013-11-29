@@ -1,0 +1,35 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=air
+pkgver=2.0.0
+pkgrel=1
+pkgdesc="AIR (Automated Image and Restore) is a GUI front-end to dd/dc3dd designed for easily creating forensic images."
+url="http://air-imager.sourceforge.net/"
+groups=('archpwn' 'archpwn-forensic')
+license=('GPL')
+arch=(i686 x86_64)
+makedepends=('gcc' 'make')
+depends=('perl' 'perl-tk' 'sharutils')
+source=(http://downloads.sourceforge.net/air-imager/${pkgname}-${pkgver}.tar.gz)
+md5sums=('d4dff8fcaf94d555bd7f833097fe816d')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+  export PERLTK_VER=$(pacman -Q perl-tk | awk -F' ' '{print $2}' | sed -e 's/-.*//' -e 's/_//')
+  INTERACTIVE=no INSTALL_DIR=$pkgdir/usr TEMP_DIR=$srcdir/ \
+  FINAL_INSTALL_DIR=/usr ./install-$pkgname-$pkgver
+
+  chown -R root:root $pkgdir/
+  chown root:users $pkgdir/usr/share/air/logs
+  chmod ug+rwx $pkgdir/usr/share/air/logs
+  
+  if [ -p "$pkgdir/usr/share/air/air-fifo" ]; then
+    chmod ug+rw $pkgdir/usr/share/air/air-fifo
+    chown root:users $pkgdir/usr/share/air/air-fifo
+  fi
+
+  chmod a+x $pkgdir/usr/bin/air
+
+}
+
+# vim:set ts=2 sw=2 et:

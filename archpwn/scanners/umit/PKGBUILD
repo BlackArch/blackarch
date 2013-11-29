@@ -1,0 +1,28 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=umit
+pkgver=1.0RC
+pkgrel=2
+pkgdesc="UMIT is a powerful nmap frontend."
+arch=('i686' 'x86_64' 'ppc')
+url="http://www.umitproject.org/"
+license=('GPL')
+groups=('archpwn' 'archpwn-scanners')
+depends=('python' 'pygtk' 'nmap' 'python-pysqlite')
+makedepends=('gcc' 'make' 'gtk2')
+source=(http://downloads.sourceforge.net/$pkgname/$pkgname-$pkgver.tar.bz2
+        $pkgname.desktop)
+md5sums=('4466f58f756acc1265feb7f9f5670cc0'
+         'dc653e673749e79c82d1e7831c900ff8')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver/"
+
+  mkdir plugins
+  PYTHONPATH="$(pwd)" python setup.py plugins
+  # Remove useless plugins
+  rm plugins/{dummyworking,ContextMenu,Localize,SystemInfo,SystemInfoConsumer,TestCase}.ump
+
+  python setup.py install --root=$pkgdir --install-lib=usr/share/umit -P
+  install -Dm644 "$srcdir"/$pkgname.desktop $pkgdir/usr/share/applications/$pkgname.desktop
+}

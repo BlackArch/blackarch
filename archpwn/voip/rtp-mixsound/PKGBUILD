@@ -1,0 +1,39 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=rtp-mixsound
+pkgver=3.0
+pkgrel=1
+pkgdesc="A tool to mix pre-recorded audio in real-time with the audio (i.e. RTP) in the specified target audio stream."
+url="http://www.hackingexposedvoip.com/"
+updateurl="http://www.hackingvoip.com/sec_tools.html=>rtpmixsound_v"
+license=('GPL')
+arch=(i686 x86_64)
+depends=('libfindrtp' 'libpcap' 'libnet')
+groups=('archpwn' 'archpwn-voip')
+makedepends=('gcc' 'make')
+source=(http://www.hackingexposedvoip.com/tools/${pkgname//-/}_v$pkgver.tar.gz
+        http://www.hackingexposedvoip.com/tools/hack_library.tar.gz
+        http://www.hackingvoip.com/tools/g711conversions.tar.gz)
+md5sums=('80bf380af4700be2605ef4f46467ad04'
+         'f198da341418289389a5d4b49abbfa1e'
+         '96a3f7f6a068203b3d0659afb39a3d08')
+
+build() {
+  cd "$srcdir/hack_library"
+  sed -i "s:gcc :gcc $CFLAGS :" Makefile
+  make
+
+  cd "$srcdir/g711conversions"
+  sed -i "s:gcc :gcc $CFLAGS :" Makefile
+  make
+
+  cd "$srcdir/${pkgname//-/}_v$pkgver"
+  sed -i "s:gcc :gcc $CFLAGS :" Makefile
+  make
+
+  mkdir -p $pkgdir/usr/share/$pkgname/
+  install -Dm755 rtpmixsound $pkgdir/usr/bin/rtpmixsound
+  install -Dm644 Readme.txt stapler.wav helzart.wav g711RTPCaptureAllClearToBlow.pcap $pkgdir/usr/share/$pkgname/
+}
+
+# vim:set ts=2 sw=2 et:

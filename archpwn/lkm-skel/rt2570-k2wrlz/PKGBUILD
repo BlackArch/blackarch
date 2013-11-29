@@ -1,0 +1,27 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=rt2570-k2wrlz
+pkgver=1.6.4
+pkgrel=1
+pkgdesc="rt2570 drivers with injection patchset from aircrack-ng.org"
+license=('GPL')
+depends=('kernel26')
+arch=('i686' 'x86_64')
+install=$pkgname.install
+source=(http://homepages.tu-darmstadt.de/~p_larbig/wlan/$pkgname-$pkgver.tar.bz2
+        rt2570-k2wrlz-2.6.31.patch)
+md5sums=('21f6e873ad7ee34843dbcd1204f9eda3'
+         '1e8efa76612c1fd5f5757869db0cc465')
+_kernver=2.6.31-ARCH
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+  patch -Np1 < "$startdir"/rt2570-k2wrlz-2.6.31.patch || return 1
+
+  cd "Module"
+  make KERNDIR=/lib/modules/$_kernver/build || return 1
+  install -Dm644 rt2570.ko $pkgdir/lib/modules/$_kernver/kernel/drivers/net/wireless/rt2570-k2wrlz.ko || return 1
+  sed -i -e "s/KERNEL_VERSION='.*'/KERNEL_VERSION='${_kernver}'/" $startdir/*.install
+}
+
+# vim:set ts=2 sw=2 et:

@@ -1,0 +1,97 @@
+diff -Nur ArpON-2.0.orig/Makefile ArpON-2.0/Makefile
+--- ArpON-2.0.orig/Makefile	2010-05-28 03:07:19.000000000 +1000
++++ ArpON-2.0/Makefile	2010-06-11 16:07:54.231686404 +1000
+@@ -1,82 +1,28 @@
++CC = gcc
+ SOURCE = src/arpon.c
+ EXEC = src/arpon
+ EXEC_FILE = arpon
+ MAN = man8/arpon.8
+ FILE = etc/arpon.sarpi
+ 
+-CFLAGS += -g -Wall -Werror
+-LDFLAGS +=
++CFLAGS += -g -Wall -Werror -DLINUX
++LDLIBS += -lpthread -lpcap -ldnet -lnet
+ 
+-LIBS_LINUX = -lpthread -lpcap -ldnet -lnet -L/usr/local/lib -I/usr/local/include
+-LIBS_DEBIAN = -lpthread -lpcap -ldumbnet -lnet -L/usr/lib -I/usr/include
+-LIBS_GENTOO = -lpthread -lpcap -ldnet -lnet -L/usr/lib -I/usr/include
+-LIBS_OSX = -lpthread -lpcap -ldnet -lnet -L/opt/local/lib/ -I/opt/local/include/
+-LIBS_FREEBSD = -lpthread -lpcap -ldnet -lnet -L/usr/local/lib -I/usr/local/include -L/usr/local/lib/libnet11 -I/usr/local/include/libnet11
+-LIBS_FREEBSD_NEW = -lpthread -lpcap -ldnet -lnet -L/usr/local/lib -I/usr/local/include -L/usr/local/lib/libnet113 -I/usr/local/include/libnet113 
+-LIBS_NETBSD = -lpthread -lpcap -ldnet -lnet -L/usr/local/lib -I/usr/local/include -L/usr/lib/libnet11 -I/usr/include/libnet11
+-LIBS_NETBSD_NEW = -lpthread -lpcap -ldnet -lnet -L/usr/pkg/lib -I/usr/pkg/include -L/usr/pkg/lib/libnet11 -I/usr/pkg/include/libnet11
+-LIBS_OPENBSD = -lpthread -lpcap -ldnet -lnet -L/usr/local/lib -I/usr/local/include -L/usr/lib/libnet11 -I/usr/include/libnet11
+-LIBS_OPENBSD_NEW = -lpthread -lpcap -ldnet -lnet -L/usr/local/lib -I/usr/local/include -L/usr/local/lib/libnet-1.1 -I/usr/local/include/libnet-1.1
+-
+-arpon:
+-	@echo ""
+-	@echo "  Portings avaible:" 
+-	@echo ""
+-	@echo "  - Linux          run:  make linux"
+-	@echo "  - Linux Debian   run:  make debian"	
+-	@echo "  - Linux Gentoo   run:  make gentoo"
+-	@echo "  - Mac OS X       run:  make osx"
+-	@echo "  - FreeBSD        run:  make freebsd"
+-	@echo "  - FreeBSD new    run:  make freebsd_new"
+-	@echo "  - NetBSD         run:  make netbsd"
+-	@echo "  - NetBSD new     run:  make netbsd_new"
+-	@echo "  - OpenBSD        run:  make openbsd"
+-	@echo "  - OpenBSD new    run:  make openbsd_new"
+-	@echo ""
+-	@echo "  Have got problems? Read INSTALL file."	
+-	@echo ""
+-
+-linux: $(SOURCE)
+-	gcc $(CFLAGS) $(LDFLAGS) $(LIBS_LINUX) -DLINUX -o $(EXEC) $(SOURCE)
+-
+-debian: $(SOURCE)
+-	gcc $(CFLAGS) $(LDFLAGS) $(LIBS_DEBIAN) -DLINUX -DDEBIAN -o $(EXEC) $(SOURCE)
+-
+-gentoo: $(SOURCE)
+-	gcc $(CFLAGS) $(LDFLAGS) $(LIBS_GENTOO) -DLINUX -o $(EXEC) $(SOURCE)
+-
+-osx: $(SOURCE)
+-	gcc $(CFLAGS) $(LDFLAGS) $(LIBS_OSX) -o $(EXEC) $(SOURCE)
+-
+-freebsd: $(SOURCE)
+-	gcc $(CFLAGS) $(LDFLAGS) $(LIBS_FREEBSD) -o $(EXEC) $(SOURCE)
+-
+-freebsd_new: $(SOURCE)
+-	gcc $(CFLAGS) $(LDFLAGS) $(LIBS_FREEBSD_NEW) -o $(EXEC) $(SOURCE)
+-
+-netbsd: $(SOURCE)
+-	gcc $(CFLAGS) $(LDFLAGS) $(LIBS_NETBSD) -DNETBSD -o $(EXEC) $(SOURCE)
+-
+-netbsd_new: $(SOURCE)
+-	gcc $(CFLAGS) $(LDFLAGS) $(LIBS_NETBSD_NEW) -DNETBSD -o $(EXEC) $(SOURCE) /usr/pkg/lib/libnet11/libnet.a
+-
+-openbsd: $(SOURCE)
+-	gcc $(CFLAGS) $(LDFLAGS) $(LIBS_OPENBSD) -DOPENBSD -o $(EXEC) $(SOURCE)
+-
+-openbsd_new: $(SOURCE)
+-	gcc $(CFLAGS) $(LDFLAGS) $(LIBS_OPENBSD_NEW) -DOPENBSD -o $(EXEC) $(SOURCE)
++all: $(EXEC)
++$(EXEC): $(SOURCE)
++	$(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) $^ $(LDFLAGS) $(LOADLIBES) $(LDLIBS) -o $@
+ 
+ clean:
+ 	rm -f $(EXEC)
+ 
+ install:
+-	cp $(EXEC) $(DESTDIR)/sbin
+-	cp $(FILE) $(DESTDIR)/etc
+-	cp $(MAN) $(DESTDIR)/usr/share/man/man8/
++	install -D -m755 $(EXEC) $(DESTDIR)/usr/sbin/$(EXEC_FILE)
++	install -D -m644 $(FILE) $(DESTDIR)/$(FILE)
++	install -D -m644 $(MAN) $(DESTDIR)/usr/share/man/$(MAN)
+ 
+ uninstall:
+-	rm -f $(DESTDIR)/sbin/$(EXEC_FILE)
++	rm -f $(DESTDIR)/usr/sbin/$(EXEC_FILE)
+ 	rm -f $(DESTDIR)/$(FILE)
+ 	rm -f $(DESTDIR)/usr/share/man/$(MAN)
+ 
+-.PHONY: arpon osx freebsd netbsd openbsd linux debian gentoo clean install uninstall
++.PHONY: clean install uninstall

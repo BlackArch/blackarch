@@ -1,0 +1,44 @@
+# Contributor: Francesco Piccinno <stack.box@gmail.com>
+
+pkgname=cuda-toolkit
+pkgver=3.0
+pkgrel=1
+pkgdesc="NVIDIA's CUDA architecture can be programmed in the only C language environment that unlocks the processing power of GPUs to solve the most complex compute-intensive challenges."
+arch=('i686' 'x86_64')
+
+url="http://www.nvidia.com/object/cuda_home.html"
+license=('custom')
+provides=('cuda')
+
+if [ "$CARCH" = "i686" ]; then
+   ARCH=x86
+   source=(http://developer.download.nvidia.com/compute/cuda/3_0/toolkit/cudatoolkit_3.0_linux_32_suse11.1.run install-linux.pl.ununinstall.patch)
+   depends=('gcc-libs' 'nvidia>=190.42-1' 'zlib')
+   md5sums=(718a8672d450e850371c921111536957 6d81b78719e35aaf7824a7310a3fb469)
+fi
+
+if [ "$CARCH" = "x86_64" ]; then
+   ARCH=x86_64
+   source=(http://developer.download.nvidia.com/compute/cuda/3_0/toolkit/cudatoolkit_3.0_linux_64_suse11.1.run install-linux.pl.ununinstall.patch)
+   depends=('gcc-libs' 'nvidia>=190.42-1' 'zlib' 'lib32-pcre')
+   md5sums=(18fb7060b70b1815b360f40c5c282265 6d81b78719e35aaf7824a7310a3fb469)
+fi
+
+build() {
+  cd $srcdir
+
+  mkdir -p $pkgdir/opt/cuda/
+
+  [ "$CARCH" = "i686" ] &&  sh cudatoolkit_3.0_linux_32_suse11.1.run --noexec --keep
+  [ "$CARCH" = "x86_64" ] &&  sh cudatoolkit_3.0_linux_64_suse11.1.run --noexec --keep
+
+  patch -p0 -i install-linux.pl.ununinstall.patch || return 1
+  cd pkg
+  ./install-linux.pl --prefix=$pkgdir/opt/cuda
+
+  # We don't need profiler, documentation
+  rm -rf $pkgdir/opt/cuda/cudaprof
+  rm -rf $pkgdir/opt/cuda/openclprof
+  rm -rf $pkgdir/opt/cuda/doc
+  rm -rf $pkgdir/opt/cuda/man
+}

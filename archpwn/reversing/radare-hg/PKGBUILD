@@ -1,0 +1,42 @@
+# Contributor: Jens Pranaitis <jens@jenux.homelinux.org>
+# Contributor: Shino <shino@jenux.homelinux.org>
+
+pkgname="radare-hg"
+pkgver=1287
+pkgrel=1
+pkgdesc="A collection of tools with the aim to create a complete, portable, multi-architecture, unix-like toolchain for reverse engineering."
+arch=('i686' 'x86_64')
+url="http://radare.nopcode.org"
+license=('GPL2')
+depends=('bash' 'perl' 'python' 'vte')
+makedepends=('mercurial')
+provides=("radare")
+conflicts=("radare")
+groups=('archpwn' 'archpwn-reversing')
+
+_hgroot="http://radare.org/hg"
+_hgrepo="radare"
+
+build() {
+  cd "$srcdir"
+  msg "Connecting to Mercurial server...."
+
+  if [ -d $_hgrepo ] ; then
+    cd $_hgrepo
+    hg pull -u || return 1
+    msg "The local files are updated."
+  else
+    hg clone $_hgroot $_hgrepo || return 1
+  fi
+
+  msg "Mercurial checkout done or server timeout"
+  msg "Starting make..."
+
+  rm -rf "$srcdir/$_hgrepo-build"
+  cp -r "$srcdir/$_hgrepo" "$srcdir/$_hgrepo-build"
+  cd "$srcdir/$_hgrepo-build"
+
+  ./configure --prefix=/usr
+  make
+  make DESTDIR="$pkgdir/" install
+}
