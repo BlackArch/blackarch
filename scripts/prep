@@ -2,6 +2,13 @@
 # Cleans up PKGBUILD files.
 # Spots that need manual checking are marked with 'TODO' comments.
 
+# Simulates sponge from moreutils
+_sponge() {
+	tmp=$(mktemp /tmp/blackarch.XXXXXXX)
+	cat > "$tmp"
+	mv "$tmp" "$1"
+}
+
 pkgbuild=$1
 
 if [[ ! -r "$pkgbuild" ]] ; then
@@ -12,7 +19,7 @@ echo "cleaning '$pkgbuild'..."
 
 # Expand tabs to two spaces
 echo "expanding tabs..."
-expand -it2 "$pkgbuild" | sponge "$pkgbuild"
+expand -it2 "$pkgbuild" | _sponge "$pkgbuild"
 
 # Remove vim modeline
 echo "removing vim modeline..."
@@ -42,7 +49,7 @@ sed -i '/#\s*\([Cc]ontributor\|[Mm]aintainer\)/d' "$pkgbuild"
 
 # Squeeze extra blank lines (why does cat have this feature?)
 echo 'squeezing extra blank lines...'
-cat -s "$pkgbuild" | sponge "$pkgbuild"
+cat -s "$pkgbuild" | _sponge "$pkgbuild"
 
 # Remove '|| return'
 echo "removing '|| return'..."
