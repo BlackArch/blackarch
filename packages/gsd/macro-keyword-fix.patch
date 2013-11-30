@@ -1,0 +1,2104 @@
+Description: Build with QT_NO_KEYWORDS
+ By default QT uses keywords like "signals", "slots", "emit", "foreach",
+ "forever" by defining them as macros. But when other libraries have
+ headers with those keywords, things tend to break and that's just
+ what happened with recent versions of GLib.
+ .
+ To fix this, we replace those keywords with proper Qt-specific symbols
+ Q_SIGNALS, Q_SLOTS, Q_EMIT, Q_FOREACH, Q_FOREVER and we build
+ with QT_NO_KEYWORDS.
+Author: RaphaÃ«l Hertzog <hertzog@debian.org>
+
+--- a/src/dock_details.cpp
++++ b/src/dock_details.cpp
+@@ -214,7 +214,7 @@ dock_details_task::report ()
+ 
+   QString report = reports->getAttr (reports->getEntity (ndx.row ()), "report id");
+   QString task_id = control->getTaskModel ()->getAttr (task, "task id");
+-  emit sig_report (report, task_id);
++  Q_EMIT sig_report (report, task_id);
+ }
+ 
+ 
+@@ -246,7 +246,7 @@ dock_details_task::delete_report ()
+       return;
+     }
+   QString id = reports->getAttr (reports->getEntity (ndx.row ()), "report id");
+-  emit sig_delete_report (id);
++  Q_EMIT sig_delete_report (id);
+ }
+ 
+ void
+@@ -550,7 +550,7 @@ dock_details_credential::exec_modify_cre
+   if (password.compare ("") != 0)
+     parameter.insert ("password", password);
+ 
+-  emit sig_modify (omp_utilities::LSC_CREDENTIAL, id, NULL, parameter);
++  Q_EMIT sig_modify (omp_utilities::LSC_CREDENTIAL, id, NULL, parameter);
+ }
+ 
+ 
+@@ -1002,7 +1002,7 @@ dock_details_config::exec_modify_config
+       parameter.insert ("nvt family name", name);
+       parameter.insert ("nvt family growing", trend_t);
+       parameter.insert ("nvt family all", all);
+-      emit sig_modify (omp_utilities::CONFIG, id, families, parameter);
++      Q_EMIT sig_modify (omp_utilities::CONFIG, id, families, parameter);
+     }
+ }
+ 
+@@ -1015,7 +1015,7 @@ dock_details_config::add_family (QString
+   parameter.insert ("nvt family name", name);
+   parameter.insert ("nvt family growing", "1");
+   parameter.insert ("nvt family all", "1");
+-  emit sig_modify (omp_utilities::CONFIG, id, families, parameter);
++  Q_EMIT sig_modify (omp_utilities::CONFIG, id, families, parameter);
+ }
+ 
+ 
+@@ -1040,7 +1040,7 @@ dock_details_config::exec_modify_scanpre
+   parameter.insert ("id", id);
+   parameter.insert ("preference name", "scanner[scanner]:"+name);
+   parameter.insert ("preference value", new_value);
+-  emit sig_modify (omp_utilities::CONFIG, id, NULL, parameter);
++  Q_EMIT sig_modify (omp_utilities::CONFIG, id, NULL, parameter);
+ }
+ 
+ 
+@@ -1334,7 +1334,7 @@ dock_details_config::details_family ()
+     {
+       QString name = families->getValue (families->getEntity (ndx.row ()),
+                                                               "name");
+-      emit sig_details_family (this->id, name);
++      Q_EMIT sig_details_family (this->id, name);
+     }
+ }
+ 
+@@ -1351,7 +1351,7 @@ dock_details_config::details_nvt ()
+                                                           "preference"
+                                                           " nvt oid");
+     }
+-  emit sig_details_nvt (id , oid);
++  Q_EMIT sig_details_nvt (id , oid);
+ }
+ 
+ 
+@@ -1555,7 +1555,7 @@ dock_details_family::exec_modify_family
+       parameter.insert ("nvt selection", "remove");
+       parameter.insert ("nvt selection name", name);
+       parameter.insert ("nvt oid", nvtModel->getAttr (nvt, "nvt oid"));
+-      emit sig_modify (omp_utilities::CONFIG, id, nvtModel, parameter);
++      Q_EMIT sig_modify (omp_utilities::CONFIG, id, nvtModel, parameter);
+     }
+ }
+ 
+@@ -1568,7 +1568,7 @@ dock_details_family::add_nvt (QString oi
+   parameter.insert ("nvt selection", "add");
+   parameter.insert ("nvt selection name", name);
+   parameter.insert ("nvt oid", oid);
+-  emit sig_modify (omp_utilities::CONFIG, id, nvtModel, parameter);
++  Q_EMIT sig_modify (omp_utilities::CONFIG, id, nvtModel, parameter);
+ }
+ 
+ 
+@@ -1591,7 +1591,7 @@ dock_details_family::details_nvt ()
+       oid = nvtModel->getAttr (nvtModel->getEntity (ndx.row ()),
+                                                           "nvt oid");
+     }
+-  emit sig_details_nvt (id , oid);
++  Q_EMIT sig_details_nvt (id , oid);
+ 
+ }
+ 
+@@ -1802,7 +1802,7 @@ dock_details_nvt::exec_modify_nvt (QStri
+   parameter.insert ("preference name", name);
+   parameter.insert ("preference value", value);
+   parameter.insert ("nvt oid", oid);
+-  emit sig_modify (omp_utilities::CONFIG, id, prefModel, parameter);
++  Q_EMIT sig_modify (omp_utilities::CONFIG, id, prefModel, parameter);
+ }
+ 
+ 
+@@ -1947,7 +1947,7 @@ dock_details_note::exec_modify_note (QSt
+   parameter.insert ("task", task);
+   parameter.insert ("result", result);
+ 
+-  emit sig_modify (omp_utilities::NOTE,
++  Q_EMIT sig_modify (omp_utilities::NOTE,
+                    note->getAttr (elem, "note id"),
+                    NULL,
+                    parameter);
+@@ -2114,7 +2114,7 @@ dock_details_override::exec_modify_overr
+   parameter.insert ("task", task);
+   parameter.insert ("result", result);
+ 
+-  emit sig_modify (omp_utilities::OVERRIDE,
++  Q_EMIT sig_modify (omp_utilities::OVERRIDE,
+                    override->getAttr (elem, "override id"),
+                    NULL,
+                    parameter);
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -195,6 +195,10 @@ if (OPENVAS_DATA_DIR)
+   add_definitions (-DOPENVAS_DATA_DIR=\\\"${OPENVAS_DATA_DIR}\\\")
+ endif (OPENVAS_DATA_DIR)
+ 
++# Forbids QT to define "signals", "slots", "emit" otherwise
++# code doesn't compile with GLib
++add_definitions (-DQT_NO_KEYWORDS)
++
+ if (MINGW)
+   set (GLIB_LDFLAGS "-L${CROSS_ENV}lib")
+   set (OPENVAS_LDFLAGS "-L${OPENVAS_DIR}/lib")
+--- a/src/dock_details.h
++++ b/src/dock_details.h
+@@ -61,10 +61,10 @@ class dock_details : public QDockWidget
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_selected (int, QString);
+ 
+-  public slots:
++  public Q_SLOTS:
+     virtual void update () {};
+ 
+   protected:
+@@ -88,17 +88,17 @@ class dock_details_task : public dock_de
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_report (QString, QString);
+     void sig_delete_report (QString);
+ 
+-  private slots:
++  private Q_SLOTS:
+     void report ();
+     void report_selection_changed (const QModelIndex &sel,
+                                    const QModelIndex &desel);
+     void delete_report ();
+ 
+-  public slots:
++  public Q_SLOTS:
+     void update ();
+ 
+   private:
+@@ -130,7 +130,7 @@ class dock_details_target : public dock_
+ {
+   Q_OBJECT
+ 
+-  public slots:
++  public Q_SLOTS:
+     void update ();
+   public:
+     dock_details_target (gsd_control *ctl)
+@@ -150,7 +150,7 @@ class dock_details_port_list : public do
+ {
+   Q_OBJECT
+ 
+-  public slots:
++  public Q_SLOTS:
+     void update (QString id);
+     void update ();
+   public:
+@@ -175,10 +175,10 @@ class dock_details_credential : public d
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (int, QString, model_omp_entity *m, QMap<QString, QString>);
+ 
+-  public slots:
++  public Q_SLOTS:
+     void update ();
+     void modify_credential ();
+     void exec_modify_credential (QString, QString, QString, QString);
+@@ -206,7 +206,7 @@ class dock_details_escalator : public do
+ {
+   Q_OBJECT
+ 
+-  public slots:
++  public Q_SLOTS:
+     void update ();
+   public:
+     dock_details_escalator (gsd_control *ctl)
+@@ -227,7 +227,7 @@ class dock_details_schedule : public doc
+ {
+   Q_OBJECT
+ 
+-  public slots:
++  public Q_SLOTS:
+     void update ();
+   public:
+     dock_details_schedule (gsd_control *ctl)
+@@ -247,7 +247,7 @@ class dock_details_config : public dock_
+                             private Ui::dock_details_config
+ {
+   Q_OBJECT
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (int, QString, model_omp_entity *m, QMap<QString, QString>);
+     void sig_details_family (QString, QString);
+     void sig_details_nvt (QString, QString);
+@@ -255,7 +255,7 @@ class dock_details_config : public dock_
+     bool editable;
+     model_omp_entity *families;
+     model_omp_entity *preferences;
+-  private slots:
++  private Q_SLOTS:
+     void selectionChanged_family (const QModelIndex &sel,
+                                   const QModelIndex &desel);
+     void selectionChanged_scanPref (const QModelIndex &sel,
+@@ -269,7 +269,7 @@ class dock_details_config : public dock_
+     void add_family (QString name);
+     void exec_modify_scanpref (QString value);
+ 
+-  public slots:
++  public Q_SLOTS:
+     void update (QString config_id);
+     void details_family ();
+     void details_nvt ();
+@@ -297,7 +297,7 @@ class dock_details_family : public dock_
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_details_nvt (QString, QString);
+     void sig_modify (int, QString, model_omp_entity*, QMap<QString, QString>);
+   private:
+@@ -305,14 +305,14 @@ class dock_details_family : public dock_
+     QString name;
+     model_omp_entity *nvtModel;
+ 
+-  private slots:
++  private Q_SLOTS:
+     void details_nvt ();
+     void modify_family ();
+     void exec_modify_family (bool value);
+     void add_nvt (QString oid, QString name);
+     void nvt_selection_changed (const QModelIndex&, const QModelIndex &);
+ 
+-  public slots:
++  public Q_SLOTS:
+     void update (QString name, QString config_id);
+ 
+   public:
+@@ -338,7 +338,7 @@ class dock_details_nvt : public dock_det
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (int, QString, model_omp_entity*, QMap<QString, QString>);
+   private:
+     bool editable;
+@@ -346,7 +346,7 @@ class dock_details_nvt : public dock_det
+     model_omp_entity *nvtModel;
+     model_omp_entity *prefModel;
+ 
+-  public slots:
++  public Q_SLOTS:
+     void update (QString name, QString config_id);
+     void modify_nvt ();
+     void exec_modify_nvt (QString);
+@@ -384,13 +384,13 @@ class dock_details_note : public dock_de
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (int, QString, model_omp_entity*, QMap<QString, QString>);
+ 
+   private:
+     model_omp_entity *note;
+     QString task_id;
+-  public slots:
++  public Q_SLOTS:
+     void update (QString id);
+     void modify_note ();
+     void exec_modify_note (QString hosts,
+@@ -424,13 +424,13 @@ class dock_details_override : public doc
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (int, QString, model_omp_entity*, QMap<QString, QString>);
+ 
+   private:
+     model_omp_entity *override;
+ 
+-  public slots:
++  public Q_SLOTS:
+     void update (QString id);
+     void modify_override ();
+     void exec_modify_override (QString hosts,
+@@ -464,7 +464,7 @@ class dock_details_slave : public dock_d
+ {
+   Q_OBJECT
+ 
+-  public slots:
++  public Q_SLOTS:
+     void update ();
+   public:
+     dock_details_slave (gsd_control *ctl)
+--- a/src/dock_logging.cpp
++++ b/src/dock_logging.cpp
+@@ -83,7 +83,7 @@ dock_logging::getList ()
+ void
+ dock_logging::level_changed (double lvl)
+ {
+-  emit sig_log_lvl (lvl);
++  Q_EMIT sig_log_lvl (lvl);
+ }
+ 
+ 
+--- a/src/dock_logging.h
++++ b/src/dock_logging.h
+@@ -36,7 +36,7 @@ class dock_logging : public QDockWidget,
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+ /**
+  * @brief SIGNAL to set a new log level
+  *
+@@ -52,7 +52,7 @@ class dock_logging : public QDockWidget,
+   public:
+     QListWidget* getList ();
+ 
+-  private slots:
++  private Q_SLOTS:
+     void level_changed (double lvl);
+     void clear_list ();
+ };
+--- a/src/dock_performance.cpp
++++ b/src/dock_performance.cpp
+@@ -183,7 +183,7 @@ dock_performance::timeChanged ()
+     duration = spinBox->value () * 3600 * 24 *30;
+ 
+   pushButton_2->setEnabled (false);
+-  emit sig_request_system_reports ( NULL, duration);
++  Q_EMIT sig_request_system_reports ( NULL, duration);
+ }
+ 
+ 
+--- a/src/dock_performance.h
++++ b/src/dock_performance.h
+@@ -37,7 +37,7 @@ class dock_performance : public QDockWid
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_request_system_reports (QString, long);
+ 
+   public:
+@@ -48,7 +48,7 @@ class dock_performance : public QDockWid
+     void setReportModel (model_omp_entity *m);
+     void setGraphicsModel (model_omp_entity *m);
+     void load ();
+-  private slots:
++  private Q_SLOTS:
+     void selectionChanged ();
+     void timeChanged ();
+     void comboChanged (int index);
+--- a/src/dock_reports.cpp
++++ b/src/dock_reports.cpp
+@@ -346,9 +346,9 @@ dock_reports::load ()
+   la_text->setText ("Requesting Report");
+   wi_loading->setVisible (true);
+ 
+-  emit sig_request_report (parameter);
++  Q_EMIT sig_request_report (parameter);
+   parameter.insert ("format_id", html_format_id);
+-  emit sig_request_report (parameter);
++  Q_EMIT sig_request_report (parameter);
+   connect (cb_sort,
+            SIGNAL (currentIndexChanged (int)),
+            this,
+@@ -492,10 +492,10 @@ dock_reports::request_update ()
+   webView->setVisible (false);
+   wi_loading->setVisible (true);
+   la_text->setText ("Requesting Report");
+-  emit sig_request_report (parameter);
++  Q_EMIT sig_request_report (parameter);
+ 
+   parameter.insert ("format_id", xml_format_id);
+-  emit sig_request_report (parameter);
++  Q_EMIT sig_request_report (parameter);
+ }
+ 
+ 
+@@ -521,7 +521,7 @@ dock_reports::web_link (const QUrl &url)
+     {
+       QString oid = url.queryItemValue ("oid");
+       QString config_id = tasks->getAttr (task, "task config id");
+-      emit sig_details_nvt (config_id, oid);
++      Q_EMIT sig_details_nvt (config_id, oid);
+     }
+   else if (value.compare ("new_note") == 0)
+     {
+@@ -672,7 +672,7 @@ dock_reports::download_report ()
+   parameter.insert ("sort_field", sort_type);
+   parameter.insert ("sort_order", sort_order);
+ 
+-  emit sig_report_download (parameter);
++  Q_EMIT sig_report_download (parameter);
+ }
+ 
+ 
+--- a/src/dock_reports.h
++++ b/src/dock_reports.h
+@@ -44,16 +44,16 @@ class dock_reports : public dock_details
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_request_report (QMap<QString, QString>);
+     void sig_details_nvt (QString, QString);
+     void sig_report_download (QMap<QString, QString>);
+ 
+-  public slots:
++  public Q_SLOTS:
+     void update (QString id);
+     void request_update ();
+ 
+-  private slots:
++  private Q_SLOTS:
+     void web_link (const QUrl&);
+     void cvss_changed (int);
+     void download_report ();
+--- a/src/dock_table.h
++++ b/src/dock_table.h
+@@ -53,7 +53,7 @@ class dock_table : public QDockWidget, p
+     void hideToolBar ();
+     void showToolTip (QPoint pos_in, QPoint pos_out);
+ 
+-  private slots:
++  private Q_SLOTS:
+     void contextmenu (const QPoint &);
+ 
+   private:
+--- a/src/gsd_control.cpp
++++ b/src/gsd_control.cpp
+@@ -498,7 +498,7 @@ gsd_control::login (QString addr,
+ 
+   if (err != 0)
+     {
+-      emit sig_authentication_failed (err);
++      Q_EMIT sig_authentication_failed (err);
+       dialogs->login_dlg ();
+       return;
+     }
+@@ -506,7 +506,7 @@ gsd_control::login (QString addr,
+   loginData->setServerPort(port);
+   loginData->setUserName(uname);
+   loginData->setPassword(pwd);
+-  emit sig_authentication_successful ();
++  Q_EMIT sig_authentication_successful ();
+   request_version ();
+ }
+ 
+@@ -541,9 +541,9 @@ gsd_control::connect_finished()
+       request_version ();
+     }
+   else if (res == 2)
+-    emit sig_check_result (1);
++    Q_EMIT sig_check_result (1);
+   else
+-    emit sig_check_result (-1);
++    Q_EMIT sig_check_result (-1);
+ }
+ 
+ 
+@@ -2380,7 +2380,7 @@ gsd_control::notifyConfigDetails ()
+ {
+   QString id = configDetailsModel->getAttr (configDetailsModel->getEntity (0),
+                                             "config id");
+-  emit sig_config_details_finished (id);
++  Q_EMIT sig_config_details_finished (id);
+ }
+ 
+ /**
+@@ -2391,7 +2391,7 @@ gsd_control::notifyConfigDetails ()
+ void
+ gsd_control::notifyPortListDetails (QString id)
+ {
+-  emit sig_port_list_details_finished (id);
++  Q_EMIT sig_port_list_details_finished (id);
+ }
+ 
+ /**
+@@ -2404,7 +2404,7 @@ gsd_control::notifyFamilyDetails (QStrin
+ {
+   QString name = familyDetailsModel->getValue (familyDetailsModel->getEntity (0),
+                                                "family");
+-  emit sig_family_details_finished (name, config);
++  Q_EMIT sig_family_details_finished (name, config);
+ }
+ 
+ 
+@@ -2418,7 +2418,7 @@ gsd_control::notifyNVTDetails (QString c
+ {
+   QString oid = nvtDetailsModel->getAttr (nvtDetailsModel->getEntity (0),
+                                           "nvt oid");
+-  emit sig_nvt_details_finished (config, oid);
++  Q_EMIT sig_nvt_details_finished (config, oid);
+ }
+ 
+ 
+@@ -2430,7 +2430,7 @@ gsd_control::notifyNVTDetails (QString c
+ void
+ gsd_control::notifyNoteDetails (QString id)
+ {
+-  emit sig_note_details_finished (id);
++  Q_EMIT sig_note_details_finished (id);
+ }
+ 
+ 
+@@ -2442,7 +2442,7 @@ gsd_control::notifyNoteDetails (QString
+ void
+ gsd_control::notifyOverrideDetails (QString id)
+ {
+-  emit sig_override_details_finished (id);
++  Q_EMIT sig_override_details_finished (id);
+ }
+ 
+ 
+@@ -2454,7 +2454,7 @@ gsd_control::notifyOverrideDetails (QStr
+ void
+ gsd_control::notifyReport (QString id)
+ {
+-  emit sig_report_finished (id);
++  Q_EMIT sig_report_finished (id);
+ }
+ 
+ /**
+@@ -2519,7 +2519,7 @@ gsd_control::notifyVersion (QString vers
+         p = 4;
+       else if (version_f > 3.0)
+         p = (int) version_f;
+-      emit sig_check_result (p);
++      Q_EMIT sig_check_result (p);
+     }
+ }
+ 
+@@ -2527,7 +2527,7 @@ gsd_control::notifyVersion (QString vers
+ void
+ gsd_control::notifyTaskDetails ()
+ {
+-  emit sig_task_details_finished ();
++  Q_EMIT sig_task_details_finished ();
+ }
+ 
+ /**
+@@ -2679,16 +2679,16 @@ gsd_control::request_finished_listener(i
+     }
+   if (type == omp_utilities::NOTE && com == omp_utilities::OMP_GET)
+     {
+-      emit sig_note_finished ();
++      Q_EMIT sig_note_finished ();
+     }
+   if (type == omp_utilities::OVERRIDE && com == omp_utilities::OMP_GET)
+     {
+-      emit sig_override_finished ();
++      Q_EMIT sig_override_finished ();
+     }
+   if (type == omp_utilities::LSC_CREDENTIAL && com == omp_utilities::OMP_GET)
+     {
+       mainwindow->focus_credentials (false);
+-      emit sig_lsc_credential_finished ();
++      Q_EMIT sig_lsc_credential_finished ();
+     }
+   if (type == omp_utilities::VERSION)
+     {
+@@ -2705,7 +2705,7 @@ gsd_control::request_finished_listener(i
+   if ((type == omp_utilities::NOTE || type == omp_utilities::OVERRIDE) &&
+       (com == omp_utilities::OMP_CREATE || com == omp_utilities::OMP_DELETE))
+     {
+-      emit sig_request_report ();
++      Q_EMIT sig_request_report ();
+     }
+   if (type == omp_utilities::PORT_LIST && com == omp_utilities::OMP_DETAILS)
+     {
+@@ -2713,7 +2713,7 @@ gsd_control::request_finished_listener(i
+     }
+   if (type == omp_utilities::PORT_LIST && com == omp_utilities::OMP_GET)
+     {
+-      emit sig_port_list_finished ();
++      Q_EMIT sig_port_list_finished ();
+     }
+   if (type == omp_utilities::PORT_LIST && ( com == omp_utilities::OMP_MODIFY ||
+       com == omp_utilities::OMP_CREATE || com == omp_utilities::OMP_DELETE ))
+@@ -2722,7 +2722,7 @@ gsd_control::request_finished_listener(i
+     }
+   if (type == omp_utilities::REPORT_FORMAT) 
+     {
+-      emit sig_report_format_finished ();
++      Q_EMIT sig_report_format_finished ();
+     }
+ }
+ 
+--- a/src/gsd_control.h
++++ b/src/gsd_control.h
+@@ -53,7 +53,7 @@ class gsd_control : public QObject
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_authentication_failed (int);
+     void sig_authentication_successful ();
+     void sig_check_result (int);
+@@ -128,7 +128,7 @@ class gsd_control : public QObject
+ 
+     void loadData ();
+ 
+-  private slots:
++  private Q_SLOTS:
+     void login(QString addr, int port, QString name, QString pwd);
+     void check_server (QString, int, QString, QString);
+     void logout ();
+--- a/src/gsd_dialogs.cpp
++++ b/src/gsd_dialogs.cpp
+@@ -225,7 +225,7 @@ dlg_login::setProfile (QString name, int
+ void
+ dlg_login::profile_changed (int index)
+ {
+-  emit sig_profile_selected (index);
++  Q_EMIT sig_profile_selected (index);
+ }
+ 
+ 
+@@ -246,7 +246,7 @@ dlg_login::profile_save ()
+       c->setServerPort (le_srvport->text ().toInt (ok, 10));
+       c->setUserName (le_uname->text ());
+ 
+-      emit sig_save_profile (cb_profile->currentText (), *c);
++      Q_EMIT sig_save_profile (cb_profile->currentText (), *c);
+ 
+       if (cb_profile->findText(cb_profile->currentText ()) == -1)
+         {
+@@ -266,7 +266,7 @@ void dlg_login::profile_remove ()
+ {
+   cb_profile->removeItem (cb_profile->currentIndex ());
+ 
+-  emit sig_remove_profile (cb_profile->currentIndex ());
++  Q_EMIT sig_remove_profile (cb_profile->currentIndex ());
+ 
+   QString s (le_srvport->text ());
+   if (strcmp (s.toLatin1 ().data (), "0") == 0)
+@@ -334,7 +334,7 @@ dlg_login::accept_login ()
+                              q, tr ("&Ok"), QString (), 0, 1 );
+     }
+   else
+-    emit sig_login (address, port.toInt (), user, password);
++    Q_EMIT sig_login (address, port.toInt (), user, password);
+ }
+ 
+ 
+@@ -350,9 +350,9 @@ dlg_login::checkServer ()
+     return;
+ 
+   if (user.compare ("") != 0 && password.compare ("") != 0)
+-    emit sig_check_server (address, port.toInt (), user, password);
++    Q_EMIT sig_check_server (address, port.toInt (), user, password);
+   else
+-    emit sig_check_server (address, port.toInt (), "", "");
++    Q_EMIT sig_check_server (address, port.toInt (), "", "");
+ }
+ 
+ 
+@@ -636,7 +636,7 @@ dlg_new_task::create ()
+   parameter.insert ("schedule", scheduleId);
+   parameter.insert ("escalator", escalatorId);
+   parameter.insert ("slave", slaveId);
+-  emit sig_create (omp_utilities::TASK, parameter);
++  Q_EMIT sig_create (omp_utilities::TASK, parameter);
+   this->close ();
+ }
+ 
+@@ -644,35 +644,35 @@ dlg_new_task::create ()
+ void
+ dlg_new_task::new_target ()
+ {
+-  emit sig_new_target ();
++  Q_EMIT sig_new_target ();
+ }
+ 
+ 
+ void
+ dlg_new_task::new_config ()
+ {
+-  emit sig_new_config ();
++  Q_EMIT sig_new_config ();
+ }
+ 
+ 
+ void
+ dlg_new_task::new_escalator ()
+ {
+-  emit sig_new_escalator ();
++  Q_EMIT sig_new_escalator ();
+ }
+ 
+ 
+ void
+ dlg_new_task::new_schedule ()
+ {
+-  emit sig_new_schedule ();
++  Q_EMIT sig_new_schedule ();
+ }
+ 
+ 
+ void
+ dlg_new_task::new_slave ()
+ {
+-  emit sig_new_slave ();
++  Q_EMIT sig_new_slave ();
+ }
+ 
+ void
+@@ -754,19 +754,19 @@ dlg_modify_task::selectSlave (int pos)
+ void
+ dlg_modify_task::new_escalator ()
+ {
+-  emit sig_new_escalator ();
++  Q_EMIT sig_new_escalator ();
+ }
+ 
+ void
+ dlg_modify_task::new_schedule ()
+ {
+-  emit sig_new_schedule ();
++  Q_EMIT sig_new_schedule ();
+ }
+ 
+ void
+ dlg_modify_task::new_slave ()
+ {
+-  emit sig_new_slave ();
++  Q_EMIT sig_new_slave ();
+ }
+ void
+ dlg_modify_task::modify ()
+@@ -789,7 +789,7 @@ dlg_modify_task::modify ()
+   parameter.insert ("escalator", escalatorId);
+   parameter.insert ("slave", slaveId);
+ 
+-  emit sig_modify (omp_utilities::TASK, parameter);
++  Q_EMIT sig_modify (omp_utilities::TASK, parameter);
+   this->close ();
+ }
+ 
+@@ -873,7 +873,7 @@ dlg_new_target::create ()
+   parameter.insert ("port_list", plistId);
+ 
+ 
+-  emit sig_create (omp_utilities::TARGET, parameter);
++  Q_EMIT sig_create (omp_utilities::TARGET, parameter);
+   this->close ();
+ }
+ 
+@@ -881,13 +881,13 @@ void
+ dlg_new_target::new_ssh_credential ()
+ {
+   type = "ssh";
+-  emit sig_new_credential ();
++  Q_EMIT sig_new_credential ();
+ }
+ 
+ void
+ dlg_new_target::new_port_list ()
+ {
+-  emit sig_new_port_list ();
++  Q_EMIT sig_new_port_list ();
+ }
+ 
+ void
+@@ -900,7 +900,7 @@ void
+ dlg_new_target::new_smb_credential ()
+ {
+   type = "smb";
+-  emit sig_new_credential ();
++  Q_EMIT sig_new_credential ();
+ }
+ 
+ void
+@@ -941,7 +941,7 @@ dlg_new_config::create ()
+   parameter.insert ("comment", le_comment->text ());
+   parameter.insert ("base", base);
+ 
+-  emit sig_create (omp_utilities::CONFIG, parameter);
++  Q_EMIT sig_create (omp_utilities::CONFIG, parameter);
+ 
+   this->close ();
+ }
+@@ -994,7 +994,7 @@ dlg_new_schedule::create ()
+   parameter.insert ("period", QString ("%1").arg (period));
+   parameter.insert ("period unit", period_unit);
+ 
+-  emit sig_create (omp_utilities::SCHEDULE, parameter);
++  Q_EMIT sig_create (omp_utilities::SCHEDULE, parameter);
+   this->close ();
+ }
+ 
+@@ -1082,7 +1082,7 @@ dlg_new_escalator::create ()
+   parameter.insert ("method name", meth_data_2);
+   parameter.insert ("method data 2", meth_data_3);
+   parameter.insert ("method name 2", meth_data_4);
+-  emit sig_create (omp_utilities::ESCALATOR, parameter);
++  Q_EMIT sig_create (omp_utilities::ESCALATOR, parameter);
+   this->close ();
+ }
+ 
+@@ -1131,7 +1131,7 @@ dlg_new_port_list::create ()
+   parameter.insert ("comment", le_comment->text ());
+   parameter.insert ("port_range", le_port_range->text ());
+ 
+-  emit sig_create (omp_utilities::PORT_LIST, parameter);
++  Q_EMIT sig_create (omp_utilities::PORT_LIST, parameter);
+   this->close ();
+ }
+ 
+@@ -1168,7 +1168,7 @@ dlg_new_credential::create ()
+   parameter.insert ("password", le_passwd->text ());
+   parameter.insert ("type", type);
+ 
+-  emit sig_create (omp_utilities::LSC_CREDENTIAL, parameter);
++  Q_EMIT sig_create (omp_utilities::LSC_CREDENTIAL, parameter);
+   this->close ();
+ }
+ 
+@@ -1193,7 +1193,7 @@ dlg_new_agent::create ()
+   parameter.insert ("comment", le_comment->text ());
+   parameter.insert ("installer", le_installer->text ());
+   parameter.insert ("signature", le_signature->text ());
+-  emit sig_create (omp_utilities::AGENT, parameter);
++  Q_EMIT sig_create (omp_utilities::AGENT, parameter);
+ 
+   this->close ();
+ }
+@@ -1250,7 +1250,7 @@ dlg_new_note::create ()
+   if (rb_result_value->isChecked ())
+     parameter.insert ("result", rb_result_value->text ());
+ 
+-  emit sig_create (omp_utilities::NOTE, parameter);
++  Q_EMIT sig_create (omp_utilities::NOTE, parameter);
+ 
+   this->close ();
+ }
+@@ -1282,7 +1282,7 @@ dlg_new_override::create ()
+ 
+   parameter.insert ("new_threat", cb_new_threat->currentText ());
+ 
+-  emit sig_create (omp_utilities::OVERRIDE, parameter);
++  Q_EMIT sig_create (omp_utilities::OVERRIDE, parameter);
+ 
+   this->close ();
+ }
+@@ -1299,7 +1299,7 @@ dlg_new_slave::create ()
+   parameter.insert ("login", le_login->text ());
+   parameter.insert ("password", le_password->text ());
+ 
+-  emit sig_create (omp_utilities::SLAVE, parameter);
++  Q_EMIT sig_create (omp_utilities::SLAVE, parameter);
+ 
+   this->close ();
+ }
+--- a/src/gsd_dialogs.h
++++ b/src/gsd_dialogs.h
+@@ -74,7 +74,7 @@ class dlg_about : public QDialog, privat
+ {
+   Q_OBJECT
+ 
+-  private slots:
++  private Q_SLOTS:
+     void link_clicked (QString);
+ 
+   public:
+@@ -105,7 +105,7 @@ class dlg_login :public QDialog, private
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_login (QString, int, QString, QString);
+     void sig_profile_selected (int);
+     void sig_save_profile (QString, omp_credentials&);
+@@ -169,10 +169,10 @@ class dlg_login :public QDialog, private
+     void selectProfile (int ndx);
+     bool isOpen ();
+ 
+-  public slots:
++  public Q_SLOTS:
+     void checkServer ();
+ 
+-  private slots:
++  private Q_SLOTS:
+     void profile_changed (int);
+     void profile_save ();
+     void profile_remove ();
+@@ -196,7 +196,7 @@ class dlg_start_gsa : public QDialog, pr
+   private:
+     QString gsd_url;
+ 
+-  private slots:
++  private Q_SLOTS:
+     void start_gsa ();
+     void reset ();
+ 
+@@ -227,7 +227,7 @@ class create_dialog : public QDialog
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_create (int, QMap<QString, QString>);
+ 
+   public:
+@@ -244,10 +244,10 @@ class details_dialog : public QDialog
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (int, QString, QMap<QString, QString>);
+ 
+-  private slots:
++  private Q_SLOTS:
+     //virtual void modify ();
+     //virtual void toggle_modify_widget ();
+ 
+@@ -284,7 +284,7 @@ class dlg_new_port_list : public create_
+       };
+     ~dlg_new_port_list () {};
+ 
+-  private slots:
++  private Q_SLOTS:
+     void create ();
+ };
+ 
+@@ -296,7 +296,7 @@ class dlg_new_task : public create_dialo
+ 
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_new_target ();
+     void sig_new_config ();
+     void sig_new_escalator ();
+@@ -346,7 +346,7 @@ class dlg_new_task : public create_dialo
+     void selectSchedule (int pos);
+     void selectEscalator (int pos);
+     void selectSlave (int pos);
+-  private slots:
++  private Q_SLOTS:
+     void create ();
+     void new_target ();
+     void new_config ();
+@@ -363,7 +363,7 @@ class dlg_new_target : public create_dia
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_new_credential ();
+     void sig_new_port_list ();
+ 
+@@ -399,7 +399,7 @@ class dlg_new_target : public create_dia
+     void selectPortList (int pos);
+     void selectCredential (int pos);
+ 
+-  private slots:
++  private Q_SLOTS:
+     void create ();
+     void new_ssh_credential ();
+     void new_smb_credential ();
+@@ -436,7 +436,7 @@ class dlg_new_schedule : public create_d
+       };
+     ~dlg_new_schedule () {};
+ 
+-  private slots:
++  private Q_SLOTS:
+     void create ();
+ };
+ 
+@@ -479,7 +479,7 @@ class dlg_new_escalator : public create_
+       };
+     ~dlg_new_escalator () {};
+ 
+-  private slots:
++  private Q_SLOTS:
+     void create ();
+ 
+   private:
+@@ -505,7 +505,7 @@ class dlg_new_credential : public create
+       };
+     ~dlg_new_credential () {};
+ 
+-  private slots:
++  private Q_SLOTS:
+     void create ();
+ };
+ 
+@@ -528,7 +528,7 @@ class dlg_new_config : public create_dia
+       };
+     ~dlg_new_config () {};
+ 
+-  private slots:
++  private Q_SLOTS:
+     void create ();
+ };
+ 
+@@ -560,7 +560,7 @@ class dlg_new_agent : public create_dial
+       };
+     ~dlg_new_agent () {};
+ 
+-  private slots:
++  private Q_SLOTS:
+     void open_installer ();
+     void open_signature ();
+     void create ();
+@@ -575,20 +575,20 @@ class dlg_modify_config : public QDialog
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (bool, bool);
+     void sig_add_family (QString name);
+ 
+-  private slots:
++  private Q_SLOTS:
+     void modify ()
+       {
+-        emit sig_modify (rb_trend_grow->isChecked (),
++        Q_EMIT sig_modify (rb_trend_grow->isChecked (),
+                          cb_selected->isChecked ());
+         this->close ();
+       };
+     void add_family ()
+       {
+-        emit sig_add_family (cb_families->currentText ());
++        Q_EMIT sig_add_family (cb_families->currentText ());
+         cb_families->removeItem (cb_families->currentIndex ());
+       };
+ 
+@@ -624,16 +624,16 @@ class dlg_modify_scan_pref : public QDia
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (QString);
+ 
+-  private slots:
++  private Q_SLOTS:
+     void modify ()
+       {
+         if (wi_cb_value->isVisible ())
+-          emit sig_modify (comboBox->currentText ());
++          Q_EMIT sig_modify (comboBox->currentText ());
+         else
+-          emit sig_modify (le_value->text ());
++          Q_EMIT sig_modify (le_value->text ());
+         this->close ();
+       };
+ 
+@@ -671,19 +671,19 @@ class dlg_modify_family : public QDialog
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (bool);
+     void sig_add_nvt (QString oid, QString name);
+ 
+-  private slots:
++  private Q_SLOTS:
+     void modify ()
+       {
+-        emit sig_modify (cb_selected->isChecked ());
++        Q_EMIT sig_modify (cb_selected->isChecked ());
+         this->close ();
+       };
+     void add_nvt ()
+       {
+-        emit sig_add_nvt (cb_add->itemData (cb_add->currentIndex ())
++        Q_EMIT sig_add_nvt (cb_add->itemData (cb_add->currentIndex ())
+                                              .toString (),
+                           la_name_v->text ());
+         cb_add->removeItem (cb_add->currentIndex ());
+@@ -722,26 +722,26 @@ class dlg_modify_nvt : public QDialog,
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (QString);
+ 
+-  private slots:
++  private Q_SLOTS:
+     void modify ()
+       {
+         if (widget_cb->isVisible ())
+-          emit sig_modify (comboBox->currentText ());
++          Q_EMIT sig_modify (comboBox->currentText ());
+         else if (widget->isVisible ())
+-          emit sig_modify (le_value->text ());
++          Q_EMIT sig_modify (le_value->text ());
+         else if (widget_2->isVisible ())
+           {
+             QFile f (lineEdit->text ());
+             QByteArray ba = f.readAll ();
+             QString b64 = ba.toBase64 ().data ();
+-            emit sig_modify (b64);
++            Q_EMIT sig_modify (b64);
+           }
+         else if (widget_3->isVisible ())
+           {
+-            emit sig_modify (lineEdit_2->text ());
++            Q_EMIT sig_modify (lineEdit_2->text ());
+           }
+         this->close ();
+       };
+@@ -812,10 +812,10 @@ class dlg_modify_note : public QDialog,
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (QString, QString, QString, QString, QString, QString);
+ 
+-  private slots:
++  private Q_SLOTS:
+     void modify ()
+       {
+         QString hosts, port, newThreat, threat, task, result, text;
+@@ -842,7 +842,7 @@ class dlg_modify_note : public QDialog,
+ 
+         text = te_text->toPlainText ();
+ 
+-        emit sig_modify (hosts, port, threat, task, result, text);
++        Q_EMIT sig_modify (hosts, port, threat, task, result, text);
+         close ();
+       };
+ 
+@@ -939,11 +939,11 @@ class dlg_modify_override : public QDial
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (QString, QString, QString, QString,
+                      QString, QString, QString);
+ 
+-  private slots:
++  private Q_SLOTS:
+     void modify ()
+       {
+         QString hosts, port, newThreat, threat, task, result, text;
+@@ -974,7 +974,7 @@ class dlg_modify_override : public QDial
+ 
+         text = te_text->toPlainText ();
+ 
+-        emit sig_modify (hosts, port, threat, newThreat, task, result, text);
++        Q_EMIT sig_modify (hosts, port, threat, newThreat, task, result, text);
+         close ();
+       };
+ 
+@@ -1079,10 +1079,10 @@ class dlg_modify_credential : public QDi
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (QString, QString, QString, QString);
+ 
+-  private slots:
++  private Q_SLOTS:
+     void modify ()
+       {
+         QString login;
+@@ -1097,7 +1097,7 @@ class dlg_modify_credential : public QDi
+             login = le_login->text ();
+             password = le_password->text ();
+           }
+-        emit sig_modify (le_name->text (),
++        Q_EMIT sig_modify (le_name->text (),
+                          le_comment->text (),
+                          login,
+                          password);
+@@ -1131,13 +1131,13 @@ class dlg_modify_task : public QDialog,
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_modify (int, QMap<QString, QString>);
+     void sig_new_schedule ();
+     void sig_new_escalator ();
+     void sig_new_slave ();
+ 
+-  private slots:
++  private Q_SLOTS:
+     void modify ();
+     void new_escalator ();
+     void new_schedule ();
+@@ -1191,7 +1191,7 @@ class dlg_new_note : public create_dialo
+ {
+   Q_OBJECT
+ 
+-  private slots:
++  private Q_SLOTS:
+     void create ();
+ 
+   private:
+@@ -1247,7 +1247,7 @@ class dlg_new_override : public create_d
+ {
+   Q_OBJECT
+ 
+-  private slots:
++  private Q_SLOTS:
+     void create ();
+ 
+   private:
+@@ -1306,7 +1306,7 @@ class dlg_new_slave : public create_dial
+ {
+   Q_OBJECT
+ 
+-  private slots:
++  private Q_SLOTS:
+     void create ();
+ 
+   public:
+--- a/src/gsd_dlg.cpp
++++ b/src/gsd_dlg.cpp
+@@ -185,7 +185,7 @@ gsd_dlg::~gsd_dlg ()
+ void
+ gsd_dlg::create (int type, QMap<QString, QString> parameter)
+ {
+-  emit sig_create (type, parameter);
++  Q_EMIT sig_create (type, parameter);
+ }
+ 
+ 
+@@ -199,7 +199,7 @@ gsd_dlg::create (int type, QMap<QString,
+ void
+ gsd_dlg::modify (int type, QMap<QString, QString> parameter)
+ {
+-  emit sig_modify (type, parameter);
++  Q_EMIT sig_modify (type, parameter);
+ }
+ 
+ 
+@@ -636,7 +636,7 @@ gsd_dlg::accept_login (QString address,
+                                QString user,
+                                QString password)
+ {
+-  emit sig_login (address, port, user, password);
++  Q_EMIT sig_login (address, port, user, password);
+ }
+ 
+ 
+@@ -646,7 +646,7 @@ gsd_dlg::check_server (QString address,
+                        QString user,
+                        QString password)
+ {
+-  emit sig_check_server (address, port, user, password);
++  Q_EMIT sig_check_server (address, port, user, password);
+ }
+ 
+ /**
+--- a/src/gsd_dlg.h
++++ b/src/gsd_dlg.h
+@@ -43,13 +43,13 @@ class gsd_dlg : public QObject
+ 
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_login (QString, int, QString, QString);
+     void sig_check_server (QString, int, QString, QString);
+     void sig_create (int, QMap<QString, QString>);
+     void sig_modify (int, QMap<QString, QString>);
+ 
+-  private slots:
++  private Q_SLOTS:
+     void login_update (int);
+     void accept_login (QString, int, QString, QString);
+     void check_server (QString, int, QString, QString);
+@@ -69,7 +69,7 @@ class gsd_dlg : public QObject
+ 
+     void update_target_credentials (const QModelIndex&, int, int);
+     void update_target_port_lists (const QModelIndex&, int, int);
+-  public slots:
++  public Q_SLOTS:
+     void login_dlg ();
+     void about_dlg ();
+     void start_gsa_dlg ();
+--- a/src/gsd_mw.cpp
++++ b/src/gsd_mw.cpp
+@@ -1076,7 +1076,7 @@ gsd_mw::logout ()
+   update_stop ();
+   setLoggedOut ();
+   closeDockWidgets ();
+-  emit sig_logout ();
++  Q_EMIT sig_logout ();
+ }
+ 
+ 
+@@ -1140,7 +1140,7 @@ gsd_mw::setLoggedOut ()
+ void
+ gsd_mw::closeDockWidgets ()
+ {
+-  foreach (dock_details *widget, details_widgets)
++  Q_FOREACH (dock_details *widget, details_widgets)
+     widget->close ();
+ }
+ 
+@@ -1210,7 +1210,7 @@ gsd_mw::authentication_successful ()
+ void
+ gsd_mw::login_dlg ()
+ {
+-  emit sig_login ();
++  Q_EMIT sig_login ();
+ }
+ 
+ 
+@@ -1220,7 +1220,7 @@ gsd_mw::login_dlg ()
+ void
+ gsd_mw::about_dlg ()
+ {
+-  emit sig_about ();
++  Q_EMIT sig_about ();
+ }
+ 
+ 
+@@ -1230,7 +1230,7 @@ gsd_mw::about_dlg ()
+ void
+ gsd_mw::start_gsa ()
+ {
+-  emit sig_start_gsa ();
++  Q_EMIT sig_start_gsa ();
+ }
+ 
+ 
+@@ -1242,7 +1242,7 @@ gsd_mw::start_gsa ()
+ void
+ gsd_mw::update ()
+ {
+-  emit sig_req_tasks (0);
++  Q_EMIT sig_req_tasks (0);
+ }
+ 
+ 
+@@ -1263,7 +1263,7 @@ gsd_mw::update_start ()
+       pbar_update->setFormat (QApplication::translate ("MainWindow", "manual",
+                               0, QApplication::UnicodeUTF8));
+       tb_stop_refresh->setDisabled (true);
+-      emit sig_stop_update ();
++      Q_EMIT sig_stop_update ();
+     }
+   else
+     {
+@@ -1280,7 +1280,7 @@ gsd_mw::update_start ()
+                                                             (updateInterval));
+ 
+       tb_stop_refresh->setDisabled (false);
+-      emit sig_req_tasks (updateInterval*1000);
++      Q_EMIT sig_req_tasks (updateInterval*1000);
+       pbar_update->setMaximum (updateInterval);
+       progressUpdateTimer->start (1000);
+     }
+@@ -1303,7 +1303,7 @@ gsd_mw::update_stop ()
+                           0, QApplication::UnicodeUTF8));
+   tb_stop_refresh->setDisabled (true);
+ 
+-  emit sig_stop_update ();
++  Q_EMIT sig_stop_update ();
+ }
+ 
+ 
+@@ -1316,7 +1316,7 @@ gsd_mw::task_start ()
+   QModelIndexList selected = tasks->getTable ()->selectionModel ()
+                                                ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_start_task (selected.at (0).row ());
++    Q_EMIT sig_start_task (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                               tr ("No Task selected!"));
+@@ -1332,7 +1332,7 @@ gsd_mw::task_stop ()
+   QModelIndexList selected = tasks->getTable ()->selectionModel ()
+                                                ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_stop_task (selected.at (0).row ());
++    Q_EMIT sig_stop_task (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                               tr ("No Task selected!"));
+@@ -1348,7 +1348,7 @@ gsd_mw::task_pause ()
+   QModelIndexList selected = tasks->getTable ()->selectionModel ()
+                                                ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_pause_task (selected.at (0).row ());
++    Q_EMIT sig_pause_task (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                               tr ("No Task selected!"));
+@@ -1364,7 +1364,7 @@ gsd_mw::task_resume ()
+   QModelIndexList selected = tasks->getTable ()->selectionModel ()
+                                                ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_resume_task (selected.at (0).row ());
++    Q_EMIT sig_resume_task (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                               tr ("No Task selected!"));
+@@ -1380,7 +1380,7 @@ gsd_mw::modify_note_dlg ()
+   QModelIndexList selected = notes->getTable ()->selectionModel ()
+                                                ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_modify_note (selected.at (0).row ());
++    Q_EMIT sig_modify_note (selected.at (0).row ());
+ }
+ 
+ 
+@@ -1393,7 +1393,7 @@ gsd_mw::modify_override_dlg ()
+   QModelIndexList selected = overrides->getTable ()->selectionModel ()
+                                                    ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-  emit sig_modify_override (selected.at (0).row ());
++  Q_EMIT sig_modify_override (selected.at (0).row ());
+ }
+ 
+ 
+@@ -1406,7 +1406,7 @@ gsd_mw::modify_task_dlg ()
+   QModelIndexList selected = tasks->getTable ()->selectionModel ()
+                                                ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_modify_task (selected.at (0).row ());
++    Q_EMIT sig_modify_task (selected.at (0).row ());
+ }
+ 
+ 
+@@ -1422,7 +1422,7 @@ gsd_mw::delete_config ()
+   QModelIndexList selected = configs->getTable ()->selectionModel ()
+                                                    ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_delete_config (selected.at (0).row ());
++    Q_EMIT sig_delete_config (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                               tr ("No scan config selected!"));
+@@ -1440,7 +1440,7 @@ gsd_mw::delete_target ()
+   QModelIndexList selected = targets->getTable ()->selectionModel ()
+                                                    ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_delete_target (selected.at (0).row ());
++    Q_EMIT sig_delete_target (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                               tr ("No target selected!"));
+@@ -1458,7 +1458,7 @@ gsd_mw::delete_schedule ()
+   QModelIndexList selected = schedules->getTable ()->selectionModel ()
+                                                      ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_delete_schedule (selected.at (0).row ());
++    Q_EMIT sig_delete_schedule (selected.at (0).row ());
+   else
+       QMessageBox::information (NULL,tr ("Status Error"),
+                                 tr ("No schedule selected!"));
+@@ -1476,7 +1476,7 @@ gsd_mw::delete_escalator ()
+   QModelIndexList selected = escalators->getTable ()->selectionModel ()
+                                                       ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_delete_escalator (selected.at (0).row ());
++    Q_EMIT sig_delete_escalator (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                               tr ("No escalator selected!"));
+@@ -1494,7 +1494,7 @@ gsd_mw::delete_credential ()
+   QModelIndexList selected = credentials->getTable ()->selectionModel ()
+                                                        ->selectedRows (0);
+   if (selected.size () != 0)
+-    emit sig_delete_credential (selected.at (0).row ());
++    Q_EMIT sig_delete_credential (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                               tr ("No credential selected!"));
+@@ -1512,7 +1512,7 @@ gsd_mw ::delete_agent ()
+   QModelIndexList selected = agents->getTable ()->selectionModel ()
+                                                   ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_delete_agent (selected.at (0).row ());
++    Q_EMIT sig_delete_agent (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                               tr ("No agent selected!"));
+@@ -1530,7 +1530,7 @@ gsd_mw ::delete_note ()
+   QModelIndexList selected = notes->getTable ()->selectionModel ()
+                                                 ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_delete_note (selected.at (0).row ());
++    Q_EMIT sig_delete_note (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                                 tr ("No note selected!"));
+@@ -1548,7 +1548,7 @@ gsd_mw::delete_override ()
+   QModelIndexList selected = overrides->getTable ()->selectionModel ()
+                                                      ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_delete_override (selected.at (0).row ());
++    Q_EMIT sig_delete_override (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                               tr ("No override selected!"));
+@@ -1566,7 +1566,7 @@ gsd_mw::delete_slave ()
+   QModelIndexList selected = slaves->getTable ()->selectionModel ()
+                                                   ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_delete_slave (selected.at (0).row ());
++    Q_EMIT sig_delete_slave (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                               tr ("No slave selected!"));
+@@ -1584,7 +1584,7 @@ gsd_mw::delete_port_list ()
+   QModelIndexList selected = portlists->getTable ()->selectionModel ()
+                                                    ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_delete_port_list (selected.at (0).row ());
++    Q_EMIT sig_delete_port_list (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                               tr ("No port list selected!"));
+@@ -1596,7 +1596,7 @@ gsd_mw::delete_port_list ()
+ void
+ gsd_mw::new_task_dlg ()
+ {
+-  emit sig_create_task ();
++  Q_EMIT sig_create_task ();
+ }
+ 
+ 
+@@ -1606,7 +1606,7 @@ gsd_mw::new_task_dlg ()
+ void
+ gsd_mw::new_config_dlg ()
+ {
+-  emit sig_create_config ();
++  Q_EMIT sig_create_config ();
+ }
+ 
+ 
+@@ -1616,7 +1616,7 @@ gsd_mw::new_config_dlg ()
+ void
+ gsd_mw::new_target_dlg ()
+ {
+-  emit sig_create_target ();
++  Q_EMIT sig_create_target ();
+ }
+ 
+ 
+@@ -1626,7 +1626,7 @@ gsd_mw::new_target_dlg ()
+ void
+ gsd_mw::new_schedule_dlg ()
+ {
+-  emit sig_create_schedule ();
++  Q_EMIT sig_create_schedule ();
+ }
+ 
+ 
+@@ -1636,7 +1636,7 @@ gsd_mw::new_schedule_dlg ()
+ void
+ gsd_mw::new_escalator_dlg ()
+ {
+-  emit sig_create_escalator ();
++  Q_EMIT sig_create_escalator ();
+ }
+ 
+ 
+@@ -1646,7 +1646,7 @@ gsd_mw::new_escalator_dlg ()
+ void
+ gsd_mw::new_credential_dlg ()
+ {
+-  emit sig_create_credential ();
++  Q_EMIT sig_create_credential ();
+ }
+ 
+ /**
+@@ -1655,7 +1655,7 @@ gsd_mw::new_credential_dlg ()
+ void
+ gsd_mw::new_port_list_dlg ()
+ {
+-  emit sig_create_port_list ();
++  Q_EMIT sig_create_port_list ();
+ }
+ 
+ /**
+@@ -1664,7 +1664,7 @@ gsd_mw::new_port_list_dlg ()
+ void
+ gsd_mw::new_agent_dlg ()
+ {
+-  emit sig_create_agent ();
++  Q_EMIT sig_create_agent ();
+ }
+ 
+ 
+@@ -1674,7 +1674,7 @@ gsd_mw::new_agent_dlg ()
+ void
+ gsd_mw::new_slave_dlg ()
+ {
+-  emit sig_create_slave ();
++  Q_EMIT sig_create_slave ();
+ }
+ 
+ 
+@@ -1688,7 +1688,7 @@ gsd_mw::details_config_dlg ()
+                                                    ->selectedRows (0);
+   if (selected.at (0).isValid ())
+     {
+-      emit sig_details_config (selected.at (0).row ());
++      Q_EMIT sig_details_config (selected.at (0).row ());
+       QDomElement config = control->getConfigModel ()
+                                         ->getEntity (selected.at (0).row ());
+       QString selected_id = control->getConfigModel ()
+@@ -1811,8 +1811,8 @@ gsd_mw::details_family_dlg (QString conf
+   if (config_id.compare ("") == 0 || name.compare ("") == 0)
+     return;
+ 
+-  emit sig_details_family (config_id, name);
+-  emit sig_nvts (name);
++  Q_EMIT sig_details_family (config_id, name);
++  Q_EMIT sig_nvts (name);
+   if (details_widgets.contains (name+config_id))
+     {
+       QSettings settings ("Greenbone", "GSD");
+@@ -1924,7 +1924,7 @@ gsd_mw::details_nvt_dlg (QString config_
+   if (config_id.compare ("") == 0 || oid.compare ("") == 0)
+     return;
+ 
+-  emit sig_details_nvt (config_id, oid);
++  Q_EMIT sig_details_nvt (config_id, oid);
+   if (details_widgets.contains (oid+config_id))
+     {
+       QSettings settings ("Greenbone", "GSD");
+@@ -2310,7 +2310,7 @@ gsd_mw::details_port_list_dlg ()
+                                   ->getEntity (selected.at (0).row ());
+       QString selected_id = control->getPortListModel()
+                                     ->getAttr (port_list, "port_list id");
+-      emit sig_details_port_list (selected_id);
++      Q_EMIT sig_details_port_list (selected_id);
+       if (details_widgets.contains (selected_id))
+         {
+           QSettings settings ("Greenbone", "GSD");
+@@ -2577,7 +2577,7 @@ gsd_mw::details_note_dlg ()
+                                                                    .row ()),
+                                                                   "note id");
+ 
+-      emit sig_details_note (note_id);
++      Q_EMIT sig_details_note (note_id);
+       QDomElement note = control->getNoteModel ()
+                                   ->getEntity (selected.at (0).row ());
+       QString selected_id = control->getNoteModel ()
+@@ -2679,7 +2679,7 @@ gsd_mw::details_override_dlg ()
+                                                                  .row ()),
+                                                                 "override id");
+ 
+-      emit sig_details_override (overr_id);
++      Q_EMIT sig_details_override (overr_id);
+       QDomElement override = control->getOverrideModel ()
+                                   ->getEntity (selected.at (0).row ());
+       QString selected_id = control->getOverrideModel ()
+@@ -2857,7 +2857,7 @@ gsd_mw::config_download ()
+                                                    ->selectedRows (0);
+   if (selected.at (0).isValid ())
+     {
+-      emit sig_download_config (selected.at (0).row ());
++      Q_EMIT sig_download_config (selected.at (0).row ());
+     }
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+@@ -2891,7 +2891,7 @@ gsd_mw::config_upload ()
+   QMap<QString, QString> parameter;
+   parameter.insert ("upload", utf8_str.data ());
+ 
+-  emit sig_upload (omp_utilities::CONFIG, parameter);
++  Q_EMIT sig_upload (omp_utilities::CONFIG, parameter);
+ }
+ 
+ 
+@@ -4085,20 +4085,20 @@ gsd_mw::authentication_failed (int err)
+                                 tr ("Error while connecting to manager!"
+                                     "\nPlease check server"
+                                     " address and port!"));
+-      emit sig_login ();
++      Q_EMIT sig_login ();
+     }
+   else if (err == -5)
+     {
+       QMessageBox::information (NULL,tr ("Login Error"),
+                                 tr ("Manager closed connection!"));
+-      emit sig_login ();
++      Q_EMIT sig_login ();
+     }
+   else if (err == 2)
+     {
+       QMessageBox::information (NULL,tr ("Login Error"),
+                                 tr ("Authentication failed!\n"
+                                     "Please check username and password!"));
+-      emit sig_login ();
++      Q_EMIT sig_login ();
+     }
+ }
+ 
+@@ -4224,7 +4224,7 @@ gsd_mw::task_delete()
+   QModelIndexList selected = tasks->getTable ()->selectionModel ()
+                                                 ->selectedRows (0);
+   if (selected.at (0).isValid ())
+-    emit sig_delete_task (selected.at (0).row ());
++    Q_EMIT sig_delete_task (selected.at (0).row ());
+   else
+     QMessageBox::information (NULL,tr ("Status Error"),
+                                 tr ("No task selected!"));
+@@ -4369,7 +4369,7 @@ gsd_mw::show_report (QString id, QString
+ void
+ gsd_mw::clear_dock_widget_settings ()
+ {
+-  foreach (dock_details *widget, details_widgets)
++  Q_FOREACH (dock_details *widget, details_widgets)
+     {
+       if (widget->isVisible () &&
+           this->dockWidgetArea (widget) != Qt::BottomDockWidgetArea)
+--- a/src/gsd_mw.h
++++ b/src/gsd_mw.h
+@@ -55,7 +55,7 @@ class gsd_mw : public QMainWindow , priv
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_req_tasks (int);
+     void sig_req_schedules (int);
+     void sig_req_targets (int);
+@@ -139,7 +139,7 @@ class gsd_mw : public QMainWindow , priv
+     void sig_download_system_report (QString, int);
+     void sig_nvt_family_details (QString);
+ 
+-  public slots:
++  public Q_SLOTS:
+     void logout ();
+     void authentication_failed (int);
+     void authentication_successful ();
+@@ -164,7 +164,7 @@ class gsd_mw : public QMainWindow , priv
+     void setLanguage (QString l);
+     void updateDashboard ();
+ 
+-  private slots:
++  private Q_SLOTS:
+     void about_dlg ();
+     void activate_port_list_actions ();
+     void login_dlg ();
+--- a/src/model_omp_entity.cpp
++++ b/src/model_omp_entity.cpp
+@@ -177,7 +177,7 @@ model_omp_entity::addEntity (QDomElement
+       s_Content.insert (pos, ent);
+       endInsertRows ();
+       mutex.unlock ();
+-      emit sig_changed (true);
++      Q_EMIT sig_changed (true);
+       return 0;
+     }
+   QDomElement temp = s_Content[pos].toElement () ;
+@@ -192,7 +192,7 @@ model_omp_entity::addEntity (QDomElement
+               s_Content[pos].clear ();
+               s_Content[pos] = node.cloneNode (true).toElement ();
+               mutex.unlock ();
+-              emit sig_changed (true);
++              Q_EMIT sig_changed (true);
+               return 0;
+             }
+           QDomNodeList list1 = node.childNodes ();
+@@ -202,7 +202,7 @@ model_omp_entity::addEntity (QDomElement
+               s_Content[pos].clear ();
+               s_Content[pos] = node.cloneNode (true).toElement ();
+               mutex.unlock ();
+-              emit sig_changed (true);
++              Q_EMIT sig_changed (true);
+               return 0;
+             }
+         }
+@@ -221,7 +221,7 @@ model_omp_entity::addEntity (QDomElement
+     }
+ 
+   mutex.unlock ();
+-  emit sig_changed (true);
++  Q_EMIT sig_changed (true);
+   return 0;
+ }
+ 
+@@ -304,7 +304,7 @@ model_omp_entity::removeEntity (QDomElem
+       if (temp == ent)
+         {
+           removeRows (i, 1, QModelIndex ());
+-          emit sig_changed (true);
++          Q_EMIT sig_changed (true);
+           return 0;
+         }
+       i++;
+@@ -322,7 +322,7 @@ int
+ model_omp_entity::removeEntity (int ndx)
+ {
+   removeRows (ndx, 1, QModelIndex ());
+-  emit sig_changed (true);
++  Q_EMIT sig_changed (true);
+   return 0;
+ }
+ 
+@@ -334,7 +334,7 @@ void
+ model_omp_entity::removeEntities ()
+ {
+   removeRows (0, s_Content.size (), QModelIndex ());
+-  emit sig_changed (true);
++  Q_EMIT sig_changed (true);
+ }
+ 
+ 
+--- a/src/model_omp_entity.h
++++ b/src/model_omp_entity.h
+@@ -41,7 +41,7 @@ class model_omp_entity : public QAbstrac
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_changed (bool);
+ 
+   public:
+--- a/src/omp_connector.cpp
++++ b/src/omp_connector.cpp
+@@ -471,7 +471,7 @@ void
+ omp_connector::stop_update ()
+ {
+   update->stop ();
+-  emit sig_update_stopped ();
++  Q_EMIT sig_update_stopped ();
+ }
+ 
+ 
+@@ -483,7 +483,7 @@ omp_connector::stop_update ()
+ void
+ omp_connector::update_started ()
+ {
+-  emit sig_update_started ();
++  Q_EMIT sig_update_started ();
+ }
+ 
+ /**
+@@ -508,7 +508,7 @@ omp_connector::updateRunning ()
+ void
+ omp_connector::update_finished ()
+ {
+-  emit sig_update_finished ();
++  Q_EMIT sig_update_finished ();
+ }
+ 
+ 
+@@ -518,7 +518,7 @@ omp_connector::update_finished ()
+ void
+ omp_connector::update_trigger ()
+ {
+-  emit sig_update_trigger ();
++  Q_EMIT sig_update_trigger ();
+ }
+ 
+ 
+@@ -528,7 +528,7 @@ omp_connector::update_trigger ()
+ void
+ omp_connector::thread_started ()
+ {
+-  emit sig_thread_started ();
++  Q_EMIT sig_thread_started ();
+ }
+ 
+ 
+@@ -538,7 +538,7 @@ omp_connector::thread_started ()
+ void
+ omp_connector::thread_finished ()
+ {
+-  emit sig_thread_finished ();
++  Q_EMIT sig_thread_finished ();
+ }
+ 
+ /**
+@@ -547,7 +547,7 @@ omp_connector::thread_finished ()
+ void
+ omp_connector::request_finished (int type, int com, QString userData)
+ {
+-  emit sig_request_finished (type, com, userData);
++  Q_EMIT sig_request_finished (type, com, userData);
+ }
+ 
+ /**
+@@ -556,7 +556,7 @@ omp_connector::request_finished (int typ
+ void
+ omp_connector::request_failed (int type,int com, int err)
+ {
+-  emit sig_request_failed (type, com, err);
++  Q_EMIT sig_request_failed (type, com, err);
+ }
+ 
+ 
+@@ -566,6 +566,6 @@ omp_connector::request_failed (int type,
+ void
+ omp_connector::log (QString msg, int prio)
+ {
+-  emit sig_log(msg, prio);
++  Q_EMIT sig_log(msg, prio);
+ }
+ 
+--- a/src/omp_connector.h
++++ b/src/omp_connector.h
+@@ -41,7 +41,7 @@ class omp_connector : public QObject
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+ /**
+  * @brief SIGNAL to synchronize with updates.
+  */
+@@ -98,7 +98,7 @@ class omp_connector : public QObject
+  */
+     void sig_log (QString, int);
+ 
+-  private slots:
++  private Q_SLOTS:
+     void update_trigger ();
+     void update_finished ();
+     void update_started ();
+@@ -108,7 +108,7 @@ class omp_connector : public QObject
+     void request_failed (int type, int com, int err);
+     void log (QString msg, int prio);
+ 
+-  public slots:
++  public Q_SLOTS:
+     void stop_update ();
+ 
+   private:
+--- a/src/omp_thread_helper.cpp
++++ b/src/omp_thread_helper.cpp
+@@ -48,7 +48,7 @@ omp_thread_helper::~omp_thread_helper ()
+ void
+ omp_thread_helper::triggerUpdate ()
+ {
+-  emit sig_update_trigger ();
++  Q_EMIT sig_update_trigger ();
+ }
+ 
+ 
+@@ -60,7 +60,7 @@ omp_thread_helper::triggerUpdate ()
+ void
+ omp_thread_helper::finishedUpdate ()
+ {
+-  emit sig_update_finished ();
++  Q_EMIT sig_update_finished ();
+ }
+ 
+ 
+@@ -70,7 +70,7 @@ omp_thread_helper::finishedUpdate ()
+ void
+ omp_thread_helper::threadStarted ()
+ {
+-  emit sig_thread_started ();
++  Q_EMIT sig_thread_started ();
+ }
+ 
+ 
+@@ -80,7 +80,7 @@ omp_thread_helper::threadStarted ()
+ void
+ omp_thread_helper::threadFinished ()
+ {
+-  emit sig_thread_finished ();
++  Q_EMIT sig_thread_finished ();
+ }
+ 
+ 
+@@ -90,7 +90,7 @@ omp_thread_helper::threadFinished ()
+ void
+ omp_thread_helper::requestFinished (int type, int com, QString userData)
+ {
+-  emit sig_request_finished (type, com, userData);
++  Q_EMIT sig_request_finished (type, com, userData);
+ }
+ 
+ 
+@@ -100,7 +100,7 @@ omp_thread_helper::requestFinished (int
+ void
+ omp_thread_helper::requestFailed (int type, int com, int err)
+ {
+-  emit sig_request_failed (type, com, err);
++  Q_EMIT sig_request_failed (type, com, err);
+ }
+ 
+ 
+@@ -112,5 +112,5 @@ omp_thread_helper::requestFailed (int ty
+ void
+ omp_thread_helper::log (QString msg, int prio)
+ {
+-  emit sig_log (msg, prio);
++  Q_EMIT sig_log (msg, prio);
+ }
+--- a/src/omp_thread_helper.h
++++ b/src/omp_thread_helper.h
+@@ -37,7 +37,7 @@ class omp_thread_helper : public QObject
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+ /**
+  * @brief SIGNAL to synchronize with update.
+  */
+--- a/src/omp_update.cpp
++++ b/src/omp_update.cpp
+@@ -200,7 +200,7 @@ omp_update::removeFromQueue (omp_utiliti
+ void
+ omp_update::update ()
+ {
+-  emit sig_update_trigger ();
++  Q_EMIT sig_update_trigger ();
+ 
+   for (int i = 0; i < updateQueue.size (); i++)
+     {
+--- a/src/omp_update.h
++++ b/src/omp_update.h
+@@ -44,7 +44,7 @@ class omp_update :public QObject
+ {
+   Q_OBJECT
+ 
+-  signals:
++  Q_SIGNALS:
+     void sig_update_trigger ();
+   private:
+     int interval;
+@@ -54,7 +54,7 @@ class omp_update :public QObject
+     QMap <omp_utilities::omp_type, QString > stringList;
+     QList <omp_utilities::omp_type> updateQueue;
+     omp_command *worker;
+-  private slots:
++  private Q_SLOTS:
+     void update ();
+ 
+   public:
+
+
