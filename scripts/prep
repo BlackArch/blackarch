@@ -11,6 +11,9 @@ _sponge() {
 
 pkgbuild=$1
 
+source "$pkgbuild"
+namcap "$pkgbuild"
+
 if [[ ! -r "$pkgbuild" ]] ; then
 	echo >&2 "could not read '$pkgbuild'."
 	exit 1
@@ -31,10 +34,11 @@ echo "checking license..."
 source "$pkgbuild"
 for lic in "${license[@]}" ; do
 	if [[ ! "$lic" =~ \
-		   ^([Uu]nknown|[Cc]ustom|BSD|MIT|ZLIB|[Pp]ython)$ ]] ; then
+		   ^([Uu]nknown|[Cc]ustom:.*|BSD|MIT|ZLIB|[Pp]ython)$ ]] ; then
 		[[ -z "$lic" ]] && echo >&2 "'$pkgbuild' has no license."
 		[[ -e /usr/share/licenses/common/$lic ]] ||
 		echo >&2 "'$pkgbuild' has invalid license: '$lic'"
+		sed -i '1i\# TODO: check license' "$pkgbuild"
 	fi
 done
 )
@@ -57,8 +61,8 @@ sed -i 's/||\s*return.*//' "$pkgbuild"
 
 # Check for package function
 if ! grep -q 'package.*()' "$pkgbuild" ; then
-	sed -i '1i\# TODO: make package function' "$pkgbuild"
 	echo >&2 "warning: no package function"
+	sed -i '1i\# TODO: make package function' "$pkgbuild"
 fi
 
 # Remove blank line at top
@@ -69,7 +73,7 @@ awk 'BEGIN{ i=0 } {
 		   print
 		}
 		i++
-	 }' "$pkgbuild" | sponge "$pkgbuild"
+	 }' "$pkgbuild" | _sponge "$pkgbuild"
 
 # Check for startdir
 # This is too difficult to fix automatically
@@ -78,8 +82,14 @@ if grep -q 'startdir' "$pkgbuild" ; then
 	sed -i '1i\# TODO: remove startdir' "$pkgbuild"
 fi
 
+# Remove $pkgname
+if grep -q '\$pkgname' "$pkgbuild" ; then
+	echo >&2 'removing $pkgname...'
+	sed -i "s/\\\$pkgname/$pkgname/g" "$pkgbuild"
+fi
+
 # Remove trailing whitespace
 if grep -Eq '[[:space:]]+$' "$pkgbuild" ; then
-	echo "removing trailing whitespace..."
+	echo 'removing trailing whitespace...'
 	sed -i 's/[[:space:]]*$//' "$pkgbuild"
 fi
