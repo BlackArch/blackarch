@@ -4,6 +4,7 @@
 
 # Default settings.
 sign=true
+ruby_only=false
 
 # The sorts are sensitive.
 export LC_ALL=POSIX
@@ -27,6 +28,9 @@ cache_rights() {
 
 for arg ; do
 	case "$arg" in
+		--ruby)
+			ruby_only=true
+			;;
 		--nosign|--test)
 			sign=false
 			;;
@@ -59,7 +63,11 @@ mkdir -p "$repodir"
 cd "$pkgdir"
 
 msg 'generating depth list...'
-"$basedir/depth-list" |
+if $ruby_only ; then
+	grep -l ruby */PKGBUILD | cut -d/ -f1 | xargs "$basedir/depth-list"
+else
+	"$basedir/depth-list"
+fi |
 while read item ; do (
 	cache_rights
 
