@@ -4,7 +4,6 @@
 
 # Default settings.
 sign=true
-ruby_only=false
 
 # The sorts are sensitive.
 export LC_ALL=POSIX
@@ -26,10 +25,15 @@ cache_rights() {
 	sudo -v || msg 'sudo failed. continuing build anyways.'
 }
 
-for arg ; do
-	case "$arg" in
-		--ruby)
-			ruby_only=true
+while [[ -n "$1" ]] ; do
+	case "$1" in
+		--content-filter)
+			content_filter=$2
+			shift
+			;;
+		--name-filter)
+			name_filter=$2
+			shift
 			;;
 		--nosign|--test)
 			sign=false
@@ -39,6 +43,7 @@ for arg ; do
 			exit 1
 			;;
 	esac
+	shift
 done
 
 cache_rights
@@ -63,11 +68,9 @@ mkdir -p "$repodir"
 cd "$pkgdir"
 
 msg 'generating depth list...'
-if $ruby_only ; then
-	grep -l ruby */PKGBUILD | cut -d/ -f1 | xargs "$basedir/depth-list"
-else
-	"$basedir/depth-list"
-fi |
+grep -l "$content_filter" */PKGBUILD | cut -d/ -f1 |
+grep "$name_filter" | xargs "$basedir/depth-list" |
+cat
 while read item ; do (
 	cache_rights
 
