@@ -1,0 +1,47 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+
+do_deletes=false
+sign=true
+
+archs=(x86_64)
+real_repo=$(realpath ../real-repo)
+build_repo=$(realpath ../repo)
+
+upgrades=$(./get-upgrades)
+
+get_name() {
+	tar xJf "$1" .PKGINFO --force-local -O 2> /dev/null | grep '^pkgname' | cut -d' ' -f3
+}
+
+find_package() {
+	for p in "$1/$2"*.pkg.tar.xz ; do
+		#shopt -s errorglob
+		if tar xJf "$p" .PKGINFO -O 2> /dev/null --force-local | grep -q "pkgname = $2\$" ; then
+			echo "$p"
+			return 0
+		else
+			return 1
+		fi
+	done
+}
+
+for arch in $archs ; do
+	if $do_deletes ; then
+		echo "$upgrades" | grep '^removed' | cut -d' ' -f2 |
+		while read p ; do
+			echo rm -v "$(find_package "$real_repo" "$p")"
+		done
+	fi
+
+	(
+	cd "$build_repo/$arch"
+	for new_package in *.pkg.tar.xz ; do
+		new_name=$(get_name "$new_package")
+		old_package=$(find_package "$real_repo/$arch" "$new_name")
+		[[ -n "$old_package" ]] && rm -v "$old_package"
+		cp -v "$new_package" "$real_repo/$arch"
+	done
+	)
+done
