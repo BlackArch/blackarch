@@ -8,30 +8,43 @@ testing=blackarch-testing
 real=blackarch
 real_bak=blackarch.bak
 
+real_local=$(realpath ../real-repo)
+
 eval $(ssh-agent)
 trap "kill $SSH_AGENT_PID" EXIT
 ssh-add
 
+fix_permissions() {
+	ssh "$site" "chgrp -R www-data $sitedir/* 2> /dev/null
+	             chmod -R ug+rwX,o+rX $sitedir/* 2> /dev/null"
+}
+
 ran=$RANDOM$RANDOM
 case "$1" in
 	local-real)
-		rsync -avz --progress --delete-after ../real-repo/ ssh://$site/$sitedir/$real.$ran
+		echo >&2 'syncing local to real...'
+		rsync -avz --progress --delete-after "${real_local:-safety}/" $site:/$sitedir/$real.$ran
 		ssh "$site" "rm -rf $sitedir/${real_bak:-safety}
 		             mv -v $sitedir/$real $sitedir/$real_bak
 		             mv -v $sitedir/$real.$ran $sitedir/$real"
+		fix_permissions
 		;;
 
 	local-test)
-		rsync -avz --progress --delete-after ../real-repo/ ssh://$site/$sitedir/$testing
+		echo >&2 'syncing local to test...'
+		rsync -avz --progress --delete-after "${real_local:-safety}/" $site:/$sitedir/$testing
+		fix_permissions
 		;;
 
 	test-real)
+		echo >&2 'syncing test to real...'
 		ssh "$site" "rm -rf $sitedir/${real_bak:-safety}
 		             mv -v $sitedir/$real $sitedir/$real_bak
 		             mv -v $sitedir/$testing $sitedir/$real"
 		;;
 
 	revert)
+		echo >&2 'reverting from real backup'
 		ssh "$site" "[ -d $sitedir/$real_bak ] || echo 'no backup'
 		             mv -v $sitedir/$real $sitedir/$real.$ran
 		             mv -v $sitedir/$real_bak $sitedir/$real
