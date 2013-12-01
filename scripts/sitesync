@@ -1,0 +1,38 @@
+#!/bin/sh
+
+cd "$(dirname "$0")"
+
+site=blackarch.org
+sitedir=/var/www/pub
+testing=blackarch-testing
+real=blackarch
+real_bak=blackarch.bak
+
+eval $(ssh-agent)
+trap "kill $SSH_AGENT_PID" EXIT
+ssh-add
+
+ran=$RANDOM$RANDOM
+case "$1" in
+	local-real)
+		rsync -avz --progress --delete-after ../real-repo/ ssh://$site/$sitedir/$real.$ran
+		ssh "$site" "rm -rf $sitedir/${real_bak:-safety}
+		             mv $sitedir/$real $sitedir/$real_bak
+		             mv $sitedir/$real.$ran $sitedir/$real"
+		;;
+	local-test)
+		rsync -avz --progress --delete-after ../real-repo/ \
+		  ssh://blackarch.org/var/www/pub/blackarch-testing
+		;;
+	test-real)
+		ssh "$site" "rm -rf $sitedir/${real_bak:-safety}
+		             mv $sitedir/$real $sitedir/$real_bak
+		             mv $sitedir/$real.$ran $sitedir/$real"
+		;;
+	revert)
+		ssh "$site" "[ -d $sitedir/$real_bak ] || echo 'no backup'
+		             mv $sitedir/$real $sitedir/$real.$ran
+		             mv $sitedir/$real_bak $sitedir/$real
+		             mv $sitedir/$real.$ran $sitedir/$real_bak"
+		;;
+esac
