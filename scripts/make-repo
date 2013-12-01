@@ -4,6 +4,7 @@
 
 # Default settings.
 sign=false
+arch=x86_64
 
 # The sorts are sensitive.
 export LC_ALL=POSIX
@@ -33,6 +34,10 @@ while [[ -n "$1" ]] ; do
 			;;
 		--name-filter)
 			name_filter=$2
+			shift
+			;;
+		--arch)
+			arch=$2
 			shift
 			;;
 		--sign)
@@ -94,7 +99,11 @@ while read item ; do (
 	msg2 'building...'
 
 	# Build.
-	makepkg -s --nocheck --noconfirm 2>&1
+	if [[ $arch == i686 ]] ; then
+		linux32 makepkg --config "$basedir/conf/makepkg.$arch.conf" -s --nocheck --noconfirm 2>&1
+	else
+		makepkg --config "$basedir/conf/makepkg.$arch.conf" -s --nocheck --noconfirm 2>&1
+	fi
 
 	# Log errors.
 	ret=$?
