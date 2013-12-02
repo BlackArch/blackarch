@@ -21,6 +21,7 @@ fix_permissions() {
 
 ran=$RANDOM$RANDOM
 case "$1" in
+	# Copy Local -> Real
 	local-real)
 		echo >&2 'syncing local to real...'
 		rsync -avz --progress --delete-after "${real_local:-safety}/" $site:/$sitedir/$real.$ran
@@ -31,12 +32,14 @@ case "$1" in
 		fix_permissions
 		;;
 
+	# Sync Local -> Test
 	local-test)
 		echo >&2 'syncing local to test...'
 		rsync -avz --progress --delete-after "${real_local:-safety}/" $site:/$sitedir/$testing
 		fix_permissions
 		;;
 
+	# Move Test -> Real
 	test-real)
 		echo >&2 'syncing test to real...'
 		ssh "$site" "rm -rf $sitedir/${real_bak:-safety}
@@ -44,6 +47,16 @@ case "$1" in
 		             mv -v $sitedir/$testing $sitedir/$real"
 		;;
 
+	# Move Test -> Real and copy Real -> Test afterwards.
+	test-real-copy)
+		echo >&2 'syncing test to real...'
+		ssh "$site" "rm -rf $sitedir/${real_bak:-safety}
+		             mv -v $sitedir/$real $sitedir/$real_bak
+		             mv -v $sitedir/$testing $sitedir/$real
+		             cp -a $sitedir/$real $sitedir/$testing"
+		;;
+
+	# Revert real from backup.
 	revert)
 		echo >&2 'reverting from real backup'
 		ssh "$site" "[ -d $sitedir/$real_bak ] || echo 'no backup'
