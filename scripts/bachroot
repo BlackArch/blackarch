@@ -1,78 +1,128 @@
 #!/bin/bash
 
 blackarch=$(dirname "$0")/..
-chroot=$HOME/alt/base
-running=$HOME/alt/running
+chroot=$HOME/alt/blackarch
+base=$HOME/alt/blackarch.base.qcow2
+base_bak=$HOME/alt/blackarch.base.qcow2.bak
+nbd=/dev/nbd1
 
 if [[ $UID != 0 ]] ; then
 	echo >&2 'must be root'
 	exit 1
 fi
 
-mounts=()
 clear_mounts() {
 	for mount in "${mounts[@]}" ; do
 		umount "$mount"
 	done
+
+	mounts=()
+
+	qemu-nbd -d "$nbd"
 }
 trap clear_mounts EXIT
 
 track_mount() {
 	mounts+=("$2")
+	mkdir -p "$2"
 	mount "$@"
 }
 
+connect_nbd() {
+	modprobe nbd max_part=63
+	qemu-nbd -f qcow2 -c "$nbd" "$1"
+}
+
+set -e
+
 case "$1" in
 	init)
-		if [[ -d "$chroot" ]] ; then
-			echo >&2 'chroot already exists'
-			exit 1
-		fi
+		echo 'making a new base image...'
 
-		mkdir -p "$chroot"
+		[[ -e "$base" ]] && mv -f "$base" "$base_bak"
+
+		qemu-img create -f qcow2 "$base" 15G
+
+		connect_nbd "$base"
+		mkfs.ext4 "$nbd"
+		track_mount "$nbd" "$chroot"
+
+		# Strap
+		echo 'strapping...'
 		pacstrap -d "$chroot" base base-devel namcap zsh tmux sudo
+
+		# Mirrorlist
+		echo 'copying mirrorlist...'
 		cp -f /etc/pacman.d/mirrorlist "$chroot/etc/pacman.d/mirrorlist"
+
+		# User
+		echo 'adding user...'
 		arch-chroot "$chroot" groupadd test
 		arch-chroot "$chroot" useradd -s /bin/zsh -g test -m test
 		arch-chroot "$chroot" echo test:a \| chpasswd
-		# yes?
-		pacstrap -d "$chroot" gcc-multilib
+
+		# Multilib
+		echo 'modifying pacman.conf...'
 		cat >> "$chroot/etc/pacman.conf" <<EOF
 [multilib]
 Include = /etc/pacman.d/mirrorlist
 EOF
+		echo 'taking care of gcc...'
+		arch-chroot "$chroot" pacman --noconfirm -Rdd gcc gcc-libs binutils
+		pacstrap -d "$chroot" gcc-multilib
 
-		arch-chroot "$chroot" sed -i '/root ALL/a\test ALL=NOPASSWD: ALL' /etc/sudoers
+		# Sudo
+		echo 'modifying sudoers...'
+		sed -i '/root ALL/a\test ALL=NOPASSWD: ALL' "$chroot/etc/sudoers"
+
+		clear_mounts
+
+		qemu-img snapshot -c base "$base"
 		;;
 
-	# This is dangerous. Be careful.
-	clean)
-		for d in "$running/home" "$running/home/test" ; do
-		if mountpoint -q "$d" ; then
-			echo >&2 "not removing mountpoint: $d"
-			exit 1
-		fi
-		done
+	snaps)
+		qemu-img snapshot -l "$base"
+		;;
 
-		rm -rf "$running"
+	clean)
+		echo 'reverting to base snapshot...'
+		qemu-img snapshot -a base "$base"
+
+		echo >&2 'cleaning snapshots...'
+		qemu-img snapshot -l "$base" | awk '{ print $2 }' |
+		  sed 1,2d | grep -v '^base$' |
+		  xargs -n1 -I{} qemu-img snapshot -d {} "$base"
+		;;
+
+	revert)
+		echo 'reverting to base snapshot...'
+		qemu-img snapshot -a base "$base"
 		;;
 
 	enter)
-		chroot "$running" su - test
+		echo 'diving into chroot...'
+
+		connect_nbd "$base"
+		track_mount "$nbd" "$chroot"
+
+		if mountpoint -q "$chroot/proc" ; then
+			echo 'already mounted.'
+			chroot "$chroot" su - test
+		else
+			echo 'mounting...'
+
+			track_mount "$blackarch" "$chroot/home/test" --bind
+			track_mount "$chroot" "$chroot" --rbind
+			arch-chroot "$chroot" su - test
+		fi
+
+		clear_mounts
+
+		qemu-img snapshot -c build "$base"
 		;;
 
 	*)
-		if [[ ! -d "$running" ]] ; then
-			echo 'cloning...'
-			cp -a "$chroot" "$running"
-		fi
-
-		echo 'diving into chroot...'
-
-		echo 'mounting...'
-		track_mount "$blackarch" "$running/home/test" --bind
-		track_mount "$running" "$running" --rbind
-
-		arch-chroot "$running" su - test
+		echo >&2 'invalid command.'
+		exit 1
 		;;
 esac
