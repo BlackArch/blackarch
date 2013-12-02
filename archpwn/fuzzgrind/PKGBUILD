@@ -9,7 +9,7 @@ arch=(i686 x86_64)
 depends=('glibc')
 license=('GPL')
 groups=('blackarch' 'blackarch-analysis')
-source=("http://seclabs.org/$pkgname/files/${pkgname}_$pkgver.tar.gz"
+source=("http://seclabs.org/fuzzgrind/files/${pkgname}_$pkgver.tar.gz"
         "http://people.csail.mit.edu/vganesh/STP_files/stp.tar.gz"
         "http://valgrind.org/downloads/valgrind-3.4.1.tar.bz2"
         "glibc-2.12.patch"
@@ -23,7 +23,7 @@ md5sums=('d7562677b43cb10b288830b22bf9c423'
          'e435a0debedf207b279256eff50c68f6')
 
 build() {
-  cd "$srcdir/$pkgname/"
+  cd "$srcdir/fuzzgrind/"
   tar --ignore-failed-read -jkxf "$srcdir"/valgrind-3.4.1.tar.bz2
 
   cd valgrind-3.4.1
@@ -31,27 +31,27 @@ build() {
   patch -Np1 -i ${srcdir}/valgrind-3.5.0-stat_h.patch
 
   autoreconf
-  ./configure --prefix="/usr/share/$pkgname/valgrind"
+  ./configure --prefix="/usr/share/fuzzgrind/valgrind"
   make
 
-  mkdir -p $pkgdir/usr/share/$pkgname/valgrind
+  mkdir -p $pkgdir/usr/share/fuzzgrind/valgrind
   make DESTDIR="$pkgdir" install
 
-  rm -rf $pkgdir/usr/share/$pkgname/valgrind/share/
-  rm -rf $pkgdir/usr/share/$pkgname/valgrind/lib/pkgconfig/
-  rm -rf $pkgdir/usr/share/$pkgname/valgrind/include/
+  rm -rf $pkgdir/usr/share/fuzzgrind/valgrind/share/
+  rm -rf $pkgdir/usr/share/fuzzgrind/valgrind/lib/pkgconfig/
+  rm -rf $pkgdir/usr/share/fuzzgrind/valgrind/include/
 
-  cd "$srcdir/$pkgname/testcase"
+  cd "$srcdir/fuzzgrind/testcase"
   make
 
-  cd "$srcdir/$pkgname/fault_detection"
+  cd "$srcdir/fuzzgrind/fault_detection"
   make
 
-  cd "$srcdir/$pkgname/"
-  sed -i "s:./valgrind-3.4.1/build/bin/valgrind:/usr/share/$pkgname/valgrind/bin/valgrind:" fuzz/valgrind.py
-  cp -r testcase fault_detection fuzz session $pkgdir/usr/share/$pkgname/
+  cd "$srcdir/fuzzgrind/"
+  sed -i "s:./valgrind-3.4.1/build/bin/valgrind:/usr/share/fuzzgrind/valgrind/bin/valgrind:" fuzz/valgrind.py
+  cp -r testcase fault_detection fuzz session $pkgdir/usr/share/fuzzgrind/
 
-  cd $pkgdir/usr/share/$pkgname
+  cd $pkgdir/usr/share/fuzzgrind
   mkdir -p stp/
   tar -C stp/ -xzf "$srcdir"/stp.tar.gz
 
