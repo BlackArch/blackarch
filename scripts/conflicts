@@ -1,0 +1,34 @@
+#!/bin/bash
+# Checks ofr conflicts.
+# This is pretty ugly.
+
+tmp1=$(mktemp /tmp/conflict.XXXXXXXX)
+tmp2=$(mktemp /tmp/conflict.XXXXXXXX)
+trap "rm $tmp1 $tmp2" EXIT
+
+jobs=8
+pack_jobs=8
+
+cat > $tmp2 <<\EOFI
+file=$1
+pkgfile=$(pkgfile "$file")
+#echo "checking $file..."
+if [[ -n "$pkgfile" ]] ; then
+	cat <<-MSG
+	conflict: $file
+	details:
+	$pkgfile
+	MSG
+fi
+EOFI
+
+cat > $tmp1 <<EOFO
+pack=\$1
+#echo "checking \$pack..."
+pacman -Ql \$pack | cut -d' ' -f2- |
+  parallel --no-notice -j$pack_jobs -n1 bash $tmp2
+EOFO
+
+pacman -Sgg | grep blackarch |
+  cut -d' ' -f2 | sort -u |
+  parallel --no-notice -j$jobs -n1 bash $tmp1
