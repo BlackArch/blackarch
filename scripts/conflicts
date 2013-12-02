@@ -10,13 +10,16 @@ jobs=8
 pack_jobs=8
 
 cat > $tmp2 <<\EOFI
-file=$1
-pkgfile=$(pkgfile "$file")
+pack=$1
+file=$2
+
+pkgfile=$(pkgfile "$file" | grep -v "^blackarch/$pack")
 #echo "checking $file..."
 if [[ -n "$pkgfile" ]] ; then
 	cat <<-MSG
 	conflict: $file
-	details:
+	package: $pack
+	conflicting:
 	$pkgfile
 	MSG
 fi
@@ -25,10 +28,10 @@ EOFI
 cat > $tmp1 <<EOFO
 pack=\$1
 #echo "checking \$pack..."
-pacman -Ql \$pack | cut -d' ' -f2- |
-  parallel --no-notice -j$pack_jobs -n1 bash $tmp2
+pkgfile -ql \$pack |
+  parallel --no-notice -j$pack_jobs -n2 bash $tmp2 \$pack
 EOFO
 
-pacman -Sgg | grep blackarch |
-  cut -d' ' -f2 | sort -u |
+pacman -Ss | grep '^blackarch' |
+  cut -d' ' -f1 | cut -d/ -f2 | sort -u |
   parallel --no-notice -j$jobs -n1 bash $tmp1
