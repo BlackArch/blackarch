@@ -1,0 +1,32 @@
+#!/bin/bash
+
+pack=$1
+arch=$2
+lock=$3
+
+acquire_lock() {
+	echo "$pack acquiring lock..."
+	while ! mkdir "$lock" ; do
+		sleep 0.5
+	done
+}
+
+release_lock() {
+	echo "$pack releasing lock..."
+	rmdir "$lock"
+}
+
+base=$(dirname "$0")
+
+cd "$pack"
+
+acquire_lock
+"$base/install-deps" PKGBUILD
+release_lock
+
+# Build.
+if [[ $arch == i686 ]] ; then
+	linux32 makepkg --config "$basedir/conf/makepkg.$arch.conf" -s --nocheck --noconfirm 2>&1
+else
+	makepkg --config "$basedir/conf/makepkg.$arch.conf" -s --nocheck --noconfirm 2>&1
+fi
