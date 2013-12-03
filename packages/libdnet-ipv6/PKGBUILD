@@ -1,0 +1,37 @@
+pkgname=libdnet-ipv6
+pkgver=1.12
+pkgrel=2
+pkgdesc="A simplified, portable interface to several low-level networking routines"
+arch=('i686' 'x86_64')
+makedepends=('python2')
+optdepends=('python2')
+provides=('libdnet')
+conflicts=('libdnet')
+license=('BSD')
+url="http://code.google.com/p/libdnet/"
+source=("http://libdnet.googlecode.com/files/libdnet-$pkgver.tgz" "ipv6.patch")
+md5sums=('9253ef6de1b5e28e9c9a62b882e44cc9' '02c56065af3091eacf65983b7dc841e5')
+
+prepare() {
+  cd "$srcdir/libdnet-$pkgver"
+
+  patch -p1 -i ../ipv6.patch
+}
+
+build() {
+  cd "$srcdir/libdnet-$pkgver"
+
+  autoreconf -I config --force --install
+  ./configure --prefix=/usr --sbindir=/usr/bin
+  make
+}
+
+package() {
+  cd "$srcdir/libdnet-$pkgver"
+  make DESTDIR="$pkgdir/" install
+
+  cd python && \
+  python2 setup.py install --root=$pkgdir
+
+  install -D -m0644 ../LICENSE $pkgdir/usr/share/licenses/libdnet/LICENSE
+}

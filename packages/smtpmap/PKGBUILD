@@ -1,0 +1,44 @@
+pkgname=smtpmap
+pkgver=0.8.234_BETA
+pkgrel=1
+pkgdesc='Tool to identify the running smtp software on a given host.'
+url='http://www.projectiwear.org/~plasmahh/software.html'
+arch=('i686' 'x86_64')
+groups=('blackarch' 'blackarch-intel')
+license=('GPL')
+depends=('libpcap')
+source=("http://www.projectiwear.org/~plasmahh/smtpmap-${pkgver/_/-}.tar.bz2"
+        "gcc-3.4.patch"
+        "smtpmap-64bit.patch")
+md5sums=('ed748597a1368388844e8bba6e9d4721'
+        '5ae7a4a427926d64f31073470ababf66'
+        'f308cb4551391369224de6f4e51fbf81')
+
+prepare() {
+  cd "$srcdir/smtpmap-${pkgver/_/-}"
+  
+  patch -Np1 < "$srcdir/gcc-3.4.patch"
+  patch -Np0 < "$srcdir/smtpmap-64bit.patch"
+  
+  sed -i "s|-O -Wall|$CFLAGS|g" makefile.conf
+}
+
+build() {
+  cd "$srcdir/smtpmap-${pkgver/_/-}"
+  
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd "$srcdir/smtpmap-${pkgver/_/-}"
+  
+  install -Dm755 "src/smtpmap" "$pkgdir/usr/bin/smtmap"
+  install -Dm644 "COPYING" "$pkgdir/usr/share/licenses/smtpmap/COPYING"
+
+  mkdir -p "$pkgdir/usr/share/smtpmap"
+  cp share/* "$pkgdir/usr/share/smtpmap/"
+
+  mkdir -p "$pkgdir/usr/share/doc/smtpmap/"
+  cp ChangeLog README TODO "$pkgdir/usr/share/doc/smtpmap/"
+}
