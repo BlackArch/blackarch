@@ -77,6 +77,7 @@ msg 'generating depth list...'
 while read item ; do
 	cache_rights
 
+	# Extract depth and name from item.
 	read depth pack <<< "$item"
 	msg "-item> $pack $depth"
 
@@ -110,6 +111,11 @@ while read item ; do
 		queue=()
 	fi
 
+	# Exit on last item.
+	if [[ $depth == 0 ]] ; then
+		break
+	fi
+
 	queue+=("$pack")
 
 	# Log errors.
@@ -129,6 +135,7 @@ while read item ; do
 	# Move package into the repo.
 	mv *.pkg.tar.xz "$repodir"
 done < <(grep -l "$content_filter" */PKGBUILD | cut -d/ -f1 |
-         grep "$name_filter" | xargs "$basedir/depth-list")
+         grep "$name_filter" | xargs "$basedir/depth-list";
+         echo '0 end')
 
 # vim: set ft=zsh:
