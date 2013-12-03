@@ -1,0 +1,33 @@
+pkgname=metoscan
+pkgver=05
+pkgrel=1
+pkgdesc='Tool for scanning the HTTP methods supported by a webserver. It works
+by testing a URL and checking the responses for the different requests.'
+url='http://www.open-labs.org/'
+groups=('blackarch' 'blackarch-intel' 'blackarch-web-apps')
+license=('custom')
+depends=('curl')
+makedepends=('gcc' 'make')
+arch=('i686' 'x86_64')
+source=("http://www.open-labs.org/${pkgname}${pkgver}.tar.gz")
+md5sums=('726677986188c6d403693ec0ef42096b')
+
+prepare() {
+  cd "$srcdir/metoscan$pkgver"
+  
+  sed -i '/CURLOPT_MUTE/d' get_url.c
+  sed -i "s:gcc :gcc $CFLAGS :" Makefile 
+}
+
+build() {
+  cd "$srcdir/metoscan$pkgver"
+  
+  make
+}
+
+package() {
+  cd "$srcdir/metoscan$pkgver"
+
+  install -Dm755 metoscan "$pkgdir/usr/bin/metoscan"
+  install -Dm644 README.txt "$pkgdir/usr/share/doc/metoscan/README.txt"
+}
