@@ -5,6 +5,7 @@
 # Default settings.
 arch=x86_64
 jobs=8
+use_whitelist=false
 
 # The sorts are sensitive.
 export LC_ALL=POSIX
@@ -30,6 +31,11 @@ while [[ -n "$1" ]] ; do
 	case "$1" in
 		--content-filter)
 			content_filter=$2
+			shift
+			;;
+		--whitelist)
+			use_whitelist=true
+			whitelist=$2
 			shift
 			;;
 		--name-filter)
@@ -134,8 +140,15 @@ while read item ; do
 	msg2 'moving to repo...'
 	# Move package into the repo.
 	mv *.pkg.tar.xz "$repodir"
-done < <(grep -l "$content_filter" */PKGBUILD | cut -d/ -f1 |
-         grep "$name_filter" | xargs "$basedir/depth-list";
-         echo '0 end')
+done < <(
+if $use_whitelist ; then
+	grep -l "$content_filter" */PKGBUILD | cut -d/ -f1 |
+			grep "$name_filter" | xargs "$basedir/depth-list";
+			echo '0 end'
+else
+	echo "${whitelist//,/ }" |
+	  xargs "$basedir/depth-list"
+fi
+)
 
 # vim: set ft=zsh:
