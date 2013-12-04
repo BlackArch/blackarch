@@ -1,27 +1,36 @@
-# TODO: make package function
-
 pkgname=3proxy
 pkgver=0.7
 pkgrel=2
-pkgdesc="3proxy tiny free proxy server"
+pkgdesc="Tiny free proxy server"
 url="http://3proxy.ru/"
 groups=('blackarch' 'blackarch-misc')
-depends=('glibc')
 license=('GPL')
-arch=(i686 x86_64)
+arch=('i686' 'x86_64')
+options=('!makeflags')
 source=(http://3proxy.ru/current/3proxy-$pkgver-devel.tgz)
-md5sums=('c6480ddf9680d504a1f4f51eca38ff36')
+md5sums=('a04eab0ad1a1e4d7459460d9af9fe2df')
 
-build() {
-  cd $srcdir/3proxy-$pkgver-devel
+prepare() {
+  cd "$srcdir/3proxy-$pkgver-devel"
 
   sed -i "s|/usr/bin/install|/bin/install|g" Makefile.Linux
   sed -i "s|/usr/local|/usr|g" Makefile.Linux
   sed -i "s|-s ||g" Makefile.Linux
   sed -i "s|-Wall -g -O2|$CFLAGS|g" Makefile.Linux
   sed -i "s|\$(prefix)/etc/|/etc/|g" Makefile.Linux
-
-  make -f Makefile.Linux prefix=/usr
-  make -j1 -f Makefile.Linux install DESTDIR=$pkgdir/
 }
 
+build() {
+  cd "$srcdir/3proxy-$pkgver-devel"
+
+  make -f Makefile.Linux prefix=/usr
+}
+
+package() {
+  cd "$srcdir/3proxy-$pkgver-devel"
+
+  make -f Makefile.Linux install "DESTDIR=$pkgdir/"
+
+  # Fix conflict with extra/libproxy.
+  mv "$pkgdir/usr/bin/proxy" "$pkgdir/usr/bin/3proxy"
+}
