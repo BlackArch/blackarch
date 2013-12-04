@@ -13,6 +13,10 @@ get_name() {
 	tar xJf "$1" .PKGINFO --force-local -O 2> /dev/null | grep '^pkgname' | cut -d' ' -f3
 }
 
+get_version() {
+	tar xJf "$1" .PKGINFO --force-local -O 2> /dev/null | grep '^pkgver' | cut -d' ' -f3
+}
+
 find_package() {
 	for p in "$1/$2"*.pkg.tar.xz ; do
 		#shopt -s errorglob
@@ -26,22 +30,23 @@ find_package() {
 }
 
 for arch in $archs ; do
-	if $do_deletes ; then
-		upgrades=$(./get-upgrades)
-
-		echo "$upgrades" | grep '^removed' | cut -d' ' -f2 |
-		while read p ; do
-			echo rm -v "$(find_package "$real_repo" "$p")"
-		done
-	fi
-
+	echo >&2 "arch: $arch"
 	(
 	cd "$build_repo/$arch"
-	for new_package in *.pkg.tar.xz ; do
-		new_name=$(get_name "$new_package")
-		old_package=$(find_package "$real_repo/$arch" "$new_name")
-		[[ -n "$old_package" ]] && rm -v "$old_package"
-		cp -v "$new_package" "$real_repo/$arch"
+	for new_package_file in *.pkg.tar.xz ; do
+		new_name=$(get_name "$new_package_file")
+		new_version=$(get_version "$new_package_file")
+
+		echo -n >&2 "dealing with $new_name..."
+		find_package "$real_repo/$arch" "$new_name" | read old_package old_version
+
+		if [[ -n "$old_package" && "$old_version" != "$new_version" ]] ; then
+			echo
+			rm -v "$old_package"
+			echo cp -v "$new_package_file" "$real_repo/$arch"
+		else
+			echo ' nah'
+		fi
 	done
 	)
 done
