@@ -1,32 +1,28 @@
-# TODO: make package function
+#stat: test newsource?
 pkgname=airgraph-ng
-pkgver=1745
+pkgver=  
 pkgrel=1
 pkgdesc="Graphing tool for the aircrack suite"
 arch=('i686' 'x86_64')
 url="http://www.aircrack-ng.org"
 license=('GPL2')
-depends=('graphviz' 'python')
+depends=('graphviz' 'python2')
 makedepends=("subversion")
 groups=('blackarch' 'blackarch-misc')
+source=('svn+http://trac.aircrack-ng.org/svn/trunk/scripts/airgraph-ng')
+md5sums=('SKIP')
 
-_svntrunk="http://trac.aircrack-ng.org/svn/trunk/scripts/airgraph-ng/"
-_svnmod=airgraph-ng
+pkgver() {
+  cd airgraph-ng
+  svnversion | tr -d [A-z]
+}
 
-build() {
-  cd "${srcdir}"
-  msg "Connecting to SVN server...."
-  if [ -d $_svnmod/.svn ]; then
-    (cd $_svnmod && svn up -r $pkgver)
-  else
-    svn co $_svntrunk --config-dir ./ -r $pkgver $_svnmod
-  fi
-  msg "SVN checkout done or server timeout"
-  msg "Starting make..."
-  svn export $_svnmod $_svnmod-build
-  cd $_svnmod-build
-  mkdir -p "${pkgdir}"{/usr/lib/python2.6/site-packages,/usr/bin,/usr/share/man/man1}
-  install -m 644 lib/lib_Airgraphviz.py "${pkgdir}"/usr/lib/python2.6/site-packages/
-  install -m 644 man/{airgraph-ng.1,dump-join.1} "${pkgdir}"/usr/share/man/man1/
-  install -m 755 {airgraph-ng,dump-join.py} "${pkgdir}"/usr/bin/
+package() {
+  install -dm755 "$pkgdir/usr/lib/python2.6/site-packages"
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/man/man1"
+
+  install -m644 lib/lib_Airgraphviz.py "$pkgdir/usr/lib/python2.6/site-packages"
+  install -m644 man/airgraph-ng.1 man/dump-join.1 "$pkgdir/usr/share/man/man1"
+  install -m755 airgraph-ng dump-join.py "$pkgdir/usr/bin"
 }
