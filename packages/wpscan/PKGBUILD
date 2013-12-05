@@ -1,19 +1,21 @@
 pkgname=wpscan
-pkgver=20131203
-pkgrel=2
-epoch=3
+pkgver=1144.8555e0c
+pkgrel=1
+epoch=4
 groups=('blackarch' 'blackarch-web')
 pkgdesc='A vulnerability scanner which checks the security of WordPress installations using a black box approach'
 arch=('i686' 'x86_64')
 url="http://wpscan.org"
 license=('GPL3')
-makedepends=('git' 'rubygems')
+makedepends=('git' 'rubygems' 'libxslt')
+optdepends=('bundle' 'typhoeus' 'nokogiri' 'terminal-table' 'ruby-progressbar')
 options=(!strip)
-source=('git+https://github.com/wpscanteam/wpscan')
+source=('git+http://github.com/wpscanteam/wpscan')
 md5sums=('SKIP')
 
 pkgver() {
-  date +%Y%m%d
+  cd wpscan
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
@@ -28,5 +30,7 @@ package() {
 #!/bin/sh
 ruby /usr/share/wpscan/wpscan.rb "\$@"
 EOF
+  sed -i "s/ROOT_DIR + '\/log.txt/'\/home\/' + ENV['USER'] + '\/wpscan.log/" "$pkgdir/usr/share/wpscan/lib/common/common_helper.rb"
+
   chmod +x "$pkgdir/usr/bin/wpscan"
 }
