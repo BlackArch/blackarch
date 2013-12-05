@@ -1,32 +1,103 @@
 #!/bin/bash
 
 pack=$1
-arch=$2
-lock=$3
+_arch=$2
+depth=$3
+lock=${4:-/tmp/lock.default}
+
+msg() {
+	echo >&2 "$*"
+}
+
+msg2() {
+	echo >&2 "-----: $*"
+}
+
+warn() {
+	echo >&2 "error: $*"
+}
 
 acquire_lock() {
-	echo "$pack acquiring lock..."
-	while ! mkdir "$lock" ; do
+	msg2 "$pack acquiring lock..."
+	while ! mkdir "$lock" &> /dev/null ; do
 		sleep 0.5
 	done
+	msg2 "$pack acquired lock."
+	has_lock=true
 }
 
 release_lock() {
-	echo "$pack releasing lock..."
-	rmdir "$lock"
+	if $has_lock ; then
+		msg2 "$pack releasing lock..."
+		rmdir "$lock"
+		has_lock=false
+	fi
 }
+trap release_lock EXIT
 
-base=$(dirname "$0")
+msg "starting $pack..."
+
+basedir=$(realpath "$(dirname "$0")")
+repodir=../repo/$_arch
+mkdir -p "$basedir/$repodir"
+repodir=$(realpath "$basedir/$repodir")
+builddir=$(realpath "$basedir/../build")
 
 cd "$pack"
 
-acquire_lock
-"$base/install-deps" PKGBUILD
-release_lock
+msg2 "building $pack..."
+
+# We have a script for this is better for performance since we can integrate
+# the lock.
+_install_deps() {
+	unset pkgname
+	unset depends
+	unset makedepends
+	unset pkgver
+
+	. "$1"
+
+	deps=()
+
+	for dep in "${depends[@]}" "${makedepends[@]}" ; do
+		# Strip the version specifiers.
+		deps+=($(sed 's/\(>\|<\|=\).*//' <<< $dep))
+	done
+
+	acquire_lock
+	sudo pacman -S --needed --noconfirm --asdeps "${deps[@]}"
+	release_lock
+}
+
+msg2 "installing deps for $pack..."
+
+_install_deps PKGBUILD
 
 # Build.
-if [[ $arch == i686 ]] ; then
-	linux32 makepkg --config "$basedir/conf/makepkg.$arch.conf" -s --nocheck --noconfirm 2>&1
+msg2 "building $pack..."
+if [[ $_arch == i686 ]] ; then
+	linux32 makepkg -f --config "$basedir/conf/makepkg.$_arch.conf" --nocheck --noconfirm 2>&1
 else
-	makepkg --config "$basedir/conf/makepkg.$arch.conf" -s --nocheck --noconfirm 2>&1
+	makepkg -f --config "$basedir/conf/makepkg.$_arch.conf" --nocheck --noconfirm 2>&1
 fi
+
+# Log errors.
+ret=$?
+if [[ $ret != 0 ]] ; then
+	warn "'$pack' failed with error code $ret"
+	exit 1
+fi
+
+# Install if dependency.
+if [[ $depth != 1 ]] ; then
+	# It is assumed that all make-package processes have been killed at
+	# this point.
+	acquire_lock
+	sudo pacman --asdeps --noconfirm -U *.pkg.tar.xz ||
+		warn "'$pack' failed to install"
+	release_lock
+fi
+
+msg2 'moving to repo...'
+# Move package into the repo.
+mv *.pkg.tar.xz "$repodir"

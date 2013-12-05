@@ -2,10 +2,11 @@
 
 blackarch=$(dirname "$0")/..
 chroot=$HOME/alt/blackarch
-base=$HOME/alt/blackarch.base.qcow2
-base_bak=$HOME/alt/blackarch.base.qcow2.bak
-nbd=/dev/nbd6
+image=$HOME/alt/blackarch
+nbd=/dev/nbd0
 arch=x86_64
+
+base_packages=(base base-devel namcap zsh tmux sudo vim parallel moreutils)
 
 if [[ $UID != 0 ]] ; then
 	echo >&2 'must be root'
@@ -14,6 +15,8 @@ fi
 
 clear_mounts() {
 	cd /
+
+	echo "mounts: ${mounts[@]}"
 
 	for mount in "${mounts[@]}" ; do
 		echo "unmounting $mount..."
@@ -51,22 +54,53 @@ while (( $# )) ; do
 	case "$1" in
 		--arch|-a)
 			arch=$2
+			case $arch in
+				i686|x86_64) ;;
+				*)
+					echo >&2 "invalid arch: $arch"
+					exit 1
+					;;
+			esac
 			shift
 			;;
 		init)
 			echo 'making a new base image...'
 
-			[[ -e "$base" ]] && mv -f "$base" "$base_bak"
+			[[ -e "$image.$arch.qcow2" ]] && mv -f "$image.$arch.qcow2" "$image.$arch.qcow2"
 
-			qemu-img create -f qcow2 "$base" 15G
+			qemu-img create -f qcow2 "$image.$arch.qcow2" 15G
 
-			connect_nbd "$base"
+			connect_nbd "$image.$arch.qcow2"
 			mkfs.ext4 "$nbd"
 			track_mount "$nbd" "$chroot"
 
-			# Strap
-			echo 'strapping...'
-			pacstrap -d "$chroot" base base-devel namcap zsh tmux sudo
+			case $arch in
+				x86_64)
+					# Strap
+					echo 'strapping...'
+					pacstrap -d "$chroot" "${base_packages[@]}"
+
+					# Multilib
+					echo 'modifying pacman.conf...'
+					cat >> "$chroot/etc/pacman.conf" <<-EOF
+					[multilib]
+					Include = /etc/pacman.d/mirrorlist
+					EOF
+					;;
+				i686)
+					sed -e 's/\$arch/i686/g' /etc/pacman.d/mirrorlist > "$chroot"
+					sed -e 's|/etc/pacman.d/mirrorlist|/opt/arch32/mirrorlist|g' \
+					    -e '/Architecture/s|auto|i686|' \
+					    -e '/\[multilib\]/,/Include/d' \
+						/etc/pacman.conf \
+					    > "$chroot"
+
+					mkdir -p "$chroot"/var/{cache/pacman/pkg,lib/pacman}
+
+					pacman --root "$chroot" --cachedir "$chroot/var/cache/pacman/pkg" \
+					  --config "$chroot/pacman.conf" -Sy "${base_packages[@]}"
+					;;
+			esac
 
 			# Mirrorlist
 			echo 'copying mirrorlist...'
@@ -78,48 +112,38 @@ while (( $# )) ; do
 			arch-chroot "$chroot" useradd -s /bin/zsh -g test -m test
 			arch-chroot "$chroot" echo test:a \| chpasswd
 
-			# Multilib
-			echo 'modifying pacman.conf...'
-			cat >> "$chroot/etc/pacman.conf" <<-EOF
-			[multilib]
-			Include = /etc/pacman.d/mirrorlist
-			EOF
-			echo 'taking care of gcc...'
-			arch-chroot "$chroot" pacman --noconfirm -Rdd gcc gcc-libs binutils
-			pacstrap -d "$chroot" gcc-multilib
-
 			# Sudo
 			echo 'modifying sudoers...'
 			sed -i '/root ALL/a\test ALL=NOPASSWD: ALL' "$chroot/etc/sudoers"
 
 			clear_mounts
 
-			qemu-img snapshot -c base "$base"
+			qemu-img snapshot -c base "$image.$arch.qcow2"
 			;;
 
 		snaps)
-			qemu-img snapshot -l "$base"
+			qemu-img snapshot -l "$image.$arch.qcow2"
 			;;
 
 		clean)
 			echo 'reverting to base snapshot...'
-			qemu-img snapshot -a base "$base"
+			qemu-img snapshot -a base "$image.$arch.qcow2"
 
 			echo >&2 'cleaning snapshots...'
-			qemu-img snapshot -l "$base" | awk '{ print $2 }' |
+			qemu-img snapshot -l "$image.$arch.qcow2" | awk '{ print $2 }' |
 			sed 1,2d | grep -v '^base$' |
-			xargs -n1 -I{} qemu-img snapshot -d {} "$base"
+			xargs -n1 -I{} qemu-img snapshot -d {} "$image.$arch.qcow2"
 			;;
 
 		revert)
 			echo 'reverting to base snapshot...'
-			qemu-img snapshot -a base "$base"
+			qemu-img snapshot -a base "$image.$arch.qcow2"
 			;;
 
 		enter)
 			echo 'diving into chroot...'
 
-			connect_nbd "$base"
+			connect_nbd "$image.$arch.qcow2"
 			track_mount "$nbd" "$chroot"
 
 			if mountpoint -q "$chroot/proc" ; then
@@ -128,14 +152,14 @@ while (( $# )) ; do
 			else
 				echo 'mounting...'
 
-				track_mount "$blackarch" "$chroot/home/test" --bind
 				track_mount "$chroot" "$chroot" --rbind
+				track_mount "$blackarch" "$chroot/home/test/blackarch" --bind
 				arch-chroot "$chroot" su - test
 			fi
 
 			clear_mounts
 
-			qemu-img snapshot -c build$RANDOM "$base"
+			qemu-img snapshot -c build$RANDOM "$image.$arch.qcow2"
 			;;
 
 		*)
