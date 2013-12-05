@@ -61,9 +61,6 @@ done
 
 cache_rights
 
-# Don't use the X passphrase prompt.
-#unset DISPLAY
-
 basedir=$(realpath "$(dirname "$0")")
 cd "$basedir/.."
 
@@ -76,9 +73,10 @@ rm -rf "$builddir"
 mkdir -p "$builddir"
 
 # Built package go here.
-repodir=$(realpath repo/$(uname -m))
+repodir=../repo/$arch
 [[ -d "$repodir" ]] && mv -f "$repodir" "$repodir.bak"
-mkdir -p "$repodir"
+mkdir -p "$basedir/$repodir"
+repodir=$(realpath "$basedir/$repodir")
 
 cd "$pkgdir"
 
@@ -112,6 +110,8 @@ while read item ; do
 	#"$base/make-package" . $arch /tmp/make-repo$RANDOM.lck
 
 	if [[ $depth != $last_depth ]] ; then
+		$brutal_unlock && sudo rm -f /var/lib/pacman/db.lck
+
 		msg "building $last_depth..."
 
 		msg "queue: ${queue[@]}"
@@ -122,8 +122,6 @@ while read item ; do
 		last_depth=$depth
 
 		queue=()
-
-		$brutal_unlock && sudo rm -f /var/lib/pacman/db.lck
 	fi
 
 	# Exit on last item.

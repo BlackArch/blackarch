@@ -6,6 +6,12 @@ depth=$3
 lock=${4:-/tmp/lock.default}
 
 basedir=$(realpath "$(dirname "$0")")
+repodir=../repo/$arch
+mkdir -p "$basedir/$repodir"
+repodir=$(realpath "$basedir/$repodir")
+builddir=$(realpath "$basedir/../build")
+
+cd "$pack"
 
 msg() {
 	echo >&2 "$*"
@@ -22,9 +28,9 @@ warn() {
 acquire_lock() {
 	msg2 "$pack acquiring lock..."
 	while ! mkdir "$lock" &> /dev/null ; do
-		msg2 "$pack acquired lock."
 		sleep 0.5
 	done
+	msg2 "$pack acquired lock."
 	has_lock=true
 }
 
@@ -37,10 +43,8 @@ release_lock() {
 }
 trap release_lock EXIT
 
-base=$(dirname "$0")
-
 acquire_lock
-"$base/install-deps" PKGBUILD
+"$basedir/install-deps" PKGBUILD
 release_lock
 
 # Build.
