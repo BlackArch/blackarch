@@ -13,6 +13,24 @@ builddir=$(realpath "$basedir/../build")
 
 cd "$pack"
 
+# We have a script for this is better for performance since we can integrate
+# the lock.
+_install_deps() {
+	. "$1"
+
+	deps=()
+
+	for dep in "${depends[@]}" "${makedepends[@]}" ; do
+		# Strip the version specifiers.
+		deps+=($(sed 's/\(>\|<\|=\).*//' <<< $dep))
+	done
+
+	acquire_lock
+	sudo pacman -S --needed --noconfirm --asdeps "${deps[@]}"
+	release_lock
+}
+
+
 msg() {
 	echo >&2 "$*"
 }
@@ -44,7 +62,7 @@ release_lock() {
 trap release_lock EXIT
 
 acquire_lock
-"$basedir/install-deps" PKGBUILD
+_install_deps PKGBUILD
 release_lock
 
 # Build.
