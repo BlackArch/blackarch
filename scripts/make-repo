@@ -4,8 +4,9 @@
 
 # Default settings.
 arch=x86_64
-jobs=8
+jobs=22
 use_whitelist=false
+brutal_unlock=true
 
 # The sorts are sensitive.
 export LC_ALL=POSIX
@@ -60,9 +61,6 @@ done
 
 cache_rights
 
-# Don't use the X passphrase prompt.
-#unset DISPLAY
-
 basedir=$(realpath "$(dirname "$0")")
 cd "$basedir/.."
 
@@ -71,11 +69,14 @@ pkgdir=$(realpath packages)
 
 # PKGBUILDs and tracked source are copied here.
 builddir=$(realpath build)
+rm -rf "$builddir"
 mkdir -p "$builddir"
 
 # Built package go here.
-repodir=$(realpath repo/$(uname -m))
-mkdir -p "$repodir"
+repodir=../repo/$arch
+[[ -d "$repodir" ]] && mv -f "$repodir" "$repodir.bak"
+mkdir -p "$basedir/$repodir"
+repodir=$(realpath "$basedir/$repodir")
 
 cd "$pkgdir"
 
@@ -95,24 +96,30 @@ while read item ; do
 	msg2 "$pack copying..."
 
 	# packages/*/<package> -> build/<package>
-	cp -vfr "$pack" "$builddir"
+	cp -vfr "$pkgdir/$pack" "$builddir"
 
 	msg2 "$pack cleaning..."
 
 	# Better than nothing cleaning.
 	# It is preferable to run 'git clean -dXf packages' or work with a fresh
 	# clone.
-	cd "$builddir/$pack"
+	cd "${builddir:-safety}/$pack"
 	rm -vrf */
 	rm -vf *.{xz,gz,zip,bzip2,gunzip2,tgz,tar}
 
 	#"$base/make-package" . $arch /tmp/make-repo$RANDOM.lck
 
 	if [[ $depth != $last_depth ]] ; then
-		msg2 "$pack building..."
+		$brutal_unlock && sudo rm -f /var/lib/pacman/db.lck
+
+		msg "on level $last_depth"
+
+		msg "queue: ${queue[@]}"
 
 		printf "$builddir/%s\\n" "${queue[@]}" |
-		  parallel -n1 -j$jobs "$base/make-package" . $arch /tmp/make-repo$RANDOM.lck
+		  parallel -I{} -n1 -j$jobs "$basedir/make-package" {} $arch $last_depth /tmp/make-repo$RANDOM$RANDOM.lck
+
+		last_depth=$depth
 
 		queue=()
 	fi
@@ -123,32 +130,15 @@ while read item ; do
 	fi
 
 	queue+=("$pack")
-
-	# Log errors.
-	ret=$?
-	if [[ $ret != 0 ]] ; then
-		warn "'$pack' failed with error code $ret"
-		continue
-	fi
-
-	# Install if dependency.
-	if [[ $depth != 1 ]] ; then
-		sudo pacman --asdeps --noconfirm -U *.pkg.tar.xz ||
-		  warn "'$pack' failed to install"
-	fi
-
-	msg2 'moving to repo...'
-	# Move package into the repo.
-	mv *.pkg.tar.xz "$repodir"
 done < <(
-if $use_whitelist ; then
+if ! $use_whitelist ; then
 	grep -l "$content_filter" */PKGBUILD | cut -d/ -f1 |
 			grep "$name_filter" | xargs "$basedir/depth-list";
-			echo '0 end'
 else
 	echo "${whitelist//,/ }" |
 	  xargs "$basedir/depth-list"
 fi
+echo '0 end'
 )
 
 # vim: set ft=zsh:
