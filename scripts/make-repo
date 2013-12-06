@@ -69,6 +69,7 @@ pkgdir=$(realpath packages)
 
 # PKGBUILDs and tracked source are copied here.
 builddir=$(realpath build)
+msg "clearing $builddir..."
 rm -rf "$builddir"
 mkdir -p "$builddir"
 
@@ -81,6 +82,39 @@ repodir=$(realpath "$basedir/$repodir")
 cd "$pkgdir"
 
 msg 'generating depth list...'
+packs=$(if $use_whitelist ; then
+	msg2 'using whitelist...'
+	echo "${whitelist//,/ }" |
+	  xargs "$basedir/depth-list"
+else
+	msg2 'using filters...'
+	grep -l "$content_filter" */PKGBUILD | cut -d/ -f1 |
+	  grep "$name_filter" | xargs "$basedir/depth-list";
+fi)
+
+msg 'installing all dependencies...'
+printf '%s\n' "${packs[@]}" |
+cut -d' ' -f2 |
+while read pack ; do
+	. "$pack/PKGBUILD"
+
+	printf '%s\n' "${depends[@]}" "${makedepends[@]}"
+done | sort -u |
+sed 's/\(>\|<\|=\).*//' |
+while read dep ; do
+	if pacman -Si "$dep" &> /dev/null ; then
+		echo -n >&2 .
+		echo "$dep"
+	fi
+done |
+grep -v libdnet | # TEMPORARY
+sudo xargs pacman -S --noconfirm --needed --asdeps >&2 2>&1
+
+packs+=$'\n0 end'
+
+msg 'starting build...'
+
+# Fed at the bottom to avoid creating a subshell.
 while read item ; do
 	cache_rights
 
@@ -117,7 +151,9 @@ while read item ; do
 		msg "queue: ${queue[@]}"
 
 		printf "$builddir/%s\\n" "${queue[@]}" |
-		  parallel -I{} -n1 -j$jobs "$basedir/make-package" {} $arch $last_depth /tmp/make-repo$RANDOM$RANDOM.lck
+		  parallel --no-notice -I{} -n1 -j$jobs \
+		    "$basedir/make-package" {} $arch $last_depth \
+		    /tmp/make-repo$RANDOM$RANDOM.lck
 
 		last_depth=$depth
 
@@ -130,15 +166,6 @@ while read item ; do
 	fi
 
 	queue+=("$pack")
-done < <(
-if ! $use_whitelist ; then
-	grep -l "$content_filter" */PKGBUILD | cut -d/ -f1 |
-			grep "$name_filter" | xargs "$basedir/depth-list";
-else
-	echo "${whitelist//,/ }" |
-	  xargs "$basedir/depth-list"
-fi
-echo '0 end'
-)
+done < <(echo "$packs")
 
 # vim: set ft=zsh:
