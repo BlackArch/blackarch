@@ -7,13 +7,13 @@ This is a quick-start guide. It shows you how to contribute to the
 sizes, from tiny typo fixes to new packages. For help, suggestions, or
 questions feel free to contact us on:
 
-* [irc://irc.genscripts.net:6667/blackarch](irc://irc.genscripts.net:6667/blackarch)
+* [irc://irc.freenode.net:6667/blackarch](irc://irc.freenode.net:6667/blackarch)
 
 Everyone is welcome to contribute. All contributions are appreciated.
 
 ## Tutorials
 
-We advise you to read the following tutorials before contributing:
+Please read the following tutorials before contributing:
 
 - [Arch Packaging Standards](https://wiki.archlinux.org/index.php/Arch_Packaging_Standards)
 - [Creating Packages](https://wiki.archlinux.org/index.php/Creating_Packages)
@@ -93,7 +93,7 @@ user@blackarch nfsshell $ makepkg -sf
 
 **5. Install and test the package**
 ```
-user@blackarch nfsshell $ pacman -U nfsshell-19980519-1-x86_64.pkg.tar.xz 
+user@blackarch nfsshell $ pacman -U nfsshell-19980519-1-x86_64.pkg.tar.xz
 ```
 
 **6. Add, commit and push package**
