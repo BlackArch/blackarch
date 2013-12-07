@@ -43,7 +43,7 @@ track_mount() {
 }
 
 connect_nbd() {
-	modprobe nbd max_part=63
+	modprobe nbd max_part=63 || true
 	qemu-nbd -f qcow2 -c "$nbd" "$1"
 }
 
@@ -66,13 +66,15 @@ while (( $# )) ; do
 		init)
 			echo 'making a new base image...'
 
-			[[ -e "$image.$arch.qcow2" ]] && mv -f "$image.$arch.qcow2" "$image.$arch.qcow2"
+			[[ -e "$image.$arch.qcow2" ]] && mv -f "$image.$arch.qcow2" "$image.$arch.qcow2.bak"
 
 			qemu-img create -f qcow2 "$image.$arch.qcow2" 15G
 
+			echo "arch: $arch"
 			connect_nbd "$image.$arch.qcow2"
 			mkfs.ext4 "$nbd"
 			track_mount "$nbd" "$chroot"
+
 
 			case $arch in
 				x86_64)
@@ -88,17 +90,17 @@ while (( $# )) ; do
 					EOF
 					;;
 				i686)
-					sed -e 's/\$arch/i686/g' /etc/pacman.d/mirrorlist > "$chroot"
-					sed -e 's|/etc/pacman.d/mirrorlist|/opt/arch32/mirrorlist|g' \
+					sed -e 's/\$arch/i686/g' /etc/pacman.d/mirrorlist > "$chroot/mirrorlist"
+					sed -e "s|/etc/pacman.d/mirrorlist|$chroot/mirrorlist|g" \
 					    -e '/Architecture/s|auto|i686|' \
 					    -e '/\[multilib\]/,/Include/d' \
 						/etc/pacman.conf \
-					    > "$chroot"
+					    > "$chroot/pacman.conf"
 
 					mkdir -p "$chroot"/var/{cache/pacman/pkg,lib/pacman}
 
 					pacman --root "$chroot" --cachedir "$chroot/var/cache/pacman/pkg" \
-					  --config "$chroot/pacman.conf" -Sy "${base_packages[@]}"
+					  --noconfirm --config "$chroot/pacman.conf" -Sy "${base_packages[@]}"
 					;;
 			esac
 
