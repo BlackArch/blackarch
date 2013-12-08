@@ -1,0 +1,31 @@
+pkgname=zmap
+pkgver=1.1.0
+pkgrel=1
+pkgdesc='Fast network scanner designed for Internet-wide network surveys'
+url='https://zmap.io/'
+license=('Apache')
+arch=('i686' 'x86_64')
+depends=('gmp' 'libpcap')
+makedepends=('byacc-noconflict' 'cmake' 'gengetopt')
+backup=('etc/zmap/blacklist.conf' 'etc/zmap/zmap.conf')
+source=("https://github.com/zmap/zmap/archive/v$pkgver.tar.gz")
+sha256sums=('6a73b4cfe62bf9ff31f1d075eac066671fe5f5a6e1b97a845361509c94611eb7')
+
+build() {
+  cd $srcdir/zmap-$pkgver
+  cmake -DENABLE_HARDENING=ON
+  make
+}
+
+package() {
+  cd "$srcdir/zmap-$pkgver/src"
+  install -Dm755 zmap $pkgdir/usr/bin/zmap
+  install -Dm644 zmap.1 $pkgdir/usr/share/man/man1/zmap.1
+  install -dm755 $pkgdir/etc/zmap
+  install -m644 ../conf/* $pkgdir/etc/zmap
+  cd ..
+  for F in AUTHORS CHANGELOG INSTALL README; do
+    install -Dm644 $F $pkgdir/usr/share/doc/zmap/$F;
+  done
+  cp -a examples $pkgdir/usr/share/doc/zmap
+}

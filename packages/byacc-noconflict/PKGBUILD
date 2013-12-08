@@ -1,0 +1,36 @@
+pkgname=byacc-noconflict
+pkgver=20130925
+pkgrel=1
+pkgdesc="Non-conflicting version of byacc not providing bison/yacc"
+arch=('i686' 'x86_64')
+url="http://invisible-island.net/byacc/"
+license=('custom')
+depends=('glibc')
+source=(ftp://invisible-island.net/byacc/byacc-$pkgver.tgz
+        ftp://invisible-island.net/byacc/byacc-$pkgver.tgz.asc)
+md5sums=('265f74058b923d7d9ddd1bd82f05a42e'
+         'SKIP')
+sha256sums=('e2560caab28396fc732a946e722cf5c6220e72388e70cdcc23bf67ae88799b31'
+            'SKIP')
+
+build() {
+  cd $srcdir/byacc-$pkgver
+
+  ./configure --prefix=/usr --mandir=/usr/share/man
+  make
+}
+
+package() {
+  cd $srcdir/byacc-$pkgver
+  make DESTDIR=$pkgdir install
+
+  # License
+  sed -n "/is distributed/,/distributed freely/p" README > COPYING
+  install -Dm644 COPYING $pkgdir/usr/share/licenses/byacc/COPYING
+
+  # Rename
+  cd $pkgdir/usr/bin
+  mv yacc byacc
+  cd $pkgdir/usr/share/man/man1
+  mv yacc.1 byacc.1
+}
