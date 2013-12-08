@@ -81,6 +81,7 @@ repodir=$(realpath "$basedir/$repodir")
 
 cd "$pkgdir"
 
+# TODO: delegate filtering to depth-list
 msg 'generating depth list...'
 packs=$(if $use_whitelist ; then
 	msg2 'using whitelist...'
@@ -92,6 +93,7 @@ else
 	  grep "$name_filter" | xargs "$basedir/depth-list";
 fi)
 
+# TODO: clean this up a bit maybe?
 msg 'installing all dependencies...'
 printf '%s\n' "${packs[@]}" |
 cut -d' ' -f2 |
@@ -107,8 +109,11 @@ while read dep ; do
 		echo "$dep"
 	fi
 done |
-grep -v libdnet | # TEMPORARY
-sudo xargs pacman -Syy --noconfirm --needed --asdeps
+if [[ $arch == i686 ]] ; then
+	linux32 sudo xargs pacman -Syy --noconfirm --needed --asdeps
+else
+	sudo xargs pacman -Syy --noconfirm --needed --asdeps
+fi
 
 packs+=$'\n0 end'
 
