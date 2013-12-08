@@ -1,19 +1,39 @@
-# TODO: make package function
-
 pkgname=wmat
 pkgver=latest
 pkgrel=1
+epoch=2
+groups=('blackarch' 'blackarch-web-apps')
 pkgdesc="Automatic tool for testing webmail accounts"
 arch=('any')
 url="http://netsec.rs/70/tools.html"
 license=('custom')
 depends=('python')
-groups=('blackarch' 'blackarch-web-apps')
 source=(http://netsec.rs/UserFiles/File/wmat.zip)
 md5sums=('1d9dae7180d03531a5c1b4073e15715b')
 
-build() {
-  cd $srcdir/wmat
-  mkdir -p $pkgdir/usr/share/wmat/
-  cp -r * $pkgdir/usr/share/wmat/
+pkgver() {
+  date +%Y%m%d
+}
+
+prepare() {
+  cd "$srcdir/wmat"
+
+  sed -i 's/env python/env python2/' wmat.py
+}
+
+package() {
+  cd "$srcdir/wmat"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/share/wmat"
+  install -dm755 "$pkgdir/usr/bin"
+
+  cp -r * "$pkgdir/usr/share/wmat"
+  chmod +x "$pkgdir/usr/share/wmat/wmat.py"
+
+  cat > "$pkgdir/usr/bin/wmat" <<EOF
+#!/bin/sh
+python2 /usr/share/wmat/wmat.py "\$@"
+EOF
+  chmod 755 "$pkgdir/usr/bin/wmat"
 }
