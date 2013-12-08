@@ -1,0 +1,22 @@
+#!/bin/bash
+
+base=${0%%/*}
+echo "base: $base"
+
+cd "$base/../packages"
+
+if [[ -n $(git diff --shortstat .) ]] ; then
+	echo >&2 'packages/ is dirty. not modifying packages.'
+	exit 1
+fi
+
+while read item ; do
+	pack=$(cut -d' ' -f1 <<< $item)
+	groups=$(cut -d' ' -f2- <<< $item)
+	file=$pack/PKGBUILD
+
+	echo "modifying $pack..."
+
+	sed -i '/^groups=/d' $file
+	sed -i "/pkgdesc/i\groups=('blackarch' $(printf "'%s' " $groups | sed 's/\s$//'))" $file
+done < ../docs/misc/newgroups
