@@ -1,36 +1,37 @@
-# TODO: make package function
-
 pkgname=sysinternals-suite
-pkgver=latest
+pkgver=20131208
 pkgrel=1
 pkgdesc="Sysinternals tools suite"
 url="http://sysinternals.com"
 groups=('blackarch' 'blackarch-windows')
 license=('sysinternals')
-arch=(any)
+arch=('any')
 source=(http://download.sysinternals.com/files/SysinternalsSuite.zip)
-md5sums=('3ed7faf7489b1e12adb47449072d7382')
+md5sums=('97880cf95b3f619c3c2fd8975beea70c')
 
-build() {
+pkgver() {
+  date +%Y%m%d
+}
+
+package() {
   cd "$srcdir"
+
+  # Base directory.
+  install -dm755 "$pkgdir/usr/share/sysinternals-suite"
+
   find . -type l -exec rm {} \;
 
   # Transform all files to lowercase
   for f in *; do
-    lc=$(echo $f | tr '[A-Z]' '[a-z]0')
+    lc=$(echo $f | tr '[A-Z]' '[a-z]')
 
     if [ ! -f $f -o -f $lc ]; then
       continue
     fi
+
     mv -i $f $lc
   done
 
-  for f in *.exe *.sys; do
-    install -Dm755 $f $pkgdir/opt/windows/sysinternals-suite/$f
-  done
-
-  for f in *.chm *.hlp *.txt *; do
-    install -Dm644 $f $pkgdir/opt/windows/sysinternals-suite/$f
-  done
+  install -m755 *.exe *.sys "$pkgdir/usr/share/sysinternals-suite"
+  install -m644 *.chm *.hlp *.txt "$pkgdir/usr/share/sysinternals-suite"
 }
-
