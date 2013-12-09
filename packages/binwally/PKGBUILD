@@ -1,0 +1,31 @@
+pkgname=binwally
+pkgver=0.r3.ca092a7
+pkgrel=1
+pkgdesc="Binary and Directory tree comparison tool using the Fuzzy Hashing concept (ssdeep)"
+url="https://github.com/bmaia/binwally"
+arch=(any)
+license=('MIT')
+depends=('python2' 'cython2' 'python2-pydeep' 'ssdeep')
+source=("git+https://github.com/bmaia/binwally.git")
+md5sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/binwally"
+  printf "0.r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+prepare(){
+  grep -iRl 'python' "$srcdir/binwally" | xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
+  grep -iRl 'ssdeep' "$srcdir/binwally" | xargs sed -i 's|ssdeep|pydeep|'
+}
+
+package() {
+  cd "$srcdir/binwally"
+  
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin/"
+
+  #Bin
+  install -m755 binwally.py "$pkgdir/usr/bin/binwally"
+}
+

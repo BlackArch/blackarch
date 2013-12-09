@@ -1,5 +1,3 @@
-# TODO: make package function
-
 pkgname=make-pdf
 pkgver=0.1.1
 pkgrel=1
@@ -7,13 +5,19 @@ pkgdesc="This tool will embed javascript inside a PDF document"
 arch=('any')
 url="http://blog.didierstevens.com/programs/pdf-tools/"
 groups=('blackarch' 'blackarch-forensics')
-depends=('python')
+depends=('python2' 'dos2unix')
 license=('GPL')
 source=(http://www.didierstevens.com/files/software/make-pdf\_V${pkgver//./_}.zip)
 md5sums=('9af2e343b78553021c989e8e22355531')
 
-build() {
-  cd "${srcdir}"
-  install -Dm644 mPDF.py $pkgdir/usr/lib/python2.6/site-packages/mPDF.py
+prepare(){
+  cd "$srcdir"
+  grep -iRl 'python' "$srcdir" | xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
+  dos2unix *.py
+}
+
+package() {
+  cd "$srcdir"
+  install -Dm644 mPDF.py $pkgdir/usr/lib/python2.7/site-packages/mPDF.py
   install -Dm755 make-pdf-javascript.py $pkgdir/usr/bin/make-pdf-javascript
 }
