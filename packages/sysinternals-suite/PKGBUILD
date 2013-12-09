@@ -1,0 +1,37 @@
+pkgname=sysinternals-suite
+pkgver=20131208
+pkgrel=1
+groups=('blackarch' 'blackarch-windows')
+pkgdesc="Sysinternals tools suite"
+url="http://sysinternals.com"
+license=('sysinternals')
+arch=('any')
+source=(http://download.sysinternals.com/files/SysinternalsSuite.zip)
+md5sums=('97880cf95b3f619c3c2fd8975beea70c')
+
+pkgver() {
+  date +%Y%m%d
+}
+
+package() {
+  cd "$srcdir"
+
+  # Base directory.
+  install -dm755 "$pkgdir/usr/share/windows/sysinternals-suite"
+
+  find . -type l -exec rm {} \;
+
+  # Transform all files to lowercase
+  for f in *; do
+    lc=$(echo $f | tr '[A-Z]' '[a-z]')
+
+    if [ ! -f $f -o -f $lc ]; then
+      continue
+    fi
+
+    mv -i $f $lc
+  done
+
+  install -m755 *.exe *.sys "$pkgdir/usr/share/windows/sysinternals-suite"
+  install -m644 *.chm *.hlp *.txt "$pkgdir/usr/share/windows/sysinternals-suite"
+}
