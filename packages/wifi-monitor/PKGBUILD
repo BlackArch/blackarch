@@ -1,0 +1,35 @@
+pkgname=wifi-monitor
+pkgver=0.r18.4068742
+pkgrel=1
+pkgdesc="Prints the IPs on your local network that're sending the most packets"
+url="https://github.com/DanMcInerney/wifi-monitor"
+arch=(any)
+license=('custom')
+depends=('python2' 'scapy')
+source=("git+https://github.com/DanMcInerney/wifi-monitor.git")
+md5sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/wifi-monitor"
+  printf "0.r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+prepare(){
+  grep -iRl 'python' "$srcdir/wifi-monitor" | xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
+}
+
+
+
+package() {
+  cd "$srcdir/wifi-monitor"
+  
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin/"
+  install -dm755 "$pkgdir/usr/share/licenses/wifi-monitor"
+  
+  install -Dm644 README.md "$pkgdir/usr/share/licenses/wifi-monitor/"
+
+  install -m755 wifi-monitor.py "$pkgdir/usr/bin/wifi-monitor"
+
+}
+
