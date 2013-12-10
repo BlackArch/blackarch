@@ -1,7 +1,7 @@
 What is blackarchLinux?
 ------------------------
 
-**blackarchLinux** is a lightweight expansion to Arch Linux for penetration
+**BlackArchLinux** is a lightweight expansion to Arch Linux for penetration
 testers.
 
 The toolset is distributed as an Arch Linux [unofficial user
