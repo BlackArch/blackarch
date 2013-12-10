@@ -3,7 +3,7 @@
 ## Notes
 
 This is a quick-start guide. It shows you how to contribute to the
-[blackarch](http://blackarch.org/) project. We accept pull requests of all
+[blackarchlinux](http://blackarchlinux.org/) project. We accept pull requests of all
 sizes, from tiny typo fixes to new packages. For help, suggestions, or
 questions feel free to contact us on:
 
@@ -23,9 +23,9 @@ Please read the following tutorials before contributing:
 
 ## Steps
 
-In order to submit your changes to the blackarch project, follow these (general) steps:
+In order to submit your changes to the BlackArchLinux project, follow these (general) steps:
 
-1. Fork the repository from [https://github.com/BlackArch/blackarch](https://github.com/BlackArch/blackarch)
+1. Fork the repository from [https://github.com/BlackArchLinux/blackarchlinux](https://github.com/BlackArchLinux/blackarchlinux)
 
 2. Hack the necessary files, (e.g. PKGBUILD, .patch files, etc).
 
@@ -45,17 +45,17 @@ pre-existing PKGBUILD file for *nfsshell* from the
 
 **1. Fetch PKGBUILD file**
 ```
-user@blackarch $ yaourt -G nfsshell
+user@blackarchlinux $ yaourt -G nfsshell
 ==> Download nfsshell sources
 x LICENSE
 x PKGBUILD
 x gcc.patch
-user@blackarch $ cd nfsshell/
+user@blackarchlinux $ cd nfsshell/
 ```
 
 **2. Clean up PKGBUILD file and save some time**
 ```
-user@blackarch nfsshell $ ./blarckarch/scripts/prep-packages PKGBUILD
+user@blackarchlinux nfsshell $ ./blarckarch/scripts/prep-packages PKGBUILD
 cleaning 'PKGBUILD'...
 expanding tabs...
 removing vim modeline...
@@ -70,12 +70,12 @@ removing trailing whitespace...
 
 **3. Adjust PKGBUILD file**
 ```
-user@blackarch nfsshell $ vi PKGBUILD
+user@blackarchlinux nfsshell $ vi PKGBUILD
 ```
 
 **4. Build the package**
 ```
-user@blackarch nfsshell $ makepkg -sf
+user@blackarchlinux nfsshell $ makepkg -sf
 ==> Making package: nfsshell 19980519-1 (Mon Dec  2 17:23:51 CET 2013)
 ==> Checking runtime dependencies...
 ==> Checking buildtime dependencies...
@@ -93,19 +93,19 @@ user@blackarch nfsshell $ makepkg -sf
 
 **5. Install and test the package**
 ```
-user@blackarch nfsshell $ pacman -U nfsshell-19980519-1-x86_64.pkg.tar.xz
+user@blackarchlinux nfsshell $ pacman -U nfsshell-19980519-1-x86_64.pkg.tar.xz
 ```
 
 **6. Add, commit and push package**
 ```
-user@blackarch nfsshell $ cd /blackarch/packages
-user@blackarch ~/blackarch/packages $ mv ~/nfsshell .
-user@blackarch ~/blackarch/packages $ git add nfsshell && git commit nfsshell && git push
+user@blackarchlinux nfsshell $ cd /blackarchlinux/packages
+user@blackarchlinux ~/blackarchlinux/packages $ mv ~/nfsshell .
+user@blackarchlinux ~/blackarchlinux/packages $ git add nfsshell && git commit nfsshell && git push
 ```
 
 **7. Create a pull request on github**
 ```
-firefox https://github.com/<contributor>/blackarch
+firefox https://github.com/<contributor>/blackarchlinux
 ```
 
 ### Requests
