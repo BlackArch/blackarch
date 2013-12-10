@@ -1,4 +1,4 @@
-What is blackarchLinux?
+What is BlackArchLinux?
 ------------------------
 
 **BlackArchLinux** is a lightweight expansion to Arch Linux for penetration
