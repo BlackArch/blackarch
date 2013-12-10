@@ -1,15 +1,15 @@
-What is BlackArch Linux?
+What is blackarchlinuxLinux?
 ------------------------
 
-**BlackArch Linux** is a lightweight expansion to Arch Linux for penetration
+**blackarchlinuxLinux** is a lightweight expansion to Arch Linux for penetration
 testers.
 
 The toolset is distributed as an Arch Linux [unofficial user
 repository](https://wiki.archlinux.org/index.php/Unofficial_User_Repositories)
-so you can install BlackArch Linux on top of an existing Arch Linux
+so you can install blackarchlinuxLinux on top of an existing Arch Linux
 installation. Packages may be installed individually or by category.
 
-<!-- Count tools: pacman -Sgg | grep blackarch | cut -d' ' -f2 | sort -u | wc -l -->
+<!-- Count tools: pacman -Sgg | grep blackarchlinux | cut -d' ' -f2 | sort -u | wc -l -->
 We currently have over 185 tools in our toolset and the repository is
 constantly expanding. All tools are thoroughly tested before being added to the
 codebase to maintain the quality of the repository.
@@ -17,13 +17,13 @@ codebase to maintain the quality of the repository.
 Get Involved
 ------------
 
-You can get in touch with the BlackArch team. Just check out the following:
+You can get in touch with the blackarchlinux team. Just check out the following:
 
 **Please, send us pull requests!**
 
-**Web:** http://blackarch.org/
+**Web:** http://blackarchlinux.org/
 
-**Mail:** blackarchlinux@gmail.com
+**Mail:**
 
 **IRC:** [irc://irc.freenode.net/blackarch](irc://irc.freenode.net/blackarch)
 
@@ -34,8 +34,8 @@ Add this to
 [`/etc/pacman.conf`](https://www.archlinux.org/pacman/pacman.conf.5.html):
 
 ```
-[blackarch]
-Server = http://www.blackarch.org/pub/blackarch/$arch
+[blackarchlinux]
+Server = http://www.blackarchlinux.org/pub/blackarchlinux/$arch
 ```
 
 For package signing, pull in and sign the package signing keys:
@@ -56,39 +56,39 @@ Now run
 Installing packages
 -------------------
 
-You may now install tools from the BlackArch repository. To list all of the available tools, run
+You may now install tools from the blackarchlinux repository. To list all of the available tools, run
 
  ```
- # pacman -Sgg | grep blackarch
+ # pacman -Sgg | grep blackarchlinux
  ```
 
 To install all of the tools, run
 
  ```
- # pacman -S blackarch
+ # pacman -S blackarchlinux
  ```
 
 To install a category of tools, run
 
  ```
- # pacman -S blackarch-<category>
+ # pacman -S blackarchlinux-<category>
  ```
 
-To see the BlackArch categories, run
+To see the blackarchlinux categories, run
 
  ```
- # pacman -Sg | grep blackarch
+ # pacman -Sg | grep blackarchlinux
  ```
 
 <!-- Run `scripts/make-category-list` to generate this list. -->
 Package Groups
 --------------
 
-Tools may be installed by category. The category groups are listed below.  To learn more about each included tool visit http://www.blackarch.org/packages.html
+Tools may be installed by category. The category groups are listed below.  To learn more about each included tool visit http://www.blackarchlinux.org/packages.html
 
 #### Intelligence Gathering
  ```
- # pacman -S blackarch-intel
+ # pacman -S blackarchlinux-intel
  ```
 
 Tools in this group:
@@ -161,7 +161,7 @@ Tools in this group:
 
 #### Forensics
  ```
- # pacman -S blackarch-forensics
+ # pacman -S blackarchlinux-forensics
  ```
 
 Tools in this group:
@@ -194,7 +194,7 @@ Tools in this group:
 
 #### Exploitation
  ```
- # pacman -S blackarch-exploitation
+ # pacman -S blackarchlinux-exploitation
  ```
 
 Tools in this group:
@@ -214,7 +214,7 @@ Tools in this group:
 
 #### Defensive
  ```
- # pacman -S blackarch-defensive
+ # pacman -S blackarchlinux-defensive
  ```
 
 Tools in this group:
@@ -228,7 +228,7 @@ Tools in this group:
 
 #### Wireless Attacks
  ```
- # pacman -S blackarch-wireless
+ # pacman -S blackarchlinux-wireless
  ```
 
 Tools in this group:
@@ -257,7 +257,7 @@ Tools in this group:
 
 #### Threat Analysis
  ```
- # pacman -S blackarch-analysis
+ # pacman -S blackarchlinux-analysis
  ```
 
 Tools in this group:
@@ -287,7 +287,7 @@ Tools in this group:
 
 #### Web Applications
  ```
- # pacman -S blackarch-web-apps
+ # pacman -S blackarchlinux-web-apps
  ```
 
 Tools in this group:
@@ -321,7 +321,7 @@ Tools in this group:
 
 #### Password Attacks
  ```
- # pacman -S blackarch-password-attacks
+ # pacman -S blackarchlinux-password-attacks
  ```
 
 Tools in this group:
@@ -351,7 +351,7 @@ Tools in this group:
 
 #### Hardware Hacking
  ```
- # pacman -S blackarch-hardware-hacking
+ # pacman -S blackarchlinux-hardware-hacking
  ```
 
 Tools in this group:
@@ -361,7 +361,7 @@ Tools in this group:
 
 #### Reverse Engineering
  ```
- # pacman -S blackarch-reversing
+ # pacman -S blackarchlinux-reversing
  ```
 
 Tools in this group:
@@ -377,7 +377,7 @@ Tools in this group:
 
 #### Stress Testing
  ```
- # pacman -S blackarch-stress-testing
+ # pacman -S blackarchlinux-stress-testing
  ```
 
 Tools in this group:
@@ -390,7 +390,7 @@ Tools in this group:
 
 #### Threat Modeling
  ```
- # pacman -S blackarch-threat-model
+ # pacman -S blackarchlinux-threat-model
  ```
 
 Tools in this group:
