@@ -6,13 +6,19 @@ export LC_ALL=POSIX
 basedir=$(realpath "$(dirname "$0")")
 cd "$basedir/../packages"
 
-comm -3 <(for pack in * ; do (
+if [[ $# == 0 ]] ; then
+	packs=(*)
+else
+	packs=("$@")
+fi
+
+comm -3 <(for pack in "${packs[@]}" ; do (
               source "$pack/PKGBUILD"
               for dep in "${depends[@]}" "${makedepends[@]}" ; do
                   [[ -d $dep ]] && echo $dep
               done
           ) done | sed 's/\(>\|<\|=\).*//' | sort -u) \
-		<(printf '%s\n' * | sort) |
+		<(printf '%s\n' "${packs[@]}" | sort) |
 while read item ; do
 	echo 1 $item
 	"$basedir/get-blackarch-deps" $item

@@ -1,0 +1,84 @@
+#!/bin/bash
+
+pack=$1
+_arch=$2
+depth=$3
+lock=${4:-/tmp/lock.default}
+
+has_lock=false
+
+msg() {
+	echo >&2 "$*"
+}
+
+msg2() {
+	echo >&2 "-----> $*"
+}
+
+warn() {
+	echo >&2 "%error% $*"
+}
+
+acquire_lock() {
+	msg2 "$pack acquiring lock..."
+	while ! mkdir "$lock" &> /dev/null ; do
+		sleep 0.5
+	done
+	msg2 "$pack acquired lock."
+	has_lock=true
+}
+
+release_lock() {
+	if $has_lock ; then
+		msg2 "$pack releasing lock..."
+		rmdir "$lock"
+		has_lock=false
+	fi
+}
+trap release_lock EXIT
+
+msg "starting $pack..."
+
+basedir=$(realpath "$(dirname "$0")")
+repodir=../repo/$_arch
+mkdir -p "$basedir/$repodir"
+repodir=$(realpath "$basedir/$repodir")
+builddir=$(realpath "$basedir/../build")
+
+cd "$pack"
+
+# Build.
+msg2 "building $pack..."
+if [[ $_arch == i686 ]] ; then
+	linux32 makepkg -f --config "$basedir/conf/makepkg.$_arch.conf" --nocheck --noconfirm 2>&1
+else
+	makepkg -f --config "$basedir/conf/makepkg.$_arch.conf" --nocheck --noconfirm 2>&1
+fi
+
+# Log errors.
+ret=$?
+if [[ $ret != 0 ]] ; then
+	warn "'$pack' failed with error code $ret"
+	exit 1
+fi
+
+# Install if dependency.
+if [[ $depth != 1 ]] ; then
+	# It is assumed that all make-package processes have been killed at
+	# this point.
+	if [[ $_arch == i686 ]] ; then
+		acquire_lock
+		linux32 sudo pacman --asdeps --noconfirm -U *.pkg.tar.xz ||
+			warn "'$pack' failed to install"
+		release_lock
+	else
+		acquire_lock
+		sudo pacman --asdeps --noconfirm -U *.pkg.tar.xz ||
+			warn "'$pack' failed to install"
+		release_lock
+	fi
+fi
+
+msg2 'moving to repo...'
+# Move package into the repo.
+mv *.pkg.tar.xz "$repodir"

@@ -1,0 +1,37 @@
+pkgname=ropeme
+pkgver=1.0
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation')
+pkgdesc="ROPME is a set of python scripts to generate ROP gadgets and payload."
+arch=('i686' 'x86_64')
+url="http://www.vnsecurity.net/2010/08/ropeme-rop-exploit-made-easy/"
+license=('GPL')
+depends=('python3' 'distorm')
+source=(https://github.com/packz/ropeme/archive/master.zip)
+md5sums=('e5454f7785bb3a12ee136d4a6475fc2a')
+
+
+build(){
+  cd "$srcdir/ropeme-master"
+  sed -i 's|python$|python2|' *.py
+}
+
+package() {
+  cd "$srcdir/ropeme-master"
+
+  install -dm755 "$pkgdir/usr/bin/"
+  install -dm755 "$pkgdir/usr/share/ropeme"
+
+  cp -R --no-preserve=ownership * "$pkgdir/usr/share/ropeme"
+
+  find "$pkgdir/" -name "*.py" -exec sed -i 's/import distorm/import distorm3 as distorm/' {} \;
+  chmod +x "$pkgdir/usr/share/ropeme/exploit.py"
+  chmod +x "$pkgdir/usr/share/ropeme/ropeme/readelf.py"
+  chmod +x "$pkgdir/usr/share/ropeme/ropeme/search-gadgets.py"
+  chmod +x "$pkgdir/usr/share/ropeme/ropeme/ropshell.py"
+
+  ln -s "/usr/share/ropeme/ropeme/ropshell.py" "$pkgdir/usr/bin/ropshell"
+  ln -s "/usr/share/ropeme/ropeme/readelf.py" "$pkgdir/usr/bin/ropeme-readelf"
+  ln -s "/usr/share/ropeme/ropeme/search-gadgets.py" "$pkgdir/usr/bin/ropeme-search-gadgets"
+  ln -s "/usr/share/ropeme/exploit.py" "$pkgdir/usr/bin/ropeme-exploit"
+}

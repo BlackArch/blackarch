@@ -1,4 +1,4 @@
-# TODO: make package function
+#stat: test, lorcon-old dep
 pkgname=airpwn
 pkgver=1.4
 pkgrel=1
@@ -6,17 +6,25 @@ pkgdesc="Airpwn is a tool for generic packet injection on an 802.11 network."
 arch=('i686' 'x86_64')
 url="http://airpwn.sourceforge.net"
 license=('GPL')
-depends=('pcre' 'libpcap' 'openssl' 'lorcon-old-svn' 'wireless_tools' 'libnet' 'python')
+depends=('pcre' 'libpcap' 'openssl' 'lorcon-old' 'wireless_tools' 'libnet' 'python')
 groups=('blackarch' 'blackarch-wireless')
-source=(http://downloads.sourceforge.net/airpwn/$pkgname-$pkgver.tgz)
+source=(http://downloads.sourceforge.net/airpwn/airpwn-$pkgver.tgz)
 md5sums=('c5538f5eadc2afa0bf3e873c4bfa2513')
+
 build() {
-  cd "${srcdir}"/$pkgname-$pkgver
-  unset LDFLAGS # I can't be arsed to figure out the proper linking dependencies
+  cd "$srcdir/airpwn-$pkgver"
+
+  unset LDFLAGS
+
   ./configure --prefix=/usr --mandir=/usr/share/man
-  # really configure should be fixed to detect python 2.6, but I'm too dumb for that :(
-  sed -i 's/python2.4/python2.6/g' conf.h
+
+  sed -i 's/python2.4/python2/g' conf.h
   sed -i 's|-lssl -lorcon -lpthread -lpcre -lpcap -lnet|-lssl -lorcon -lpthread -lpcre -lpcap -lnet -lpython2.6|g' Makefile
+
   make
-  make DESTDIR="${pkgdir}" install
+}
+
+package() {
+  cd "$srcdir/airpwn-$pkgver"
+  make "DESTDIR=$pkgdir" install
 }

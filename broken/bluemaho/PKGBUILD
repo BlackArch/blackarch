@@ -2,24 +2,24 @@ pkgname=bluemaho
 pkgver=090417
 pkgrel=1
 pkgdesc="A GUI-shell (interface) for suite of tools for testing security of bluetooth devices"
-arch=(i686 x86_64)
+arch=('i686' 'x86_64')
 url="http://wiki.thc.org/BlueMaho"
 license=('GPL3')
-depends=('wxpython' 'bluediving' 'bss' 'bt_audit' 'hidattack' 'glib')
-groups=(blackarch blackarch-wireless)
-source=("${pkgname}_v$pkgver.tgz::http://wiki.thc.org/BlueMaho?action=AttachFile&do=get&target=${pkgname}_v$pkgver.tgz")
+depends=('wxpython' 'bluediving' 'bss' 'bt-audit' 'hidattack' 'glib')
+groups=('blackarch' 'blackarch-wireless')
+source=("bluemaho_v$pkgver.tgz::http://wiki.thc.org/BlueMaho?action=AttachFile&do=get&target=bluemaho_v$pkgver.tgz")
 md5sums=('f92f331337d36aa03acdad16f9aee83a')
 
 prepare() {
-  cd sources/bluepimp
+  cd "$srcdir/bluemaho-$pkgver/exploits/sources/bluepimp"
   sed -i 's:hci_remote_name:hci_read_remote_name:' obex_socket.c
 
-  cd sources/helomoto/
+  cd "$srcdir/bluemaho-$pkgver/exploits/sources/helomoto"
   sed -i "s:gcc :gcc $CFLAGS :g" Makefile
 }
 
 build() {
-  cd "$srcdir/$pkgname-$pkgver/tools"
+  cd "$srcdir/bluemaho-$pkgver/tools"
 
   chmod -R -x *
   chmod -R +X *
@@ -29,26 +29,26 @@ build() {
   chmod -x *
   chmod +x *.sh
 
-  mkdir -p $pkgdir/usr/share/$pkgname/tools
+  mkdir -p "$pkgdir/usr/share/bluemaho/tools"
 
-  cd $pkgdir/usr/share/$pkgname/tools/
+  cd "$pkgdir/usr/share/bluemaho/tools"
   for tool in 'atshell' 'bccmd' 'bdaddr' 'psm_scan' 'rfcomm_scan' 'bss' 'btobex' \
               'carwhisperer' 'l2cap-packet' 'redfang' 'ussp-push'; do
     ln -sf /usr/bin/$tool .
   done
 
-  cd "$srcdir/$pkgname-$pkgver/tools"
+  cd "$srcdir/bluemaho-$pkgver/tools"
   rm -rf sources/
-  cp -r * $pkgdir/usr/share/$pkgname/tools/
+  cp -r * "$pkgdir/usr/share/bluemaho/tools"
 
   # Symlinks available exploits
-  mkdir -p $pkgdir/usr/share/$pkgname/exploits/
-  cd "$pkgdir/usr/share/$pkgname/exploits/"
+  mkdir -p $pkgdir/usr/share/bluemaho/exploits/
+  cd "$pkgdir/usr/share/bluemaho/exploits/"
 
   ln -sf /usr/bin/hidattack .
   ln -sf /usr/share/hidattack/ha.inp hidattack.inp
 
-  cd "$srcdir/$pkgname-$pkgver/exploits"
+  cd "$srcdir/bluemaho-$pkgver/exploits"
   chmod -x *
 
 
@@ -88,7 +88,7 @@ package() {
   rm hidattack*
 
   rm -rf sources/
-  cp * $pkgdir/usr/share/$pkgname/exploits/
+  cp * $pkgdir/usr/share/bluemaho/exploits/
 
   cd ../config
   rm build.sh
@@ -98,5 +98,5 @@ package() {
   chmod -x *
   cd ../../../
 
-  cp -r bluemaho.py config $pkgdir/usr/share/$pkgname/
+  cp -r bluemaho.py config $pkgdir/usr/share/bluemaho/
 }

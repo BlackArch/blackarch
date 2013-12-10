@@ -1,0 +1,60 @@
+pkgname=complemento
+pkgver=0.7.6
+pkgrel=1
+pkgdesc="Complemento is a collection of tools for pentester: LetDown is a powerful tcp flooder ReverseRaider is a domain scanner that use wordlist scanning or reverse resolution scanning Httsquash is an http server scanner, banner grabber and data retriever"
+url="http://complemento.sourceforge.net"
+license="GPL"
+groups=('blackarch' 'blackarch-intel')
+arch=('i686' 'x86_64')
+depends=('glibc' 'c-ares' 'libnet' 'python2' 'libpcap' 'curl')
+source=(http://downloads.sourceforge.net/complemento/complemento-$pkgver.tar.gz)
+md5sums=('dbc1c22769109f27b04556314cf58968')
+
+build() {
+  cd "$srcdir/complemento/letdown/"
+  sed -i 's/python2.5/python2/g' Makefile
+
+  cd "$srcdir/complemento/httsquash/"
+  sed -i 's/python2.5/python2/g' Makefile
+
+  cd "$srcdir/complemento/reverseraider/"
+  sed -i 's/python2.5/python2/g' Makefile
+
+  cd "$srcdir/complemento"
+  make clean
+  make
+}
+
+package(){
+  # Multi stage installation
+  install -dm755 $pkgdir/usr/share/complemento/
+  install -dm755 $pkgdir/usr/bin/
+
+  cd "$srcdir/complemento"
+  install -Dm644 readme $pkgdir/usr/share/complemento/readme
+
+  cd "$srcdir/complemento/letdown/"
+  install -Dm755 letdown $pkgdir/usr/share/complemento/letdown/letdown
+  ln -s $pkgdir/usr/share/complemento/letdown/letdown $pkgdir/usr/bin/letdown
+  install -Dm644 readme $pkgdir/usr/share/complemento/letdown/readme
+
+  cd payloads
+  for pay in *; do
+    install -Dm644 $pay $pkgdir/usr/share/complemento/letdown/payloads/$pay
+  done
+
+  cd "$srcdir/complemento/httsquash/"
+  install -Dm755 httsquash $pkgdir/usr/share/complemento/httsquash/httsquash
+  ln -s $pkgdir/usr/share/complemento/httsquash/httsquash $pkgdir/usr/bin/httsquash
+  install -Dm644 readme $pkgdir/usr/share/complemento/httsquash/readme
+
+  cd "$srcdir/complemento/reverseraider/"
+  install -Dm755 reverseraider $pkgdir/usr/share/complemento/reverseraider/reverseraider
+  ln -s $pkgdir/usr/share/complemento/reverseraider/reverseraider $pkgdir/usr/bin/reverseraider
+
+  cd wordlists
+  for lst in *; do
+    install -Dm644 $lst $pkgdir/usr/share/complemento/reverseraider/wordlists/$lst
+  done
+
+}

@@ -1,28 +1,35 @@
 pkgname=unicornscan
 pkgver=0.4.7
-pkgrel=3
-groups=('blackarch-intel' 'blackarch')
+pkgrel=5
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='A new information gathering and correlation engine.'
 url='http://www.unicornscan.org/'
-pkgdesc="A new information gathering and correlation engine."
-arch=('i686' 'x86_64')
-license=('GPL')
 depends=('libpcap' 'postgresql-libs' 'geoip' 'libdnet' 'libltdl')
 makedepends=('flex' 'bison')
+license=('GPL')
+arch=('i686' 'x86_64')
 source=("http://www.unicornscan.org/releases/unicornscan-$pkgver-2.tar.bz2")
 md5sums=('4c5f272eb38c333c0094c32317edf758')
 
 build() {
-  cd "$srcdir/unicornscan-$pkgver"
+	# prevent crashing geoip dependency
+	export LDFLAGS="${LDFLAGS/--as-needed,/}"
 
-  # Prevent crashing geoip dependency.
-  export LDFLAGS="${LDFLAGS/--as-needed,/}"
-  ./configure CFLAGS="$CFLAGS -D_GNU_SOURCE" --prefix=/usr --sysconfdir=/etc --localstatedir=/var --with-pgsql --with-geoip
-  make
+	cd "$srcdir/unicornscan-$pkgver"
+
+	./configure CFLAGS="$CFLAGS -D_GNU_SOURCE" --prefix=/usr --sysconfdir=/etc \
+		--localstatedir=/var --with-pgsql --with-geoip
+	make
 }
 
 package() {
-  cd "$srcdir/unicornscan-$pkgver"
+	cd "$pkgdir"
+	mkdir -p "etc/unicornscan"
 
-  make "DESTDIR=$pkgdir" install
-  ln -s /usr/share/GeoIP/GeoIP.dat "$pkgdir/etc/unicornscan/GeoIP.dat"
+	cd "$pkgdir/etc/unicornscan"
+	ln -s /usr/share/GeoIP/GeoIP.dat GeoIP.dat
+
+	cd "$srcdir/unicornscan-$pkgver"
+	install -Dm755 "src/unicornscan" "$pkgdir/usr/bin/unicornscan"
+	install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/unicornscan/LICENSE"
 }

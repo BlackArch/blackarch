@@ -1,0 +1,777 @@
+diff -Naur libdnet-1.12.org/configure libdnet-1.12.new/configure
+--- libdnet-1.12.org/configure	2007-01-20 13:39:54.000000000 +0200
++++ libdnet-1.12.new/configure	2009-04-20 11:18:04.000000000 +0300
+@@ -22411,6 +22411,26 @@
+ 
+ fi
+ 
++if test "$ac_cv_dnet_linux_procfs" = yes ; then
++	case $LIBOBJS in
++    "ndisc-linux.$ac_objext"   | \
++  *" ndisc-linux.$ac_objext"   | \
++    "ndisc-linux.$ac_objext "* | \
++  *" ndisc-linux.$ac_objext "* ) ;;
++  *) LIBOBJS="$LIBOBJS ndisc-linux.$ac_objext" ;;
++esac
++
++else
++	case $LIBOBJS in
++    "ndisc-none.$ac_objext"   | \
++  *" ndisc-none.$ac_objext"   | \
++    "ndisc-none.$ac_objext "* | \
++  *" ndisc-none.$ac_objext "* ) ;;
++  *) LIBOBJS="$LIBOBJS ndisc-none.$ac_objext" ;;
++esac
++
++fi
++
+ if test "$ac_cv_header_linux_if_tun_h" = yes ; then
+ 	case $LIBOBJS in
+     "tun-linux.$ac_objext"   | \
+diff -Naur libdnet-1.12.org/configure.in libdnet-1.12.new/configure.in
+--- libdnet-1.12.org/configure.in	2007-01-20 13:39:21.000000000 +0200
++++ libdnet-1.12.new/configure.in	2009-04-20 10:55:30.000000000 +0300
+@@ -298,6 +298,13 @@
+ 	AC_LIBOBJ([route-none])
+ fi
+ 
++dnl Check for ndisc interface.
++if test "$ac_cv_dnet_linux_procfs" = yes ; then
++	AC_LIBOBJ([ndisc-linux])
++else
++	AC_LIBOBJ([ndisc-none])
++fi
++
+ dnl Check for tun interface.
+ if test "$ac_cv_header_linux_if_tun_h" = yes ; then
+ 	AC_LIBOBJ([tun-linux])
+diff -Naur libdnet-1.12.org/include/dnet/Makefile.am libdnet-1.12.new/include/dnet/Makefile.am
+--- libdnet-1.12.org/include/dnet/Makefile.am	2004-09-10 05:35:51.000000000 +0300
++++ libdnet-1.12.new/include/dnet/Makefile.am	2009-04-20 10:56:50.000000000 +0300
+@@ -5,4 +5,4 @@
+ dnetincludedir = $(includedir)/dnet
+ 
+ dnetinclude_HEADERS = addr.h arp.h blob.h eth.h fw.h icmp.h intf.h ip.h \
+-	ip6.h os.h rand.h route.h tcp.h tun.h udp.h
++	ip6.h os.h rand.h route.h tcp.h tun.h udp.h ndisc.h
+diff -Naur libdnet-1.12.org/include/dnet/Makefile.in libdnet-1.12.new/include/dnet/Makefile.in
+--- libdnet-1.12.org/include/dnet/Makefile.in	2006-01-19 08:14:02.000000000 +0200
++++ libdnet-1.12.new/include/dnet/Makefile.in	2009-04-20 10:56:35.000000000 +0300
+@@ -106,7 +106,7 @@
+ dnetincludedir = $(includedir)/dnet
+ 
+ dnetinclude_HEADERS = addr.h arp.h blob.h eth.h fw.h icmp.h intf.h ip.h \
+-	ip6.h os.h rand.h route.h tcp.h tun.h udp.h
++	ip6.h os.h rand.h route.h tcp.h tun.h udp.h ndisc.h
+ 
+ subdir = include/dnet
+ mkinstalldirs = $(SHELL) $(top_srcdir)/config/mkinstalldirs
+diff -Naur libdnet-1.12.org/include/dnet/ip6.h libdnet-1.12.new/include/dnet/ip6.h
+--- libdnet-1.12.org/include/dnet/ip6.h	2004-02-23 12:01:15.000000000 +0200
++++ libdnet-1.12.new/include/dnet/ip6.h	2009-04-30 09:36:31.000000000 +0300
+@@ -177,6 +177,8 @@
+ char	*ip6_ntoa(const ip6_addr_t *ip6);
+ #define	 ip6_aton ip6_pton
+ 
++ssize_t	 ip6_add_option(void *buf, size_t len,
++	    int proto, const void *optbuf, size_t optlen);
+ void	 ip6_checksum(void *buf, size_t len);
+ __END_DECLS
+ 
+diff -Naur libdnet-1.12.org/include/dnet/ndisc.h libdnet-1.12.new/include/dnet/ndisc.h
+--- libdnet-1.12.org/include/dnet/ndisc.h	1970-01-01 02:00:00.000000000 +0200
++++ libdnet-1.12.new/include/dnet/ndisc.h	2009-04-20 10:58:24.000000000 +0300
+@@ -0,0 +1,35 @@
++/*
++ * ndisc.c
++ *
++ * Kernel arp/ndisc table operations.
++ *
++ * Copyright (c) 2000 Dug Song <dugsong@monkey.org>
++ *
++ */
++
++#ifndef DNET_NDISC_H
++#define DNET_NDISC_H
++
++/*
++ * NDISC cache entry
++ */
++struct ndisc_entry {
++    int    intf_index;
++	struct addr	ndisc_pa;			/* protocol address */
++	struct addr	ndisc_ha;			/* hardware address */
++};
++
++typedef struct ndisc_handle ndisc_t;
++
++typedef int (*ndisc_handler)(const struct ndisc_entry *entry, void *arg);
++
++__BEGIN_DECLS
++ndisc_t	*ndisc_open(void);
++int	 ndisc_add(ndisc_t *n, const struct ndisc_entry *entry);
++int	 ndisc_delete(ndisc_t *n, const struct ndisc_entry *entry);
++int	 ndisc_get(ndisc_t *n, struct ndisc_entry *entry);
++int	 ndisc_loop(ndisc_t *n, ndisc_handler callback, void *arg);
++ndisc_t	*ndisc_close(ndisc_t *r);
++__END_DECLS
++
++#endif /* DNET_NDISC_H */
+diff -Naur libdnet-1.12.org/include/dnet/route.h libdnet-1.12.new/include/dnet/route.h
+--- libdnet-1.12.org/include/dnet/route.h	2002-02-04 06:03:45.000000000 +0200
++++ libdnet-1.12.new/include/dnet/route.h	2009-04-20 11:00:50.000000000 +0300
+@@ -26,7 +26,10 @@
+ __BEGIN_DECLS
+ route_t	*route_open(void);
+ int	 route_add(route_t *r, const struct route_entry *entry);
++int  route_add_dev(route_t *r, const struct route_entry *entry, const char* dev);
++int	 route6_add(route_t *r, const struct route_entry *entry, int intf_index);
+ int	 route_delete(route_t *r, const struct route_entry *entry);
++int	 route6_delete(route_t *r, const struct route_entry *entry, int intf_index);
+ int	 route_get(route_t *r, struct route_entry *entry);
+ int	 route_loop(route_t *r, route_handler callback, void *arg);
+ route_t	*route_close(route_t *r);
+diff -Naur libdnet-1.12.org/include/dnet.h libdnet-1.12.new/include/dnet.h
+--- libdnet-1.12.org/include/dnet.h	2004-09-10 06:10:01.000000000 +0300
++++ libdnet-1.12.new/include/dnet.h	2009-04-20 11:00:57.000000000 +0300
+@@ -16,6 +16,7 @@
+ #include <dnet/ip6.h>
+ #include <dnet/addr.h>
+ #include <dnet/arp.h>
++#include <dnet/ndisc.h>
+ #include <dnet/icmp.h>
+ #include <dnet/tcp.h>
+ #include <dnet/udp.h>
+diff -Naur libdnet-1.12.org/src/Makefile.in libdnet-1.12.new/src/Makefile.in
+--- libdnet-1.12.org/src/Makefile.in	2006-01-19 08:14:02.000000000 +0200
++++ libdnet-1.12.new/src/Makefile.in	2009-04-20 10:52:54.000000000 +0300
+@@ -144,6 +144,7 @@
+ 	intf-win32.c intf.c ip-cooked.c ip-win32.c ip.c memcmp.c \
+ 	route-bsd.c route-hpux.c route-linux.c route-none.c \
+ 	route-win32.c strlcat.c strlcpy.c strsep.c tun-bsd.c \
++	ndisc-linux.c ndisc-none.c \
+ 	tun-linux.c tun-none.c tun-solaris.c
+ SOURCES = $(libdnet_la_SOURCES)
+ 
+diff -Naur libdnet-1.12.org/src/intf.c libdnet-1.12.new/src/intf.c
+--- libdnet-1.12.org/src/intf.c	2006-01-09 09:09:49.000000000 +0200
++++ libdnet-1.12.new/src/intf.c	2009-09-01 17:34:47.000000000 +0300
+@@ -20,6 +20,9 @@
+ # define IP_MULTICAST
+ #endif
+ #include <net/if.h>
++#ifdef HAVE_NET_IF_DL_H
++# include <net/if_dl.h>
++#endif
+ #ifdef HAVE_NET_IF_VAR_H
+ # include <net/if_var.h>
+ #endif
+@@ -79,6 +82,21 @@
+ 	u_char		ifcbuf[4192];
+ };
+ 
++/* TODO: move to .h */
++union sockunion {
++#ifdef HAVE_NET_IF_DL_H
++	struct sockaddr_dl	sdl;
++#endif
++	struct sockaddr_in	sin;
++#ifdef HAVE_SOCKADDR_IN6
++	struct sockaddr_in6	sin6;
++#endif
++	struct sockaddr		sa;
++#ifdef AF_RAW
++	struct sockaddr_raw	sr;
++#endif
++};
++
+ static int
+ intf_flags_to_iff(u_short flags, int iff)
+ {
+@@ -125,14 +143,10 @@
+ 		
+ 		if ((intf->fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+ 			return (intf_close(intf));
+-#ifdef SIOCGIFNETMASK_IN6
+ 		if ((intf->fd6 = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+-#  ifdef EPROTONOSUPPORT
+ 			if (errno != EPROTONOSUPPORT)
+-#  endif
+ 				return (intf_close(intf));
+ 		}
+-#endif
+ 	}
+ 	return (intf);
+ }
+@@ -568,21 +582,51 @@
+ 	return (_intf_get_aliases(intf, entry));
+ }
+ 
++static int get_max_bits(const struct addr *a)
++{
++	if (a->addr_type == ADDR_TYPE_IP) {
++		return IP_ADDR_BITS;
++	} else if (a->addr_type == ADDR_TYPE_IP6) {
++		return IP6_ADDR_BITS;
++	} else {
++		return 0;
++	}
++}
++
+ static int
+ _match_intf_src(const struct intf_entry *entry, void *arg)
+ {
+ 	struct intf_entry *save = (struct intf_entry *)arg;
++	int len;
++	int i;
++
++	struct addr a, saved_addr;
++
++	len = save->intf_len < entry->intf_len ? save->intf_len : entry->intf_len;
++
++	saved_addr = save->intf_addr;
++	saved_addr.addr_bits = get_max_bits(&saved_addr);
+ 	
+-	if (entry->intf_addr.addr_type == ADDR_TYPE_IP &&
+-	    entry->intf_addr.addr_ip == save->intf_addr.addr_ip) {
+-		/* XXX - truncated result if entry is too small. */
+-		if (save->intf_len < entry->intf_len)
+-			memcpy(save, entry, save->intf_len);
+-		else
+-			memcpy(save, entry, entry->intf_len);
+-		return (1);
++	a = entry->intf_addr;
++	a.addr_bits = get_max_bits(&a);
++
++	if (addr_cmp(&a, &saved_addr) == 0) {
++		memcpy(save, entry, len);
++		return 1;
+ 	}
+-	return (0);
++
++	for (i = 0; i < (int)entry->intf_alias_num; i++) {
++		a = entry->intf_alias_addrs[i];
++		a.addr_bits = get_max_bits(&a);
++
++		if (addr_cmp(&a, &saved_addr) == 0) {
++			memcpy(save, entry, len);
++			save->intf_addr = entry->intf_alias_addrs[i];
++			return 1;
++		}
++	}
++
++	return 0;
+ }
+ 
+ int
+@@ -600,25 +644,28 @@
+ int
+ intf_get_dst(intf_t *intf, struct intf_entry *entry, struct addr *dst)
+ {
+-	struct sockaddr_in sin;
++	union sockunion sun;
+ 	int n;
+-	
+-	if (dst->addr_type != ADDR_TYPE_IP) {
++	int fd;
++
++	if (dst->addr_type != ADDR_TYPE_IP && dst->addr_type != ADDR_TYPE_IP6) {
+ 		errno = EINVAL;
+ 		return (-1);
+ 	}
+-	addr_ntos(dst, (struct sockaddr *)&sin);
+-	sin.sin_port = htons(666);
+-	
+-	if (connect(intf->fd, (struct sockaddr *)&sin, sizeof(sin)) < 0)
++	addr_ntos(dst, (struct sockaddr *)&sun);
++	sun.sin.sin_port = htons(666);
++
++	fd = dst->addr_type == ADDR_TYPE_IP6 ? intf->fd6 : intf->fd;
++
++	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) < 0)
+ 		return (-1);
+-	
+-	n = sizeof(sin);
+-	if (getsockname(intf->fd, (struct sockaddr *)&sin, &n) < 0)
++
++	n = sizeof(sun);
++	if (getsockname(fd, (struct sockaddr *)&sun, &n) < 0)
+ 		return (-1);
+-	
+-	addr_ston((struct sockaddr *)&sin, &entry->intf_addr);
+-	
++
++	addr_ston((struct sockaddr *)&sun, &entry->intf_addr);
++
+ 	if (intf_loop(intf, _match_intf_src, entry) != 1)
+ 		return (-1);
+ 	
+diff -Naur libdnet-1.12.org/src/ip6.c libdnet-1.12.new/src/ip6.c
+--- libdnet-1.12.org/src/ip6.c	2005-01-23 09:36:54.000000000 +0200
++++ libdnet-1.12.new/src/ip6.c	2009-04-20 11:01:57.000000000 +0300
+@@ -9,6 +9,8 @@
+ #include "config.h"
+ 
+ #include "dnet.h"
++#include <string.h>
++#include <errno.h>
+ 
+ #define IP6_IS_EXT(n)	\
+ 	((n) == IP_PROTO_HOPOPTS || (n) == IP_PROTO_DSTOPTS || \
+@@ -70,3 +72,57 @@
+ 		}
+ 	}
+ }
++
++ssize_t
++ip6_add_option(void *buf, size_t len, int proto,
++    const void *optbuf, size_t optlen)
++{
++	struct ip6_hdr *ip6;
++	struct tcp_hdr *tcp = NULL;
++	u_char *p;
++	int hl, datalen, padlen;
++
++	if (proto != IP_PROTO_TCP) {
++		errno = EINVAL;
++		return (-1);
++	}
++
++	ip6 = (struct ip6_hdr *)buf;
++	p = (u_char *)buf + IP6_HDR_LEN;
++
++	tcp = (struct tcp_hdr *)p;
++	hl = tcp->th_off << 2;
++	p = (u_char *)tcp + hl;
++
++	datalen = ntohs(ip6->ip6_plen) + IP6_HDR_LEN - (p - (u_char *)buf);
++
++	/* Compute padding to next word boundary. */
++	if ((padlen = 4 - (optlen % 4)) == 4)
++		padlen = 0;
++
++	/* XXX - IP_HDR_LEN_MAX == TCP_HDR_LEN_MAX */
++	if (hl + optlen + padlen > IP_HDR_LEN_MAX ||
++	    ntohs(ip6->ip6_plen) + IP6_HDR_LEN + optlen + padlen > len) {
++		errno = EINVAL;
++		return (-1);
++	}
++
++	/* Shift any existing data. */
++	if (datalen) {
++		memmove(p + optlen + padlen, p, datalen);
++	}
++	/* XXX - IP_OPT_NOP == TCP_OPT_NOP */
++	if (padlen) {
++		memset(p, IP_OPT_NOP, padlen);
++		p += padlen;
++	}
++	memmove(p, optbuf, optlen);
++	p += optlen;
++	optlen += padlen;
++
++	tcp->th_off = (p - (u_char *)tcp) >> 2;
++
++	ip6->ip6_plen = htons(ntohs(ip6->ip6_plen) + optlen);
++
++	return (optlen);
++}
+diff -Naur libdnet-1.12.org/src/ndisc-linux.c libdnet-1.12.new/src/ndisc-linux.c
+--- libdnet-1.12.org/src/ndisc-linux.c	1970-01-01 02:00:00.000000000 +0200
++++ libdnet-1.12.new/src/ndisc-linux.c	2009-04-20 10:57:55.000000000 +0300
+@@ -0,0 +1,197 @@
++/*
++ * ndisc-linux.c
++ *
++ * Copyright (c) 2000 Dug Song <dugsong@monkey.org>
++ *
++ */
++
++#include "config.h"
++
++#include <sys/types.h>
++#include <sys/ioctl.h>
++#include <sys/socket.h>
++#include <sys/uio.h>
++
++#include <asm/types.h>
++#include <netinet/in.h>
++#include <linux/netlink.h>
++#include <linux/rtnetlink.h>
++
++#include <net/route.h>
++
++#include <ctype.h>
++#include <errno.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++
++#include "dnet.h"
++
++struct ndisc_handle 
++{
++	int nlfd;
++	int seq;
++};
++
++ndisc_t *
++ndisc_open(void)
++{
++	struct sockaddr_nl snl;
++	ndisc_t *n;
++
++	if ((n = calloc(1, sizeof(*n))) != NULL) {
++		n->nlfd = -1;
++
++		if ((n->nlfd = socket(AF_NETLINK, SOCK_RAW,
++			 NETLINK_ROUTE)) < 0)
++			return (ndisc_close(n));
++		
++		memset(&snl, 0, sizeof(snl));
++		snl.nl_family = AF_NETLINK;
++		
++		if (bind(n->nlfd, (struct sockaddr *)&snl, sizeof(snl)) < 0)
++			return (ndisc_close(n));
++	}
++	return (n);
++}
++
++static int
++netlink_addattr(struct nlmsghdr *n, int type, const void *data, int data_len)
++{
++	int len = RTA_LENGTH(data_len);
++	struct rtattr *rta;
++
++	rta = (struct rtattr *)((uint8_t*)n + NLMSG_ALIGN(n->nlmsg_len));
++	rta->rta_type = type;
++	rta->rta_len = len;
++	memcpy(RTA_DATA(rta), data, data_len);
++	n->nlmsg_len = NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len);
++	return 0;
++}
++
++int
++ndisc_modify(ndisc_t *n, const struct ndisc_entry *entry, int type, int flags)
++{
++	struct nlmsghdr *nmsg;
++	struct ndmsg *ndm;
++	struct rtattr *rta;
++	struct sockaddr_nl snl;
++	struct iovec iov;
++	struct msghdr msg;
++	u_char buf[512];
++	int i, af, alen;
++
++	switch (entry->ndisc_pa.addr_type) {
++	case ADDR_TYPE_IP:
++		af = AF_INET;
++		alen = IP_ADDR_LEN;
++		break;
++	case ADDR_TYPE_IP6:
++		af = AF_INET6;
++		alen = IP6_ADDR_LEN;
++		break;
++	default:
++		errno = EINVAL;
++		return (-1);
++	}
++	memset(buf, 0, sizeof(buf));
++
++	nmsg = (struct nlmsghdr *)buf;
++	nmsg->nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg));
++	nmsg->nlmsg_flags = NLM_F_REQUEST | flags;
++	nmsg->nlmsg_type = type;
++	nmsg->nlmsg_seq = ++n->seq;
++
++	nmsg->nlmsg_flags |= NLM_F_ACK;
++
++	ndm = (struct ndmsg *)(nmsg + 1);
++	ndm->ndm_family = af;
++	ndm->ndm_state = NUD_PERMANENT; 
++	ndm->ndm_ifindex = entry->intf_index;
++	
++	netlink_addattr(nmsg, NDA_DST, &entry->ndisc_pa.addr_data8[0],
++			alen);
++
++	if (type == RTM_NEWNEIGH) {
++		netlink_addattr(nmsg, NDA_LLADDR, 
++				&entry->ndisc_ha.addr_data8[0], ETH_ADDR_LEN);
++	}
++
++	memset(&snl, 0, sizeof(snl));
++	snl.nl_family = AF_NETLINK;
++
++	iov.iov_base = nmsg;
++	iov.iov_len = nmsg->nlmsg_len;
++	
++	memset(&msg, 0, sizeof(msg));
++	msg.msg_name = &snl;
++	msg.msg_namelen = sizeof(snl);
++	msg.msg_iov = &iov;
++	msg.msg_iovlen = 1;
++	
++	if (sendmsg(n->nlfd, &msg, 0) < 0)
++		return (-1);
++
++	iov.iov_base = buf;
++	iov.iov_len = sizeof(buf);
++	
++	if ((i = recvmsg(n->nlfd, &msg, 0)) <= 0)
++		return (-1);
++
++	if (nmsg->nlmsg_len < (int)sizeof(*nmsg) || nmsg->nlmsg_len > i ||
++	    nmsg->nlmsg_seq != n->seq) {
++		errno = EINVAL;
++		return (-1);
++	}
++	if (nmsg->nlmsg_type == NLMSG_ERROR) {
++		struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(nmsg);
++		errno = -err->error;
++		if (errno == 0) {
++			return 0;
++		}
++
++		return (-1);
++	}
++
++	return (-1);
++}
++
++int
++ndisc_add(ndisc_t *n, const struct ndisc_entry *entry)
++{
++	return ndisc_modify(n, entry, RTM_NEWNEIGH, NLM_F_CREATE | NLM_F_EXCL);
++}
++
++int
++ndisc_delete(ndisc_t *n, const struct ndisc_entry *entry)
++{
++	return ndisc_modify(n, entry, RTM_DELNEIGH, 0);
++}
++
++int
++ndisc_get(ndisc_t *n, struct ndisc_entry *entry)
++{
++	/* TBD */
++	errno = ENOSYS;
++	return (-1);
++}
++
++int
++nsidc_loop(ndisc_t *n, ndisc_handler callback, void *arg)
++{
++	/* TBD */
++	errno = ENOSYS;
++	return (-1);
++}
++
++ndisc_t *
++ndisc_close(ndisc_t *n)
++{
++	if (n != NULL) {
++		if (n->nlfd >= 0)
++			close(n->nlfd);
++		free(n);
++	}
++	return (NULL);
++}
+diff -Naur libdnet-1.12.org/src/ndisc-none.c libdnet-1.12.new/src/ndisc-none.c
+--- libdnet-1.12.org/src/ndisc-none.c	1970-01-01 02:00:00.000000000 +0200
++++ libdnet-1.12.new/src/ndisc-none.c	2009-04-20 10:58:00.000000000 +0300
+@@ -0,0 +1,55 @@
++/*
++ * ndisc-linux.c
++ *
++ * Copyright (c) 2000 Dug Song <dugsong@monkey.org>
++ *
++ */
++
++#include "config.h"
++
++#include <errno.h>
++#include <stdio.h>
++#include <stdlib.h>
++
++#include "dnet.h"
++
++ndisc_t *
++ndisc_open(void)
++{
++	errno = ENOSYS;
++	return (NULL);
++}
++
++int
++ndisc_add(ndisc_t *n, const struct ndisc_entry *entry)
++{
++	errno = ENOSYS;
++	return (-1);
++}
++
++int
++ndisc_delete(ndisc_t *n, const struct ndisc_entry *entry)
++{
++	errno = ENOSYS;
++	return (-1);
++}
++
++int
++ndisc_get(ndisc_t *n, struct ndisc_entry *entry)
++{
++	errno = ENOSYS;
++	return (-1);
++}
++
++int
++nsidc_loop(ndisc_t *n, ndisc_handler callback, void *arg)
++{
++	errno = ENOSYS;
++	return (-1);
++}
++
++ndisc_t *
++ndisc_close(ndisc_t *n)
++{
++	return (NULL);
++}
+diff -Naur libdnet-1.12.org/src/route-linux.c libdnet-1.12.new/src/route-linux.c
+--- libdnet-1.12.org/src/route-linux.c	2006-01-15 09:33:29.000000000 +0200
++++ libdnet-1.12.new/src/route-linux.c	2009-04-20 11:02:11.000000000 +0300
+@@ -39,6 +39,7 @@
+ 
+ struct route_handle {
+ 	int	 fd;
++	int	 fd6;
+ 	int	 nlfd;
+ };
+ 
+@@ -49,11 +50,14 @@
+ 	route_t *r;
+ 
+ 	if ((r = calloc(1, sizeof(*r))) != NULL) {
+-		r->fd = r->nlfd = -1;
+-		
++		r->fd = r->fd6 = r->nlfd = -1;
++
+ 		if ((r->fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+ 			return (route_close(r));
+-		
++
++		if ((r->fd6 = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
++			return (route_close(r));
++
+ 		if ((r->nlfd = socket(AF_NETLINK, SOCK_RAW,
+ 			 NETLINK_ROUTE)) < 0)
+ 			return (route_close(r));
+@@ -91,6 +95,67 @@
+ }
+ 
+ int
++route_add_dev(route_t *r, const struct route_entry *entry, const char* dev)
++{
++	struct rtentry rt;
++	struct addr dst;
++
++	memset(&rt, 0, sizeof(rt));
++	rt.rt_flags = RTF_UP;
++	rt.rt_dev = (char*)dev;
++
++	if (ADDR_ISHOST(&entry->route_dst)) {
++		rt.rt_flags |= RTF_HOST;
++		memcpy(&dst, &entry->route_dst, sizeof(dst));
++	} else
++		addr_net(&entry->route_dst, &dst);
++
++	if (entry->route_gw.addr_ip != 0) {
++		rt.rt_flags |= RTF_GATEWAY;
++	}
++	
++	if (addr_ntos(&dst, &rt.rt_dst) < 0 ||
++	    addr_ntos(&entry->route_gw, &rt.rt_gateway) < 0 ||
++	    addr_btos(entry->route_dst.addr_bits, &rt.rt_genmask) < 0)
++		return (-1);
++	
++	int ret = (ioctl(r->fd, SIOCADDRT, &rt));
++	return ret;
++}
++
++int
++route6_add(route_t *r, const struct route_entry *entry, int intf_index)
++{
++	struct in6_rtmsg rt;
++	struct addr dst;
++
++	memset(&rt, 0, sizeof(rt));
++	rt.rtmsg_flags = RTF_UP;
++
++	if (ADDR_ISHOST(&entry->route_dst)) {
++		rt.rtmsg_flags |= RTF_HOST;
++		memcpy(&dst, &entry->route_dst, sizeof(dst));
++	} else {
++		addr_net(&entry->route_dst, &dst);
++	}
++
++	rt.rtmsg_dst_len = entry->route_dst.addr_bits;
++	rt.rtmsg_ifindex = intf_index;
++	rt.rtmsg_metric = 1;
++
++	memcpy(&rt.rtmsg_dst, &dst.addr_ip6, sizeof(rt.rtmsg_dst));
++
++	if (!IN6_IS_ADDR_UNSPECIFIED(&entry->route_gw.addr_ip6)) {
++		rt.rtmsg_flags |= RTF_GATEWAY;
++		memcpy(&rt.rtmsg_gateway, &entry->route_gw.addr_ip6,
++				sizeof(rt.rtmsg_gateway));
++	}
++
++	int ret = (ioctl(r->fd6, SIOCADDRT, &rt));
++	return ret;
++}
++
++int
+ route_delete(route_t *r, const struct route_entry *entry)
+ {
+ 	struct rtentry rt;
+@@ -113,6 +178,32 @@
+ }
+ 
+ int
++route6_delete(route_t *r, const struct route_entry *entry, int intf_index)
++{
++	struct in6_rtmsg rt;
++	struct addr dst;
++
++	memset(&rt, 0, sizeof(rt));
++	rt.rtmsg_flags = RTF_UP;
++
++	if (ADDR_ISHOST(&entry->route_dst)) {
++		rt.rtmsg_flags |= RTF_HOST;
++		memcpy(&dst, &entry->route_dst, sizeof(dst));
++	} else
++		addr_net(&entry->route_dst, &dst);
++
++	rt.rtmsg_dst_len = entry->route_dst.addr_bits;
++	rt.rtmsg_ifindex = intf_index;
++	rt.rtmsg_metric = 1;
++
++	memcpy(&rt.rtmsg_dst, &dst, sizeof(rt.rtmsg_dst));
++	memcpy(&rt.rtmsg_gateway, &entry->route_gw, sizeof(rt.rtmsg_gateway));
++
++	int ret = (ioctl(r->fd6, SIOCDELRT, &rt));
++	return ret;
++}
++
++int
+ route_get(route_t *r, struct route_entry *entry)
+ {
+ 	static int seq;
+@@ -278,6 +369,8 @@
+ 	if (r != NULL) {
+ 		if (r->fd >= 0)
+ 			close(r->fd);
++		if (r->fd6 >= 0)
++			close(r->fd6);
+ 		if (r->nlfd >= 0)
+ 			close(r->nlfd);
+ 		free(r);

@@ -1,13 +1,13 @@
 pkgname=netglub
 pkgver=1.0
-pkgrel=2
+pkgrel=3
+groups=('blackarch' 'blackarch-recon')
 pkgdesc="The really open source information gathering tool"
 arch=('i686' 'x86_64')
-groups=('blackarch-intel' 'blackarch')
 url='http://www.netglub.org'
 license=('GPL')
 source=("http://redmine.lab.diateam.net/attachments/download/1/netglub-$pkgver.tar.gz")
-depends=('mariadb' 'qt4' 'sqlitebrowser' 'gdb' 'graphviz')
+depends=('mariadb' 'qt4' 'sqlitebrowser' 'gdb' 'graphviz' 'python2')
 md5sums=('c91005ccbd1010b7883f07e2d0e08e0a')
 options=('!strip')
 
@@ -20,14 +20,20 @@ prepare() {
 }
 
 build() {
+  # _FORTIFY_SOURCE causes errors maybe.
+  unset CPPFLAGS CFLAGS CXXFLAGS LDFLAGS
+
+  # Master.
   cd "$srcdir/netglub-$pkgver/master"
   qmake-qt4
   make
 
+  # Slave.
   cd "$srcdir/netglub-$pkgver/slave"
   qmake-qt4
   make
 
+  # Qng (GUI).
   cd "$srcdir/netglub-$pkgver/qng"
   qmake-qt4
   scrub=$(awk '/LIBS.+=/' Makefile)

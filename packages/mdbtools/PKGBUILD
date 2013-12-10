@@ -1,39 +1,30 @@
 pkgname=mdbtools
-pkgver=0.7
-groups=('blackarch' 'blackarch-analysis')
-pkgrel=3
+pkgver=0.7.1
+pkgrel=5
+groups=('blackarch' 'blackarch-forensic')
 pkgdesc="Utilities for viewing data and exporting schema from Microsoft Access Database files"
 arch=('i686' 'x86_64')
-url='http://sourceforge.net/projects/mdbtools/'
+url="http://sourceforge.net/projects/mdbtools/"
 license=('LGPL' 'GPL')
 depends=('libgnomeui' 'unixodbc')
-makedepends=('bison' 'flex' 'txt2man' 'automake')
-options=('!libtool')
-source=(https://github.com/brianb/mdbtools/tarball/0.7
-        gmdb2.desktop
-        autogen.sh.patch)
-md5sums=('234241dc00bb15e70ca5bc7addf184da'
-         '289f236ca91d73510e842922b5776999'
-         'a686eba6fde82a0fb06a5b886dcb89e5')
-
-prepare() {
-  cd "$srcdir/brianb-mdbtools-004cc9f"
-
-  patch -i ../autogen.sh.patch
-}
+makedepends=('bison' 'flex' 'txt2man' 'autoconf' 'rarian')
+options=('!libtool' '!makeflags')
+source=("https://github.com/brianb/mdbtools/archive/$pkgver.tar.gz"
+        'gmdb2.desktop')
+md5sums=('477c7af98e75f8e6c987b020d6a822d8'
+         '289f236ca91d73510e842922b5776999')
 
 build() {
-  cd "$srcdir/brianb-mdbtools-004cc9f"
-
-  ./autogen.sh
+  cd "$srcdir/mdbtools-$pkgver"
+  autoreconf -i -f
   ./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man --with-unixodbc=/usr
   make
 }
 
 package() {
-  cd "$srcdir/brianb-mdbtools-004cc9f"
-
+  cd "$srcdir/mdbtools-$pkgver"
   make DESTDIR="$pkgdir" install
+
   rmdir "$pkgdir/usr/share/man/mant"
   install -Dm644 ../gmdb2.desktop "$pkgdir/usr/share/applications/gmdb2.desktop"
 }

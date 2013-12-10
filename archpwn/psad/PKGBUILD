@@ -6,11 +6,10 @@ pkgrel=1
 pkgdesc="A collection of three lightweight system daemons (two main daemons and one helper daemon) that run on Linux machines and analyze iptables log messages to detect port scans and other suspicious traffic"
 arch=('i686')
 url="http://cipherdyne.org/psad/"
-updateurl="http://www.cipherdyne.com/psad/download/=>psad-"
 license=('GPL')
 groups=('blackarch' 'blackarch-defensive')
 depends=('perl-bit-vector' 'perl-date-calc' 'perl-iptables-chainmgr' 'perl-iptables-parse' 'perl-net-ipv4addr' 'perl-storable' 'perl-unix-syslog')
-source=("http://cipherdyne.org/psad/download/$pkgname-$pkgver.tar.gz"
+source=("http://cipherdyne.org/psad/download/psad-$pkgver.tar.gz"
         "psad-init.archlinux"
         "psad.install"
         "psad.patch1")
@@ -20,25 +19,25 @@ md5sums=('c5e4a8d1bba6b5026ebada0084970e47'
          '9d72e2e5af8a06b7c85973b927fc12ae')
 
 build() {
-  cd "$srcdir/$pkgname-$pkgver/deps/Net-IPv4Addr"
+  cd "$srcdir/psad-$pkgver/deps/Net-IPv4Addr"
   PERL_MM_USE_DEFAULT=1 perl Makefile.PL INSTALLDIRS=vendor
   make
 
-  cd "$srcdir/$pkgname-$pkgver/deps/IPTables-Parse"
+  cd "$srcdir/psad-$pkgver/deps/IPTables-Parse"
   PERL_MM_USE_DEFAULT=1 perl Makefile.PL INSTALLDIRS=vendor
   make
 
-  cd "$srcdir/$pkgname-$pkgver/deps/IPTables-ChainMgr"
+  cd "$srcdir/psad-$pkgver/deps/IPTables-ChainMgr"
   PERL_MM_USE_DEFAULT=1 perl Makefile.PL INSTALLDIRS=vendor
   make
 
-  cd "$srcdir/$pkgname-$pkgver"
+  cd "$srcdir/psad-$pkgver"
   make
   patch -p1 -i $srcdir/psad.patch1
 
   mkdir -p $pkgdir/usr/sbin/
   mkdir -p $pkgdir/usr/bin
-  mkdir -p $pkgdir/usr/share/doc/$pkgname/
+  mkdir -p $pkgdir/usr/share/doc/psad/
   mkdir -p $pkgdir/etc/rc.d/
   mkdir -p $pkgdir/etc/psad/snort_rules/
   install -dm500 $pkgdir/var/run/psad
@@ -59,10 +58,10 @@ build() {
   install -Dm755 $srcdir/psad-init.archlinux $pkgdir/etc/rc.d/psad
 
   for f in BENCHMARK CREDITS Change* FW_EXAMPLE_RULES README SCAN_LOG; do
-    install -Dm644 $f $pkgdir/usr/share/doc/$pkgname/$f
+    install -Dm644 $f $pkgdir/usr/share/doc/psad/$f
   done
 
-  cd $srcdir/$pkgname-$pkgver/deps/snort_rules/
+  cd $srcdir/psad-$pkgver/deps/snort_rules/
   for f in *.rules; do
     install -Dm644 $f $pkgdir/etc/psad/snort_rules/$f
   done

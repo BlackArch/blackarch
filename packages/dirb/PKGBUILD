@@ -1,9 +1,9 @@
 pkgname=dirb
 pkgver=2.04
-pkgrel=4
+pkgrel=6
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
 pkgdesc="A web content scanner, brute forceing for hidden files"
 url='http://dirb.sourceforge.net/'
-groups=('blackarch' 'blackarch-web-apps')
 arch=('i686' 'x86_64')
 license=("GPL2")
 depends=('curl')
@@ -16,16 +16,22 @@ prepare() {
 
 build () {
   cd $srcdir/dirb
-  ./configure
+  ./configure --prefix=/usr
   make
 }
 
 package() {
-  cd $srcdir/dirb
+  cd "$srcdir/dirb"
 
   make DESTDIR="$pkgdir" install
+
   install -dm755 "$pkgdir/usr/share/dirb"
+
   cp --no-preserve=ownership -r "$srcdir/dirb/wordlists" "$pkgdir/usr/share/dirb/"
+
   chmod -R 644 "$pkgdir/usr/share/dirb/wordlists"
-  chmod +X "$pkgdir/usr/share/dirb/wordlists"
+  chmod -R +X "$pkgdir/usr/share/dirb/wordlists"
+
+  # Fix conflict with extra/icu.
+  mv "$pkgdir/usr/bin/gendict" "$pkgdir/usr/bin/dirb-gendict"
 }

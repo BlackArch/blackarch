@@ -3,7 +3,10 @@
 # May be run from anywhere. Must live in '$projectroot/scripts'.
 
 # Default settings.
-sign=true
+arch=x86_64
+jobs=35
+use_whitelist=false
+brutal_unlock=true
 
 # The sorts are sensitive.
 export LC_ALL=POSIX
@@ -25,22 +28,38 @@ cache_rights() {
 	sudo -v || msg 'sudo failed. continuing build anyways.'
 }
 
-for arg ; do
-	case "$arg" in
-		--nosign|--test)
-			sign=false
+while [[ -n "$1" ]] ; do
+	case "$1" in
+		--content-filter)
+			content_filter=$2
+			shift
+			;;
+		--whitelist)
+			use_whitelist=true
+			whitelist=$2
+			shift
+			;;
+		--name-filter)
+			name_filter=$2
+			shift
+			;;
+		-a|--arch)
+			arch=$2
+			shift
+			;;
+		-j|--jobs)
+			jobs=$2
+			shift
 			;;
 		*)
 			msg "'$arg' not recognized."
 			exit 1
 			;;
 	esac
+	shift
 done
 
 cache_rights
-
-# Don't use the X passphrase prompt.
-#unset DISPLAY
 
 basedir=$(realpath "$(dirname "$0")")
 cd "$basedir/.."
@@ -50,83 +69,110 @@ pkgdir=$(realpath packages)
 
 # PKGBUILDs and tracked source are copied here.
 builddir=$(realpath build)
+msg "clearing $builddir..."
+rm -rf "$builddir"
 mkdir -p "$builddir"
 
 # Built package go here.
-repodir=$(realpath repo)
-mkdir -p "$repodir"
+repodir=../repo/$arch
+[[ -d "$repodir" ]] && mv -f "$repodir" "$repodir.bak"
+mkdir -p "$basedir/$repodir"
+repodir=$(realpath "$basedir/$repodir")
 
 cd "$pkgdir"
 
+# TODO: delegate filtering to depth-list
 msg 'generating depth list...'
-"$basedir/depth-list" |
-while read item ; do (
+packs=$(if $use_whitelist ; then
+	msg2 'using whitelist...'
+	echo "${whitelist//,/ }" |
+	  xargs "$basedir/depth-list"
+else
+	msg2 'using filters...'
+	grep -l "$content_filter" */PKGBUILD | cut -d/ -f1 |
+	  grep "$name_filter" | xargs "$basedir/depth-list";
+fi)
+
+# TODO: clean this up a bit maybe?
+msg 'installing all dependencies...'
+printf '%s\n' "${packs[@]}" |
+cut -d' ' -f2 |
+while read pack ; do
+	CARCH=$arch
+
+	. "$pack/PKGBUILD"
+
+	printf '%s\n' "${depends[@]}" "${makedepends[@]}"
+done | sort -u |
+sed 's/\(>\|<\|=\).*//' |
+while read dep ; do
+	if pacman -Si "$dep" &> /dev/null ; then
+		echo -n >&2 .
+		echo "$dep"
+	fi
+done |
+if [[ $arch == i686 ]] ; then
+	linux32 sudo xargs pacman -Syy --noconfirm --needed --asdeps 2>&1
+else
+	sudo xargs pacman -Syy --noconfirm --needed --asdeps 2>&1
+fi
+
+packs+=$'\n0 end'
+
+msg 'starting build...'
+
+# Fed at the bottom to avoid creating a subshell.
+while read item ; do
 	cache_rights
 
+	# Extract depth and name from item.
 	read depth pack <<< "$item"
-	msg "depth> $depth"
-	msg "-name> $pack"
+	msg "%item% $pack $depth"
 
-	msg2 'copying...'
+	# Handle first package.
+	if [[ -z "$last_depth" ]] ; then
+		last_depth=$depth
+	fi
+
+	msg2 "$pack copying..."
 
 	# packages/*/<package> -> build/<package>
-	cp -vfr "$pack" "$builddir"
-	cd "$builddir/$pack"
+	cp -fr "$pkgdir/$pack" "$builddir"
 
-	msg2 'cleaning...'
+	msg2 "$pack cleaning..."
 
 	# Better than nothing cleaning.
 	# It is preferable to run 'git clean -dXf packages' or work with a fresh
 	# clone.
-	rm -vrf */
-	rm -vf *.{xz,gz,zip,bzip2,gunzip2,tgz,tar}
+	cd "${builddir:-safety}/$pack"
+	rm -rf */
+	rm -f *.{xz,gz,zip,bzip2,gunzip2,tgz,tar}
 
-	msg2 'building...'
+	#"$base/make-package" . $arch /tmp/make-repo$RANDOM.lck
 
-	# Build.
-	makepkg -s --nocheck --noconfirm 2>&1
+	if [[ $depth != $last_depth ]] ; then
+		$brutal_unlock && sudo rm -f /var/lib/pacman/db.lck
 
-	# Log errors.
-	ret=$?
-	if [[ $ret != 0 ]] ; then
-		warn "'$pack' failed with error code $ret"
-		continue
+		msg "on level $last_depth"
+
+		msg "queue: ${queue[@]}"
+
+		printf "$builddir/%s\\n" "${queue[@]}" |
+		  parallel --no-notice -I{} -n1 -j$jobs \
+		    "$basedir/make-package" {} $arch $last_depth \
+		    /tmp/make-repo$RANDOM$RANDOM.lck
+
+		last_depth=$depth
+
+		queue=()
 	fi
 
-	# Install if dependency.
-	if [[ $depth != 1 ]] ; then
-		sudo pacman --asdeps --noconfirm -U *.pkg.tar.xz ||
-		  warn "'$pack' failed to install"
+	# Exit on last item.
+	if [[ $depth == 0 ]] ; then
+		break
 	fi
 
-	msg2 'moving to repo...'
-	# Move package into the repo.
-	mv *.pkg.tar.xz "$repodir"
-) done
-
-# Put together a database.
-cd "$repodir"
-
-if $sign ; then
-	msg 'starting gpg agent...'
-
-	# Kill gpg-agent on exit.
-	trap_exit() {
-		kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")"
-	}
-	trap trap_exit EXIT
-
-	# Start gpg-agent.
-	[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
-	[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
-
-	msg 'signing packages...'
-	for pack in *.pkg.tar.xz ; do
-		gpg -b "$pack"
-	done
-fi
-
-msg 'creating database...'
-repo-add blackarch.db.tar.gz *.pkg.tar.xz 2>&1
+	queue+=("$pack")
+done < <(echo "$packs")
 
 # vim: set ft=zsh:

@@ -1,0 +1,153 @@
+#!/usr/bin/env python2
+# coding=utf-8
+
+# blackarch package finder: searches pacman.conf repos, AUR, a local copy of the ba github repo + ba github issues
+
+import subprocess
+import colorama, re, string, sys
+import argparse
+from os.path import expanduser
+
+# BLACKARCH_HOME var is where your local blackarch github unstable repo resides
+BLACKARCH_HOME = expanduser("~") + '/devel/github/blackarch'
+# PACKER var is for searching pacman.conf repos
+PACKER = '/usr/bin/packer'
+
+colorama.init(autoreset=True)
+red = "\033[1;31m"
+blue = "\033[1;34m"
+cyan = "\033[1;36m"
+bold = "\033[1;37m"
+normal = "\033[22;m"
+stopcolor = "\033[0;0m"
+
+
+def seperator():
+    print " ___-----_______{]" + bold + "_______________________________________________________"
+    print "{&&&&&&&&#%%&#%&{]" + bold + "_______________________________________________________\\"
+    print "                {]"
+
+
+def coreAUR(query):
+    if type(query) is list:
+        count = 0
+        for url in query:
+            count += 1
+            print blue + "\n[" + cyan + "*" + blue + "]" + bold + "  Packer core|AUR scan :: searching for package name: " + red + "%s" % url
+            coreAURscan = [PACKER, '-Ss', '%s' % url]
+            try:
+                subprocess.call(coreAURscan, close_fds=True)
+            except subprocess.CalledProcessError as exc:
+                print("Status : FAIL", exc.returncode, exc.output)
+            seperator()
+    elif type(query) is str:
+        url = query
+        print blue + "\n[" + cyan + "*" + blue + "]" + bold + "  Packer core|AUR scan :: searching for package name: " + red + "%s" % url
+        coreAURscan = [PACKER, '-Ss', '%s' % url]
+        try:
+            subprocess.call(coreAURscan, close_fds=True)
+        except subprocess.CalledProcessError as exc:
+            print("Status : FAIL", exc.returncode, exc.output)
+        seperator()
+
+
+def bafind(query):
+    if type(query) is list:
+        count = 0
+        for url in query:
+            count += 1
+            print blue + "\n[" + cyan + "*" + blue + "]" + bold + "  BlackArch github (unstable) scan :: searching for package name: " + red + "%s" % url
+            try:
+                findcmd = ['find', BLACKARCH_HOME, '-type', 'd', '-iname', '*%s*' % url]
+                grepcmd = ['grep', '-i', '--color=always', '%s' % url]
+                findit = subprocess.Popen(findcmd, stdout=subprocess.PIPE)
+                grepit = subprocess.Popen(grepcmd, stdin=findit.stdout, stdout=subprocess.PIPE)
+                findit.stdout.close()
+                grepit.communicate()[0]
+            except subprocess.CalledProcessError as exc:
+                print("Status : FAIL", exc.returncode, exc.output)
+            seperator()
+    elif type(query) is str:
+        url = query
+        print blue + "\n[" + cyan + "*" + blue + "]" + normal + "  BlackArch github (unstable) scan :: searching for package name: " + bold + "%s" % url
+        try:
+            findcmd = ['find', BLACKARCH_HOME, '-type', 'd', '-iname', '*%s*' % url]
+            grepcmd = ['grep', '-i', '--color=always', '%s' % url]
+            findit = subprocess.Popen(findcmd, stdout=subprocess.PIPE)
+            grepit = subprocess.Popen(grepcmd, stdin=findit.stdout, stdout=subprocess.PIPE)
+            findit.stdout.close()
+            grepit.communicate()[0]
+        except subprocess.CalledProcessError as exc:
+            print("Status : FAIL", exc.returncode, exc.output)
+        seperator()
+
+
+def ghifind(query):
+    if type(query) is list:
+        count = 0
+        for url in query:
+            count += 1
+            print blue + "\n[" + cyan + "*" + blue + "]" + normal + "  ghi list :: searching for package name: " + red + "%s" % url
+            try:
+                ghiscan = ['ghi', 'list', '--', 'blackarch/blackarch']
+                grepghi = ['grep', '-i', '--color', '%s' % url]
+                ghigo = subprocess.Popen(ghiscan, stdout=subprocess.PIPE)
+                grepgo = subprocess.Popen(grepghi, stdin=ghigo.stdout, close_fds=True)
+                ghigo.stdout.close()
+                grepgo.communicate()[0]
+            except subprocess.CalledProcessError as exc:
+                print("Status : FAIL", exc.returncode, exc.output)
+            seperator()
+    elif type(query) is str:
+        url = query
+        print blue + "\n[" + cyan + "*" + blue + "]" + bold + "  ghi list :: searching for package name: " + red + "%s" % url
+        try:
+            ghiscan = ['ghi', 'list', '--', 'blackarch/blackarch']
+            grepghi = ['grep', '-i', '--color', '%s' % url]
+            ghigo = subprocess.Popen(ghiscan, stdout=subprocess.PIPE)
+            grepgo = subprocess.Popen(grepghi, stdin=ghigo.stdout, close_fds=True)
+            ghigo.stdout.close()
+            grepgo.communicate()[0]
+        except subprocess.CalledProcessError as exc:
+            print("Status : FAIL", exc.returncode, exc.output)
+        seperator()
+
+
+def main():
+    parser = argparse.ArgumentParser(description='blackarch package finder')
+    parser.add_argument('pkg', help='package to search for, space or comma seperated', nargs='*',
+                        type=lambda v: v.split(','), )
+    parser.add_argument('-f', '--filename', dest='filename', help='input filename containing search terms')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s version 0.1.0')
+    args = parser.parse_args()
+    print blue + "\n[" + cyan + "+" + blue + "]" + bold + "  Initialized BlackArch Package Finder..."
+    if (args.pkg):
+        print blue + "[" + cyan + "+" + blue + "]" + bold + "  Query terms plucked from command-line"
+        packlist = []
+        packlist.append(args.pkg)
+        for package in packlist:
+            if type(package) is list:
+                for x in package:
+                    coreAUR(x)
+                for y in package:
+                    bafind(y)
+                for z in package:
+                    ghifind(z)
+            else:
+                print blue + "[" + red + "!" + blue + "]" + bold + "  something is not right"
+                sys.exit(1)
+    elif (args.filename):
+        print blue + "[" + cyan + "+" + blue + "]" + normal + "  Reading filename: " + bold + str(
+            args.filename) + normal + " for query terms"
+        packlist = []
+        with open(args.filename, mode='r', buffering=-1) as file:
+            packlist = [x.strip() for x in file.readlines()]
+            for package in packlist:
+                coreAUR(package)
+                bafind(package)
+                ghifind(package)
+    print blue + "\n[" + cyan + "-" + blue + "]" + bold + "  ... annnnd that's all folks\n"
+
+
+if __name__ == '__main__':
+    main()
