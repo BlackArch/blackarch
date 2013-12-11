@@ -4,14 +4,8 @@
 # blackarch package finder: searches pacman.conf repos, AUR, a local copy of the ba github repo + ba github issues
 
 import subprocess
-import colorama, re, string, sys
+import colorama, re, string, sys, os
 import argparse
-from os.path import expanduser
-
-# BLACKARCH_HOME var is where your local blackarch github unstable repo resides
-BLACKARCH_HOME = expanduser("~") + '/devel/github/blackarch'
-# PACKER var is for searching pacman.conf repos
-PACKER = '/usr/bin/packer'
 
 colorama.init(autoreset=True)
 red = "\033[1;31m"
@@ -33,8 +27,8 @@ def coreAUR(query):
         count = 0
         for url in query:
             count += 1
-            print blue + "\n[" + cyan + "*" + blue + "]" + bold + "  Packer core|AUR scan :: searching for package name: " + red + "%s" % url
-            coreAURscan = [PACKER, '-Ss', '%s' % url]
+            print blue + "\n[" + cyan + "*" + blue + "]" + bold + "  core + AUR scan :: searching for package name: " + red + "%s" % url
+            coreAURscan = [args.packer, '-Ss', '%s' % url]
             try:
                 subprocess.call(coreAURscan, close_fds=True)
             except subprocess.CalledProcessError as exc:
@@ -42,8 +36,8 @@ def coreAUR(query):
             seperator()
     elif type(query) is str:
         url = query
-        print blue + "\n[" + cyan + "*" + blue + "]" + bold + "  Packer core|AUR scan :: searching for package name: " + red + "%s" % url
-        coreAURscan = [PACKER, '-Ss', '%s' % url]
+        print blue + "\n[" + cyan + "*" + blue + "]" + bold + "  core + AUR scan :: searching for package name: " + red + "%s" % url
+        coreAURscan = [args.packer, '-Ss', '%s' % url]
         try:
             subprocess.call(coreAURscan, close_fds=True)
         except subprocess.CalledProcessError as exc:
@@ -58,10 +52,10 @@ def bafind(query):
             count += 1
             print blue + "\n[" + cyan + "*" + blue + "]" + bold + "  BlackArch github (unstable) scan :: searching for package name: " + red + "%s" % url
             try:
-                findcmd = ['find', BLACKARCH_HOME, '-type', 'd', '-iname', '*%s*' % url]
+                findcmd = ['find', args.bahome, '-type', 'd', '-iname', '*%s*' % url]
                 grepcmd = ['grep', '-i', '--color=always', '%s' % url]
                 findit = subprocess.Popen(findcmd, stdout=subprocess.PIPE)
-                grepit = subprocess.Popen(grepcmd, stdin=findit.stdout, stdout=subprocess.PIPE)
+                grepit = subprocess.Popen(grepcmd, stdin=findit.stdout, close_fds=True)
                 findit.stdout.close()
                 grepit.communicate()[0]
             except subprocess.CalledProcessError as exc:
@@ -71,10 +65,10 @@ def bafind(query):
         url = query
         print blue + "\n[" + cyan + "*" + blue + "]" + normal + "  BlackArch github (unstable) scan :: searching for package name: " + bold + "%s" % url
         try:
-            findcmd = ['find', BLACKARCH_HOME, '-type', 'd', '-iname', '*%s*' % url]
+            findcmd = ['find', args.bahome, '-type', 'd', '-iname', '*%s*' % url]
             grepcmd = ['grep', '-i', '--color=always', '%s' % url]
             findit = subprocess.Popen(findcmd, stdout=subprocess.PIPE)
-            grepit = subprocess.Popen(grepcmd, stdin=findit.stdout, stdout=subprocess.PIPE)
+            grepit = subprocess.Popen(grepcmd, stdin=findit.stdout, close_fds=True)
             findit.stdout.close()
             grepit.communicate()[0]
         except subprocess.CalledProcessError as exc:
@@ -87,9 +81,9 @@ def ghifind(query):
         count = 0
         for url in query:
             count += 1
-            print blue + "\n[" + cyan + "*" + blue + "]" + normal + "  ghi list :: searching for package name: " + red + "%s" % url
+            print blue + "\n[" + cyan + "*" + blue + "]" + bold + "  ghi list :: searching for package name: " + red + "%s" % url
             try:
-                ghiscan = ['ghi', 'list', '--', 'blackarch/blackarch']
+                ghiscan = ['ghi', 'list', '--', 'blackarchlinux/blackarchlinux']
                 grepghi = ['grep', '-i', '--color', '%s' % url]
                 ghigo = subprocess.Popen(ghiscan, stdout=subprocess.PIPE)
                 grepgo = subprocess.Popen(grepghi, stdin=ghigo.stdout, close_fds=True)
@@ -102,7 +96,7 @@ def ghifind(query):
         url = query
         print blue + "\n[" + cyan + "*" + blue + "]" + bold + "  ghi list :: searching for package name: " + red + "%s" % url
         try:
-            ghiscan = ['ghi', 'list', '--', 'blackarch/blackarch']
+            ghiscan = ['ghi', 'list', '--', 'blackarchlinux/blackarchlinux']
             grepghi = ['grep', '-i', '--color', '%s' % url]
             ghigo = subprocess.Popen(ghiscan, stdout=subprocess.PIPE)
             grepgo = subprocess.Popen(grepghi, stdin=ghigo.stdout, close_fds=True)
@@ -112,14 +106,29 @@ def ghifind(query):
             print("Status : FAIL", exc.returncode, exc.output)
         seperator()
 
+class check_dir(argparse.Action):
+    def __call__(self,parser, namespace, values, option_string=None):
+        badir=values
+        print "values from call > " + badir
+        if not os.path.isdir(badir):
+            raise argparse.ArgumentTypeError("badir:{0} is not a valid path".format(badir))
+        if os.access(badir, os.R_OK):
+            setattr(namespace,self.dest,badir)
+        else:
+            print "in the else part of check_dir > " + badir
+            #return badir
+            raise argparse.ArgumentTypeError("badir:{0} is not a readable dir".format(badir))
+
+parser = argparse.ArgumentParser(description='blackarch package finder')
+parser.add_argument('pkg', help='package to search for, space or comma seperated', nargs='*',
+                    type=lambda v: v.split(','), )
+parser.add_argument('-b', '--bahome', action=check_dir, required=True, help='specify the directory where your BlackArchLinux github (unstable) repo resides')
+parser.add_argument('-p', '--packer', required=True, help='specify the tool to search pacman.conf repos AND the AUR, Example: "packer", OR "pacaur"')
+parser.add_argument('-f', '--filename', dest='filename', help='input filename containing search terms')
+parser.add_argument('-v', '--version', action='version', version='%(prog)s version 0.1.1')
+args = parser.parse_args()
 
 def main():
-    parser = argparse.ArgumentParser(description='blackarch package finder')
-    parser.add_argument('pkg', help='package to search for, space or comma seperated', nargs='*',
-                        type=lambda v: v.split(','), )
-    parser.add_argument('-f', '--filename', dest='filename', help='input filename containing search terms')
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s version 0.1.0')
-    args = parser.parse_args()
     print blue + "\n[" + cyan + "+" + blue + "]" + bold + "  Initialized BlackArch Package Finder..."
     if (args.pkg):
         print blue + "[" + cyan + "+" + blue + "]" + bold + "  Query terms plucked from command-line"
@@ -147,7 +156,6 @@ def main():
                 bafind(package)
                 ghifind(package)
     print blue + "\n[" + cyan + "-" + blue + "]" + bold + "  ... annnnd that's all folks\n"
-
 
 if __name__ == '__main__':
     main()
