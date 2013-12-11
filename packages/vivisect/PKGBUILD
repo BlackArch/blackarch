@@ -1,0 +1,46 @@
+pkgname=vivisect
+pkgver=20130901
+pkgrel=1
+groups=('blackarchlinux' 'blackarchlinux-debugger' 'blackarch-reversing' 'blackarch-disassembler')
+pkgdesc="Vivisect is a Python based static analysis and reverse engineering framework, Vdb is a Python based research/reversing focused debugger and programatic debugging API by invisigoth of kenshoto"
+arch=('i686' 'x86_64')
+url="http://visi.kenshoto.com/"
+license=('BSD')
+depends=('python2' 'python2-pyqt4' 'pyqt4-common' 'python2-msgpack')
+source=("http://visi.kenshoto.com/static/releases/vivisect_$pkgver.zip")
+options=('!emptydirs')
+md5sums=('216a375f5828f1d304203c6c125321a0')
+
+prepare() {
+  cd "$srcdir/vivisect_$pkgver"
+
+  sed -i 's|#!/usr/bin/python|#!/usr/bin/python2|' "$srcdir/vivisect_$pkgver/vdbbin"
+  sed -i 's|#!/usr/bin/python|#!/usr/bin/python2|' "$srcdir/vivisect_$pkgver/vivbin"
+}
+
+package() {
+  cd "$srcdir/vivisect_$pkgver"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/vivisect"
+
+  cp -a * "$pkgdir/usr/share/vivisect"
+
+  cat > "$pkgdir/usr/bin/vdbbin" <<EOF
+#!/bin/sh
+cd /usr/share/vivisect
+python2 /usr/share/vivisect/vdbbin "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/vdbbin"
+
+  cat > "$pkgdir/usr/bin/vivbin" <<EOF
+#!/bin/sh
+cd /usr/share/vivisect
+python2 /usr/share/vivisect/vivbin "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/vivbin"
+}
+
