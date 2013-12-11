@@ -1,7 +1,10 @@
 #!/usr/bin/env python2
 # coding=utf-8
 
-# blackarch package finder: searches pacman.conf repos, AUR, a local copy of the ba github repo + ba github issues
+# BlackArchLinux package finder: searches pacman.conf repos, AUR, a local copy of the ba github repo + ba github issues
+#
+# REQUIRED packages: 'python2', 'python2-argparse', 'python2-colorama', 'ghi'
+#   lastly you will need an AUR helper: i.e. packer, yaourt, pacaur, clyde, etc
 
 import subprocess
 import colorama, re, string, sys, os
@@ -96,10 +99,6 @@ def ghifind(query):
         url = query
         print blue + "\n[" + cyan + "*" + blue + "]" + bold + "  ghi list :: searching for package name: " + red + "%s" % url
         try:
-            ghiscan = ['ghi', 'list', '--', 'blackarchlinux/blackarchlinux']
-            grepghi = ['grep', '-i', '--color', '%s' % url]
-            ghigo = subprocess.Popen(ghiscan, stdout=subprocess.PIPE)
-            grepgo = subprocess.Popen(grepghi, stdin=ghigo.stdout, close_fds=True)
             ghigo.stdout.close()
             grepgo.communicate()[0]
         except subprocess.CalledProcessError as exc:
@@ -109,18 +108,16 @@ def ghifind(query):
 class check_dir(argparse.Action):
     def __call__(self,parser, namespace, values, option_string=None):
         badir=values
-        print "values from call > " + badir
         if not os.path.isdir(badir):
             raise argparse.ArgumentTypeError("badir:{0} is not a valid path".format(badir))
         if os.access(badir, os.R_OK):
             setattr(namespace,self.dest,badir)
         else:
             print "in the else part of check_dir > " + badir
-            #return badir
             raise argparse.ArgumentTypeError("badir:{0} is not a readable dir".format(badir))
 
 parser = argparse.ArgumentParser(description='blackarch package finder')
-parser.add_argument('pkg', help='package to search for, space or comma seperated', nargs='*',
+parser.add_argument('package', help='name of package to search for [space or comma seperated]', nargs='+',
                     type=lambda v: v.split(','), )
 parser.add_argument('-b', '--bahome', action=check_dir, required=True, help='specify the directory where your BlackArchLinux github (unstable) repo resides')
 parser.add_argument('-p', '--packer', required=True, help='specify the tool to search pacman.conf repos AND the AUR, Example: "packer", OR "pacaur"')
@@ -130,10 +127,10 @@ args = parser.parse_args()
 
 def main():
     print blue + "\n[" + cyan + "+" + blue + "]" + bold + "  Initialized BlackArch Package Finder..."
-    if (args.pkg):
+    if (args.package):
         print blue + "[" + cyan + "+" + blue + "]" + bold + "  Query terms plucked from command-line"
         packlist = []
-        packlist.append(args.pkg)
+        packlist.append(args.package)
         for package in packlist:
             if type(package) is list:
                 for x in package:
