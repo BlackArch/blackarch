@@ -1,0 +1,84 @@
+#!/bin/bash
+
+stdin=false
+log=false
+severity=severity-low
+status=status-accepted
+
+parse_opts()
+{
+	while getopts slHt:h: flags ; do
+		case $flags in
+			n)
+				accept=false
+				;;
+			s)
+				stdin=true
+				;;
+			l)
+				log=true
+				;;
+			H)
+				severity=severity-high
+				;;
+			t)
+				type=$OPTARG
+				;;
+			h)
+				header=$OPTARG
+				;;
+			*)
+				echo >&2 'you have failed.'
+				;;
+		esac
+	done
+}
+
+check_opts()
+{
+	if [[ -z "$type" ]] ; then
+		echo >&2 'no type.'
+		exit 1
+	fi
+
+	if [[ -z "$header" ]] ; then
+		echo >&2 'no header'
+		exit 1
+	fi
+}
+
+get_content()
+{
+	if $stdin ; then
+		cat > "$1"
+	else
+		${EDITOR:-vi} "$1"
+	fi
+}
+
+do_format()
+{
+	if $log ; then
+		# Four spaces for code formatting.
+		sed -i 's/^/    /' "$1"
+	fi
+}
+
+open_issue()
+{
+	export GHI_EDITOR=cat
+	echo ghi -L type-$type,$severity,$status open -- BlackArch/blackarch < "$1"
+}
+
+main()
+{
+	tmp=$(mktemp /tmp/issue.XXXXXXX)
+
+	parse_opts "$@"
+	check_opts
+	get_content $tmp
+	do_format $tmp
+	open_issue $tmp
+}
+
+main "$@"
