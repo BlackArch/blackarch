@@ -1,0 +1,18 @@
+#!/bin/bash
+# List packages in the real repo that no longer exist in the Git repo.
+
+base=$(dirname "$0")
+archs=(i686 x86_64)
+
+get_name() {
+	tar xJf "$1" .PKGINFO --force-local -O 2> /dev/null | grep '^pkgname' | cut -d' ' -f3
+}
+
+for arch in "${archs[@]}" ; do
+	for p in ../real-repo/$arch/*.pkg.tar.xz ; do (
+		pkgname=$(get_name "$p")
+		if [[ ! -d ../packages/$pkgname ]] ; then
+			echo "$p"
+		fi
+	) done
+done
