@@ -17,11 +17,11 @@ codebase to maintain the quality of the repository.
 Get Involved
 ------------
 
-You can get in touch with the blackarchlinux team. Just check out the following:
+You can get in touch with the blackarch team. Just check out the following:
 
 **Please, send us pull requests!**
 
-**Web:** http://blackarchlinux.org/
+**Web:** http://www.blackarch.org/
 
 **Mail:**
 
@@ -34,15 +34,13 @@ Add this to
 [`/etc/pacman.conf`](https://www.archlinux.org/pacman/pacman.conf.5.html):
 
 ```
-[blackarchlinux]
-Server = http://www.blackarchlinux.org/pub/blackarchlinux/$arch
+[blackarch]
+Server = http://www.blackarch.org/pub/blackarch/$arch
 ```
 
 For package signing, pull in and sign the package signing keys:
 
 ```
- # pacman-key -r 12135932909A15567BCC2AA91FA5B9C987E7BDF3
- # pacman-key --lsign-key 12135932909A15567BCC2AA91FA5B9C987E7BDF3
  # pacman-key -r 4345771566D76038C7FEB43863EC0ADBEA87E4E3
  # pacman-key --lsign-key 4345771566D76038C7FEB43863EC0ADBEA87E4E3
 ```
@@ -56,39 +54,39 @@ Now run
 Installing packages
 -------------------
 
-You may now install tools from the blackarchlinux repository. To list all of the available tools, run
+You may now install tools from the blackarch repository. To list all of the available tools, run
 
  ```
- # pacman -Sgg | grep blackarchlinux
+ # pacman -Sgg | grep blackarch
  ```
 
 To install all of the tools, run
 
  ```
- # pacman -S blackarchlinux
+ # pacman -S blackarch
  ```
 
 To install a category of tools, run
 
  ```
- # pacman -S blackarchlinux-<category>
+ # pacman -S blackarch-<category>
  ```
 
-To see the blackarchlinux categories, run
+To see the blackarch categories, run
 
  ```
- # pacman -Sg | grep blackarchlinux
+ # pacman -Sg | grep blackarch
  ```
 
 <!-- Run `scripts/make-category-list` to generate this list. -->
 Package Groups
 --------------
 
-Tools may be installed by category. The category groups are listed below.  To learn more about each included tool visit http://www.blackarchlinux.org/packages.html
+Tools may be installed by category. The category groups are listed below.  To learn more about each included tool visit http://www.blackarch.org/packages.html
 
 #### Intelligence Gathering
  ```
- # pacman -S blackarchlinux-intel
+ # pacman -S blackarch-intel
  ```
 
 Tools in this group:
@@ -161,7 +159,7 @@ Tools in this group:
 
 #### Forensics
  ```
- # pacman -S blackarchlinux-forensics
+ # pacman -S blackarch-forensics
  ```
 
 Tools in this group:
@@ -194,7 +192,7 @@ Tools in this group:
 
 #### Exploitation
  ```
- # pacman -S blackarchlinux-exploitation
+ # pacman -S blackarch-exploitation
  ```
 
 Tools in this group:
@@ -214,7 +212,7 @@ Tools in this group:
 
 #### Defensive
  ```
- # pacman -S blackarchlinux-defensive
+ # pacman -S blackarch-defensive
  ```
 
 Tools in this group:
@@ -228,7 +226,7 @@ Tools in this group:
 
 #### Wireless Attacks
  ```
- # pacman -S blackarchlinux-wireless
+ # pacman -S blackarch-wireless
  ```
 
 Tools in this group:
@@ -257,7 +255,7 @@ Tools in this group:
 
 #### Threat Analysis
  ```
- # pacman -S blackarchlinux-analysis
+ # pacman -S blackarch-analysis
  ```
 
 Tools in this group:
@@ -287,7 +285,7 @@ Tools in this group:
 
 #### Web Applications
  ```
- # pacman -S blackarchlinux-web-apps
+ # pacman -S blackarch-web-apps
  ```
 
 Tools in this group:
@@ -321,7 +319,7 @@ Tools in this group:
 
 #### Password Attacks
  ```
- # pacman -S blackarchlinux-password-attacks
+ # pacman -S blackarch-password-attacks
  ```
 
 Tools in this group:
@@ -351,7 +349,7 @@ Tools in this group:
 
 #### Hardware Hacking
  ```
- # pacman -S blackarchlinux-hardware-hacking
+ # pacman -S blackarch-hardware-hacking
  ```
 
 Tools in this group:
@@ -361,7 +359,7 @@ Tools in this group:
 
 #### Reverse Engineering
  ```
- # pacman -S blackarchlinux-reversing
+ # pacman -S blackarch-reversing
  ```
 
 Tools in this group:
@@ -377,7 +375,7 @@ Tools in this group:
 
 #### Stress Testing
  ```
- # pacman -S blackarchlinux-stress-testing
+ # pacman -S blackarch-stress-testing
  ```
 
 Tools in this group:
@@ -390,7 +388,7 @@ Tools in this group:
 
 #### Threat Modeling
  ```
- # pacman -S blackarchlinux-threat-model
+ # pacman -S blackarch-threat-model
  ```
 
 Tools in this group:
