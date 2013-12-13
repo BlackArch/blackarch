@@ -1,0 +1,36 @@
+pkgname=tpcat
+pkgver=latest
+pkgrel=1
+url="http://sourceforge.net/projects/tpcat/"
+pkgdesc="TPCAT is based upon pcapdiff by the EFF. TPCAT will analyze two packet captures (taken on each side of the firewall as an example) and report any packets that were seen on the source capture but didn’t make it to the dest."
+groups=('blackarch' 'blackarch-misc')
+depends=('python2' 'wxpython' 'python2-pcapy')
+license=('GPL')
+arch=(any)
+source=(http://downloads.sourceforge.net/tpcat/TPCAT.py
+        http://downloads.sourceforge.net/tpcat/tpcat.zip)
+md5sums=('3c5c2ac2378672bb9f12c493a52dc407'
+         '5d6199a34807d14d38d8a54ada77ca07')
+
+prepare(){
+  grep -iRl 'python' "$srcdir" | xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
+}
+
+
+
+package() {
+  cd "$srcdir"
+  install -Dm755 TPCAT.py $pkgdir/usr/share/tpcat/tpcat.py
+  install -Dm644 tpcat/firewall.ico $pkgdir/usr/share/tpcat/firewall.ico
+  install -Dm644 tpcat/Readme.txt $pkgdir/usr/share/tpcat/Readme.txt
+
+  mkdir -p $pkgdir/usr/bin/
+  cd $pkgdir/usr/bin
+  echo > $pkgdir/usr/bin/tpcat << EOF
+#!/bin/sh
+cd /usr/share/tpcat
+python2 tpcat.py "\$@"
+EOF
+  chmod +x $pkgdir/usr/bin/tpcat
+}
+
