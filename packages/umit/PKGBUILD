@@ -1,28 +1,25 @@
-# TODO: make package function
-
 pkgname=umit
-pkgver=1.0RC
-pkgrel=2
-pkgdesc="UMIT is a powerful nmap frontend."
+pkgver=1.0
+pkgrel=1
+pkgdesc="A powerful nmap frontend."
 arch=('i686' 'x86_64' 'ppc')
 url="http://www.umitproject.org/"
 license=('GPL')
-groups=('blackarch' 'blackarch-intel')
-depends=('python' 'pygtk' 'nmap' 'python-pysqlite')
-makedepends=('gcc' 'make' 'gtk2')
-source=(http://downloads.sourceforge.net/umit/umit-$pkgver.tar.bz2
-        umit.desktop)
-md5sums=('4466f58f756acc1265feb7f9f5670cc0'
-         'dc653e673749e79c82d1e7831c900ff8')
+depends=('python2' 'pygtk' 'nmap' 'python2-pysqlite')
+source=("http://downloads.sourceforge.net/$pkgname/$pkgname-$pkgver.tar.bz2"
+        'setup.patch')
+md5sums=('68412d8d50dafd53e0392f71ed62dcfc'
+         'a1e1b57443c92e716b881bdb347fe091')
 
 build() {
-  cd "$srcdir/umit-$pkgver/"
+  cd $srcdir/umit-$pkgver
 
-  mkdir plugins
-  PYTHONPATH="$(pwd)" python setup.py plugins
-  # Remove useless plugins
-  rm plugins/{dummyworking,ContextMenu,Localize,SystemInfo,SystemInfoConsumer,TestCase}.ump
+  patch -p0 < $srcdir/setup.patch
+} 
 
-  python setup.py install --root=$pkgdir --install-lib=usr/share/umit -P
-  install -Dm644 "$srcdir"/umit.desktop $pkgdir/usr/share/applications/umit.desktop
+package() {
+  cd $srcdir/umit-$pkgver
+
+  python2 setup.py install --root="$pkgdir" --install-lib=usr/share/umit --optimize=1
 }
+
