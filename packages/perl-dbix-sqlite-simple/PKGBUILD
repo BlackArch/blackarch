@@ -1,22 +1,47 @@
-# TODO: remove startdir
-# TODO: make package function
-
-pkgname=perl-dbix-sqlite-simple
-pkgver=0.34
-pkgrel=1
+pkgname='perl-dbix-sqlite-simple'
+pkgver='0.34'
+pkgrel='1'
 pkgdesc="easy access to SQLite databases using objects"
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-url="http://search.cpan.org/~gomor/DBIx-SQLite-Simple"
-license=('PerlArtistic')
-depends=('perl' 'perl-class-gomor' 'perl-dbd-sqlite')
-source=(http://search.cpan.org/CPAN/authors/id/G/GO/GOMOR/DBIx-SQLite-Simple-$pkgver.tar.gz)
+arch=('any')
+license=('PerlArtistic' 'GPL')
+options=('!emptydirs')
+depends=('perl-class-gomor' 'perl-dbd-sqlite')
+makedepends=()
+url='http://search.cpan.org/dist/DBIx-SQLite-Simple'
+source=('http://search.cpan.org/CPAN/authors/id/G/GO/GOMOR/DBIx-SQLite-Simple-0.34.tar.gz')
 md5sums=('7375627800f0ef136eff5ef18c766c64')
+sha512sums=('60a0dc247f23b674ec6863061ae165a20b8eb7d69cf468d4954bc4ea16619287a97794570441d3135d1e28040a30e869fefd43aa9d1fbbf2c093032574bf974f')
+_distdir="DBIx-SQLite-Simple-0.34"
 
 build() {
-  cd  $startdir/src/DBIx-SQLite-Simple-$pkgver
-  PERL_MM_USE_DEFAULT=1 perl Makefile.PL INSTALLDIRS=vendor
-  make
-  make pure_install doc_install DESTDIR=$startdir/pkg
-  find $startdir/pkg -name '.packlist' -delete
-  find $startdir/pkg -name '*.pod' -delete
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""                 \
+      PERL_AUTOINSTALL=--skipdeps                            \
+      PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'"     \
+      PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+      MODULEBUILDRC=/dev/null
+
+    cd "$srcdir/$_distdir"
+    /usr/bin/perl Makefile.PL
+    make
+  )
 }
+
+check() {
+  cd "$srcdir/$_distdir"
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""
+    make test
+  )
+}
+
+package() {
+  cd "$srcdir/$_distdir"
+  make install
+
+  find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}
+
+# Local Variables:
+# mode: shell-script
+# sh-basic-offset: 2
+# End:
+# vim:set ts=2 sw=2 et:
