@@ -1,0 +1,44 @@
+pkgname=perl-test-most
+_cpanname='Test-Most'
+pkgver=0.31
+pkgrel=1
+pkgdesc="Most commonly needed test functions and features."
+arch=('any')
+license=('PerlArtistic' 'GPL')
+options=('!emptydirs')
+depends=('perl>=5.5.0' 'perl-exception-class>=1.14' 'perl-test-deep>=0.106' 'perl-test-differences>=0.61'
+         'perl-test-exception>=0.31' 'perl-test-warn>=0.23')
+url="http://search.cpan.org/dist/$_cpanname"
+source=("http://search.cpan.org/CPAN/authors/id/O/OV/OVID/$_cpanname-$pkgver.tar.gz")
+md5sums=('6be4f2f97858c7958a837cfbc2a22fba')
+
+# Function to change to the working directory and set
+# environment variables to override undesired options.
+prepareEnvironment() {
+	cd "$srcdir/$_cpanname-$pkgver"
+	export \
+		PERL_MM_USE_DEFAULT=1 \
+		PERL_AUTOINSTALL=--skipdeps \
+		PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'" \
+		PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+		MODULEBUILDRC=/dev/null
+}
+
+build() {
+	prepareEnvironment
+	/usr/bin/perl Makefile.PL
+	make
+}
+
+check() {
+	prepareEnvironment
+	make test
+}
+
+package() {
+	prepareEnvironment
+	make install
+
+	# Remove "perllocal.pod" and ".packlist".
+	find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}
