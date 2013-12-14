@@ -1,28 +1,20 @@
-# TODO: make package function
 pkgname=passcracking
-pkgver=20100712
+pkgver=20131214
 pkgrel=1
 pkgdesc="A little python script for sending hashes to passcracking.com and milw0rm"
-arch=("i686")
+arch=("any")
 url="http://github.com/jensp/passcracking"
-license=('')
-depends=('python')
+license=('custom:unkown')
+depends=('python2')
 groups=('blackarch' 'blackarch-password-attacks-attacks')
-_gitroot="git://github.com/jensp/passcracking.git"
-_gitname="passcracking"
-build() {
-  cd "$srcdir"
-  msg "Connecting to GIT server...."
-  if [ -d $_gitname ] ; then
-    cd $_gitname && git pull origin
-    msg "The local files are updated."
-  else
-    git clone $_gitroot $_gitname
-  fi
-  msg "GIT checkout done or server timeout"
-  msg "Starting make..."
-  rm -rf "$srcdir/$_gitname-build"
-  cp -r "$srcdir/$_gitname" "$srcdir/$_gitname-build"
-  cd "$srcdir/$_gitname-build"
-  install -D -m755 passcracking.py "${pkgdir}"/usr/bin/passcracking
+source=("git+https://github.com/jensp/passcracking.git")
+md5sums=('SKIP')
+
+prepare(){
+  grep -iRl 'python' "$srcdir/passcracking" | xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
+}
+
+package() {
+  cd "$srcdir/passcracking"
+  install -D -m755 passcracking.py $pkgdir/usr/bin/passcracking
 }
