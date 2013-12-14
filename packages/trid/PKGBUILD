@@ -1,20 +1,33 @@
-# TODO: make package function
-
 pkgname=trid
-pkgver=latest
-pkgrel=1
-pkgdesc="TrID is an utility designed to identify file types from their binary signatures"
-arch=('any')
+pkgver=2.11
+pkgrel=3
+pkgdesc="An utility designed to identify file types from their binary signatures"
+arch=('i686' 'x86_64')
 url="http://mark0.net/soft-trid-e.html"
-license=('GPL')
-groups=('blackarch' 'blackarch-forensics')
-source=(http://mark0.net/download/${pkgname}_linux.zip)
-md5sums=('e1d727115cfe51b44a9bb405bd3bf418')
+license=('CUSTOM')
+if [ "$CARCH" == "x86_64" ];then
+  depends=('trid-defs' 'lib32-ncurses')
+else
+  depends=('trid-defs' 'ncurses')
+fi
+source=(http://mark0.net/download/trid_linux.zip)
 
-build() {
-  cd "${srcdir}"/
+package() {
+  cd "$srcdir"
 
-  install -Dm755 trid $pkgdir/usr/share/trid/trid
-  install -Dm644 readme_e.txt $pkgdir/usr/share/trid/readme_e.txt
-  install -Dm644 readme_i.txt $pkgdir/usr/share/trid/readme_i.txt
+  install -Dm755 trid "$pkgdir/usr/share/trid/trid"
+  install -m 644 readme_e.txt "$pkgdir/usr/share/trid/README"
+  install -dm755 "$pkgdir/usr/share/licenses/trid"
+  ln -s /opt/trid/README "$pkgdir/usr/share/licenses/trid/README"
+
+  install -dm755  "$pkgdir/usr/bin"
+  cat > "$pkgdir/usr/bin/trid" <<EOF
+#!/bin/sh
+
+/usr/share/trid/trid -d:/usr/share/trid/triddefs.trd \$*
+
+EOF
+  chmod +x "$pkgdir/usr/bin/trid"
 }
+
+md5sums=('ee6327a79e1abf8ad36d1b0b96057f3f')
