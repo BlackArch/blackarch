@@ -1,20 +1,34 @@
-# TODO: make package function
-
 pkgname=suricata
-pkgver=1.0.0
+pkgver=1.4.6
 pkgrel=1
-pkgdesc="The Suricata Engine is an Open Source Next Generation Intrusion Detection and Prevention Engine."
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-url="http://www.openinfosecfoundation.org"
-license=('GPL3')
-depends=('libyaml')
-groups=('blackarch' 'blackarch-defensive')
-source=(http://www.openinfosecfoundation.org/download/suricata-$pkgver.tar.gz)
-md5sums=('01b8a6e4908f4a35f7f5d09b1a84cf5e')
+pkgdesc="An Open Source Next Generation Intrusion Detection and Prevention Engine"
+arch=('i686' 'x86_64')
+url="http://openinfosecfoundation.org/index.php/download-suricata"
+license=('GPL2')
+depends=('libcap-ng' 'libnet' 'libpcap' 'libyaml' 'pcre')
+optdepends=('snort: suricata can use rulesets provided by snort')
+backup=('etc/suricata/suricata.yaml')
+source=(http://openinfosecfoundation.org/download/$pkgname-$pkgver.tar.gz)
+sha256sums=('5cf5d76dd63d06b993912301edc8afa06f886d0b68740239cc7df49b00800f8e')
 
 build() {
-  cd "$srcdir"/${pkgname}-${pkgver}
-  ./configure --prefix=$pkgdir/usr
+  cd ${srcdir}/$pkgname-$pkgver
+
+  ./configure --prefix=/usr --sysconfdir=/etc/$pkgname
   make
-  make install
+}
+
+package() {
+  cd ${srcdir}/$pkgname-$pkgver
+
+  make DESTDIR=${pkgdir} install
+
+  install -d ${pkgdir}/var/log/$pkgname
+
+  install -D -m644 $pkgname.yaml "${pkgdir}/etc/$pkgname/$pkgname.yaml"
+  install -D -m644 classification.config "${pkgdir}/etc/$pkgname/classification.config"
+  install -D -m644 reference.config "${pkgdir}/etc/$pkgname/reference.config"
+ 
+  install -d "${pkgdir}/etc/$pkgname/rules"
+  install -D -m644 rules/*.rules "${pkgdir}/etc/$pkgname/rules/"
 }
