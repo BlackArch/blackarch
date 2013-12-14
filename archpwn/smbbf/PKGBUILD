@@ -1,32 +1,40 @@
-# TODO: make package function
-
 pkgname=smbbf
 pkgver=0.9.1
 pkgrel=1
 pkgdesc="SMB password bruteforcer."
+url="http://packetstormsecurity.com/files/25381/smbbf-0.9.1.tar.gz.html"
 groups=('blackarch' 'blackarch-password-attacks' 'blackarch-password-attacks-attacks')
 license=('GPL')
-makedepends=('gcc' 'make')
 depends=('openssl')
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-source=(http://packetstormsecurity.org/Crackers/${pkgname}-${pkgver}.tar.gz)
+options=('!makeflags')
+source=("http://packetstorm.igor.onlinedirect.bg/Crackers/smbbf-0.9.1.tar.gz")
 md5sums=('ddee38c0194ecef0bc0fe41aa6429ceb')
 
-build() {
+prepare() {
   cd "$srcdir/smbbf"
 
   sed -i '/SMBBF_INCLUDE =/cSMBBF_INCLUDE = -Iinclude -I\/usr\/include\/openssl -DCLK_TCK=CLOCKS_PER_SEC' Makefile
   sed -i '/LIBDES=/cLIBDES = -lcrypto' Makefile
   sed -i "/^CC =/cCC = gcc $CFLAGS" Makefile
-
-  make -j 1
-
-  for bin in nbdecode smbbf smbdumpusers smbgetserverinfo; do
-    install -Dm755 $bin $pkgdir/usr/bin/$bin
-  done
-
-  for data in README *.txt; do
-    install -Dm644 $data $pkgdir/usr/share/smbbf/$data
-  done
 }
 
+build() {
+  cd "$srcdir/smbbf"
+
+  make
+}
+
+package() {
+  cd "$srcdir/smbbf"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/doc/smbbf"
+
+  # Bin.
+  install -m755 nbdecode smbbf smbdumpusers smbgetserverinfo "$pkgdir/usr/bin"
+
+  # Doc.
+  install -m644 README *.txt "$pkgdir/usr/share/doc/smbbf"
+}
