@@ -1,10 +1,8 @@
-# TODO: make package function
-
 pkgname=darkjumper
 pkgver=5.8
 pkgrel=1
 pkgdesc="This tool will try to find every website that host at the same server at your target"
-depends=('perl' 'python')
+depends=('perl' 'python2')
 url="http://sourceforge.net/projects/darkjumper/"
 groups=('blackarch' 'blackarch-web-apps')
 license=('GPL')
@@ -12,14 +10,22 @@ arch=('any')
 source=(http://downloads.sourceforge.net/darkjumper/${pkgname}.v$pkgver.tar.gz)
 md5sums=('eca340d0bd033dcb829b57017e5556a1')
 
-build() {
+prepare(){
   cd $srcdir/darkjumper.v$pkgver
   rm *.pyc
   chmod -x *
   chmod +x *.py *.pl
-  sed -i 's:/usr/bin/python:/usr/bin/env python:' *.py
+  sed -i 's:/usr/bin/python:/usr/bin/env python2:' *.py
   sed -i 's:/usr/bin/perl:/usr/bin/env perl:' *.pl
+}
 
-  mkdir -p $pkgdir/usr/share/darkjumper/
-  cp * $pkgdir/usr/share/darkjumper/
+package() {
+  cd $srcdir/darkjumper.v$pkgver
+
+  install -dm755 $pkgdir/usr/share/darkjumper/
+  install -dm755 $pkgdir/usr/bin/
+  cp -a --no-preserve=ownership * $pkgdir/usr/share/darkjumper/
+ 
+  for i in *.pl; do ln -s $pkgdir/usr/share/darkjumper/$i $pkgdir/usr/bin/$i;done
+  for i in *.py; do ln -s $pkgdir/usr/share/darkjumper/$i $pkgdir/usr/bin/$i;done
 }
