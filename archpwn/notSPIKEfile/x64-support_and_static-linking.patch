@@ -1,0 +1,100 @@
+diff -ur dist/libdisasm/src/arch/i386/libdisasm/Makefile dist-my/libdisasm/src/arch/i386/libdisasm/Makefile
+--- dist/libdisasm/src/arch/i386/libdisasm/Makefile	2005-05-31 23:06:44.000000000 +0800
++++ dist-my/libdisasm/src/arch/i386/libdisasm/Makefile	2013-12-15 15:41:01.421826806 +0800
+@@ -1,6 +1,6 @@
+ LIBNAME	= libdisasm.so
+ INCLUDE 	= -I.
+-FLAGS 	= $(INCLUDE)  -O3 -ggdb
++FLAGS 	= $(INCLUDE) -c -O3 -ggdb
+ LFLAGS 	= $(FLAGS) -fPIC -shared -Wl,-soname,$(LIBNAME)
+ RM		= rm
+ CC		= gcc
+@@ -12,7 +12,7 @@
+ all: libdis quikdis testdis
+ 
+ libdis:
+-	$(CC) $(LFLAGS) $(SRC) -o $(LIBNAME)
++	$(CC) $(LFLAGS) $(SRC)
+ 
+ quikdis: libdis
+ 	$(CC) $(FLAGS) -L. -ldisasm quikdis.c -o quikdis
+Binary files dist/libdisasm/src/arch/i386/libdisasm/quikdis and dist-my/libdisasm/src/arch/i386/libdisasm/quikdis differ
+Binary files dist/libdisasm/src/arch/i386/libdisasm/testdis and dist-my/libdisasm/src/arch/i386/libdisasm/testdis differ
+diff -ur dist/Makefile dist-my/Makefile
+--- dist/Makefile	2005-07-29 02:15:23.000000000 +0800
++++ dist-my/Makefile	2013-12-15 15:41:51.281826975 +0800
+@@ -11,9 +11,9 @@
+ %.o: %.c $(INCLUDEDIR)/%.h
+ 	$(CC) -c $(CFLAGS) $*.c -I $(INCLUDEDIR)
+ all: $(OBJ)
+-	$(CC) $(OBJ) -o $(EXE) $(LIBS)
++	$(CC) $(OBJ) -o $(EXE) libdisasm/src/arch/i386/libdisasm/*.o
+ clean:
+-	rm -rf $(OBJ) $(EXE) *~ core *.tar dist libdisasm/src/arch/i386/libdisasm/*.so
++	rm -rf $(OBJ) $(EXE) *~ core *.tar dist libdisasm/src/arch/i386/libdisasm/*.so libdisasm/src/arch/i386/libdisasm/*.o
+ tar:
+ 	mkdir dist
+ 	cp -pr README LICENSE INSTALL libdisasm include *.c Makefile make.sh dist
+diff -ur dist/ptrace_utils.c dist-my/ptrace_utils.c
+--- dist/ptrace_utils.c	2005-07-29 02:20:46.000000000 +0800
++++ dist-my/ptrace_utils.c	2013-12-15 15:37:42.438492800 +0800
+@@ -50,6 +50,7 @@
+ void
+ F_printregs (FILE *fp,struct user_regs_struct regs)
+ {
++#if defined(__i386__)
+ 	fprintf (fp,"\n%%eax 0x%.8lx\n", regs.eax);
+ 	fprintf (fp,"%%ebx 0x%.8lx\n", regs.ebx);
+ 	fprintf (fp,"%%ecx 0x%.8lx\n", regs.ecx);
+@@ -58,6 +59,18 @@
+ 	fprintf (fp,"%%edi 0x%.8lx\n\n", regs.edi);
+ 
+ 	fprintf (fp,"%%eip 0x%.8lx\t%%esp 0x%.8lx\n\n", regs.eip, regs.esp);
++#elif defined(__x86_64__)
++	fprintf (fp,"\n%%eax 0x%.8lx\n", regs.rax);
++	fprintf (fp,"%%ebx 0x%.8lx\n", regs.rbx);
++	fprintf (fp,"%%ecx 0x%.8lx\n", regs.rcx);
++	fprintf (fp,"%%edx 0x%.8lx\n", regs.rdx);
++	fprintf (fp,"%%esi 0x%.8lx\n", regs.rsi);
++	fprintf (fp,"%%edi 0x%.8lx\n\n", regs.rdi);
++
++	fprintf (fp,"%%eip 0x%.8lx\t%%esp 0x%.8lx\n\n", regs.rip, regs.rsp);
++#else
++#error arch not supported
++#endif
+ }
+ 
+ void
+@@ -228,7 +241,13 @@
+ 				pDumpfile = malloc(strlen(pOutfileProcess)+1+8+strlen("-dump.txt")+1);
+ /* XXX check errors on F_getregs XXX */
+ 				F_getregs (pid, &regs);
++#if defined(__i386__)
+ 				sprintf(pDumpfile,"%s-%.8x-dump.txt",pBasefile,(unsigned)regs.eip);
++#elif defined(__x86_64__)
++				sprintf(pDumpfile,"%s-%.8x-dump.txt",pBasefile,(unsigned)regs.rip);
++#else
++#error arch not supported
++#endif
+ 				if ( !(fp = fopen(pDumpfile,"w")) )
+ 				{
+ 					perror("fopen");
+@@ -236,9 +255,18 @@
+ 				}
+ 				fprintf(fp,"TYPE %d: FUZZ %d: BYTE %d\n",type,fuzz,byte);
+ 				F_printregs (fp,regs);
++#if defined(__i386__)
+ 				F_libdis_print (fp,pid, 9, regs.eip);
+ /* XXX aesthetics: consider removing "STACK DUMP" label XXX */
+ 				F_memdump (fp,pid, regs.esp, 128,"%esp");
++#elif defined(__x86_64__)
++				F_libdis_print (fp,pid, 9, regs.rip);
++/* XXX aesthetics: consider removing "STACK DUMP" label XXX */
++				F_memdump (fp,pid, regs.rsp, 128,"%rsp");
++#else
++#error arch not supported
++#endif
++
+ 				if ( (ptrace (PTRACE_CONT, pid, NULL,
+ 							  (WSTOPSIG (status) == SIGTRAP) ? 0 : WSTOPSIG (status))) == -1 )
+ 				{
