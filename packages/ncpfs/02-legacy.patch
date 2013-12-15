@@ -1,0 +1,981 @@
+--- a/contrib/pam/pam_ncp_auth.c	2005-01-28 04:35:59.000000000 +1100
++++ b/contrib/pam/pam_ncp_auth.c	2010-03-27 15:18:45.000000000 +1100
+@@ -257,6 +257,7 @@
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <string.h>
++#include <syslog.h>
+ #include <unistd.h>
+ #include <pwd.h>
+ #include <grp.h>
+@@ -266,6 +267,7 @@
+ #include <fcntl.h>
+ #include <errno.h>
+ #include <ctype.h>
++#include <syslog.h>
+ 
+ #include "support.h"
+ 
+--- a/include/ncp/ipxlib.h	2005-01-28 04:35:59.000000000 +1100
++++ b/include/ncp/ipxlib.h	2010-03-27 15:20:07.000000000 +1100
+@@ -63,32 +63,32 @@ struct sap_query
+ 
+ struct sap_server_ident
+ {
+-	u_int16_t	server_type __attribute__((packed));
+-	char		server_name[48] __attribute__((packed));
+-	IPXNet		server_network __attribute__((packed));
++	u_int16_t	server_type;
++	char		server_name[48];
++	IPXNet		server_network;
+ #ifdef SWIG
+-	u_int8_t	server_node[6] __attribute__((packed));
++	u_int8_t	server_node[6];
+ #else
+-	IPXNode		server_node __attribute__((packed));
++	IPXNode		server_node;
+ #endif
+-	IPXPort		server_port __attribute__((packed));
+-	u_int16_t	intermediate_network __attribute__((packed));
+-};
++	IPXPort		server_port;
++	u_int16_t	intermediate_network;
++} __attribute__((packed));
+ 
+ #define IPX_RIP_REQUEST (0x1)
+ #define IPX_RIP_RESPONSE (0x2)
+ 
+ struct ipx_rt_def {
+-	u_int32_t network __attribute__((packed));
+-	u_int16_t hops __attribute__((packed));
+-	u_int16_t ticks __attribute__((packed));
+-};
++	u_int32_t network;
++	u_int16_t hops;
++	u_int16_t ticks;
++} __attribute__((packed));
+ 
+ struct ipx_rip_packet
+ {
+-	u_int16_t		operation __attribute__((packed));
+-	struct ipx_rt_def	rt[1] __attribute__((packed));
+-};
++	u_int16_t		operation;
++	struct ipx_rt_def	rt[1];
++} __attribute__((packed));
+ 
+ #ifdef SWIG
+ #define IPX_BROADCAST_NODE "\xff\xff\xff\xff\xff\xff"
+--- a/include/ncp/kernel/ncp.h	2005-01-28 04:35:59.000000000 +1100
++++ b/include/ncp/kernel/ncp.h	2010-03-27 15:20:07.000000000 +1100
+@@ -52,28 +52,28 @@
+ #define NCP_DEALLOC_SLOT_REQUEST (0x5555)
+ 
+ struct ncp_request_header {
+-	u_int16_t type __attribute__((packed));
+-	u_int8_t  sequence __attribute__((packed));
+-	u_int8_t  conn_low __attribute__((packed));
+-	u_int8_t  task __attribute__((packed));
+-	u_int8_t  conn_high __attribute__((packed));
+-	u_int8_t  function __attribute__((packed));
+-	u_int8_t  data[0] __attribute__((packed));
+-};
++	u_int16_t type;
++	u_int8_t  sequence;
++	u_int8_t  conn_low;
++	u_int8_t  task;
++	u_int8_t  conn_high;
++	u_int8_t  function;
++	u_int8_t  data[0];
++} __attribute__((packed));
+ 
+ #define NCP_REPLY                (0x3333)
+ #define NCP_POSITIVE_ACK         (0x9999)
+ 
+ struct ncp_reply_header {
+-	u_int16_t type __attribute__((packed));
+-	u_int8_t sequence __attribute__((packed));
+-	u_int8_t conn_low __attribute__((packed));
+-	u_int8_t task __attribute__((packed));
+-	u_int8_t conn_high __attribute__((packed));
+-	u_int8_t completion_code __attribute__((packed));
+-	u_int8_t connection_state __attribute__((packed));
+-	u_int8_t data[0] __attribute__((packed));
+-};
++	u_int16_t type;
++	u_int8_t sequence;
++	u_int8_t conn_low;
++	u_int8_t task;
++	u_int8_t conn_high;
++	u_int8_t completion_code;
++	u_int8_t connection_state;
++	u_int8_t data[0];
++} __attribute__((packed));
+ 
+ #define NCP_VOLNAME_LEN (16)
+ #define NCP_NUMBER_OF_VOLUMES (64)
+@@ -175,64 +175,64 @@ struct ncp_volume_info {
+ 
+ #ifdef SWIG
+ struct nw_info_struct {
+-	u_int32_t spaceAlloc __attribute__((packed));
+-	u_int32_t attributes __attribute__((packed));
+-	u_int16_t flags __attribute__((packed));
+-	u_int32_t dataStreamSize __attribute__((packed));
+-	u_int32_t totalStreamSize __attribute__((packed));
+-	u_int16_t numberOfStreams __attribute__((packed));
+-	u_int16_t creationTime __attribute__((packed));
+-	u_int16_t creationDate __attribute__((packed));
+-	u_int32_t creatorID __attribute__((packed));
+-	u_int16_t modifyTime __attribute__((packed));
+-	u_int16_t modifyDate __attribute__((packed));
+-	u_int32_t modifierID __attribute__((packed));
+-	u_int16_t lastAccessDate __attribute__((packed));
+-	u_int16_t archiveTime __attribute__((packed));
+-	u_int16_t archiveDate __attribute__((packed));
+-	u_int32_t archiverID __attribute__((packed));
+-	u_int16_t inheritedRightsMask __attribute__((packed));
+-	u_int32_t dirEntNum __attribute__((packed));
+-	u_int32_t DosDirNum __attribute__((packed));
+-	u_int32_t volNumber __attribute__((packed));
+-	u_int32_t EADataSize __attribute__((packed));
+-	u_int32_t EAKeyCount __attribute__((packed));
+-	u_int32_t EAKeySize __attribute__((packed));
+-	u_int32_t NSCreator __attribute__((packed));
++	u_int32_t spaceAlloc;
++	u_int32_t attributes;
++	u_int16_t flags;
++	u_int32_t dataStreamSize;
++	u_int32_t totalStreamSize;
++	u_int16_t numberOfStreams;
++	u_int16_t creationTime;
++	u_int16_t creationDate;
++	u_int32_t creatorID;
++	u_int16_t modifyTime;
++	u_int16_t modifyDate;
++	u_int32_t modifierID;
++	u_int16_t lastAccessDate;
++	u_int16_t archiveTime;
++	u_int16_t archiveDate;
++	u_int32_t archiverID;
++	u_int16_t inheritedRightsMask;
++	u_int32_t dirEntNum;
++	u_int32_t DosDirNum;
++	u_int32_t volNumber;
++	u_int32_t EADataSize;
++	u_int32_t EAKeyCount;
++	u_int32_t EAKeySize;
++	u_int32_t NSCreator;
+ %pragma(swig) readonly
+-	u_int8_t nameLen __attribute__((packed));
++	u_int8_t nameLen;
+ %pragma(swig) readwrite
+-	byteLenPrefixCharArray entryName[255] __attribute__((packed));
+-};
++	byteLenPrefixCharArray entryName[255];
++} __attribute__((packed));
+ #else
+ struct nw_info_struct {
+-	u_int32_t spaceAlloc __attribute__((packed));
+-	u_int32_t attributes __attribute__((packed));
+-	u_int16_t flags __attribute__((packed));
+-	u_int32_t dataStreamSize __attribute__((packed));
+-	u_int32_t totalStreamSize __attribute__((packed));
+-	u_int16_t numberOfStreams __attribute__((packed));
+-	u_int16_t creationTime __attribute__((packed));
+-	u_int16_t creationDate __attribute__((packed));
+-	u_int32_t creatorID __attribute__((packed));
+-	u_int16_t modifyTime __attribute__((packed));
+-	u_int16_t modifyDate __attribute__((packed));
+-	u_int32_t modifierID __attribute__((packed));
+-	u_int16_t lastAccessDate __attribute__((packed));
+-	u_int16_t archiveTime __attribute__((packed));
+-	u_int16_t archiveDate __attribute__((packed));
+-	u_int32_t archiverID __attribute__((packed));
+-	u_int16_t inheritedRightsMask __attribute__((packed));
+-	u_int32_t dirEntNum __attribute__((packed));
+-	u_int32_t DosDirNum __attribute__((packed));
+-	u_int32_t volNumber __attribute__((packed));
+-	u_int32_t EADataSize __attribute__((packed));
+-	u_int32_t EAKeyCount __attribute__((packed));
+-	u_int32_t EAKeySize __attribute__((packed));
+-	u_int32_t NSCreator __attribute__((packed));
+-	u_int8_t nameLen __attribute__((packed));
+-	u_int8_t entryName[256] __attribute__((packed));
+-};
++	u_int32_t spaceAlloc;
++	u_int32_t attributes;
++	u_int16_t flags;
++	u_int32_t dataStreamSize;
++	u_int32_t totalStreamSize;
++	u_int16_t numberOfStreams;
++	u_int16_t creationTime;
++	u_int16_t creationDate;
++	u_int32_t creatorID;
++	u_int16_t modifyTime;
++	u_int16_t modifyDate;
++	u_int32_t modifierID;
++	u_int16_t lastAccessDate;
++	u_int16_t archiveTime;
++	u_int16_t archiveDate;
++	u_int32_t archiverID;
++	u_int16_t inheritedRightsMask;
++	u_int32_t dirEntNum;
++	u_int32_t DosDirNum;
++	u_int32_t volNumber;
++	u_int32_t EADataSize;
++	u_int32_t EAKeyCount;
++	u_int32_t EAKeySize;
++	u_int32_t NSCreator;
++	u_int8_t nameLen;
++	u_int8_t entryName[256];
++} __attribute__((packed));
+ #endif
+ 
+ /* modify mask - use with MODIFY_DOS_INFO structure */
+@@ -251,46 +251,46 @@ struct nw_info_struct {
+ #define DM_MAXIMUM_SPACE	  (0x00002000L)
+ 
+ struct nw_modify_dos_info {
+-	u_int32_t attributes __attribute__((packed));
+-	u_int16_t creationDate __attribute__((packed));
+-	u_int16_t creationTime __attribute__((packed));
+-	u_int32_t creatorID __attribute__((packed));
+-	u_int16_t modifyDate __attribute__((packed));
+-	u_int16_t modifyTime __attribute__((packed));
+-	u_int32_t modifierID __attribute__((packed));
+-	u_int16_t archiveDate __attribute__((packed));
+-	u_int16_t archiveTime __attribute__((packed));
+-	u_int32_t archiverID __attribute__((packed));
+-	u_int16_t lastAccessDate __attribute__((packed));
+-	u_int16_t inheritanceGrantMask __attribute__((packed));
+-	u_int16_t inheritanceRevokeMask __attribute__((packed));
+-	u_int32_t maximumSpace __attribute__((packed));
+-};
++	u_int32_t attributes;
++	u_int16_t creationDate;
++	u_int16_t creationTime;
++	u_int32_t creatorID;
++	u_int16_t modifyDate;
++	u_int16_t modifyTime;
++	u_int32_t modifierID;
++	u_int16_t archiveDate;
++	u_int16_t archiveTime;
++	u_int32_t archiverID;
++	u_int16_t lastAccessDate;
++	u_int16_t inheritanceGrantMask;
++	u_int16_t inheritanceRevokeMask;
++	u_int32_t maximumSpace;
++} __attribute__((packed));
+ 
+ #ifdef SWIG
+ struct nw_file_info {
+ 	struct nw_info_struct i;
+ 	int opened;
+ 	int access;
+-	u_int32_t server_file_handle __attribute__((packed));
+-	u_int8_t open_create_action __attribute__((packed));
+-	fixedArray file_handle[6] __attribute__((packed));
+-};
++	u_int32_t server_file_handle;
++	u_int8_t open_create_action;
++	fixedArray file_handle[6];
++} __attribute__((packed));
+ #else
+ struct nw_file_info {
+ 	struct nw_info_struct i;
+ 	int opened;
+ 	int access;
+-	u_int32_t server_file_handle __attribute__((packed));
+-	u_int8_t open_create_action __attribute__((packed));
+-	u_int8_t file_handle[6] __attribute__((packed));
+-};
++	u_int32_t server_file_handle;
++	u_int8_t open_create_action;
++	u_int8_t file_handle[6];
++} __attribute__((packed));
+ #endif
+ 
+ struct nw_search_sequence {
+-	u_int8_t volNumber __attribute__((packed));
+-	u_int32_t dirBase __attribute__((packed));
+-	u_int32_t sequence __attribute__((packed));
+-};
++	u_int8_t volNumber;
++	u_int32_t dirBase;
++	u_int32_t sequence;
++} __attribute__((packed));
+ 
+ #endif				/* _LINUX_NCP_H */
+--- a/include/ncp/ncp.h	2005-01-28 04:35:59.000000000 +1100
++++ b/include/ncp/ncp.h	2010-03-27 15:20:07.000000000 +1100
+@@ -91,21 +91,21 @@ struct nw_property {
+ };
+ 
+ struct prop_net_address {
+-	u_int32_t network __attribute__((packed));
++	u_int32_t network;
+ #ifdef SWIG
+ 	fixedArray node[IPX_NODE_LEN];
+ #else
+-	u_int8_t node[IPX_NODE_LEN] __attribute__((packed));
++	u_int8_t node[IPX_NODE_LEN];
+ #endif
+-	u_int16_t port __attribute__((packed));
+-};
++	u_int16_t port;
++} __attribute__((packed));
+ 
+ struct ncp_filesearch_info {
+ 	u_int8_t volume_number;
+ 	u_int16_t directory_id;
+ 	u_int16_t sequence_no;
+ 	u_int8_t access_rights;
+-};
++} __attribute__((packed));
+ 
+ #define NCP_MAX_FILENAME (14)
+ struct ncp_file_info {
+@@ -127,28 +127,28 @@ struct ncp_file_info {
+ 
+ #ifdef SWIG
+ struct nw_queue_job_entry {
+-	u_int16_t InUse __attribute__((packed));
+-	u_int32_t prev __attribute__((packed));
+-	u_int32_t next __attribute__((packed));
+-	u_int32_t ClientStation __attribute__((packed));
+-	u_int32_t ClientTask __attribute__((packed));
+-	u_int32_t ClientObjectID __attribute__((packed));
+-	u_int32_t TargetServerID __attribute__((packed));
+-	fixedArray TargetExecTime[6] __attribute__((packed));
+-	fixedArray JobEntryTime[6] __attribute__((packed));
+-	u_int32_t JobNumber __attribute__((packed));
+-	u_int16_t JobType __attribute__((packed));
+-	u_int16_t JobPosition __attribute__((packed));
+-	u_int16_t JobControlFlags __attribute__((packed));
+-	u_int8_t FileNameLen __attribute__((packed));
+-	byteLenPrefixCharArray JobFileName[13] __attribute__((packed));
+-	u_int32_t JobFileHandle __attribute__((packed));
+-	u_int32_t ServerStation __attribute__((packed));
+-	u_int32_t ServerTaskNumber __attribute__((packed));
+-	u_int32_t ServerObjectID __attribute__((packed));
+-	fixedCharArray JobTextDescription[50] __attribute__((packed));
+-	fixedArray ClientRecordArea[152] __attribute__((packed));
+-};
++	u_int16_t InUse;
++	u_int32_t prev;
++	u_int32_t next;
++	u_int32_t ClientStation;
++	u_int32_t ClientTask;
++	u_int32_t ClientObjectID;
++	u_int32_t TargetServerID;
++	fixedArray TargetExecTime[6];
++	fixedArray JobEntryTime[6];
++	u_int32_t JobNumber;
++	u_int16_t JobType;
++	u_int16_t JobPosition;
++	u_int16_t JobControlFlags;
++	u_int8_t FileNameLen;
++	byteLenPrefixCharArray JobFileName[13];
++	u_int32_t JobFileHandle;
++	u_int32_t ServerStation;
++	u_int32_t ServerTaskNumber;
++	u_int32_t ServerObjectID;
++	fixedCharArray JobTextDescription[50];
++	fixedArray ClientRecordArea[152];
++} __attribute__((packed));
+ 
+ struct queue_job {
+ 	struct nw_queue_job_entry j;
+@@ -156,28 +156,28 @@ struct queue_job {
+ };
+ #else
+ struct nw_queue_job_entry {
+-	u_int16_t InUse __attribute__((packed));
+-	u_int32_t prev __attribute__((packed));
+-	u_int32_t next __attribute__((packed));
+-	u_int32_t ClientStation __attribute__((packed));
+-	u_int32_t ClientTask __attribute__((packed));
+-	u_int32_t ClientObjectID __attribute__((packed));
+-	u_int32_t TargetServerID __attribute__((packed));
+-	u_int8_t TargetExecTime[6] __attribute__((packed));
+-	u_int8_t JobEntryTime[6] __attribute__((packed));
+-	u_int32_t JobNumber __attribute__((packed));
+-	u_int16_t JobType __attribute__((packed));
+-	u_int16_t JobPosition __attribute__((packed));
+-	u_int16_t JobControlFlags __attribute__((packed));
+-	u_int8_t FileNameLen __attribute__((packed));
+-	char JobFileName[13] __attribute__((packed));
+-	u_int32_t JobFileHandle __attribute__((packed));
+-	u_int32_t ServerStation __attribute__((packed));
+-	u_int32_t ServerTaskNumber __attribute__((packed));
+-	u_int32_t ServerObjectID __attribute__((packed));
+-	char JobTextDescription[50] __attribute__((packed));
+-	char ClientRecordArea[152] __attribute__((packed));
+-};
++	u_int16_t InUse;
++	u_int32_t prev;
++	u_int32_t next;
++	u_int32_t ClientStation;
++	u_int32_t ClientTask;
++	u_int32_t ClientObjectID;
++	u_int32_t TargetServerID;
++	u_int8_t TargetExecTime[6];
++	u_int8_t JobEntryTime[6];
++	u_int32_t JobNumber;
++	u_int16_t JobType;
++	u_int16_t JobPosition;
++	u_int16_t JobControlFlags;
++	u_int8_t FileNameLen;
++	char JobFileName[13];
++	u_int32_t JobFileHandle;
++	u_int32_t ServerStation;
++	u_int32_t ServerTaskNumber;
++	u_int32_t ServerObjectID;
++	char JobTextDescription[50];
++	char ClientRecordArea[152];
++} __attribute__((packed));
+ 
+ struct queue_job {
+ 	struct nw_queue_job_entry j;
+@@ -202,34 +202,34 @@ struct queue_job {
+ 
+ #ifdef SWIG
+ struct print_job_record {
+-	u_int8_t Version __attribute__((packed));
+-	u_int8_t TabSize __attribute__((packed));
+-	u_int16_t Copies __attribute__((packed));
+-	u_int16_t CtrlFlags __attribute__((packed));
+-	u_int16_t Lines __attribute__((packed));
+-	u_int16_t Rows __attribute__((packed));
+-	fixedCharArray FormName[16] __attribute__((packed));
+-	fixedArray Reserved[6] __attribute__((packed));
+-	fixedCharArray BannerName[13] __attribute__((packed));
+-	fixedCharArray FnameBanner[13] __attribute__((packed));
+-	fixedCharArray FnameHeader[14] __attribute__((packed));
+-	fixedCharArray Path[80] __attribute__((packed));
+-};
++	u_int8_t Version;
++	u_int8_t TabSize;
++	u_int16_t Copies;
++	u_int16_t CtrlFlags;
++	u_int16_t Lines;
++	u_int16_t Rows;
++	fixedCharArray FormName[16];
++	fixedArray Reserved[6];
++	fixedCharArray BannerName[13];
++	fixedCharArray FnameBanner[13];
++	fixedCharArray FnameHeader[14];
++	fixedCharArray Path[80];
++} __attribute__((packed));
+ #else
+ struct print_job_record {
+-	u_int8_t Version __attribute__((packed));
+-	u_int8_t TabSize __attribute__((packed));
+-	u_int16_t Copies __attribute__((packed));
+-	u_int16_t CtrlFlags __attribute__((packed));
+-	u_int16_t Lines __attribute__((packed));
+-	u_int16_t Rows __attribute__((packed));
+-	char FormName[16] __attribute__((packed));
+-	u_int8_t Reserved[6] __attribute__((packed));
+-	char BannerName[13] __attribute__((packed));
+-	char FnameBanner[13] __attribute__((packed));
+-	char FnameHeader[14] __attribute__((packed));
+-	char Path[80] __attribute__((packed));
+-};
++	u_int8_t Version;
++	u_int8_t TabSize;
++	u_int16_t Copies;
++	u_int16_t CtrlFlags;
++	u_int16_t Lines;
++	u_int16_t Rows;
++	char FormName[16];
++	u_int8_t Reserved[6];
++	char BannerName[13];
++	char FnameBanner[13];
++	char FnameHeader[14];
++	char Path[80];
++} __attribute__((packed));
+ #endif
+ 
+ #endif				/* _NCP_H */
+--- a/include/ncp/ncplib.h	2005-01-28 04:35:59.000000000 +1100
++++ b/include/ncp/ncplib.h	2010-03-27 15:20:07.000000000 +1100
+@@ -107,7 +107,7 @@ extern "C" {
+ 
+ /* we know that the 386 can handle misalignment and has the "right" 
+    byteorder */
+-#if defined(__i386__)
++#if 0
+ 
+ static inline word
+ WVAL_LH(const void * buf, int pos)
+@@ -462,25 +462,25 @@ struct ncp_file_server_info
+ #else
+ struct ncp_file_server_info
+ {
+-	u_int8_t ServerName[48] __attribute__((packed));
+-	u_int8_t FileServiceVersion __attribute__((packed));
+-	u_int8_t FileServiceSubVersion __attribute__((packed));
+-	u_int16_t MaximumServiceConnections __attribute__((packed));
+-	u_int16_t ConnectionsInUse __attribute__((packed));
+-	u_int16_t NumberMountedVolumes __attribute__((packed));
+-	u_int8_t Revision __attribute__((packed));
+-	u_int8_t SFTLevel __attribute__((packed));
+-	u_int8_t TTSLevel __attribute__((packed));
+-	u_int16_t MaxConnectionsEverUsed __attribute__((packed));
+-	u_int8_t AccountVersion __attribute__((packed));
+-	u_int8_t VAPVersion __attribute__((packed));
+-	u_int8_t QueueVersion __attribute__((packed));
+-	u_int8_t PrintVersion __attribute__((packed));
+-	u_int8_t VirtualConsoleVersion __attribute__((packed));
+-	u_int8_t RestrictionLevel __attribute__((packed));
+-	u_int8_t InternetBridge __attribute__((packed));
+-	u_int8_t Reserved[60] __attribute__((packed));
+-};
++	u_int8_t ServerName[48];
++	u_int8_t FileServiceVersion;
++	u_int8_t FileServiceSubVersion;
++	u_int16_t MaximumServiceConnections;
++	u_int16_t ConnectionsInUse;
++	u_int16_t NumberMountedVolumes;
++	u_int8_t Revision;
++	u_int8_t SFTLevel;
++	u_int8_t TTSLevel;
++	u_int16_t MaxConnectionsEverUsed;
++	u_int8_t AccountVersion;
++	u_int8_t VAPVersion;
++	u_int8_t QueueVersion;
++	u_int8_t PrintVersion;
++	u_int8_t VirtualConsoleVersion;
++	u_int8_t RestrictionLevel;
++	u_int8_t InternetBridge;
++	u_int8_t Reserved[60];
++} __attribute__((packed));
+ #endif
+ 
+ struct ncp_file_server_info_2 {
+@@ -588,47 +588,47 @@ long
+ 
+ struct ncp_station_addr
+ {
+-	u_int32_t NetWork __attribute__((packed));
++	u_int32_t NetWork;
+ #ifdef SWIG
+ 	fixedArray Node[6];
+ #else
+-	u_int8_t Node[6] __attribute__((packed));
++	u_int8_t Node[6];
+ #endif
+-	u_int16_t Socket __attribute__((packed));
+-};
++	u_int16_t Socket;
++} __attribute__((packed));
+ 
+ struct ncp_prop_login_control
+ {
+ #ifdef SWIG
+ 	fixedArray AccountExpireDate[3];
+ #else
+-	u_int8_t AccountExpireDate[3] __attribute__((packed));
++	u_int8_t AccountExpireDate[3];
+ #endif	
+-	u_int8_t Disabled __attribute__((packed));
++	u_int8_t Disabled;
+ #ifdef SWIG
+ 	fixedArray PasswordExpireDate[3];
+ #else	
+-	u_int8_t PasswordExpireDate[3] __attribute__((packed));
++	u_int8_t PasswordExpireDate[3];
+ #endif	
+-	u_int8_t GraceLogins __attribute__((packed));
+-	u_int16_t PasswordExpireInterval __attribute__((packed));
+-	u_int8_t MaxGraceLogins __attribute__((packed));
+-	u_int8_t MinPasswordLength __attribute__((packed));
+-	u_int16_t MaxConnections __attribute__((packed));
++	u_int8_t GraceLogins;
++	u_int16_t PasswordExpireInterval;
++	u_int8_t MaxGraceLogins;
++	u_int8_t MinPasswordLength;
++	u_int16_t MaxConnections;
+ #ifdef SWIG
+-	fixedArray ConnectionTimeMask[42] __attribute__((packed));
+-	fixedArray LastLogin[6] __attribute__((packed));
++	fixedArray ConnectionTimeMask[42];
++	fixedArray LastLogin[6];
+ #else	
+-	u_int8_t ConnectionTimeMask[42] __attribute__((packed));
+-	u_int8_t LastLogin[6] __attribute__((packed));
++	u_int8_t ConnectionTimeMask[42];
++	u_int8_t LastLogin[6];
+ #endif	
+-	u_int8_t RestrictionMask __attribute__((packed));
+-	u_int8_t reserved __attribute__((packed));
+-	u_int32_t MaxDiskUsage __attribute__((packed));
+-	u_int16_t BadLoginCount __attribute__((packed));
+-	u_int32_t BadLoginCountDown __attribute__((packed));
+-	struct ncp_station_addr LastIntruder __attribute__((packed));
+-};
++	u_int8_t RestrictionMask;
++	u_int8_t reserved;
++	u_int32_t MaxDiskUsage;
++	u_int16_t BadLoginCount;
++	u_int32_t BadLoginCountDown;
++	struct ncp_station_addr LastIntruder;
++} __attribute__((packed));
+ 
+ NWCCODE NWReadPropertyValue(NWCONN_HANDLE conn, const char *objName,
+ 			    NWObjectType objType, const char *propertyName,
+--- a/ipx-1.0/ipx_internal_net.8	2005-01-28 04:35:59.000000000 +1100
++++ b/ipx-1.0/ipx_internal_net.8	2007-09-16 21:43:16.000000000 +1000
+@@ -15,6 +15,8 @@ not have a physical device or frame type
+ a route-independent address for service providers.   Internal networks
+ are optional; however, when one is present it is also the
+ Primary Interface.  There can only be one internal network per host.
++The node number defaults to 1 if a second arg is not
++given to the "add" command.
+ .SS OPTIONS
+ .TP
+ .I add
+--- a/ipx-1.0/Makefile.in	2005-01-28 04:35:59.000000000 +1100
++++ b/ipx-1.0/Makefile.in	2007-09-16 21:43:16.000000000 +1000
+@@ -52,8 +52,8 @@ mrproper: clean
+ distclean: mrproper
+ 
+ install: $(UTILS) $(MAN8GZ) $(UTIIPX)
+-	$(INSTALL) -d $(DESTDIR)$(bindir)
+-	$(INSTALL) $(UTILS) $(UTIIPX) $(DESTDIR)$(bindir)
++	$(INSTALL) -d $(DESTDIR)$(sbindir)
++	$(INSTALL) $(UTILS) $(UTIIPX) $(DESTDIR)$(sbindir)
+ 	$(INSTALL) -d $(DESTDIR)$(mandir)/man8
+ 	$(INSTALL_DATA) $(MAN8GZ) $(DESTDIR)$(mandir)/man8
+ 
+--- a/lib/ncplib.c	2005-01-28 04:35:59.000000000 +1100
++++ b/lib/ncplib.c	2010-03-27 15:20:07.000000000 +1100
+@@ -2421,7 +2421,7 @@ ncp_initialize_2(int *argc, char **argv,
+ 	int i = 1;
+ 	NWCCODE nwerr;
+ 
+-	static int get_argument(int arg_no, const char **target) {
++	int get_argument(int arg_no, const char **target) {
+ 		int count = 1;
+ 
+ 		if (target != NULL) {
+@@ -2584,14 +2584,14 @@ ncp_request(struct ncp_conn *conn, int f
+ 
+ struct nw_time_buffer
+ {
+-	u_int8_t year __attribute__((packed));
+-	u_int8_t month __attribute__((packed));
+-	u_int8_t day __attribute__((packed));
+-	u_int8_t hour __attribute__((packed));
+-	u_int8_t minute __attribute__((packed));
+-	u_int8_t second __attribute__((packed));
+-	u_int8_t wday __attribute__((packed));
+-};
++	u_int8_t year;
++	u_int8_t month;
++	u_int8_t day;
++	u_int8_t hour;
++	u_int8_t minute;
++	u_int8_t second;
++	u_int8_t wday;
++} __attribute__((packed));
+ 
+ static time_t
+ nw_to_ctime(struct nw_time_buffer *source)
+--- a/lib/ndslib.c	2005-01-28 04:35:59.000000000 +1100
++++ b/lib/ndslib.c	2010-03-27 15:18:45.000000000 +1100
+@@ -49,7 +49,7 @@
+ #define RANDBUF  /* if defined: read random data once from /dev/urandom */
+ /*#define ERR_MSG*/ /* if defined: show error messages in nds_login_auth */
+ /*#define DEBUG_PRINT*/
+-/*#define FIND_ISR */ /* if defined: show reasons for -330 invalid response */
++#define FIND_ISR /* if defined: show reasons for -330 invalid response */
+ 
+ #define NCP_OBSOLETE
+ 
+--- a/man/Makefile.in	2005-01-28 04:35:59.000000000 +1100
++++ b/man/Makefile.in	2010-03-27 15:18:45.000000000 +1100
+@@ -15,7 +15,7 @@ MOUNT2 = @MOUNT2@
+ 
+ MAN1 := nprint.1 nsend.1 nwauth.1 nwbols.1 nwboprops.1 nwbpset.1 \
+ 	nwbpvalues.1 nwdir.1 nwfsinfo.1 nwfstime.1 nwpasswd.1 nwpurge.1 \
+-	nwrights.1 nwsfind.1 nwtrustee.1 nwuserlist.1 nwvolinfo.1 pqlist.1 \
++	nwrights.1 nwsfind.1 nwtrustee.1 nwtrustee2.1 nwuserlist.1 nwvolinfo.1 pqlist.1 \
+ 	nwpqjob.1 pqstat.1 pserver.1 slist.1 nwpjmv.1
+ MAN3 := $(notdir $(wildcard ${this_srcdir}/*.3ncp))
+ MAN5 := nwclient.5
+@@ -47,6 +47,7 @@ install: all
+ 	ln -sf nwpqjob.1.gz $(DESTDIR)$(mandir)/man1/pqrm.1.gz
+ ifeq ($(USE_KERNEL),1)
+ 	ln -sf ncpmount.8.gz $(DESTDIR)$(mandir)/man8/mount.ncp.8.gz
++	ln -sf ncpmount.8.gz $(DESTDIR)$(mandir)/man8/mount.ncpfs.8.gz
+ endif
+ 
+ install-dev: all
+--- a/man/ncpmount.8	2005-01-28 04:35:59.000000000 +1100
++++ b/man/ncpmount.8	2007-09-16 21:43:16.000000000 +1000
+@@ -282,7 +282,7 @@ is done by commercial workstations, plea
+ You can specify character translation rules for converting names from
+ unicode to your desktop (it works together with \fB-p\fP).
+ .I iocharset
+-is charset name, for example \fIiso-8859-1\fP.
++is charset name, for example \fIiso8859-1\fP.
+ .RE
+ 
+ .B -p
+--- a/man/nwbpset.1	2005-01-28 04:35:59.000000000 +1100
++++ b/man/nwbpset.1	2010-03-27 15:18:45.000000000 +1100
+@@ -26,7 +26,7 @@ Reads a property specification from the 
+ sets the corresponding property. The format is determined by the
+ output of 'nwbpvalues -c'. nwbpset will hopefully become an important
+ part of the bindery management suite of ncpfs, together with
+-'nwbpvalues -c'. See util/nwbpsecurity for an example.
++\'nwbpvalues -c\'. See util/nwbpsecurity for an example.
+ 
+ As another example, look at the following command line:
+ 
+--- a/man/nwbpvalues.1	2005-01-28 04:35:59.000000000 +1100
++++ b/man/nwbpvalues.1	2007-09-16 21:43:16.000000000 +1000
+@@ -1,4 +1,4 @@
+-.TH NWBPVALUES 8 7/9/1996 nwbpvalues nwbpvalues
++.TH NWBPVALUES 1 7/9/1996 nwbpvalues nwbpvalues
+ .SH NAME
+ nwbpvalues \- Print a NetWare Bindery Propery's contents
+ .SH SYNOPSIS
+--- a/man/nwfsctrl.8	2005-01-28 04:35:59.000000000 +1100
++++ b/man/nwfsctrl.8	2007-09-16 21:43:16.000000000 +1000
+@@ -1,4 +1,4 @@
+-.TH NWFSCTRL 1 2/12/1999 nwfsctrl nwfsctrl
++.TH NWFSCTRL 8 2/12/1999 nwfsctrl nwfsctrl
+ .SH NAME
+ nwfsctrl \- Perform server command
+ .SH SYNOPSIS
+--- a/man/nwtrustee.1	2005-01-28 04:35:59.000000000 +1100
++++ b/man/nwtrustee.1	2007-09-16 21:43:16.000000000 +1000
+@@ -1,4 +1,4 @@
+-.TH NWTRUSTEE 8 7/9/1996 nwtrustee nwtrustee
++.TH NWTRUSTEE 1 7/9/1996 nwtrustee nwtrustee
+ .SH NAME
+ nwtrustee \- List an object's trustee directory assignments
+ .SH SYNOPSIS
+--- a/man/nwtrustee2.1	1970-01-01 10:00:00.000000000 +1000
++++ b/man/nwtrustee2.1	2007-09-16 21:43:16.000000000 +1000
+@@ -0,0 +1,52 @@
++.TH NWTRUSTEE2 1 10/16/2005 nwtrustee2 nwtrustee2
++.SH NAME
++nwtrustee2 \- Lists trustees and permissions of a ncp directory
++.SH SYNOPSIS
++.B nwtrustee2
++[
++.B -h
++] [
++.B -?
++] [
++.B -v
++] [
++.I directory
++]
++
++.SH DESCRIPTION
++.B nwtrustee2
++lists the permissions assigned to any trustees for a given ncp directory. It
++does not show the inherited permissions, but only the ones directly assigned to
++it.
++
++The letters used to express the permissions are explained in the
++\fInwgrant\fP(1) manpage.
++
++The \fIdirectory\fP has to belong to a volume mounted with \fIncpmount\fP or
++mount.ncp, if omited the current directory is used.
++
++.SH OPTIONS
++
++.B -h
++or
++.B -?
++.RS 3
++.B -h
++or
++.B -?
++prints a short help text.
++.RE
++
++.B -v
++.RS 3
++Verbose mode. Prints the directory name before procesing.
++.RE
++
++.SH SEE ALSO
++
++\fInwtrustee\fP(1), \fInwgrant\fP(1), \fInwrevoke\fP(1), \fInwrights\fP(1)
++
++
++.SH AUTHORS
++nwtrustee2 was written by Petr Vandrovec <vandrove@vc.cvut.cz>.
++This manual page was written by Maximiliano Curia <maxy@gnuservers.com.ar>.
+--- a/man/nwvolinfo.1	2005-01-28 04:35:59.000000000 +1100
++++ b/man/nwvolinfo.1	2007-09-16 21:43:16.000000000 +1000
+@@ -1,4 +1,4 @@
+-.TH NWVOLINFO 8 7/9/1996 nwvolinfo nwvolinfo
++.TH NWVOLINFO 1 7/9/1996 nwvolinfo nwvolinfo
+ .SH NAME
+ nwvolinfo \- Diplay info on NetWare Volumes
+ .SH SYNOPSIS
+@@ -97,4 +97,4 @@ Display the information in numeric-only 
+ 
+ .SH AUTHORS
+ nwvolinfo was written by Jacek Stepniewski <cunio@gazeta.pl> based on
+-utilities by Volker Lendecke.
+\ No newline at end of file
++utilities by Volker Lendecke.
+Binary files ncpfs-2.2.6/po/de.gmo and b/po/de.gmo differ
+--- a/po/de.po	2005-01-28 04:35:59.000000000 +1100
++++ b/po/de.po	2007-09-16 21:43:16.000000000 +1000
+@@ -216,7 +216,7 @@ msgstr "%s: Ungültiger Routerknoten %s\
+ #: ipx-1.0/ipx_route.c:98
+ #, c-format
+ msgid "%s: Node (%s) is invalid.\n"
+-msgstr "%s: Knoten (%s) is ungültig.\n"
++msgstr "%s: Knoten (%s) ist ungültig.\n"
+ 
+ #: ipx-1.0/ipx_route.c:124
+ #, c-format
+@@ -1426,7 +1426,7 @@ msgstr "Kann Verbindung zu Kontext nicht
+ #: sutil/ncplogin.c:920
+ #, c-format
+ msgid "Cannot authenticate connection: %s\n"
+-msgstr "Kann Vebindung nicht authentifizieren: %s\n"
++msgstr "Kann Verbindung nicht authentifizieren: %s\n"
+ 
+ #: sutil/ncplogin.c:939
+ #, c-format
+@@ -1789,7 +1789,7 @@ msgstr "bind(wdog_sock, ): %s\n"
+ #: sutil/ncpm_common.c:1791
+ #, c-format
+ msgid "Could not open message socket: %s\n"
+-msgstr "Konte Socket für Nachrichten nicht öffnen: %s\n"
++msgstr "Konnte Socket für Nachrichten nicht öffnen: %s\n"
+ 
+ #: sutil/ncpm_common.c:1799
+ #, c-format
+@@ -1904,7 +1904,7 @@ msgid ""
+ "\n"
+ msgstr ""
+ "\n"
+-"-v              Detailierte Ausgabe\n"
++"-v              Detaillierte Ausgabe\n"
+ "-i interface    Zu testendes Interface, Standard: eth0\n"
+ "-t timeout      Wartezeit auf Antwort in Sekunden, Standard: 3\n"
+ "-h              Zeigt diesen Hilfetext an\n"
+@@ -2782,7 +2782,7 @@ msgstr ""
+ "\n"
+ "-t type        Typ der aufzulistenden Objekte (Dezimalwert)\n"
+ "-o object      Maske für aufzulistenden Objekte\n"
+-"-v             Detailierte Auflistung\n"
++"-v             Detaillierte Auflistung\n"
+ "-a             Alternatives Ausgabeformat\n"
+ "-d             Objekttyp dezimal anzeigen\n"
+ "\n"
+@@ -2818,7 +2818,7 @@ msgstr ""
+ "\n"
+ "-o object_name Name des zu überprüfenden Objekts\n"
+ "-t type        Objekttyp (Dezimalwert)\n"
+-"-v             Detailierte Auflistung\n"
++"-v             Detaillierte Auflistung\n"
+ "\n"
+ 
+ #: util/nwborm.c:47
+@@ -3129,7 +3129,7 @@ msgstr ""
+ "-o object_name Objektname\n"
+ "-t type        Objekttyp (Dezimalwert)\n"
+ "-p property    Name der zu listenden Eigenschaft\n"
+-"-v             Detailierte Auflistung\n"
++"-v             Detaillierte Auflistung\n"
+ "-c             Kanonische Ausgabe, für die Verwendung mit nwbpadd\n"
+ "\n"
+ 
+@@ -3629,7 +3629,7 @@ msgstr ""
+ "            über dessen Inhalt\n"
+ "      -l    Listet Namespace Informationen\n"
+ "      -e    Listet erweiterte Attributinformationen\n"
+-"      -v    Detailiertes Auflistung\n"
++"      -v    Detailliertes Auflistung\n"
+ "      -f    Listet die Datei nutzende Verbindungen\n"
+ "      -p    List physikalische Sperren dieser Datei\n"
+ "      -t    Technisch - zeigt Werte und ihre Bedeutung\n"
+@@ -4532,7 +4532,7 @@ msgstr ""
+ "-O objectid    Objekt-ID\n"
+ "-o objname     Objektname (Typ muß angegeben werden)\n"
+ "-t type        Objekttyp\n"
+-"-v             Detailierte Auflistung\n"
++"-v             Detaillierte Auflistung\n"
+ "\n"
+ 
+ #: util/nwtrustee2.c:45
+@@ -4559,7 +4559,7 @@ msgid ""
+ "\n"
+ msgstr ""
+ "\n"
+-"-v             Detailiert\n"
++"-v             Detailliert\n"
+ "\n"
+ "Datei- / Verzeichnisliste, die nach Trustees abgesucht wird\n"
+ "\n"
+--- a/sutil/Makefile.in	2005-01-28 04:35:59.000000000 +1100
++++ b/sutil/Makefile.in	2007-09-16 21:43:16.000000000 +1000
+@@ -53,8 +53,8 @@ install: all
+ 	${INSTALL} -d $(DESTDIR)/sbin
+ 	${INSTALL} -m 4755 $(UTILS) $(DESTDIR)$(bindir)
+ ifeq ($(USE_KERNEL),1)
+-	ln -sf ..$(bindir)/ncpmount $(DESTDIR)/sbin/mount.ncp
+-	ln -sf ..$(bindir)/ncpmount $(DESTDIR)/sbin/mount.ncpfs
++	ln -sf $(bindir)/ncpmount $(DESTDIR)/sbin/mount.ncp
++	ln -sf $(bindir)/ncpmount $(DESTDIR)/sbin/mount.ncpfs
+ 	ln -sf ncpumount $(DESTDIR)$(bindir)/ncplogout
+ endif
+ 
+--- a/sutil/ncpm_common.c	2005-01-28 04:35:59.000000000 +1100
++++ b/sutil/ncpm_common.c	2007-09-16 21:44:54.000000000 +1000
+@@ -85,6 +85,7 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <signal.h>
++#include <stddef.h>
+ #include <pwd.h>
+ #include <grp.h>
+ #include <ncp/ext/socket.h>
+--- a/util/Makefile.in	2005-01-28 04:35:59.000000000 +1100
++++ b/util/Makefile.in	2007-09-16 21:43:16.000000000 +1000
+@@ -70,7 +70,7 @@ ifneq ($(SBINUTILS),)
+ endif
+ ifeq ($(USE_KERNEL)$(MOUNT2),11)
+ ifneq ($(sbindir),/sbin)
+-	ln -sf ..$(sbindir)/nwmsg $(DESTDIR)/sbin/nwmsg
++	ln -sf $(sbindir)/nwmsg $(DESTDIR)/sbin/nwmsg
+ endif
+ endif
+ 
+--- a/util/nwpjmv.c	2005-01-28 04:35:59.000000000 +1100
++++ b/util/nwpjmv.c	2007-09-16 21:43:16.000000000 +1000
+@@ -131,7 +131,7 @@ build_command(struct nw_queue *q, struct
+ 	char *s = q->command;
+ 	char *target_end = target + target_size;
+ 
+-	static void add_string(const char *str)
++	void add_string(const char *str)
+ 	{
+ 		int len = strlen(str);
+ 		if (target + len + 1 > target_end)
+--- a/util/pserver.c	2005-01-28 04:35:59.000000000 +1100
++++ b/util/pserver.c	2007-09-16 21:43:16.000000000 +1000
+@@ -153,7 +153,7 @@ build_command(struct nw_queue *q, struct
+ 	char *s = q->command;
+ 	char *target_end = target + target_size;
+ 
+-	static void add_string(const char *str)
++	void add_string(const char *str)
+ 	{
+ 		int len = strlen(str);
+ 		if (target + len + 1 > target_end)

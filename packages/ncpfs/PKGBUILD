@@ -1,0 +1,51 @@
+pkgname=ncpfs
+pkgver=2.2.6
+pkgrel=7
+pkgdesc="ncpfs allows you to mount volumes of NetWare servers under Linux."
+url="http://www.novell.com/"
+arch=('i686' 'x86_64')
+license=('GPL')
+depends=('linux>=3.0.0' 'pam')
+_url="http://ftp.de.debian.org/debian/pool/main/n/$pkgname"
+_with_php=0
+source=("${_url}/${pkgname}_${pkgver}.orig.tar.gz"
+        '01-linux3.0_uname.patch'
+        '02-legacy.patch'
+        '03-multiple_security_issues.patch')
+md5sums=('a9ab9f135d504440202069393dd9eb36'
+         'e3e3c7c148fff31162175af02f8111a7'
+         '20e438bdd8c141b4b604aaf30a3f5f4a'
+         '4b0de0263d1d4b91b3520d2eb0cda3a8')
+if [ $_with_php -eq 1 ]; then
+  makedepends=('php')
+  optdepends=('php: PHP NCP authentication support')
+fi
+
+build() {
+  cd $pkgname-$pkgver
+
+  patch -p1 -i "$srcdir"/01-linux3.0_uname.patch
+  patch -p1 -i "$srcdir"/02-legacy.patch
+  patch -p1 -i "$srcdir"/03-multiple_security_issues.patch
+  
+  # fix glibc 2.16.0-2
+  export ncp_cv_pam_directory='/usr/lib/security'
+  
+  if [ $_with_php -eq 1 ]; then
+    ./configure --prefix=/usr --mandir=/usr/share
+    sed 's/function_entry/zend_function_entry/' -i contrib/php/php_auth_nds.c
+  else
+    ./configure --prefix=/usr --mandir=/usr/share --disable-php
+  fi
+  
+  make
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install install-dev
+  # fix libncp symlink
+  rm "$pkgdir"/usr/lib/libncp.so
+  ln -s libncp.so.2.3.0 "$pkgdir"/usr/lib/libncp.so
+  ln -s libncp.so.2.3.0 "$pkgdir"/usr/lib/libncp.so.2.3
+}
