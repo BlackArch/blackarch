@@ -1,0 +1,42 @@
+pkgname='arpon'
+_realpkgname='ArpON'
+pkgver='2.7'
+pkgrel=1
+pkgdesc='A portable handler daemon that make ARP protocol secure in order to avoid the Man In The Middle (MITM) attack through ARP Spoofing, ARP Cache Poisoning or ARP Poison Routing (APR) attacks.'
+arch=('x86' 'x86_64')
+url='http://arpon.sourceforge.net/'
+license=('custom')
+depends=('bash' 'libdnet' 'libnet' 'libpcap')
+makedepends=('cmake' 'libdnet')
+backup=('etc/conf.d/arpon')
+groups=('blackarch' 'blackarch-defensive')
+source=("http://downloads.sourceforge.net/sourceforge/$pkgname/$_realpkgname-$pkgver.tar.gz"
+        "arpon"
+        "arpon.conf.d")
+md5sums=('3c3230f6852b9ffd5618a35c2f25221c'
+         '86f43d0040e3947c0509de1ed0902775'
+         '9b5ee4ac66f42a10efc2768bbd999a18')
+
+build() {
+  cd "$srcdir/$_realpkgname-$pkgver"
+  
+  [ -d build ] || mkdir build
+  
+  cd build
+  
+  cmake -DPCAP_LIB_DIR="/usr/lib" -DPCAP_LIBRARY="/usr/lib/libpcap.so" ..
+  
+  make
+}
+
+package() {
+  cd "$srcdir/$_realpkgname-$pkgver/build"
+  
+  make DESTDIR="$pkgdir" install
+  
+  install -D -m644 "../LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -D -m755 "$srcdir/arpon" "$pkgdir/etc/rc.d/arpon"
+  install -D -m644 "$srcdir/arpon.conf.d" "$pkgdir/etc/conf.d/arpon"
+
+  mv "$pkgdir/sbin" "$pkgdir/usr/bin"
+}
