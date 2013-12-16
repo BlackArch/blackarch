@@ -1,0 +1,62 @@
+pkgname=viproy-voipkit
+pkgver=20131102
+pkgrel=1
+groups=('blackarchlinux' 'blackarchlinux-exploitation' 'blackarchlinux-fuzzer' 'blackarchlinux-scanner')
+pkgdesc="VIPROY - VoIP Pen-Test Kit for Metasploit Framework"
+depends=('ruby1.9' 'metasploit')
+arch=('i686' 'x86_64')
+makedepends=('git')
+url='http://viproy.com/'
+license=('custom')
+options=('!strip')
+install=viproy-voipkit.install
+source=('git+https://github.com/fozavci/viproy-voipkit'
+  'http://viproy.com/files/siptrust.pdf'
+  'http://packetstorm.foofus.com/papers/voip/Return_of_the_SIP-3.5.pdf')
+md5sums=('SKIP'
+   '9815a824aa785dfceb1eb7f8e531b60a'
+   '2a27c2084d5a6bce0b1e763dfb792f3b')
+
+pkgver() {
+  cd "$srcdir/viproy-voipkit"
+  git log -1 --format="%cd" --date=short | sed 's|-||g'
+}
+
+prepare() {
+  # Creating a copy of the original Metasploit 'mixins.rb' file
+  cd "$srcdir/viproy-voipkit"
+  if [[ ! $(grep "'msf/core/auxiliary/sip'" /usr/share/metasploit/lib/msf/core/auxiliary/mixins.rb) ]]; then
+    cp --no-preserve=ownership /usr/share/metasploit/lib/msf/core/auxiliary/mixins.rb "$srcdir/viproy-voipkit/lib/msf/core/auxiliary/mixins.rb"
+    # Modify the copy of original Metasploit 'mixins.rb' per Viproy installation instructions
+    echo "require 'msf/core/auxiliary/sip'" >> "$srcdir/viproy-voipkit/lib/msf/core/auxiliary/mixins.rb"
+  fi
+}
+
+package() {
+  cd "$srcdir/viproy-voipkit"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/share/metasploit/lib/rex/proto/sip"
+  install -dm755 "$pkgdir/usr/share/metasploit/lib/msf/core/auxiliary"
+  install -dm755 "$pkgdir/usr/share/metasploit/modules/auxiliary/scanner/sip"
+  install -dm755 "$pkgdir/usr/share/doc/metasploit/viproy-voipkit"
+
+  # Place our updated 'mixins.rb' file in installation directory as 'mixins.rb-new'
+  if [[ ! $(grep "'msf/core/auxiliary/sip'" /usr/share/metasploit/lib/msf/core/auxiliary/mixins.rb) ]]; then
+    cp --no-preserve=ownership "$srcdir/viproy-voipkit/lib/msf/core/auxiliary/mixins.rb" "$pkgdir/usr/share/metasploit/lib/msf/core/auxiliary/mixins.rb-new"
+  fi
+
+  # Documentation + License
+  install -Dm644 README.md "$pkgdir/usr/share/doc/metasploit/viproy-voipkit/README.md"
+  install -Dm644 Usage.txt "$pkgdir/usr/share/doc/metasploit/viproy-voipkit/Usage.txt"
+  install -Dm644 "$srcdir/siptrust.pdf" "$pkgdir/usr/share/doc/metasploit/viproy-voipkit/siptrust.pdf"
+  install -Dm644 "$srcdir/Return_of_the_SIP-3.5.pdf" "$pkgdir/usr/share/doc/metasploit/viproy-voipkit/Return_of_the_SIP-3.5.pdf"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/viproy-voipkit/LICENSE"
+
+  # Source
+  install -Dm644 data/wordlists/sipproxy_replace.txt "$pkgdir/usr/share/metasploit/data/wordlists/sipproxy_replace.txt"
+  install -Dm644 lib/msf/core/auxiliary/sip.rb "$pkgdir/usr/share/metasploit/lib/msf/core/auxiliary/sip.rb"
+  install -Dm644 lib/rex/proto/sip/socket.rb "$pkgdir/usr/share/metasploit/lib/rex/proto/sip/socket.rb"
+  install -Dm644 lib/rex/proto/sip.rb "$pkgdir/usr/share/metasploit/lib/rex/proto/sip.rb"
+  install -Dm644 modules/auxiliary/scanner/sip/vsip* "$pkgdir/usr/share/metasploit/modules/auxiliary/scanner/sip"
+}
