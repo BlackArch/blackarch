@@ -1,0 +1,46 @@
+pkgname='winexe'
+pkgver='1.00'
+pkgrel=1
+pkgdesc='Remotely execute commands on Windows NT/2000/XP/2003 systems.'
+arch=('x86' 'x86_64')
+url='http://sourceforge.net/projects/winexe/'
+license=('GPL3')
+depends=('gnutls' 'libsasl' 'popt' 'talloc' 'tdb')
+makedepends=('python2')
+groups=('blackarch' 'blackarch-misc' 'blackarch-windows')
+source=("http://downloads.sourceforge.net/project/$pkgname/$pkgname-$pkgver.tar.gz"
+        "getopts.patch"
+        "gnutls.patch"
+        "pidl.patch")
+md5sums=('48325521ddc40d14087d1480dc83d51e'
+         '30ca08fe03518e9428799187159c78f4'
+         '201d74de823b8b07195a62a5c9e1bfdf'
+         '486d86e0f181a844ddbf1e6267098ef3')
+
+prepare() {
+  cd "$srcdir/$pkgname-$pkgver"
+  
+  patch -Np1 -i "$srcdir/pidl.patch"
+  
+  cd "source4"
+  patch -Np1 -i "$srcdir/getopts.patch"
+  patch -Np2 -i "$srcdir/gnutls.patch"
+}
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  cd "source4"
+  
+  ./autogen.sh
+  PYTHON_VER=2 ./configure --enable-fhs --prefix=/usr
+  
+  make basics
+  make bin/winexe
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver/source4"
+  
+  install -D -m755 "bin/winexe" "$pkgdir/usr/bin/winexe"
+}
