@@ -1,0 +1,47 @@
+pkgname=stebb
+pkgver=1.0
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation' 'blackarch-fuzzer')
+pkgdesc="OWASP STeBB (Security Testing Browser Bundle ) is an open source Linux based penetration testing browser bundle built over Mozilla Firefox, with a vast array of tools"
+arch=('i686' 'x86_64')
+url='http://www.stebb.com/'
+license=('custom')
+depends=('gtk2' 'mozilla-common' 'libxt' 'startup-notification' 'mime-types'
+         'dbus-glib' 'alsa-lib' 'desktop-file-utils' 'hicolor-icon-theme'
+         'libvpx' 'libevent' 'nss' 'hunspell' 'sqlite')
+makedepends=('unzip' 'zip' 'diffutils' 'python2' 'yasm' 'mesa' 'imake'
+             'xorg-server-xvfb' 'libpulse' 'gstreamer0.10-base'
+             'inetutils')
+optdepends=('networkmanager: Location detection via available WiFi networks'
+            'gstreamer0.10-base-plugins: vorbis decoding, ogg demuxing'
+            'gstreamer0.10-good-plugins: webm and mp4 demuxing'
+            'gstreamer0.10-bad-plugins: aac, vp8 and opus decoding'
+            'gstreamer0.10-ugly-plugins: h.264 and mp3 decoding'
+            'gstreamer0.10-ffmpeg: more decoders'
+            'libpulse: PulseAudio audio driver')
+source=("http://downloads.sourceforge.net/sourceforge/stebb/stebb-portable-32-${pkgver}.tar.gz")
+md5sums=('bd193ed4c246aff81ae276aa6c763dfb')
+
+package() {
+  cd "${srcdir}/STeBB"
+
+  # Make base directories.
+  install -dm755 "${pkgdir}/usr/share/stebb"
+  install -dm755 "${pkgdir}/usr/share/doc/stebb"
+  install -dm755 "${pkgdir}/usr/share/licenses/stebb"
+  install -dm755 "${pkgdir}/usr/bin"
+
+  # Bins
+  cp -aR * ${pkgdir}/usr/share/stebb
+
+  # License
+  sed -n 1,36p application.ini src/STeBB/application.ini | sed 's|^;[ ]*||g' > ${pkgdir}/usr/share/licenses/stebb/LICENSE
+
+  # Make joint script.
+  cat > ${pkgdir}/usr/bin/stebb <<EOF
+#!/bin/bash
+cd /usr/share/stebb
+./run-stebb.sh "\$@"
+EOF
+  chmod +x ${pkgdir}/usr/bin/stebb
+}
