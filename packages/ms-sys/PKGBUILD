@@ -1,0 +1,34 @@
+pkgname='ms-sys'
+pkgver='2.2.0'
+pkgrel=1
+pkgdesc='A tool to write Win9x-.. master boot records (mbr) under linux - RTM!'
+arch=('x86' 'x86_64' 'armv6h' 'armv7h')
+url='http://ms-sys.sourceforge.net/'
+license=('GPL2')
+groups=('blackarch' 'blackarch-binary' 'blackarch-backdoor'
+        'blackarch-forensics')
+source=("http://downloads.sourceforge.net/sourceforge/ms-sys/ms-sys-$pkgver.tar.gz")
+md5sums=('aed171c3b354e7c755e1b9fd9bd8c384')
+
+prepare() {
+  cd "$srcdir/ms-sys-$pkgver"
+  
+  mkdir -p "$pkgdir/usr/{bin,share/man/man1}"
+  sed -i "s|MANDIR =.*|MANDIR = /usr/share/man|g" Makefile
+}
+
+build() {
+  cd "$srcdir/ms-sys-$pkgver"
+
+  make PREFIX="/usr"
+}
+
+package() {
+  cd "$srcdir/ms-sys-$pkgver"
+  
+  make PREFIX="/usr" DESTDIR="$pkgdir" install
+
+  install -D -m644 "COPYING" "$pkgdir/usr/share/licenses/ms-sys/COPYING"
+  install -D -m644 "README" "$pkgdir/usr/share/doc/ms-sys/README"
+  install -D -m644 "FAQ" "$pkgdir/usr/share/doc/ms-sys/FAQ"
+}
