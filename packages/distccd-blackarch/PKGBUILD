@@ -1,0 +1,50 @@
+_subarchs=(armv6h armv7h)
+pkgbase='distccd-blackarch'
+pkgname=("${_subarchs[@]/#/$pkgbase-}")
+pkgver=4.7.2
+pkgrel=2
+pkgdesc="An x-tools & distcc services package for BlackArch ARM only for x86_64"
+arch=('x86_64')
+license=('GPL' )
+url="http://archlinuxarm.org/developers/distcc-cross-compiling"
+depends=('distcc')
+options=('libtool' 'emptydirs' '!strip')
+source=(http://archlinuxarm.org/builder/xtools/x-tools6h.tar.xz
+	http://archlinuxarm.org/builder/xtools/x-tools7h.tar.xz
+	distccd-armv7h.conf
+	distccd-armv7h.service
+	distccd-armv6h.conf
+	distccd-armv6h.service
+        )
+md5sums=('90af57b6610b622340edc7166f316761'
+         'ad5ebe4481ceff9ebcebd80ac1c11303'
+         '4c7552805af92262356d262b14c8f173'
+         'e760b78b6d8c4d94ba1540ee0a9e33b9'
+         '8bd7cddb50f8c41f6a3e87a1d1d95b0b'
+         '0f2ed6569e6f9de9ce63c9550b68a7a7')
+
+_package_subarch() {
+    # backup configs
+    backup=("etc/conf.d/distccd-$1")
+    # install symlink to distccd
+    install -d "${pkgdir}/usr/bin"
+    ln -sf /usr/bin/distccd "${pkgdir}/usr/bin/distccd-$1"
+    # copy in toolchain
+    install -d "${pkgdir}/usr/local/x-tools-$1"
+    cp -ar "${srcdir}/$2" "${pkgdir}/usr/local/x-tools-$1"
+    # install services
+    install -Dm0644 "${srcdir}/distccd-$1.service" \
+       "${pkgdir}/usr/lib/systemd/system/distccd-$1.service"
+    # install config
+    install -Dm0644 "${srcdir}/distccd-$1.conf" \
+       "${pkgdir}/etc/conf.d/distccd-$1"
+
+}
+
+for i in "${!_subarchs[@]}"; do
+    _xtoolsdir="${source[i]##*/}"
+    _xtoolsdir="${_xtoolsdir%%.*}"
+    eval 'package_distccd-blackarch-'${_subarchs[i]}'() {
+        _package_subarch '${_subarchs[i]}' '${_xtoolsdir}'
+    }'
+done
