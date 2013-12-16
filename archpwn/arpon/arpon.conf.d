@@ -1,2 +1,0 @@
-INTERFACE=eth0
-OPTIONS=-d
