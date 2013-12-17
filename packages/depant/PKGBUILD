@@ -1,0 +1,37 @@
+pkgname='depant'
+pkgver='0.3a'
+pkgrel=1
+pkgdescription='Check network for services with default passwords.'
+arch=('x86' 'x86_64')
+url='http://midnightresearch.com/projects/depant/'
+license=('GPL')
+groups=('blackarch' 'blackarch-cracker')
+depends=('python-ipcalc' 'hydra' 'nmap' 'setuptools')
+source=("http://midnightresearch.com/local/packages/depant/depant-$pkgver.tgz")
+md5sums=('d1f7af5228436ff1d3816dffd1f2e458')
+
+build() {
+  cd "$srcdir/depant"
+  
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/depant"
+  
+  install -D -m755 "build/lib/depant/depant.py" \
+    "$pkgdir/usr/share/depant/depant.py"
+  install -D -m644 "build/lib/depant/hydra.py" \
+    "$pkgdir/usr/share/depant/hydra.py"
+  install -D -m644 "build/lib/depant/nmap.py" "$pkgdir/usr/share/depant/nmap.py"
+  install -D -m644 "README" "$pkgdir/usr/share/doc/depant/README"
+  install -D -m644 "LICENSE" "$pkgdir/usr/share/licenses/depant/LICENSE"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  cat > "$pkgdir/usr/bin/depant"  << EOF
+  #!/bin/sh
+  cd /usr/share/depant/ && python2 depant.py \$@
+EOF
+  chmod 0755 "$pkgdir/usr/bin/depant"
+}
