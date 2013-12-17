@@ -1,5 +1,5 @@
 pkgname=dpeparser
-pkgver=$(date +%Y%m%d)
+pkgver=20131217
 pkgrel=1
 pkgdesc="Default password enumeration project"
 arch=('any')
@@ -9,31 +9,34 @@ groups=('blackarch' 'blackarch-analysis')
 source=('http://www.toolswatch.org/dpe/dpeparser.py')
 md5sums=('f802cc1d26190fdba0f4cfe5a7f1aaa8')
 
+pkgver() {
+  date +%Y%m%d
+}
+
 prepare() {
-    python dpeparser.py -u
+  cd "$srcdir"
+
+  sed -i 's#MydpeDB ="dpe_db.xml"#MydpeDB = "/usr/share/dpeparser/dpe_db.xml"#' dpeparser.py
+}
+
+build() {
+  cd "$srcdir"
+
+  python2 dpeparser.py -u
 }
 
 package() {
-    instdir="$pkgdir/usr/share/dpeparser"
-    bindir="$pkgdir/usr/bin"
+  cd "$srcdir"
 
-    install -m755 -d "$bindir"
-    install -m755 -d "$instdir"
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/dpeparser"
 
-    install -m755 dpeparser.py "$instdir/"
-    install -m644 dpe_db.xml "$instdir/"
+  install -m755 dpeparser.py "$pkgdir/usr/share/dpeparser"
+  install -m644 dpe_db.xml "$pkgdir/usr/share/dpeparser"
 
-    sed -i 's#MydpeDB ="dpe_db.xml"#MydpeDB = "/usr/share/dpeparser/dpe_db.xml"#' "$instdir/dpeparser.py"
-
-    cat > "$bindir/dpeparser" << EOF
+  cat > "$pkgdir/usr/bin/dpeparser" <<EOF
 #!/bin/bash
-
-python /usr/share/dpeparser/dpeparser.py "\$@"
-
+python2 /usr/share/dpeparser/dpeparser.py "\$@"
 EOF
-
-    chmod 755 "$bindir/dpeparser"
-
+  chmod 755 "$pkgdir/usr/bin/dpeparser"
 }
-
-
