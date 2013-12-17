@@ -1,0 +1,39 @@
+pkgname='pirana'
+pkgver='0.3.1'
+pkgrel=1
+pkgdesc='Exploitation framework that tests the security of a email content filter.'
+url='http://www.guay-leroux.com/projects.html'
+groups=('blackarch' 'blackarch-exploitation')
+license=('GPL')
+arch=('x86' 'x86_64')
+depends=('perl')
+source=("http://packetstorm.igor.onlinedirect.bg/UNIX/audit/pirana-$pkgver.tar.gz")
+md5sums=('5e0aba05b87c5a85cd827b9c583d9943')
+
+prepare() {
+  cd "$srcdir/pirana-$pkgver"
+  
+  sed -ie '/arpa\/inet.h/a#include <limits.h>/' \
+    "exploits/exploit_ARJ_long_filename.c"
+}
+
+build() {
+  cd "$srcdir/pirana-$pkgver"
+  
+  make CC="gcc $CFLAGS"
+}
+
+package() {
+  cd "$srcdir/pirana-$pkgver"
+  
+  install -d "$pkgdir/usr/bin"
+  install -d "$pkgdir/usr/share/pirana/"
+  cp -r * "$pkgdir/usr/share/pirana/"
+
+  cat > "$pkgdir/usr/bin/pirana" << EOF
+  #!/bin/sh
+  cd /usr/share/pirana/ && perl pirana.pl \$*
+EOF
+
+  chmod 0755 "$pkgdir/usr/bin/pirana" "$pkgdir/usr/share/pirana/pirana.pl"
+}
