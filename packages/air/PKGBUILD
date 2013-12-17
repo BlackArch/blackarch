@@ -1,0 +1,36 @@
+pkgname='air'
+pkgver='2.0.0'
+pkgrel=1
+pkgdesc='A GUI front-end to dd/dc3dd designed for easily creating forensic images.'
+url='http://air-imager.sourceforge.net/'
+groups=('blackarch' 'blackarch-forensic')
+license=('GPL')
+arch=('x86' 'x86_64' 'armv6h' 'armv7h')
+depends=('perl-tk' 'sharutils')
+install='air.install'
+source=("http://downloads.sourceforge.net/air-imager/air-$pkgver.tar.gz")
+md5sums=('d4dff8fcaf94d555bd7f833097fe816d')
+
+package() {
+  cd "$srcdir/air-$pkgver"
+
+  install -d -m755 "$pkgdir/var/log"
+
+  export PERLTK_VER=$(pacman -Q perl-tk | awk -F' ' '{ print $2 }' |
+  sed -e 's/-.*//' -e 's/_//')
+
+  INTERACTIVE="no" INSTALL_DIR="$pkgdir/usr" TEMP_DIR="$srcdir/" \
+    FINAL_INSTALL_DIR=/usr ./install-air-$pkgver
+
+  chown -R root:root $pkgdir/*
+
+  mv "$pkgdir/usr/share/air/logs" "$pkgdir/var/log/air"
+  ln -s "/var/log/air" "$pkgdir/usr/share/air/logs"
+  chmod ug+rwx "$pkgdir/var/log/air"
+
+  if [[ -p "$pkgdir/usr/share/air/air-fifo" ]]; then
+    chmod ug+rw "$pkgdir/usr/share/air/air-fifo"
+  fi
+
+  chmod a+xr "$pkgdir/usr/bin/air"
+}
