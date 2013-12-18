@@ -1,0 +1,26 @@
+pkgname='voipong'
+pkgver='2.0'
+pkgrel=1
+pkgdesc='A utility which detects all Voice Over IP calls on a pipeline, and for those which are G711 encoded, dumps actual conversation to seperate wave files.'
+arch=('x86' 'x86_64' 'armv6h' 'armv7h')
+url='http://www.enderunix.org/voipong/'
+license=('GPL')
+groups=('blackarch' 'blackarch-voip')
+depends=('libpcap')
+source=("http://www.enderunix.org/voipong/voipong-$pkgver.tar.gz")
+md5sums=('4b3e16c5d8399bba86b3caf1887550ff')
+
+package() {
+  cd "$srcdir/voipong-$pkgver"
+
+  mkdir -p $pkgdir/{usr/bin,etc/}
+
+  sed -e "s:/usr/local/etc:/etc:g" -i voipctl.c
+  sed -e "s:/usr/local/etc:/etc:g" -i voipong.c
+  sed -e "s:/usr/local/etc:$pkgdir/etc:g" -e "s:/usr/local/:$pkgdir/usr/:g" \
+    -i Makefile.linux
+
+  make CFLAGS="$CFLAGS -Iinclude" -f Makefile.linux
+  
+  make install -f Makefile.linux
+}
