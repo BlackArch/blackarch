@@ -45,7 +45,7 @@ And uncomment mirror that is closest to you.
 
 Then add this to
 [`/etc/pacman.conf`](https://www.archlinux.org/pacman/pacman.conf.5.html):
-
+```
 [blackarch]
 Include = /etc/pacman.d/mirrorlist-blackarch
 ```
