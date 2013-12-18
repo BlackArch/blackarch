@@ -1,0 +1,41 @@
+pkgname='bios_memimage'
+pkgver='1.2'
+pkgrel=1
+pkgdesc='A tool to dump RAM contents to disk (aka cold boot attack).'
+arch=('x86' 'x86_64')
+url='http://citp.princeton.edu/memory/code/'
+license=('BSD')
+groups=('blackarch' 'blackarch-cracker' 'blackarch-forensic')
+source=("http://citp.princeton.edu/memory-content/src/bios_memimage-$pkgver.tar.gz")
+md5sums=('fb9da18baa0ea00889c9e314da3e7b8e')
+
+build() {
+  cd "$srcdir/bios_memimage"
+
+  machine="`uname -m`"
+
+  if [ "$machine" = "x86_64" ]
+  then
+    make -f Makefile.64 -C stand
+    make -f Makefile.64
+  else
+    make
+  fi
+}
+
+package() {
+  cd "$srcdir/bios_memimage"
+  
+  install -D -m755 "pxedump/pxedump" \
+    "$pkgdir/usr/bin/pxedump"
+  install -D -m755 "usbdump/usbdump" \
+    "$pkgdir/usr/bin/usbdump"
+  install -D -m644 "pxe/scraper.bin" \
+    "$pkgdir/usr/share/bios_memimage/pxe/scraper.bin"
+  install -D -m644 "usb/scraper.bin" \
+    "$pkgdir/usr/share/bios_memimage/usb/scraper.bin"
+  install -D -m644 "doc/readme.txt" \
+    "$pkgdir/usr/share/doc/bios_memimage/readme.txt"
+  install -D -m644 "doc/faq.txt" \
+    "$pkgdir/usr/share/doc/bios_memimage/faq.txt"
+}
