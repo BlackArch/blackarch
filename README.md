@@ -37,6 +37,13 @@ Add this to
 [blackarch]
 Server = http://www.blackarch.org/pub/blackarch/$arch
 ```
+To use the mirrorlist:
+```
+[blackarch]
+Include = /etc/pacman.d/mirrorlist-blackarch
+```
+And uncomment mirror that is closest to you.
+
 
 For package signing, pull in and sign the package signing keys:
 
