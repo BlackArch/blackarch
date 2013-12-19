@@ -1,0 +1,48 @@
+pkgname='packet-o-matic'
+pkgver=351
+pkgrel=1
+pkgdesc='A real time packet processor. Reads the packet from an input module, match the packet using rules and connection tracking information and then send it to a target module.'
+arch=('x86' 'x86_64')
+url='http://www.packet-o-matic.org/'
+license=('GPL')
+groups=('blackarch' 'blackarch-networking' 'blackarch-tunneling')
+depends=('libpcap' 'libxml2' 'libnet')
+makedepends=('subversion')
+provides=('packet-o-matic')
+replaces=('packet-o-matic')
+md5sums=('SKIP')
+_svntrunk='https://svn.tuxicoman.be/svn/packet-o-matic/trunk'
+
+prepare() {
+  cd "$srcdir"
+
+  if [ -d $pkgname/.svn ]
+  then
+    cd $pkgname && svn up -r $pkgver
+  else
+    svn co $_svntrunk --config-dir ./ -r $pkgver $pkgname
+  fi
+
+  rm -rf "$srcdir/$pkgname-build"
+  cp -r "$srcdir/$pkgname" "$srcdir/$pkgname-build"
+  cd "$srcdir/$pkgname-build"
+
+  touch config.h.in
+  libtoolize --force --copy
+  aclocal
+  automake --add-missing
+  autoconf
+}
+
+build() {
+  cd "$srcdir/$pkgname-build"
+  
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd "$srcdir/$pkgname-build"
+  
+  make DESTDIR="$pkgdir/" install
+}
