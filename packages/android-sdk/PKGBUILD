@@ -1,0 +1,58 @@
+pkgname=android-sdk
+pkgver=r22.0.5
+pkgrel=1
+pkgdesc="Google Android SDK"
+groups=('blackarch' 'blackarch-mobile')
+arch=('i686' 'x86_64')
+url='http://developer.android.com/sdk/index.html'
+license=('custom')
+depends=('java-runtime' 'alsa-lib' 'openal' 'libstdc++5' 'libxv'
+         'ncurses' 'sdl' 'swt' 'zlib')
+if [[ $CARCH = x86_64 ]]; then
+  depends=('java-runtime' 'lib32-alsa-lib' 'lib32-openal' 'lib32-libstdc++5'
+           'lib32-libxv' 'lib32-ncurses' 'lib32-sdl' 'lib32-zlib' 'swt')
+fi
+install=android-sdk.install
+optdepends=('android-udev-rules: udev rules for Android devices'
+            'android-sdk-platform-tools: adb, aapt, aidl, dexdump and dx')
+source=(https://dl.google.com/android/android-sdk_${pkgver}-linux.tgz
+        android-sdk.png
+        android-sdk.desktop
+        android-sdk.sh
+        android-sdk.csh
+        android-sdk.conf
+        license.html)
+sha1sums=('efeed61de82e1d60166c062b730d1f78b4616cbf'
+          'c249134310ae91dccce1ad839b3985211674ab71'
+          'e834f53e13d5926ec7be3fd775fa80aa6f328eb6'
+          '78f8574e651c9bf8b7515ecb30c7ef93edbc4a96'
+          '08c85aab7523e22b298891c7047bc0e7adbf3437'
+          '145bdf3eb41a56574b289c1577a24bc47097ec83'
+          'bfb91be7e0b602d765b7a1fcaf0ce1b7e1a93faa')
+
+package() {
+  cd "$pkgdir"
+
+  # Base Dirs
+  install -Dm755 "$srcdir/android-sdk.sh" etc/profile.d/android-sdk.sh
+  install -Dm755 "$srcdir/android-sdk.csh" etc/profile.d/android-sdk.csh
+  install -Dm644 "$srcdir/android-sdk.conf" etc/ld.so.conf.d/android-sdk.conf
+  mkdir -p opt
+
+  cp -a "$srcdir/android-sdk-linux" opt/android-sdk
+  install -Dm655 "$srcdir/android-sdk.png" usr/share/pixmaps/android-sdk.png
+  install -Dm655 "$srcdir/android-sdk.desktop" \
+    usr/share/applications/android-sdk.desktop
+  install -Dm644 "$srcdir/license.html" \
+    usr/share/licenses/android-sdk/license.html
+
+  if [[ $CARCH = i686 ]]; then
+    rm -rf ${pkgdir}/opt/android-sdk/tools/lib/{monitor-,}x86_64 \
+      ${pkgdir}/opt/android-sdk/tools/lib/lib64* \
+      ${pkgdir}/opt/android-sdk/tools/emulator64-*
+  fi
+
+  # Fix permissions
+  chmod -R ugo+rX "${pkgdir}/opt"
+  chmod g+rwX opt/android-sdk
+}
