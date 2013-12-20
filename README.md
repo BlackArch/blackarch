@@ -35,7 +35,7 @@ Add this to
 
 ```
 [blackarch]
-Server = http://www.blackarch.org/pub/blackarch/$arch
+Server = http://www.blackarch.org/blackarch/$repo/os/$arch
 ```
 To use the mirrorlist:
 ```
