@@ -1,0 +1,22 @@
+info_dir=/usr/share/info
+info_files=(gnupg.info gnupg.info-1 gnupg.info-2)
+
+post_install() {
+  [ -x usr/bin/install-info ] || return 0
+  for f in ${info_files[@]}; do
+    usr/bin/install-info ${info_dir}/$f ${info_dir}/dir 2> /dev/null
+  done
+  echo -e "\e[1mNOTE: Keys larger than 16384 bits fail on unpatched gnupg versions!\e[0m"
+}
+
+post_upgrade() {
+  post_install $1
+  echo -e "\e[1mNOTE: Keys larger than 16384 bits fail on unpatched gnupg versions!\e[0m"
+}
+
+pre_remove() {
+  [ -x usr/bin/install-info ] || return 0
+  for f in ${info_files[@]}; do
+    usr/bin/install-info --delete ${info_dir}/$f ${info_dir}/dir 2> /dev/null
+  done
+}

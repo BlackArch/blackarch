@@ -1,0 +1,62 @@
+pkgname=blackarch-gnupg-largekeys
+pkgver=2.0.22
+pkgrel=1
+pkgdesc='Complete and free implementation of the OpenPGP standard'
+url='http://www.gnupg.org/'
+license=('GPL')
+arch=('i686' 'x86_64')
+optdepends=('curl: gpg2keys_curl'
+            'libldap: gpg2keys_ldap'
+            'libusb-compat: scdaemon')
+makedepends=('curl' 'libldap' 'libusb-compat')
+depends=('bzip2' 'libksba' 'libgcrypt' 'pth' 'libassuan' 'readline' 'pinentry' 'dirmngr')
+source=("ftp://ftp.gnupg.org/gcrypt/${pkgname%%-largekeys}/${pkgname%%-largekeys}-${pkgver}.tar.bz2"{,.sig}
+        'protect-tool-env.patch'{,.sig}
+        'gnupg2-large-keys.patch'{,.sig}
+        'install'{,.sig}
+        'PKGBUILD.sig')
+sha1sums=('9ba9ee288e9bf813e0f1e25cbe06b58d3072d8b8' 'SKIP'
+          '2ec97ba55ae47ff0d63bc813b8c64cb79cef11db' 'SKIP'
+          'a77b9616d238fbdd5488e7024e5e1f36ce8ed586' 'SKIP'
+          'ff80fc79329cfa631c19ae1ea6fc4a390ab851f7' 'SKIP'
+          'SKIP')
+
+install=install
+
+conflicts=('gnupg2' 'gnupg')
+provides=("gnupg2=${pkgver}" "gnupg=${pkgver}")
+replaces=('gnupg2' 'gnupg')
+
+prepare() {
+	cd "${srcdir}/${pkgname%%-largekeys}-${pkgver}"
+	patch -p1 -i ../protect-tool-env.patch # FS#31900
+	patch -p1 -i ../gnupg2-large-keys.patch
+}
+
+build() {
+	cd "${srcdir}/${pkgname%%-largekeys}-${pkgver}"
+	./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--sbindir=/usr/bin \
+		--libexecdir=/usr/lib/gnupg \
+		--enable-maintainer-mode \
+		--enable-symcryptrun \
+		--enable-gpgtar \
+
+	make
+}
+
+check() {
+	cd "${srcdir}/${pkgname%%-largekeys}-${pkgver}"
+	make check
+}
+
+package() {
+	cd "${srcdir}/${pkgname%%-largekeys}-${pkgver}"
+	make DESTDIR="${pkgdir}" install
+	ln -s gpg2 "${pkgdir}"/usr/bin/gpg
+	ln -s gpgv2 "${pkgdir}"/usr/bin/gpgv
+	ln -s gpg2.1.gz "${pkgdir}"/usr/share/man/man1/gpg.1.gz
+	rm "${pkgdir}/usr/share/gnupg/com-certs.pem" # FS#33059
+}
