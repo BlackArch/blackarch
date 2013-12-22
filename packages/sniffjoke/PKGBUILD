@@ -8,11 +8,17 @@ pkgdesc="Injects packets in the transmission flow that are able to seriously dis
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://www.delirandom.net/sniffjoke/'
 depends=('cmake' 'gcc' 'iptables' 'tcpdump')
-source=('http://www.delirandom.net/sniffjoke/sniffjoke-0.4.1.tar.bz2' )
-md5sums=('5a916a830abef8b5c26d4f0e38941b40')
+source=('git+https://github.com/vecna/sniffjoke'
+	 CMake.patch)
+md5sums=('SKIP'
+	 '3684e50ae4a6c0f31cccd76aee54abc1')
+
+prepare() {
+  patch -p1 -i CMake.patch
+}
 
 build() {
-  cd $srcdir/sniffjoke-0.4.1
+  cd $srcdir/sniffjoke
   [[ -d build ]] || mkdir build
   cd build
 
@@ -21,14 +27,9 @@ build() {
 }
 
 package() {
-  cd $srcdir/sniffjoke-0.4.1
+  cd $srcdir/sniffjoke
   cd build
 
   make DESTDIR=$pkgdir install
-
-  # Conform to the FHS.
-  install -dm755 "$pkgdir/usr/bin"
-  mv "$pkgdir"/usr/var "$pkgdir/etc"
-  mv "$pkgdir"/usr/local/{bin,sbin}/* "$pkgdir/usr/bin"
-  rm -rf "$pkgdir"/usr/local
 }
+
