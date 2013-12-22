@@ -23,7 +23,7 @@ You can get in touch with the blackarch team. Just check out the following:
 
 **Web:** http://www.blackarch.org/
 
-**Mail:**
+**Mail:** team@blackarch.org
 
 **IRC:** [irc://irc.freenode.net/blackarch](irc://irc.freenode.net/blackarch)
 
