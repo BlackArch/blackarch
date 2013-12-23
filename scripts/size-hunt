@@ -1,0 +1,28 @@
+#!/bin/bash
+
+check_deps=false
+
+get_field() {
+	pacman -Si "$1" | grep "^$2" | sed 's/[^:]\+:\s\+//'
+
+}
+
+echo 'name download install'
+
+# Just give up now.
+if $check_deps ; then
+	pacman -Sgg | grep blackarch |
+	cut -d' ' -f2 | sort -u |
+	while read d ; do
+		printf '%s\n' $(get_field "$d" 'Depends On')
+		echo "$d"
+	done | grep -v '^None$'
+else
+	pacman -Sgg | grep blackarch |
+	  cut -d' ' -f2
+fi | sort -u |
+while read p ; do
+	download_size=$(get_field "$p" 'Download Size' | cut -d' ' -f1)
+	install_size=$(get_field "$p" 'Installed Size' | cut -d' ' -f1)
+	echo "$p $download_size $install_size"
+done
