@@ -1,0 +1,99 @@
+_runkernver=$(uname -r)
+pkgname=compat-drivers-patched
+pkgver=3.9_rc4_2_su # NO CRAP! (-c). Use _ instead of -
+_upver="${pkgver//_/-}"
+pkgrel=3
+pkgdesc='Compat drivers provides drivers released on newer kernels backported for usage on older kernels. Patched flavor'
+url='https://backports.wiki.kernel.org/index.php/Main_Page'
+arch=('i686' 'x86_64')
+license=('GPL')
+depends=('linux')
+makedepends=('linux-api-headers' "linux-headers>=${_runkernver:0:3}")
+optdepends=('compat-drivers-frag+ack: wl-frag+ack patch')
+install=backports.install
+#source=("http://www.orbit-lab.org/kernel/compat-wireless-${pkgver:0:1}-stable/v${pkgver:0:3}/compat-wireless-${_upver}.tar.bz2")
+#source=("http://www.kernel.org/pub/linux/kernel/projects/backports/stable/v${_upver%%-*}/compat-drivers-${_upver}.tar.xz")
+source=("http://www.kernel.org/pub/linux/kernel/projects/backports/stable/v3.9-rc4/compat-drivers-${_upver}.tar.xz")
+#echo $source
+#XZ is way better in decompression
+
+sha256sums=('718c1d6baaf82bea5383ada4c1cc4b772bd992f55d462d8339c7f6cbfb78cf27')
+
+
+#_extramodules=extramodules-3.7-ARCH
+_extramodules=extramodules-${_runkernver%.*}-ARCH
+_kernver=$(cat /usr/lib/modules/${_extramodules}/version) # TODO make this a lower boundary and utilize in reality pacman to get freshest paths. Or make it for specific kernels. Or multiply it over specific kernels ? :3
+
+_cfgdir="/etc/makepkg.d/${pkgname}/"
+_patchdir="${_cfgdir}/patches/"
+
+# For a list of supported drivers, run ./scripts/driver-select from the source tarball.
+# To only build specific ones, define the _selected_drivers variable; for instance:
+#         _selected_drivers='atheros intel wl12xx'
+# You can also export this variable in ~/.bashrc or /etc/profile to automate updating this package
+
+prepare() {
+  (
+    _kernel_simple=${_runkernver%.*}
+    if [ -n "${_kernel_simple:2:2}" ]; then
+      if [ ${_kernel_simple:2:2} -gt 9 ]; then
+        error "compat-drivers-patched package remains in AUR only for old kernels. Use backports-patched instead"
+        false
+        exit 1
+      fi
+    fi
+    unset _kernel_simple
+  )
+  cd "${srcdir}/compat-drivers-${_upver}"
+  # modprobe -l dropped in kmod
+  sed 's:modprobe -l \([^ )`]*\):find /usr/lib/modules/*/kernel -name "\1.ko*" | sed "s|.*/kernel||":' -i scripts/*
+  sed 's:\$(MODPROBE) -l \([^ )`]*\):find /usr/lib/modules/*/kernel -name "\1.ko*" | sed "s|.*/kernel||":' -i Makefile
+
+  # rfkill.h does not use compat-3.1.h # TODO : IS THIS RLY NEEDED ?
+  echo '#define br_port_exists(dev) (dev->priv_flags & IFF_BRIDGE_PORT)' >> net/wireless/core.h
+
+  # Patch time!
+  #patch -p1 -i ../mac80211.compat08082009.wl_frag+ack_v1.patch
+  # WARNING - PART BELOW IS UNTESTED: current format - 00-name for cfgfile (to export variables) and 12-3-name for patches (3 stands for -p3)
+  if [ -d "${_cfgdir}" ]; then
+    _CFGLIST=$(ls -1 "${_cfgdir}" | awk ' /^[0-9][0-9]-.*/ {print "source '${_cfgdir}'"$0";"}')
+    eval $_CFGLIST
+    unset _CFGLIST
+    if [ -d "${_patchdir}" ]; then
+      _PATCHLIST=$(ls -1 "${_patchdir}" | awk ' /^[0-9][0-9]-[0-9]-.*/ {print $0}')
+      for _patch in $_PATCHLIST; do
+        msg "Merging patch: ${_patch}"
+        patch -p${_patch:3:1} -i ${_patchdir}/${_patch}
+      done
+      unset _PATCHLIST
+    fi
+  fi
+}
+
+build() {
+  cd "${srcdir}/compat-drivers-${_upver}"
+
+  # Make time!
+  [[ -n ${_selected_drivers} ]] && scripts/driver-select ${_selected_drivers}
+  make KLIB=/usr/lib/modules/"${_kernver}"
+}
+
+package() {
+  cd "${srcdir}/compat-drivers-${_upver}"
+  mkdir ${pkgdir}/usr/
+  make INSTALL_MOD_PATH="${pkgdir}/usr" KMODDIR=../"${_extramodules}" install-modules
+  find "${pkgdir}" -name '*.ko' -exec gzip -9 {} \;
+
+  install -d "${pkgdir}"/usr/bin
+  install scripts/*{enable,load} "${pkgdir}"/usr/bin
+
+  install -d "${pkgdir}"/usr/lib/compat-drivers
+  install scripts/modlib.sh "${pkgdir}"/usr/lib/compat-drivers
+
+  install -d "${pkgdir}"/usr/lib/udev/rules.d
+  install udev/compat_firmware.sh	"${pkgdir}"/usr/lib/udev
+  install udev/50-compat_firmware.rules "${pkgdir}"/usr/lib/udev/rules.d
+
+  # Preparation for future
+  install -d "${pkgdir}"/etc/makepkg.d/"${pkgname}"/patches
+}
