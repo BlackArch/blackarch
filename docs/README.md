@@ -10,7 +10,7 @@ so you can install BlackArchLinux on top of an existing Arch Linux
 installation. Packages may be installed individually or by category.
 
 <!-- Count tools: pacman -Sgg | grep blackarchlinux | cut -d' ' -f2 | sort -u | wc -l -->
-We currently have over 185 tools in our toolset and the repository is
+We currently have over 650 tools in our toolset and the repository is
 constantly expanding. All tools are thoroughly tested before being added to the
 codebase to maintain the quality of the repository.
 
