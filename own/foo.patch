@@ -1,0 +1,650 @@
+Only in blackarchiso/: .git
+Only in blackarchiso/: .gitignore
+Only in blackarchiso/: README.md
+diff -r -u baiso/build.sh blackarchiso/build.sh
+--- baiso/build.sh	2013-12-27 20:52:26.142357691 +0100
++++ blackarchiso/build.sh	2013-12-23 16:55:24.943092621 +0100
+@@ -2,14 +2,13 @@
+ 
+ set -e -u
+ 
+-iso_name=archlinux
+-iso_label="ARCH_$(date +%Y%m)"
++iso_name=blackarch
++iso_label="blackarch_$(date +%Y%m)"
+ iso_version=$(date +%Y.%m.%d)
+ install_dir=arch
++arch=$(uname -m)
+ work_dir=work
+ out_dir=out
+-
+-arch=$(uname -m)
+ verbose=""
+ pacman_conf=${work_dir}/pacman.conf
+ script_path=$(readlink -f ${0%/*})
+@@ -19,6 +18,8 @@
+     echo "usage ${0} [options]"
+     echo
+     echo " General options:"
++    echo "    -A <arch>          Set the architecture (prefix)"
++    echo "                        Default: ${arch}"
+     echo "    -N <iso_name>      Set an iso filename (prefix)"
+     echo "                        Default: ${iso_name}"
+     echo "    -V <iso_version>   Set an iso version (in filename)"
+@@ -59,9 +60,14 @@
+ 
+ # Additional packages (root-image)
+ make_packages() {
+-    setarch ${arch} mkarchiso ${verbose} -w "${work_dir}/${arch}" -C "${pacman_conf}" -D "${install_dir}" -p "$(grep -h -v ^# ${script_path}/packages.{both,${arch}})" install
++    if [[ ${arch} == "x86_64" ]]; then
++          # remove gcc-libs to avoid conflict with gcc-libs-multilib
++          setarch ${arch} mkarchiso ${verbose} -w "${work_dir}/${arch}" -C "${pacman_conf}" -D "${install_dir}" -r "pacman -Rdd --noconfirm gcc-libs" run
++    fi
++          setarch ${arch} mkarchiso ${verbose} -w "${work_dir}/${arch}" -C "${pacman_conf}" -D "${install_dir}" -p "$(grep -h -v ^# ${script_path}/packages.{both,${arch}})" install
+ }
+ 
++
+ # Copy mkinitcpio archiso hooks and build initramfs (root-image)
+ make_setup_mkinitcpio() {
+     local _hook
+@@ -100,6 +106,21 @@
+     cp ${work_dir}/${arch}/root-image/usr/share/licenses/common/GPL2/license.txt ${work_dir}/iso/${install_dir}/boot/memtest.COPYING
+ }
+ 
++# Fetch packages for offline installation
++make_pkgcache() {
++    for pkg in $(grep -h -v ^# ${script_path}/pkgcache.{both,${arch}})
++    do
++        rm -f /var/cache/pacman/pkg/${pkg}-*
++        # Get the download link from pacman
++		pkg_path=$(pacman -Sp ${pkg})
++        # Download the package
++		wget -P ${work_dir}/${arch}/root-image/var/cache/pacman/pkg ${pkg_path}
++        # Download the signature file
++		wget -P ${work_dir}/${arch}/root-image/var/cache/pacman/pkg ${pkg_path}.sig
++    done
++}
++
++
+ # Prepare /${install_dir}/boot/syslinux
+ make_syslinux() {
+     mkdir -p ${work_dir}/iso/${install_dir}/boot/syslinux
+@@ -195,12 +216,12 @@
+     setarch ${arch} mkarchiso ${verbose} -w "${work_dir}" -D "${install_dir}" prepare
+     rm -rf ${work_dir}/root-image
+     # rm -rf ${work_dir}/${arch}/root-image (if low space, this helps)
+-}
++}	
+ 
+ # Build ISO
+ make_iso() {
+     mkarchiso ${verbose} -w "${work_dir}" -D "${install_dir}" checksum
+-    mkarchiso ${verbose} -w "${work_dir}" -D "${install_dir}" -L "${iso_label}" -o "${out_dir}" iso "${iso_name}-${iso_version}-dual.iso"
++    mkarchiso ${verbose} -w "${work_dir}" -D "${install_dir}" -L "${iso_label}" -o "${out_dir}" iso "${iso_name}-${iso_version}-${arch}.iso"
+ }
+ 
+ if [[ ${EUID} -ne 0 ]]; then
+@@ -213,8 +234,9 @@
+     _usage 1
+ fi
+ 
+-while getopts 'N:V:L:D:w:o:vh' arg; do
++while getopts 'A:N:V:L:D:w:o:vh' arg; do
+     case "${arg}" in
++        A) arch="${OPTARG}" ;;
+         N) iso_name="${OPTARG}" ;;
+         V) iso_version="${OPTARG}" ;;
+         L) iso_label="${OPTARG}" ;;
+@@ -234,29 +256,32 @@
+ 
+ run_once make_pacman_conf
+ 
+-# Do all stuff for each root-image
+-for arch in i686 x86_64; do
+-    run_once make_basefs
+-    run_once make_packages
+-    run_once make_setup_mkinitcpio
+-    run_once make_customize_root_image
+-done
+-
+-for arch in i686 x86_64; do
+-    run_once make_boot
+-done
++if [[ ${arch} == "x86_64" ]];
++then
++      #Add multilb to pacman.conf
++      echo "modifying pacman.conf..." 
++      echo "modifying pacman.conf..."
++      echo '[multilib]' >> ${pacman_conf}
++      echo 'Include = /etc/pacman.d/mirrorlist' >> ${pacman_conf}
++fi
+ 
++# Do all stuff for each root-image
++run_once make_basefs
++run_once make_packages
++run_once make_setup_mkinitcpio
++run_once make_customize_root_image
++run_once make_boot
+ # Do all stuff for "iso"
+ run_once make_boot_extra
++run_once make_pkgcache
+ run_once make_syslinux
+ run_once make_isolinux
+-run_once make_efi
+-run_once make_efiboot
+ 
+-run_once make_aitab
+-
+-for arch in i686 x86_64; do
+-    run_once make_prepare
+-done
++if [[ ${arch} == "x86_64" ]];then
++      run_once make_efi
++      run_once make_efiboot
++fi
+ 
++run_once make_aitab
++run_once make_prepare
+ run_once make_iso
+Only in blackarchiso/efiboot: EFI
+diff -r -u baiso/efiboot/loader/entries/archiso-x86_64-cd.conf blackarchiso/efiboot/loader/entries/archiso-x86_64-cd.conf
+--- baiso/efiboot/loader/entries/archiso-x86_64-cd.conf	2013-12-27 20:52:26.139023972 +0100
++++ blackarchiso/efiboot/loader/entries/archiso-x86_64-cd.conf	2013-12-23 16:55:24.943092621 +0100
+@@ -1,4 +1,4 @@
+-title   Arch Linux archiso x86_64 UEFI CD
++title   BlackArch Linux x86_64 UEFI CD
+ linux   /EFI/archiso/vmlinuz.efi
+ initrd  /EFI/archiso/archiso.img
+ options archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL%
+diff -r -u baiso/efiboot/loader/entries/archiso-x86_64-usb.conf blackarchiso/efiboot/loader/entries/archiso-x86_64-usb.conf
+--- baiso/efiboot/loader/entries/archiso-x86_64-usb.conf	2013-12-27 20:52:26.139023972 +0100
++++ blackarchiso/efiboot/loader/entries/archiso-x86_64-usb.conf	2013-12-23 16:55:24.943092621 +0100
+@@ -1,4 +1,4 @@
+-title   Arch Linux archiso x86_64 UEFI USB
++title   BlackArch Linux x86_64 UEFI USB
+ linux   /%INSTALL_DIR%/boot/x86_64/vmlinuz
+ initrd  /%INSTALL_DIR%/boot/x86_64/archiso.img
+ options archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL%
+diff -r -u baiso/efiboot/loader/entries/uefi-shell-v1-x86_64.conf blackarchiso/efiboot/loader/entries/uefi-shell-v1-x86_64.conf
+--- baiso/efiboot/loader/entries/uefi-shell-v1-x86_64.conf	2013-12-27 20:52:26.139023972 +0100
++++ blackarchiso/efiboot/loader/entries/uefi-shell-v1-x86_64.conf	2013-12-23 16:55:24.943092621 +0100
+@@ -1,2 +1,2 @@
+-title  UEFI Shell x86_64 v1
++title  BlackArch Linux UEFI Shell x86_64 v1
+ efi    /EFI/shellx64_v1.efi
+diff -r -u baiso/efiboot/loader/entries/uefi-shell-v2-x86_64.conf blackarchiso/efiboot/loader/entries/uefi-shell-v2-x86_64.conf
+--- baiso/efiboot/loader/entries/uefi-shell-v2-x86_64.conf	2013-12-27 20:52:26.139023972 +0100
++++ blackarchiso/efiboot/loader/entries/uefi-shell-v2-x86_64.conf	2013-12-23 16:55:24.943092621 +0100
+@@ -1,2 +1,2 @@
+-title  UEFI Shell x86_64 v2
++title  BlackArch Linux UEFI Shell x86_64 v2
+ efi    /EFI/shellx64_v2.efi
+diff -r -u baiso/packages.both blackarchiso/packages.both
+--- baiso/packages.both	2013-12-27 20:52:26.142357691 +0100
++++ blackarchiso/packages.both	2013-12-23 16:55:24.943092621 +0100
+@@ -1,60 +1,292 @@
++# Intallation
+ arch-install-scripts
+-b43-fwcutter
+-btrfs-progs
+-crda
+-darkhttpd
+-ddrescue
+-dhclient
+-dialog
++refind-efi
++haveged
+ dmraid
+-dnsmasq
+-dnsutils
+-dosfstools
+-elinks
+-ethtool
+-f2fs-tools
+-fsarchiver
+-gnu-netcat
+-gpm
+-gptfdisk
+-grml-zsh-config
++hwdetect
++hwinfo
++squashfs-tools
++ntp
++dialog
+ grub
+-haveged
+-hdparm
+-ipw2100-fw
+-ipw2200-fw
+-irssi
+-lftp
+ linux-atm
++tzdata
++usb_modeswitch
++reflector
++
++# Console Apps
++gpm
++dialog
++ncurses
++sudo
+ mc
+-mtools
++tmux
++screen
++mlocate
++wgetpaste
++mutt
++#canto in aur but its a nice console based rss reader
++mc
++ranger
++openssl
++arch-wiki-lite
++
++# BlackArch
++blackarch
++aircrack-ng
++gnu-netcat
++nmap
++wireshark-cli
++wireshark-gtk
++
++# Filesystems
++btrfs-progs
++dosfstools
++f2fs-tools
+ nfs-utils
+ nilfs-utils
+-nmap
+ ntfs-3g
+-ntp
+-openconnect
+-openssh
+-openvpn
++ntfsprogs
++parted
++gparted
++hdparm
++gptfdisk
++ddrescue
++fsarchiver
++mtools
+ partclone
+ parted
+ partimage
++smartmontools
++testdisk
++
++# Servers
++darkhttpd
++openssh
++tftp-hpa
++vsftpd
++
++# Shells
++bash
++grml-zsh-config
++zsh
++
++# Development
++base-devel
++python
++python2
++#pyparted if we want to use it we will need to add it to the repo
++python2-geoip
++python2-pyqt4
++git
++mercurial
++cmake
++emacs
++gvim
++vim
++geany
++geany-plugins
++
++# Xorg
++xf86-video-apm
++xf86-video-ark
++xf86-video-ast
++xf86-video-ati
++xf86-video-chips
++xf86-video-cirrus
++xf86-video-dummy
++xf86-video-fbdev
++xf86-video-glint
++xf86-video-i128
++xf86-video-i740
++xf86-video-intel
++xf86-video-mach64
++xf86-video-mga
++xf86-video-modesetting
++xf86-video-neomagic
++xf86-video-nouveau
++xf86-video-nv
++xf86-video-openchrome
++xf86-video-r128
++xf86-video-rendition
++xf86-video-s3
++xf86-video-s3virge
++xf86-video-savage
++xf86-video-siliconmotion
++xf86-video-sis
++xf86-video-sisimedia
++xf86-video-sisusb
++xf86-video-tdfx
++xf86-video-trident
++xf86-video-tseng
++xf86-video-v4l
++xf86-video-vesa
++xf86-video-vmware
++xf86-video-voodoo
++xorg-server
++xorg-xinit
++xorg-utils
++xorg-server-utils
++xorg-xdm
++mesa
++xorg-drivers
++xorg-xkill
++xorg-xbacklight
++nouveau-dri
++intel-dri
++ati-dri
++xf86-input-synaptics
++
++# VirtualBox
++virtualbox-guest-utils
++virtualbox-guest-modules
++virtualbox-host-modules
++
++# Sound
++alsa-firmware
++alsa-utils
++alsa-oss
++volumeicon
++
++# Internet
++chromium
++firefox
++pidgin
++pidgin-otr
++dwb
++rtorrent
++transmission-gtk
++elinks
++irssi
++hexchat
++surf
++lftp
++ncftp
++tcpdump
++
++# Media plugins
++gstreamer0.10-plugins
++flashplugin
++cmus
++mpd
++mpv
++xfburn
++bashburn
++vlc
++
++# Window Manager Stuff
++openbox
++obconf
++obmenu
++oblogout
++obmenu-generator
++perl-linux-desktopfiles
++perl-data-dump
++scrot
++nitrogen
++openbox-themes
++dzen2
++conky
++dmenu
++dwm
++tint2
++spectrwm
++ratpoison
++awesome
++feh
++clipit
++spacefm
++slock
++scrot
++xautolock
++hsetroot
++xxkb
++apvlv
++abiword
++zim
++antiword
++aria2
++#detox in aur might be useful: http://kmandla.wordpress.com/software/
++#dict in aur might be useful: http://kmandla.wordpress.com/software/
++#hnb in aur might be useful: http://kmandla.wordpress.com/software/
++htop
++iftop
++surfraw
++xcompmgr
++#xorg-xdm
++#xdm-archlinux
++#libxdg-basedir
++#archlinux-xdg-menu
++#xdg-utils
++#xdg-user-dirs
++#python-xdg
++#python2-xdg
++#python2-dirspec
++slim
++slim-themes
++
++# Xorg Extras
++cairo
++fontconfig
++terminator
++rxvt-unicode
++
++# Network
++ipw2100-fw
++ipw2200-fw
++zd1211-firmware
++wireless_tools
++wpa_actiond
++ethtool
++b43-fwcutter
++crda
++wicd
++wicd-gtk
++macchanger
++netctl
++dhclient
++dnsmasq
++dnsutils
++openconnect
++openvpn
++vpnc
++tinc
+ pptpclient
+ ppp
+ rfkill
+ rp-pppoe
+ rsync
+-smartmontools
+ speedtouch
+-sudo
+-tcpdump
+-testdisk
+-usb_modeswitch
+-vpnc
+ wget
+-wireless_tools
+-wpa_actiond
+ wvdial
+ xl2tpd
+-zd1211-firmware
+-zsh
++
++# Archive Tools
++unace
++zip
++unzip
++unrar
++p7zip
++arj
++xz
++lzop
++unrar
++cpio
++
++# Cryptography
++truecrypt
++tor
++vidalia
++torsocks
++encfs
++gnupg
++
++# Fonts
++ttf-dejavu
++ttf-bitstream-vera
++terminus-font
++ttf-droid
++ttf-inconsolata
++ttf-liberation
++ttf-linux-libertine
++ttf-ubuntu-font-family
+diff -r -u baiso/pacman.conf blackarchiso/pacman.conf
+--- baiso/pacman.conf	2013-12-27 20:52:26.139023972 +0100
++++ blackarchiso/pacman.conf	2013-12-23 16:55:24.943092621 +0100
+@@ -84,9 +84,12 @@
+ [community]
+ Include = /etc/pacman.d/mirrorlist
+ 
++
+ # An example of a custom package repository.  See the pacman manpage for
+ # tips on creating your own repositories.
+ #[custom]
+ #SigLevel = Optional TrustAll
+ #Server = file:///home/custompkgs
+-
++[blackarch]
++SigLevel = Optional TrustAll
++Server = http://www.blackarch.org/blackarch/$repo/os/$arch
+Only in blackarchiso/: pkgcache.both
+Only in blackarchiso/: pkgcache.i686
+Only in blackarchiso/: pkgcache.x86_64
+Only in blackarchiso/root-image/etc: X11
+Only in blackarchiso/root-image/etc: arch-release
+Only in blackarchiso/root-image/etc: group
+diff -r -u baiso/root-image/etc/hostname blackarchiso/root-image/etc/hostname
+--- baiso/root-image/etc/hostname	2013-12-27 20:52:26.132356390 +0100
++++ blackarchiso/root-image/etc/hostname	2013-12-23 16:55:24.943092621 +0100
+@@ -1 +1 @@
+-archiso
++blackarch
+Only in blackarchiso/root-image/etc: hosts
+Only in blackarchiso/root-image/etc: modules-load.d
+Only in blackarchiso/root-image/etc: oblogout.conf
+Only in blackarchiso/root-image/etc: os-release
+Only in blackarchiso/root-image/etc: passwd
+Only in blackarchiso/root-image/etc: shadow
+Only in blackarchiso/root-image/etc: shells
+Only in blackarchiso/root-image/etc: skel
+Only in blackarchiso/root-image/etc: slim.conf
+Only in blackarchiso/root-image/etc: sudoers
+Only in blackarchiso/root-image/etc: timezone
+Only in blackarchiso/root-image/etc: vconsole.conf
+Only in blackarchiso/root-image: home
+Only in blackarchiso/root-image/root: configs
+diff -r -u baiso/root-image/root/customize_root_image.sh blackarchiso/root-image/root/customize_root_image.sh
+--- baiso/root-image/root/customize_root_image.sh	2013-12-27 20:52:26.125689349 +0100
++++ blackarchiso/root-image/root/customize_root_image.sh	2013-12-23 16:55:24.943092621 +0100
+@@ -10,7 +10,23 @@
+ usermod -s /usr/bin/zsh root
+ cp -aT /etc/skel/ /root/
+ 
+-useradd -m -p "" -g users -G "adm,audio,floppy,log,network,rfkill,scanner,storage,optical,power,wheel" -s /usr/bin/zsh arch
++#commenting out for now, may need to set this up later
++#useradd -m -p "" -g users -G "adm,audio,floppy,log,network,rfkill,scanner,storage,optical,power,wheel" -s /usr/bin/zsh blackarch
++
++# Create the user directory for live session
++if [ ! -d /home/blackarch ]; then
++    mkdir /home/blackarch && chown -R blackarch:users /home/blackarch
++else
++    chown -R blackarch:users /home/blackarch
++fi
++
++# Copy files over to home
++cp -aT /etc/skel /home/blackarch
++chown -R blackarch:users /home/blackarch
++chmod 755 /home/blackarch/.xinitrc
++
++#add entries for .xinitrc
++#sed -i 's/# exec gnome-session/exec gnome-session/' /home/blackarch/.xinitrc
+ 
+ chmod 750 /etc/sudoers.d
+ chmod 440 /etc/sudoers.d/g_wheel
+@@ -18,4 +34,15 @@
+ sed -i "s/#Server/Server/g" /etc/pacman.d/mirrorlist
+ sed -i 's/#\(Storage=\)auto/\1volatile/' /etc/systemd/journald.conf
+ 
+-systemctl enable multi-user.target pacman-init.service choose-mirror.service
++#start up systemctl processes
++#systemctl enable multi-user.target pacman-init.service choose-mirror.service
++systemctl disable multi-user.target
++systemctl enable graphical.target pacman-init.service choose-mirror.service
++systemctl enable slim.service
++systemctl enable sshd
++
++#disable network interface names
++ln -s /dev/null /etc/udev/rules.d/80-net-name-slot.rules
++
++# set blackarch users password to reset at login
++#chage -d0 blackarch
+Only in blackarchiso/root-image: usr
+Only in blackarchiso/: run
+diff -r -u baiso/syslinux/archiso_head.cfg blackarchiso/syslinux/archiso_head.cfg
+--- baiso/syslinux/archiso_head.cfg	2013-12-27 20:52:26.135690169 +0100
++++ blackarchiso/syslinux/archiso_head.cfg	2013-12-23 16:55:24.949759288 +0100
+@@ -1,6 +1,6 @@
+ SERIAL 0 38400
+ UI boot/syslinux/vesamenu.c32
+-MENU TITLE Arch Linux
++MENU TITLE BlackArch Linux
+ MENU BACKGROUND boot/syslinux/splash.png
+ 
+ MENU WIDTH 78
+diff -r -u baiso/syslinux/archiso_sys32.cfg blackarchiso/syslinux/archiso_sys32.cfg
+--- baiso/syslinux/archiso_sys32.cfg	2013-12-27 20:52:26.135690169 +0100
++++ blackarchiso/syslinux/archiso_sys32.cfg	2013-12-23 16:55:24.949759288 +0100
+@@ -1,9 +1,9 @@
+ LABEL arch32
+ TEXT HELP
+-Boot the Arch Linux (i686) live medium.
+-It allows you to install Arch Linux or perform system maintenance.
++Boot the BlackArch Linux (i686) live medium.
++It allows you to install BlackArch Linux or perform system maintenance.
+ ENDTEXT
+-MENU LABEL Boot Arch Linux (i686)
++MENU LABEL Boot BlackArch Linux (i686)
+ LINUX boot/i686/vmlinuz
+ INITRD boot/i686/archiso.img
+ APPEND archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL%
+diff -r -u baiso/syslinux/archiso_sys64.cfg blackarchiso/syslinux/archiso_sys64.cfg
+--- baiso/syslinux/archiso_sys64.cfg	2013-12-27 20:52:26.135690169 +0100
++++ blackarchiso/syslinux/archiso_sys64.cfg	2013-12-23 16:55:24.949759288 +0100
+@@ -1,9 +1,9 @@
+ LABEL arch64
+ TEXT HELP
+-Boot the Arch Linux (x86_64) live medium.
+-It allows you to install Arch Linux or perform system maintenance.
++Boot the BlackArch Linux (x86_64) live medium.
++It allows you to install BlackArch Linux or perform system maintenance.
+ ENDTEXT
+-MENU LABEL Boot Arch Linux (x86_64)
++MENU LABEL Boot BlackArch Linux (x86_64)
+ LINUX boot/x86_64/vmlinuz
+ INITRD boot/x86_64/archiso.img
+ APPEND archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL%
