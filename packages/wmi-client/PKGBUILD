@@ -1,0 +1,40 @@
+pkgname=wmi-client
+pkgver=1.3.13
+pkgrel=2
+pkgdesc="Linux WMI client"
+arch=('any')
+url="https://bitbucket.org/instarch/wmi-client/"
+license=("GPL2")
+depends=('gnutls' 'python2')
+source=("http://dev.zenoss.org/svn/branches/zenoss-3.2.x/inst/externallibs/wmi-$pkgver.tar.bz2"
+        "gnutls.patch"
+        "python3.patch")
+md5sums=('e4c24ee5bd02dbc8eb0b0c4eea424157'
+         '9cb99d4540e7ca18ac3706edc75340ec'
+         'af2cf917937b6c887a3f01a91bc7a10c')
+
+prepare() {
+  cd "$srcdir/wmi-$pkgver"
+
+  patch -Np0 -i ../gnutls.patch
+  patch -Np0 -i ../python3.patch
+
+  find "$srcdir" -type f -exec grep -sl '^#!/usr/bin/python$' {} \; | xargs sed -i 's|/usr/bin/python$|&2|'
+
+  # Fix evil makefile.
+  sed -i '/^pywmi-installed:/s/pywmi-build//' GNUmakefile
+}
+
+build() {
+  cd "$srcdir/wmi-$pkgver"
+
+  make build
+}
+
+package() {
+  cd "$srcdir/wmi-$pkgver"
+
+  export ZENHOME="$pkgdir/usr"
+
+  make install
+}
