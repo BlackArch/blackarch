@@ -1,58 +1,88 @@
-# Contributor: Michael P <ptchinster@archlinux.us>
-pkgname=lanmap2-git
-pkgver=20121006
+pkgname=lanmap2
+pkgver=20131231
 pkgrel=1
 pkgdesc="Passive network mapping tool"
 arch=('i686' 'x86_64')
 url="http://github.com/rflynn/lanmap2"
 license=('GPL')
-groups=()
+groups=('blackarch' 'blackarch-recon')
 depends=('sqlite3' 'libpcap' 'php' 'graphviz')
-makedepends=('git' 'gcc')
-provides=('lanmap2')
-conflicts=('lanmap2')
-replaces=()
-backup=()
-options=()
+makedepends=('git')
+provides=('lanmap2-git')
+conflicts=('lanmap2-git')
 install='lanmap2.install'
-source=()
-noextract=()
-md5sums=()
+source=('git+http://github.com/rflynn/lanmap2.git')
+md5sums=('SKIP')
 
-_gitroot="git://github.com/rflynn/lanmap2.git"
-_gitname="lanmap2"
+pkgver() {
+  date +%Y%m%d
+}
 
-build() {
-  cd "$srcdir"
-  msg "Connecting to GIT server...."
+prepare() {
+  cd "$srcdir/lanmap2"
 
-  if [ -d $_gitname ] ; then
-    cd $_gitname && git pull origin
-    msg "The local files are updated."
-  else
-    git clone $_gitroot $_gitname
-  fi
-
-  msg "GIT checkout done or server timeout"
-  msg "Starting make..."
-
-  rm -rf "$srcdir/$_gitname-build"
-  git clone "$srcdir/$_gitname" "$srcdir/$_gitname-build"
-  cd "$srcdir/$_gitname-build"
-
-  (cd db; ./build-db.sh)
   sed -i 's/DbFile\[\] = .*/DbFile\[\] = "db\/db";/g' src/report.c
 
-  make -C src
-  make -C tools
+  # Fix PHP.
+  sed -i '1a\[ -z "$PHP_INI" ] && PHP_INI=/etc/php/php.ini' graph/graph.sh
+  sed -i 's/^php/php -c $PHP_INI/' graph/graph.sh
 }
 
-package ()
-{
-  mkdir -p ${pkgdir}/opt/${pkgname}/{,tools}
-  install -m755 ${srcdir}/$_gitname-build/src/cap ${pkgdir}/opt/${pkgname}/
-  install -m755 ${srcdir}/$_gitname-build/tools/os-graph ${pkgdir}/opt/${pkgname}/tools
-  install -m755 ${srcdir}/$_gitname-build/tools/oui2insert ${pkgdir}/opt/${pkgname}/tools
-  cp -R ${srcdir}/$_gitname-build/{graph,web,db,img} ${pkgdir}/opt/${pkgname}/
+build() {
+  cd "$srcdir/lanmap2"
+
+  make
 }
 
+package () {
+  cd "$srcdir/lanmap2"
+
+  # Base directories
+  install -dm755 "$pkgdir/usr/share/lanmap2/tools"
+  install -dm755 "$pkgdir/usr/share/doc/lanmap2"
+  install -dm755 "$pkgdir/usr/bin"
+
+  # Tools
+  install -m755 "$srcdir/lanmap2/src/cap" "$pkgdir/usr/share/lanmap2"
+  install -m755 "$srcdir/lanmap2/tools/os-graph" "$pkgdir/usr/share/lanmap2/tools"
+  install -m755 "$srcdir/lanmap2/tools/oui2insert" "$pkgdir/usr/share/lanmap2/tools"
+
+  # Everything
+  cp -R graph web db img "$pkgdir/usr/share/lanmap2"
+
+  # Doc
+  cp -R doc/* ref "$pkgdir/usr/share/doc/lanmap2"
+
+  # Bin
+  cat >> "$pkgdir/usr/bin/lanmap2-cap" <<\EOF
+#!/bin/sh
+
+if [ $EUID != 0 ] ; then
+  echo >&2 'run as root.'
+  exit 1
+fi
+
+cd /usr/share/lanmap2
+./cap
+EOF
+  chmod +x "$pkgdir/usr/bin/lanmap2-cap"
+
+  cat >> "$pkgdir/usr/bin/lanmap2-graph" <<\EOF
+#!/bin/sh
+
+if [ $EUID != 0 ] ; then
+  echo >&2 'run as root.'
+  exit 1
+fi
+
+cd /usr/share/lanmap2/graph
+
+# Fix PHP.
+tmp=`mktemp /tmp/lanmap.XXXXXXXX`
+cat /etc/php/php.ini > $tmp
+sed -i 's|open_basedir\s*=.*|&:/usr/share/graph|' $tmp
+
+PHP_INI=$tmp ./graph.sh
+EOF
+  chmod +x "$pkgdir/usr/bin/lanmap2-graph"
+}
