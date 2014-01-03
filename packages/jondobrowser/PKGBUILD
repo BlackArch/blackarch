@@ -1,0 +1,51 @@
+pkgname=jondobrowser
+pkgver=0.12
+pkgrel=1
+_language='en-US'
+pkgdesc='Firefox tweaked to work with jondo (anonymous browsing) (english version)'
+url='https://anonymous-proxy-servers.net/en/jondobrowser.html'
+arch=('x86_64' 'i686')
+license=('GPL')
+depends=('java-runtime')
+optdepends=('zenity: simple dialog boxes'
+      'kdialog: KDE dialog boxes'
+      'notify-send: Gnome dialog boxes'
+      'jondo: connection to jondo proxy cascades, gui version'
+      'jondoconsole: connection to jondo proxy cascades, cli version')
+install="jondobrowser.install"
+source=("https://anonymous-proxy-servers.net/en/downloads/JonDoBrowser-${pkgver}-linux-${CARCH}-${_language}.tar.xz"
+        "https://anonymous-proxy-servers.net/en/downloads/JonDoBrowser-${pkgver}-linux-${CARCH}-${_language}.tar.xz.asc"
+        "jondobrowser.desktop")
+if [[ "$CARCH" == 'x86_64' ]]; then
+sha256sums=('d9914af5b01e2f4d3ebfda1ad94ecdafdb9292484eb0fa27dcd1223c35b9a34f'
+            'SKIP')
+else
+  sha256sums=('ebc967b33a23f05eb8c0486a9b7e0b454c74356d748fc71349b2e90429b55b70'
+              'SKIP')
+fi
+sha256sums+=('b7bbf376fd760e85102649166ed8710cceab88cf73b0425b67cb33be34d57749')
+
+prepare() {
+  cd "$srcdir/JonDoBrowser"
+
+  sed -i 's|\./|/opt/JonDoBrowser/|' start-jondobrowser.sh
+}
+
+package() {
+  cd "$srcdir/JonDoBrowser"
+
+  install -dm755  "$pkgdir/opt/JonDoBrowser"
+
+  # Sharable
+  install -Dm644 ../jondobrowser.desktop "$pkgdir/usr/share/applications/jondobrowser.desktop"
+
+  # Bin
+  install -Dm755 start-jondobrowser.sh "$pkgdir/usr/bin/jondobrowser"
+
+  # Doc
+  install -Dm644 CHANGELOG "$pkgdir/usr/share/doc/jondobrowser/CHANGELOG"
+
+  # Opt
+  cp -r App "$pkgdir/opt/JonDoBrowser/"
+  cp -r Data "$pkgdir/opt/JonDoBrowser"
+}
