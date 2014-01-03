@@ -71,7 +71,7 @@ Installing packages
 You may now install tools from the blackarch repository. To list all of the available tools, run
 
  ```
- # pacman -Sl blackarch
+ # pacman -Sgg | grep blackarch | cut -d' ' -f2 | sort -u
  ```
 
 To install all of the tools, run
