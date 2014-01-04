@@ -4,37 +4,36 @@ pkgrel=1
 pkgdesc="A tool for using Abuse of Functionality and XML External Entities vulnerabilities on some websites to attack other websites"
 arch=('any')
 url="http://websecurity.com.ua/davoset/"
-license=('custom') # license currently unknown
+license=('custom:unknown')
 groups=('blackarch' 'blackarch-dos')
 depends=('perl>=5.10.0')
 makedepends=('unrar' 'dos2unix')
-options=(!emptydirs)
-source=("davoset-${pkgver}.rar::http://websecurity.com.ua/uploads/2013/DAVOSET_v.${pkgver}.rar")
+options=('!emptydirs')
+source=("davoset-$pkgver.rar::http://websecurity.com.ua/uploads/2013/DAVOSET_v.$pkgver.rar")
 md5sums=('f534e3c7831697e6fc93468f9fadcdef')
-noextract=("davoset-${pkgver}.rar")
+noextract=("davoset-$pkgver.rar")
 install="davoset.install"
 
 prepare() {
   cd "$srcdir"
 
   # bsdtar cannot handle this archive
-  unrar e -ad -o+ davoset-${pkgver}.rar
+  unrar e -ad -o+ davoset-$pkgver.rar
+
+  cd davoset-$pkgver
+
+  dos2unix -- *
 }
 
 package() {
   cd "$srcdir/davoset-$pkgver"
 
-  # The provided files are DOS-formatted (thus dos2unix)
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/davoset"
 
-  mkdir -p "$pkgdir/usr/bin"
+  # Bin
   install -Dm755 davoset.pl "$pkgdir/usr/bin/davoset"
-  dos2unix "$pkgdir/usr/bin/davoset"
 
-  mkdir -p "$pkgdir/usr/share/davoset"
-  for f in *.txt; do
-    install -Dm644 $f "$pkgdir/usr/share/davoset/$f"
-    dos2unix "$pkgdir/usr/share/davoset/$f"
-  done
+  # Share
+  install -Dm644 *.txt "$pkgdir/usr/share/davoset"
 }
-
-# vim:set ts=2 sw=2 et:
