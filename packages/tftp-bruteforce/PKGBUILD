@@ -1,26 +1,31 @@
 pkgname=tftp-bruteforce
 pkgver=0.1
-pkgrel=2
+pkgrel=3
 pkgdesc="TFTP-bruteforcer is a fast TFTP filename bruteforcer written in perl."
 url="http://www.hackingexposedcisco.com/"
 groups=('blackarch' 'blackarch-cracker')
 license=('LGPL')
 depends=('perl')
-arch=(any)
+arch=('any')
 source=(http://dl.packetstormsecurity.net/UNIX/audit/TFTP-bruteforce.tar.gz)
 md5sums=('e4b8103d5eae2ff3a0df51acffdc7a6c')
 
 package() {
   cd "$srcdir/TFTP-bruteforce"
 
-  install -d $pkgdir/usr/bin
-  install -d $pkgdir/usr/share/tftp-bruteforce
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/tftp-bruteforce"
 
-  for file in README.txt brutefile.txt tftpbrute.pl; do
-    cp $file $pkgdir/usr/share/tftp-bruteforce/
-  done
+  install -m644 README.txt brutefile.txt "$pkgdir/usr/share/tftp-bruteforce"
+  install -m755 tftpbrute.pl "$pkgdir/usr/share/tftp-bruteforce"
 
-  chmod +x $pkgdir/usr/share/tftp-bruteforce/tftpbrute.pl
-  ln -sf $pkgdir/usr/share/tftp-bruteforce/tftpbrute.pl $pkgdir/usr/bin/tftpbrute
+  cat > "$pkgdir/usr/bin/tftpbrute" <<EOF
+#!/bin/sh
+echo >&2
+echo >&2 '/usr/share/tftp-bruteforce/brutefile.txt exists.'
+echo >&2 'Enjoy.'
+echo >&2
+exec /usr/share/tftp-bruteforce/tftpbrute.pl 
+EOF
+  chmod +x "$pkgdir/usr/bin/tftpbrute"
 }
-
