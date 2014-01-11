@@ -134,4 +134,4 @@ Follow this guide
     5. Setup up root password.
     6. Setup normal user account (optional).
     7. Grub install (automatic)
-    8. Reboot and enjoy your Black Arch distro.
+    8. Reboot and enjoy your BlackArch distro.
