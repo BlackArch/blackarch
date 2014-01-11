@@ -27,8 +27,8 @@ You can get in touch with the blackarch team. Just check out the following:
 
 **IRC:** [irc://irc.freenode.net/blackarch](irc://irc.freenode.net/blackarch)
 
-Configure Repositories
-----------------------
+Configure Repository
+--------------------
 
 Add this to
 [`/etc/pacman.conf`](https://www.archlinux.org/pacman/pacman.conf.5.html):
