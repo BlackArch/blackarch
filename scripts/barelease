@@ -9,12 +9,24 @@ site=blackarch.org
 sitedir=/nginx/var/www
 repo=blackarch-testing
 
+force=false
+
+package=$1
+shift
+
+for arg ; do
+	case "$arg" in
+		-f)
+			force=true
+			;;
+	esac
+done
+
 lock() {
-	if ! mkdir /tmp/blackarch.lck ; then
+	if ! mkdir -m000 /tmp/blackarch.lck ; then
 		echo >&2 'unable to obtain lock. remove /tmp/blackarch.lck perhaps?'
 		exit 1
 	fi
-	chmod 000 /tmp/blackarch.lck
 }
 
 unlock() {
@@ -23,7 +35,9 @@ unlock() {
 
 usage() {
 	cat <<EOF
-usage: barelease <package>
+usage: barelease <package> [-f]
+
+-f    remove /tmp/blackarch.lck before doing anything
 EOF
 }
 
@@ -40,9 +54,6 @@ cleanup() {
 	rm -rf "$tmp"
 }
 trap cleanup EXIT
-
-package=$1
-shift
 
 if [[ ! -r "$package" ]] ; then
 	echo >&2 "unable to read package file: '$package'."
@@ -79,6 +90,11 @@ tmp=$(mktemp -d /tmp/barelease.XXXXXXXX)
 
 cp "$package" "$tmp"
 cd "$tmp"
+
+if $force ; then
+	echo "warning: forcing lock release..."
+	ssh blackarch.org "$(declare -f unlock); unlock"
+fi
 
 echo "obtaining lock..."
 ssh blackarch.org "$(declare -f lock); lock"
