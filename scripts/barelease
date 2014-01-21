@@ -1,7 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 # Please excuse the multiple connections.
 # This does not delete old package files. Absolutely do not try to do that
 # manually.
+
+set -e -u
 
 site=blackarch.org
 sitedir=/nginx/var/www
@@ -79,7 +81,7 @@ for a in "${arch[@]}" ; do
 	echo "releasing for $a..."
 
 	echo "obtaining lock..."
-	ssh blackarch.org "$(export -f lock) lock"
+	ssh blackarch.org "$(declare -f lock); lock"
 
 	cp "$package" "$tmp"
 	cd "$tmp"
@@ -96,5 +98,5 @@ for a in "${arch[@]}" ; do
 	echo rsync --progress "$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a"
 
 	echo "releasing lock..."
-	echo ssh blackarch.org "$(export -f unlock) unlock"
+	ssh blackarch.org "$(declare -f unlock); unlock"
 done
