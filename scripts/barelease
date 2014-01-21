@@ -3,7 +3,7 @@
 # This does not delete old package files. Absolutely do not try to do that
 # manually.
 
-set -e -u
+set -e
 
 site=blackarch.org
 sitedir=/nginx/var/www
@@ -77,14 +77,14 @@ ssh-add
 
 tmp=$(mktemp /tmp/barelease.XXXXXXXX)
 
+cp "$package" "$tmp"
+cd "$tmp"
+
+echo "obtaining lock..."
+ssh blackarch.org "$(declare -f lock); lock"
+
 for a in "${arch[@]}" ; do
 	echo "releasing for $a..."
-
-	echo "obtaining lock..."
-	ssh blackarch.org "$(declare -f lock); lock"
-
-	cp "$package" "$tmp"
-	cd "$tmp"
 
 	echo "pulling..."
 	rsync --progress "$site:$sitedir/blackarch/$repo/os/$a/blackarch.db.tar.gz" .
@@ -96,7 +96,7 @@ for a in "${arch[@]}" ; do
 
 	echo "pushing..."
 	echo rsync --progress "$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a"
-
-	echo "releasing lock..."
-	ssh blackarch.org "$(declare -f unlock); unlock"
 done
+
+echo "releasing lock..."
+ssh blackarch.org "$(declare -f unlock); unlock"
