@@ -10,6 +10,7 @@ sitedir=/nginx/var/www
 repo=blackarch-testing
 
 force=false
+always_push=false
 
 package=$1
 shift
@@ -18,6 +19,9 @@ for arg ; do
 	case "$arg" in
 		-f)
 			force=true
+			;;
+		-a)
+			always_push=true
 			;;
 	esac
 done
@@ -30,14 +34,15 @@ lock() {
 }
 
 unlock() {
-	rmdir /tmp/blackarch.lck || true
+	rmdir /tmp/blackarch.lck > /dev/null 2>&1 || true
 }
 
 usage() {
 	cat <<EOF
 usage: barelease <package> [-f]
 
--f    remove /tmp/blackarch.lck before doing anything
+-f    Remove /tmp/blackarch.lck before doing anything.
+-a    Always push, even if repo-add fails. This can be dangerous. Please talk to paraxor if you do not understand why.
 EOF
 }
 
@@ -107,7 +112,7 @@ for a in "${arch[@]}" ; do
 
 	echo "signing and adding to database..."
 	gpg --yes -b "$package"
-	if ! repo-add blackarch.db.tar.gz "$p" ; then
+	if ! repo-add blackarch.db.tar.gz "$p" && ! $always_push ; then
 		echo >&2 "something bad happened. not pushing for $arch."
 		continue
 	fi
