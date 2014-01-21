@@ -26,6 +26,8 @@ EOF
 }
 
 cleanup() {
+	echo 'cleaning up...'
+
 	# Kill gpg-agent.
 	kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")"
 
@@ -36,18 +38,6 @@ cleanup() {
 	rm -rf "$tmp"
 }
 trap cleanup EXIT
-
-# gpg-agent
-[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
-[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
-
-# ssh-agent
-if [[ -z "$SSH_AGENT_PID" ]] ; then
-	eval $(ssh-agent)
-fi
-ssh-add
-
-tmp=$(mktemp /tmp/barelease.XXXXXXXX)
 
 package=$1
 shift
@@ -68,9 +58,26 @@ elif [[ "$package" =~ 'x86_64.pkg.tar.xz$' ]] ; then
 	arch=(x86_64)
 elif [[ "$package" =~ 'i686.pkg.tar.xz$' ]] ; then
 	arch=(i686)
+else
+	echo "unknown arch for '$package'"
+	exit 1
 fi
 
+# gpg-agent
+[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
+[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
+
+# ssh-agent
+if [[ -z "$SSH_AGENT_PID" ]] ; then
+	eval $(ssh-agent)
+fi
+ssh-add
+
+tmp=$(mktemp /tmp/barelease.XXXXXXXX)
+
 for a in "${arch[@]}" ; do
+	echo "releasing for $a..."
+
 	ssh blackarch.org "$(export -f lock) lock"
 
 	cp "$package" "$tmp"
