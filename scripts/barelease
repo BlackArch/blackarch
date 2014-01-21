@@ -78,18 +78,23 @@ tmp=$(mktemp /tmp/barelease.XXXXXXXX)
 for a in "${arch[@]}" ; do
 	echo "releasing for $a..."
 
+	echo "obtaining lock..."
 	ssh blackarch.org "$(export -f lock) lock"
 
 	cp "$package" "$tmp"
 	cd "$tmp"
 
+	echo "pulling..."
 	rsync --progress "$site:$sitedir/blackarch/$repo/os/$a/blackarch.db.tar.gz" .
 
-	gpg -b "$package"
+	echo "signing and adding to database..."
+	gpg --yes -b "$package"
 	repo-add blackarch.db.tar.gz "$p"
-	gpg -b blackarch.db.tar.gz
+	gpg --yes -b blackarch.db.tar.gz
 
-	rsync --progress "$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a"
+	echo "pushing..."
+	echo rsync --progress "$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a"
 
-	ssh blackarch.org "$(export -f unlock) unlock"
+	echo "releasing lock..."
+	echo ssh blackarch.org "$(export -f unlock) unlock"
 done
