@@ -30,7 +30,7 @@ lock() {
 }
 
 unlock() {
-	rmdir /tmp/blackarch.lck
+	rmdir /tmp/blackarch.lck || true
 }
 
 usage() {
@@ -107,7 +107,10 @@ for a in "${arch[@]}" ; do
 
 	echo "signing and adding to database..."
 	gpg --yes -b "$package"
-	repo-add blackarch.db.tar.gz "$p"
+	if ! repo-add blackarch.db.tar.gz "$p" ; then
+		echo >&2 "something bad happened. not pushing for $arch."
+		continue
+	fi
 	gpg --yes -b blackarch.db.tar.gz
 
 	echo "pushing..."
