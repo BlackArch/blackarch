@@ -1,0 +1,77 @@
+#!/bin/sh
+# Please excuse the multiple connections.
+# This does not delete old package files. Absolutely do not try to do that
+# manually.
+
+site=blackarch.org
+sitedir=/nginx/var/www
+repo=blackarch-testing
+
+lock() {
+	if ! mkdir /tmp/blackarch.lck ; then
+		echo >&2 'unable to obtain lock. remove /tmp/blackarch.lck perhaps?'
+		exit 1
+	fi
+	chmod 000 /tmp/blackarch.lck
+}
+
+unlock() {
+	rmdir /tmp/blackarch.lck
+}
+
+usage() {
+	cat <<EOF
+usage: barelease <package>
+EOF
+}
+
+# TODO: ssh and gpg agent
+
+package=$1
+shift
+
+while [[ -n "$1" ]] ; do
+	case "$1" in
+		-a)
+			arch+=("$2")
+			shift
+			;;
+		*)
+			echo >&2 "option not recognized: $1"
+			exit 1
+			;;
+	esac
+	shift
+done
+
+if [[ ! -r "$package" ]] ; then
+	echo >&2 "unable to read package file: '$package'."
+	exit 1
+fi
+
+if [[ "$package" != *.pkg.tar.xz ]] ; then
+	echo >&2 "'$package' must have a .pkg.tar.xz extension."
+	exit 1
+fi
+
+if [[ "$package" =~ 'any.pkg.tar.xz$' ]] ; then
+	arch=(i686 x86_64)
+elif [[ "$package" =~ 'x86_64.pkg.tar.xz$' ]] ; then
+	arch=(x86_64)
+elif [[ "$package" =~ 'i686.pkg.tar.xz$' ]] ; then
+	arch=(i686)
+fi
+
+tmp=$(mktemp /tmp/barelease.XXXXXXXX)
+trap "rm -rf '$tmp'" EXIT
+cd "$tmp"
+
+for a in "${arch[@]}" ; do
+	ssh blackarch.org "$(export -f lock) lock"
+	rsync --progress "$site:$sitedir/blackarch/$repo/os/$a/blackarch.db.tar.gz" .
+	gpg -b "$p"
+	repo-add blackarch.db.tar.gz "$p"
+	gpg -b blackarch.db.tar.gz
+	rsync --progress "$p"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a"
+	ssh blackarch.org "$(export -f unlock) unlock"
+done
