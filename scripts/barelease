@@ -25,7 +25,27 @@ usage: barelease <package>
 EOF
 }
 
-# TODO: ssh and gpg agent
+cleanup() {
+	# Kill gpg-agent.
+	kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")"
+
+	# Kill ssh-agent.
+	kill "$SSH_AGENT_PID"
+
+	# Clean up temporary directory.
+	rm -rf "$tmp"
+}
+trap cleanup EXIT
+
+# gpg-agent
+[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
+[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
+
+# ssh-agent
+eval $(ssh-agent)
+ssh-add
+
+tmp=$(mktemp /tmp/barelease.XXXXXXXX)
 
 package=$1
 shift
@@ -62,16 +82,19 @@ elif [[ "$package" =~ 'i686.pkg.tar.xz$' ]] ; then
 	arch=(i686)
 fi
 
-tmp=$(mktemp /tmp/barelease.XXXXXXXX)
-trap "rm -rf '$tmp'" EXIT
-cd "$tmp"
-
 for a in "${arch[@]}" ; do
 	ssh blackarch.org "$(export -f lock) lock"
+
+	cp "$package" "$tmp"
+	cd "$tmp"
+
 	rsync --progress "$site:$sitedir/blackarch/$repo/os/$a/blackarch.db.tar.gz" .
-	gpg -b "$p"
+
+	gpg -b "$package"
 	repo-add blackarch.db.tar.gz "$p"
 	gpg -b blackarch.db.tar.gz
-	rsync --progress "$p"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a"
+
+	rsync --progress "$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a"
+
 	ssh blackarch.org "$(export -f unlock) unlock"
 done
