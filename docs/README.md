@@ -30,26 +30,34 @@ You can get in touch with the blackarch team. Just check out the following:
 Configure Repository
 --------------------
 
-Add this to
-[`/etc/pacman.conf`](https://www.archlinux.org/pacman/pacman.conf.5.html):
+BlackArch is compatible with normal Arch installations. It acts as an unofficial user repository.
+
+1. Run the following as root. This is for package signing.
+
+```
+wget http://blackarch.org/blackarch/blackarch/os/x86_64/blackarch-keyring-20140118-3-any.pkg.tar.xz{,.sig}
+gpg --keyserver hkp://pgp.mit.edu --recv-keys '4345771566D76038C7FEB43863EC0ADBEA87E4E3'
+gpg --with-fingerprint --verify blackarch-keyring-20140118-3-any.pkg.tar.xz.sig
+rm blackarch-keyring-20140118-3-any.pkg.tar.xz.sig
+pacman-key --init
+pacman -U blackarch-keyring-20140118-3-any.pkg.tar.xz
+```
+
+2. If possible, please verify the signing key's fingerprint against as many sources as possible. 
+
+3. Append the following lines to your /etc/pacman.conf file:
 
 ```
 [blackarch]
-Server = http://www.blackarch.org/blackarch/$repo/os/$arch
+Server = <mirror_site>/$repo/os/$arch
+Replace <mirror_site> with a mirror site of your choosing. Please use one of our official mirrors. See Mirror Sites. 
 ```
 
-For package signing, pull in and sign the package signing keys:
+4. Now run:
 
 ```
- # pacman-key -r 4345771566D76038C7FEB43863EC0ADBEA87E4E3
- # pacman-key --lsign-key 4345771566D76038C7FEB43863EC0ADBEA87E4E3
+$ sudo pacman -Syyu
 ```
-
-Now run
-
- ```
- # pacman -Syyu
- ```
 
 Installing Packages From Repository
 -----------------------------------
