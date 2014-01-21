@@ -15,16 +15,36 @@ always_push=false
 package=$1
 shift
 
-for arg ; do
-	case "$arg" in
+while (( $# != 0 )) ; do
+	case "$1" in
 		-f)
 			force=true
 			;;
 		-a)
 			always_push=true
 			;;
+		-k)
+			key=$2
+			shift
+			;;
 	esac
+	shift
 done
+
+if [[ -z "$key" ]] ; then
+	key=$(gpg -K | grep -B1 'BlackArch Developer' | head -n1 | awk '{ print $2 }' | cut -d/ -f2)
+	if [[ -z "$key" ]] ; then
+		echo >&2 'failed to auto-detect a packager key.'
+		exit 1
+	fi
+fi
+
+if ! pacman-key -l | grep -q "$key" ; then
+	echo >&2 "$key is not in the keyring."
+	exit 1
+fi
+
+echo "using key: $key"
 
 lock() {
 	if ! mkdir -m000 /tmp/blackarch.lck ; then
@@ -42,7 +62,8 @@ usage() {
 usage: barelease <package> [-f]
 
 -f    Remove /tmp/blackarch.lck before doing anything.
--a    Always push, even if repo-add fails. This can be dangerous. Please talk to paraxor if you do not understand why.
+-a    Always push, even if repo-add fails. This can be dangerous. Please talk
+      to paraxor if you do not understand why.
 EOF
 }
 
@@ -111,12 +132,12 @@ for a in "${arch[@]}" ; do
 	rsync --progress "$site:$sitedir/blackarch/$repo/os/$a/blackarch.db.tar.gz" .
 
 	echo "signing and adding to database..."
-	gpg --yes -b "$package"
+	gpg --default-key "$key" --yes -b "$package"
 	if ! repo-add blackarch.db.tar.gz "$p" && ! $always_push ; then
 		echo >&2 "something bad happened. not pushing for $arch."
 		continue
 	fi
-	gpg --yes -b blackarch.db.tar.gz
+	gpg --default-key "$key" --yes -b blackarch.db.tar.gz
 
 	echo "pushing..."
 	rsync --progress "$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a"
