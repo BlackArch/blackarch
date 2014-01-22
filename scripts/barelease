@@ -14,6 +14,10 @@ repo=blackarch-testing
 force=false
 always_push=false
 
+err() {
+	echo >&2 "ERROR: $*"
+}
+
 usage() {
 	cat <<EOF
 usage: barelease <package> [-f|-a|-k <key>]
@@ -70,7 +74,7 @@ detect_key() {
 	if [[ -z "$key" ]] ; then
 		key=$(gpg -K | grep -B1 'BlackArch Developer' | head -n1 | awk '{ print $2 }' | cut -d/ -f2)
 		if [[ -z "$key" ]] ; then
-			echo >&2 'failed to auto-detect a packager key.'
+			err 'failed to auto-detect a packager key.'
 			exit 1
 		fi
 	fi
@@ -78,7 +82,7 @@ detect_key() {
 
 check_key() {
 	if ! pacman-key -l | grep -q "$key" ; then
-		echo >&2 "$key is not in the keyring."
+		err "$key is not in the keyring."
 		exit 1
 	fi
 
@@ -87,12 +91,12 @@ check_key() {
 
 check_package() {
 	if [[ ! -r "$package" ]] ; then
-		echo >&2 "unable to read package file: '$package'."
+		err "unable to read package file: '$package'."
 		exit 1
 	fi
 
 	if [[ "$package" != *.pkg.tar.xz ]] ; then
-		echo >&2 "'$package' must have a .pkg.tar.xz extension."
+		err "'$package' must have a .pkg.tar.xz extension."
 		exit 1
 	fi
 }
@@ -125,7 +129,7 @@ start_ssh_agent() {
 # This runs on the remote host.
 remote_lock() {
 	if ! mkdir -m000 /tmp/blackarch.lck ; then
-		echo >&2 'unable to obtain lock. remove /tmp/blackarch.lck perhaps?'
+		err 'unable to obtain lock. remove /tmp/blackarch.lck perhaps?'
 		exit 1
 	fi
 }
@@ -158,7 +162,7 @@ do_release() {
 		echo "signing and adding to database..."
 		gpg --default-key "$key" --yes -b "$package"
 		if ! repo-add blackarch.db.tar.gz "$p" && ! $always_push ; then
-			echo >&2 "something bad happened. not pushing for $arch."
+			err "something bad happened. not pushing for $arch."
 			continue
 		fi
 		gpg --default-key "$key" --yes -b blackarch.db.tar.gz
