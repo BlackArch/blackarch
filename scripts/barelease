@@ -19,6 +19,9 @@ force=false
 # override with -a
 always_push=false
 
+we_started_gpg=false
+we_started_ssh=false
+
 err() {
 	echo >&2 "ERROR: $*"
 }
@@ -40,10 +43,10 @@ cleanup() {
 	echo 'cleaning up...'
 
 	# Kill gpg-agent.
-	kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")" 2> /dev/null >&2
+	$we_started_gpg && kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")" 2> /dev/null >&2
 
 	# Kill ssh-agent.
-	kill "$SSH_AGENT_PID" 2> /dev/null >&2
+	$we_started_ssh && kill "$SSH_AGENT_PID" 2> /dev/null >&2
 
 	# Clean up temporary directory.
 	rm -rf "$tmp"
@@ -132,13 +135,17 @@ detect_arch() {
 start_gpg_agent() {
 	echo 'starting gpg agent...'
 	[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
-	[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
+	if [[ -z "$GPG_AGENT_INFO" ]] ; then
+		eval $(gpg-agent --daemon --default-cache-ttl 10000)
+		we_started_gpg=true
+	fi
 }
 
 start_ssh_agent() {
 	echo 'starting ssh agent...'
 	if [[ -z "$SSH_AGENT_PID" ]] ; then
 		eval $(ssh-agent)
+		we_started_ssh=true
 	fi
 	ssh-add
 }
