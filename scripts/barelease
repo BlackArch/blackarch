@@ -14,51 +14,6 @@ repo=blackarch-testing
 force=false
 always_push=false
 
-package=$1
-shift
-
-while (( $# != 0 )) ; do
-	case "$1" in
-		-f)
-			force=true
-			;;
-		-a)
-			always_push=true
-			;;
-		-k)
-			key=$2
-			shift
-			;;
-	esac
-	shift
-done
-
-if [[ -z "$key" ]] ; then
-	key=$(gpg -K | grep -B1 'BlackArch Developer' | head -n1 | awk '{ print $2 }' | cut -d/ -f2)
-	if [[ -z "$key" ]] ; then
-		echo >&2 'failed to auto-detect a packager key.'
-		exit 1
-	fi
-fi
-
-if ! pacman-key -l | grep -q "$key" ; then
-	echo >&2 "$key is not in the keyring."
-	exit 1
-fi
-
-echo "using key: $key"
-
-lock() {
-	if ! mkdir -m000 /tmp/blackarch.lck ; then
-		echo >&2 'unable to obtain lock. remove /tmp/blackarch.lck perhaps?'
-		exit 1
-	fi
-}
-
-unlock() {
-	rmdir /tmp/blackarch.lck > /dev/null 2>&1 || true
-}
-
 usage() {
 	cat <<EOF
 usage: barelease <package> [-f|-a|-k <key>]
@@ -82,69 +37,155 @@ cleanup() {
 	# Clean up temporary directory.
 	rm -rf "$tmp"
 }
-trap cleanup EXIT
 
-if [[ ! -r "$package" ]] ; then
-	echo >&2 "unable to read package file: '$package'."
-	exit 1
-fi
-
-if [[ "$package" != *.pkg.tar.xz ]] ; then
-	echo >&2 "'$package' must have a .pkg.tar.xz extension."
-	exit 1
-fi
-
-if [[ $package == *-any.pkg.tar.xz ]] ; then
-	arch=(i686 x86_64)
-elif [[ $package == *-x86_64.pkg.tar.xz ]] ; then
-	arch=(x86_64)
-elif [[ $package == *-i686.pkg.tar.xz ]] ; then
-	arch=(i686)
-else
-	echo "unknown arch for '$package'"
-	exit 1
-fi
-
-# gpg-agent
-[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
-[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
-
-# ssh-agent
-if [[ -z "$SSH_AGENT_PID" ]] ; then
-	eval $(ssh-agent)
-fi
-ssh-add
-
-tmp=$(mktemp -d /tmp/barelease.XXXXXXXX)
-
-cp "$package" "$tmp"
-cd "$tmp"
-
-if $force ; then
-	echo "warning: forcing lock release..."
-	ssh blackarch.org "$(declare -f unlock); unlock"
-fi
-
-echo "obtaining lock..."
-ssh blackarch.org "$(declare -f lock); lock"
-
-for a in "${arch[@]}" ; do
-	echo "releasing for $a..."
-
-	echo "pulling..."
-	rsync --progress "$site:$sitedir/blackarch/$repo/os/$a/blackarch.db.tar.gz" .
-
-	echo "signing and adding to database..."
-	gpg --default-key "$key" --yes -b "$package"
-	if ! repo-add blackarch.db.tar.gz "$p" && ! $always_push ; then
-		echo >&2 "something bad happened. not pushing for $arch."
-		continue
+check_args() {
+	if (( $# == 0 )) ; then
+		usage
+		exit 1
 	fi
-	gpg --default-key "$key" --yes -b blackarch.db.tar.gz
+}
 
-	echo "pushing..."
-	rsync --progress "$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a"
-done
+parse_args() {
+	package=$1
+	shift
 
-echo "releasing lock..."
-ssh blackarch.org "$(declare -f unlock); unlock"
+	while (( $# != 0 )) ; do
+		case "$1" in
+			-f)
+				force=true
+				;;
+			-a)
+				always_push=true
+				;;
+			-k)
+				key=$2
+				shift
+				;;
+		esac
+		shift
+	done
+}
+
+detect_key() {
+	if [[ -z "$key" ]] ; then
+		key=$(gpg -K | grep -B1 'BlackArch Developer' | head -n1 | awk '{ print $2 }' | cut -d/ -f2)
+		if [[ -z "$key" ]] ; then
+			echo >&2 'failed to auto-detect a packager key.'
+			exit 1
+		fi
+	fi
+}
+
+check_key() {
+	if ! pacman-key -l | grep -q "$key" ; then
+		echo >&2 "$key is not in the keyring."
+		exit 1
+	fi
+
+	echo "using key: $key"
+}
+
+check_package() {
+	if [[ ! -r "$package" ]] ; then
+		echo >&2 "unable to read package file: '$package'."
+		exit 1
+	fi
+
+	if [[ "$package" != *.pkg.tar.xz ]] ; then
+		echo >&2 "'$package' must have a .pkg.tar.xz extension."
+		exit 1
+	fi
+}
+
+detect_arch() {
+	if [[ $package == *-any.pkg.tar.xz ]] ; then
+		arch=(i686 x86_64)
+	elif [[ $package == *-x86_64.pkg.tar.xz ]] ; then
+		arch=(x86_64)
+	elif [[ $package == *-i686.pkg.tar.xz ]] ; then
+		arch=(i686)
+	else
+		echo "unknown arch for '$package'"
+		exit 1
+	fi
+}
+
+start_gpg_agent() {
+	[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
+	[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
+}
+
+start_ssh_agent() {
+	if [[ -z "$SSH_AGENT_PID" ]] ; then
+		eval $(ssh-agent)
+	fi
+	ssh-add
+}
+
+# This runs on the remote host.
+remote_lock() {
+	if ! mkdir -m000 /tmp/blackarch.lck ; then
+		echo >&2 'unable to obtain lock. remove /tmp/blackarch.lck perhaps?'
+		exit 1
+	fi
+}
+
+# This runs on the remote host.
+remote_unlock() {
+	rmdir /tmp/blackarch.lck > /dev/null 2>&1 || true
+}
+
+do_release() {
+	tmp=$(mktemp -d /tmp/barelease.XXXXXXXX)
+
+	cp "$package" "$tmp"
+	cd "$tmp"
+
+	if $force ; then
+		echo "warning: forcing lock release..."
+		ssh blackarch.org "$(declare -f remote_unlock); remote_unlock"
+	fi
+
+	echo "obtaining lock..."
+	ssh blackarch.org "$(declare -f remote_lock); remote_lock"
+
+	for a in "${arch[@]}" ; do
+		echo "releasing for $a..."
+
+		echo "pulling..."
+		rsync --progress "$site:$sitedir/blackarch/$repo/os/$a/blackarch.db.tar.gz" .
+
+		echo "signing and adding to database..."
+		gpg --default-key "$key" --yes -b "$package"
+		if ! repo-add blackarch.db.tar.gz "$p" && ! $always_push ; then
+			echo >&2 "something bad happened. not pushing for $arch."
+			continue
+		fi
+		gpg --default-key "$key" --yes -b blackarch.db.tar.gz
+
+		echo "pushing..."
+		rsync --progress "$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a"
+	done
+
+	echo "releasing lock..."
+	ssh blackarch.org "$(declare -f remote_unlock); remote_unlock"
+}
+
+main() {
+	check_args "$@"
+	parse_args "$@"
+
+	trap cleanup EXIT
+
+	detect_key
+	check_key
+
+	check_package
+	detect_arch
+	start_gpg_agent
+	start_ssh_agent
+
+	do_release
+}
+
+main "$@"
