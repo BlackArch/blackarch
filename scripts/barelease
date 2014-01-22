@@ -3,8 +3,6 @@
 # This does not delete old package files. Absolutely do not try to do that
 # manually.
 
-set -e
-
 unset DISPLAY
 
 site=blackarch.org
@@ -21,6 +19,11 @@ always_push=false
 
 we_started_gpg=false
 we_started_ssh=false
+
+error_handler() {
+	err 'something bad happened.'
+	exit 1
+}
 
 err() {
 	echo >&2 "ERROR: $*"
@@ -202,13 +205,13 @@ do_release() {
 			continue
 		fi
 
-		repo-add blackarch.files.tar.gz "$p"
+		repo-add blackarch.files.tar.gz "$p" || true
 
 		gpg --default-key "$key" --yes -b blackarch.files.tar.gz
 		gpg --default-key "$key" --yes -b blackarch.db.tar.gz
 
 		echo "pushing..."
-		rsync -e "ssh -l $user" --progress "$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a"
+		rsync -e "ssh -l $user" --progress "$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a" || true
 	done
 
 	echo "releasing lock..."
@@ -216,6 +219,8 @@ do_release() {
 }
 
 main() {
+	trap error_handler ERR
+
 	check_args "$@"
 	parse_args "$@"
 
