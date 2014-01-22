@@ -1,5 +1,6 @@
 #!/bin/bash
 
+origdir=$PWD
 basedir=${BASH_SOURCE[0]%/*}
 outdir=$(realpath "$basedir/../babuild")
 cd "$basedir"
@@ -11,7 +12,16 @@ err() {
 }
 
 usage() {
-	echo 'usage: babuild [-g <package in git> | -p <package at path>] [-a <arch>] [-o <outdir>] [-i <packager>]'
+	cat <<EOF
+usage: babuild [-g <package in git>] [-a <arch>] [-o <outdir>] [-i <packager>]'
+
+  -g <package in git>    Change the CWD to a package's directory in git before building.
+  -a <arch>              Whitelist architectures to build for. You may use this
+                         flag multiple times. This does not apply to 'any' packages.
+  -o <outdir>            Specify an out directory to copy built packages to.
+  -i <packager>          Specify the packager for makepkg. You can set the
+                         PACKAGER environmental variable instead.
+EOF
 }
 
 cleanup() {
@@ -33,20 +43,14 @@ parse_args() {
 				shift
 				;;
 			-g|--git)
-				package=("$2")
-				git=true
-				shift
-				;;
-			-p|--path)
-				package=("$2")
-				git=false
+				git_package="$2"
 				shift
 				;;
 			-o|--out)
 				outdir=$2
 				shift
 				;;
-			-i|--packager)
+			-p|--packager)
 				export PACKAGER=$2
 				shift
 				;;
@@ -62,15 +66,8 @@ parse_args() {
 		arch=(i686 x86_64)
 	fi
 
-	if [[ -z "$package" ]] ; then
-		usage
-		exit 1
-	fi
-
-	if $git ; then
-		cd "../packages/$package"
-	else
-		cd "$package"
+	if [[ -n "$git_package" ]] ; then
+		cd "$basedir/../packages/$git_package"
 	fi
 }
 
