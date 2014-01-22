@@ -33,10 +33,10 @@ cleanup() {
 	echo 'cleaning up...'
 
 	# Kill gpg-agent.
-	kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")"
+	kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")" 2> /dev/null >&2
 
 	# Kill ssh-agent.
-	kill "$SSH_AGENT_PID"
+	kill "$SSH_AGENT_PID" 2> /dev/null >&2
 
 	# Clean up temporary directory.
 	rm -rf "$tmp"
@@ -179,12 +179,13 @@ main() {
 	check_args "$@"
 	parse_args "$@"
 
-	trap cleanup EXIT
+	check_package
 
 	detect_key
 	check_key
 
-	check_package
+	trap cleanup EXIT
+
 	detect_arch
 	start_gpg_agent
 	start_ssh_agent
