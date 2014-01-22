@@ -3,7 +3,6 @@
 basedir=${BASH_SOURCE[0]%/*}
 cd "$basedir"
 
-arch=(x86_64 i686)
 export LC_ALL=POSIX
 
 err() {
@@ -12,6 +11,10 @@ err() {
 
 usage() {
 	echo 'usage: babuild [-g <package in git> | -p <package at path>] [-a <arch>]'
+}
+
+cleanup() {
+	rm -rf "$tmp"
 }
 
 check_for_root() {
@@ -46,6 +49,10 @@ parse_args() {
 		shift
 	done
 
+	if (( ${#arch[@]} == 0 )) ; then
+		arch=(i686 x86_64)
+	fi
+
 	if [[ -z "$package" ]] ; then
 		usage
 		exit 1
@@ -63,7 +70,6 @@ copy_files() {
 	# world-writeable.
 	tmp=/tmp/babuild.$RANDOM$RANDOM
 	mkdir "$tmp"
-	trap 'rm -rf "$tmp"' EXIT
 	(
 	. ./PKGBUILD
 	copy=(PKGBUILD "$install" "$changelog")
@@ -75,11 +81,12 @@ copy_files() {
 	cp "${copy[@]}" "$tmp" 2> /dev/null
 	)
 	chmod -R a+wrX "$tmp"
-	cd "$tmp"
 }
 
 do_build() {
-	if grep -q 'arch.*any' PKGBUILD ; then
+	cd "$tmp"
+
+	if grep -q '^arch.*any' PKGBUILD ; then
 		blackarch32-i686-build "${pass_through[@]}"
 	else
 		for arch in "${arch[@]}" ; do
@@ -98,6 +105,9 @@ do_build() {
 main() {
 	check_for_root
 	parse_args "$@"
+
+	trap cleanup EXIT
+
 	copy_files
 	do_build
 }
