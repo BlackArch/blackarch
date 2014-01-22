@@ -1,80 +1,105 @@
 #!/bin/bash
 
-usage() {
-	echo >&2 'usage: babuild [-g <package in git> | -p <package at path>] [-a <arch>]'
-}
-
 basedir=${BASH_SOURCE[0]%/*}
 cd "$basedir"
 
 arch=(x86_64 i686)
 export LC_ALL=POSIX
 
-while [[ -n "$1" ]] ; do
-	case "$1" in
-		-a|--arch)
-			arch+=("$2")
-			shift
-			;;
-		-g|--git)
-			package=("$2")
-			git=true
-			shift
-			;;
-		-p|--path)
-			package=("$2")
-			git=false
-			shift
-			;;
-		*)
-			pass_through=("$2")
-			shift
-			;;
-	esac
-	shift
-done
+err() {
+	echo >&2 "ERROR: $*"
+}
 
-if [[ -z "$package" ]] ; then
-	usage
-	exit 1
-fi
+usage() {
+	echo 'usage: babuild [-g <package in git> | -p <package at path>] [-a <arch>]'
+}
 
-if $git ; then
-	cd "../packages/$package"
-else
-	cd "$package"
-fi
-
-# Copy files.
-# The temporary directory and its contents must be world-readable and
-# world-writeable.
-tmp=/tmp/babuild.$RANDOM$RANDOM
-mkdir "$tmp"
-trap 'rm -rf "$tmp"' EXIT
-(
-. ./PKGBUILD
-copy=(PKGBUILD "$install" "$changelog")
-for s in "${source[@]}" ; do
-	if [[ -r "$s" ]] ; then
-		copy+=("$s")
+check_for_root() {
+	if (( $EUID != 0 )) ; then
+		err "you must have root privledges."
+		exit 1
 	fi
-done
-cp "${copy[@]}" "$tmp" 2> /dev/null
-)
-chmod -R a+wrX "$tmp"
-cd "$tmp"
+}
 
-if grep -q 'arch.*any' PKGBUILD ; then
-	blackarch32-i686-build "${pass_through[@]}"
-else
-	for arch in "${arch[@]}" ; do
-		case "$arch" in
-			i686)
-				blackarch32-i686-build "${pass_through[@]}"
+parse_args() {
+	while [[ -n "$1" ]] ; do
+		case "$1" in
+			-a|--arch)
+				arch+=("$2")
+				shift
 				;;
-			x86_64)
-				blackarch64-x86_64-build "${pass_through[@]}"
+			-g|--git)
+				package=("$2")
+				git=true
+				shift
+				;;
+			-p|--path)
+				package=("$2")
+				git=false
+				shift
+				;;
+			*)
+				pass_through=("$2")
+				shift
 				;;
 		esac
+		shift
 	done
-fi
+
+	if [[ -z "$package" ]] ; then
+		usage
+		exit 1
+	fi
+
+	if $git ; then
+		cd "../packages/$package"
+	else
+		cd "$package"
+	fi
+}
+
+copy_files() {
+	# The temporary directory and its contents must be world-readable and
+	# world-writeable.
+	tmp=/tmp/babuild.$RANDOM$RANDOM
+	mkdir "$tmp"
+	trap 'rm -rf "$tmp"' EXIT
+	(
+	. ./PKGBUILD
+	copy=(PKGBUILD "$install" "$changelog")
+	for s in "${source[@]}" ; do
+		if [[ -r "$s" ]] ; then
+			copy+=("$s")
+		fi
+	done
+	cp "${copy[@]}" "$tmp" 2> /dev/null
+	)
+	chmod -R a+wrX "$tmp"
+	cd "$tmp"
+}
+
+do_build() {
+	if grep -q 'arch.*any' PKGBUILD ; then
+		blackarch32-i686-build "${pass_through[@]}"
+	else
+		for arch in "${arch[@]}" ; do
+			case "$arch" in
+				i686)
+					blackarch32-i686-build "${pass_through[@]}"
+					;;
+				x86_64)
+					blackarch64-x86_64-build "${pass_through[@]}"
+					;;
+			esac
+		done
+	fi
+}
+
+main() {
+	check_for_root
+	parse_args "$@"
+	copy_files
+	do_build
+}
+
+main "$@"
