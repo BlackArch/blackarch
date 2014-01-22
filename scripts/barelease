@@ -189,14 +189,13 @@ do_release() {
 		unlock
 	fi
 
-	echo "obtaining lock..."
 	lock
 
 	for a in "${arch[@]}" ; do
 		echo "releasing for $a..."
 
 		echo "pulling..."
-		rsync -e "ssh -l $user" --progress "$site:$sitedir/blackarch/$repo/os/$a/blackarch.db.tar.gz" .
+		rsync -e "ssh -l $user" --progress "$site:$sitedir/blackarch/$repo/os/$a"/{blackarch.db.tar.gz,blackarch.files.tar.gz} .
 
 		echo "signing and adding to database..."
 		gpg --default-key "$key" --yes -b "$package"
@@ -205,6 +204,7 @@ do_release() {
 			continue
 		fi
 
+		echo 'adding to files database...'
 		repo-add blackarch.files.tar.gz "$p" || true
 
 		gpg --default-key "$key" --yes -b blackarch.files.tar.gz
@@ -214,7 +214,6 @@ do_release() {
 		rsync -e "ssh -l $user" --progress "$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a" || true
 	done
 
-	echo "releasing lock..."
 	unlock
 }
 
