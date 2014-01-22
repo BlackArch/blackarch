@@ -150,12 +150,22 @@ start_ssh_agent() {
 	ssh-add
 }
 
+lock() {
+	echo "obtaining lock..."
+	ssh -l "$user" blackarch.org "$(declare -f remote_lock); remote_lock"
+}
+
 # This runs on the remote host.
 remote_lock() {
 	if ! mkdir -m000 /tmp/blackarch.lck ; then
 		echo >&2 'unable to obtain lock.'
 		exit 1
 	fi
+}
+
+unlock() {
+	echo "releasing lock..."
+	ssh -l "$user" blackarch.org "$(declare -f remote_unlock); remote_unlock"
 }
 
 # This runs on the remote host.
@@ -173,11 +183,11 @@ do_release() {
 
 	if $force ; then
 		echo "warning: forcing lock release..."
-		ssh -l "$user" blackarch.org "$(declare -f remote_unlock); remote_unlock"
+		unlock
 	fi
 
 	echo "obtaining lock..."
-	ssh -l "$user" blackarch.org "$(declare -f remote_lock); remote_lock"
+	lock
 
 	for a in "${arch[@]}" ; do
 		echo "releasing for $a..."
@@ -202,7 +212,7 @@ do_release() {
 	done
 
 	echo "releasing lock..."
-	ssh -l "$user" blackarch.org "$(declare -f remote_unlock); remote_unlock"
+	unlock
 }
 
 main() {
