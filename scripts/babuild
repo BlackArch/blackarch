@@ -12,7 +12,7 @@ err() {
 
 usage() {
 	cat <<EOF
-usage: babuild [-g <package in git>] [-a <arch>] [-o <outdir>] [-i <packager>]'
+usage: babuild [-g <package in git>] [-a <arch>] [-o <outdir>] [-i <packager>] [-- archbuild args [-- makechrootpkg args [-- makepkg args]]]'
 
   -g <package in git>    Change the CWD to a package's directory in git before building.
   -a <arch>              Whitelist architectures to build for. You may use this
@@ -51,18 +51,20 @@ parse_args() {
 				exit
 				;;
 			--)
+				shift
 				pass_through+=("$@")
 				break
 				;;
 			*)
-				pass_through+=("$2")
-				shift
+				err "unknown argument: $1"
+				exit 1
 				;;
 		esac
 		shift
 	done
 
 	# archbuild -> makechrootpkg -> makepkg
+	state=0
 	set -- "${pass_through[@]}"
 	for arg ; do
 		if [[ "$arg" == -- ]] ; then
@@ -70,22 +72,20 @@ parse_args() {
 		else
 			case "$state" in
 				0)
-					archbuild_args+=("$2")
+					archbuild_args+=("$arg")
 					;;
 				1)
-					makechrootpkg_args+=("$2")
+					makechrootpkg_args+=("$arg")
 					;;
 				2)
-					makepkg_args+=("$2")
+					makepkg_args+=("$arg")
 					;;
 				*)
 					echo "invalid argument depth: $state"
 					exit 1
 					;;
 			esac
-			shift
 		fi
-		shift
 	done
 
 	if (( ${#arch[@]} == 0 )) ; then
