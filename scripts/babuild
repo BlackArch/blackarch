@@ -62,6 +62,32 @@ parse_args() {
 		shift
 	done
 
+	# archbuild -> makechrootpkg -> makepkg
+	set -- "${pass_through[@]}"
+	for arg ; do
+		if [[ "$arg" == -- ]] ; then
+			(( state++ ))
+		else
+			case "$state" in
+				0)
+					archbuild_args+=("$2")
+					;;
+				1)
+					makechrootpkg_args+=("$2")
+					;;
+				2)
+					makepkg_args+=("$2")
+					;;
+				*)
+					echo "invalid argument depth: $state"
+					exit 1
+					;;
+			esac
+			shift
+		fi
+		shift
+	done
+
 	if (( ${#arch[@]} == 0 )) ; then
 		arch=(i686 x86_64)
 	fi
@@ -97,13 +123,12 @@ copy_files() {
 	chmod -R a+wrX "$tmp"
 }
 
-
 _build_i686() {
-	blackarch32-i686-build "${pass_through[@]}" -- -D /dev/input
+	blackarch32-i686-build "${archbuild_args[@]}" -- -D /dev/input "${makechrootpkg_args[@]}" -- "${makepkg_args[@]}"
 }
 
 _build_x86_64() {
-	blackarch64-x86_64-build "${pass_through[@]}" -- -D /dev/input
+	blackarch64-x86_64-build "${archbuild_args[@]}" -- -D /dev/input "${makechrootpkg_args[@]}" -- "${makepkg_args[@]}"
 }
 
 do_build() {
