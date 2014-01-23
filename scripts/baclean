@@ -1,0 +1,48 @@
+#!/bin/bash
+
+shopt -s extglob
+
+site=blackarch.org
+sitedir=/nginx/var/www
+# override with -r
+repo=blackarch-testing
+# override with -u
+user=$USER
+
+while (( $# )) ; do
+	case "$1" in
+		-r)
+			repo=$2
+			shift
+			;;
+		-u)
+			user=$2
+			shift
+			;;
+	esac
+	shift
+done
+
+# This runs on the remote host.
+# This is not meant to be efficient or portable.
+remote_cleanup() {
+	for a in i686 x86_64 ; do
+		cd "$a"
+		for p in *.pkg.tar.xz ; do
+			[[ -e "$p" ]] || continue
+			pkgname=$(sed 's/-[^-]\+-[^-]\+-[^-]\+.pkg.tar.xz$//' <<< "$p")
+			matched=("$pkgname"-+([!-])-+([!-])-+([!-]).pkg.tar.xz)
+			printf '%s\n' "${matched[@]}" | sort -V | head -n-1 | xargs rm -v
+		done
+		cd ..
+	done
+}
+
+# The user's shell must be bash.
+# TODO: bash -c
+ssh -l "$user" blackarch.org bash <<EOF
+shopt -s extglob
+cd '$sitedir/blackarch/$repo/os'
+$(declare -f remote_cleanup)
+remote_cleanup
+EOF
