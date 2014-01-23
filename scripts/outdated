@@ -1,0 +1,39 @@
+#!/bin/bash
+
+base=${BASH_SOURCE[0]%/*}/..
+
+quiet=false
+
+for arg ; do
+	case "$arg" in
+		-q)
+			quiet=true
+			;;
+	esac
+done
+
+for p in "$base/packages"/*/PKGBUILD ; do (
+	. "$p"
+
+	if [[ -n "$epoch" ]] ; then
+		gitver=$epoch:$pkgver-$pkgrel
+	else
+		gitver=$pkgver-$pkgrel
+	fi
+
+	repover=$(pacman -Si "$pkgname" 2> /dev/null | awk '-F: ' '/Version/{ print $2 }') 
+
+	if [[ -z "$repover" ]] ; then
+		if $quiet ; then
+			echo "$pkgname"
+		else
+			echo "new: $pkgname"
+		fi
+	elif [[ "$repover" !=  "$gitver" ]] ; then
+		if $quiet ; then
+			echo "$pkgname"
+		else
+			echo "$pkgname $repover -> $gitver"
+		fi
+	fi
+) done
