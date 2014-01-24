@@ -32,6 +32,8 @@ Configure Repository
 
 BlackArch is compatible with normal Arch installations. It acts as an unofficial user repository.
 
+0. If you have installed BlackArch before and there is an existing [blackarch] entry in /etc/pacman.conf, remove or comment out the entry and run pacman -Syy. 
+
 1. Run the following as root. This is for package signing.
 
 ```
@@ -50,8 +52,8 @@ pacman -U blackarch-keyring-20140118-3-any.pkg.tar.xz
 ```
 [blackarch]
 Server = <mirror_site>/$repo/os/$arch
-Replace <mirror_site> with a mirror site of your choosing. Please use one of our official mirrors. See Mirror Sites. 
 ```
+Replace <mirror_site> with a mirror site of your choosing. Please use one of our official mirrors. See the list of [mirror sites](http://blackarch.org/download.html#mirrors) on our website.
 
 4. Now run:
 

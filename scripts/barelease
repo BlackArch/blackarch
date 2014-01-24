@@ -111,6 +111,11 @@ detect_key() {
 			exit 1
 		fi
 	fi
+	
+	# TODO: remove this once the transition period is over.
+	if [[ "$key" == 4EB7BB3C ]] ; then
+		key=EA87E4E3
+	fi
 }
 
 check_key() {
@@ -219,13 +224,13 @@ do_release() {
 		fi
 
 		echo 'adding to files database...'
-		repo-add blackarch.files.tar.gz "$p" || true
+		repo-add blackarch.files.tar.gz "$package" || true
 
 		gpg --default-key "$key" --yes -b blackarch.files.tar.gz
 		gpg --default-key "$key" --yes -b blackarch.db.tar.gz
 
 		echo "pushing..."
-		rsync --chmod 644 -e "ssh -l $user" --progress "$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a" || true
+		rsync --chmod 644 -e "ssh -l $user" --progress ./"$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a" || true
 	done
 
 	unlock
