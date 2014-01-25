@@ -1,34 +1,57 @@
 pkgname=cuckoo
-pkgver=0.6
+pkgver=1.0
 pkgrel=1
 pkgdesc="A malware analysis system"
 url="http://cuckoosandbox.org/"
-arch=(any)
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 license=('custom')
 install='cuckoo.install'
-depends=('python2' 'python2-sqlalchemy' 'python2-dpkt' 
-         'python2-jinja' 'python2-magic' 'python2-pydeep' 'libvirt' 
-         'python2-bottlepy' 'python2-pefile' 'tcpdump')
-source=("http://downloads.cuckoosandbox.org/0.6.0/cuckoo_0.6.tar.gz")
-md5sums=('060d1682188922fd5357fd19e542ea5a')
+depends=('python2' 'python2-sqlalchemy' 'python2-dpkt' 'python2-jinja'
+         'python2-magic' 'python2-pydeep' 'libvirt' 'python2-bottle'
+         'python2-pefile' 'python2-pymongo' 'tcpdump' 'yara' 'python2-yara')
+source=("http://downloads.cuckoosandbox.org/$pkgver/cuckoo_$pkgver.tar.gz"
+        'https://raw2.github.com/BlackArch/tcpdump_net_raw/master/tcpdump_net_raw.c')
+md5sums=('7043ec608691f303a0320e74e948887a'
+         '814cb8837586bffead4c1a0387a1e66b')
 
 prepare() {
    cd "$srcdir/cuckoo"
-   sed -i 's/env python/env python2/' cuckoo.py
+
+   # Set some configuration defaults.
+   sed -i 's|env python|env python2|' cuckoo.py
+   sed -i 's|^version_check =.*|version_check = off|' conf/cuckoo.conf
+   sed -i 's|^tcpdump =.*|tcpdump = /opt/cuckoo/cuckoo_tcpdump|' conf/auxiliary.conf
+   sed -i 's|^platform =.*|platform = linux|' conf/{kvm.conf,virtualbox.conf,vmware.conf,esx.conf}
+
+}
+
+build() {
+  cd "$srcdir"
+
+  make tcpdump_net_raw
 }
 
 package() {
   cd "$srcdir/cuckoo"
   
   # Base directories.
-  install -dm755 "$pkgdir/usr/share/cuckoo"
   install -dm755 "$pkgdir/usr/bin/"
+  install -dm755 "$pkgdir/opt/cuckoo"
 
-  cp -a * "$pkgdir/usr/share/$pkgname"
+  install -m754 "$srcdir/tcpdump_net_raw" "$pkgdir/opt/cuckoo/cuckoo_tcpdump"
 
-cat > "$pkgdir/usr/bin/cuckoo" << EOF
+  cp --no-preserve=ownership -a * "$pkgdir/opt/cuckoo"
+  chmod u+rwX,g+rwX,o+rX -R "$pkgdir/opt"
+
+  cat > "$pkgdir/usr/bin/cuckoo" <<EOF
 #!/bin/sh
-cd /usr/share/cuckoo
+
+if ! id | grep -q '(cuckoo)' && ! [ \$EUID -eq 0 ] ; then
+  echo "ERROR: Add yourself to the cuckoo group to use cuckoo as an unprivledged user."
+  exit 1
+fi
+
+cd /opt/cuckoo
 python2 cuckoo.py "\$@"
 EOF
  chmod +x "$pkgdir/usr/bin/cuckoo"
