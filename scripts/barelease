@@ -153,22 +153,24 @@ detect_arch() {
 }
 
 start_gpg_agent() {
-	echo 'gpg-agent already started.'
 	[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
 	if [[ -z "$GPG_AGENT_INFO" ]] ; then
 		echo 'starting gpg-agent...'
 		eval $(gpg-agent --daemon --default-cache-ttl 10000)
 		we_started_gpg=true
+	else
+		echo 'gpg-agent already started.'
 	fi
 }
 
 start_ssh_agent() {
-	echo 'ssh-agent already started.'
 	if [[ -z "$SSH_AGENT_PID" ]] ; then
 		echo 'starting ssh-agent...'
 		eval $(ssh-agent)
 		ssh-add
 		we_started_ssh=true
+	else
+		echo 'ssh-agent already started.'
 	fi
 }
 
@@ -217,7 +219,7 @@ do_release() {
 		rsync -e "ssh -l $user" --progress "$site:$sitedir/blackarch/$repo/os/$a"/{blackarch.db.tar.gz,blackarch.files.tar.gz} .
 
 		echo "signing and adding to database..."
-		gpg --default-key "$key" --yes -b "$package"
+		gpg --default-key "$key" --yes -b "$package" > /dev/null
 		if ! repo-add --nocolor -n -q blackarch.db.tar.gz "$package" && ! $always_push ; then
 			err "something bad happened. not pushing for $arch."
 			continue
@@ -226,8 +228,8 @@ do_release() {
 		echo 'adding to files database...'
 		repo-add --nocolor -n -q -f blackarch.files.tar.gz "$package" || true
 
-		gpg --default-key "$key" --yes -b blackarch.files.tar.gz
-		gpg --default-key "$key" --yes -b blackarch.db.tar.gz
+		gpg --default-key "$key" --yes -b blackarch.files.tar.gz > /dev/null
+		gpg --default-key "$key" --yes -b blackarch.db.tar.gz > /dev/null
 
 		echo "pushing..."
 		rsync --ignore-existing --chmod 644 -e "ssh -l $user" --progress ./"$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a" || true
