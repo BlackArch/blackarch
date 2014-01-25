@@ -1,14 +1,17 @@
 #!/bin/bash
 
-auto_detect=false
-
 usage() {
 	cat <<EOF
-usage: basign-key -s <key_to_sign_with> -s <key_to_sign> -m
+usage: basign-key -u <key_to_sign_with> -s <key_to_sign>
 
-  -u <key>   Specify the key to sign with.
-  -s <key>   Specify the key to sign.
-  -m         Try to autodetect a master key to sign with. Using this with -u is an error.
+  -s <key>    Specify the key to sign.
+  -u <key>    Specify the key to sign with. If <key> is a master key name,
+              it is resolved.
+
+  Valid master key names:
+    - paraxor
+    - noptrix
+    - nrz
 EOF
 }
 
@@ -23,9 +26,6 @@ parse_args() {
 				key_to_sign=$2
 				shift
 				;;
-			-m)
-				auto_detect=true
-				;;
 			-h)
 				usage
 				exit
@@ -37,23 +37,21 @@ parse_args() {
 		esac
 		shift
 	done
-
-	if $auto_detect && [[ -n "$key_to_use" ]] ; then
-		usage
-		exit 1
-	fi
 }
 
-auto_detect_key() {
-	if $auto_detect ; then
-		key_to_use=$(gpg -K | grep -B1 'BlackArch Master' | head -n1 | awk '{ print $2 }' | cut -d/ -f2)
-		if [[ -z "$key_to_use" ]] ; then
-			err 'failed to auto-detect a master key.'
-			exit 1
-		fi
-	fi
-
-	echo "auto-detected master key: $key_to_use"
+resolve_key_name() {
+	case "$key_to_use" in
+		paraxor)
+			key_to_use=8F9A9793CB8591147C2EC70566E0CDBD1E01F333
+			;;
+		noptrix)
+			key_to_use=CBA3C7D4798912702DCF568E67D8BDF42AD93F4E
+			;;
+		nrz)
+			key_to_use=A0917C4147A37007CB54C1CFD295AA940EFDDF62
+			;;
+	esac
+	echo "signing $key_to_sign with $key_to_use."
 }
 
 check_keys() {
@@ -78,7 +76,7 @@ send_key() {
 main() {
 	parse_args "$@"
 
-	auto_detect_key
+	resolve_key_name
 	check_keys
 
 	get_key
