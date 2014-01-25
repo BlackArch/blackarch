@@ -1,8 +1,14 @@
 #!/bin/bash
 
+auto_detect=false
+
 usage() {
 	cat <<EOF
-usage: basign-key -u <key_to_sign_with> -k <key_to_sign>
+usage: basign-key -s <key_to_sign_with> -s <key_to_sign> -m
+
+  -u <key>   Specify the key to sign with.
+  -s <key>   Specify the key to sign.
+  -m         Try to autodetect a master key to sign with. Using this with -u is an error.
 EOF
 }
 
@@ -13,9 +19,12 @@ parse_args() {
 				key_to_use=$2
 				shift
 				;;
-			-k)
+			-s)
 				key_to_sign=$2
 				shift
+				;;
+			-m)
+				auto_detect=true
 				;;
 			-h)
 				usage
@@ -25,6 +34,25 @@ parse_args() {
 		shift
 	done
 
+	if $auto_detect && [[ -n "$key_to_use" ]] ; then
+		usage
+		exit 1
+	fi
+}
+
+auto_detect_key() {
+	if $auto_detect ; then
+		key_to_use=$(gpg -K | grep -B1 'BlackArch Master' | head -n1 | awk '{ print $2 }' | cut -d/ -f2)
+		if [[ -z "$key_to_use" ]] ; then
+			err 'failed to auto-detect a master key.'
+			exit 1
+		fi
+	fi
+
+	echo "auto-detected master key: $key_to_use"
+}
+
+check_keys() {
 	if [[ -z "$key_to_use" || -z "$key_to_sign" ]] ; then
 		usage
 		exit 1
@@ -45,6 +73,9 @@ send_key() {
 
 main() {
 	parse_args "$@"
+
+	auto_detect_key
+	check_keys
 
 	get_key
 	sign_key
