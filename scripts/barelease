@@ -161,6 +161,7 @@ start_gpg_agent() {
 	else
 		echo 'gpg-agent already started.'
 	fi
+	gpg --default-key "$key" -s > /dev/null < /dev/null
 }
 
 start_ssh_agent() {
@@ -198,8 +199,6 @@ remote_unlock() {
 }
 
 do_release() {
-	echo "starting release..."
-
 	tmp=$(mktemp -d /tmp/barelease.XXXXXXXX)
 
 	cp "$package" "$tmp"
@@ -213,13 +212,14 @@ do_release() {
 	lock
 
 	for a in "${arch[@]}" ; do
-		echo "releasing for $a..."
+		echo
+		echo "ARCH: $a"
 
 		echo "pulling..."
-		rsync -e "ssh -l $user" --progress "$site:$sitedir/blackarch/$repo/os/$a"/{blackarch.db.tar.gz,blackarch.files.tar.gz} .
+		rsync -z -e "ssh -l $user" "$site:$sitedir/blackarch/$repo/os/$a"/{blackarch.db.tar.gz,blackarch.files.tar.gz} .
 
 		echo "signing and adding to database..."
-		gpg --default-key "$key" --yes -b "$package" > /dev/null
+		gpg --no-tty --default-key "$key" --yes -b "$package" > /dev/null 2>&1
 		if ! repo-add --nocolor -n -q blackarch.db.tar.gz "$package" && ! $always_push ; then
 			err "something bad happened. not pushing for $arch."
 			continue
@@ -228,11 +228,11 @@ do_release() {
 		echo 'adding to files database...'
 		repo-add --nocolor -n -q -f blackarch.files.tar.gz "$package" || true
 
-		gpg --default-key "$key" --yes -b blackarch.files.tar.gz > /dev/null
-		gpg --default-key "$key" --yes -b blackarch.db.tar.gz > /dev/null
+		gpg --no-tty --default-key "$key" --yes -b blackarch.files.tar.gz > /dev/null 2>&1
+		gpg --no-tty --default-key "$key" --yes -b blackarch.db.tar.gz > /dev/null 2>&1
 
 		echo "pushing..."
-		rsync --ignore-existing --chmod 644 -e "ssh -l $user" --progress ./"$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a" || true
+		rsync -z --ignore-existing --chmod 644 -e "ssh -l $user" ./"$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a" || true
 	done
 
 	unlock
