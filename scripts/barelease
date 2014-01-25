@@ -218,19 +218,19 @@ do_release() {
 
 		echo "signing and adding to database..."
 		gpg --default-key "$key" --yes -b "$package"
-		if ! repo-add blackarch.db.tar.gz "$package" && ! $always_push ; then
+		if ! repo-add --nocolor -n -q blackarch.db.tar.gz "$package" && ! $always_push ; then
 			err "something bad happened. not pushing for $arch."
 			continue
 		fi
 
 		echo 'adding to files database...'
-		repo-add -f blackarch.files.tar.gz "$package" || true
+		repo-add --nocolor -n -q -f blackarch.files.tar.gz "$package" || true
 
 		gpg --default-key "$key" --yes -b blackarch.files.tar.gz
 		gpg --default-key "$key" --yes -b blackarch.db.tar.gz
 
 		echo "pushing..."
-		rsync --chmod 644 -e "ssh -l $user" --progress ./"$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a" || true
+		rsync --ignore-existing --chmod 644 -e "ssh -l $user" --progress ./"$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a" || true
 	done
 
 	unlock
