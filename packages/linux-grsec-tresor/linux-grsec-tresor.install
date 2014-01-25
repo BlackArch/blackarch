@@ -1,0 +1,117 @@
+# arg 1:  the new package version
+# arg 2:  the old package version
+
+KERNEL_NAME=-grsec-tresor
+KERNEL_VERSION=3.12.5-6-grsec-tresor
+
+_fix_permissions() {
+  /usr/bin/linux-pax-flags -y
+
+  echo
+  echo You can repeat this process after updating or installing affected
+  echo binaries by running "linux-pax-flags".
+}
+
+_add_proc_group() {
+  if ! getent group proc-trusted >/dev/null; then
+    groupadd -g 9998 -r proc-trusted
+  fi
+}
+
+_add_tpe_group() {
+  if getent group grsec-trusted >/dev/null; then
+    groupmod -n tpe-trusted grsec-trusted
+  fi
+
+  if ! getent group tpe-trusted >/dev/null; then
+    groupadd -g 9999 -r tpe-trusted
+  fi
+}
+
+_add_socket_deny_groups() {
+  if ! getent group socket-deny-server >/dev/null; then
+    groupadd -g 9997 -r socket-deny-server
+  fi
+  
+  if ! getent group socket-deny-client >/dev/null; then
+    groupadd -g 9996 -r socket-deny-client
+  fi
+
+  if ! getent group socket-deny-all >/dev/null; then
+    groupadd -g 9995 -r socket-deny-all
+  fi
+}
+
+_add_groups() {
+  _add_proc_group
+  _add_tpe_group
+  _add_socket_deny_groups
+}
+
+_remove_groups() {
+  for group in grsec-trusted proc-trusted tpe-trusted socket-deny-server socket-deny-client socket-deny-all; do
+    if getent group $group >/dev/null; then
+	  groupdel $group
+    fi
+  done
+}
+
+_help() {
+cat <<EOF
+
+Configuration of grsecurity features via sysctl is possible in
+"/etc/sysctl.d/05-grsecurity.conf".
+
+For group tpe-trusted, Trusted Path Execution is disabled. For group
+proc-trusted, the access to /proc is not restricted. Think carefully before
+adding a normal user to these groups.
+
+To prevent certain socket access to users, there are three groups:
+socket-deny-server, socket-deny-client and socket-deny-all.
+
+There is an extensive wikibook on grsecurity and some documentation in the Arch
+Linux Wiki:
+
+https://en.wikibooks.org/wiki/Grsecurity
+https://wiki.archlinux.org/index.php/Grsecurity
+
+EOF
+}
+
+post_install() {
+  # updating module dependencies
+  echo ">>> Updating module dependencies. Please wait ..."
+  depmod ${KERNEL_VERSION}
+  echo ">>> Generating initial ramdisk, using mkinitcpio.  Please wait..."
+  mkinitcpio -p linux${KERNEL_NAME}
+
+  _add_groups
+  _fix_permissions
+  
+  _help
+}
+
+post_upgrade() {
+  if findmnt --fstab -uno SOURCE /boot &>/dev/null && ! mountpoint -q /boot; then
+    echo "WARNING: /boot appears to be a separate partition but is not mounted."
+  fi
+
+  # updating module dependencies
+  echo ">>> Updating module dependencies. Please wait ..."
+  depmod ${KERNEL_VERSION}
+  echo ">>> Generating initial ramdisk, using mkinitcpio.  Please wait..."
+  mkinitcpio -p linux${KERNEL_NAME}
+
+  _add_groups
+  _fix_permissions
+
+  _help
+}
+
+post_remove() {
+  # also remove the compat symlinks
+  rm -f boot/initramfs-linux${KERNEL_NAME}.img
+  rm -f boot/initramfs-linux${KERNEL_NAME}-fallback.img
+
+  _remove_groups
+}
