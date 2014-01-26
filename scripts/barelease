@@ -3,32 +3,16 @@
 # This does not delete old package files. Absolutely do not try to do that
 # manually.
 
+set -e
+
 unset DISPLAY
 
-# override with -s
 site=blackarch.org
-# override with -d
 sitedir=/nginx/var/www
-# overrise with -r
 repo=blackarch
-# override with -u
-user=$USER
 
-# overrise with -f
 force=false
-# override with -a
 always_push=false
-
-# override with --remove
-remove=true
-
-we_started_gpg=false
-we_started_ssh=false
-
-error_handler() {
-	err 'something bad happened.'
-	exit 1
-}
 
 err() {
 	echo >&2 "ERROR: $*"
@@ -38,16 +22,11 @@ usage() {
 	cat <<EOF
 usage: barelease <package> [-f|-a|-k <key>]
 
-  -f          Remove /tmp/blackarch.lck before doing anything.
-  -a          Always push, even if repo-add fails. This can be dangerous. Please talk
-              to paraxor if you do not understand why.
-  -k <key>    Specify the gpg key to use for signing.
-  -r <repo>   Specify an alternative repo. (Default: blackarch) 
-  -u <user>   Specify the user to use on the remote host.
-  -d <dir>    Specify the location of the repo on the site (Default: /nginx/var/www)
-  -s <site>   Specify the site to use (Default: blackarch.org)
-
-  --remove    Remove a package from the repo by name.
+-f          Remove /tmp/blackarch.lck before doing anything.
+-a          Always push, even if repo-add fails. This can be dangerous. Please talk
+            to paraxor if you do not understand why.
+-k <key>    Specify the gpg key to use for signing.
+-r <repo>   Specify an alternative repo. (Default: blackarch) 
 EOF
 }
 
@@ -55,10 +34,10 @@ cleanup() {
 	echo 'cleaning up...'
 
 	# Kill gpg-agent.
-	$we_started_gpg && kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")" 2> /dev/null >&2
+	kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")" 2> /dev/null >&2
 
 	# Kill ssh-agent.
-	$we_started_ssh && kill "$SSH_AGENT_PID" 2> /dev/null >&2
+	kill "$SSH_AGENT_PID" 2> /dev/null >&2
 
 	# Clean up temporary directory.
 	rm -rf "$tmp"
@@ -75,12 +54,6 @@ parse_args() {
 	package=$1
 	shift
 
-	if [[ $package == -h ]] ; then
-		usage
-		exit
-	fi
-
-	# TODO: Add a flag for the package file name?
 	while (( $# != 0 )) ; do
 		case "$1" in
 			-f)
@@ -97,30 +70,6 @@ parse_args() {
 				repo=$2
 				shift
 				;;
-			-u)
-				user=$2
-				shift
-				;;
-			-s)
-				site=$2
-				shift
-				;;
-			-d)
-				sitedir=$2
-				shift
-				;;
-			-h)
-				usage
-				exit
-				;;
-			--remove)
-				remove=true
-				;;
-			*)
-				err "invalid arg: $1"
-				usage
-				exit 1
-				;;
 		esac
 		shift
 	done
@@ -134,11 +83,6 @@ detect_key() {
 			exit 1
 		fi
 	fi
-	
-	# TODO: remove this once the transition period is over.
-	if [[ "$key" == 4EB7BB3C ]] ; then
-		key=EA87E4E3
-	fi
 }
 
 check_key() {
@@ -151,8 +95,6 @@ check_key() {
 }
 
 check_package() {
-	$remove && return
-
 	if [[ ! -r "$package" ]] ; then
 		err "unable to read package file: '$package'."
 		exit 1
@@ -165,9 +107,7 @@ check_package() {
 }
 
 detect_arch() {
-	if $remove ; then
-		arch=(i686 x86_64)
-	elif [[ $package == *-any.pkg.tar.xz ]] ; then
+	if [[ $package == *-any.pkg.tar.xz ]] ; then
 		arch=(i686 x86_64)
 	elif [[ $package == *-x86_64.pkg.tar.xz ]] ; then
 		arch=(x86_64)
@@ -181,43 +121,22 @@ detect_arch() {
 
 start_gpg_agent() {
 	[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
-	if [[ -z "$GPG_AGENT_INFO" ]] ; then
-		echo 'starting gpg-agent...'
-		eval $(gpg-agent --daemon --default-cache-ttl 10000)
-		we_started_gpg=true
-	else
-		echo 'gpg-agent already started.'
-	fi
-	gpg --default-key "$key" -s > /dev/null < /dev/null
+	[[ -z "$GPG_AGENT_INFO" ]] && eval $(gpg-agent --daemon --default-cache-ttl 10000)
 }
 
 start_ssh_agent() {
 	if [[ -z "$SSH_AGENT_PID" ]] ; then
-		echo 'starting ssh-agent...'
 		eval $(ssh-agent)
-		ssh-add
-		we_started_ssh=true
-	else
-		echo 'ssh-agent already started.'
 	fi
-}
-
-lock() {
-	echo "obtaining lock..."
-	ssh -l "$user" "$site" "$(declare -f remote_lock); remote_lock"
+	ssh-add
 }
 
 # This runs on the remote host.
 remote_lock() {
 	if ! mkdir -m000 /tmp/blackarch.lck ; then
-		echo >&2 'unable to obtain lock.'
+		err 'unable to obtain lock. remove /tmp/blackarch.lck perhaps?'
 		exit 1
 	fi
-}
-
-unlock() {
-	echo "releasing lock..."
-	ssh -l "$user" "$site" "$(declare -f remote_unlock); remote_unlock"
 }
 
 # This runs on the remote host.
@@ -226,64 +145,42 @@ remote_unlock() {
 }
 
 do_release() {
-	if ! $remove ; then
-		tmp=$(mktemp -d /tmp/barelease.XXXXXXXX)
+	tmp=$(mktemp -d /tmp/barelease.XXXXXXXX)
 
-		cp "$package" "$tmp"
-		cd "$tmp"
-	fi
+	cp "$package" "$tmp"
+	cd "$tmp"
 
 	if $force ; then
 		echo "warning: forcing lock release..."
-		unlock
+		ssh blackarch.org "$(declare -f remote_unlock); remote_unlock"
 	fi
 
-	lock
+	echo "obtaining lock..."
+	ssh blackarch.org "$(declare -f remote_lock); remote_lock"
 
 	for a in "${arch[@]}" ; do
-		echo
-		echo "ARCH: $a"
+		echo "releasing for $a..."
 
 		echo "pulling..."
-		rsync -z -e "ssh -l $user" "$site:$sitedir/blackarch/$repo/os/$a"/{blackarch.db.tar.gz,blackarch.files.tar.gz} .
+		rsync --progress "$site:$sitedir/blackarch/$repo/os/$a/blackarch.db.tar.gz" .
 
-		if $remove ; then
-			echo 'removing from database...'
-			repo-remove --nocolor -q blackarch.db.tar.gz "$package" || true
-		else
-			echo "signing and adding to database..."
-			gpg --no-tty --default-key "$key" --yes -b "$package" > /dev/null 2>&1
-			if ! repo-add --nocolor -n -q blackarch.db.tar.gz "$package" && ! $always_push ; then
-				err "something bad happened. not pushing for $arch."
-				continue
-			fi
+		echo "signing and adding to database..."
+		gpg --default-key "$key" --yes -b "$package"
+		if ! repo-add blackarch.db.tar.gz "$p" && ! $always_push ; then
+			err "something bad happened. not pushing for $arch."
+			continue
 		fi
-
-		if $remove ; then
-			echo 'removing from files database...'
-			repo-remove --nocolor -q blackarch.files.tar.gz "$package" || true
-		else
-			echo 'adding to files database...'
-			repo-add --nocolor -n -q -f blackarch.files.tar.gz "$package" || true
-		fi
-
-		gpg --no-tty --default-key "$key" --yes -b blackarch.files.tar.gz > /dev/null 2>&1
-		gpg --no-tty --default-key "$key" --yes -b blackarch.db.tar.gz > /dev/null 2>&1
+		gpg --default-key "$key" --yes -b blackarch.db.tar.gz
 
 		echo "pushing..."
-		if ! $remove ; then
-			rsync -z --ignore-existing --chmod 644 -e "ssh -l $user" ./"$package"{,.sig} \
-			  "$site:$sitedir/blackarch/$repo/os/$a" || true
-		fi
-		rsync -z --chmod 644 -e "ssh -l $user" blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a" || true
+		rsync --progress "$package"{,.sig} blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a"
 	done
 
-	unlock
+	echo "releasing lock..."
+	ssh blackarch.org "$(declare -f remote_unlock); remote_unlock"
 }
 
 main() {
-	trap error_handler ERR
-
 	check_args "$@"
 	parse_args "$@"
 

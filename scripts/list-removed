@@ -1,12 +1,9 @@
 #!/bin/bash
 # List packages in the real repo that no longer exist in the Git repo.
 
-base=${BASH_SOURCE[0]%/*}/..
+jobs=10
+base=$(realpath "$(dirname "$0")")
 cd "$base"
 
-pacman -Sql blackarch |
-while IFS= read -r pack ; do
-	if [[ ! -e "packages/$pack" ]] ; then
-		echo "$pack"
-	fi
-done
+printf '%s\n' ../real-repo/*/*.pkg.tar.xz |
+  parallel --no-notice -j$jobs -n1 "$base/list-removed-helper"

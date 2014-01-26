@@ -8,7 +8,7 @@ testing=blackarch-testing/os
 real=blackarch/os
 real_bak=blackarch.bak/os
 
-real_local=$(realpath ../real-repo/os)
+real_local=$(realpath ../real-repo)
 
 eval $(ssh-agent)
 trap "kill $SSH_AGENT_PID" EXIT
@@ -19,16 +19,12 @@ fix_permissions() {
 	             chmod -R ug+rwX,o+rX $sitedir/* 2> /dev/null"
 }
 
-_rsync() {
-	rsync --delete-after --progress -vz -rlptD "$@"
-}
-
 ran=$RANDOM$RANDOM
 case "$1" in
 	# Copy Local -> Real
 	local-real)
 		echo >&2 'syncing local to real...'
-		_rsync "${real_local:-safety}/" $site:/$sitedir/$real.$ran
+		rsync -avz --progress --delete-after "${real_local:-safety}/" $site:/$sitedir/$real.$ran
 		ssh "$site" "cp -a $sitedir/$testing $sitedir/$real.$ran
 		             rm -rf $sitedir/$real
 		             mv -v $sitedir/$real.$ran $sitedir/$real"
@@ -39,7 +35,7 @@ case "$1" in
 	local-test)
 		echo >&2 'syncing local to test...'
 		ssh "$site" "mkdir -p '$sitedir/$testing'"
-		_rsync "${real_local:-safety}/" $site:/$sitedir/$testing
+		rsync -avz --progress --delete-after "${real_local:-safety}/" $site:/$sitedir/$testing
 		fix_permissions
 		;;
 
