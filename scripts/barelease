@@ -151,21 +151,23 @@ check_key() {
 }
 
 check_package() {
-	if ! $remove ; then
-		if [[ ! -r "$package" ]] ; then
-			err "unable to read package file: '$package'."
-			exit 1
-		fi
+	$remove && return
 
-		if [[ "$package" != *.pkg.tar.xz ]] ; then
-			err "'$package' must have a .pkg.tar.xz extension."
-			exit 1
-		fi
+	if [[ ! -r "$package" ]] ; then
+		err "unable to read package file: '$package'."
+		exit 1
+	fi
+
+	if [[ "$package" != *.pkg.tar.xz ]] ; then
+		err "'$package' must have a .pkg.tar.xz extension."
+		exit 1
 	fi
 }
 
 detect_arch() {
-	if [[ $package == *-any.pkg.tar.xz ]] ; then
+	if $remove ; then
+		arch=(i686 x86_64)
+	elif [[ $package == *-any.pkg.tar.xz ]] ; then
 		arch=(i686 x86_64)
 	elif [[ $package == *-x86_64.pkg.tar.xz ]] ; then
 		arch=(x86_64)
@@ -202,7 +204,7 @@ start_ssh_agent() {
 
 lock() {
 	echo "obtaining lock..."
-	ssh -l "$user" "$site" "$*; $(declare -f remote_lock); remote_lock"
+	ssh -l "$user" "$site" "$(declare -f remote_lock); remote_lock"
 }
 
 # This runs on the remote host.
@@ -215,7 +217,7 @@ remote_lock() {
 
 unlock() {
 	echo "releasing lock..."
-	ssh -l "$user" "$site" "$*; $(declare -f remote_unlock); remote_unlock"
+	ssh -l "$user" "$site" "$(declare -f remote_unlock); remote_unlock"
 }
 
 # This runs on the remote host.
@@ -224,10 +226,12 @@ remote_unlock() {
 }
 
 do_release() {
-	tmp=$(mktemp -d /tmp/barelease.XXXXXXXX)
+	if ! $remove
+		tmp=$(mktemp -d /tmp/barelease.XXXXXXXX)
 
-	cp "$package" "$tmp"
-	cd "$tmp"
+		cp "$package" "$tmp"
+		cd "$tmp"
+	fi
 
 	if $force ; then
 		echo "warning: forcing lock release..."
