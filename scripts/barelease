@@ -19,6 +19,9 @@ force=false
 # override with -a
 always_push=false
 
+# override with --remove
+remove=true
+
 we_started_gpg=false
 we_started_ssh=false
 
@@ -43,6 +46,8 @@ usage: barelease <package> [-f|-a|-k <key>]
   -u <user>   Specify the user to use on the remote host.
   -d <dir>    Specify the location of the repo on the site (Default: /nginx/var/www)
   -s <site>   Specify the site to use (Default: blackarch.org)
+
+  --remove    Remove a package from the repo by name.
 EOF
 }
 
@@ -108,6 +113,9 @@ parse_args() {
 				usage
 				exit
 				;;
+			--remove)
+				remove=true
+				;;
 			*)
 				err "invalid arg: $1"
 				usage
@@ -143,14 +151,16 @@ check_key() {
 }
 
 check_package() {
-	if [[ ! -r "$package" ]] ; then
-		err "unable to read package file: '$package'."
-		exit 1
-	fi
+	if ! $remove ; then
+		if [[ ! -r "$package" ]] ; then
+			err "unable to read package file: '$package'."
+			exit 1
+		fi
 
-	if [[ "$package" != *.pkg.tar.xz ]] ; then
-		err "'$package' must have a .pkg.tar.xz extension."
-		exit 1
+		if [[ "$package" != *.pkg.tar.xz ]] ; then
+			err "'$package' must have a .pkg.tar.xz extension."
+			exit 1
+		fi
 	fi
 }
 
@@ -192,7 +202,7 @@ start_ssh_agent() {
 
 lock() {
 	echo "obtaining lock..."
-	ssh -l "$user" "$site" "$(declare -f remote_lock); remote_lock"
+	ssh -l "$user" "$site" "$*; $(declare -f remote_lock); remote_lock"
 }
 
 # This runs on the remote host.
@@ -205,7 +215,7 @@ remote_lock() {
 
 unlock() {
 	echo "releasing lock..."
-	ssh -l "$user" "$site" "$(declare -f remote_unlock); remote_unlock"
+	ssh -l "$user" "$site" "$*; $(declare -f remote_unlock); remote_unlock"
 }
 
 # This runs on the remote host.
@@ -233,21 +243,34 @@ do_release() {
 		echo "pulling..."
 		rsync -z -e "ssh -l $user" "$site:$sitedir/blackarch/$repo/os/$a"/{blackarch.db.tar.gz,blackarch.files.tar.gz} .
 
-		echo "signing and adding to database..."
-		gpg --no-tty --default-key "$key" --yes -b "$package" > /dev/null 2>&1
-		if ! repo-add --nocolor -n -q blackarch.db.tar.gz "$package" && ! $always_push ; then
-			err "something bad happened. not pushing for $arch."
-			continue
+		if $remove ; then
+			echo 'removing from database...'
+			repo-remove --nocolor -q blackarch.db.tar.gz "$package"
+		else
+			echo "signing and adding to database..."
+			gpg --no-tty --default-key "$key" --yes -b "$package" > /dev/null 2>&1
+			if ! repo-add --nocolor -n -q blackarch.db.tar.gz "$package" && ! $always_push ; then
+				err "something bad happened. not pushing for $arch."
+				continue
+			fi
 		fi
 
-		echo 'adding to files database...'
-		repo-add --nocolor -n -q -f blackarch.files.tar.gz "$package" || true
+		if $remove ; then
+			echo 'removing from files database...'
+			repo-remove --nocolor -q blackarch.files.tar.gz "$package" || true
+		else
+			echo 'adding to files database...'
+			repo-add --nocolor -n -q -f blackarch.files.tar.gz "$package" || true
+		fi
 
 		gpg --no-tty --default-key "$key" --yes -b blackarch.files.tar.gz > /dev/null 2>&1
 		gpg --no-tty --default-key "$key" --yes -b blackarch.db.tar.gz > /dev/null 2>&1
 
 		echo "pushing..."
-		rsync -z --ignore-existing --chmod 644 -e "ssh -l $user" ./"$package"{,.sig} "$site:$sitedir/blackarch/$repo/os/$a" || true
+		if ! $remove ; then
+			rsync -z --ignore-existing --chmod 644 -e "ssh -l $user" ./"$package"{,.sig} \
+			  "$site:$sitedir/blackarch/$repo/os/$a" || true
+		fi
 		rsync -z --chmod 644 -e "ssh -l $user" blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a" || true
 	done
 
