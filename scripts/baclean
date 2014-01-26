@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export LC_ALL=C
+
 shopt -s extglob
 
 site=blackarch.org
@@ -33,7 +35,18 @@ remote_cleanup() {
 			[[ -e "$p" ]] || continue
 			pkgname=$(sed 's/-[^-]\+-[^-]\+-[^-]\+.pkg.tar.xz$//' <<< "$p")
 			matched=("$pkgname"-+([!-])-+([!-])-+([!-]).pkg.tar.xz)
-			printf '%s\n' "${matched[@]}" | sort -V | head -n-1 | xargs -r rm -v
+			for pm in "${matched[@]}" ; do
+				if grep -q '[0-9]:' <<< "$pm" ; then
+					echo "$pm"
+				else
+					# Since packages with epoches of zero do not include '0:'
+					# in their names, we have to force them to the top.
+					echo "0000$pm"
+				fi
+			done |
+			sort -V | head -n-1 |
+			sed 's/^0000//' |
+			xargs -r rm -v
 		done
 		cd ..
 	done
