@@ -11,19 +11,41 @@ repo=blackarch-testing
 # override with -u
 user=$USER
 
-while (( $# )) ; do
-	case "$1" in
-		-r)
-			repo=$2
-			shift
-			;;
-		-u)
-			user=$2
-			shift
-			;;
-	esac
-	shift
-done
+we_started_ssh=false
+
+usage() {
+	cat <<EOF
+usage: baclean [-u <user>] [-r <repo>] [-h]
+
+  -u <usage>    Set the ssh user.
+  -r <repo>     Set the repo.
+  -h            Display this message.
+EOF
+}
+
+parse_args() {
+	while (( $# )) ; do
+		case "$1" in
+			-r)
+				repo=$2
+				shift
+				;;
+			-u)
+				user=$2
+				shift
+				;;
+			-h)
+				usage
+				exit
+				;;
+			*)
+				usage
+				exit 1
+				;;
+		esac
+		shift
+	done
+}
 
 cleanup() {
 	# Kill ssh-agent.
@@ -87,6 +109,8 @@ remote_removed_cleanup() {
 }
 
 main() {
+	parse_args "$@"
+
 	start_ssh_agent
 
 	echo "cleaning repo: $repo..."
@@ -110,4 +134,4 @@ remote_old_cleanup
 EOF
 }
 
-main
+main "$@"
