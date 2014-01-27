@@ -25,9 +25,26 @@ while (( $# )) ; do
 	shift
 done
 
+cleanup() {
+	# Kill ssh-agent.
+	$we_started_ssh && kill "$SSH_AGENT_PID" 2> /dev/null >&2
+}
+
+start_ssh_agent() {
+	if [[ -z "$SSH_AGENT_PID" ]] ; then
+		echo 'starting ssh-agent...'
+		eval $(ssh-agent)
+		ssh-add
+		we_started_ssh=true
+	else
+		echo 'ssh-agent already started.'
+	fi
+}
+
 # This runs on the remote host.
 # This is not meant to be efficient or portable.
-remote_cleanup() {
+remote_old_cleanup() {
+	echo 'cleaning old package files...'
 	for a in i686 x86_64 ; do
 		cd "$a"
 		echo "ARCH: $a"
@@ -52,13 +69,45 @@ remote_cleanup() {
 	done
 }
 
-echo "cleaning repo: $repo..."
+remote_removed_cleanup() {
+	echo 'cleaning removed package files...'
 
-# The user's shell must be bash.
-# TODO: bash -c
-ssh -l "$user" blackarch.org bash <<EOF
+	for a in i686 x86_64 ; do
+		cd "$a"
+		echo "ARCH: $a"
+		zgrep %NAME% blackarch.db.tar.gz --no-group-separator -a -A1 |
+		grep -v %NAME% > /tmp/package_list
+		for p in *.pkg.tar.xz ; do
+			pkgname=$(sed 's/-[^-]\+-[^-]\+-[^-]\+.pkg.tar.xz$//' <<< "$p")
+			grep -q "^$pkgname$" /tmp/package_list || rm -v "$p"
+		done
+		cd ..
+	done
+	rm /tmp/package_list
+}
+
+main() {
+	start_ssh_agent
+
+	echo "cleaning repo: $repo..."
+
+	# REMOVED
+	ssh -l "$user" blackarch.org bash <<EOF
 shopt -s extglob
 cd '$sitedir/blackarch/$repo/os'
-$(declare -f remote_cleanup)
-remote_cleanup
+$(declare -f remote_removed_cleanup)
+remote_removed_cleanup
 EOF
+
+	# OLD
+	# The user's shell must be bash.
+	# TODO: bash -c
+	ssh -l "$user" blackarch.org bash <<EOF
+shopt -s extglob
+cd '$sitedir/blackarch/$repo/os'
+$(declare -f remote_old_cleanup)
+remote_old_cleanup
+EOF
+}
+
+main
