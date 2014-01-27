@@ -80,12 +80,14 @@ remote_old_cleanup() {
 				else
 					# Since packages with epoches of zero do not include '0:'
 					# in their names, we have to force them to the top.
-					echo "0000$pm"
+					echo "00000000$pm"
 				fi
+				# Add signature files.
+				echo "$pm.sig"
 			done |
 			sort -V | head -n-1 |
-			sed 's/^0000//' |
-			xargs -r rm -v
+			sed 's/^00000000//' |
+			xargs -r rm -fv
 		done
 		cd ..
 	done
@@ -101,11 +103,11 @@ remote_removed_cleanup() {
 		grep -v %NAME% > /tmp/package_list
 		for p in *.pkg.tar.xz ; do
 			pkgname=$(sed 's/-[^-]\+-[^-]\+-[^-]\+.pkg.tar.xz$//' <<< "$p")
-			grep -q "^$pkgname$" /tmp/package_list || rm -v "$p"
+			grep -q "^$pkgname$" /tmp/package_list || rm -v "$p" "$p.sig"
 		done
 		cd ..
 	done
-	rm /tmp/package_list
+	rm -f /tmp/package_list
 }
 
 main() {
