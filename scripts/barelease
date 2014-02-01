@@ -42,7 +42,7 @@ usage: barelease <package> [options]
   -a          Always push, even if repo-add fails. This can be dangerous. Please talk
               to paraxor if you do not understand why.
   -k <key>    Specify the gpg key to use for signing.
-  -r <repo>   Specify an alternative repo. (Default: blackarch) 
+  -r <repo>   Specify an alternative repo. (Default: blackarch)
   -u <user>   Specify the user to use on the remote host.
   -d <dir>    Specify the location of the repo on the site (Default: /nginx/var/www)
   -s <site>   Specify the site to use (Default: blackarch.org)
@@ -72,15 +72,6 @@ check_args() {
 }
 
 parse_args() {
-	package=$1
-	shift
-
-	if [[ $package == -h ]] ; then
-		usage
-		exit
-	fi
-
-	# TODO: Add a flag for the package file name?
 	while (( $# != 0 )) ; do
 		case "$1" in
 			-f)
@@ -116,6 +107,9 @@ parse_args() {
 			--remove)
 				remove=true
 				;;
+			*.pkg.tar.xz)
+				packages+=("$1")
+				;;
 			*)
 				err "invalid arg: $1"
 				usage
@@ -134,7 +128,7 @@ detect_key() {
 			exit 1
 		fi
 	fi
-	
+
 	# TODO: remove this once the transition period is over.
 	if [[ "$key" == 4EB7BB3C ]] ; then
 		key=EA87E4E3
@@ -150,33 +144,15 @@ check_key() {
 	echo "using key: $key"
 }
 
-check_package() {
+check_packages() {
 	$remove && return
 
-	if [[ ! -r "$package" ]] ; then
-		err "unable to read package file: '$package'."
-		exit 1
-	fi
-
-	if [[ "$package" != *.pkg.tar.xz ]] ; then
-		err "'$package' must have a .pkg.tar.xz extension."
-		exit 1
-	fi
-}
-
-detect_arch() {
-	if $remove ; then
-		arch=(i686 x86_64)
-	elif [[ $package == *-any.pkg.tar.xz ]] ; then
-		arch=(i686 x86_64)
-	elif [[ $package == *-x86_64.pkg.tar.xz ]] ; then
-		arch=(x86_64)
-	elif [[ $package == *-i686.pkg.tar.xz ]] ; then
-		arch=(i686)
-	else
-		echo "unknown arch for '$package'"
-		exit 1
-	fi
+	for package in "${packages[@]}" ; do
+		if [[ ! -r "$package" ]] ; then
+			err "unable to read package file: '$package'."
+			exit 1
+		fi
+	done
 }
 
 start_gpg_agent() {
@@ -226,14 +202,24 @@ remote_unlock() {
 }
 
 do_release() {
+	tmp=$(mktemp -d /tmp/barelease.XXXXXXXX)
+	mkdir -p "$tmp"/{i686,x86_64}
+
 	if ! $remove ; then
-		tmp=$(mktemp -d /tmp/barelease.XXXXXXXX)
-
-		cp "$package" "$tmp"
-		cd "$tmp"
+		for package in "${packages[@]}" ; do
+			if [[ $package == *-any.pkg.tar.xz ]] ; then
+				cp "$package" "$tmp/i686"
+				cp "$package" "$tmp/x86_64"
+			elif [[ $package == *-x86_64.pkg.tar.xz ]] ; then
+				cp "$package" "$tmp/x86_64"
+			elif [[ $package == *-i686.pkg.tar.xz ]] ; then
+				cp "$package" "$tmp/i686"
+			else
+				echo "unknown arch for '$package'"
+				exit 1
+			fi
+		done
 	fi
-
-	package=${package##*/}
 
 	if $force ; then
 		echo "warning: forcing lock release..."
@@ -242,31 +228,31 @@ do_release() {
 
 	lock || exit 1
 
-	for a in "${arch[@]}" ; do
+	for arch in i686 x86_64 ; do
+		cd "$tmp/$arch"
+
 		echo
-		echo "ARCH: $a"
+		echo "ARCH: $arch"
 
 		echo "pulling..."
-		rsync -z -e "ssh -l $user" "$site:$sitedir/blackarch/$repo/os/$a"/{blackarch.db.tar.gz,blackarch.files.tar.gz} .
+		rsync -z -e "ssh -l $user" "$site:$sitedir/blackarch/$repo/os/$arch"/{blackarch.db.tar.gz,blackarch.files.tar.gz} .
 
 		if $remove ; then
-			echo 'removing from database...'
-			repo-remove --nocolor -q blackarch.db.tar.gz "$package" || true
-		else
-			echo "signing and adding to database..."
-			gpg --no-tty --default-key "$key" --yes -b "$package" > /dev/null 2>&1
-			if ! repo-add --nocolor -n -q blackarch.db.tar.gz "$package" && ! $always_push ; then
-				err "something bad happened. not pushing for $arch."
-				continue
-			fi
-		fi
+			for package in "${packages[@]}" ; do
+				echo 'removing from database...'
+				repo-remove --nocolor -q blackarch.db.tar.gz "$package" || true
 
-		if $remove ; then
-			echo 'removing from files database...'
-			repo-remove --nocolor -q blackarch.files.tar.gz "$package" || true
+				echo 'removing from files database...'
+				repo-remove --nocolor -q blackarch.files.tar.gz "$package" || true
+			done
 		else
-			echo 'adding to files database...'
-			repo-add --nocolor -n -q -f blackarch.files.tar.gz "$package" || true
+			echo "signing and adding to databases..."
+			for package in *.pkg.tar.xz ; do
+				gpg --no-tty --default-key "$key" --yes -b "$package" > /dev/null 2>&1
+			done
+
+			repo-add --nocolor -n -q blackarch.db.tar.gz *.pkg.tar.xz
+			repo-add --nocolor -n -q -f blackarch.files.tar.gz *.pkg.tar.xz || true
 		fi
 
 		gpg --no-tty --default-key "$key" --yes -b blackarch.files.tar.gz > /dev/null 2>&1
@@ -274,10 +260,10 @@ do_release() {
 
 		echo "pushing..."
 		if ! $remove ; then
-			rsync -z --ignore-existing --chmod 644 -e "ssh -l $user" ./"$package"{,.sig} \
-			  "$site:$sitedir/blackarch/$repo/os/$a" || true
+			rsync -z --ignore-existing --chmod 644 -e "ssh -l $user" ./*.pkg.tar.xz{,.sig} \
+			  "$site:$sitedir/blackarch/$repo/os/$arch" || true
 		fi
-		rsync -z --chmod 644 -e "ssh -l $user" blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$a" || true
+		rsync -z --chmod 644 -e "ssh -l $user" blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$arch" || true
 	done
 
 	unlock
@@ -289,14 +275,13 @@ main() {
 	check_args "$@"
 	parse_args "$@"
 
-	check_package
+	check_packages
 
 	detect_key
 	check_key
 
 	trap cleanup EXIT
 
-	detect_arch
 	start_gpg_agent
 	start_ssh_agent
 
