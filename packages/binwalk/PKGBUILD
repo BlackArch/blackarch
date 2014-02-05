@@ -1,24 +1,43 @@
 pkgname=binwalk
-pkgver=1.2.2
-pkgrel=4
-groups=('blackarch' 'blackarch-misc')
+pkgver=1.3.0
+pkgrel=3
+groups=('blackarch' 'blackarch-firmware')
 pkgdesc="A tool for searching a given binary image for embedded files"
-arch=('any')
-url='http://code.google.com/p/binwalk/'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url="http://binwalk.org"
 license=('MIT')
-depends=('python2' 'python2-magic' 'python2-matplotlib')
+optdepends=('firmware-mod-kit: Firmware extract rules helper')
+depends=('python2' 'python2-magic' 'python2-pyqtgraph' 'python2-opengl'
+         'python2-pydeep')
 provides=('binwalk')
-source=("https://binwalk.googlecode.com/files/binwalk-$pkgver.tar.gz")
-md5sums=('77da02cbc2c6dbe80ec7f1e759e0224d')
+source=("https://github.com/devttys0/binwalk/archive/v$pkgver.tar.gz"
+        'binwalk.patch')
+md5sums=('6e79eda646277728719df596ca5d7bae'
+         'ead01d529ca8edc03c3a7e046e6bf8e5')
 
 prepare() {
+  cd "$srcdir"
+
+  patch -p0 < binwalk.patch
+}
+
+build() {
   cd "$srcdir/binwalk-$pkgver/src"
 
-  sed -i 's/env python$/env python2/' bin/binwalk
+  python2 setup.py build
+
+  cd C
+  ./configure --prefix=/usr
+  make
 }
 
 package() {
   cd "$srcdir/binwalk-$pkgver/src"
 
-  python2 setup.py install "--root=$pkgdir" --optimize=1
+  cd C
+  make "DESTDIR=$pkgdir" install
+  cd ..
+
+  python2 setup.py install "--root=$pkgdir"
+  chmod a+x "$pkgdir/usr/lib"/lib*
 }
