@@ -89,7 +89,17 @@ parse_args() {
 	done
 
 	if (( ${#arch[@]} == 0 )) ; then
-		arch=(i686 x86_64)
+		case "$(uname -m)" in
+			arm*)
+				arch=("$(uname -m)")
+				;;
+			i686|x86_64)
+				arch=(i686 x86_64)
+				;;
+			*)
+				err "unknown arch: $(uname -m)"
+				;;
+		esac
 	fi
 
 	if [[ -n "$git_package" ]] ; then
@@ -124,14 +134,24 @@ copy_files() {
 	chmod -R a+wrX "$tmp"
 }
 
-_build_i686() {
-	blackarch32-i686-build "${archbuild_args[@]}" -- -D /dev/input "${makechrootpkg_args[@]}" -- \
-	  --config makepkg-i686.blackarch.conf "${makepkg_args[@]}"
-}
+build_for_arch() {
+	arch=$1
+	case "$arch" in
+		i686)
+			archbuild=blackarch32-i686-build
+			;;
+		x86_64)
+			archbuild=blackarch64-x86_64-build
+			;;
+		*)
+			archbuild=blackarcharm-$arch-build
+			;;
+	esac
 
-_build_x86_64() {
-	blackarch64-x86_64-build "${archbuild_args[@]}" -- -D /dev/input "${makechrootpkg_args[@]}" -- \
-	  --config makepkg-x86_64.blackarch.conf "${makepkg_args[@]}"
+	$archbuild "${archbuild_args[@]}" \
+	  -- -D /dev/input \
+	  "${makechrootpkg_args[@]}" \
+	  -- "${makepkg_args[@]}"
 }
 
 do_build() {
@@ -139,25 +159,14 @@ do_build() {
 
 	if grep -q '^arch.*any' PKGBUILD ; then
 		echo "NOTE: package's architecture is set to 'any'"
-		_build_i686
+		build_for_arch i686
 	else
 		for arch in "${arch[@]}" ; do
-			case "$arch" in
-				i686)
-					if grep -q '^arch.*i686' PKGBUILD ; then
-						_build_i686
-					else
-						echo "NOTE: package is not compatible with i686"
-					fi
-					;;
-				x86_64)
-					if grep -q '^arch.*x86_64' PKGBUILD ; then
-						_build_x86_64
-					else
-						echo "NOTE: package is not compatible with x86_64"
-					fi
-					;;
-			esac
+			if grep -q "^arch.*$arch" PKGBUILD ; then
+				build_for_arch "$arch"
+			else
+				note "package is not compatible with $arch"
+			fi
 		done
 	fi
 }
