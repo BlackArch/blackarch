@@ -10,8 +10,10 @@ arch=('any')
 url="http://code.google.com/p/zaproxy/"
 license=('Apache')
 depends=('java-environment' 'bash')
-source=("http://zaproxy.googlecode.com/files/ZAP_${pkgver}_Linux.tar.gz")
-md5sums=('479c3e4ba3fa713c4e007cda585166a6')
+source=("http://zaproxy.googlecode.com/files/ZAP_${pkgver}_Linux.tar.gz"
+	'patchfile')
+md5sums=('479c3e4ba3fa713c4e007cda585166a6'
+	 'efdc294928281e2589bcb4fd1c9c2e3a')
 
 package() {
   install -dm755 "$pkgdir/usr/bin"
@@ -19,12 +21,13 @@ package() {
 
   cp -r "$srcdir/ZAP_$pkgver"/* "$pkgdir/usr/share/zaproxy"
 
+  # workaround for version parse error when _JAVA_OPTIONS is set
+  # NOTE: this will be fixed in next stable release
+  cd "$pkgdir/usr/share/zaproxy"
+  patch -p0 < "$startdir/patchfile"
+
   cat > "$pkgdir/usr/bin/zaproxy" <<EOF
 #!/bin/sh
-# zap.sh parses the output of java -version for version information. If
-# _JAVA_OPTIONS is set, the parsing breaks.
-# TODO: patch zap.sh?
-unset _JAVA_OPTIONS
 exec /usr/share/zaproxy/zap.sh
 EOF
   chmod +x "$pkgdir/usr/bin/zaproxy"
