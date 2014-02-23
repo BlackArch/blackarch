@@ -3,7 +3,7 @@
 
 pkgname=zaproxy
 pkgver=2.2.2
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-fuzzer' 'blackarch-webapp')
 pkgdesc="A local intercepting proxy with integrated penetration testing tool for finding vulnerabilities in web applications"
 arch=('any')
@@ -11,20 +11,25 @@ url="http://code.google.com/p/zaproxy/"
 license=('Apache')
 depends=('java-environment' 'bash')
 source=("http://zaproxy.googlecode.com/files/ZAP_${pkgver}_Linux.tar.gz"
-	'patchfile')
+        'zaproxy.diff')
 md5sums=('479c3e4ba3fa713c4e007cda585166a6'
-	 'efdc294928281e2589bcb4fd1c9c2e3a')
+         'efdc294928281e2589bcb4fd1c9c2e3a')
 
-package() {
-  install -dm755 "$pkgdir/usr/bin"
-  install -dm755 "$pkgdir/usr/share/zaproxy"
-
-  cp -r "$srcdir/ZAP_$pkgver"/* "$pkgdir/usr/share/zaproxy"
+prepare() {
+  cd "$srcdir/ZAP_$pkgver"
 
   # workaround for version parse error when _JAVA_OPTIONS is set
   # NOTE: this will be fixed in next stable release
-  cd "$pkgdir/usr/share/zaproxy"
-  patch -p0 < "$srcdir/patchfile"
+  patch -p0 < "$srcdir/zaproxy.diff"
+}
+
+package() {
+  cd "$srcdir/ZAP_$pkgver"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/zaproxy"
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/zaproxy"
 
   cat > "$pkgdir/usr/bin/zaproxy" <<EOF
 #!/bin/sh
