@@ -67,52 +67,23 @@ start_ssh_agent() {
 # This is not meant to be efficient or portable.
 remote_old_cleanup() {
 	echo 'cleaning old package files...'
-	for a in i686 x86_64 ; do
+	tmp=$(mktemp -d /tmp/baclean.XXXXXXXX)
+	for a in i686 x86_64 armv6h armv7h ; do
 		cd "$a"
 		echo "ARCH: $a"
+
+		tar xzf blackarch.db.tar.gz -C "$tmp"
 		for p in *.pkg.tar.xz ; do
-			[[ -e "$p" ]] || continue
-			pkgname=$(sed 's/-[^-]\+-[^-]\+-[^-]\+.pkg.tar.xz$//' <<< "$p")
-			matched=("$pkgname"-+([!-])-+([!-])-+([!-]).pkg.tar.xz)
-			for pm in "${matched[@]}" ; do
-				if grep -q '[0-9]:' <<< "$pm" ; then
-					echo "$pm"
-				else
-					# Since packages with epoches of zero do not include '0:'
-					# in their names, we have to force them to the top.
-					echo "00000000$pm"
-				fi
-				# Add signature files.
-				echo "$pm.sig"
-			done |
-			sort -V | head -n-1 |
-			sed 's/^00000000//' |
-			xargs -r rm -fv
+			pkgnamever=$(sed 's/-[^-]\+-[^-]\+.pkg.tar.xz$//' <<< "$p")
+			[[ -e "$tmp/$pkgnamever" ]] || echo rm -v "$p" "$p.sig"
 		done
 		cd ..
 	done
-}
-
-remote_removed_cleanup() {
-	echo 'cleaning removed package files...'
-
-	for a in i686 x86_64 ; do
-		cd "$a"
-		echo "ARCH: $a"
-		zgrep %NAME% blackarch.db.tar.gz --no-group-separator -a -A1 |
-		grep -v %NAME% > /tmp/package_list
-		for p in *.pkg.tar.xz ; do
-			pkgname=$(sed 's/-[^-]\+-[^-]\+-[^-]\+.pkg.tar.xz$//' <<< "$p")
-			grep -q "^$pkgname$" /tmp/package_list || rm -v "$p" "$p.sig"
-		done
-		cd ..
-	done
-	rm -f /tmp/package_list
 }
 
 main() {
 	echo >&2 'do not use this script.'
-	exit 1
+	#exit 1
 
 	parse_args "$@"
 
@@ -120,19 +91,11 @@ main() {
 
 	echo "cleaning repo: $repo..."
 
-	# REMOVED
-	ssh -l "$user" blackarch.org bash <<EOF
-shopt -s extglob
-cd '$sitedir/blackarch/$repo/os'
-$(declare -f remote_removed_cleanup)
-remote_removed_cleanup
-EOF
-
-	# OLD
 	# The user's shell must be bash.
 	# TODO: bash -c
 	ssh -l "$user" blackarch.org bash <<EOF
 shopt -s extglob
+shopt -s nullglob
 cd '$sitedir/blackarch/$repo/os'
 $(declare -f remote_old_cleanup)
 remote_old_cleanup
