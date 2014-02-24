@@ -17,7 +17,7 @@ backup=('etc/conf.d/snort'
         'etc/snort/classification.config')
 options=('!makeflags' '!libtool')
 install='snort.install'
-source=("http://www.snort.org/dl/snort-current/snort-${pkgver}.tar.gz"
+source=("http://www.snort.org/dl/snort-current/snort-$pkgver.tar.gz"
         "http://rules.emergingthreats.net/open/snort-2.9.0/emerging.rules.tar.gz"
         'snort'
         'snort.conf.d'
@@ -29,7 +29,7 @@ md5sums=('18111f6de3989ca89add36077a7c2659'
          '0d898dfe906fe45ad8562c500c36facb')
 
 build() {
-  cd "${srcdir}/snort-${pkgver}"
+  cd "$srcdir/snort-$pkgver"
 
   ./configure --prefix=/usr --sysconfdir=/etc/snort --with-libpcap-includes=/usr/include/pcap \
               --with-daq-includes=/usr/include --with-daq-libraries=/usr/lib \
@@ -38,25 +38,25 @@ build() {
 }
 
 package() {
-  cd "${srcdir}/snort-${pkgver}"
+  cd "$srcdir/snort-$pkgver"
 
-  make DESTDIR="${pkgdir}" install
+  make DESTDIR="$pkgdir" install
 
   # Base directories.
-  install -dm755 "${pkgdir}/etc/rc.d"
-  install -dm755 "${pkgdir}/etc/snort/rules"
+  install -dm755 "$pkgdir/etc/rc.d"
+  install -dm755 "$pkgdir/etc/snort/rules"
+  install -dm755 "$pkgdir/var/log/snort"
 
-  install -dm755 "${pkgdir}/var/log/snort"
-  install -Dm644 etc/{*.conf*,*.map} "${pkgdir}/etc/snort/"
-  install -Dm644 "${srcdir}/snort.conf.d" "${pkgdir}/etc/conf.d/snort"
-  install -Dm755 "${srcdir}/snort" "${pkgdir}/etc/rc.d/snort"
+  install -Dm644 etc/{*.conf*,*.map} "$pkgdir/etc/snort/"
+  install -Dm644 "$srcdir/snort.conf.d" "$pkgdir/etc/conf.d/snort"
+  install -Dm755 "$srcdir/snort" "$pkgdir/etc/rc.d/snort"
 
   # Service file.
-  install -Dm644 ../snort.service $pkgdir/usr/lib/systemd/system/snort.service
+  install -Dm644 ../snort.service "$pkgdir/usr/lib/systemd/system/snort.service"
 
-  sed -i 's#/usr/local/lib/#/usr/lib/#' "${pkgdir}/etc/snort/snort.conf"
+  sed -i 's#/usr/local/lib/#/usr/lib/#' "$pkgdir/etc/snort/snort.conf"
 
   # Emerging threats rules.
   echo 'include $RULE_PATH/emerging.conf' >> "${pkgdir}/etc/snort/snort.conf"
-  cp ${srcdir}/rules/* "${pkgdir}/etc/snort/rules"
+  cp "$srcdir/rules"/* "$pkgdir/etc/snort/rules"
 }
