@@ -196,6 +196,58 @@ remote_unlock() {
 	rmdir /tmp/blackarch.lck > /dev/null 2>&1 || true
 }
 
+remote_irc_notify() {
+	b=''
+
+	list_len=3
+	use_list=false
+
+	user=$USER
+	case "$user" in
+		para) user=paraxor ;;
+	esac
+
+	hook_file=/etc/barelease
+	hook_url=$(cat $hook_file)
+
+	packages=("$@")
+
+	if (( ${#packages[@]} != 1 )) ; then
+		s=s
+	fi
+
+	url_encode() {
+		xxd -plain | tr -d '\n' | sed 's/\(..\)/%\1/g'
+	}
+
+	send_payload() {
+		curl -s "$hook_url" -d "payload=$(printf %s "$1" | url_encode)"
+	}
+	
+	sprunge=$(printf '%s\n' "${packages[@]}" | curl -s http://sprunge.us -F "sprunge=<-")
+
+	# TODO: color and bold
+	if $use_list ; then
+		send_payload "$b$user$b pushed ${#packages[@]} package$s to the bin repo, including:"
+	else
+		send_payload "$b$user$b pushed ${#packages[@]} package$s to the bin repo: $sprunge"
+	fi
+
+	if $use_list ; then
+		for p in ${packages[@]:0:$list_len} ; do
+			send_payload "- $p"
+		done
+
+		if (( ${#packages[@]} > $list_len )) ; then
+			send_payload "full list: $sprunge"
+		fi
+	fi
+}
+
+irc_notify() {
+	ssh -l "$user" "$site" "$(declare -f remote_irc_notify); remote_irc_notify $@"
+}
+
 do_release() {
 	tmp=$(mktemp -d /tmp/barelease.XXXXXXXX)
 	mkdir -p "$tmp"/{i686,x86_64,armv6h,armv7h}
@@ -219,6 +271,8 @@ do_release() {
 				echo "unknown arch for '$package'"
 				exit 1
 			fi
+
+			notify_list+=("${package%.pkg.tar.xz}")
 		done
 	fi
 
@@ -274,6 +328,8 @@ do_release() {
 	done
 
 	unlock
+
+	irc_notify "${notify_list[@]}"
 }
 
 main() {
