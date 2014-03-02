@@ -6,31 +6,34 @@
 
 pkgname=libpcap-1.4
 pkgver=1.4.0
-pkgrel=2
+pkgrel=3
 pkgdesc="A system-independent interface for user-level packet capture"
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url="http://www.tcpdump.org/"
 license=('BSD')
 depends=('glibc' 'libnl' 'sh' 'libusbx')
 makedepends=('flex')
-source=(http://www.tcpdump.org/release/libpcap-${pkgver}.tar.gz{,.sig})
+source=(http://www.tcpdump.org/release/libpcap-$pkgver.tar.gz{,.sig})
 md5sums=('56e88a5aabdd1e04414985ac24f7e76c'
          'SKIP')
 
 build() {
-  cd ${srcdir}/libpcap-${pkgver}
+  cd "$srcdir/libpcap-$pkgver"
   ./configure --prefix=/usr --enable-ipv6 --with-libnl
+  sed -i 's/libpcap\.so/libpcap-1.4.so/g' Makefile
+  sed -i 's/^shared: libpcap/shared: libpcap-1.4/' Makefile
   make
 }
 
 package() {
-  cd ${srcdir}/libpcap-${pkgver}
-  install -d -m755 ${pkgdir}/usr/bin
-  make DESTDIR=${pkgdir} install
+  cd "$srcdir/libpcap-$pkgver"
+
+  install -dm755 "$pkgdir/usr/bin"
+  make "DESTDIR=$pkgdir" install
   
   # backwards compatibility, programs often look for net/bpf.h
-  mkdir -p ${pkgdir}/usr/include/net
-  cd ${pkgdir}/usr/include/net
+  install -dm755 "$pkgdir/usr/include/net"
+  cd "$pkgdir/usr/include/net"
   ln -s ../pcap-bpf.h bpf.h
 
   # install the license
@@ -38,17 +41,6 @@ package() {
 
   # Avoid conflicting with normal libpcap
   rm -rf "$pkgdir/usr/share"
-  rm "$pkgdir/usr/lib/libpcap.a"
-  mv "$pkgdir/usr/lib/libpcap.so.1.4.0" "$pkgdir/usr/lib/libpcap-1.4.so.1.4.0"
-  rm "$pkgdir/usr/lib/libpcap.so"
-  rm "$pkgdir/usr/lib/libpcap.so.1"
-  ln -s libpcap-1.4.so.1.4.0 "$pkgdir/usr/lib/libpcap-1.4.so"
-  ln -s libpcap-1.4.so.1.4.0 "$pkgdir/usr/lib/libpcap-1.4.so.1"
-  mv "$pkgdir/usr/bin/pcap-config" "$pkgdir/usr/bin/pcap-config-1.4"
-  rm "$pkgdir/usr/include/net/bpf.h"
-  ln -s ../pcap-bpf-1.4.h "$pkgdir/usr/include/net/bpf-1.4.h"
-  mv "$pkgdir/usr/include/pcap" "$pkgdir/usr/include/pcap-1.4"
-  mv "$pkgdir/usr/include/pcap.h" "$pkgdir/usr/include/pcap-1.4.h"
-  mv "$pkgdir/usr/include/pcap-bpf.h" "$pkgdir/usr/include/pcap-bpf-1.4.h"
-  mv "$pkgdir/usr/include/pcap-namedb.h" "$pkgdir/usr/include/pcap-namedb-1.4.h"
+  rm -rf "$pkgdir/usr/bin"
+  rm -rf "$pkgdir/usr/include"
 }
