@@ -1,0 +1,76 @@
+#!/bin/bash
+
+usage() {
+	:
+}
+
+err() {
+	echo >&2 "$(tput bold; tput setaf)ERROR: $*$(tput sgr0)"
+}
+
+parse_args() {
+	case "$1" in
+		version)
+			action=version
+			shift
+			args=("$@")
+			;;
+		pkgrel++)
+			action=pkgrel++
+			shift
+			args=("$@")
+			;;
+		extract)
+			action=extract
+			shift
+			args=("$@")
+			;;
+		*)
+			err "unknown action: $1"
+			;;
+	esac
+}
+
+cleanup() {
+	rm -rf "$tmp"
+}
+
+extract() {
+	$extract || return
+
+	tmp=$(mktemp -d)
+
+	cp -a "$dir" "$tmp"
+}
+
+check_extraction() {
+	if ! [[ -r "$tmp/.PKGINFO" || -r "$tmp/.MTREE" ]] ; then
+		err 'cannot read .PKGINFO or .MTREE'
+	fi
+}
+
+archive() {
+	$archive || return
+
+	( cd "$tmp"
+
+	# Make a new mtree file.
+	rm -f .MTREE
+	bsdtar czf .MTREE --format=mtree \
+	  --options='!all,use-set,type,uid,gid,mode,size,time,md5' *
+
+	# Re-create archive.
+	fakeroot tar cJpf "$pkg" * .??* )
+}
+
+main() {
+	parse_args "$@"
+
+	extract
+	check_extraction
+	trap cleanup EXIT
+
+	archive
+}
+
+main "$@"
