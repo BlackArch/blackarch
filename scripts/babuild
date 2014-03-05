@@ -6,6 +6,9 @@ basedir=${BASH_SOURCE[0]%/*}
 
 export LC_ALL=POSIX
 
+# override with -t
+tmpdir=/tmp
+
 note() {
 	echo >&2 "babuild: NOTE: $*"
 }
@@ -21,9 +24,10 @@ usage: babuild [-g <package in git>] [-a <arch>] [-o <outdir>] [-p <packager>] [
   -g <package in git>    Change the CWD to a package's directory in git before building.
   -a <arch>              Whitelist architectures to build for. You may use this
                          flag multiple times. This does not apply to 'any' packages.
-  -o <outdir>            Specify an out directory to copy built packages to.
+  -o <directory>         Specify an out directory to copy built packages to.
   -p <packager>          Specify the packager for makepkg. You can set the
                          PACKAGER environmental variable instead.
+  -t <directory>         Specify a temporary directory
 EOF
 }
 
@@ -48,6 +52,10 @@ parse_args() {
 				;;
 			-p|--packager)
 				export PACKAGER=$2
+				shift
+				;;
+			-t|--tmpdir)
+				tmpdir=$2
 				shift
 				;;
 			-h)
@@ -121,7 +129,7 @@ check_for_root() {
 copy_files() {
 	# The temporary directory and its contents must be world-readable and
 	# world-writeable.
-	tmp=/tmp/babuild.$RANDOM$RANDOM
+	tmp=$tmpdir/babuild.$RANDOM$RANDOM
 	mkdir "$tmp"
 	(
 	CARCH=$(uname -m)
