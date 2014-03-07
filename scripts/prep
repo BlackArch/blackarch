@@ -37,12 +37,16 @@ source "$pkgbuild_tmp"
 #namcap "$pkgbuild_tmp"
 
 # Expand tabs to two spaces
-err "expanding tabs..."
-expand -it2 "$pkgbuild_tmp" | _sponge "$pkgbuild_tmp"
+if grep -q '^\t' "$pkgbuild_tmp" ; then
+	err "expanding tabs..."
+	expand -it2 "$pkgbuild_tmp" | _sponge "$pkgbuild_tmp"
+fi
 
 # Remove vim modeline
-err "removing vim modeline..."
-sed -i '/#\s*vim:/d' "$pkgbuild_tmp"
+if grep -q '#\s*vim:' "$pkgbuild_tmp" ; then
+	err "removing vim modeline..."
+	sed -i '/#\s*vim:/d' "$pkgbuild_tmp"
+fi
 
 # Check license
 #err "checking license..."
@@ -57,30 +61,38 @@ sed -i '/#\s*vim:/d' "$pkgbuild_tmp"
 #done
 
 # Remove Id comment
-err "removing id comment..."
-sed -i '/#\s*\$\s*Id:/d' "$pkgbuild_tmp"
+if grep -q '#\s*\$\s*Id:' "$pkgbuild_tmp" ; then
+	err "removing id comment..."
+	sed -i '/#\s*\$\s*Id:/d' "$pkgbuild_tmp"
+fi
 
 # Remove maintainer and contributor comments
-err 'removing contributor and maintainer comments...'
-sed -i '/#\s*\([Cc]ontributor\|[Mm]aintainer\)/d' "$pkgbuild_tmp"
+if grep -q '#\s*\([Cc]ontributor\|[Mm]aintainer\)' "$pkgbuild_tmp" ; then
+	err 'removing contributor and maintainer comments...'
+	sed -i '/#\s*\([Cc]ontributor\|[Mm]aintainer\)/d' "$pkgbuild_tmp"
+fi
 
 # Squeeze extra blank lines (why does cat have this feature?)
-err 'squeezing extra blank lines...'
+# TODO: detect these
+#err 'squeezing extra blank lines...'
 cat -s "$pkgbuild_tmp" | _sponge "$pkgbuild_tmp"
 
 # Remove '|| return'
-err "removing '|| return'..."
-sed -i 's/||\s*return.*//' "$pkgbuild_tmp"
+if grep -q '||\s*return' "$pkgbuild_tmp" ; then
+	err "removing '|| return'..."
+	sed -i 's/||\s*return.*//' "$pkgbuild_tmp"
+fi
 
 # Check for package function
 if ! grep -q 'package.*()' "$pkgbuild_tmp" ; then
-	err "warning: no package function"
+	err "added TODO: make package function"
 	sed -i '1i\# TODO: make package function' "$pkgbuild_tmp"
 fi
 
+# TODO: detect this
 # Remove blank line at top
 # This also adds a trailing newline if there isn't one already.
-err 'removing leading blank line...'
+#err 'removing leading blank line...'
 awk 'BEGIN{ i=0 } {
 		if (!(/^$/ && i==0)) {
 		   print
@@ -91,7 +103,7 @@ awk 'BEGIN{ i=0 } {
 # Check for startdir
 # This is too difficult to fix automatically
 if grep -q 'startdir' "$pkgbuild_tmp" ; then
-	err 'warning: has startdir'
+	err 'added TODO: remove startdir'
 	sed -i '1i\# TODO: remove startdir' "$pkgbuild_tmp"
 fi
 
