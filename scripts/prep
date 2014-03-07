@@ -1,92 +1,107 @@
 #!/bin/bash
-# Cleans up PKGBUILD files.
+# Cleans up pkgbuild_tmp files.
 # Spots that need manual checking are marked with 'TODO' comments.
 
 # Simulates sponge from moreutils
 _sponge() {
-	tmp=$(mktemp /tmp/blackarch.XXXXXXX)
+	tmp=$(mktemp /tmp/blackarch-prep.XXXXXXXXX)
 	cat > "$tmp"
 	mv "$tmp" "$1"
 }
 
-pkgbuild=$1
+err() {
+	echo >&2 "$*"
+}
 
-source "$pkgbuild"
-namcap "$pkgbuild"
+pkgbuild_tmp=$(mktemp /tmp/blackarch-prep.XXXXXXXX)
+trap "rm -f $pkgbuild_tmp" EXIT
 
-if [[ ! -r "$pkgbuild" ]] ; then
-	echo >&2 "could not read '$pkgbuild'."
+if (( $# <= 1 )) ; then
+	cat > "$pkgbuild_tmp"
+	output=/dev/stdout
+else
+	cat "$1" > "$pkgbuild_tmp"
+	output=$1
+fi
+
+source "$pkgbuild_tmp"
+namcap "$pkgbuild_tmp"
+
+if [[ ! -r "$pkgbuild_tmp" ]] ; then
+	err "could not read '$pkgbuild_tmp'."
 	exit 1
 fi
-echo "cleaning '$pkgbuild'..."
+err "cleaning '$pkgbuild_tmp'..."
 
 # Expand tabs to two spaces
-echo "expanding tabs..."
-expand -it2 "$pkgbuild" | _sponge "$pkgbuild"
+err "expanding tabs..."
+expand -it2 "$pkgbuild_tmp" | _sponge "$pkgbuild_tmp"
 
 # Remove vim modeline
-echo "removing vim modeline..."
-sed -i '/#\s*vim:/d' "$pkgbuild"
+err "removing vim modeline..."
+sed -i '/#\s*vim:/d' "$pkgbuild_tmp"
 
 # Check license
-#echo "checking license..."
+#err "checking license..."
 #for lic in "${license[@]}" ; do
 #	if [[ ! "$lic" =~ \
 #		   ^([Uu]nknown|[Cc]ustom.*|BSD|MIT|ZLIB|[Pp]ython)$ ]] ; then
-#		[[ -z "$lic" ]] && echo >&2 "'$pkgbuild' has no license."
+#		[[ -z "$lic" ]] && err "'$pkgbuild_tmp' has no license."
 #		[[ -e /usr/share/licenses/common/$lic ]] ||
-#		echo >&2 "'$pkgbuild' has invalid license: '$lic'"
-#		sed -i '1i\# TODO: check license' "$pkgbuild"
+#		err "'$pkgbuild_tmp' has invalid license: '$lic'"
+#		sed -i '1i\# TODO: check license' "$pkgbuild_tmp"
 #	fi
 #done
 
 # Remove Id comment
-echo "removing id comment..."
-sed -i '/#\s*\$\s*Id:/d' "$pkgbuild"
+err "removing id comment..."
+sed -i '/#\s*\$\s*Id:/d' "$pkgbuild_tmp"
 
 # Remove maintainer and contributor comments
-echo 'removing contributor and maintainer comments...'
-sed -i '/#\s*\([Cc]ontributor\|[Mm]aintainer\)/d' "$pkgbuild"
+err 'removing contributor and maintainer comments...'
+sed -i '/#\s*\([Cc]ontributor\|[Mm]aintainer\)/d' "$pkgbuild_tmp"
 
 # Squeeze extra blank lines (why does cat have this feature?)
-echo 'squeezing extra blank lines...'
-cat -s "$pkgbuild" | _sponge "$pkgbuild"
+err 'squeezing extra blank lines...'
+cat -s "$pkgbuild_tmp" | _sponge "$pkgbuild_tmp"
 
 # Remove '|| return'
-echo "removing '|| return'..."
-sed -i 's/||\s*return.*//' "$pkgbuild"
+err "removing '|| return'..."
+sed -i 's/||\s*return.*//' "$pkgbuild_tmp"
 
 # Check for package function
-if ! grep -q 'package.*()' "$pkgbuild" ; then
-	echo >&2 "warning: no package function"
-	sed -i '1i\# TODO: make package function' "$pkgbuild"
+if ! grep -q 'package.*()' "$pkgbuild_tmp" ; then
+	err "warning: no package function"
+	sed -i '1i\# TODO: make package function' "$pkgbuild_tmp"
 fi
 
 # Remove blank line at top
 # This also adds a trailing newline if there isn't one already.
-echo 'removing leading blank line...'
+err 'removing leading blank line...'
 awk 'BEGIN{ i=0 } {
 		if (!(/^$/ && i==0)) {
 		   print
 		}
 		i++
-	 }' "$pkgbuild" | _sponge "$pkgbuild"
+	 }' "$pkgbuild_tmp" | _sponge "$pkgbuild_tmp"
 
 # Check for startdir
 # This is too difficult to fix automatically
-if grep -q 'startdir' "$pkgbuild" ; then
-	echo 'warning: has startdir'
-	sed -i '1i\# TODO: remove startdir' "$pkgbuild"
+if grep -q 'startdir' "$pkgbuild_tmp" ; then
+	err 'warning: has startdir'
+	sed -i '1i\# TODO: remove startdir' "$pkgbuild_tmp"
 fi
 
 # Remove $pkgname
-if grep -q '\$pkgname' "$pkgbuild" ; then
-	echo >&2 'removing $pkgname...'
-	sed -i "s/\\\$pkgname/$pkgname/g" "$pkgbuild"
+if grep -q '\$pkgname' "$pkgbuild_tmp" ; then
+	err 'removing $pkgname...'
+	sed -i "s/\\\$pkgname/$pkgname/g" "$pkgbuild_tmp"
 fi
 
 # Remove trailing whitespace
-if grep -Eq '[[:space:]]+$' "$pkgbuild" ; then
-	echo 'removing trailing whitespace...'
-	sed -i 's/[[:space:]]*$//' "$pkgbuild"
+if grep -Eq '[[:space:]]+$' "$pkgbuild_tmp" ; then
+	err 'removing trailing whitespace...'
+	sed -i 's/[[:space:]]*$//' "$pkgbuild_tmp"
 fi
+
+cat "$pkgbuild_tmp" > "$output"
