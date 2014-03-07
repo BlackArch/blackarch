@@ -1,5 +1,3 @@
-# TODO: make package function
-
 pkgname=fuzzgrind
 pkgver=090622
 pkgrel=1
@@ -22,17 +20,25 @@ md5sums=('d7562677b43cb10b288830b22bf9c423'
          '0ac843aecfc539a53ae88c48b1a17047'
          'e435a0debedf207b279256eff50c68f6')
 
-build() {
+prepare() {
   cd "$srcdir/fuzzgrind/"
   tar --ignore-failed-read -jkxf "$srcdir"/valgrind-3.4.1.tar.bz2
 
   cd valgrind-3.4.1
   patch -Np0 -i ${srcdir}/glibc-2.12.patch
   patch -Np1 -i ${srcdir}/valgrind-3.5.0-stat_h.patch
+}
+
+build() {
+  cd "$srcdir/fuzzgrind/valgrind-3.4.1"
 
   autoreconf
   ./configure --prefix="/usr/share/fuzzgrind/valgrind"
   make
+}
+
+package() {
+  cd "$srcdir/fuzzgrind/valgrind-3.4.1"
 
   mkdir -p $pkgdir/usr/share/fuzzgrind/valgrind
   make DESTDIR="$pkgdir" install
