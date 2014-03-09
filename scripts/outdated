@@ -3,11 +3,15 @@
 base=${BASH_SOURCE[0]%/*}/..
 
 quiet=true
+show_new=true
 
 for arg ; do
 	case "$arg" in
 		-v)
 			quiet=false
+			;;
+		-u)
+			show_new=false
 			;;
 	esac
 done
@@ -24,10 +28,12 @@ for p in "$base/packages"/*/PKGBUILD ; do (
 	repover=$(pacman -Si "$pkgname" 2> /dev/null | awk '-F: ' '/^Version/{ print $2 }' | head -n1) 
 
 	if [[ -z "$repover" ]] ; then
-		if $quiet ; then
-			echo "$pkgname"
-		else
-			echo "new: $pkgname"
+		if $show_new ; then
+			if $quiet ; then
+				echo "$pkgname"
+			else
+				echo "new: $pkgname"
+			fi
 		fi
 	elif [[ "$repover" !=  "$gitver" ]] ; then
 		if $quiet ; then
