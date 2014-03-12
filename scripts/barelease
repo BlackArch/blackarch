@@ -5,6 +5,8 @@
 
 unset DISPLAY
 
+base=${BASH_SOURCE[0]%/*}
+
 # override with -s
 site=blackarch.org
 # override with -d
@@ -13,6 +15,8 @@ sitedir=/nginx/var/www
 repo=blackarch
 # override with -u
 user=$USER
+# override with -o
+handle_official=false
 
 # override with -f
 force=false
@@ -50,6 +54,7 @@ usage: barelease [options and package files]
   -d <dir>    Specify the location of the repo on the site (Default: /nginx/var/www)
   -s <site>   Specify the site to use (Default: blackarch.org)
   -e          Release all *.pkg.tar.xz files in the cwd.
+  -o          Do not add official packages to groups.
 
   --remove    Remove a package from the repo by name.
 EOF
@@ -237,7 +242,7 @@ remote_irc_notify() {
 	send_payload() {
 		curl -s "$hook_url" -d "payload=$(printf %s "$1" | url_encode)"
 	}
-	
+
 	# TODO: group packages by name
 	sprunge=$(printf '%s\n' "${packages[@]}" | curl -s http://sprunge.us -F "sprunge=<-")
 
@@ -340,6 +345,17 @@ do_release() {
 
 			repo-add --nocolor -n -q blackarch.db.tar.gz *.pkg.tar.xz
 			repo-add --nocolor -n -q -f blackarch.files.tar.gz *.pkg.tar.xz || true
+
+			# Handle official packages.
+			if $handle_official ; then
+				for p in *.pkg.tar.xz ; do
+					dbname=$(sed 's/[^-]\+-[^-]\+-[^-]\+.pkg.tar.xz$//' <<< "$entry")
+					if grep -q "^$dbname " "$base/../docs/offical" ; then
+						echo "$p is an official package. adding it to groups."
+						"$base/dbmod" blackarch.db.tar.gz group "${p%.pkg.tar.xz}" $(grep "^$d " | cut -d' ' -f2-)
+					fi
+				done
+			fi
 		fi
 
 		gpg --no-tty --default-key "$key" --yes -b blackarch.files.tar.gz > /dev/null 2>&1
