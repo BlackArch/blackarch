@@ -1,30 +1,32 @@
 pkgname='fuzzgrind'
 pkgver='090622'
 pkgrel=1
-pkgdesc="Fuzzgrind is a fully automatic fuzzing tool, generating test files with the purpose of discovering new execution paths likely to trigger bugs and potentially vulnerabilities."
-url="http://seclabs.org/fuzzgrind/"
-arch=(i686 x86_64)
+pkgdesc='A fully automatic fuzzing tool, generating test files with the purpose of discovering new execution paths likely to trigger bugs and potentially vulnerabilities.'
+url='http://seclabs.org/fuzzgrind/'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 depends=('glibc')
 license=('GPL')
 groups=('blackarch' 'blackarch-analysis')
-source=("http://seclabs.org/fuzzgrind/files/${pkgname}_$pkgver.tar.gz"
-        "http://people.csail.mit.edu/vganesh/STP_files/stp.tar.gz"
-        "http://valgrind.org/downloads/valgrind-3.4.1.tar.bz2"
-        "glibc-2.12.patch"
-        "valgrind-3.5.0-stat_h.patch")
+source=("http://esec-lab.sogeti.com/dotclear/public/fuzzgrind/${pkgname}_$pkgver.tar.gz"
+        'stp.tar.gz::https://github.com/stp/stp/tarball/master'
+        'http://valgrind.org/downloads/valgrind-3.4.1.tar.bz2'
+        'glibc-2.12.patch'
+        'valgrind-3.5.0-stat_h.patch')
 noextract=('stp.tar.gz'
            'valgrind-3.4.1.tar.bz2')
 md5sums=('d7562677b43cb10b288830b22bf9c423'
-         '84e8593560233bda15c269635c8a98ae'
+         '57697b999f2dcd6adc1a490bba82a34a'
          'b5f039dd2271aaf9ae570ab4116f87c7'
          '0ac843aecfc539a53ae88c48b1a17047'
          'e435a0debedf207b279256eff50c68f6')
 
 prepare() {
   cd "$srcdir/fuzzgrind/"
+
   tar --ignore-failed-read -jkxf "$srcdir"/valgrind-3.4.1.tar.bz2
 
   cd valgrind-3.4.1
+
   patch -Np0 -i ${srcdir}/glibc-2.12.patch
   patch -Np1 -i ${srcdir}/valgrind-3.5.0-stat_h.patch
 }
@@ -33,7 +35,9 @@ build() {
   cd "$srcdir/fuzzgrind/valgrind-3.4.1"
 
   autoreconf
+
   ./configure --prefix="/usr/share/fuzzgrind/valgrind"
+
   make
 }
 
