@@ -8,7 +8,7 @@ base=${BASH_SOURCE[0]%/*}/..
 show_new=true
 # override with -n
 show_updates=true
-# override with -a
+# override with -a and -e
 archs=("$(uname -m)")
 # override with -q
 verbose=true
@@ -22,19 +22,20 @@ err() {
 
 usage() {
 	cat <<EOF
-usage: outdated [-u] [-n] [-a] [-q] [-h]
+usage: outdated [-u] [-n] [-a] [-e] [-q] [-h]
 
-  -u        Only show updates.
-  -n        Only show new packages.
-  -a        Check for all architectures (i686, x86_64, armv6h, armv7h).
-			By default, only the architecture of this machine is checked.
-  -q        Be quiet.
-  -h        Show this message.
+  -u            Only show updates.
+  -n            Only show new packages.
+  -a <arch>     Only check <arch> architecture.
+  -e            Check for all architectures (i686, x86_64, armv6h, armv7h).
+			    By default, only the architecture of this machine is checked.
+  -q            Be quiet.
+  -h            Show this message.
 EOF
 }
 
 parse_args() {
-	while getopts unaqh flags ; do
+	while getopts una:eqh flags ; do
 		case "$flags" in
 			u)
 				show_new=false
@@ -43,6 +44,9 @@ parse_args() {
 				show_updates=false
 				;;
 			a)
+				archs=("$OPTARG")
+				;;
+			e)
 				archs=(i686 x86_64 armv7h armv6h)
 				;;
 			q)
