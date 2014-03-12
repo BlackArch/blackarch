@@ -14,8 +14,10 @@ repo=blackarch
 # override with -u
 user=$USER
 
-# overrise with -f
+# override with -f
 force=false
+# override with -w
+wait_for_lock=false
 # override with -a
 always_push=false
 
@@ -39,6 +41,7 @@ usage() {
 usage: barelease [options and package files]
 
   -f          Remove /tmp/blackarch.lck before doing anything.
+  -w          Wait for the lock.
   -a          Always push, even if repo-add fails. This can be dangerous. Please talk
               to paraxor if you do not understand why.
   -k <key>    Specify the gpg key to use for signing.
@@ -77,6 +80,9 @@ parse_args() {
 		case "$1" in
 			-f)
 				force=true
+				;;
+			-w)
+				wait_for_lock=true
 				;;
 			-a)
 				always_push=true
@@ -179,14 +185,23 @@ start_ssh_agent() {
 
 lock() {
 	echo "obtaining lock..."
-	ssh -l "$user" "$site" "$(declare -f remote_lock); remote_lock"
+	ssh -l "$user" "$site" "$(declare -f remote_lock); remote_lock $wait_for_lock"
 }
 
 # This runs on the remote host.
 remote_lock() {
-	if ! mkdir -m000 /tmp/blackarch.lck ; then
-		echo >&2 'unable to obtain lock.'
-		exit 1
+	local wait_for_lock=$1
+
+	if $wait_for_lock ; then
+		echo >&2 'waiting for the lock...'
+		while ! mkdir -m000 /tmp/blackarch.lck ; do
+			sleep 1
+		done
+	else
+		if ! mkdir -m000 /tmp/blackarch.lck ; then
+			echo >&2 'unable to obtain lock.'
+			exit 1
+		fi
 	fi
 }
 
