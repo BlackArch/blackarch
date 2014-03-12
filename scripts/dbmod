@@ -5,11 +5,18 @@ err() {
 }
 
 parse_args() {
+	db=$1
+	if [[ "$db" != *.db.tar.gz ]] ; then
+		err "not a database: $db"
+		exit 1
+	fi
+	shift
 	case "$1" in
 		group)
 			action=group
-			package=$1
-			groups+=("$@")
+			package=$2
+			shift; shift
+			groups=("$@")
 			if (( ${#groups[@]} == 0 )) ; then
 				err 'no groups specified'
 				exit 1
@@ -29,24 +36,33 @@ cleanup() {
 
 extract() {
 	tmp=$(mktemp -d)
-	tar xzf "$db_file" -C "$tmp"
+	tar xzf "$db" -C "$tmp"
 }
 
 take_action() {
 	case "$action" in
 		group)
+			echo "adding $package to groups"
+			if grep -q '%GROUPS%' "$tmp/$package/desc" ; then
+				sed -i '/%GROUPS%/,/^$/d' "$tmp/$package/desc"
+			fi
 
+			printf '%%GROUPS%%\n' >> "$tmp/$package/desc"
+			printf '%s\n' "${groups[@]}" >>"$tmp/$package/desc"
 			;;
 	esac
 }
 
 archive() {
 	( cd "$tmp"
-	  tar czf "$db_file" * )
+	  tar czf "$db" * )
+	mv -f "$tmp/$db" "$db"
 }
 
 main() {
 	parse_args "$@"
+
+	trap cleanup EXIT
 
 	extract
 	take_action
