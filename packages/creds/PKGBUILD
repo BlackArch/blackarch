@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='creds'
+pkgver=6556.8cf7ff1
+pkgrel=1
+groups=('blackarch' 'blackarch-sniffer')
+pkgdesc='Harvest FTP/POP/IMAP/HTTP/IRC credentials along with interesting data from each of the protocols.'
+arch=('any')
+url='https://github.com/DanMcInerney/creds.py'
+license=('custom')
+depends=('python2')
+source=('git+https://github.com/DanMcInerney/creds.py.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/creds.py"
+
+  install -dm755 "$pkgdir/usr/bin"
+
+  install -Dm755 "creds.py" "$pkgdir/usr/share/creds/creds.py"
+  install -Dm744 "README.md" "$pkgdir/usr/share/doc/creds/README.md"
+
+  rm -rf "README.md"
+
+  cat > "$pkgdir/usr/bin/creds" << EOF
+#!/bin/sh
+cd /usr/share/creds/
+python2 creds.py "\$@"
+EOF
+
+ chmod +x "$pkgdir/usr/bin/creds"
+}
