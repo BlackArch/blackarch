@@ -1,8 +1,10 @@
 #!/bin/bash
 # Please excuse the multiple connections.
-# This does not delete old package files. Absolutely do not try to do that
-# manually.
+# Use baclean to clean up the old .pkg.tar.xz files.
+# TODO: delegate lock
+# TODO: test delegate notification
 
+# use curses pinentry
 unset DISPLAY
 
 base=${BASH_SOURCE[0]%/*}
@@ -215,60 +217,6 @@ remote_unlock() {
 	rmdir /tmp/blackarch.lck > /dev/null 2>&1 || true
 }
 
-remote_irc_notify() {
-	b=''
-
-	list_len=3
-	use_list=false
-
-	user=$USER
-	case "$user" in
-		para) user=paraxor ;;
-	esac
-
-	hook_file=/etc/barelease_notifico
-	hook_url=$(cat $hook_file)
-
-	packages=("$@")
-
-	if (( ${#packages[@]} != 1 )) ; then
-		s=s
-	fi
-
-	url_encode() {
-		xxd -plain | tr -d '\n' | sed 's/\(..\)/%\1/g'
-	}
-
-	send_payload() {
-		curl -s "$hook_url" -d "payload=$(printf %s "$1" | url_encode)"
-	}
-
-	# TODO: group packages by name
-	sprunge=$(printf '%s\n' "${packages[@]}" | curl -s http://sprunge.us -F "sprunge=<-")
-
-	# TODO: color?
-	if $use_list ; then
-		send_payload "$b$user$b pushed ${#packages[@]} package$s to the bin repo, including:"
-	else
-		send_payload "$b$user$b pushed ${#packages[@]} package$s to the bin repo: $sprunge"
-	fi
-
-	if $use_list ; then
-		for p in ${packages[@]:0:$list_len} ; do
-			send_payload "- $p"
-		done
-
-		if (( ${#packages[@]} > $list_len )) ; then
-			send_payload "full list: $sprunge"
-		fi
-	fi
-}
-
-irc_notify() {
-	$remove && return
-	ssh -l "$user" "$site" "$(declare -f remote_irc_notify); remote_irc_notify $@"
-}
-
 update_feed_info() {
 	# TODO: finish this.
 	#printf '%s\n' "$@" >> "$sitedir/data/updates"
@@ -392,7 +340,9 @@ main() {
 
 	do_release
 
-	irc_notify "${notify_list[@]}"
+	if ! $remove ; then
+		"$base/banotify" "${notify_list[@]}"
+	fi
 	update_feed_info "${notify_list[@]}"
 }
 
