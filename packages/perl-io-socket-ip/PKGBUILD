@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+# Originally from the AUR.
+
+pkgname='perl-io-socket-ip'
+pkgver='0.27'
+pkgrel='1'
+pkgdesc="Family-neutral IP socket supporting both IPv4 and IPv6"
+arch=('any')
+license=('PerlArtistic' 'GPL')
+options=('!emptydirs')
+depends=('perl>=0')
+url='http://search.cpan.org/dist/IO-Socket-IP'
+source=('http://search.cpan.org/CPAN/authors/id/P/PE/PEVANS/IO-Socket-IP-0.27.tar.gz')
+md5sums=('2bc43f6fb1e8c1c6350fe507cf5413e2')
+sha512sums=('1170c54a76b99c7d880a9214fc93162b8ca54c0f05dae18e97c356b45e874e9ec4e5f093c428aa0f727898e0724bfb3b3b3b87341ce646c7a7e2ae493bfd8237')
+_distdir="IO-Socket-IP-0.27"
+
+build() {
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""                 \
+      PERL_AUTOINSTALL=--skipdeps                            \
+      PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'"     \
+      PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+      MODULEBUILDRC=/dev/null
+
+    cd "$srcdir/$_distdir"
+    /usr/bin/perl Makefile.PL
+    make
+  )
+}
+
+check() {
+  cd "$srcdir/$_distdir"
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""
+    make test
+  )
+}
+
+package() {
+  cd "$srcdir/$_distdir"
+  make install
+
+  find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}
