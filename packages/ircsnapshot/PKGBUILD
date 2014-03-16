@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ircsnapshot'
+pkgver=93.9ba3c6c
+pkgrel=1
+groups=('blackarch' 'blackarch-recon')
+pkgdesc='Tool to gather information from IRC servers.'
+arch=('any')
+url='https://github.com/bwall/ircsnapshot'
+license=('MIT')
+depends=('python2')
+source=("git+https://github.com/bwall/ircsnapshot.git")
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ircsnapshot"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/ircsnapshot"
+
+  install -dm755 "$pkgdir/usr/share/ircsnapshot"
+  install -dm755 "$pkgdir/usr/bin"
+
+  install -Dm744 "README.md" "$pkgdir/usr/share/doc/ircsnapshot/README.md"
+  install -Dm744 "LICENSE.TXT" \
+    "$pkgdir/usr/share/licenses/ircsnapshot/LICENSE.TXT"
+
+  rm -rf README.md LICENSE.TXT
+
+  cp -a * "$pkgdir/usr/share/ircsnapshot"
+
+  cat > "$pkgdir/usr/bin/ircsnapshot" << EOF
+#!/bin/sh
+cd /usr/share/ircsnapshot/
+python2 ircsnapshot.py "\$@"
+EOF
+
+chmod +x "$pkgdir/usr/bin/ircsnapshot"
+}
