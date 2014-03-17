@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ssl-phuck3r'
+pkgver=5.ba9ff9c
+pkgrel=1
+groups=('blackarch' 'blackarch-sniffer' 'blackarch-networking')
+pkgdesc='All in one script for Man-In-The-Middle attacks.'
+arch=('any')
+url='https://github.com/zombiesam/ssl_phuck3r'
+license=('custom')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/zombiesam/ssl_phuck3r.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ssl_phuck3r"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/ssl_phuck3r"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/ssl_phuck3r"
+
+  install -Dm744 README.md "$pkgdir/usr/share/doc/ssl_phuck3r/README.md"
+
+  rm -rf README.md
+
+  cp -a * "$pkgdir/usr/share/ssl_phuck3r"
+
+  cat > "$pkgdir/usr/bin/sslphuck" <<EOF
+#!/bin/sh
+cd /usr/share/ssl_phuck3r
+python2 sslphuck.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/sslphuck"
+}
