@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname='subterfuge'
-pkgver='1.0'
+pkgver='5.0'
 pkgrel=1
 epoch=2
 groups=('blackarch' 'blackarch-exploitation')
@@ -12,22 +12,28 @@ arch=('any')
 license=('GPL3')
 depends=('python-django')
 install='subterfuge.install'
-source=("https://subterfuge.googlecode.com/files/subterfuge_$pkgver-${pkgrel}_all.deb"
-        "subterfuge.patch")
-sha1sums=('02596f7103e6a84c04cbc203692ac355427cb717'
-          '17bb7f5213d245aab9ce850448650d3abfa8bc92')
-
-prepare() {
-  cd "$srcdir"
-
-  tar -zxvf data.tar.gz
-  patch -p1 -i subterfuge.patch
-  sed -i 's/\t/####/g' "$srcdir/usr/share/subterfuge/update.py"
-}
+source=("https://subterfuge.googlecode.com/files/SubterfugePublicBeta$pkgver.tar.gz")
+sha1sums=('8c8bb64985ce2a661f5f5d50c72840f3102ca05a')
 
 package() {
-  cd "$srcdir"
+  cd "$srcdir/subterfuge"
 
-  install -Dm755 "$srcdir/bin/subterfuge" "$pkgdir/usr/bin/subterfuge"
-  cp -R "$srcdir/usr/" "$pkgdir"
+  # Base directories.
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/subterfuge"
+  install -dm755 "$pkgdir/usr/share/licenses/subterfuge"
+
+  tar xzf subterfuge_packages.tar.gz
+
+  # Share.
+  cp -a subterfuge/* "$pkgdir/usr/share/subterfuge"
+
+  # Licence.
+  mv "$pkgdir/usr/share/subterfuge/COPYING" "$pkgdir/usr/share/licenses/subterfuge"
+
+  cat >> "$pkgdir/usr/bin/subterfuge" <<EOF
+#!/bin/sh
+exec python2 /usr/share/subterfuge/subterfuge
+EOF
+  chmod +x "$pkgdir/usr/bin/subterfuge"
 }
