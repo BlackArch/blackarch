@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname='sqlninja'
-pkgver='0.2.5'
-pkgrel=8
+pkgver='0.2.6_r1'
+pkgrel=1
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-fuzzer' 'blackarch-webapp')
 pkgdesc="A tool targeted to exploit SQL Injection vulnerabilities on a web application that uses Microsoft SQL Server as its back-end"
 arch=('any')
@@ -13,40 +13,41 @@ depends=('perl' 'perl-netpacket' 'perl-net-pcap' 'perl-net-dns' 'perl-net-rawip'
 optdepends=('metasploit: to use the metasploit attack mode'
             'tigervnc: a VNC client, vncviewer, to use the VNC payload')
 conflicts=('sqlninja-svn')
-source=(http://downloads.sourceforge.net/sourceforge/sqlninja/sqlninja-${pkgver}.tgz)
-sha1sums=('ea33352a336d8ce18f5001c79d7bb94583a46f5d')
+source=("http://downloads.sourceforge.net/sourceforge/sqlninja/sqlninja-${pkgver/_/-}.tgz")
+sha1sums=('b2ed4e0daea858b10190a3838a280faecee98fde')
 
-package() {
-  cd ${srcdir}/sqlninja-${pkgver}
-
-  # Make base directories.
-  install -dm755 ${pkgdir}/usr/share/sqlninja
-  install -dm755 ${pkgdir}/usr/share/doc/sqlninja
-  install -dm755 ${pkgdir}/usr/share/licenses/sqlninja
-  install -dm755 ${pkgdir}/usr/bin
-
-  install -m644 ChangeLog README sqlninja-howto.html $pkgdir/usr/share/doc/sqlninja
-
-  cp -pR apps scripts sources sqlninja sqlninja.conf ${pkgdir}/usr/share/sqlninja
-  install -D -m644 LICENSE ${pkgdir}/usr/share/licenses/sqlninja/LICENSE
-
-  # Archlinux fixes
-  cd ${pkgdir}/usr/share/sqlninja
+prepare() {
+  cd "$srcdir/sqlninja-${pkgver/_/-}"
 
   # TODO: Is this still relevant?
   # Check if metasploit-svn or metasploit stable is installed (-svn takes precedence)
   # Apply Archlinux metasploit home directory to sqlninja.conf.
   if [[ -d /usr/src/metasploit ]] ; then
-    sed -i 's|/home/sqlninja/trunk/|/usr/src/metasploit|g' sqlninja.conf
+    sed -i 's|/home/sqlninja/trunk/|/usr/src/metasploit|g' sqlninja.conf.example
   else
-    sed -i 's|/home/sqlninja/trunk/|/opt/metasploit|g' sqlninja.conf
+    sed -i 's|/home/sqlninja/trunk/|/usr/share/metasploit|g' sqlninja.conf.example
   fi
+}
+
+package() {
+  cd "$srcdir/sqlninja-${pkgver/_/-}"
+
+  # Make base directories.
+  install -dm755 "$pkgdir/usr/share/sqlninja"
+  install -dm755 "$pkgdir/usr/share/doc/sqlninja"
+  install -dm755 "$pkgdir/usr/share/licenses/sqlninja"
+  install -dm755 "$pkgdir/usr/bin"
+
+  install -m644 ChangeLog README sqlninja-howto.html "$pkgdir/usr/share/doc/sqlninja"
+
+  cp -pR apps scripts sources sqlninja sqlninja.conf.example "$pkgdir/usr/share/sqlninja"
+  install -D -m644 LICENSE "$pkgdir/usr/share/licenses/sqlninja/LICENSE"
 
   # Make joint script.
-  cat > ${pkgdir}/usr/bin/sqlninja <<EOF
+  cat > "$pkgdir/usr/bin/sqlninja" <<EOF
 #!/bin/bash
 cd /usr/share/sqlninja
 ./sqlninja "\$@"
 EOF
-  chmod +x ${pkgdir}/usr/bin/sqlninja
+  chmod +x "$pkgdir/usr/bin/sqlninja"
 }
