@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# TODO: test the lock
-
 base=${BASH_SOURCE[0]%/*}
 
 export LC_ALL=C
@@ -15,6 +13,7 @@ repo=blackarch
 # override with -u
 user=$USER
 
+has_lock=false
 we_started_ssh=false
 
 usage() {
@@ -54,6 +53,7 @@ parse_args() {
 cleanup() {
 	# Kill ssh-agent.
 	$we_started_ssh && kill "$SSH_AGENT_PID" 2> /dev/null >&2
+	$has_lock && "$base/balock" -u
 }
 
 start_ssh_agent() {
@@ -91,6 +91,7 @@ main() {
 	start_ssh_agent
 
 	"$base/balock"
+	has_lock=true
 
 	echo "cleaning repo: $repo..."
 
