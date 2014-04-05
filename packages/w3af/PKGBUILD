@@ -2,11 +2,11 @@
 # See COPYING for license details.
 
 pkgname='w3af'
-pkgver='1.5'
-pkgrel=7
+pkgver='1.6'
+pkgrel=1
 groups=('blackarch' 'blackarch-fuzzer' 'blackarch-scanner' 'blackarch-webapp')
-pkgdesc="Web Application Attack and Audit Framework"
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+pkgdesc='Web Application Attack and Audit Framework.'
+arch=('any')
 url='http://w3af.sourceforge.net/'
 license=('GPL')
 depends=('python2' 'python2-clamd' 'python2-pybloomfiltermmap' 'python2-esmre'
@@ -15,11 +15,10 @@ depends=('python2' 'python2-clamd' 'python2-pybloomfiltermmap' 'python2-esmre'
          'scapy' 'python2-guess-language' 'python2-cluster' 'python2-msgpack'
          'sqlite' 'python2-ntlm' 'python2-pygithub' 'python2-gitpython'
          'graphviz' 'pygtksourceview2' 'pygtk' 'gtk2' 'python2-beautifulsoup3'
-         'python2-xdot' 'libxml2' 'libxslt')
+         'python2-xdot' 'libxml2' 'libxslt' 'libyaml' 'python2-yaml'
+         'python2-pip')
 options=('!strip')
-#source=("https://github.com/andresriancho/w3af/archive/$pkgver.tar.gz"
-        #'w3af.desktop')
-source=("git+https://github.com/andresriancho/w3af"
+source=('git+https://github.com/andresriancho/w3af'
         'w3af.desktop')
 sha1sums=('SKIP'
           'fe0416f1dcca30e817d19c79c57a6a62b9579685')
@@ -27,22 +26,13 @@ sha1sums=('SKIP'
 prepare() {
   cd "$srcdir/w3af"
 
-  git checkout feature/module
-
-  # Delete some of the stuff from w3af-extlib (stuff that needs to be installed) -> dependencies
-  rm -rf w3af/extlib/fpconst-0.7.2
-  rm -rf w3af/extlib/SOAPpy
-
   # Enforce python2
   sed -i -e 's|#!\s*/usr/bin/python[^\d.]*$|#!/usr/bin/python2|' \
-         -e 's|#!\s*/usr/bin/env python[^\d.]*$|#!/usr/bin/env python2|' \
-         $(find . -name '*.py') w3af_{console,gui}
+    -e 's|#!\s*/usr/bin/env python[^\d.]*$|#!/usr/bin/env python2|' \
+    $(find . -name '*.py') w3af_{console,gui}
 
   # Remove dependency checks.
   sed -i 's/dependency_check()/#&/' w3af_{console,gui}
-
-  # Change the default metasploit location.
-  #sed -i 's|/opt/metasploit3|/usr/share/metasploit|' core/controllers/miscSettings.py
 }
 
 package() {
@@ -51,22 +41,24 @@ package() {
   # Base directories.
   install -dm755 "$pkgdir/usr/share/w3af"
   install -dm755 "$pkgdir/usr/bin"
-  install -dm755 "$pkgdir/usr/share/applications/"
+  install -dm755 "$pkgdir/usr/share/applications"
 
   cp --no-preserve=ownership -a * "$pkgdir/usr/share/w3af"
 
   install -Dm644 "$srcdir/w3af.desktop" "$pkgdir/usr/share/applications"
 
   # Joint script for w3af_console.
-  cat > "$pkgdir/usr/bin/w3af" <<EOF
+  cat > "$pkgdir/usr/bin/w3af" << EOF
 #!/bin/sh
 exec python2 /usr/share/w3af/w3af_console "\$@"
 EOF
 
   # Joint script for w3af_gui.
-  cat > "$pkgdir/usr/bin/w3af-gui" <<EOF
+  cat > "$pkgdir/usr/bin/w3af-gui" << EOF
 #!/bin/sh
 exec python2 /usr/share/w3af/w3af_gui "\$@"
 EOF
-  chmod +x "$pkgdir/usr/share/w3af"/w3af_{console,gui} "$pkgdir/usr/bin"/{w3af,w3af-gui}
+
+  chmod +x "$pkgdir/usr/share/w3af"/w3af_{console,gui} \
+    "$pkgdir/usr/bin"/{w3af,w3af-gui}
 }

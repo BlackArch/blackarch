@@ -3,9 +3,9 @@
 
 pkgname='creepy'
 pkgver='20121023'
-pkgrel=8
+pkgrel=10
 groups=('blackarch' 'blackarch-scanner' 'blackarch-social')
-pkgdesc="A geolocation information gatherer. Offers geolocation information gathering through social networking platforms."
+pkgdesc='A geolocation information gatherer. Offers geolocation information gathering through social networking platforms.'
 arch=('any')
 url='http://github.com/ilektrojohn/creepy'
 license=('GPL3')
@@ -13,24 +13,25 @@ provides=('creepy')
 makedepends=('git')
 depends=('python2' 'python2-tweepy' 'python2-osmgpsmap' 'python2-flickrapi'
          'python2-beautifulsoup3' 'python2-exiv2' 'python2-configobj'
-         'python2-simplejson')
+         'python2-simplejson' 'python2-yapsy')
 source=('git+https://github.com/ilektrojohn/creepy.git')
 sha1sums=('SKIP')
 
 package() {
   cd "$srcdir/creepy"
 
-  # Make base directories.
-  install -d -m755 "$pkgdir/usr/share/creepy"
-  install -d -m755 "$pkgdir/usr/bin"
-  install -d -m755 "$pkgdir/usr/share/creepy/doc"
+  install -dm755 "$pkgdir/usr/share/creepy"
+  install -dm755 "$pkgdir/usr/bin"
 
-  python2 creepy/setup.py install "--root=$pkgdir"
+  install -Dm744 README.md "$pkgdir/usr/share/creepy/doc/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/creepy/LICENSE"
 
-  # Make joint script.
-  cat > "$pkgdir/usr/bin/creepy" <<EOF
+  cp -a creepy/* "$pkgdir/usr/share/creepy/"
+
+  cat > "$pkgdir/usr/bin/creepy" << EOF
 #!/bin/sh
-exec python2 /usr/lib/python2.7/site-packages/creepy/creepymap.py "\$@"
+exec python2 "/usr/share/creepy/CreepyMain.py" "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/creepy"
 }
