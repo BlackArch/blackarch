@@ -5,23 +5,33 @@
 
 pkgname=fbcmd
 pkgver=1.1
-pkgrel=1
+pkgrel=2
 pkgdesc="A Command Line Interface (CLI) for Facebook"
 arch=('any')
 url="http://fbcmd.dtompkins.com"
 license=('GPL3')
 depends=('php')
 install=fbcmd.install
-source=("http://fbcmd.dtompkins.com/downloads/fbcmd-${pkgver//./-}.zip"
-        'fbcmd-script')
-md5sums=('b2172219e66db88905a84737804ea206'
-         '66960b96b4f0dd4e3693362e2996197d')
+source=("http://fbcmd.dtompkins.com/downloads/fbcmd-${pkgver//./-}.zip")
+md5sums=('b2172219e66db88905a84737804ea206')
 
 package() {
-  install -dm755 "$pkgdir/usr/share/fbcmd"
-  install -Dm755 "$srcdir/fbcmd-script" "$pkgdir"/usr/bin/fbcmd
-  install -Dm775 "$srcdir/fbcmd/fbcmd.php" "$pkgdir"/usr/lib/fbcmd.php
+  cd "$srcdir/fbcmd"
 
-  cp -r "$srcdir"/fbcmd/{fbcmd_update.php,facebook,support} "$pkgdir"/usr/lib/
-  cp "$srcdir"/fbcmd/{filelist.txt,gpl.txt,readme.txt} "$pkgdir"/usr/share/fbcmd/
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/fbcmd"
+  install -dm755 "$pkgdir/usr/share/doc/fbcmd"
+
+  # Share
+  install -m755 fbcmd.php "$pkgdir/usr/share/fbcmd"
+  cp -r fbcmd_update.php facebook support "$pkgdir/usr/share/fbcmd"
+
+  # Doc
+  cp filelist.txt readme.txt "$pkgdir/usr/share/doc/fbcmd"
+
+  cat >> "$pkgdir/usr/bin/fbcmd" <<EOF
+#!/bin/sh
+exec /usr/share/fbcmd/fbcmd.php "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/fbcmd"
 }
