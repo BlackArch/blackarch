@@ -1,0 +1,83 @@
+#!/bin/bash
+
+jobs=15
+
+base=${BASH_SOURCE[0]%/*}
+
+site=http://mirror.archlinux.no
+repos=(community extra core)
+
+docs_official=$base/../docs/official
+
+if [[ $EUID != 0 ]] ; then
+	err 'run this as root.'
+	exit 1
+fi
+
+tmp=$(mktemp -d /tmp/dlbrute.XXXXXXXX)
+echo "TMP: $tmp"
+
+pkg_info() {
+	local pkg=$1
+	local item=$2
+
+	pacman -Si "$pkg" | awk -F: "/^$item/{ gsub(/^ /, \"\", \$2); print \$2 }"
+}
+
+get_helper() {
+	local tmp=$1
+	local url=$2
+
+	wget -P "$tmp" "$url" &&
+	  wget -P "$tmp" "$url.sig"
+}
+
+cat > "$tmp/get_helper.sh" <<EOF
+#!/bin/bash
+
+exec > /dev/null
+
+$(declare -f get_helper)
+
+get_helper "$tmp" "\$@"
+EOF
+chmod +x "$tmp/get_helper.sh"
+
+for arch in i686 x86_64 ; do
+	cat > "$tmp/pacman.conf" <<EOF
+[options]
+Architecture = $arch
+SigLevel    = Never
+CacheDir    = $tmp/$arch
+
+[core]
+Server = $site/\$repo/os/$arch
+
+[extra]
+Server = $site/\$repo/os/$arch
+
+[community]
+Server = $site/\$repo/os/$arch
+EOF
+
+	echo 'syncing package database...'
+	setarch $arch pacman "--config=$tmp/pacman.conf" -Syy \
+	  > /dev/null
+
+	echo "downloading package files to $tmp ..."
+	cut -d' ' -f1 "$docs_official" |
+	while read p ; do
+		ver=$(pkg_info $p Version)
+		pkg_arch=$(pkg_info $p Architecture)
+		[[ $pkg_arch == any ]] || pkg_arch=$arch
+
+		file=$p-$ver-$pkg_arch.pkg.tar.xz
+
+		for repo in "${repos[@]}" ; do
+			echo "$site/$repo/os/$arch/$file" 
+		done
+	done
+done |
+parallel --no-notice -n1 -j$jobs "$tmp/get_helper.sh"
+
+rm -f "$tmp/get_helper.sh"
