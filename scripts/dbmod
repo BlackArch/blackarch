@@ -1,5 +1,7 @@
 #!/bin/bash
 
+shopt -s extglob
+
 err() {
 	echo "ERROR: $*"
 }
@@ -17,6 +19,7 @@ parse_args() {
 			package=$2
 			shift; shift
 			groups=("$@")
+
 			if (( ${#groups[@]} == 0 )) ; then
 				err 'no groups specified'
 				exit 1
@@ -40,15 +43,22 @@ extract() {
 }
 
 take_action() {
+	package_ver=($tmp/$package-+([!-])-+([!-]))
+
+	if [[ ! -d "$package_ver" ]] ; then
+		err "$package is not in the database."
+		exit 1
+	fi
+
 	case "$action" in
 		group)
 			echo "adding $package to groups"
-			if grep -q '%GROUPS%' "$tmp/$package/desc" ; then
-				sed -i '/%GROUPS%/,/^$/d' "$tmp/$package/desc"
+			if grep -q '%GROUPS%' "$package_ver/desc" ; then
+				sed -i '/%GROUPS%/,/^$/d' "$package_ver/desc"
 			fi
 
-			printf '%%GROUPS%%\n' >> "$tmp/$package/desc"
-			printf '%s\n' "${groups[@]}" >>"$tmp/$package/desc"
+			printf '%%GROUPS%%\n' >> "$package_ver/desc"
+			printf '%s\n' "${groups[@]}" >>"$package_ver/desc"
 			;;
 	esac
 }
