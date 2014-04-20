@@ -1,22 +1,71 @@
-pkgname=arachni
-_gemname=arachni
-pkgver=0.4.5.2
-pkgrel=0
+pkgname='arachni'
+pkgver=0.4.6
+pkgrel=3
 groups=('blackarch' 'blackarch-webapp')
-pkgdesc="Arachni is a feature-full, modular, high-performance Ruby framework aimed towards helping penetration testers and administrators evaluate the security of web applications."
+pkgdesc='A feature-full, modular, high-performance Ruby framework aimed towards helping penetration testers and administrators evaluate the security of web applications.'
 arch=('any')
-license=('')
-makedepends=('ruby')
-depends=('ruby-arachni-rpc-em=0.2' 'ruby-typhoeus>=0.3.3'
-         'ruby-addressable>=2.3.2' 'ruby-nokogiri>=1.5.7.rc1'
-         'ruby-sys-proctable>=0.9.1' 'ruby-terminal-table>=1.4.2')
+license=('apache')
+makedepends=('git')
+depends=('ruby' 'ruby-bundler')
 url='https://www.arachni-scanner.com'
-source=("http://rubygems.org/downloads/arachni-$pkgver.gem")
-md5sums=('927fb46409e0ced8c058d339f10412d1')
-noextract=("arachni-$pkgver.gem")
+source=('git+git://github.com/Arachni/arachni.git')
+install='arachni.install'
+md5sums=('SKIP')
+
+pkgver() {
+  cd arachni
+
+  git describe --always | sed 's|-|.|g' | sed 's/^v//'
+}
 
 package() {
-  cd "$srcdir"
-  local _gemdir=$(ruby -e 'puts Gem.default_dir')
-  gem install --ignore-dependencies --no-user-install -i "$pkgdir$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
+  cd "$srcdir/arachni"
+
+  install -d -m755 "$pkgdir/usr/bin"
+  install -d -m755 "$pkgdir/usr/share/arachni"
+  install -d -m755 "$pkgdir/usr/share/doc/arachni"
+  install -d -m755 "$pkgdir/usr/share/licenses/arachni"
+
+  mv LICENSE.md "$pkgdir/usr/share/licenses/arachni"
+  cp --no-preserve=ownership *.md \
+    "$pkgdir/usr/share/doc/arachni"
+
+  cp --no-preserve=ownership -R * "$pkgdir/usr/share/arachni"
+
+  cat > "$pkgdir/usr/bin/arachni" << EOF
+  #!/bin/sh
+  ruby /usr/share/arachni/bin/arachni "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/arachni_console" << EOF
+  #!/bin/sh
+  ruby /usr/share/arachni/bin/arachni_console "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/arachni_multi" << EOF
+  #!/bin/sh
+  ruby /usr/share/arachni/bin/arachni_multi "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/arachni_rpc" << EOF
+  #!/bin/sh
+  ruby /usr/share/arachni/bin/arachni_rpc "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/arachni_rpcd" << EOF
+  #!/bin/sh
+  ruby /usr/share/arachni/bin/arachni_rpcd "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/arachni_rpcd_monitor" << EOF
+  #!/bin/sh
+  ruby /usr/share/arachni/bin/arachni_rpcd_monitor "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/arachni_script" << EOF
+  #!/bin/sh
+  ruby /usr/share/arachni/bin/arachni_script "\$@"
+EOF
+
+  chmod +x "$pkgdir"/usr/bin/*
 }

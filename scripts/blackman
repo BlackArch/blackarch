@@ -23,6 +23,7 @@ pacman_args=()
 action=none
 print_only=false
 no_deps=false
+needed=false
 
 for arg ; do
 	if [[ "$arg" == -* ]] ; then
@@ -39,6 +40,7 @@ for arg ; do
 			-Sl) action=list ;;
 			-Syu|-Su) action=upgrade ;;
 			--asdeps|--asdep|--noconfirm) pacman_args+=("$arg") ;;
+			--needed) pacman_args+=("$arg"); needed=true ;;
 			*) error "unsupported: $arg"; exit 1 ;;
 		esac
 	else
@@ -56,6 +58,12 @@ do_sync() { (
 	shift
 
 	cd packages/$pack || cd aur/$pack
+
+	if $needed && pacman -Qi $pack &> /dev/null ; then
+		echo >&2 "warning: $pack is already installed -- skipping"
+		return 1
+	fi
+
 	makepkg "${pacman_args[@]}" "$@" -fs
 	# TODO: improve this sort.
 	local file=$(find . -maxdepth 1 -name '*.pkg.tar.xz' | sort -n | head -n1)

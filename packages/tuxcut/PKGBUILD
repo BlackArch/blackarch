@@ -1,6 +1,6 @@
 pkgname=tuxcut
 pkgver=5.0
-pkgrel=4
+pkgrel=6
 groups=('blackarch' 'blackarch-sniffer')
 pkgdesc="Netcut-like program for Linux written in PyQt"
 url='http://bitbucket.org/a_atalla/tuxcut/'
@@ -15,14 +15,18 @@ prepare() {
 
   tar xzf data.tar.gz
 
+  rm data.tar.gz control.tar.gz
+
   # Remove hidden files.
   rm -rf .??*
+
   # Remove backup files.
   find . -name '*~' -type f -delete
-  sed -i '1s/python/python2/' $srcdir/opt/TuxCut/run.py
-  sed -i 's/^lang =.*$/lang = "English"/' $srcdir/opt/TuxCut/run.py
-  sed -i 's/run.py/tuxcut/' $srcdir/usr/bin/tuxcut
-  sed -i 's/python/python2/' $srcdir/usr/bin/tuxcut
+
+  # Fix some things.
+  sed -i '1s/python/python2/' "$srcdir/opt/TuxCut/run.py"
+  sed -i 's/^lang =.*$/lang = "English"/' "$srcdir/opt/TuxCut/run.py"
+  sed -i 's/python/python2/' "$srcdir/usr/bin/tuxcut"
 }
 
 package() {
@@ -36,15 +40,5 @@ package() {
   # Bin.
   install -m755 "$srcdir/usr/bin/tuxcut" "$pkgdir/opt/TuxCut"
 
-  cp -a --no-preserve=ownership * "$pkgdir/opt/TuxCut"
-
-  # Doc.
-  install -m644 "$srcdir/usr/share/doc/tuxcut"/* "$pkgdir/usr/share/doc/tuxcut"
-
-  cat >> "$pkgdir/usr/bin/tuxcut" <<EOF
-#!/bin/sh
-cd /opt/TuxCut
-./tuxcut
-EOF
-  chmod +x "$pkgdir/usr/bin/tuxcut" 
+  cp -a --no-preserve=ownership usr opt "$pkgdir"
 }

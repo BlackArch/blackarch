@@ -1,0 +1,136 @@
+#!/bin/bash
+
+basedir=${BASH_SOURCE[0]%/*}
+outdir=$(realpath "$basedir/../babuild")
+cd "$basedir"
+
+export LC_ALL=POSIX
+
+err() {
+	echo >&2 "ERROR: $*"
+}
+
+usage() {
+	echo 'usage: babuild [-g <package in git> | -p <package at path>] [-a <arch>] [-o <outdir>]'
+}
+
+cleanup() {
+	rm -rf "$tmp"
+}
+
+check_for_root() {
+	if (( $EUID != 0 )) ; then
+		err "you must have root privledges."
+		exit 1
+	fi
+}
+
+parse_args() {
+	while [[ -n "$1" ]] ; do
+		case "$1" in
+			-a|--arch)
+				arch+=("$2")
+				shift
+				;;
+			-g|--git)
+				package=("$2")
+				git=true
+				shift
+				;;
+			-p|--path)
+				package=("$2")
+				git=false
+				shift
+				;;
+			-o|--out)
+				outdir=$2
+				shift
+				;;
+			*)
+				pass_through=("$2")
+				shift
+				;;
+		esac
+		shift
+	done
+
+	if (( ${#arch[@]} == 0 )) ; then
+		arch=(i686 x86_64)
+	fi
+
+	if [[ -z "$package" ]] ; then
+		usage
+		exit 1
+	fi
+
+	if $git ; then
+		cd "../packages/$package"
+	else
+		cd "$package"
+	fi
+}
+
+copy_files() {
+	# The temporary directory and its contents must be world-readable and
+	# world-writeable.
+	tmp=/tmp/babuild.$RANDOM$RANDOM
+	mkdir "$tmp"
+	(
+	. ./PKGBUILD
+	copy=(PKGBUILD "$install" "$changelog")
+	for s in "${source[@]}" ; do
+		if [[ -r "$s" ]] ; then
+			copy+=("$s")
+		fi
+	done
+	cp "${copy[@]}" "$tmp" 2> /dev/null
+	)
+	chmod -R a+wrX "$tmp"
+}
+
+do_build() {
+	cd "$tmp"
+
+	if grep -q '^arch.*any' PKGBUILD ; then
+		echo "NOTE: package's architecture is set to 'any'"
+		blackarch32-i686-build "${pass_through[@]}"
+	else
+		for arch in "${arch[@]}" ; do
+			case "$arch" in
+				i686)
+					if grep -q '^arch.*i686' PKGBUILD ; then
+						blackarch32-i686-build "${pass_through[@]}"
+					else
+						echo "NOTE: package is not compatible with i686"
+					fi
+					;;
+				x86_64)
+					if grep -q '^arch.*x86_64' PKGBUILD ; then
+						blackarch64-x86_64-build "${pass_through[@]}"
+					else
+						echo "NOTE: package is not compatible with x86_64"
+					fi
+					;;
+			esac
+		done
+	fi
+}
+
+copy_build() {
+	echo "copying built packages to '$outdir'..."
+	mkdir -p "$outdir"
+	cp *.pkg.tar.xz "$outdir"
+}
+
+main() {
+	check_for_root
+	parse_args "$@"
+
+	trap cleanup EXIT
+
+	copy_files
+	do_build
+	copy_build
+}
+
+main "$@"

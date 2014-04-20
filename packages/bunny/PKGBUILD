@@ -1,30 +1,36 @@
 pkgname=bunny
 pkgver=0.93
-pkgrel=2
+pkgrel=4
 pkgdesc="A closed loop, high-performance, general purpose protocol-blind fuzzer for C programs."
 url="http://code.google.com/p/bunny-the-fuzzer/"
 depends=('openssl')
 groups=('blackarch' 'blackarch-fuzzer')
 license=('GPL')
-arch=(i686 x86_64)
+arch=('i686' 'x86_64')
 source=(http://bunny-the-fuzzer.googlecode.com/files/bunny-$pkgver.tgz)
 md5sums=('95fac3531bf5b64e20aab748278c2129')
 
 build() {
   cd "$srcdir/bunny"
+
   make
 }
 
 package(){
   cd "$srcdir/bunny"
   
-  #Base directories
-  install -dm755 $pkgdir/usr/share/bunny
-  install -dm755 $pkgdir/usr/bin/
+  # Base directories
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/bunny"
+  install -dm755 "$pkgdir/usr/share/doc/bunny"
 
-  cp -a --no-preserve=ownership * $pkgdir/usr/share/bunny/
+  # Doc
+  install -m644 CHANGES README "$pkgdir/usr/share/doc/bunny"
 
-  #Binaries
-  ln -s $pkgdir/usr/share/bunny/bunny-main $pkgdir/usr/bin/bunny
+  # Bin
+  install -m755 bunny-{exec,flow,gcc,main,trace} "$pkgdir/usr/bin"
+
+  # Data
+  cp -a --no-preserve=ownership datasets "$pkgdir/usr/share/bunny"
+  chmod a+rX "$pkgdir"/*
 }
-

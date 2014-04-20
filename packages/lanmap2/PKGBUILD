@@ -1,19 +1,31 @@
-pkgname='lanmap2'
-pkgver=20131215
+pkgname=lanmap2
+pkgver=20131231
 pkgrel=1
-pkgdesc="Builds database/visualizations of LAN structure from passively sifted information."
-arch=('x86' 'x86_64')
-url='http://github.com/pizza/lanmap2'
+pkgdesc="Passive network mapping tool"
+arch=('i686' 'x86_64')
+url="http://github.com/rflynn/lanmap2"
 license=('GPL')
-groups=('blackarch' 'blackarch-networking' 'blackarch-misc')
-depends=('php' 'libpcap' 'graphviz' 'sqlite3' 'readline')
-source=('git+https://github.com/rflynn/lanmap2')
+groups=('blackarch' 'blackarch-recon')
+depends=('sqlite3' 'libpcap' 'php' 'graphviz')
+makedepends=('git')
+provides=('lanmap2-git')
+conflicts=('lanmap2-git')
+install='lanmap2.install'
+source=('git+http://github.com/rflynn/lanmap2.git')
 md5sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir"
-
   date +%Y%m%d
+}
+
+prepare() {
+  cd "$srcdir/lanmap2"
+
+  sed -i 's/DbFile\[\] = .*/DbFile\[\] = "db\/db";/g' src/report.c
+
+  # Fix PHP.
+  sed -i '1a\[ -z "$PHP_INI" ] && PHP_INI=/etc/php/php.ini' graph/graph.sh
+  sed -i 's/^php/php -c $PHP_INI/' graph/graph.sh
 }
 
 build() {
@@ -22,9 +34,55 @@ build() {
   make
 }
 
-package() {
-  cd "$srcdir"
-  
-  mkdir -p "$pkgdir/usr/share/lanmap2"
-  cp -r lanmap2/* "$pkgdir/usr/share/lanmap2/"
+package () {
+  cd "$srcdir/lanmap2"
+
+  # Base directories
+  install -dm755 "$pkgdir/usr/share/lanmap2/tools"
+  install -dm755 "$pkgdir/usr/share/doc/lanmap2"
+  install -dm755 "$pkgdir/usr/bin"
+
+  # Tools
+  install -m755 "$srcdir/lanmap2/src/cap" "$pkgdir/usr/share/lanmap2"
+  install -m755 "$srcdir/lanmap2/tools/os-graph" "$pkgdir/usr/share/lanmap2/tools"
+  install -m755 "$srcdir/lanmap2/tools/oui2insert" "$pkgdir/usr/share/lanmap2/tools"
+
+  # Everything
+  cp -R graph web db img "$pkgdir/usr/share/lanmap2"
+
+  # Doc
+  cp -R doc/* ref "$pkgdir/usr/share/doc/lanmap2"
+
+  # Bin
+  cat >> "$pkgdir/usr/bin/lanmap2-cap" <<\EOF
+#!/bin/sh
+
+if [ $EUID != 0 ] ; then
+  echo >&2 'run as root.'
+  exit 1
+fi
+
+cd /usr/share/lanmap2
+./cap
+EOF
+  chmod +x "$pkgdir/usr/bin/lanmap2-cap"
+
+  cat >> "$pkgdir/usr/bin/lanmap2-graph" <<\EOF
+#!/bin/sh
+
+if [ $EUID != 0 ] ; then
+  echo >&2 'run as root.'
+  exit 1
+fi
+
+cd /usr/share/lanmap2/graph
+
+# Fix PHP.
+tmp=`mktemp /tmp/lanmap.XXXXXXXX`
+cat /etc/php/php.ini > $tmp
+sed -i 's|open_basedir\s*=.*|&:/usr/share/graph|' $tmp
+
+PHP_INI=$tmp ./graph.sh
+EOF
+  chmod +x "$pkgdir/usr/bin/lanmap2-graph"
 }

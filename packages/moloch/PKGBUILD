@@ -1,27 +1,36 @@
 pkgname=moloch
 pkgver=0.9.2
-pkgrel=1
+pkgrel=2
 pkgdesc="An open source large scale IPv4 full PCAP capturing, indexing and database system."
 url="https://github.com/aol/moloch"
-arch=(any)
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 license=('APACHE')
-makedepends=('glib2' 'yara')
+options=('!strip')
+depends=('libpng' 'file' 'glib2' 'libnids' 'python' 'gcc-libs-multilib'
+         'nodejs' 'geoip' 'yara')
 source=("https://github.com/aol/moloch/archive/v$pkgver.tar.gz"
         "build_fix.patch")
-options=('!strip')
-                
 md5sums=('a5fdb9717b8ae31ba0017bd3a05eda60'
-         '51f520e632d50ceae5b2de6a2fa94046')
+         'f1650b4011635c914ee1908af13131da')
 
 build(){
- cd "$srcdir/moloch-$pkgver"
- ./configure --prefix=$pkgdir/usr
- patch -p1 -i $srcdir/build_fix.patch
- make
+  cd "$srcdir/moloch-$pkgver"
+
+  ./configure "--prefix=$pkgdir/usr/share/moloch"
+
+  # TODO: stop patching here...
+  patch -p1 -i "$srcdir/build_fix.patch"
+
+  make
 }
 
 package() {
   cd "$srcdir/moloch-$pkgver"
-  make DESTDIR=$pkgdir install
-}
 
+  make install
+
+  mv "$pkgdir/usr/share/moloch/bin" "$pkgdir/usr/bin"
+
+  find "$pkgdir" -name '*.a' -exec chmod -x {} +
+  install -Dm755 "$srcdir/moloch-$pkgver/config.ini" "$pkgdir/etc/moloch/config.ini"
+}
