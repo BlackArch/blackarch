@@ -8,19 +8,24 @@ groups=('blackarch' 'blackarch-windows')
 pkgdesc="library and collection of tools that allow you to investigate volume and file system data."
 url="http://www.sleuthkit.org"
 license=('GPL')
-depends=('autotools')
+makedepends=('git')
+depends=('autoconf' 'automake' 'libtool')
 arch=('any')
-source=(http://ftp.de.debian.org/debian/pool/main/s/sleuthkit/$(pkgname)_$(pkgver).orig.tar.gz)
-sha1sums=('9350bb59bb5fbe41d6e29a8d0494460b937749ef')
+source=('git+git@github.com:sleuthkit/sleuthkit.git')
+install=('sleuthkit.install')
+sha1sums=('SKIP')
 
-package() {
-  cd "$srcdir/sleuthkit-$pkgver"
-  ./configure
-  make
-  make install
-  cd framework/
-  rm *.zip # Remove symlinks
+pkgver()
+{
+    cd sleuthkit
+    git describe --always | sed 's|-|.|g' | sed 's/^v//'
+}
 
-  install -dm755 "$pkgdir/usr/share/windows/3proxy-win32"
-  cp -r * "$pkgdir/usr/share/windows/3proxy-win32"
+package()
+{
+    cd "$srcdir/sleuthkit-$pkgver"
+    ./configure
+    make
+    make install
+    #./bootstrap
 }
