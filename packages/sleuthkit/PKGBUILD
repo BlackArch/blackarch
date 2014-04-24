@@ -2,30 +2,36 @@
 # See COPYING for license details.
 
 pkgname='sleuthkit'
-pkgver='4.1.3'
+pkgver='2591.a9e2aa0'
 pkgrel=1
-groups=('blackarch' 'blackarch-windows')
-pkgdesc="library and collection of tools that allow you to investigate volume and file system data."
-url="http://www.sleuthkit.org"
+groups=('blackarch' 'blackarch-forensic' 'blackarch-windows')
+pkgdesc='Library and collection of tools that allow you to investigate volume and file system data.'
+url='http://www.sleuthkit.org/'
 license=('GPL')
 makedepends=('git')
 depends=('autoconf' 'automake' 'libtool')
 arch=('any')
-source=('git+git@github.com:sleuthkit/sleuthkit.git')
-install=('sleuthkit.install')
+source=('git+https://github.com/sleuthkit/sleuthkit.git')
 sha1sums=('SKIP')
 
-pkgver()
-{
-    cd sleuthkit
-    git describe --always | sed 's|-|.|g' | sed 's/^v//'
+pkgver() {
+  cd "$srcdir/sleuthkit"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-package()
-{
-    cd "$srcdir/sleuthkit-$pkgver"
-    ./configure
-    make
-    make install
-    #./bootstrap
+build() {
+  cd "$srcdir/sleuthkit"
+
+  ./bootstrap
+
+  ./configure --prefix=/usr
+
+  make
+}
+
+package() {
+  cd "$srcdir/sleuthkit"
+
+  make DESTDIR="$pkgdir" install
 }
