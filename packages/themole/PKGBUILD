@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='themole'
+pkgver='0.3'
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp')
+pkgdesc='Automatic SQL injection exploitation tool.'
+arch=('any')
+url='http://sourceforge.net/projects/themole/'
+license=('GPL3')
+depends=('python3' 'python-lxml')
+source=("http://downloads.sourceforge.net/project/themole/themole-$pkgver/themole-$pkgver-lin-src.tar.gz")
+sha1sums=('2c88472fa640230e6c00301575ec1a761b590d5c')
+
+prepare() {
+  cd "$srcdir/themole-$pkgver"
+
+  sed -i 's/python3/python/' *.py
+}
+
+package() {
+  cd "$srcdir/themole-$pkgver"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/themole"
+
+  cp -a * "$pkgdir/usr/share/themole"
+
+  cat > "$pkgdir/usr/bin/themole" << EOF
+#!/bin/sh
+exec python3 /usr/share/themole/mole.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/themole"
+}
