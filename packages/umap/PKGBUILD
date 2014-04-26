@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='umap'
+pkgver='14.2969952'
+pkgrel=1
+pkgdesc='The USB host security assessment tool.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer')
+url='https://github.com/nccgroup/umap'
+arch=('any')
+license=('AGPL')
+depends=('python3' 'python-pyserial')
+makedepends=('git')
+source=('git+https://github.com/nccgroup/umap.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/umap"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/umap"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/umap"
+
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/umap/LICENSE.txt"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/umap/README.md"
+  install -Dm644 CHANGELOG.txt "$pkgdir/usr/share/doc/umap/CHANGELOG.txt"
+
+  cp -a * "$pkgdir/usr/share/umap/"
+
+  cat > "$pkgdir/usr/bin/umap" << EOF
+#!/bin/sh
+cd /usr/share/umap
+exec python3 umap.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/umap"
+}
