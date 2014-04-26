@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='scout2'
+pkgver='98.378c181'
+pkgrel=1
+pkgdesc='Security auditing tool for AWS environments.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer')
+url='http://isecpartners.github.io/Scout2/'
+arch=('any')
+license=('GPL2')
+depends=('python2' 'python2-boto' 'python2-dateutil')
+makedepends=('git')
+source=('git+https://github.com/iSECPartners/Scout2.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Scout2"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Scout2"
+
+  install -dm755 "$pkgdir/usr/bin/"
+  install -dm755 "$pkgdir/usr/share/scout2"
+
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/scout2/LICENSE"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/scout2/README.md"
+  install -Dm644 Scout2.py "$pkgdir/usr/share/scout2/Scout2.py"
+
+  cp -a report.html AWSScout2 inc-bootstrap inc-handlebars inc-jquery \
+    inc-scout2 rules "$pkgdir/usr/share/scout2"
+
+  cat > "$pkgdir/usr/bin/scout2" << EOF
+#!/bin/sh
+cd /usr/share/scout2
+exec python2 Scout2.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/scout2"
+}
