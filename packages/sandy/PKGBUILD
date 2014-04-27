@@ -1,0 +1,36 @@
+pkgname='sandy'
+pkgver='4.224ff18'
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-crypto')
+pkgdesc='An open-source Samsung phone encryption assessment framework'
+url='https://github.com/donctl/sandy'
+arch=('any')
+license=('GPL2')
+makedepends=('git')
+depends=('python2' 'python2-pexpect' 'python2-pbkdf2' 'python2-crypto')
+source=('git+https://github.com/donctl/sandy.git')
+options=('!strip')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sandy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/sandy"
+
+  install -dm755 "$pkgdir/usr/bin/"
+  install -dm755 "$pkgdir/usr/share/sandy"
+
+  cp -a * "$pkgdir/usr/share/sandy"
+
+  cat > "$pkgdir/usr/bin/sandy" << EOF
+#!/bin/sh
+cd /usr/share/sandy
+exec python2 main.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/sandy"
+}
