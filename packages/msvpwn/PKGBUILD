@@ -1,5 +1,8 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
 pkgname='msvpwn'
-pkgver='r54.2f0540d'
+pkgver='0.1.r22.ga2e845a'
 pkgrel=1
 pkgdesc="Bypass Windows' authentication via binary patching."
 groups=('blackarch' 'blackarch-windows' 'blackarch-binary' 'blackarch-backdoor')
@@ -9,15 +12,13 @@ license=('MIT')
 depends=('openssl')
 makedepends=('git')
 provides=('msvpwn')
-source=("$pkgname::git+https://bitbucket.org/mrabault/msvpwn.git")
+source=("msvpwn::git+https://bitbucket.org/mrabault/msvpwn.git")
 sha1sums=('SKIP')
 
 pkgver() {
   cd "$srcdir/$pkgname"
 
-  # Number of revisions since beginning of the history according to
-  # the VCS PKGBUILD Guidelines for Git
-  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+  git describe | sed -r 's/([^-]*-g)/r\1/;s/-/./g' | sed -r 's/v//g'
 }
 
 build() {
@@ -30,6 +31,10 @@ package() {
   cd "$srcdir/$pkgname"
 
   make PREFIX="$pkgdir/usr" install
+
+  mkdir -p "$pkgdir"/usr/share/licenses/msvpwn
+
+  install -m 755 LICENSE "$pkgdir"/usr/share/licenses/msvpwn/LICENSE
 
   chmod 644 "$pkgdir/usr/share/licenses/msvpwn/LICENSE"
   chmod 644 "$pkgdir/usr/share/man/man1/msvpwn.1.gz"
