@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='xcavator'
+pkgver='5.bd9e2d8'
+pkgrel=1
+pkgdesc="Man-In-The-Middle and phishing attack tool that steals the victim's credentials of some web services like Facebook."
+groupds=('blackarch' 'blackarch-networking' 'blackarch-sniffer')
+arch=('any')
+url='https://github.com/nccgroup/xcavator'
+license=('GPL3')
+depends=('python2' 'python2-pysmbc' 'python2-ipaddress')
+makedepends=('git')
+options=(!emptydirs)
+source=('git+https://github.com/nccgroup/xcavator.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/xcavator"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/xcavator"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/xcavator"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/xcavator/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/xcavator/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/xcavator/"
+
+  cat > "$pkgdir/usr/bin/xcavator" << EOF
+#!/bin/sh
+cd /usr/share/xcavator
+exec python2 xcavator.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/xcavator"
+}
