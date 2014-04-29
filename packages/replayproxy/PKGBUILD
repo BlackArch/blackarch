@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='replayproxy'
+pkgver='1.1'
+pkgrel=1
+groups=('blackarch' 'blackarch-forensic' 'blackarch-proxy')
+pkgdesc='Forensic tool to replay web-based attacks (and also general HTTP traffic) that were captured in a pcap file.'
+url='https://code.google.com/p/replayproxy/'
+arch=('any')
+license=('BSD')
+depends=('python2' 'python2-dpkt' 'python2-pynids')
+source=("https://replayproxy.googlecode.com/files/replayproxy%20${pkgver}.zip")
+sha1sums=('76bd83f03ebdd3b1eeebe8ba02f4d6804494ef7a')
+
+package() {
+  cd "$srcdir"
+
+  install -dm755 "$pkgdir/usr/bin/"
+  install -dm755 "$pkgdir/usr/share/replayproxy"
+
+  install -Dm644 README "$pkgdir/usr/share/doc/replayproxy/README"
+  install -m644 INSTALL "$pkgdir/usr/share/doc/replayproxy/INSTALL"
+  install -Dm644 COPYRIGHT "$pkgdir/usr/share/licenses/replayproxy/COPYRIGHT"
+
+  rm -rf "replayproxy%201.1.zip" README INSTALL COPYRIGHT
+
+  cp -a * "$pkgdir/usr/share/replayproxy"
+
+  cat > "$pkgdir/usr/bin/replayproxy" << EOF
+#!/bin/sh
+cd /usr/share/replayproxy
+exec python2 replayproxy.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/replayproxy"
+}
