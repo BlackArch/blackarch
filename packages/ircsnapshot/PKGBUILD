@@ -3,7 +3,7 @@
 
 pkgname='ircsnapshot'
 pkgver='93.9ba3c6c'
-pkgrel=4
+pkgrel=5
 groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
 pkgdesc='Tool to gather information from IRC servers.'
 arch=('any')
@@ -20,24 +20,17 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd "$srcdir/ircsnapshot"
+
+  sed -i 's|/usr/bin/env python|/usr/bin/env python2|g' \
+    ircsnapshot/ircsnapshot.py
+}
+
 package() {
   cd "$srcdir/ircsnapshot"
 
-  install -dm755 "$pkgdir/usr/share/ircsnapshot"
-  install -dm755 "$pkgdir/usr/bin"
-
-  install -Dm744 "README.md" "$pkgdir/usr/share/doc/ircsnapshot/README.md"
-  install -Dm744 "LICENSE.TXT" \
-    "$pkgdir/usr/share/licenses/ircsnapshot/LICENSE.TXT"
-
-  rm -rf README.md LICENSE.TXT
-
-  cp -a ircsnapshot/* "$pkgdir/usr/share/ircsnapshot"
-
-  cat > "$pkgdir/usr/bin/ircsnapshot" << EOF
-#!/bin/sh
-cd /usr/share/ircsnapshot/
-exec python2 ircsnapshot.py "\$@"
-EOF
-  chmod +x "$pkgdir/usr/bin/ircsnapshot"
+  install -Dm755 ircsnapshot/ircsnapshot.py "$pkgdir/usr/bin/ircsnapshot"
+  install -Dm744 README.md "$pkgdir/usr/share/doc/ircsnapshot/README.md"
+  install -Dm744 LICENSE.TXT "$pkgdir/usr/share/licenses/ircsnapshot/LICENSE.TXT"
 }
