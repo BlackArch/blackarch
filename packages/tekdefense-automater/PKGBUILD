@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='tekdefense-automater'
+pkgver='25.9a02df6'
+pkgrel=1
+groups=('blackarch' 'blackarch-forensic')
+pkgdesc='IP URL and MD5 OSINT Analysis'
+arch=('any')
+url='https://github.com/1aN0rmus/TekDefense-Automater'
+license=('MIT')
+depends=('python2')
+source=('git+https://github.com/1aN0rmus/TekDefense-Automater.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/TekDefense-Automater"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/TekDefense-Automater"
+
+  sed -i 's|/usr/bin/python|/usr/bin/python2|g' Automater.py
+}
+
+package() {
+  cd "$srcdir/TekDefense-Automater"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/automater"
+
+  for f in *.py
+  do
+    install -m644 $f "$pkgdir/usr/share/automater/$f"
+  done
+
+  install -Dm644 "sites.xml" "$pkgdir/usr/share/automater/sites.xml"
+  install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/automater/LICENSE"
+  install -Dm644 "README.md" "$pkgdir/usr/share/doc/automater/README.md"
+
+  cp -a docs/* "$pkgdir/usr/share/doc/automater"
+
+  cat > "$pkgdir/usr/bin/automater" << EOF
+#!/bin/sh
+cd /usr/share/tekdefense-automater
+exec python2 Automater.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/automater"
+}
