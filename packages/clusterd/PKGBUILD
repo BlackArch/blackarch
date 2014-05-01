@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='clusterd'
+pkgver='65.5eaa2f7'
+pkgrel=1
+pkgdesc='Automates the fingerprinting, reconnaissance, and exploitation phases of an application server attack.'
+url='https://github.com/hatRiot/clusterd'
+arch=('any')
+groups=('blackarch' 'blackarch-automation')
+license=('MIT')
+depends=('python2' 'python2-requests' 'java-environment')
+makedepends=('git')
+source=('git+https://github.com/hatRiot/clusterd.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/clusterd"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/clusterd"
+
+  install -dm755 "$pkgdir/usr/bin/"
+
+  install -Dm755 clusterd.py "$pkgdir/usr/share/clusterd/clusterd.py"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/clusterd/LICENSE"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/clusterd/README.md"
+
+  cp -a src "$pkgdir/usr/share/clusterd"
+
+  chmod u+rwX,g+rwX,o+rX -R "$pkgdir/usr/share/clusterd/src"
+
+  cat > "$pkgdir/usr/bin/clusterd" <<EOF
+#!/bin/sh
+cd /usr/share/clusterd
+exec python2 clusterd.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/clusterd"
+}
