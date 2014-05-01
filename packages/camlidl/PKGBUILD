@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='camlidl'
+pkgver='1.05'
+pkgrel=1
+pkgdesc='A stub code generator and COM binding for Objective Caml (OCaml).'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://caml.inria.fr/pub/old_caml_site/camlidl/'
+license=('custom')
+depends=('ocaml')
+source=("http://caml.inria.fr/pub/old_caml_site/distrib/bazar-ocaml/camlidl-${pkgver}.tar.gz"
+        'arch-build-system-fix.patch' 'META.camlidl')
+sha1sums=('2a0d5ba70fea8c1de1c5387f8b2058357b2177df'
+          'a7869f04e83a279ad8327f7cade60b1e470cd24a'
+          'cdabd68036a1f52c8ba8cfb22bde5a034ff8b620')
+
+prepare() {
+  cd "$srcdir/camlidl-$pkgver"
+
+  patch -Np1 -i "$srcdir/arch-build-system-fix.patch"
+
+  cp config/Makefile.unix config/Makefile
+}
+
+build() {
+  cd "$srcdir/camlidl-$pkgver"
+
+  make all
+}
+
+package() {
+  cd "$srcdir/camlidl-$pkgver"
+
+  local _ocamldir="$(ocamlc -where)"
+
+  mkdir -p $pkgdir/usr/bin $pkgdir/$_ocamldir/{caml,camlidl}
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm644 $srcdir/META.camlidl "$pkgdir/$_ocamldir/camlidl/META"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/camlidl/LICENSE"
+}

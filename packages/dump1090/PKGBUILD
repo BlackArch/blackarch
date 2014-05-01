@@ -9,6 +9,7 @@ groups=('blackarch' 'blackarch-networking' 'blackarch-misc')
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='https://github.com/MalcolmRobb/dump1090'
 license=('custom:BSD')
+depends=('rtl-sdr')
 makedepends=('git')
 source=('git+https://github.com/MalcolmRobb/dump1090.git')
 sha1sums=('SKIP')
@@ -24,30 +25,19 @@ build() {
 
   sed -i 's#gmap\.html#/usr/share/dump1090/public_html/gmap\.html#g' dump1090.c
 
-  #sed -i 's|`pkg-config --libs librtlsdr`|-lrtlsdr|g' Makefile
-  #sed -i 's|`pkg-config --cflags librtlsdr`|-lrtlsdr -I/usr/include|g' Makefile
-
   make
 }
 
 package() {
   cd "$srcdir/dump1090"
 
-  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/dump1090"
 
-  install -Dm755 dump1090 "$pkgdir/usr/share/dump1090/dump1090"
+  install -Dm755 dump1090 "$pkgdir/usr/bin/dump1090"
   install -Dm644 README.md "$pkgdir/usr/share/doc/dump1090/README.md"
   install -m644 TODO "$pkgdir/usr/share/doc/dump1090/TODO"
 
   rm README.md TODO
 
   cp -a Release public_html testfiles tools "$pkgdir/usr/share/dump1090/"
-
-  cat > "$pkgdir/usr/bin/dump1090" << EOF
-#!/bin/sh
-cd /usr/share/dump1090
-exec ./dump1090 -h
-EOF
-
-  chmod +x "$pkgdir/usr/bin/dump1090"
 }

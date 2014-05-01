@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='camomile'
+pkgver='0.8.5'
+pkgrel=1
+pkgdesc='Comprehensive Unicode library for OCaml.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/yoriyuki/Camomile'
+license=('LGPL')
+makedepends=('ocaml' 'ocaml-findlib>=1.2.3')
+source=("https://github.com/yoriyuki/camomile/releases/download/rel-$pkgver/camomile-$pkgver.tar.bz2"
+        '0002-Install-missing-camomileLibrary.a.patch')
+options=(!strip !makeflags)
+sha1sums=('5ff0bb2474f22586713b7ce3d6b86308005525ef'
+          '4b9dba2fdc0f3921e91f30693245b76465a330bd')
+
+prepare() {
+  cd "$srcdir/camomile-$pkgver"
+
+  patch -Np1 -i "../0002-Install-missing-camomileLibrary.a.patch"
+}
+
+build() {
+  cd "$srcdir/camomile-$pkgver"
+
+  ./configure --prefix=/usr
+
+  sed -i -e 's|ocamlfind install|ocamlfind install -destdir '${pkgdir}$(ocamlfind printconf destdir)'|' Makefile
+
+  make
+}
+
+package() {
+  cd "$srcdir/camomile-$pkgver"
+
+  mkdir -p "${pkgdir}$(ocamlfind printconf destdir)"
+
+  make DATADIR="$pkgdir/usr/share" install
+
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/camomile/LICENSE"
+}
