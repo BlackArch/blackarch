@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='eyewitness'
+pkgver='114.b759a29'
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-recon' 'blackarch-misc')
+pkgdesc='Designed to take screenshots of websites, provide some server header info, and identify default credentials if possible.'
+arch=('any')
+url='https://github.com/ChrisTruncer/EyeWitness'
+license=('GPL3')
+depends=('python2' 'python2-pyqt4' 'python2-netaddr' 'ghost-py')
+makedepends=('git')
+source=('git+https://github.com/ChrisTruncer/EyeWitness.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/EyeWitness"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/EyeWitness"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/eyewitness"
+
+  install -Dm755 EyeWitness.py "$pkgdir/usr/share/eyewitness/EyeWitness.py"
+  install -m644 signatures.txt "$pkgdir/usr/share/eyewitness/signatures.txt"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/eyewitness/LICENSE"
+
+  cat > "$pkgdir/usr/bin/eyewitness" << EOF
+#!/bin/sh
+cd /usr/share/eyewitness/
+exec python2 EyeWitness.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/eyewitness"
+}
