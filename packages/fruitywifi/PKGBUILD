@@ -1,0 +1,35 @@
+pkgname=FruityWifi
+pkgver=1.9
+groups=('blackarch')
+pkgrel=1
+pkgdesc="Wireless network auditing tool"
+arch=('x86_64' 'i386' 'armv7h' 'armv7l' 'armv6l')
+url='https://github.com/xtr4nge/FruityWifi'
+license=('GPLv3')
+depends=('gettext' 'make' 'intltool' 'automake' 'autoconf' 'php' 'dos2unix' 'curl' 'dnsmasq' 'hostapd' 'aircrack-ng' 'apache')
+install='fruitywifi.install'
+source=("git+https://github.com/xtr4nge/FruityWifi"
+        "httpd.patch"
+        "fruitywifi.install")
+md5sums=('SKIP'
+         'b8174eeddaa69a8d218f328a095f2da4'
+         '785698896339471bf887ff85285fad9b')
+         
+build() {
+  cd "$srcdir/$pkgname/$pkgname/bin/"
+  cc danger.c -o danger
+  chmod +x danger
+}
+
+package() {
+  cd "$srcdir/$pkgname"
+  install -dm755 "$pkgdir/usr/share/$pkgname"
+  install -dm755 "$pkgdir/srv/http/$pkgname"
+
+  cp -aR --preserve=ownership "$pkgname" "$pkgdir/usr/share"
+  ln -sf "/usr/share/$pkgname/www" "$pkgdir/srv/http/$pkgname"
+  ln -sf "/usr/share/$pkgname/logs" "$pkgdir/srv/http/$pkgname/logs"
+
+  chmod +x "$pkgdir/usr/share/$pkgname/squid.inject/poison.pl"
+  ln -sf "/usr/share/$pkgname/www.site" "$pkgdir/srv/http/site"
+}
