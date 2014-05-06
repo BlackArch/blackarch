@@ -2,30 +2,33 @@
 # See COPYING for license details.
 
 pkgname='sslyze'
-pkgver='0.6'
-pkgrel=5
+pkgver='0.9'
+pkgrel=2
 groups=('blackarch' 'blackarch-misc')
-pkgdesc="Python tool for analyzing the configuration of SSL servers and for identifying misconfigurations"
-
-arch=('any')
+pkgdesc='Python tool for analyzing the configuration of SSL servers and for identifying misconfigurations.'
+arch=('i686' 'x86_64')
 url='https://github.com/iSECPartners/sslyze'
 license=('GPL2')
-
 depends=('python2')
-source=(https://dl.dropbox.com/s/h4cc7q68jdmxay3/sslyze-${pkgver}_src.zip)
-sha1sums=('ed6ade559ef5f80a1e2b196498b4e6e5aa1aff3a')
+if [ $CARCH = "x86_64" ]
+then
+  bit="64"
+  source=("https://github.com/iSECPartners/sslyze/releases/download/release-$pkgver/sslyze-0_9-linux64.zip")
+else
+  bit="i686"
+  source=("https://github.com/iSECPartners/sslyze/releases/download/release-$pkgver/sslyze-0_9-li
+  nux32.zip")
+fi
+sha1sums=('01d9fbfde4642353dae91da91a35523f3401a718')
 
 package() {
-  # Install files.
-  install -dm755 "$pkgdir/usr/share"
-  cp --no-preserve=ownership -r $srcdir/sslyze-${pkgver}_src $pkgdir/usr/share/sslyze
+  cd "$srcdir/sslyze-0_9-linux$bit"
 
-  # Create an indirect launcher.
-  install -dm755 $pkgdir/usr/bin
-  cat > "$pkgdir/usr/bin/sslyze" <<\EOF
-#!/bin/sh
-cd /usr/share/sslyze
-python2 sslyze.py $@
-EOF
-  chmod 755 "$pkgdir/usr/bin/sslyze"
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  mv "$pkgdir/usr/bin/sslyze.py" "$pkgdir/usr/bin/sslyze"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/sslyze/README.md"
+  install -m644 AUTHORS.txt "$pkgdir/usr/share/doc/sslyze/AUTHORS.txt"
+  install -m644 CHANGELOG.md "$pkgdir/usr/share/doc/sslyze/CHANGELOG.md"
 }

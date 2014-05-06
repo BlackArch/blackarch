@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='mbelib'
+pkgver='34.1e343f4'
+pkgrel=1
+pkgdesc='Voice codecs for P25, ProVoice, Half Rate.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/szechyjs/mbelib'
+license=('custom:copyright')
+depends=('glibc')
+makedepends=('git' 'cmake')
+source=('git+https://github.com/szechyjs/mbelib.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/mbelib"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/mbelib"
+
+  mkdir build
+  cd build
+
+  cmake ../
+
+  make DEST_BASE="/usr"
+}
+
+package() {
+  cd "$srcdir/mbelib/build"
+
+  install -d "$pkgdir/usr/lib"
+
+  cp -a libmbe.* "$pkgdir/usr/lib"
+
+  cd ..
+
+  install -Dm644 mbelib.h "$pkgdir/usr/include/mbelib.h"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/mbelib/README.md"
+  install -m644 CHANGELOG "$pkgdir/usr/share/doc/mbelib/CHANGELOG"
+  install -Dm644 COPYRIGHT "$pkgdir/usr/share/licenses/mbelib/COPYRIGHT"
+}
