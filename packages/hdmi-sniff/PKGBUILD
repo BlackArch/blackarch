@@ -3,7 +3,7 @@
 
 pkgname='hdmi-sniff'
 pkgver='4.00aa2ed'
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-hardware' 'blackarch-sniffer' 'blackarch-cracker')
 pkgdesc='HDMI DDC (I2C) inspection tool. It is designed to demonstrate just how easy it is to recover HDCP crypto keys from HDMI devices.'
 arch=('any')
@@ -30,7 +30,15 @@ prepare() {
 package() {
   cd "$srcdir/hdmi-sniff"
 
-  install -Dm755 hdmi-sniff.py "$pkgdir/usr/bin/hdmi-sniff"
-  install -m755 hdmi_ddc.py "$pkgdir/usr/bin/hdmi-ddc"
+  install -Dm755 hdmi-sniff.py "$pkgdir/usr/share/hdmi-sniff/hdmi-sniff.py"
+  install -m644 hdmi_ddc.py "$pkgdir/usr/share/hdmi-ddc/hdmi_ddc.py"
   install -Dm644 README.md "$pkgdir/usr/share/doc/hdmi-sniff/README.md"
+
+  cat > "$pkgdir/usr/bin/hdmi-sniff" << EOF
+#!/bin/sh
+cd /usr/share/hdmi-sniff
+exec python2 hdmi-sniff.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/hdmi-sniff"
 }
