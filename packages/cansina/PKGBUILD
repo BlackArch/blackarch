@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cansina'
+pkgver='93.abc6577'
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+pkgdesc='A python-based Web Content Discovery Tool.'
+arch=('any')
+url='https://github.com/deibit/cansina'
+license=('GPL3')
+depends=('python2' 'python2-requests' 'java-environment')
+makedepends=('git')
+source=('git+https://github.com/deibit/cansina.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/cansina"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/cansina"
+
+  install -dm755 "$pkgdir/usr/share/cansina"
+  install -dm755 "$pkgdir/usr/bin"
+
+  for p in *.py
+  do
+    install -Dm755 $p "$pkgdir/usr/share/cansina"
+  done
+
+  install -Dm644 payload_test.txt "$pkgdir/usr/share/cansina"
+
+  for a in assets fuzzdb
+  do
+    install -dm755 $a "$pkgdir/usr/share/cansina/$a"
+    cp -a $a/* "$pkgdir/usr/share/cansina/$a/"
+  done
+
+  cat > "$pkgdir/usr/bin/cansina" << EOF
+#!/bin/sh
+cd /usr/share/cansina
+exec python2 ./cansina.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/cansina"
+}
