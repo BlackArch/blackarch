@@ -3,14 +3,14 @@
 
 pkgname='sslscan'
 pkgver=237.80a2c96
-pkgrel=3
+pkgrel=4
 groups=('blackarch' 'blackarch-scanner' 'blackarch-crypto')
 pkgdesc='Tests SSL/TLS enabled services to discover supported cipher suites.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='https://github.com/DinoTools/sslscan'
 license=('GPL3')
 depends=('openssl' 'python3')
-makedepends=('git' 'cmake' 'gzip')
+makedepends=('git' 'cmake')
 source=('git+https://github.com/DinoTools/sslscan.git')
 sha1sums=('SKIP')
 
@@ -29,7 +29,7 @@ build() {
 
   cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX="/usr"
+    -DCMAKE_INSTALL_PREFIX=$pkgdir/usr
 
   make
 }
@@ -38,14 +38,11 @@ package() {
   cd "$srcdir/sslscan"
 
   install -dm755 "$pkgdir/usr/share/doc/sslscan"
-  install -dm755 "$pkgdir/usr/lib/python3.4/site-packages"
 
-  install -Dm755 build/src/sslscan "$pkgdir/usr/bin/sslscan"
   install -Dm644 -t "$pkgdir/usr/share/doc/sslscan/" README.md Changelog TODO
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/sslscan/LICENSE"
 
-  cp -a python/sslscan "$pkgdir/usr/lib/python3.4/site-packages/sslscan"
+  cd build
 
-  gzip doc/man/sslscan.1 && install -Dm644 doc/man/sslscan.1.gz \
-    "$pkgdir/usr/share/man1/sslscan.1.gz"
+  make install
 }
