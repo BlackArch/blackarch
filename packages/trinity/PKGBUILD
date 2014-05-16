@@ -2,29 +2,44 @@
 # See COPYING for license details.
 
 pkgname='trinity'
-pkgver='1.1.1125.g67ea7db'
+pkgver=3025.2016c4d
 pkgrel=1
-pkgdesc="A Linux System call fuzzer"
+pkgdesc='A Linux System call fuzzer.'
 groups=('blackarch' 'blackarch-fuzzer')
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-url="http://codemonkey.org.uk/projects/trinity/"
+url='http://codemonkey.org.uk/projects/trinity/'
 license=('GPL')
 makedepends=('git')
-source=('git+git://git.codemonkey.org.uk/trinity')
+source=('git+https://github.com/kernelslacker/trinity.git')
 sha1sums=('SKIP')
 
 pkgver() {
-  cd trinity
-  git describe --always | sed 's/-/./g'
+  cd "$srcdir/trinity"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd trinity
+  cd "$srcdir/trinity"
+
   ./configure.sh
+
   make
 }
 
 package() {
-  cd trinity
+  cd "$srcdir/trinity"
+
+  install -Dm644 README "$pkgdir/usr/share/doc/trinity/README"
+
+  cd Documentation
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/trinity" HACKING.txt Known-bugs.txt \
+    TODO pro-tips.txt
+
+  cd ..
+
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/trinity/COPYING"
+
   make DESTDIR="$pkgdir/usr" install
 }
