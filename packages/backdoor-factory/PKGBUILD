@@ -2,35 +2,40 @@
 # See COPYING for license details.
 
 pkgname='backdoor-factory'
-pkgver='0.r54.cb62c04'
-pkgrel=2
+pkgver=56.fa56b0a
+pkgrel=1
 groups=('blackarch' 'blackarch-backdoor' 'blackarch-binary')
-pkgdesc="Patch win32/64 binaries with shellcode"
-url="https://github.com/secretsquirrel/the-backdoor-factory"
+pkgdesc='Patch win32/64 binaries with shellcode.'
+url='https://github.com/secretsquirrel/the-backdoor-factory'
 arch=('any')
 license=('GPL3')
 depends=('python2')
 makedepends=('git')
-source=("git+https://github.com/secretsquirrel/the-backdoor-factory.git")
+source=('git+https://github.com/secretsquirrel/the-backdoor-factory.git')
 sha1sums=('SKIP')
 
 pkgver() {
   cd "$srcdir/the-backdoor-factory"
-  printf "0.r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
   cd "$srcdir/the-backdoor-factory"
 
-  # Base directories.
   install -dm755 "$pkgdir/usr/share/backdoor-factory"
   install -dm755 "$pkgdir/usr/bin/"
 
+  install -Dm644 README.md "$pkgdir/usr/share/doc/backdoor-factory/README.md"
+
+  rm README.md
+
   cp -a * "$pkgdir/usr/share/backdoor-factory"
 
-  cat > "$pkgdir/usr/bin/backdoor-factory" <<EOF
+  cat > "$pkgdir/usr/bin/backdoor-factory" << EOF
 #!/bin/sh
 exec python2 /usr/share/backdoor-factory/backdoor.py "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/backdoor-factory"
 }
