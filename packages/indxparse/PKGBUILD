@@ -1,0 +1,69 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='indxparse'
+pkgver=141.81c037d
+pkgrel=1
+groups=('blackarch' 'blackarch-forensic')
+pkgdesc='A Tool suite for inspecting NTFS artifacts.'
+arch=('any')
+url='http://www.williballenthin.com/forensics/mft/indxparse/'
+license=('APACHE')
+depends=('python2' 'wxpython2.8')
+makedepends=('git')
+source=('git+https://github.com/williballenthin/INDXParse.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/INDXParse"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/INDXParse"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/indxparse"
+  install -dm755 "$pkgdir/usr/share/doc/indxparse"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/indxparse" README CONTRIBUTORS.txt \
+    CHANGELOG
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/indxparse/LICENSE"
+
+  rm README CONTRIBUTORS.txt CHANGELOG LICENSE
+
+  cp -a * "$pkgdir/usr/share/indxparse"
+
+  cat > "$pkgdir/usr/bin/indxparse" << EOF
+#!/bin/sh
+cd /usr/share/indxparse
+exec python2 INDXParse.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/indxparse"
+
+  cat > "$pkgdir/usr/bin/mft" << EOF
+#!/bin/sh
+cd /usr/share/indxparse
+exec python2 MFT.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/mft"
+
+  cat > "$pkgdir/usr/bin/mftindx" << EOF
+#!/bin/sh
+cd /usr/share/indxparse
+exec python2 MFTINDX.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/mftindx"
+
+  cat > "$pkgdir/usr/bin/mftview" << EOF
+#!/bin/sh
+cd /usr/share/indxparse
+exec python2 MFTView.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/mftview"
+}
