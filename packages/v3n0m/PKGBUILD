@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='v3n0m'
+pkgver='73.46c4906'
+pkgrel=2
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc="Popular linux version of Balthazar/NovaCygni's 'v3n0m' scanner. Searches 18k+ dorks over 13 search engines."
+arch=('any')
+url='https://github.com/v3n0m-Scanner/V3n0M-Scanner'
+license=('GPL2')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/v3n0m-Scanner/V3n0M-Scanner.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/V3n0M-Scanner"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/V3n0M-Scanner"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/v3n0m"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/v3n0m/README.md"
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/v3n0m/COPYING"
+
+  rm README.md COPYING
+
+  cp -a * "$pkgdir/usr/share/v3n0m"
+
+  cat > "$pkgdir/usr/bin/v3n0m" << EOF
+#!/bin/sh
+cd /usr/share/v3n0m
+exec python2 V3n0mScanner.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/v3n0m"
+}

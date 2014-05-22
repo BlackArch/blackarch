@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bokken-hg'
+pkgver=357.bb4b26f55b58
+pkgrel=1
+pkgdesc='GUI for radare2 and pyew.'
+arch=('any')
+groups=('blackarch' 'blackarch-misc' 'blackarch-reverseing'
+        'blackarch-disassembler')
+url='http://inguma.eu/projects/bokken/'
+license=('GPL')
+depends=('python2' 'pygtksourceview2' 'graphviz')
+optdeps=('pyew: For pyew backend support'
+         'r2-bindings: For r2 backend support (stable)'
+				 'radare2-bindings-git: For r2 backend support (devel)')
+makedepends=('mercurial')
+options=('!strip')
+source=('hg+http://inguma.eu/repos/bokken')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/bokken"
+
+  echo $(hg identify -n).$(hg identify -i)
+}
+
+package() {
+  cd "$srcdir/bokken"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/bokken"
+
+  cp -a * "$pkgdir/usr/share/bokken"
+
+  cat > "$pkgdir/usr/bin/bokken" << EOF
+#!/bin/bash
+cd /usr/share/bokken/
+exec ./bokken "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/bokken"
+}

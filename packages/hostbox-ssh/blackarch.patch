@@ -1,0 +1,445 @@
+--- src/HostBox-SSH.py	2012-12-01 21:53:53.000000000 +0100
++++ HostBox-SSH.py	2014-05-11 03:09:51.329765430 +0200
+@@ -1,6 +1,6 @@
+-#!/usr/bin/python
+-# 
+-# Released with GNU GENERAL PUBLIC LICENSE, http://www.gnu.org/licenses/gpl.html 
++#!/usr/bin/python2
++#
++# Released with GNU GENERAL PUBLIC LICENSE, http://www.gnu.org/licenses/gpl.html
+ #
+ # Tool is written by Oskar Stridsman ostridsman@bredband.net
+ #
+@@ -13,7 +13,6 @@
+ import sys
+ import os
+ import getopt
+-from wxPython.wx import *
+ import thread
+ import wx
+ import socket
+@@ -43,7 +42,7 @@
+ 
+         self.listbox = wx.ListBox(panel, -1)
+         hbox.Add(self.listbox, 1, wx.EXPAND | wx.ALL, 20)
+-        
++
+         vbox = wx.BoxSizer(wx.VERTICAL)
+         btnPanel = wx.Panel(panel, -1)
+         new = wx.Button(btnPanel, ID_NEW, 'Import', size=(90, 30))
+@@ -53,8 +52,8 @@
+         setusr = wx.Button(btnPanel, ID_USR, 'Set Usernames', size=(120, 30))
+         setpass = wx.Button(btnPanel, ID_PSW, 'Set Passwords', size=(120, 30))
+         startscan = wx.Button(btnPanel, ID_SCN, 'Start Scan', size=(120, 30))
+-        self.skipacc = wxCheckBox ( btnPanel,-1, 'skip on successful account login' )
+-        self.skipsrv = wxCheckBox ( btnPanel,-1, 'skip on successful server login' )
++        self.skipacc = wx.CheckBox(btnPanel,-1, 'skip on successful account login')
++        self.skipsrv = wx.CheckBox(btnPanel,-1, 'skip on successful server login')
+ 
+         self.Bind(wx.EVT_BUTTON, self.NewItem, id=ID_NEW)
+         self.Bind(wx.EVT_BUTTON, self.OnRename, id=ID_RENAME)
+@@ -64,7 +63,7 @@
+         self.Bind(wx.EVT_BUTTON, self.Usr, id=ID_USR)
+         self.Bind(wx.EVT_BUTTON, self.Psw, id=ID_PSW)
+         self.Bind(wx.EVT_BUTTON, self.Scan, id=ID_SCN)
+-        
++
+         vbox.Add((-1, 20))
+         vbox.Add(new)
+         vbox.Add(ren, 0, wx.TOP, 5)
+@@ -77,7 +76,7 @@
+         vbox.Add((-1, 55))
+         vbox.Add(self.skipacc, 0, wx.TOP, 5)
+         vbox.Add(self.skipsrv, 0, wx.TOP, 5)
+-        
++
+         btnPanel.SetSizer(vbox)
+         hbox.Add(btnPanel, 0.6, wx.EXPAND | wx.RIGHT, 20)
+         panel.SetSizer(hbox)
+@@ -85,9 +84,9 @@
+         self.Centre()
+         self.Show(True)
+ 
+-    
++
+     def funcScan(self,hosts,index,skipacc,skipsrv):
+-        
++
+         breakacc = False
+         breaksrv = False
+         users = []
+@@ -98,27 +97,27 @@
+             users = self.usernames.split(',')
+         else:
+             users.append(self.usernames)
+-        
++
+         if ";" in self.passwords:
+             passw = self.passwords.split(';')
+         elif "," in self.passwords:
+             passw = self.passwords.split(',')
+         else:
+             passw.append(self.passwords)
+-        
++
+         pathname = ""
+         localtime = time.asctime( time.localtime(time.time()) )
+         localtime = localtime.replace(' ', '_')
+         ext = ["logs/",localtime, ".slg"]
+         pathname = pathname.join(ext)
+-        flogfile = open(pathname, "w") 
+-        
++        flogfile = open(pathname, "w")
++
+         for h in hosts:
+             s = socket.socket()
+             try:
+                 s.connect((h, 22))
+                 s.close()
+-                
++
+                 for u in users:
+                     if breaksrv:
+                         breaksrv = False
+@@ -126,28 +125,28 @@
+                     if breakacc:
+                         breakacc = False
+                         next
+-                    
+-                        
++
++
+                     for p in passw:
+-                        
++
+                         if breakacc:
+                             breakacc = False
+                             break
+                         if breaksrv:
+                             break
+-                    
++
+                         if p == 'blank':
+                             p = ''
+                         if p == '-username':
+                             p = u
+-        
++
+                         ssh = paramiko.SSHClient()
+                         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                         print "%s: Logging in with %s / %s" % (h,u,p)
+-        
++
+                         try:
+                             msg = ssh.connect(h, username=u, password=p)
+-            
++
+                             if msg == None:
+                                 print("On Host: %s found login combination: %s / %s" % (h,u,p))
+                                 flogfile.write("On Host: %s found login combination: %s / %s\n" % (h,u,p))
+@@ -159,54 +158,54 @@
+ 
+                         except:
+                             pass
+-                    
++
+                     if breaksrv:
+                         breaksrv = False
+                         break
+             except Exception, e:
+                 print "%s: Host Unreachable. Skipping to next!" % (h)
+                 next
+-            
+-        print "Scan %i has finished." % (index) 
++
++        print "Scan %i has finished." % (index)
+         flogfile.close()
+-        
++
+     def Scan(self, event):
+         global SCAN_INDEX
+         index = SCAN_INDEX
+         hosts = self.listbox.GetStrings()
+         skipacc = False
+         skipsrv = False
+-        
++
+         if self.skipacc.GetValue():
+             skipacc = True
+-            
++
+         if self.skipsrv.GetValue():
+             skipsrv = True
+-        
++
+         thread.start_new_thread(self.funcScan,(hosts,index,skipacc,skipsrv))
+-        
+-       
+-        
++
++
++
+         SCAN_INDEX += 1
+         wx.MessageBox('Scanner started, positive results will be written to the log directory', 'Info', wx.OK | wx.ICON_INFORMATION)
+ 
+-                    
+-        
++
++
+     def Usr(self, event):
+         sel = self.usernames
+         text = sel
+         renamed = wx.GetTextFromUser('Rename item', 'Set usernames', text)
+         if renamed != '':
+             self.usernames = renamed
+-            
+-            
++
++
+     def Psw(self, event):
+         sel = self.passwords
+         text = sel
+         renamed = wx.GetTextFromUser('Rename item', 'Set passwords', text)
+         if renamed != '':
+             self.passwords = renamed
+-    
++
+     def NewItem(self, event):
+         filters = 'All files (*.*)|*.*|Stridsman Logfiles (*.slg)|*.slg'
+ 
+@@ -221,7 +220,7 @@
+             fobject = open(selected, "r")
+             hostlines = fobject.readlines()
+             fobject.close()
+-            
++
+             if "# Nmap" in hostlines[0]:
+                 succimport = False
+                 for l in hostlines:
+@@ -232,8 +231,8 @@
+                 if succimport == False:
+                     wx.MessageBox('No open ssh ports found in the selected file (or not a greppable nmap log!)', 'Info', wx.OK | wx.ICON_INFORMATION)
+ 
+-                    
+-                       
++
++
+             else:
+                 for lines in hostlines:
+                     lines = lines.strip('\n')
+@@ -255,7 +254,7 @@
+ 
+     def OnClear(self, event):
+         self.listbox.Clear()
+-        
++
+ 
+ def printHelp():
+     os.system("clear")
+@@ -264,12 +263,12 @@
+     print '\n              -2: Break on server login\n\n'
+ 
+ def consoleScan(hostlist,usernames,passwords,skipacc,skipsrv):
+-        
++
+     breakacc = False
+     breaksrv = False
+     users = []
+     passw = []
+-    
++
+     if ';' in usernames:
+         users = usernames.split(';')
+     elif ',' in usernames:
+@@ -282,49 +281,49 @@
+         passw = passwords.split(',')
+     else:
+         passw.append(passwords)
+-    
+-        
++
++
+     pathname = ""
+     localtime = time.asctime( time.localtime(time.time()) )
+     localtime = localtime.replace(' ', '_')
+     ext = ["logs/",localtime, ".slg"]
+     pathname = pathname.join(ext)
+-    flogfile = open(pathname, "w") 
+-    os.system("clear")  
+-    
++    flogfile = open(pathname, "w")
++    os.system("clear")
++
+     for h in hostlist:
+         s = socket.socket()
+         try:
+             s.connect((h, 22))
+             s.close()
+-                
++
+             for u in users:
+-                
++
+                 if breakacc:
+                     breakacc = False
+                     next
+-                
+-                        
++
++
+                 for p in passw:
+-                        
++
+                     if breakacc:
+                         breakacc = False
+                         break
+                     if breaksrv:
+                         break
+-                    
++
+                     if p == 'blank':
+                         p = ''
+                     if p == '-username':
+                         p = u
+-        
++
+                     ssh = paramiko.SSHClient()
+                     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                     print "%s: Logging in with %s / %s" % (h,u,p)
+-        
++
+                     try:
+                         msg = ssh.connect(h, username=u, password=p)
+-            
++
+                         if msg == None:
+                             print("On Host: %s found login combination: %s / %s" % (h,u,p))
+                             flogfile.write("On Host: %s found login combination: %s / %s\n" % (h,u,p))
+@@ -333,9 +332,9 @@
+                                 breakacc = True
+                             if skipsrv:
+                                 breaksrv = True
+-                                
+-                    
+-                
++
++
++
+ 
+                     except:
+                         pass
+@@ -345,48 +344,48 @@
+         except Exception, e:
+             print "%s: Host Unreachable. Skipping to next!" % (h)
+             next
+-            
+-    print "Scan %s has finished." % (localtime) 
++
++    print "Scan %s has finished." % (localtime)
+     flogfile.close()
+ 
+ 
+ def main(argv):
+-    
++
+     app = wx.App()
+     HostBox(None, -1, 'Oskar Stridsman\'s IT Resource: HostBox SSH Scanner')
+-    
++
+     skipacc = False
+     skipsrv = False
+     infile = ""
+     hostlist = []
+-    
++
+     try:
+         opts,args = getopt.getopt(argv,"hi:u:p:12",["ifile=","ufile=","pfile="])
+         print opts,args
+         if opts == []:
+             app.MainLoop()
+-        
+-        else:    
++
++        else:
+             for opt, arg in opts:
+                 if opt == '-h':
+                     printHelp()
+                     sys.exit()
+                 elif opt in ("-i", "--ifile="):
+                     infile = arg
+-                
++
+                 elif opt in ("-u", "--ufile="):
+                     usernames = arg
+-                
++
+                 elif opt in ("-p", "--pfile="):
+                     passwords = arg
+-                
++
+                 elif opt in ("-1"):
+                     skipacc = True
+                 elif opt in ("-2"):
+                     skipsrv = True
+-                
+-        
+-        
++
++
++
+             if infile == "":
+                 printHelp()
+                 sys.exit()
+@@ -396,11 +395,11 @@
+             if passwords == "":
+                 printHelp()
+                 sys.exit()
+-        
+-    
++
++
+             fobject = open(infile, "r")
+             hostlines = fobject.readlines()
+-    
++
+             if "# Nmap" in hostlines[0]:
+                 succimport = False
+                 for l in hostlines:
+@@ -412,25 +411,25 @@
+                     print 'No open ssh ports found in the selected iplist (or not a greppable nmap log!'
+                     sys.exit()
+ 
+-                    
+-                       
++
++
+             else:
+                 for lines in hostlines:
+                     lines = lines.strip('\n')
+                     hostlist.append(lines)
+ 
+-    
++
+             consoleScan(hostlist,usernames,passwords,skipacc,skipsrv)
+-        
++
+     except getopt.GetoptError:
+         printHelp()
+         sys.exit(2)
+-    
+-    
+-    
+-    
+-            
++
++
++
++
++
+ 
+ if __name__ == "__main__":
+-    main(sys.argv[1:])   
+-   
+\ No newline at end of file
++    main(sys.argv[1:])
++
