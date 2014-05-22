@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='onionshare'
+pkgver='1.5'
+pkgrel=1
+groups=('blackarch' 'blackarch-misc')
+pkgdesc='Securely and anonymously share a file of any size'
+url="https://github.com/micahflee/onionshare" 
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+license=('GPLv3')
+depends=('tor')
+source=("git+https://github.com/micahflee/onionshare")
+sha1sums=('SKIP')
+
+prepare() {
+  sed -i 's/python/python2/g' "$srcdir/$pkgname/onionshare.py"
+}
+
+package() {
+  cd "$srcdir/$pkgname"
+  install -dm755 "$pkgdir/usr/share/$pkgname"
+  install -dm644 "$pkgdir/usr/share/doc/$pkgname"
+  install -dm644 "$pkgdir/usr/share/licenses/$pkgname"
+  install -dm755 "$pkgdir/usr/bin"
+
+  mv README.md "$pkgdir/usr/share/doc/$pkgname"
+  mv LICENSE "$pkgdir/usr/share/licenses/$pkgname"
+  cp -aR * "$pkgdir/usr/share/$pkgname"
+
+cat > "$pkgdir/usr/bin/onionshare" << EOF
+#!/bin/bash
+cd /usr/share/onionshare
+exec python2 onionshare.py "\$@"
+EOF
+
+chmod +x "$pkgdir/usr/bin/onionshare"
+}
