@@ -1,0 +1,154 @@
+<?php
+/**********************************************************************************
+* 	Janissaries Joomla Fingerprint Tool Using PacketStormSecurity with Multithread
+* 	Coded by Miyachung
+* 	miyachung@hotmail.com
+* 	Janissaries.Org
+* 	Usage -> php jomplug.php FILENAME
+* 	Example -> php jomplug.php sites.txt
+* 	Site list must be www.site.com	
+* 	Demonstration -> http://www.youtube.com/watch?v=WbRX099akjA
+***********************************************************************************/
+set_time_limit(0);
+if($argv[1] && file_exists($argv[1]))
+{
+$finder = new finder;
+$finder->main($argv[1],5);
+}
+else
+{
+exit("
+\n************************************************************
+* Janissaries Joomla Fingerprint Tool Using PacketStormSecurity with Multithread
+* Coded by Miyachung
+* Usage -> php jomplug.php FILENAME
+* Example -> php jomplug.php sites.txt
+************************************************************\n
+[-]File not found.\n
+");
+}
+
+class finder
+{
+
+private $regex 			= "#option=(.*?)\"#si";
+private $packetlink 	= "http://packetstormsecurity.com/search/?q=";
+private $expregex		= '#<a class="ico text-plain" href="(.*?)" title="(.*?)">(.*?)</a>#si';
+
+public function main($url,$thnum)
+{
+	$url = file($url);
+	$url = str_replace("\n","",$url);
+	$url = str_replace("\r","",$url);
+	$this->threading($url,$thnum);
+}
+
+private function threading($url,$thread)
+{
+
+$mcurl = curl_multi_init();
+$urlx   = array_chunk($url,$thread);
+$inc = 0;
+
+foreach($urlx as $thlinks)
+{
+	for($i=0;$i<=count($thlinks)-1;$i++)
+	{
+		if(!preg_match('/http/',$thlinks[$i])) $links = "http://".$thlinks[$i];
+		$ch[$i]=curl_init();
+		curl_setopt($ch[$i],CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($ch[$i],CURLOPT_URL,$links);
+		curl_setopt($ch[$i],CURLOPT_FOLLOWLOCATION,1);
+		curl_setopt($ch[$i],CURLOPT_TIMEOUT,25);
+		curl_multi_add_handle($mcurl,$ch[$i]);
+	}
+	
+	do
+	{
+		curl_multi_exec($mcurl,$active);
+	}while( $active > 0 );
+	
+	foreach($ch as $cid => $cend)
+	{
+	$datas[$cid] = curl_multi_getcontent($cend);
+	curl_multi_remove_handle($mcurl,$cend);
+	$inc++;
+	echo "#########################################################\n";
+	echo "[*]Scanning site: ".$thlinks[$cid]." $inc / ".count($url)."\n";
+	if(!preg_match('/option=com_/',$datas[$cid]))
+	{
+	echo "[-]It isn't joomla\n";
+	echo "#########################################################\n\n";
+	continue;
+	}
+	preg_match_all($this->regex,$datas[$cid],$plugin);
+	foreach(array_values(array_filter(array_unique(($plugin[1])))) as $plugins)
+	{
+	$plugins = explode("&",$plugins);
+	$pl[] = $plugins[0];
+	
+	}
+	echo "[*]Total plugins: ".count(array_unique($pl))."\n";
+	foreach(array_unique($pl) as $pluginx)
+	{
+		$found = false;
+		$returned	=	$this->curl(urlencode($pluginx));
+		echo "[*]Looking bugs for ".$pluginx." from packetstormsecurity\n";
+		usleep(1000);
+		
+		if(preg_match_all($this->expregex,$returned,$exploit))
+		{
+		echo "-----------------------------------------------------------------------------\n\n";
+		$this->savefile("logz.txt","#########################################################\n[*]Site -> $thlinks[$cid]\n-----------------------------------------------------------------------------\n");
+		foreach($exploit[1] as $id => $exploits)
+			{
+				$found = true;
+				$exp_link  = "http://packetstormsecurity.com".$exploits;
+				$exp_link  = trim($exp_link);
+				$exp_title = $exploit[3][$id];
+				$exp_title = trim($exp_title);
+				$exp_title = urldecode($exp_title);
+				
+				echo "[+]Found -> ".$exp_title."\n";
+				echo "[!]Link  -> ".$exp_link."\n";
+				
+				$this->savefile("logz.txt","[+]Found -> $exp_title\n[!]Link -> $exp_link\n######################\n");
+			}
+			echo "\n-----------------------------------------------------------------------------\n";
+		}
+		unset($pl);
+		if(!$found){ echo "[-]$pluginx -> No Results Found From PacketStormSecurity\n";}
+		else
+		{
+		$this->savefile("logz.txt","-----------------------------------------------------------------------------\n#########################################################\n");
+		}
+	}
+	echo "#########################################################\n\n";
+	}
+	
+}
+
+
+}
+
+private function curl($plugin)
+{
+$curl=curl_init();
+curl_setopt($curl,CURLOPT_RETURNTRANSFER,1);
+curl_setopt($curl,CURLOPT_URL,$this->packetlink.$plugin);
+$exec=curl_exec($curl);
+return $exec;
+}
+
+private function savefile($filename,$content)
+{
+$fopen=fopen($filename,'ab');
+fwrite($fopen,$content."\r\n");
+fclose($fopen);
+}
+
+
+}
+
+
+?>
