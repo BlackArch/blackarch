@@ -2,32 +2,39 @@
 # See COPYING for license details.
 
 pkgname='mdbtools'
-pkgver='0.7.1'
-pkgrel=6
+pkgver=efb6a85
+pkgrel=1
 groups=('blackarch' 'blackarch-forensic')
-pkgdesc="Utilities for viewing data and exporting schema from Microsoft Access Database files"
+pkgdesc='Utilities for viewing data and exporting schema from Microsoft Access Database files'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-url="http://sourceforge.net/projects/mdbtools/"
+url='https://github.com/brianb/mdbtools'
 license=('LGPL' 'GPL')
 depends=('libgnomeui' 'unixodbc')
 makedepends=('bison' 'flex' 'txt2man' 'autoconf' 'rarian')
-options=('!libtool' '!makeflags')
-source=("https://github.com/brianb/mdbtools/archive/$pkgver.tar.gz"
-        'gmdb2.desktop')
-sha1sums=('33b746f29c1308909a1e82546ec24e8f835d461a'
-          '275e9d98d17bd34bafeede6edb22688e8233be89')
+source=('git+https://github.com/brianb/mdbtools/')
+sha1sums=('SKIP')
+
+pkgver() {
+	cd $srcdir/$_gitname
+
+	echo $(git describe --always | sed 's|mdbtools-||g' | sed 's|-|.|g')
+}
+
+prepare() {
+  cd "$srcdir/mdbtools"
+  autoreconf -i -f
+  ./configure --prefix=/usr 
+}
 
 build() {
-  cd "$srcdir/mdbtools-$pkgver"
-  autoreconf -i -f
-  ./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man --with-unixodbc=/usr
+  cd "$srcdir/mdbtools"
+
   make
 }
 
 package() {
-  cd "$srcdir/mdbtools-$pkgver"
+  cd "$srcdir/mdbtools"
   make DESTDIR="$pkgdir" install
 
-  rmdir "$pkgdir/usr/share/man/mant"
   install -Dm644 ../gmdb2.desktop "$pkgdir/usr/share/applications/gmdb2.desktop"
 }
