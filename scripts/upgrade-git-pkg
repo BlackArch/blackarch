@@ -77,6 +77,7 @@ update_version()
             echo "  -> ${pkg}"
             cd ${pkg}
             makepkg -o > ${VERBOSE} 2>&1
+            rm -rf src
             cd ..
         done
     else
@@ -116,15 +117,13 @@ upgrade_package()
 {
     echo "  -> upgrading ${pkg}"
 
-    if [ ! -d "/tmp/${pkg}" ]
-    then
-        sudo ../scripts/babuild -g "${pkg}" -o "/tmp/${pkg}" \
-            -p "${name}" 2> $VERBOSE 2>&1
-        ../scripts/barelease -u ${user} -k ${key} -f -w /tmp/${pkg}/* \
-          2> $VERBOSE 2>&1
-    else
-        sudo rm -rf /tmp/${pkg}
-    fi
+    sudo rm -rf /tmp/${pkg} > $VERBOSE 2>&1
+
+    sudo ../scripts/babuild -g "${pkg}" -o "/tmp/${pkg}" -p "${name}" \
+      2> $VERBOSE
+
+    ../scripts/barelease -u ${user} -k ${key} -f -w /tmp/${pkg}/* \
+      2> $VERBOSE
 
     return $SUCCESS
 }
@@ -241,7 +240,6 @@ main()
     get_git_packages
     update_version
     cmp_version
-    upgrade_package
 
     return $SUCCESS
 }
