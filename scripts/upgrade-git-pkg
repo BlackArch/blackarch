@@ -1,0 +1,251 @@
+#!/bin/sh
+#
+# !!! CAUTION !!!
+#
+# this script is not finished yet. do not use it!
+#
+# !!! CAUTION !!!
+
+# upgrade-git-pkg version
+VERSION="upgrade-git-pkg v0.1"
+
+# true / false
+FALSE=0
+TRUE=1
+
+# return codes
+SUCCESS=1337
+FAILURE=31337
+
+# verbose mode - default: quiet
+VERBOSE="/dev/null"
+
+# skip update version step (makepkg -o)
+SKIP_UPDATE=$FALSE
+
+
+# print warning
+warn()
+{
+    echo "[!] WARNING: ${@}"
+
+    return $SUCCESS
+}
+
+
+# print error and exit
+err()
+{
+    echo "[-] ERROR: ${@}"
+    exit $FAILURE
+
+    return $SUCCESS
+}
+
+
+# get git based packages
+get_git_packages()
+{
+    echo "[*] getting git packages"
+
+    pkgs=`grep -r "^source=(.*['\"]git" * | cut -d '/' -f 1 | tr -s '\n' ' ' |
+    sort -u`
+
+    rm /tmp/git-packages > ${VERBOSE} 2>&1
+
+    for pkg in ${pkgs}
+    do
+        ver="`pacman -Si ${pkg} | sed -n '/: blackarch/,/Description:/p' |
+        grep '^Version' | cut -d ':' -f 2- | sed 's/.//'`"
+        echo "${pkg} ${ver}" >> /tmp/git-packages
+        sort -u /tmp/git-packages -o /tmp/git-packages
+    done
+
+    return $SUCCESS
+}
+
+
+# update git version number
+update_version()
+{
+    if [ $SKIP_UPDATE -eq $FALSE ]
+    then
+        echo "[*] updating version numbers"
+
+        for pkg in `cut -d ' ' -f 1 /tmp/git-packages`
+        do
+            echo "  -> ${pkg}"
+            cd ${pkg}
+            makepkg -o > ${VERBOSE} 2>&1
+            rm -rf src
+            cd ..
+        done
+    else
+        warn "skipping version update step"
+    fi
+
+    return $SUCCESS
+}
+
+
+# compare updated git version number with old one
+cmp_version()
+{
+    echo "[*] comparing version numbers"
+
+    for p in ${pkgs}
+    do
+        pkg="`cut -d ' ' -f 1 /tmp/git-packages | grep ${p}`"
+        old="`grep ${pkg} /tmp/git-packages | cut -d ' ' -f 2 | cut -d '-' -f 1`"
+        new="`grep -r "^pkgver=" ${pkg} | cut -d '=' -f 2 | tr -d "'"`"
+
+        if [ "${new}" != "${old}" ]
+        then
+            sed -i 's/pkgrel=.*/pkgrel=1/' ${pkg}/PKGBUILD
+            upgrade_package
+        else
+            echo "  -> skipping ${pkg}" > $VERBOSE 2>&1
+        fi
+    done
+
+    return $SUCCESS
+}
+
+
+# build and release new package
+upgrade_package()
+{
+    echo "  -> upgrading ${pkg}"
+
+    sudo rm -rf /tmp/${pkg} > $VERBOSE 2>&1
+
+    sudo ../scripts/babuild -g "${pkg}" -o "/tmp/${pkg}" -p "${name}" \
+      2> $VERBOSE
+
+    ../scripts/barelease -u ${user} -k ${key} -f -w /tmp/${pkg}/* \
+      2> $VERBOSE
+
+    return $SUCCESS
+}
+
+
+# usage and help
+usage()
+{
+    echo "usage:"
+    echo ""
+    echo "  upgrade-git-pkg -u <arg> -k <arg> -n <arg> [options] | <misc>"
+    echo ""
+    echo "options:"
+    echo ""
+    echo "  -u <user>   - username for babuild/barelease"
+    echo "  -k <keyid>  - gpg key id for babuild/barelease"
+    echo "  -n <name>   - your real name for package signing (e.g. 'Foo bar')"
+    echo "  -s          - skip updating versions step (default: off)"
+    echo "  -v          - verbose mode (default: off)"
+    echo ""
+    echo "misc:"
+    echo ""
+    echo "  -V          - print version of upgrade-git-pkg and exit"
+    echo "  -H          - print this help and exit"
+
+    exit $SUCCESS
+
+    return $SUCCESS
+}
+
+
+# check argument count
+check_argc()
+{
+    if [ ${#} -lt 1 ]
+    then
+        err "-H for help and usage"
+    fi
+
+    return $SUCCESS
+}
+
+
+# check if required arguments were selected
+check_args()
+{
+    if [ "${user}" = "" ]
+    then
+        err "no username given"
+    fi
+
+    if [ "${key}" = "" ]
+    then
+        err "no gpg keyid given"
+    fi
+
+    if [ "${name}" = "" ]
+    then
+        err "no realname given"
+    fi
+
+    return $SUCCESS
+}
+
+
+# parse command line options
+get_opts()
+{
+    while getopts u:k:n:svVH flags
+    do
+        case ${flags} in
+            u)
+                user="${OPTARG}"
+                ;;
+            k)
+                key="${OPTARG}"
+                ;;
+            n)
+                name="${OPTARG}"
+                ;;
+            s)
+                SKIP_UPDATE=$TRUE
+                ;;
+            v)
+                VERBOSE="/dev/stdout"
+                ;;
+            V)
+                echo "${VERSION}"
+                exit $SUCCESS
+                ;;
+            H)
+                usage
+                ;;
+            *)
+                err "WTF?! mount /dev/brain"
+                ;;
+        esac
+    done
+
+    return $SUCCESS
+}
+
+
+# controller and program flow
+main()
+{
+    base=${BASH_SOURCE[0]%/*}
+
+    cd "${base}/../packages"
+
+    check_argc ${@}
+    get_opts ${@}
+    check_args ${@}
+    get_git_packages
+    update_version
+    cmp_version
+
+    return $SUCCESS
+}
+
+
+# program start
+main ${@}
+
+# EOF

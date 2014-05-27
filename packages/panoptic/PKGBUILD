@@ -2,31 +2,34 @@
 # See COPYING for license details.
 
 pkgname='panoptic'
-pkgver='0.r167.9e81e72'
-pkgrel=4
+pkgver=167.9e81e72
+pkgrel=1
 groups=('blackarch' 'blackarch-automation')
-pkgdesc="A tool that automates the process of search and retrieval of content for common log and config files through LFI vulnerability"
-url="https://github.com/lightos/Panoptic"
+pkgdesc='A tool that automates the process of search and retrieval of content for common log and config files through LFI vulnerability.'
+url='https://github.com/lightos/Panoptic'
 arch=('any')
 license=('MIT')
 depends=('python2')
 makedepends=('git')
-source=("git+https://github.com/lightos/Panoptic.git")
+source=('git+https://github.com/lightos/Panoptic.git')
 sha1sums=('SKIP')
 
 pkgver() {
   cd "$srcdir/Panoptic"
-  printf "0.r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare(){
-  grep -iRl 'python' "$srcdir/Panoptic" | xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
+prepare() {
+  cd "$srcdir"
+
+  grep -iRl 'python' "$srcdir/Panoptic" |
+  xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
 }
 
 package() {
   cd "$srcdir/Panoptic"
 
-  # Base directories.
   install -dm755 "$pkgdir/usr/share/panoptic"
   install -dm755 "$pkgdir/usr/bin/"
 
@@ -37,5 +40,6 @@ cat > "$pkgdir/usr/bin/panoptic" << EOF
 cd /usr/share/panoptic/
 exec python2 panoptic.py "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/panoptic"
 }
