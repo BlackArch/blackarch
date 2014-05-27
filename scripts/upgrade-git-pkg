@@ -96,7 +96,8 @@ cmp_version()
     for p in ${pkgs}
     do
         pkg="`cut -d ' ' -f 1 /tmp/git-packages | grep ${p}`"
-        old="`grep ${pkg} /tmp/git-packages | cut -d ' ' -f 2 | cut -d '-' -f 1`"
+        old="`grep ${pkg} /tmp/git-packages | cut -d ' ' -f 2 |
+        cut -d ':' -f 2- |cut -d '-' -f 1`"
         new="`grep -r "^pkgver=" ${pkg} | cut -d '=' -f 2 | tr -d "'"`"
 
         if [ "${new}" != "${old}" ]
@@ -120,10 +121,10 @@ upgrade_package()
     sudo rm -rf /tmp/${pkg} > $VERBOSE 2>&1
 
     sudo ../scripts/babuild -g "${pkg}" -o "/tmp/${pkg}" -p "${name}" \
-      2> $VERBOSE
+        2> $VERBOSE
 
     ../scripts/barelease -u ${user} -k ${key} -f -w /tmp/${pkg}/* \
-      2> $VERBOSE
+        2> $VERBOSE
 
     return $SUCCESS
 }
