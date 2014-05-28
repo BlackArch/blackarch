@@ -2,37 +2,46 @@
 # See COPYING for license details.
 
 pkgname='onionshare'
-pkgver='1.5'
+pkgver=71.0cd457f
 pkgrel=1
-groups=('blackarch' 'blackarch-misc')
-pkgdesc='Securely and anonymously share a file of any size'
-url="https://github.com/micahflee/onionshare" 
+groups=('blackarch' 'blackarch-misc' 'blackarch-defensive')
+pkgdesc='Securely and anonymously share a file of any size.'
+url='https://github.com/micahflee/onionshare/'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-license=('GPLv3')
-depends=('tor')
-source=("git+https://github.com/micahflee/onionshare")
+license=('GPL3')
+depends=('python2' 'tor')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/micahflee/onionshare.git')
 sha1sums=('SKIP')
 
+pkgver() {
+  cd "$srcdir/onionshare"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
 prepare() {
-  sed -i 's/python/python2/g' "$srcdir/$pkgname/onionshare.py"
+  cd "$srcdir/onionshare"
+
+  #sed -i 's|python|python2|g' onionshare.py
 }
 
 package() {
-  cd "$srcdir/$pkgname"
-  install -dm755 "$pkgdir/usr/share/$pkgname"
-  install -dm644 "$pkgdir/usr/share/doc/$pkgname"
-  install -dm644 "$pkgdir/usr/share/licenses/$pkgname"
-  install -dm755 "$pkgdir/usr/bin"
+  cd "$srcdir/onionshare"
 
-  mv README.md "$pkgdir/usr/share/doc/$pkgname"
-  mv LICENSE "$pkgdir/usr/share/licenses/$pkgname"
-  cp -aR * "$pkgdir/usr/share/$pkgname"
+  #install -dm755 "$pkgdir/usr/share/onionshare"
 
-cat > "$pkgdir/usr/bin/onionshare" << EOF
-#!/bin/bash
-cd /usr/share/onionshare
-exec python2 onionshare.py "\$@"
-EOF
+  install -Dm644 README.md "$pkgdir/usr/share/doc/onionshare/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/onionshare/LICENSE"
 
-chmod +x "$pkgdir/usr/bin/onionshare"
+  python2 setup.py install --root="$pkgdir" --optimize=1
+  #cp -aR * "$pkgdir/usr/share/$pkgname"
+
+ # cat > "$pkgdir/usr/bin/onionshare" << EOF
+#!/bin/sh
+#cd /usr/share/onionshare
+#exec python2 onionshare.py "\$@"
+#EOF
+
+  #chmod +x "$pkgdir/usr/bin/onionshare"
 }
