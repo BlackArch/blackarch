@@ -23,6 +23,9 @@ VERBOSE="/dev/null"
 # skip update version step (makepkg -o)
 SKIP_UPDATE=$FALSE
 
+# dry-run: list packages that have to be upgraded
+LIST_UPGRADES=$FALSE
+
 
 # print warning
 warn()
@@ -102,8 +105,13 @@ cmp_version()
 
         if [ "${new}" != "${old}" ]
         then
-            sed -i 's/pkgrel=.*/pkgrel=1/' ${pkg}/PKGBUILD
-            upgrade_package
+            if [ $LIST_UPGRADES -eq $TRUE ]
+            then
+                echo "  -> upgrade: ${pkg} -> ${old} -> ${new}"
+            else
+                sed -i 's/pkgrel=.*/pkgrel=1/' ${pkg}/PKGBUILD
+                upgrade_package
+            fi
         else
             echo "  -> skipping ${pkg}" > $VERBOSE 2>&1
         fi
@@ -120,10 +128,10 @@ upgrade_package()
 
     sudo rm -rf /tmp/${pkg} > $VERBOSE 2>&1
 
-    sudo ../scripts/babuild -g "${pkg}" -o "/tmp/${pkg}" -p "${name}" \
+    sudo ${base}/../scripts/babuild -g "${pkg}" -o "/tmp/${pkg}" -p "${name}" \
         2> $VERBOSE
 
-    ../scripts/barelease -u ${user} -k ${key} -f -w /tmp/${pkg}/* \
+    ${base}../scripts/barelease -u ${user} -k ${key} -f -w /tmp/${pkg}/* \
         2> $VERBOSE
 
     return $SUCCESS
@@ -143,6 +151,7 @@ usage()
     echo "  -k <keyid>  - gpg key id for babuild/barelease"
     echo "  -n <name>   - your real name for package signing (e.g. 'Foo bar')"
     echo "  -s          - skip updating versions step (default: off)"
+    echo "  -l          - dry-run, do not upgrade just list the packages"
     echo "  -v          - verbose mode (default: off)"
     echo ""
     echo "misc:"
@@ -193,7 +202,7 @@ check_args()
 # parse command line options
 get_opts()
 {
-    while getopts u:k:n:svVH flags
+    while getopts u:k:n:slvVH flags
     do
         case ${flags} in
             u)
@@ -207,6 +216,9 @@ get_opts()
                 ;;
             s)
                 SKIP_UPDATE=$TRUE
+                ;;
+            l)
+                LIST_UPGRADES=$TRUE
                 ;;
             v)
                 VERBOSE="/dev/stdout"
