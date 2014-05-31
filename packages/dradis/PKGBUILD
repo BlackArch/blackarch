@@ -2,43 +2,49 @@
 # See COPYING for license details.
 
 pkgname='dradis'
-pkgver='2.5.2'
-pkgrel=2
-pkgdesc="An open source framework to enable effective information sharing."
-groups=('blackarch' 'blackarch-misc')
-url="http://dradisframework.org/"
+pkgver='2.9.0'
+pkgrel=1
+pkgdesc='An open source framework to enable effective information sharing.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-misc')
+url='http://dradisframework.org/'
 license=('GPL')
 depends=('ruby1.8' 'ruby1.8-sqlite3' 'ruby1.8-rake')
 arch=('any')
-source=(http://downloads.sourceforge.net/dradis/dradis-v$pkgver.tar.bz2)
-sha1sums=('c0f68b91a6fdd8e8f904a53e249148b52e1b815d')
+source=("http://downloads.sourceforge.net/dradis/dradis-v${pkgver}.tar.bz2")
+sha1sums=('eeb61389b85f983d1f975fc12e9828f143fdd6cb')
 
 prepare() {
-  cd "$srcdir/dradis-2.5/server/script"
+  cd "$srcdir/dradis-${pkgver//.0//}"
+
   find . -type f | xargs sed -i 's:/usr/bin/env ruby:/usr/bin/env ruby-1.8:'
 }
 
 package() {
-  cd "$srcdir/dradis-2.5/server"
+  cd "$srcdir/dradis-${pkgver//.0/}"
 
-  # Base directories.
   install -dm755 "$pkgdir/usr/bin"
   install -dm755 "$pkgdir/usr/share/dradis"
+  install -dm755 "$pkgdir/usr/share/doc/dradis"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/dradis" CHANGELOG RELEASE_NOTES \
+    readme.txt
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/dradis/LICENSE"
+  install -m644 LICENSE.logo "$pkgdir/usr/share/licenses/dradis/LICENSE.logo"
+
+  rm CHANGELOG RELEASE_NOTES readme.txt LICENSE LICENSE.logo
 
   cp -r * "$pkgdir/usr/share/dradis"
-  rm "$pkgdir/usr/share/dradis/"{README,CHANGELOG}
 
-  cd "$pkgdir/usr/bin"
-
-  # Joint scripts.
-  cat > dradis-configure << EOF
+  cat > "$pkgdir/usr/bin/dradis-configure" << EOF
 #!/bin/sh
 export PATH="/opt/ruby1.8/bin:$PATH"
 cd /usr/share/dradis
 exec rake-1.8 dradis:reset
 EOF
 
-  cat > dradis-start << EOF
+  chmod +x "$pkgdir/usr/bin/dradis-configure"
+
+  cat > "$pkgdir/usr/bin/dradis-start" << EOF
 #!/bin/sh
 export PATH="/opt/ruby1.8/bin:$PATH"
 cd /usr/share/dradis
@@ -46,5 +52,5 @@ firefox https://localhost:3004/ &
 exec ruby-1.8 script/server
 EOF
 
-  chmod +x dradis-start dradis-configure
+  chmod +x "$pkgdir/usr/bin/dradis-start"
 }

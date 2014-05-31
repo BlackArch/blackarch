@@ -1,0 +1,53 @@
+diff -rupN driftnet-0.1.6/driftnet.c driftnet-0.1.6.new/driftnet.c
+--- driftnet-0.1.6/driftnet.c	2002-07-09 20:26:41.000000000 +0100
++++ driftnet-0.1.6.new/driftnet.c	2014-05-30 19:26:09.956669689 +0100
+@@ -14,7 +14,7 @@ static const char rcsid[] = "$Id: driftn
+ #include <assert.h>
+ #include <dirent.h>
+ #include <errno.h>
+-#include <pcap.h>
++#include <pcap/pcap.h>
+ 
+ #include <netinet/in.h> /* needs to be before <arpa/inet.h> on OpenBSD */
+ #include <arpa/inet.h>
+@@ -308,6 +308,29 @@ void terminate_on_signal(int s) {
+     foad = s;
+ }
+ 
++int interface_check() {
++    static char errbuf[PCAP_ERRBUF_SIZE];
++    pcap_if_t *alldevs,*d;
++    int status = pcap_findalldevs(&alldevs, errbuf);
++
++    int count;
++    for(d=alldevs; d!=NULL; d=d->next) {
++        int i = 0;
++        pcap_addr_t *a;
++        for(a=d->addresses; a!=NULL; a=a->next) {
++            if(a->addr->sa_family == AF_INET)
++            {
++                char* test = inet_ntoa(((struct sockaddr_in*)a->addr)->sin_addr);
++                test = NULL;
++            }
++            i+=1;
++        }
++        count = i;
++    }
++    pcap_freealldevs(alldevs);
++    return count;
++}
++
+ /* setup_signals:
+  * Set up signal handlers. */
+ void setup_signals(void) {
+@@ -595,8 +618,7 @@ int main(int argc, char *argv[]) {
+     if (verbose) 
+         fprintf(stderr, PROGNAME": using temporary file directory %s\n", tmpdir);
+ 
+-    if (!interface && !(interface = pcap_lookupdev(ebuf))) {
+-        fprintf(stderr, PROGNAME": pcap_lookupdev: %s\n", ebuf);
+-        fprintf(stderr, PROGNAME": try specifying an interface with -i\n");
++     if (interface_check() <=2) {
++        fprintf(stderr, PROGNAME": Too many active interfaces, try specifying one with -i\n");
+         return -1;
+     }
