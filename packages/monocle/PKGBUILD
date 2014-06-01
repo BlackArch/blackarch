@@ -1,0 +1,34 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='monocle'
+pkgver='1.0'
+pkgrel=2
+groups=('blackarch' 'blackarch-recon' 'blackarch-networking')
+pkgdesc='A local network host discovery tool. In passive mode, it will listen for ARP request and reply packets. In active mode, it will send ARP requests to the specific IP range. The results are a list of IP and MAC addresses present on the local network.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://packetstormsecurity.com/files/99823/Monocle-Host-Discovery-Tool-1.0.html'
+license=('GPL3')
+source=("http://packetstorm.igor.onlinedirect.bg/UNIX/utilities/monocle-${pkgver}.tar.gz")
+sha1sums=('400d5f6c0b115cd52dfeec8cacdaba2084e10265')
+
+build() {
+  cd "$srcdir/monocle-$pkgver"
+
+  ./configure
+
+  # Makefile needs to be fixed. we go with this:
+  cd src
+  gcc error.c main.c mem.c netconf.c socket.c -O0 -W -o ../monocle
+}
+
+package() {
+  cd "$srcdir/monocle-$pkgver"
+
+  install -dm755 "$pkgdir/usr/share/doc/monocle"
+
+  install -Dm755 monocle "$pkgdir/usr/bin/monocle"
+  install -Dm644 -t "$pkgdir/usr/share/doc/monocle" AUTHORS BUG INSTALL NEWS \
+    README
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/monocle/COPYING"
+}
