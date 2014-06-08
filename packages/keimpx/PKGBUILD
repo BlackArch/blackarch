@@ -2,43 +2,42 @@
 # See COPYING for license details.
 
 pkgname='keimpx'
-pkgver=159.ebe5cdc
-pkgrel=1
+pkgver='0.2'
+pkgrel=7
+epoch=1
 groups=('blackarch' 'blackarch-cracker')
 pkgdesc='Tool to verify the usefulness of credentials across a network over SMB.'
-url='https://github.com/inquisb/keimpx'
+url='http://code.google.com/p/keimpx/'
 license=('Apache')
 depends=('python2' 'impacket' 'python2-crypto')
-makedepends=('git')
+makedepends=('unzip')
 arch=('any')
-source=('git+https://github.com/inquisb/keimpx.git'
+source=("http://keimpx.googlecode.com/files/keimpx-${pkgver}.zip"
         'setup.py-remove_py2exe.patch')
-sha1sums=('SKIP'
+sha1sums=('f2a2fa3282222f09267e6ba631bb9d02434f4cb4'
           'd54425f9d34d17870d13eade888207252233cfb5')
 
-pkgver() {
-  cd "$srcdir/keimpx"
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
 prepare() {
-  cd "$srcdir/keimpx"
+  cd "$srcdir/keimpx-$pkgver"
 
   sed -i 's/\/usr\/bin\/env python/\/usr\/bin\/env python2/' keimpx.py
   sed -i 's/keimpx_path =/keimpx_path = \"\/usr\/share\/keimpx\" #/' keimpx.py
+}
 
-  patch setup.py < "$srcdir/setup.py-remove_py2exe.patch"
+build() {
+  cd "$srcdir/keimpx-$pkgver"
+
+  patch setup.py < $srcdir/setup.py-remove_py2exe.patch
 }
 
 package() {
-  cd "$srcdir/keimpx"
-
-  install -dm755 "$pkgdir/usr/share/keimpx"
+  cd "$srcdir/keimpx-$pkgver"
 
   python2 setup.py install --prefix="$pkgdir/usr"
 
   install -Dm755 keimpx.py "$pkgdir/usr/bin/keimpx"
 
-  mv "$pkgdir/usr/contrib" "$pkgdir/usr/share/keimpx"
+  install -dm755 "$pkgdir/usr/share/keimpx"
+
+  mv $pkgdir/usr/contrib $pkgdir/usr/share/keimpx
 }
