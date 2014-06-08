@@ -3,13 +3,13 @@
 
 pkgname='host-extract'
 pkgver=9
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
 pkgdesc='Ruby script tries to extract all IP/Host patterns in page response of a given URL and JavaScript/CSS files of that URL.'
 arch=('any')
 url='https://code.google.com/p/host-extract/'
 license=('GPL3')
-depends=('ruby')
+depends=('ruby' 'ruby-mechanize')
 makedepends=('subversion')
 source=('svn+http://host-extract.googlecode.com/svn/trunk')
 sha1sums=('SKIP')
@@ -20,24 +20,11 @@ pkgver() {
   svn info | grep -i 'revision:' | cut -d ' ' -f 2
 }
 
-prepare() {
-  cd "$srcdir/trunk"
-
-  sed -i '1d' host-extract.rb
-}
-
 package() {
   cd "$srcdir/trunk"
 
   install -dm755 "$pkgdir/usr/bin"
 
-  install -Dm644 host-extract.rb "$pkgdir/usr/share/host-extract/host-extract.rb"
+  install -Dm755 host-extract.rb "$pkgdir/usr/bin/host-extract"
   install -Dm644 README "$pkgdir/usr/share/doc/host-extract/README"
-
-  cat > "$pkgdir/usr/bin/host-extract" << EOF
-#!/bin/sh
-exec ruby /usr/share/host-extract/host-extract.rb "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/host-extract"
 }
