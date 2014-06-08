@@ -3,7 +3,7 @@
 
 pkgname='athena-ssl-scanner'
 pkgver='0.5.2'
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-scanner' 'blackarch-crypto')
 pkgdesc='a SSL cipher scanner that checks all cipher codes. It can identify about 150 different ciphers.'
 arch=('any')
@@ -16,7 +16,21 @@ sha1sums=('49e1573a6e3bd1a325f71b0b70b0d834698c3e64')
 package() {
   cd "$srcdir"
 
-  install -Dm755 athena-ssl-cipher-check_v${pkgver//./}.jar \
-    "$pkgdir/usr/bin/athena-ssl-scanner"
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/athna-ssl-scanner/LICENSE"
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/athena-ssl-scanner"
+
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/athena-ssl-scanner/LICENSE"
+
+  rm LICENSE
+
+  mv athena-ssl-cipher-check_v${pkgver//./}.jar athena-ssl-cipher-check.jar
+
+  cp -a * "$pkgdir/usr/share/athena-ssl-scanner"
+
+  cat > "$pkgdir/usr/bin/athena-ssl-scanner" << EOF
+#!/bin/sh
+exec java -jar /usr/share/athena-ssl-scanner/athena-ssl-scanner.jar
+EOF
+
+  chmod +x "$pkgdir/usr/bin/athena-ssl-scanner"
 }
