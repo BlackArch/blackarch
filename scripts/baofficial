@@ -21,6 +21,20 @@ die() {
 	exit 1
 }
 
+usage() {
+	cat <<EOF
+usage: baofficial [options] <package name>...
+
+options
+  -n           Do not release with barelease. Instead, simply download the package
+               and signature files.
+  -o <out>     Specify an output directory for package and signatur files. This is only
+               useful with -n.
+  -s           Do not download signatures. Using this without -n is normally an error.
+  -m <mirror>  Specify an official repo mirror (default: $mirror).
+EOF
+}
+
 pkg_info() {
 	local pkg=$1
 	local item=$2
@@ -39,13 +53,14 @@ _sudo() {
 }
 
 parse_args() {
-	while getopts nm:so: flag ; do
+	while getopts no:sm:h flag ; do
 		case "$flag" in
 			n) do_release=false ;;
-			m) mirror=$OPTARG ;;
+			o) out_dir=$OPTARG  ;;
 			s) signatures=false ;;
-			o) out_dir=$OPTARG ;;
-			*) die "invalid option: $OPTARG" ;;
+			m) mirror=$OPTARG   ;;
+			h) usage; exit      ;;
+			*) usage; exit 1    ;;
 		esac
 	done
 
