@@ -2,29 +2,52 @@
 # See COPYING for license details.
 
 pkgname='responder'
-pkgver='2.0.8'
-pkgrel=1
-groups=('blackarch' 'blackarch-networking')
+pkgver=108.5c9fec9
+pkgrel=2
+epoch=1
 pkgdesc='A LLMNR and NBT-NS poisoner, with built-in HTTP/SMB/MSSQL/FTP/LDAP rogue authentication server supporting NTLMv1/NTLMv2/LMv2, Extended Security NTLMSSP and Basic HTTP authentication.'
-url='https://github.com/SpiderLabs/Responder'
-license=('custom')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-spoof'
+        'blackarch-networking')
 arch=('any')
 depends=('python2')
-source=("https://github.com/SpiderLabs/Responder/archive/v${pkgver}.tar.gz")
-sha1sums=('1509a9c710baa56751cc1316a9ba4f47a1d80d4d')
+makedepends=('git')
+url='https://github.com/SpiderLabs/Responder/'
+license=('GPL3')
+source=('git+https://github.com/SpiderLabs/Responder.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Responder"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 package() {
-  cd "$srcdir/Responder-$pkgver"
+  cd "$srcdir/Responder"
 
-  install -dm755 "$pkgdir/usr/share/responder"
   install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/responder"
+  install -dm755 "$pkgdir/usr/share/doc/responder"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/responder" README.md CHANGELOG
+
+  rm README.md CHANGELOG
 
   cp -a * "$pkgdir/usr/share/responder"
 
   cat > "$pkgdir/usr/bin/responder" << EOF
 #!/bin/sh
-exec python2 /usr/share/responder/Responder.py "\$@"
+cd /usr/share/responder
+exec python2 Responder.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/responder"
+
+  cat > "$pkgdir/usr/bin/dhcp-responder" << EOF
+#!/bin/sh
+cd /usr/share/responder
+exec python2 DHCP.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/dhcp-responder"
 }
