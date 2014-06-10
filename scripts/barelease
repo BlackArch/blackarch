@@ -19,6 +19,8 @@ repo=blackarch
 user=$USER
 # override with -b
 use_existing_sigs=false
+# override with -o
+handle_official=false
 
 # override with -f
 force=false
@@ -58,6 +60,8 @@ usage: barelease [options and package files]
   -e          Release all *.pkg.tar.xz files in the cwd.
   -b          Use signature files that are in the same directories as the
               released packages. This disables gpg signing.
+  -o          Call scripts/baofficial to handle any official packages. This
+              implies -b.
 
   --remove    Remove a package from the repo by name.
 EOF
@@ -119,6 +123,10 @@ parse_args() {
 				packages+=(*.pkg.tar.xz)
 				;;
 			-b)
+				use_existing_sigs=true
+				;;
+			-o)
+				handle_official=true
 				use_existing_sigs=true
 				;;
 			-h)
@@ -306,6 +314,10 @@ do_release() {
 
 			repo-add --nocolor -n -q blackarch.db.tar.gz *.pkg.tar.xz
 			repo-add --nocolor -n -q -f blackarch.files.tar.gz *.pkg.tar.xz || true
+		fi
+
+		if $handle_official ; then
+			"$base/baofficial" blackarch.db.tar.gz
 		fi
 
 		gpg --no-tty --default-key "$key" --yes -b blackarch.files.tar.gz > /dev/null 2>&1
