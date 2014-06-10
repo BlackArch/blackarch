@@ -17,8 +17,8 @@ sitedir=/nginx/var/www
 repo=blackarch
 # override with -u
 user=$USER
-# override with -o
-official=false
+# override with -b
+use_existing_sig=false
 
 # override with -f
 force=false
@@ -56,7 +56,8 @@ usage: barelease [options and package files]
   -d <dir>    Specify the location of the repo on the site (Default: /nginx/var/www)
   -s <site>   Specify the site to use (Default: blackarch.org)
   -e          Release all *.pkg.tar.xz files in the cwd.
-  -o          Release official packages (do not use unless you really understand)
+  -b          Use signature files that are in the same directories as the
+              released packages. This disables gpg signing.
 
   --remove    Remove a package from the repo by name.
 EOF
@@ -117,8 +118,8 @@ parse_args() {
 			-e)
 				packages+=(*.pkg.tar.xz)
 				;;
-			-o)
-				official=true
+			-b)
+				use_existing_sig=true
 				;;
 			-h)
 				usage
@@ -233,23 +234,30 @@ do_release() {
 	if ! $remove ; then
 		for package in "${packages[@]}" ; do
 			if [[ $package == *-any.pkg.tar.xz ]] ; then
-				cp "$package"{,.sig} "$tmp/i686" 2> /dev/null
-				cp "$package"{,.sig} "$tmp/x86_64" 2> /dev/null
-				cp "$package"{,.sig} "$tmp/armv6h" 2> /dev/null
-				cp "$package"{,.sig} "$tmp/armv7h" 2> /dev/null
+				dests=(i686 x86_64 armv6h armv7h)
 			elif [[ $package == *-x86_64.pkg.tar.xz ]] ; then
-				cp "$package"{,.sig} "$tmp/x86_64" 2> /dev/null
+				dests=(x86_64)
 			elif [[ $package == *-i686.pkg.tar.xz ]] ; then
-				cp "$package"{,.sig} "$tmp/i686" 2> /dev/null
+				dests=(i686)
 			elif [[ $package == *-armv6h.pkg.tar.xz ]] ; then
-				cp "$package"{,.sig} "$tmp/armv6h" 2> /dev/null
+				dests=(armv6h)
 			elif [[ $package == *-armv7h.pkg.tar.xz ]] ; then
-				cp "$package"{,.sig} "$tmp/armv7h" 2> /dev/null
+				dests=(armv7h)
 			else
-				echo "unknown arch for '$package'"
+				err "unknown arch for '$package'"
 				exit 1
 			fi
 
+			for dest in "${dests[@]}" ; do
+				if $use_existing_sigs ; then
+					if ! cp "$package.sig" "$tmp/$dest" 2> /dev/null ; then
+						err "could not file $package.sig"
+						exit 1
+					fi
+				fi
+
+				cp "$package" "$tmp/$dest" 2> /dev/null
+			done
 
 			notify_list+=("$(sed 's|.*/||;s|.pkg.tar.xz$||' <<< "$package")")
 		done
@@ -291,24 +299,13 @@ do_release() {
 		else
 			echo "signing and adding to databases..."
 				for package in *.pkg.tar.xz ; do
-					if ! $official || [[ ! -e "$package.sig" ]] ; then
+					if ! $use_existing_sigs ; then
 						gpg --no-tty --default-key "$key" --yes -b "$package" > /dev/null 2>&1
 					fi
 				done
 
 			repo-add --nocolor -n -q blackarch.db.tar.gz *.pkg.tar.xz
 			repo-add --nocolor -n -q -f blackarch.files.tar.gz *.pkg.tar.xz || true
-
-			# Handle official packages.
-			if $official ; then
-				for p in *.pkg.tar.xz ; do
-					dbname=$(sed 's/[^-]\+-[^-]\+-[^-]\+.pkg.tar.xz$//' <<< "$entry")
-					if grep -q "^$dbname " "$base/../docs/offical" ; then
-						echo "$p is an official package. adding it to groups."
-						"$base/dbmod" blackarch.db.tar.gz group "${p%.pkg.tar.xz}" blackarch $(grep "^$d " "$base/../docs/official" | cut -d' ' -f2-)
-					fi
-				done
-			fi
 		fi
 
 		gpg --no-tty --default-key "$key" --yes -b blackarch.files.tar.gz > /dev/null 2>&1
