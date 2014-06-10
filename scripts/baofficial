@@ -65,9 +65,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-handle_package() {
-	local pkgname=$1
-	local arch=$2
+pacman_init() {
+	local arch=$1
+
 	local pacman_dir=$tmp/pacman/$arch
 	local dbdir=$pacman_dir/db
 	local logfile=$pacman_dir/pacman.log
@@ -99,9 +99,17 @@ EOF
 
 	# Sync db.
 	_sudo pacman "--config=$conffile" -Sy > /dev/null
+}
+
+handle_package() {
+	local pkgname=$1
+	local arch=$2
+
+	local pacman_dir=$tmp/pacman/$arch
+	conffile=$pacman_dir/pacman.conf
 
 	# Check existence.
-	if ! pacman -Si "$pkgname" &> /dev/null ; then
+	if ! pacman "--config=$conffile" -Si "$pkgname" &> /dev/null ; then
 		die "$pkgname does not exist in the official repos"
 	fi
 
@@ -113,7 +121,7 @@ EOF
 	# Download.
 	(
 	cd "$tmp"
-	err 'downloading files...'
+	err "downloading files for $pkgname..."
 	curl -sO "$mirror/$repo/os/$arch/$pkgname-$pkgver-$pkg_arch.pkg.tar.xz"
 	curl -sO "$mirror/$repo/os/$arch/$pkgname-$pkgver-$pkg_arch.pkg.tar.xz.sig"
 	)
@@ -136,6 +144,9 @@ tmp=$(mktemp -d /tmp/baofficial.XXXXXXXX)
 main() {
 	parse_args "$@"
 	check_args
+
+	pacman_init i686
+	pacman_init x86_64
 
 	for pkgname in "${pkgnames[@]}" ; do
 		handle_package "$pkgname" i686
