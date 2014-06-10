@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='peda'
+pkgver='0.1'
+pkgrel=1
+groups=('blackarch' 'blackarch-debugger' 'blackarch-exploitation')
+pkgdesc="Python Exploit Development Assistance for GDB"
+arch=('any')
+url='https://github.com/longld/peda'
+license=('GPL3')
+depends=('python2')
+source=("https://github.com/longld/peda/archive/master.zip")
+sha1sums=('303f66e49c07a591ab956a3ab7d6d898c1893487')
+
+prepare() {
+  cd "$srcdir"
+
+  find -name '*.py' -exec sed -i 's/env python$/env python2/' '{}' \;
+}
+
+package() {
+  cd "$srcdir/peda-master"
+
+  # Base directories.
+  install -dm755 "$pkgdir/usr/share/peda"
+  install -dm755 "$pkgdir/usr/bin"
+
+  # Entire program.
+  cp --no-preserve=ownership -R * "$pkgdir/usr/share/peda"
+
+  # Joint script.
+  cat > "$pkgdir/usr/bin/peda" <<EOF
+#!/bin/sh
+exec python2 /usr/share/peda/peda.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/peda"
+}
