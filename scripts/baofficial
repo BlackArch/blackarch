@@ -30,9 +30,11 @@ pkg_info() {
 	  head -n1
 }
 
-check_for_root() {
+_sudo() {
 	if [[ $EUID != 0 ]] ; then
-		die 'run this as root.'
+		sudo "$@"
+	else
+		"$@"
 	fi
 }
 
@@ -61,27 +63,14 @@ check_args() {
 cleanup() {
 	rm -rf "$tmp"
 }
-# TODO uncomment
-#trap cleanup EXIT
+trap cleanup EXIT
 
-tmp=$(mktemp -d /tmp/baofficial.XXXXXXXX)
-# TODO remove
-echo "$tmp"
-
-main() {
-	check_for_root
-	parse_args "$@"
-	check_args
-}
-
-main "$@"
-
-pacman_dir=$tmp/pacman
-
-for arch in i686 x86_64 ; do
-	dbdir=$pacman_dir/$arch/db
-	logfile=$pacman_dir/$arch/pacman.log
-	conffile=$pacman_dir/$arch/pacman.conf
+handle_arch() {
+	local arch=$1
+	local pacman_dir=$tmp/pacman/$arch
+	local dbdir=$pacman_dir/db
+	local logfile=$pacman_dir/pacman.log
+	local conffile=$pacman_dir/pacman.conf
 
 	mkdir -p "$dbdir"
 	mkdir -p "${logfile%/*}"
@@ -105,10 +94,10 @@ Server = $mirror/\$repo/os/$arch
 Server = $mirror/\$repo/os/$arch
 EOF
 
-	err 'syncing package database...'
+	err "syncing $arch package database..."
 
 	# Sync db.
-	pacman "--config=$conffile" -Sy > /dev/null
+	_sudo pacman "--config=$conffile" -Sy > /dev/null
 
 	# Check existence.
 	if ! pacman -Si "$pkgname" &> /dev/null ; then
@@ -123,16 +112,34 @@ EOF
 	# Download.
 	(
 	cd "$tmp"
+	err 'downloading files...'
 	curl -sO "$mirror/$repo/os/$arch/$pkgname-$pkgver-$pkg_arch.pkg.tar.xz"
 	curl -sO "$mirror/$repo/os/$arch/$pkgname-$pkgver-$pkg_arch.pkg.tar.xz.sig"
 	)
-done
+}
 
-if $do_release ; then
-	barelease -o "$tmp"/*.pkg.tar.xz
-else
-	cp -i "$tmp"/*.pkg.tar.xz "$out_dir"
-	if $signatures ; then
-		cp -i "$tmp"/*.pkg.tar.xz.sig "$out_dir"
+handle_finale() {
+	if $do_release ; then
+		barelease -o "$tmp"/*.pkg.tar.xz
+		echo barelease -o "$tmp"/*.pkg.tar.xz
+	else
+		cp -i "$tmp"/*.pkg.tar.xz "$out_dir"
+		if $signatures ; then
+			cp -i "$tmp"/*.pkg.tar.xz.sig "$out_dir"
+		fi
 	fi
-fi
+}
+
+tmp=$(mktemp -d /tmp/baofficial.XXXXXXXX)
+
+main() {
+	parse_args "$@"
+	check_args
+
+	handle_arch i686
+	handle_arch x86_64
+
+	handle_finale
+}
+
+main "$@"
