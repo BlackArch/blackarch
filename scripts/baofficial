@@ -51,12 +51,12 @@ parse_args() {
 
 	shift $(( $OPTIND - 1 ))
 
-	pkgname=$1
+	pkgnames=("$@")
 }
 
 check_args() {
-	if [[ -z "$pkgname" ]] ; then
-		die 'specify a package name'
+	if (( "${#pkgnames[@]}" == 0 )) ; then
+		die 'specify at least one package name'
 	fi
 }
 
@@ -65,8 +65,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-handle_arch() {
-	local arch=$1
+handle_package() {
+	local pkgname=$1
+	local arch=$2
 	local pacman_dir=$tmp/pacman/$arch
 	local dbdir=$pacman_dir/db
 	local logfile=$pacman_dir/pacman.log
@@ -136,8 +137,10 @@ main() {
 	parse_args "$@"
 	check_args
 
-	handle_arch i686
-	handle_arch x86_64
+	for pkgname in "${pkgnames[@]}" ; do
+		handle_package "$pkgname" i686
+		handle_package "$pkgname" x86_64
+	done
 
 	handle_finale
 }
