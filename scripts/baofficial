@@ -1,0 +1,138 @@
+#!/bin/bash
+# Download official package files.
+
+# override with -n
+do_release=true
+# override with -m
+mirror=http://mirror.archlinux.no
+# override with -s
+signatures=true
+# override with -o
+out_dir=.
+
+base=${BASH_SOURCE[0]%/*}
+
+err() {
+	echo >&2 "baofficial: $*"
+}
+
+die() {
+	err "FATAL: $*"
+	exit 1
+}
+
+pkg_info() {
+	local pkg=$1
+	local item=$2
+
+	pacman "--config=$conffile" -Si "$pkg" |
+	  awk -F: "/^$item/{ gsub(/^ /, \"\", \$2); print \$2 }" |
+	  head -n1
+}
+
+check_for_root() {
+	if [[ $EUID != 0 ]] ; then
+		die 'run this as root.'
+	fi
+}
+
+parse_args() {
+	while getopts nm:so: flag ; do
+		case "$flag" in
+			n) do_release=false ;;
+			m) mirror=$OPTARG ;;
+			s) signatures=false ;;
+			o) out_dir=$OPTARG ;;
+			*) die "invalid option: $OPTARG" ;;
+		esac
+	done
+
+	shift $(( $OPTIND - 1 ))
+
+	pkgname=$1
+}
+
+check_args() {
+	if [[ -z "$pkgname" ]] ; then
+		die 'specify a package name'
+	fi
+}
+
+cleanup() {
+	rm -rf "$tmp"
+}
+# TODO uncomment
+#trap cleanup EXIT
+
+tmp=$(mktemp -d /tmp/baofficial.XXXXXXXX)
+# TODO remove
+echo "$tmp"
+
+main() {
+	check_for_root
+	parse_args "$@"
+	check_args
+}
+
+main "$@"
+
+pacman_dir=$tmp/pacman
+
+for arch in i686 x86_64 ; do
+	dbdir=$pacman_dir/$arch/db
+	logfile=$pacman_dir/$arch/pacman.log
+	conffile=$pacman_dir/$arch/pacman.conf
+
+	mkdir -p "$dbdir"
+	mkdir -p "${logfile%/*}"
+	mkdir -p "${conffile%/*}"
+
+	cat > "$conffile" <<EOF
+[options]
+Architecture = $arch
+SigLevel    = Never
+CacheDir    = $tmp/$arch
+DBPath      = $dbdir
+LogFile     = $logfile
+
+[core]
+Server = $mirror/\$repo/os/$arch
+
+[extra]
+Server = $mirror/\$repo/os/$arch
+
+[community]
+Server = $mirror/\$repo/os/$arch
+EOF
+
+	err 'syncing package database...'
+
+	# Sync db.
+	pacman "--config=$conffile" -Sy > /dev/null
+
+	# Check existence.
+	if ! pacman -Si "$pkgname" &> /dev/null ; then
+		die "$pkgname does not exist in the official repos"
+	fi
+
+	# Get info.
+	pkgver=$(pkg_info $pkgname Version)
+	pkg_arch=$(pkg_info $pkgname Architecture)
+	repo=$(pkg_info $pkgname Repository)
+
+	# Download.
+	(
+	cd "$tmp"
+	curl -sO "$mirror/$repo/os/$arch/$pkgname-$pkgver-$pkg_arch.pkg.tar.xz"
+	curl -sO "$mirror/$repo/os/$arch/$pkgname-$pkgver-$pkg_arch.pkg.tar.xz.sig"
+	)
+done
+
+if $do_release ; then
+	barelease -o "$tmp"/*.pkg.tar.xz
+else
+	cp -i "$tmp"/*.pkg.tar.xz "$out_dir"
+	if $signatures ; then
+		cp -i "$tmp"/*.pkg.tar.xz.sig "$out_dir"
+	fi
+fi
