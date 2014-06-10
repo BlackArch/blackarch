@@ -2,37 +2,43 @@
 # See COPYING for license details.
 
 pkgname='peda'
-pkgver='0.1'
+pkgver=45.d0bd978
 pkgrel=1
 groups=('blackarch' 'blackarch-debugger' 'blackarch-exploitation')
-pkgdesc="Python Exploit Development Assistance for GDB"
+pkgdesc='Python Exploit Development Assistance for GDB.'
 arch=('any')
 url='https://github.com/longld/peda'
 license=('GPL3')
-depends=('python2')
-source=("https://github.com/longld/peda/archive/master.zip")
-sha1sums=('303f66e49c07a591ab956a3ab7d6d898c1893487')
+depends=('python2' 'python2-httplib2')
+makedepends=('git')
+source=('git+https://github.com/longld/peda.git')
+sha1sums=('SKIP')
 
-prepare() {
-  cd "$srcdir"
+pkgver() {
+  cd "$srcdir/peda"
 
-  find -name '*.py' -exec sed -i 's/env python$/env python2/' '{}' \;
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd "$srcdir/peda-master"
+  cd "$srcdir/peda"
 
-  # Base directories.
-  install -dm755 "$pkgdir/usr/share/peda"
   install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/peda"
 
-  # Entire program.
-  cp --no-preserve=ownership -R * "$pkgdir/usr/share/peda"
+  install -Dm644 README "$pkgdir/usr/share/peda/README"
+  install -Dm644 README.md "$pkgdir/usr/share/peda/README"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/peda/LICENSE"
 
-  # Joint script.
-  cat > "$pkgdir/usr/bin/peda" <<EOF
+  rm README README.md LICENSE
+
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/peda"
+
+  cat > "$pkgdir/usr/bin/peda" << EOF
 #!/bin/sh
-exec python2 /usr/share/peda/peda.py "\$@"
+cd /usr/share/peda
+exec python2 peda.py "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/peda"
 }
