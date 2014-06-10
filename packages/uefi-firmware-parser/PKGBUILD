@@ -2,18 +2,33 @@
 # See COPYING for license details.
 
 pkgname='uefi-firmware-parser'
-pkgver='0.4'
+pkgver=80.d1cead2
 pkgrel=1
 groups=('blackarch' 'blackarch-firmware' 'blackarch-reversing')
 pkgdesc='Parse BIOS/Intel ME/UEFI firmware related structures: Volumes, FileSystems, Files, etc'
-arch=('any')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='https://github.com/theopolis/uefi-firmware-parser'
 license=('GPL3')
-depends=('python2' 'python2-setuptools')
-source=("https://github.com/theopolis/uefi-firmware-parser/archive/v$pkgver.tar.gz")
-sha1sums=('9d1cce096e80878e775661cf7ea6c84120826125')
+depends=('python2' 'python2-pefile')
+makedepends=('python2-setuptools')
+source=('git+https://github.com/theopolis/uefi-firmware-parser.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/uefi-firmware-parser"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 package() {
-  cd "$srcdir/uefi-firmware-parser-0.4/"
+  cd "$srcdir/uefi-firmware-parser"
+
+  install -dm755 "$pkgdir/usr/share/doc/uefi-firmware-parser"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/uefi-firmware-parser" README.rst \
+    AUTHORS requirements.txt
+  install -Dm644 LICENSE \
+    "$pkgdir/usr/share/licenses/uefi-firmware-parser/LICENSE"
+
   python2 setup.py install --root="$pkgdir" --optimize=1
 }
