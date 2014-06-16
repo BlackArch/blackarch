@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ip-https-tools'
+pkgver=4.7698f0d
+pkgrel=1
+groups=('blackarch' 'blackarch-tunnel' 'blackarch-networking')
+pkgdesc='Tools for the IP over HTTPS (IP-HTTPS) Tunneling Protocol.'
+arch=('any')
+url='https://github.com/takeshixx/ip-https-tools'
+license=('unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/takeshixx/ip-https-tools.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ip-https-tools"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/ip-https-tools"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/ip-https-tools"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/ip-https-tools/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/ip-https-tools"
+
+  cat > "$pkgdir/usr/bin/ip-https-test" << EOF
+#!/bin/sh
+exec python2 /usr/share/ip-https-tools/ip-https-test.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/ip-https-test"
+}
