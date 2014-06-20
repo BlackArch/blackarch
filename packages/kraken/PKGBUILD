@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='kraken'
+pkgver=32.368a837
+pkgrel=1
+groups=('blackarch' 'blackarch-crypto' 'blackarch-mobile' 'blackarch-hardware')
+pkgdesc='A project to encrypt A5/1 GSM signaling using a Time/Memory Tradeoff Attack.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://opensource.srlabs.de/projects/a51-decrypt'
+license=('GPL3')
+depends=('gcc-libs')
+makedepends=('git')
+source=('git+git://git.srlabs.de/kraken.git'
+        'build.patch')
+sha1sums=('SKIP'
+          '55da8f212291894bb3147f84f61482cfd4ba19b5')
+
+pkgver() {
+  cd "$srcdir/kraken"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare(){
+  cd "$srcdir/kraken/Kraken"
+
+  patch -p1 -i $srcdir/build.patch
+}
+
+build() {
+  cd "$srcdir/kraken/Kraken"
+
+  ./build.sh
+}
+
+package () {
+  cd "$srcdir/kraken/Kraken"
+
+  install -Dm755 kraken "$pkgdir/usr/bin/kraken"
+}
