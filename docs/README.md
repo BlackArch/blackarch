@@ -12,7 +12,7 @@ installation. Packages may be installed individually or by category.
 We also have a live ISO.
 
 <!-- Count tools: pacman -Sgg | grep blackarchlinux | cut -d' ' -f2 | sort -u | wc -l -->
-We currently have over 630 tools in our toolset and the repository is
+We currently have over 1019 tools in our toolset and the repository is
 constantly expanding.
 
 Get Involved
