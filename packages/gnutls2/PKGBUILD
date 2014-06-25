@@ -3,7 +3,7 @@
 
 pkgname='gnutls2'
 pkgver='2.12.23'
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-crypto')
 pkgdesc='A library which provides a secure layer over a reliable transport layer (Version 2)'
 url='http://gnutls.org/'
@@ -17,7 +17,12 @@ md5sums=('f3c1d34bd5f113395c4be0d5dfc2b7fe')
 build() {
   cd "$srcdir/gnutls-$pkgver"
   
-  ./configure --prefix=/usr/gnutls2 --with-libtasn1-prefix=/usr --with-libiconv-prefix=/usr --enable-threads=posix
+  ./configure --prefix=/usr/gnutls2 \
+    --with-libtasn1-prefix=/usr \
+    --with-libiconv-prefix=/usr \
+    --enable-threads=posix \
+    --disable-static \
+    --disable-guile
   
   make
 }
@@ -26,4 +31,7 @@ package() {
   cd "$srcdir/gnutls-${pkgver}"
   
   make DESTDIR="${pkgdir}" install
+  
+  install -d "${pkgdir}"/etc/ld.so.conf.d
+  echo '/usr/gnutls2/lib/' > "${pkgdir}/etc/ld.so.conf.d/${pkgname}.conf"
 }
