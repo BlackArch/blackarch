@@ -71,6 +71,8 @@ EOF
 cleanup() {
 	echo 'cleaning up...'
 
+	unlock
+
 	# Kill gpg-agent.
 	$we_started_gpg && kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")" 2> /dev/null >&2
 
@@ -290,7 +292,7 @@ do_release() {
 		echo "ARCH: $arch"
 
 		echo "pulling..."
-		rsync -z -e "ssh -l $user" "$site:$sitedir/blackarch/$repo/os/$arch"/{blackarch.db.tar.gz,blackarch.files.tar.gz} .
+		rsync -e "ssh -l $user" "$site:$sitedir/blackarch/$repo/os/$arch"/{blackarch.db.tar.gz,blackarch.files.tar.gz} .
 
 		if [[ ! -r blackarch.db.tar.gz || ! -r blackarch.files.tar.gz ]] ; then
 			err 'sync error. try again.'
@@ -326,15 +328,13 @@ do_release() {
 
 		echo "pushing..."
 		if ! $remove ; then
-			rsync -z --ignore-existing --chmod 644 -e "ssh -l $user" ./*.pkg.tar.xz{,.sig} \
+			rsync --ignore-existing --chmod 644 -e "ssh -l $user" ./*.pkg.tar.xz{,.sig} \
 			  "$site:$sitedir/blackarch/$repo/os/$arch" || true
 		fi
-		rsync -z --chmod 644 -e "ssh -l $user" blackarch.files.tar.gz{,.sig} \
+		rsync --chmod 644 -e "ssh -l $user" blackarch.files.tar.gz{,.sig} \
 		  blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$arch" ||
 		true
 	done
-
-	unlock
 }
 
 main() {
