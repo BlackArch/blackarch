@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='libemu'
+pkgver=571.ab48695
+pkgrel=1
+pkgdesc='A small library written in c offering basic x86 emulation and shellcode detection.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://libemu.carnivore.it/'
+license=('GPL')
+depends=('glibc')
+makedepends=('git')
+source=('libemu::git://git.carnivore.it/libemu.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/libemu"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/libemu"
+
+  sed -i 's/AM_CONFIG_HEADER/AC_CONFIG_HEADERS/g' configure.ac
+}
+
+build() {
+  cd "$srcdir/libemu"
+
+  autoreconf -i
+
+  CFLAGS="${CFLAGS} -Wno-unused-local-typedefs"
+  ./configure --prefix=/usr
+
+  make
+}
+
+package() {
+  cd "$srcdir/libemu"
+
+  make DESTDIR="$pkgdir" install
+}
