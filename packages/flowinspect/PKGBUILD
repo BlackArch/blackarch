@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='flowinspect'
+pkgver=94.01c8921
+pkgrel=1
+pkgdesc='A network traffic inspection tool.'
+groups=('blackarch' 'blackarch-networking' 'blackarch-sniffer')
+arch=('any')
+url='https://github.com/7h3rAm/flowinspect'
+license=('custom')
+depends=('python2' 'python2-pylibemu' 'python2-re2' 'python2-pynids'
+         'python2-yara' 'python2-fuzzywuzzy')
+makedepends=('git')
+source=("git+https://github.com/7h3rAm/flowinspect.git" "LICENSE")
+sha512sums=('SKIP'
+            '5ba00ca8f3dfa88fd2c5b2af7e5911bb3e962971f2089c6dd3ac0f304fae45b49c6b5e2a8ab2a7ca3ee7308ec99a581c8a20ee6cb4352408cdc29057d6118111')
+
+pkgver() {
+  cd "$srcdir/flowinspect"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/flowinspect"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/flowinspect/core"
+  mkdir -p "$pkgdir/usr/share/doc/flowinspect"
+
+  install -Dm644 core/*.py "$pkgdir/usr/share/flowinspect/core/"
+  install -Dm755 flowinspect.py "$pkgdir/usr/share/flowinspect/flowinspect.py"
+  install -Dm644 issues "$pkgdir/usr/share/doc/flowinspect/issues"
+  install -Dm644 todo "$pkgdir/usr/share/doc/flowinspect/todo"
+  install -Dm644 $srcdir/LICENSE "$pkgdir/usr/share/licenses/flowinspect/LICENSE"
+
+  cat > "$pkgdir/usr/bin/flowinspect" << EOF
+#!/bin/sh
+cd /usr/share/flowinspect
+exec python2 flowinspect.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/flowinspect"
+}
