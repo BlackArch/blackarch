@@ -1,0 +1,47 @@
+# arg 1:  the new package version
+pre_install() {
+  /bin/true
+}
+
+# arg 1:  the new package version
+post_install() {
+  echo -n "updating font cache... "
+  cd /usr/share/fonts/3270
+  /usr/bin/fc-cache -f > /dev/null
+  /usr/bin/mkfontdir
+  /usr/bin/mkfontscale
+  xset fp+ /usr/share/fonts/3270/
+  xset fp rehash
+  echo -e "\n--> You can put the hosts you want to connect to"
+  echo "--> in /etc/x3270/ibm_hosts"
+}
+
+# arg 1:  the new package version
+# arg 2:  the old package version
+pre_upgrade() {
+  /bin/true
+}
+
+# arg 1:  the new package version
+# arg 2:  the old package version
+post_upgrade() {
+  post_install $1
+}
+
+# arg 1:  the old package version
+pre_remove() {
+  [ -d /usr/share/fonts/3270 ] || return
+  rm -rf /usr/share/fonts/3270
+}
+
+# arg 1:  the old package version
+post_remove() {
+  echo -n "rebuilding font cache"
+  fc-cache -f > /dev/null
+  xset fp- /usr/share/fonts/3270/
+  xset fp rehash
+}
+
+op=$1
+shift
+$op $*

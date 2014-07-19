@@ -2,19 +2,47 @@
 # See COPYING for license details.
 
 pkgname='viper'
-pkgver='4.0'
+pkgver=279.aea7102
 pkgrel=1
-groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-webapp')
-pkgdesc='This is a simple perl script that enumerates local file inclusion attempts when given a specific target.'
+groups=('blackarch' 'blackarch-disassembler' 'blackarch-binary'
+        'blackarch-malware')
+pkgdesc='A Binary analysis framework.'
 arch=('any')
-url='http://packetstormsecurity.com/files/102848/LFI-Scanner-4.0.html'
-license=('unknown')
-depends=('perl' 'perl-libwww' 'perl-http-message')
-source=("http://packetstorm.igor.onlinedirect.bg/UNIX/scanners/lfi-scanner-ver${pkgver}.pl.txt")
-sha1sums=('91f01eb8196b42f27268190028c8c505732abedd')
+url='https://github.com/botherder/viper'
+license=('custom')
+depends=('python2' 'python2-magic' 'python2-pefile' 'python2-pydeep'
+         'python2-requests' 'python2-sqlalchemy' 'python2-crypto'
+         'python2-beautifulsoup4' 'python2-olefileio-pl')
+makedepends=('git' 'python2-sphinx')
+source=('git+https://github.com/botherder/viper.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/viper"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 package() {
-  cd "$srcdir"
+  cd "$srcdir/viper"
 
-  install -Dm755 lfi-scanner-ver${pkgver}.pl.txt "$pkgdir/usr/bin/viper"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/viper"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/viper/README.md"
+  install -Dm644 AUTHORS "$pkgdir/usr/share/doc/viper/AUTHORS"
+  install -Dm644 requirements.txt "$pkgdir/usr/share/doc/viper/requirements.txt"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/viper/LICENSE"
+
+  rm README.md AUTHORS requirements.txt LICENSE
+
+  cp -a * "$pkgdir/usr/share/viper"
+
+  cat > "$pkgdir/usr/bin/viper" << EOF
+#!/bin/sh
+cd /usr/share/viper
+exec python2 viper.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/viper"
 }

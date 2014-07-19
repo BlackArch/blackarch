@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='praeda'
+pkgver=37.093d1c0
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='An automated data/information harvesting tool designed to gather critical information from various embedded devices.'
+arch=('any')
+url='https://github.com/percx/Praeda'
+license=('GPL2')
+depends=('perl' 'perl-io-socket' 'perl-net-ssleay' 'perl-net-snmp'
+         'perl-netaddr-ip' 'perl-html-tableextract' 'perl-http-cookies'
+         'perl-html-tagparser' 'perl-uri-fetch')
+makedepends=('git')
+source=('praeda::git+https://github.com/percx/Praeda.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/praeda"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/praeda"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/praeda/"{data,jobs}
+
+  install -Dm755 praeda.pl "$pkgdir/usr/share/praeda/praeda.pl"
+  install -Dm644 data/* "$pkgdir/usr/share/praeda/data/"
+  install -Dm644 jobs/* "$pkgdir/usr/share/praeda/jobs/"
+
+  cat > "$pkgdir/usr/bin/praeda" << EOF
+#!/bin/sh
+cd /usr/share/praeda
+exec perl praeda.pl "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/praeda"
+}

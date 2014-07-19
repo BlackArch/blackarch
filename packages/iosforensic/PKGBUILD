@@ -1,0 +1,33 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='iosforensic'
+pkgver='1.0'
+pkgrel=1
+pkgdesc='iOS forensic tool https://www.owasp.org/index.php/Projects/OWASP_iOSForensic'
+groups=('blackarch' 'blackarch-forensic' 'blackarch-mobile')
+arch=('any')
+url='https://github.com/Flo354/iOSForensic'
+license=('custom')
+depends=('python2' 'sshpass' 'sqlite3' 'python2-magic' 'libplist' 'openssh')
+source=("https://github.com/Flo354/iOSForensic/archive/${pkgver}.tar.gz")
+sha1sums=('7473df679d13bf4e1abb9c620c0fcab299513e35')
+
+package(){
+  cd "$srcdir/iOSForensic-$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/iosforensic"
+
+  install -Dm755 *.py "$pkgdir/usr/share/iosforensic/"
+  install -Dm644 changelog "$pkgdir/usr/share/doc/iosforensic/changelog"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/iosforensic/README.md"
+
+  cat > "$pkgdir/usr/bin/iosforensic" << EOF
+#!/bin/sh
+cd /usr/share/iosforensic
+exec python2 iOSForensic.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/iosforensic"
+}
