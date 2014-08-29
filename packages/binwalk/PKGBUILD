@@ -2,44 +2,37 @@
 # See COPYING for license details.
 
 pkgname='binwalk'
-pkgver='1.3.0'
-pkgrel=3
+pkgver='2.0.1'
+pkgrel=1
 groups=('blackarch' 'blackarch-firmware')
-pkgdesc="A tool for searching a given binary image for embedded files"
+pkgdesc='A tool for searching a given binary image for embedded files.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url="http://binwalk.org"
 license=('MIT')
 optdepends=('firmware-mod-kit: Firmware extract rules helper')
 depends=('python2' 'python2-magic' 'python2-pyqtgraph' 'python2-opengl'
          'python2-pydeep')
-source=("https://github.com/devttys0/binwalk/archive/v$pkgver.tar.gz"
+source=("https://github.com/devttys0/binwalk/archive/v${pkgver}.tar.gz"
         'binwalk.patch')
-sha1sums=('6cab158b69e508081302305b354da12f45658272'
-          '91b0f13af7866e172bdf865f836c0a6f328631a1')
-
-prepare() {
-  cd "$srcdir"
-
-  patch -p0 < binwalk.patch
-}
+sha1sums=('b0ec783cbf72db358c5118a3052fc1ccf446d8f3'
+          '42f5aac1b50e017821c662bc643a4909d4daff8d')
 
 build() {
-  cd "$srcdir/binwalk-$pkgver/src"
+  cd "$srcdir/binwalk-$pkgver"
 
-  python2 setup.py build
+  python setup.py build
 
-  cd C
   ./configure --prefix=/usr
+
+  patch -i "$srcdir/binwalk.patch"
+
   make
 }
 
 package() {
-  cd "$srcdir/binwalk-$pkgver/src"
+  cd "$srcdir/binwalk-$pkgver"
 
-  cd C
-  make "DESTDIR=$pkgdir" install
-  cd ..
+  make DESTDIR="$pkgdir" install
 
-  python2 setup.py install "--root=$pkgdir"
-  chmod a+x "$pkgdir/usr/lib"/lib*
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/binwalk/LICENSE"
 }
