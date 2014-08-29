@@ -2,54 +2,46 @@
 # See COPYING for license details.
 
 pkgname='armitage'
-pkgver=1200
+pkgver=140715
 pkgrel=1
-epoch=3
-groups=('blackarch' 'blackarch-exploitation')
-pkgdesc="A graphical cyber attack management tool for Metasploit"
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-automation')
+pkgdesc='A graphical cyber attack management tool for Metasploit.'
 url='http://www.fastandeasyhacking.com/'
 arch=('any')
 license=('GPL')
 depends=('metasploit' 'java-environment' 'nmap' 'postgresql' 'ruby-msgpack')
 makedepends=('apache-ant' 'zip' 'unzip' 'subversion')
-install=armitage.install
-source=('svn+http://armitage.googlecode.com/svn/trunk/'
+install='armitage.install'
+source=("http://www.fastandeasyhacking.com/download/armitage${pkgver}.tgz"
         'armitage.install')
-sha1sums=('SKIP'
+sha1sums=('c8f28fe549d3838ac75fa46e1f296fed6af49f16'
           'c48183769a92176ac3b60f84dfde01903a765ae4')
 
-pkgver() {
-  cd trunk
-  svnversion | tr -d [A-z]
-}
-
-prepare() {
-  cd "$srcdir/trunk"
-  sed -i 's|/usr/share/java/apache-ant/bin/||g' package.sh
-}
-
-build() {
-  cd "$srcdir/trunk"
-  bash package.sh
-}
-
 package() {
-  cd "$srcdir/trunk"
+  cd "$srcdir/armitage"
 
-  # Base directories.
-  mkdir -p "$pkgdir/usr/share"
   mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/armitage"
 
-  # Joint script.
-  cat > "$pkgdir/usr/bin/armitage" <<\EOF
+  install -Dm644 -t "$pkgdir/usr/share/doc/armitage" readme.txt whatsnew.txt
+
+  rm readme.txt whatsnew.txt
+
+  cp -a * "$pkgdir/usr/share/armitage"
+
+  cat > "$pkgdir/usr/bin/armitage" << EOF
 #!/bin/sh
-[ -z "$MSF_DATABASE_CONFIG" ] && export MSF_DATABASE_CONFIG=/etc/metasploit/database.yml
-java -jar /usr/share/armitage/armitage.jar "$@"
+cd /usr/share/armitage
+exec ./armitage "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/armitage"
 
-  # Everything else.
-  tar -xzf "$srcdir/trunk/armitage.tgz" -C "$pkgdir/usr/share"
+  cat > "$pkgdir/usr/bin/teamserver" << EOF
+#!/bin/sh
+cd /usr/share/armitage
+exec ./teamserver "\$@"
+EOF
 
-  chown -R root:root "$pkgdir"/*
+  chmod +x "$pkgdir/usr/bin/teamserver"
 }
