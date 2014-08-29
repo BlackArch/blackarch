@@ -3,37 +3,40 @@
 
 pkgname='inguma'
 pkgver='0.1.1'
-pkgrel=6
-groups=('blackarch' 'blackarch-cracker' 'blackarch-disassembler' 'blackarch-exploitation' 'blackarch-fuzzer' 'blackarch-scanner')
-pkgdesc="A free penetration testing and vulnerability discovery toolkit entirely written in python. Framework includes modules to discover hosts, gather information about, fuzz targets, brute force usernames and passwords, exploits, and a disassembler."
+pkgrel=7
+pkgdesc='A free penetration testing and vulnerability discovery toolkit entirely written in python. Framework includes modules to discover hosts, gather information about, fuzz targets, brute force usernames and passwords, exploits, and a disassembler.'
+arch=('any')
+groups=('blackarch' 'blackarch-cracker' 'blackarch-disassembler'
+        'blackarch-exploitation' 'blackarch-fuzzer' 'blackarch-scanner')
 url='http://inguma.sourceforge.net'
 license=('GPL')
 depends=('python2' 'python2-paramiko' 'python2-pyqt')
 optdepends=('python2-cx_oracle: Access to Oracle databases'
             'python2-pysnmp: SNMP support'
             'pyqt3: GUI')
-arch=('any')
-source=(http://downloads.sourceforge.net/inguma/inguma-${pkgver}.tar.gz)
+source=("http://downloads.sourceforge.net/inguma/inguma-${pkgver}.tar.gz")
 sha1sums=('d9e59c5e11e5cf4aa7f4cd5b188023cf6fe9bca6')
-
-prepare() {
-  # python -> python2
-  find . -type f -name '*.py' -exec sed -i 's|usr/bin/python|usr/bin/env python2|' '{}' \;
-}
 
 package() {
   cd "$srcdir/inguma"
 
-  mkdir -p $pkgdir/usr/share/inguma
-  mkdir -p $pkgdir/usr/bin
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/inguma"
 
-  cp --no-preserve=ownership -r * "$pkgdir/usr/share/inguma"
-  find "$pkgdir/usr/share" -executable -exec chmod 755 '{}' \;
+  install -Dm644 -t "$pkgdir/usr/share/doc/inguma" AUTHORS BUGS ChangeLog TODO \
+    THANKS REQUIRES README MODULES.txt TUTORIAL.txt
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/inguma/LICENSE"
 
-  cat > "$pkgdir/usr/bin/inguma" <<EOF
+  rm AUTHORS BUGS ChangeLog TODO THANKS REQUIRES README MODULES.txt \
+    TUTORIAL.txt LICENSE COPYING.txt
+
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/inguma"
+
+  cat > "$pkgdir/usr/bin/inguma" << EOF
 #!/bin/sh
 cd /usr/share/inguma
-exec ./inguma.py
+exec python2 inguma.py
 EOF
+
   chmod +x "$pkgdir/usr/bin/inguma"
 }
