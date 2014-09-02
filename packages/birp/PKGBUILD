@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='birp'
+pkgver=60.1d7c49f
+pkgrel=1
+pkgdesc='A tool that will assist in the security assessment of mainframe applications served over TN3270.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-fuzzer')
+arch=('any')
+url='https://github.com/sensepost/birp'
+license=('custom')
+depends=('fontconfig' 'xorg-xset' 'xorg-mkfontscale' 'xorg-mkfontdir' 'python2'
+         'python2-colorama' 'python2-py3270' 'ipython2' 'x3270')
+source=('git+https://github.com/sensepost/birp.git' 'LICENSE')
+makedepends=('git')
+sha1sums=('SKIP'
+          'dc7c2a6a1090ab418c103ca8aae261313e00267a')
+
+pkgver() {
+  cd "$srcdir/birp"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/birp"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/birp"
+
+  install -Dm644 "Readme.md" "$pkgdir/usr/share/doc/birp/Readme.md"
+  install -Dm644 "../LICENSE" "$pkgdir/usr/share/licenses/birp/LICENSE"
+
+  rm Readme.md ../LICENSE
+
+  cp -a * "$pkgdir/usr/share/birp/"
+
+  cat > "$pkgdir/usr/bin/birp" << EOF
+#!/bin/sh
+cd /usr/share/birp
+exec python2 birp.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/birp"
+}
