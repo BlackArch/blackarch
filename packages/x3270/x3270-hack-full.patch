@@ -1,0 +1,630 @@
+diff -u x3270-3.3/ctlr.c x3270-3.3-hacked/ctlr.c
+--- x3270-3.3/ctlr.c	2013-07-12 00:03:24.000000000 +0200
++++ x3270-3.3-hacked/ctlr.c	2013-12-16 23:51:46.000000000 +0200
+@@ -454,7 +456,7 @@
+ 		baddr = nbaddr;
+ 		INC_BA(nbaddr);
+ 		if (ea_buf[baddr].fa &&
+-		    !FA_IS_PROTECTED(ea_buf[baddr].fa) &&
++		    //!FA_IS_PROTECTED(ea_buf[baddr].fa) &&
+ 		    !ea_buf[nbaddr].fa)
+ 			return nbaddr;
+ 	} while (nbaddr != baddr0);
+@@ -1159,7 +1161,7 @@
+ 		f = False;
+ 		do {
+ 			fa = ea_buf[baddr].fa;
+-			if (!FA_IS_PROTECTED(fa)) {
++			//if (!FA_IS_PROTECTED(fa)) {
+ 				mdt_clear(baddr);
+ 				do {
+ 					INC_BA(baddr);
+@@ -1171,12 +1173,12 @@
+ 						ctlr_add(baddr, EBC_null, 0);
+ 					}
+ 				} while (!ea_buf[baddr].fa);
+-			}
+-			else {
+-				do {
+-					INC_BA(baddr);
+-				} while (!ea_buf[baddr].fa);
+-			}
++			//}
++			//else {
++				//do {
++					//INC_BA(baddr);
++				//} while (!ea_buf[baddr].fa);
++			//}
+ 		} while (baddr != sbaddr);
+ 		if (!f)
+ 			cursor_move(0);
+@@ -1346,8 +1348,9 @@
+ 			 * of an unprotected field, simply advance one
+ 			 * position.
+ 			 */
+-			if (ea_buf[buffer_addr].fa &&
+-			    !FA_IS_PROTECTED(ea_buf[buffer_addr].fa)) {
++			if (ea_buf[buffer_addr].fa) {
++			//if (ea_buf[buffer_addr].fa &&
++			 //   !FA_IS_PROTECTED(ea_buf[buffer_addr].fa)) {
+ 				INC_BA(buffer_addr);
+ 				last_zpt = False;
+ 				last_cmd = True;
+@@ -1512,7 +1515,8 @@
+ 			do {
+ 				if (ea_buf[buffer_addr].fa)
+ 					current_fa = ea_buf[buffer_addr].fa;
+-				else if (!FA_IS_PROTECTED(current_fa)) {
++				//else if (!FA_IS_PROTECTED(current_fa)) {
++				else {
+ 					ctlr_add(buffer_addr, EBC_null,
+ 					    CS_BASE);
+ 				}
+diff -u x3270-3.3/fprint_screen.c x3270-3.3-hacked/fprint_screen.c
+--- x3270-3.3/fprint_screen.c	2013-07-12 00:03:24.000000000 +0200
++++ x3270-3.3-hacked/fprint_screen.c	2014-05-28 00:49:38.000000000 +0200
+@@ -80,7 +80,8 @@
+ 		HOST_COLOR_BLUE,         /* protected */
+ 		HOST_COLOR_WHITE         /* protected, intensified */
+ #       define DEFCOLOR_MAP(f) \
+-		((((f) & FA_PROTECT) >> 4) | (((f) & FA_INT_HIGH_SEL) >> 3))
++		(((f) & FA_INT_HIGH_SEL) >> 3)
++		//((((f) & FA_PROTECT) >> 4) | (((f) & FA_INT_HIGH_SEL) >> 3))
+ 	};
+ 
+ 	if (appres.m3279)
+@@ -360,6 +361,7 @@
+ 	unsigned char fa = ea_buf[fa_addr].fa;
+ 	int fa_fg, current_fg;
+ 	int fa_bg, current_bg;
++	int fa_zero = 0;
+ 	Bool fa_high, current_high;
+ 	Bool fa_ital, current_ital;
+ 	Bool mi;
+@@ -465,13 +467,21 @@
+ 			fa_ital = mi && FA_IS_MODIFIED(fa);
+ 		}
+ 		if (FA_IS_ZERO(fa)) {
+-#if defined(X3270_DBCS) /*[*/
+-			if (ctlr_dbcs_state(i) == DBCS_LEFT)
+-			    	uc = 0x3000;
+-			else
+-#endif /*]*/
+-				uc = ' ';
++//#if defined(X3270_DBCS) /*[*/
++			//if (ctlr_dbcs_state(i) == DBCS_LEFT)
++			    	//uc = 0x3000;
++			//else
++//#endif /*]*/
++				if (fa_zero > 0) { //invert colours for hidden fields
++					fa_zero = fa_fg;
++					fa_fg = fa_bg;
++					fa_bg = fa_zero;
++					fa_zero = -1;
++				}
++				//uc = ' ';
+ 		} else {
++			fa_zero = 1; //unset the flag
++		}
+ 		    	/* Convert EBCDIC to Unicode. */
+ #if defined(X3270_DBCS) /*[*/
+ 			switch (ctlr_dbcs_state(i)) {
+@@ -503,7 +513,7 @@
+ 			if (uc == 0)
+ 				uc = ' ';
+ #endif /*]*/
+-		}
++		//}
+ 
+ 		/* Translate to a type-specific format and write it out. */
+ 		if (uc == ' ' && fps->ptype != P_HTML)
+diff -u x3270-3.3/kybd.c x3270-3.3-hacked/kybd.c
+--- x3270-3.3/kybd.c	2013-07-12 00:03:24.000000000 +0200
++++ x3270-3.3-hacked/kybd.c	2013-12-16 23:51:46.000000000 +0200
+@@ -830,10 +830,10 @@
+ 	baddr = cursor_addr;
+ 	faddr = find_field_attribute(baddr);
+ 	fa = get_field_attribute(baddr);
+-	if (ea_buf[baddr].fa || FA_IS_PROTECTED(fa)) {
+-		operator_error(KL_OERR_PROTECTED);
+-		return False;
+-	}
++	//if (ea_buf[baddr].fa || FA_IS_PROTECTED(fa)) {
++		//operator_error(KL_OERR_PROTECTED);
++		//return False;
++	//}
+ 	if (appres.numeric_lock && FA_IS_NUMERIC(fa) &&
+ 	    !((code >= EBC_0 && code <= EBC_9) ||
+ 	      code == EBC_minus || code == EBC_period)) {
+@@ -1121,10 +1121,10 @@
+ 	faddr = find_field_attribute(baddr);
+ 
+ 	/* Protected? */
+-	if (ea_buf[baddr].fa || FA_IS_PROTECTED(fa)) {
+-		operator_error(KL_OERR_PROTECTED);
+-		return False;
+-	}
++	//if (ea_buf[baddr].fa || FA_IS_PROTECTED(fa)) {
++		//operator_error(KL_OERR_PROTECTED);
++		//return False;
++	//}
+ 
+ 	/* Numeric? */
+ 	if (appres.numeric_lock && FA_IS_NUMERIC(fa)) {
+@@ -1598,7 +1598,7 @@
+ 		nbaddr = baddr;
+ 		INC_BA(nbaddr);
+ 		if (ea_buf[baddr].fa &&
+-		    !FA_IS_PROTECTED(ea_buf[baddr].fa) &&
++		    //!FA_IS_PROTECTED(ea_buf[baddr].fa) &&
+ 		    !ea_buf[nbaddr].fa)
+ 			break;
+ 		DEC_BA(baddr);
+@@ -1813,10 +1813,10 @@
+ 
+ 	/* Can't delete a field attribute. */
+ 	fa = get_field_attribute(baddr);
+-	if (FA_IS_PROTECTED(fa) || ea_buf[baddr].fa) {
+-		operator_error(KL_OERR_PROTECTED);
+-		return False;
+-	}
++	//if (FA_IS_PROTECTED(fa) || ea_buf[baddr].fa) {
++		//operator_error(KL_OERR_PROTECTED);
++		//return False;
++	//}
+ 	if (ea_buf[baddr].cc == EBC_so || ea_buf[baddr].cc == EBC_si) {
+ 		/*
+ 		 * Can't delete SO or SI, unless it's adjacent to its
+@@ -1948,10 +1948,10 @@
+ 
+ 	baddr = cursor_addr;
+ 	faddr = find_field_attribute(baddr);
+-	if (faddr == baddr || FA_IS_PROTECTED(ea_buf[baddr].fa)) {
+-		operator_error(KL_OERR_PROTECTED);
+-		return;
+-	}
++	//if (faddr == baddr || FA_IS_PROTECTED(ea_buf[baddr].fa)) {
++		//operator_error(KL_OERR_PROTECTED);
++		//return;
++	//}
+ 	if (baddr && faddr == baddr - 1)
+ 		return;
+ 	do_left();
+@@ -2125,7 +2125,7 @@
+ 	prot = FA_IS_PROTECTED(get_field_attribute(baddr));
+ 
+ 	/* Skip to before this word, if in one now. */
+-	if (!prot) {
++	//if (!prot) {
+ 		c = ea_buf[baddr].cc;
+ 		while (!ea_buf[baddr].fa && c != EBC_space && c != EBC_null) {
+ 			DEC_BA(baddr);
+@@ -2133,7 +2133,7 @@
+ 				return;
+ 			c = ea_buf[baddr].cc;
+ 		}
+-	}
++	//}
+ 	baddr0 = baddr;
+ 
+ 	/* Find the end of the preceding word. */
+@@ -2144,7 +2144,8 @@
+ 			prot = FA_IS_PROTECTED(get_field_attribute(baddr));
+ 			continue;
+ 		}
+-		if (!prot && c != EBC_space && c != EBC_null)
++		//if (!prot && c != EBC_space && c != EBC_null)
++		if (c != EBC_space && c != EBC_null)
+ 			break;
+ 		DEC_BA(baddr);
+ 	} while (baddr != baddr0);
+@@ -2217,7 +2218,8 @@
+ 		c = ea_buf[baddr].cc;
+ 		if (ea_buf[baddr].fa)
+ 			prot = FA_IS_PROTECTED(ea_buf[baddr].fa);
+-		else if (!prot && c != EBC_space && c != EBC_null)
++		//else if (!prot && c != EBC_space && c != EBC_null)
++		else if (c != EBC_space && c != EBC_null)
+ 			return baddr;
+ 		INC_BA(baddr);
+ 	} while (baddr != baddr0);
+@@ -2274,13 +2276,13 @@
+ 		return;
+ 
+ 	/* If not in an unprotected field, go to the next unprotected word. */
+-	if (ea_buf[cursor_addr].fa ||
+-	    FA_IS_PROTECTED(get_field_attribute(cursor_addr))) {
+-		baddr = nu_word(cursor_addr);
+-		if (baddr != -1)
+-			cursor_move(baddr);
+-		return;
+-	}
++	//if (ea_buf[cursor_addr].fa ||
++	    //FA_IS_PROTECTED(get_field_attribute(cursor_addr))) {
++		//baddr = nu_word(cursor_addr);
++		//if (baddr != -1)
++			//cursor_move(baddr);
++		//return;
++	//}
+ 
+ 	/* If there's another word in this field, go to it. */
+ 	baddr = nt_word(cursor_addr);
+@@ -2405,7 +2407,8 @@
+ 	baddr = (baddr / COLS) * COLS;			/* 1st col */
+ 	faddr = find_field_attribute(baddr);
+ 	fa = ea_buf[faddr].fa;
+-	if (faddr != baddr && !FA_IS_PROTECTED(fa))
++	//if (faddr != baddr && !FA_IS_PROTECTED(fa))
++	if (faddr != baddr)
+ 		cursor_move(baddr);
+ 	else
+ 		cursor_move(next_unprotected(baddr));
+@@ -2689,10 +2692,10 @@
+ #endif /*]*/
+ 	baddr = cursor_addr;
+ 	fa = get_field_attribute(baddr);
+-	if (FA_IS_PROTECTED(fa) || ea_buf[baddr].fa) {
+-		operator_error(KL_OERR_PROTECTED);
+-		return;
+-	}
++	//if (FA_IS_PROTECTED(fa) || ea_buf[baddr].fa) {
++		//operator_error(KL_OERR_PROTECTED);
++		//return;
++	//}
+ 	if (formatted) {	/* erase to next field attribute */
+ 		do {
+ 			ctlr_add(baddr, EBC_null, 0);
+@@ -2754,7 +2757,7 @@
+ 		f = False;
+ 		do {
+ 			fa = ea_buf[baddr].fa;
+-			if (!FA_IS_PROTECTED(fa)) {
++			//if (!FA_IS_PROTECTED(fa)) {
+ 				mdt_clear(baddr);
+ 				do {
+ 					INC_BA(baddr);
+@@ -2766,11 +2769,11 @@
+ 						ctlr_add(baddr, EBC_null, 0);
+ 					}
+ 				} while (!ea_buf[baddr].fa);
+-			} else {	/* skip protected */
+-				do {
+-					INC_BA(baddr);
+-				} while (!ea_buf[baddr].fa);
+-			}
++			//} else {	/* skip protected */
++				//do {
++					//INC_BA(baddr);
++				//} while (!ea_buf[baddr].fa);
++			//}
+ 		} while (baddr != sbaddr);
+ 		if (!f)
+ 			cursor_move(0);
+@@ -2816,10 +2819,10 @@
+ 	fa = get_field_attribute(baddr);
+ 
+ 	/* Make sure we're on a modifiable field. */
+-	if (FA_IS_PROTECTED(fa) || ea_buf[baddr].fa) {
+-		operator_error(KL_OERR_PROTECTED);
+-		return;
+-	}
++	//if (FA_IS_PROTECTED(fa) || ea_buf[baddr].fa) {
++		//operator_error(KL_OERR_PROTECTED);
++		//return;
++	//}
+ 
+ 	/* Backspace over any spaces to the left of the cursor. */
+ 	for (;;) {
+@@ -2882,10 +2885,10 @@
+ 
+ 	baddr = cursor_addr;
+ 	fa = get_field_attribute(baddr);
+-	if (FA_IS_PROTECTED(fa) || ea_buf[baddr].fa) {
+-		operator_error(KL_OERR_PROTECTED);
+-		return;
+-	}
++	//if (FA_IS_PROTECTED(fa) || ea_buf[baddr].fa) {
++		//operator_error(KL_OERR_PROTECTED);
++		//return;
++	//}
+ 	while (!ea_buf[baddr].fa)
+ 		DEC_BA(baddr);
+ 	INC_BA(baddr);
+@@ -2996,8 +2999,8 @@
+ 	baddr = cursor_addr;
+ 	faddr = find_field_attribute(baddr);
+ 	fa = ea_buf[faddr].fa;
+-	if (faddr == baddr || FA_IS_PROTECTED(fa))
+-		return;
++	//if (faddr == baddr || FA_IS_PROTECTED(fa))
++		//return;
+ 
+ 	baddr = faddr;
+ 	while (True) {
+@@ -3336,11 +3339,11 @@
+ 		}
+ 		faddr = find_field_attribute(baddr);
+ 		fa = ea_buf[faddr].fa;
+-		if (faddr == baddr || FA_IS_PROTECTED(fa)) {
+-			baddr = next_unprotected(baddr);
+-			if (baddr <= b0)
+-				return False;
+-		}
++		//if (faddr == baddr || FA_IS_PROTECTED(fa)) {
++			//baddr = next_unprotected(baddr);
++			//if (baddr <= b0)
++				//return False;
++		//}
+ 	}
+ 
+ 	cursor_move(baddr);
+@@ -3947,26 +3950,26 @@
+ 		return 0;
+ 
+ 	fa = get_field_attribute(cursor_addr);
+-	if (ea_buf[cursor_addr].fa || FA_IS_PROTECTED(fa)) {
+-		/*
+-		 * The cursor is not in an unprotected field.  Find the
+-		 * next one.
+-		 */
+-		baddr = next_unprotected(cursor_addr);
+-
+-		/* If there isn't any, give up. */
+-		if (!baddr)
+-			return 0;
++	//if (ea_buf[cursor_addr].fa || FA_IS_PROTECTED(fa)) {
++		///*
++		 //* The cursor is not in an unprotected field.  Find the
++		 //* next one.
++		 //*/
++		//baddr = next_unprotected(cursor_addr);
++
++		///* If there isn't any, give up. */
++		//if (!baddr)
++			//return 0;
+ 
+ 		/* Move the cursor there. */
+-	} else {
++	//} else {
+ 		/* Already in an unprotected field.  Find its start. */
+ 		baddr = cursor_addr;
+ 		while (!ea_buf[baddr].fa) {
+ 			DEC_BA(baddr);
+ 		}
+ 		INC_BA(baddr);
+-	}
++	//}
+ 
+ 	/* Move the cursor to the beginning of the field. */
+ 	cursor_move(baddr);
+diff -u x3270-3.3/macros.c x3270-3.3-hacked/macros.c
+--- x3270-3.3/macros.c	2013-07-25 00:02:10.000000000 +0200
++++ x3270-3.3-hacked/macros.c	2013-12-16 23:58:00.000000000 +0200
+@@ -2093,9 +2093,9 @@
+ 			if (buf[first + i].fa) {
+ 				is_zero = FA_IS_ZERO(buf[first + i].fa);
+ 				s += sprintf(s, " ");
+-			} else if (is_zero)
+-				s += sprintf(s, " ");
+-			else
++			//} else if (is_zero) {
++				//s += sprintf(s, " ");
++			} else
+ #if defined(X3270_DBCS) /*[*/
+ 			if (IS_LEFT(ctlr_dbcs_state(first + i))) {
+ 
+@@ -2498,9 +2498,9 @@
+ 		unsigned char fa;
+ 
+ 		fa = get_field_attribute(cursor_addr);
+-		if (FA_IS_PROTECTED(fa))
+-			prot_stat = 'P';
+-		else
++		//if (FA_IS_PROTECTED(fa))
++			//prot_stat = 'P';
++		//else
+ 			prot_stat = 'U';
+ 	}
+ 
+diff -u x3270-3.3/screen.c x3270-3.3-hacked/screen.c
+--- x3270-3.3/screen.c	2013-09-06 16:59:02.000000000 +0200
++++ x3270-3.3-hacked/screen.c	2013-12-16 23:51:46.000000000 +0200
+@@ -2403,9 +2403,10 @@
+ 			else
+ 				field_color = fa_color(fa);
+ 			if (visible_control) {
+-				if (FA_IS_PROTECTED(fa))
+-					b.bits.cc = EBC_P;
+-				else if (FA_IS_MODIFIED(fa))
++				//if (FA_IS_PROTECTED(fa))
++					//b.bits.cc = EBC_P;
++				//else if (FA_IS_MODIFIED(fa))
++				if (FA_IS_MODIFIED(fa))
+ 					b.bits.cc = EBC_M;
+ 				else
+ 					b.bits.cc = EBC_U;
+@@ -2417,9 +2418,9 @@
+ 			Boolean is_vc = False;
+ 
+ 			/* Find the right graphic rendition. */
+-			if (zero) {
+-			    	gr = 0;
+-			} else {
++			//if (zero) {
++			    	//gr = 0;
++			//} else {
+ 				gr = sbp->gr;
+ 				if (!gr)
+ 					gr = field_ea->gr;
+@@ -2427,12 +2428,12 @@
+ 					any_blink = True;
+ 				if (appres.highlight_bold && FA_IS_HIGH(fa))
+ 					gr |= GR_INTENSIFY;
+-			}
++			//}
+ 
+ 			/* Find the right color. */
+-			if (zero) {
+-			    	e_color = fa_color(FA_INT_HIGH_SEL);
+-			} else {
++			//if (zero) {
++			    	//e_color = fa_color(FA_INT_HIGH_SEL);
++			//} else {
+ 				if (sbp->fg)
+ 					e_color = sbp->fg & COLOR_MASK;
+ 				else if (appres.mono && (gr & GR_INTENSIFY))
+@@ -2443,16 +2444,22 @@
+ 					e_color = INVERT_COLOR(e_color);
+ 					reverse = True;
+ 				}
+-			}
++				if (zero) {
++					e_color = INVERT_COLOR(e_color);
++					reverse = True;
++				}
++			//}
+ 			if (!appres.mono)
+ 				b.bits.fg = e_color;
+ 
+ 			/* Find the right character and character set. */
+ 			d = ctlr_dbcs_state(baddr);
+-			if (zero) {
+-				if (visible_control)
+-					b.bits.cc = EBC_space;
+-			} else if (((!visible_control || c != EBC_null) &&
++			//if (zero) {
++				//if (visible_control)
++					//b.bits.cc = EBC_space;
++					//b.bits.cc = EBC_period;
++			//} else if (((!visible_control || c != EBC_null) &&
++			if (((!visible_control || c != EBC_null) &&
+ 				    (c != EBC_space || d != DBCS_NONE)) ||
+ 			           (gr & (GR_REVERSE | GR_UNDERLINE)) ||
+ 				   visible_control) {
+@@ -2727,13 +2734,13 @@
+ 	/*
+ 	 * For non-display fields, we ignore gr and fg.
+ 	 */
+-	if (FA_IS_ZERO(fa)) {
+-		color = fa_color(fa);
+-		if (appres.mono && SELECTED(baddr)) {
+-			color = INVERT_COLOR(color);
+-		}
+-		return color;
+-	}
++	//if (FA_IS_ZERO(fa)) {
++		//color = fa_color(fa);
++		//if (appres.mono && SELECTED(baddr)) {
++			//color = INVERT_COLOR(color);
++		//}
++		//return color;
++	//}
+ 
+ 	/*
+ 	 * Find the color of the character or the field.
+@@ -2856,18 +2863,18 @@
+ 	if (d == DBCS_LEFT || d == DBCS_RIGHT)
+ 		buffer[0].bits.cs = CS_DBCS;
+ 	fa = ea_buf[faddr].fa;
+-	if (FA_IS_ZERO(fa)) {
+-		gr = 0;
+-	} else {
++	//if (FA_IS_ZERO(fa)) {
++		//gr = 0;
++	//} else {
+ 		gr = ea_buf[baddr].gr;
+ 		if (!gr)
+ 			gr = fa2ea(faddr)->gr;
+-	}
++	//}
+ 	if (ea_buf[baddr].fa) {
+ 		if (!visible_control)
+ 			blank_it = 1;
+-	} else if (FA_IS_ZERO(fa)) {
+-		blank_it = 1;
++	//} else if (FA_IS_ZERO(fa)) {
++		//blank_it = 1;
+ 	} else if (text_blinkers_exist && !text_blinking_on) {
+ 		if (gr & GR_BLINK)
+ 			blank_it = 1;
+@@ -3526,10 +3533,10 @@
+ 		/*
+ 		 * Color indices are the intensity bits (0 through 2)
+ 		 */
+-		if (FA_IS_ZERO(fa) ||
+-		    (appres.modified_sel && FA_IS_MODIFIED(fa)))
+-			return GC_NONDEFAULT | FA_INT_NORM_SEL;
+-		else
++		//if (FA_IS_ZERO(fa) ||
++		    //(appres.modified_sel && FA_IS_MODIFIED(fa)))
++			//return GC_NONDEFAULT | FA_INT_NORM_SEL;
++		//else
+ 			return GC_NONDEFAULT | (fa & 0x0c);
+ 	}
+ }
+diff -u x3270-3.3/select.c x3270-3.3-hacked/select.c
+--- x3270-3.3/select.c	2013-07-12 00:03:27.000000000 +0200
++++ x3270-3.3-hacked/select.c	2013-12-16 23:51:46.000000000 +0200
+@@ -234,18 +234,18 @@
+ 	int class;
+ 
+ 	/* Find the initial character class */
+-	if (FA_IS_ZERO(fa))
+-		ch = EBC_space;
+-	else
++	//if (FA_IS_ZERO(fa))
++		//ch = EBC_space;
++	//else
+ 		ch = ea_buf[baddr].cc;
+ 	class = char_class[ebc2asc0[ch]];
+ 
+ 	/* Find the beginning */
+ 	for (f_start = baddr; f_start % COLS; f_start--) {
+ 		fa = get_field_attribute(f_start);
+-		if (FA_IS_ZERO(fa))
+-			ch = EBC_space;
+-		else
++		//if (FA_IS_ZERO(fa))
++			//ch = EBC_space;
++		//else
+ 			ch = ea_buf[f_start].cc;
+ 		if (char_class[ebc2asc0[ch]] != class) {
+ 			f_start++;
+@@ -256,9 +256,9 @@
+ 	/* Find the end */
+ 	for (f_end = baddr; (f_end+1) % COLS; f_end++) {
+ 		fa = get_field_attribute(f_end);
+-		if (FA_IS_ZERO(fa))
+-			ch = EBC_space;
+-		else
++		//if (FA_IS_ZERO(fa))
++			//ch = EBC_space;
++		//else
+ 			ch = ea_buf[f_end].cc;
+ 		if (char_class[ebc2asc0[ch]] != class) {
+ 			f_end--;
+@@ -820,7 +820,8 @@
+ 	for (baddr = 0; baddr < ROWS*COLS; baddr++) {
+ 		if (ea_buf[baddr].fa)
+ 			fa = ea_buf[baddr].fa;
+-		else if ((IN_ANSI || !FA_IS_PROTECTED(fa)) && SELECTED(baddr))
++		//else if ((IN_ANSI || !FA_IS_PROTECTED(fa)) && SELECTED(baddr))
++		else if (IN_ANSI && SELECTED(baddr))
+ 			target[baddr/ULBS] |= 1 << (baddr%ULBS);
+ 	}
+ 
+@@ -1239,10 +1240,10 @@
+ 	}
+ 
+ 	/* If it isn't visible, then make it a blank. */
+-	if (FA_IS_ZERO(fa)) {
+-		*r = ' ';
+-		return;
+-	}
++	//if (FA_IS_ZERO(fa)) {
++		//*r = ' ';
++		//return;
++	//}
+ 
+ #if defined(X3270_DBCS) /*[*/
+ 	/* Handle DBCS. */
