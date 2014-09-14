@@ -3,6 +3,7 @@
 # Copyright (C) 2009 Benjamin Drung <bdrung at ubuntu dot com>
 # Copyright (C) 2012 Alessio Sergi <al3hex at gmail dot com>
 # modified 2012 for tor-browser (Max Roder <maxroder at web dot de>)
+# modified 2014 by Yardena Cohen <yardenack at gmail dot com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,10 +26,6 @@ VERSION='REPL_VERSION'
 LANGUAGE="REPL_LANGUAGE"
 PKGARCH="REPL_ARCH"
 
-DIRECTORY=~/.$NAME
-INSTALL_DIRECTORY=$DIRECTORY/INSTALL
-VERSION_FILE=$DIRECTORY/VERSION
-LOG_FILE=$DIRECTORY/LOG
 ARCH=$(getconf LONG_BIT)
 
 notify() {
@@ -63,22 +60,30 @@ usage() {
 Usage: ${0##*/} [option]
 
 Options:
-  -h				Show this help message and exit
-  -u				Force update of the copy in your home directory
-  -r <directory>	The Tor-Browser directory to use
+  -h|--help         Show this help message and exit
+  -u|--update       Force update of the copy in your home directory
+  --dir=<directory> The Tor-Browser directory to use
+
+  All unrecognized arguments will be passed to the browser,
+  but arguments with spaces will break, until Tor fixes this bug:
+  https://trac.torproject.org/projects/tor/ticket/12161
 EOF
 }
 
-while getopts ':hu' opt; do
-	case "$opt" in
-		h) usage; exit 0 ;;
-		u) update=1 ;;
-		:) echo "$0: Option '-$OPTARG' requires an argument" >&2
-			exit 1 ;;
-		*) echo "$0: Invalid option '-$OPTARG'" >&2
-			usage; exit 1 ;;
+DIRECTORY=~/.$NAME
+args=()
+for arg; do
+	case "$arg" in
+		-h|--help)   usage; exit 0 ;;
+		-u|--update) update=1 ;;
+		--dir=*)     DIRECTORY="${arg#*=}" ;;
+		*) args+=("$arg") ;;
 	esac
 done
+
+INSTALL_DIRECTORY=$DIRECTORY/INSTALL
+VERSION_FILE=$DIRECTORY/VERSION
+LOG_FILE=$DIRECTORY/LOG
 
 # create directory, if it is missing (e.g. first run)
 [[ ! -d "$INSTALL_DIRECTORY" ]] && mkdir -p "$INSTALL_DIRECTORY"
@@ -103,4 +108,4 @@ else
 fi
 
 # start tor-browser
-cd $INSTALL_DIRECTORY && './start-tor-browser'
+cd $INSTALL_DIRECTORY && ./start-tor-browser --class Tor\ Browser "${args[@]}"
