@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pyfiscan'
+pkgver=930.0326ac3
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+pkgdesc='Free web-application vulnerability and version scanner.'
+arch=('any')
+url='https://github.com/fgeek/pyfiscan'
+license=('custom:unknown')
+depends=('python2' 'python2-scandir' 'python2-yaml' 'python2-docopt')
+makedepends=('git')
+source=('git+https://github.com/fgeek/pyfiscan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/pyfiscan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/pyfiscan"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/pyfiscan"
+  mkdir -p "$pkgdir/usr/share/doc/pyfiscan"
+
+  cp README.md THANKS NotSupported "$pkgdir/usr/share/doc/pyfiscan"
+
+  rm README.md THANKS NotSupported
+
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/pyfiscan/LICENSE"
+
+  cp -a * "$pkgdir/usr/share/pyfiscan"
+
+  cat > "$pkgdir/usr/bin/pyfiscan" << EOF
+#!/bin/sh
+cd /usr/share/pyfiscan
+exec python2 pyfiscan.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/pyfiscan"
+}
