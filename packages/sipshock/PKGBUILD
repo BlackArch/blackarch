@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sipshock'
+pkgver=5.d8c2250
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-voip')
+pkgdesc='A scanner for SIP proxies vulnerable to Shellshock.'
+arch=('any')
+url='https://github.com/zaf/sipshock'
+license=('GPL3')
+depends=('go')
+makedepends=('git')
+source=('git+https://github.com/zaf/sipshock.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sipshock"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/sipshock"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/sipshock"
+
+  install -Dm644 sipshock.go "$pkgdir/usr/share/sipshock/sipshock.go"
+  install -Dm644 Readme.md "$pkgdir/usr/share/doc/sipshock/Readme.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/sipshock/LICENSE"
+
+  cat > "$pkgdir/usr/bin/sipshock" << EOF
+#!/bin/sh
+exec go run /usr/share/sipshock/sipshock.go "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/sipshock"
+}
