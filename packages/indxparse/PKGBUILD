@@ -2,14 +2,15 @@
 # See COPYING for license details.
 
 pkgname='indxparse'
-pkgver=147.e404af4
+pkgver=150.1b50750
 pkgrel=1
 groups=('blackarch' 'blackarch-forensic')
 pkgdesc='A Tool suite for inspecting NTFS artifacts.'
 arch=('any')
 url='http://www.williballenthin.com/forensics/mft/indxparse/'
 license=('APACHE')
-depends=('python2' 'wxpython' 'python2-progressbar' 'python2-fuse')
+depends=('python2' 'python2-progressbar')
+optdepends=('wxpython' 'python2-fusepy')
 makedepends=('git')
 source=('git+https://github.com/williballenthin/INDXParse.git')
 sha1sums=('SKIP')
@@ -23,63 +24,5 @@ pkgver() {
 package() {
   cd "$srcdir/INDXParse"
 
-  mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/share/indxparse"
-  mkdir -p "$pkgdir/usr/share/doc/indxparse"
-
-  install -Dm644 -t "$pkgdir/usr/share/doc/indxparse" README CONTRIBUTORS.txt \
-    CHANGELOG
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/indxparse/LICENSE"
-
-  rm README CONTRIBUTORS.txt CHANGELOG LICENSE
-
-  cp -a * "$pkgdir/usr/share/indxparse"
-
-  cat > "$pkgdir/usr/bin/indxparse" << EOF
-#!/bin/sh
-cd /usr/share/indxparse
-exec python2 INDXParse.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/indxparse"
-
-  cat > "$pkgdir/usr/bin/mft-indxparse" << EOF
-#!/bin/sh
-cd /usr/share/indxparse
-exec python2 MFT.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/mft-indxparse"
-
-  cat > "$pkgdir/usr/bin/mftindx" << EOF
-#!/bin/sh
-cd /usr/share/indxparse
-exec python2 MFTINDX.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/mftindx"
-
-  cat > "$pkgdir/usr/bin/mftview" << EOF
-#!/bin/sh
-cd /usr/share/indxparse
-exec python2 MFTView.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/mftview"
-
-  cat > "$pkgdir/usr/bin/fuse-mft" << EOF
-#!/bin/sh
-cd /usr/share/indxparse
-exec python2 fuse-mft.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/fuse-mft"
-
-  cat > "$pkgdir/usr/bin/get_file_info" << EOF
-#!/bin/sh
-cd /usr/share/indxparse
-exec python2 get_file_info.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/get_file_info"
+  python2 setup.py install --root="${pkgdir}/" --optimize=1
 }
