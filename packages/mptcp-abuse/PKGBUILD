@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='mptcp-abuse'
+pkgver=6.b0eeb27
+pkgrel=1
+groups=('blackarch' 'blackarch-networking' 'blackarch-recon' 'blackarch-scanner')
+pkgdesc='A collection of tools and resources to explore MPTCP on your network. Initially released at Black Hat USA 2014.'
+arch=('any')
+url='https://github.com/Neohapsis/mptcp-abuse'
+license=('GPL2')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/Neohapsis/mptcp-abuse.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/mptcp-abuse"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/mptcp-abuse"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/mptcp-abuse"
+
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/mptcp-abuse/LICENSE"
+  install -Dm644 -t "$pkgdir/usr/share/doc/mptcp-abuse" README.md \
+    "MPTCP Cheatsheet.pdf"
+
+  rm -rf README.md "MPTCP Cheatsheet.pdf"
+
+  cp -a * "$pkgdir/usr/share/mptcp-abuse"
+
+  cat > "$pkgdir/usr/bin/mptcp-fragmenter" << EOF
+#!/bin/sh
+cd /usr/share/mptcp-abuse
+exec python2 mptcp_fragmenter.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/mptcp-fragmenter"
+
+  cat > "$pkgdir/usr/bin/mptcp-scanner" << EOF
+#!/bin/sh
+cd /usr/share/mptcp-abuse
+exec python2 mptcp_scanner.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/mptcp-scanner"
+}
