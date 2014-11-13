@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='american-fuzzy-lop'
+pkgver='0.45b'
+pkgrel=1
+groups=('blackarch' 'blackarch-fuzzer' 'blackarch-binary')
+pkgdesc='A practical, instrumentation-driven fuzzer for binary formats.'
+arch=('i686' 'x86_64')
+url='https://code.google.com/p/american-fuzzy-lop/'
+license=('apache')
+if [[ $CARCH == 'x86_64' ]]; then
+  depends=('lib32-glibc')
+  makedepends=('gcc-multilib')
+else
+  depends=('glibc')
+fi
+source=('http://lcamtuf.coredump.cx/afl.tgz' 'makefile.patch')
+sha1sums=('8962ed30efce444ec0a4c8b731e3fc1d2b48a2b8'
+          'e994f078ae06c85c4443bb40381bd592af0df49e')
+
+prepare() {
+ cd "$srcdir/afl-$pkgver"
+
+ patch -i "$srcdir/makefile.patch"
+
+ sed -i 's|/usr/local/|/usr/|g' Makefile
+}
+
+build() {
+  cd "$srcdir/afl-$pkgver"
+
+  make
+  make
+}
+
+package() {
+  cd "$srcdir/afl-$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/lib/afl"
+  mkdir -p "$pkgdir/usr/share/doc/afl"
+
+  make DESTDIR="$pkgdir" install
+
+  cp -a docs/* "$pkgdir/usr/share/doc/afl"
+}
