@@ -2,25 +2,29 @@
 # See COPYING for license details.
 
 pkgname='origami'
-pkgver='1.0.0_beta1b'
-pkgrel=2
-pkgdesc='A ruby framework designed to parse, analyze, and forge PDF documents.'
+pkgver='1.2.7'
+pkgrel=1
+pkgdesc='Aims at providing a scripting tool to generate and analyze malicious PDF files.'
 arch=('any')
-url='http://security-labs.org/origami/'
-groups=('blackarch' 'blackarch-forensic')
-depends=('ruby')
-license=('GPL')
-source=("http://security-labs.org/origami/files/origami-${pkgver/_/-}.tar.gz")
-sha1sums=('12585cc4f152a3ca171a18038514812989149085')
+groups=('blackarch' 'blackarch-malware' 'blackarch-binary')
+url='http://code.google.com/p/origami-pdf'
+license=('LGPL3')
+depends=('ruby1.9')
+options=(!emptydirs)
+source=("https://rubygems.org/downloads/origami-${pkgver}.gem")
+noextract=("origami-${pkgver}.gem")
+sha1sums=('e34a4cf81dbb194a4ffe1939ff609e95479e53f1')
 
 package() {
-  cd "$srcdir/origami-1.0.0-beta1"
+  cd "$srcdir"
 
-  mkdir -p "$pkgdir/usr/share/origami/"
-  cp -r sources/* "$pkgdir/usr/share/origami/"
+  local _gemdir="$(ruby-1.9 -e'puts Gem.default_dir')"
 
-  mkdir -p "$pkgdir/usr/share/doc/origami/"
-  cp -r doc/* "$pkgdir/usr/share/doc/origami/"
+  gem-1.9 install --ignore-dependencies --no-user-install \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" $pkgname-$pkgver.gem
 
-  chmod a+rX "$pkgdir"/*
+  rm "$pkgdir/$_gemdir/cache/origami-${pkgver}.gem"
+
+  install -Dm644 "$pkgdir/$_gemdir/gems/origami-$pkgver/COPYING.LESSER" \
+    "$pkgdir/usr/share/licenses/origami/COPYING.LESSER"
 }
