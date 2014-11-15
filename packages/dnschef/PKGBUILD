@@ -2,31 +2,36 @@
 # See COPYING for license details.
 
 pkgname='dnschef'
-pkgver='0.2.1'
-pkgrel=3
+pkgver='0.3'
+pkgrel=1
 groups=('blackarch' 'blackarch-proxy')
-pkgdesc="A highly configurable DNS proxy for pentesters"
-url="http://thesprawl.org/projects/dnschef/"
+pkgdesc='A highly configurable DNS proxy for pentesters.'
+url='http://thesprawl.org/projects/dnschef/'
 arch=('any')
 depends=('python2')
 license=('GPL3')
-source=("http://thesprawl.org/media/projects/dnschef-$pkgver.tar.gz")
-sha1sums=('5efb8f49ea0acfb812e82d1037752ff9a40312bc')
+source=("https://thesprawl.org/media/projects/dnschef-${pkgver}.zip")
+sha1sums=('407ab865cb10f0b98c66a34555c659eeb584cd6f')
 
 prepare() {
   cd "$srcdir/dnschef-$pkgver"
+
   sed -i 's/env python/env python2/' *.py
 }
 
 package() {
   cd "$srcdir/dnschef-$pkgver"
 
-  # Base directories.
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/dnschef"
 
   cp -a * "$pkgdir/usr/share/dnschef"
 
-  # Bin.
-  ln -s /usr/share/dnschef/dnschef.py "$pkgdir/usr/bin/dnschef"
+  cat > "$pkgdir/usr/bin/dnschef" << EOF
+#!/bin/sh
+cd /usr/share/dnschef
+exec python2 dnschef.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/dnschef"
 }
