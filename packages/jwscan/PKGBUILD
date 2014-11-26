@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='jwscan'
+pkgver=6.b0306f0
+pkgrel=1
+groups=('blackarch' 'blackarch-reversing' 'blackarch-binary')
+pkgdesc='Scanner for Jar to EXE wrapper like Launch4j, Exe4j, JSmooth, Jar2Exe.'
+arch=('any')
+url='https://github.com/katjahahn/JWScan'
+license=('Apache')
+depends=('java-environment')
+makedepends=('git' 'sbt')
+source=('git+https://github.com/katjahahn/JWScan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/JWScan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/JWScan"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm755 jwscan.jar "$pkgdir/usr/share/jwscan/jwscan.jar"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/jwscan/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/jwscan/LICENSE"
+
+  cat > "$pkgdir/usr/bin/jwscan" << EOF
+#!/bin/sh
+exec java -jar /usr/share/jwscan/jwscan.jar "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/jwscan"
+}
