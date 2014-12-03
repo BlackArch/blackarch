@@ -2,23 +2,33 @@
 # See COPYING for license details.
 
 pkgname='owtf'
-pkgver=1015.da9c4ef
+pkgver=1016.fef357e
 pkgrel=1
-groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer' 'blackarch-scanner')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-automation'
+        'blackarch-scanner' 'blackarch-fuzzer')
 pkgdesc='The Offensive (Web) Testing Framework.'
 url='https://www.owasp.org/index.php/OWASP_OWTF'
 license=('custom')
 arch=('any')
-depends=('python2' 'python2-jinja' 'python2-tornado' 'python2-pycurl'
-         'python2-pexpect' 'python2-lxml')
+depends=('python2-jinja' 'python2-markdown' 'python2-pyvirtualdisplay'
+         'python2-tornado' 'python2-pycurl' 'python2-rdflib' 'python2-selenium'
+         'python2-pexpect' 'python2-lxml' 'java-environment' 'python2-ptp'
+	       'python2-pyopenssl' 'python2-beautifulsoup4'
+         'python2-python-owasp-zap-v2' 'python2-sqlalchemy' 'python2-six'
+         'python2-psycopg2')
+optdepends=('tor' 'proxychains-ng' 'skipfish' 'metagoofil' 'set' 'wpscan'
+            'theharvester' 'metasploit' 'whatweb' 'cms-explorer' 'whapiti'
+            'arachini' 'dnsrecon' 'dirbuster' 'w3af' 'lbd' 'nikto' 'tlssled'
+            'httprint' 'hydra' 'wafw00f' 'websecurify' 'hoppy')
 makedepends=('git')
 options=('!strip')
-source=('git+https://github.com/owtf/owtf.git'
-        'fix_resource_profile.diff'
-        'fix_general_profile.diff')
+source=("git+https://github.com/owtf/owtf" "LICENSE" 'default.cfg.patch'
+        'ssl-cipher-check.pl' 'BIG-IP_cookie_decoder.py')
 sha1sums=('SKIP'
-          '972b0887f5658aa6121d15ccfcf0508bc3e7a8f5'
-          '1162e4393f5516661657fedb13238dabc4cee6d4')
+          'a7c48222c6d3327a14f6fa8139f12148e4e90a1b'
+          'b55667d00d2b35b327a4667af6d5181ab8430870'
+          '094b0f91c4445a494770b814238026fcdb5c26fc'
+          '0f6f81c2ce46bfd3b3df88986d8ee3c184dd7a88')
 
 pkgver() {
   cd "$srcdir/owtf"
@@ -26,24 +36,33 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  cd "$srcdir/owtf"
-
-  patch -p2 -i "$srcdir/fix_resource_profile.diff"
-  patch -p2 -i "$srcdir/fix_general_profile.diff"
-}
-
 package() {
   cd "$srcdir/owtf"
 
-  mkdir -p "$pkgdir/usr/share/owtf"
   mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/owtf"
 
-  cp -a * "$pkgdir/usr/share/owtf"
+  install -Dm644 "$srcdir"/LICENSE "$pkgdir/usr/share/licenses/owtf/LICENSE"
+
+  cp -a --no-preserve=owner * "$pkgdir/usr/share/owtf"
+
+  install -Dm755 "$srcdir/ssl-cipher-check.pl" \
+    "$pkgdir/usr/share/owtf/tools/restricted/ssl/ssl-cipher-check"
+
+  install -Dm755 "$srcdir/BIG-IP_cookie_decoder.py" \
+    "$pkgdir/usr/share/owtf/tools/restricted/decoding/cookies"
+
+  patch -Np1 -i "$srcdir/default.cfg.patch"
+
+  sed -i -e "s|#![ ]*/usr/bin/python$|#!/usr/bin/python2|" \
+    -e "s|#![ ]*/usr/bin/env python$|#!/usr/bin/env python2|" \
+    -e "s|#![ ]*/bin/python$|#!/usr/bin/python2|" \
+    $(find $pkgdir -name '*.py')
 
   cat > "$pkgdir/usr/bin/owtf" << EOF
 #!/bin/sh
-exec python2 /usr/share/owtf/owtf.py "\$@"
+cd /usr/share/owtf
+exec python2 ./owtf.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/owtf"
