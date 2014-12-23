@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='nsia'
+pkgver='1.0.6'
+pkgrel=1
+pkgdesc='A website scanner that monitors websites in realtime in order to detect defacements, compliance violations, exploits, sensitive information disclosure and other issues.'
+url='http://threatfactor.com/Products/'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp' 'blackarch-defensive')
+arch=('any')
+license=('custom:nsia')
+depends=('java-environment' 'swt' 'systemd')
+makedepends=('dos2unix')
+source=('http://threatfactor.com/Support/Files/ThreatFactor%20NSIA.zip'
+        'http://threatfactor.com/Support/Files/NSIA.Definitions'
+        'nsia.tmpfiles.conf'
+        'rhino.jar')
+md5sums=('cc243c53bec5e335eb01293d9a595253'
+         '276c0c0ecbebead6e18a1774f074571e'
+         '43b18bd336891001def8d563078c24e6'
+         'e979b9ee4e828ec04ec1116dcde9739a')
+noextract=('rhino.jar')
+install='nsia.install'
+
+prepare() {
+  cd "$srcdir"
+
+  dos2unix etc/config.ini
+
+  rm lib/swt.jar
+}
+
+package() {
+  cd "$srcdir"
+
+  unset _JAVA_OPTIONS
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm644 nsia.tmpfiles.conf "$pkgdir/usr/lib/tmpfiles.d/nsia.conf"
+  install -Dm644 -t "$pkgdir/usr/share/nsia/doc" doc/"Quick Start Guide.pdf" \
+    doc/AUTHORS NSIA.Definitions
+  install -Dm644 doc/LICENSE "$pkgdir/usr/share/licenses/nsia/LICENSE"
+  install -Dm644 bin/nsia.jar "$pkgdir/usr/share/nsia/bin/nsia.jar"
+  install -Dm644 etc/config.ini "$pkgdir/usr/share/nsia/etc/config.ini"
+  install -Dm644 etc/mime.types "$pkgdir/usr/share/nsia/etc/mime.types"
+  install -Dm644 rhino.jar "$pkgdir/usr/share/nsia/lib/rhino.jar"
+
+  find lib -type f -exec install -Dm644 '{}' "$pkgdir"/usr/share/nsia/'{}' \;
+
+  ln -s /usr/share/java/swt.jar "$pkgdir/usr/share/nsia/lib/swt.jar"
+
+  echo -e '#!/usr/bin/env bash\n\nunset _JAVA_OPTIONS\n\ncd /var/lib/nsia/var\njava -Xbootclasspath/p:../lib/rhino.jar -jar /usr/share/nsia/bin/nsia.jar "$@"' > "$pkgdir/usr/bin/nsia"
+
+  chmod a+x "$pkgdir/usr/bin/nsia"
+}
