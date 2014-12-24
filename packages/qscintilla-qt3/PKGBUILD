@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='qscintilla-qt3'
+pkgver='1.7.1'
+pkgrel=1
+pkgdesc="A port to Qt3 of Neil Hodgson's Scintilla C++ editor class."
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://www.riverbankcomputing.co.uk/software/qscintilla/intro/'
+license=('GPL2')
+depends=('qt3')
+source=("http://downloads.sourceforge.net/pyqt/QScintilla-1.71-gpl-${pkgver}.tar.gz"
+        "pro.patch")
+sha1sums=('424415960e5cbcd58306e87d1d610bd8e72f3368'
+          '05143cb0ca712a3cfc45fe521ffe4c572c0d6dea')
+
+_dir="QScintilla-1.71-gpl-$pkgver/qt"
+
+prepare() {
+  cd "$_dir"
+
+  patch -p1 -i '../../pro.patch'
+}
+
+build() {
+  cd "$_dir"
+
+  qmake-qt3 qscintilla.pro
+
+  make MOC=/usr/bin/moc-qt3 UIC=/usr/bin/uic-qt3
+}
+
+package() {
+  cd "$_dir"
+
+  dlib=`grep 'TARGETD\s=' Makefile | sed 's/.*=\s*\(.*\)/\1/'`
+  sym0=`grep 'TARGET0\s=' Makefile | sed 's/.*=\s*\(.*\)/\1/'`
+  sym1=`grep 'TARGET1\s=' Makefile | sed 's/.*=\s*\(.*\)/\1/'`
+  sym2=`grep 'TARGET2\s=' Makefile | sed 's/.*=\s*\(.*\)/\1/'`
+
+  install -Dm755 "$dlib" "$pkgdir"/usr/lib/"$dlib"
+
+  ln -sr "$pkgdir"/usr/lib/"$dlib" "$pkgdir"/usr/lib/"$sym0"
+  ln -sr "$pkgdir"/usr/lib/"$dlib" "$pkgdir"/usr/lib/"$sym1"
+  ln -sr "$pkgdir"/usr/lib/"$dlib" "$pkgdir"/usr/lib/"$sym2"
+
+  make INSTALL_ROOT="$pkgdir" MOC=/usr/bin/moc-qt3 UIC=/usr/bin/uic-qt3 install
+}
