@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='faraday'
+pkgver=856.8c0fcff
+pkgrel=1
+pkgdesc='A new concept (IPE) Integrated Penetration-Test Environment a multiuser Penetration test IDE. Designed for distribution, indexation and analyze of the generated data during the process of a security audit.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation'
+        'blackarch-fuzzer' 'blackarch-fingerprint' 'blackarch-misc')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://www.faradaysec.com/'
+if [[ $CARCH = 'x86_64' ]]; then
+  depends=('zsh' 'java-environment' 'python2-pip' 'python2-flask'
+           'python2-tornado' 'python2-dateutil' 'python2-colorama' 'couchdb'
+           'pyqt3' 'python2-pysvn' 'python2-ipy' 'libpqxx' 'python2-couchdbkit'
+           'python2-requests' 'python2-whoosh' 'python2-psycopg2'
+           'python2-restkit' 'python2-mockito' 'lib32-glibc' 'ruby1.9'
+           'python2-ipy')
+else
+  depends=('zsh' 'java-environment' 'python2-pip' 'python2-flask'
+           'python2-tornado' 'python2-dateutil' 'python2-colorama' 'couchdb'
+           'pyqt3' 'python2-pysvn' 'python2-ipy' 'libpqxx' 'python2-couchdbkit'
+           'python2-requests' 'python2-whoosh' 'python2-psycopg2'
+           'python2-restkit' 'python2-mockito' 'ruby1.9' 'python2-ipy')
+fi
+makedepends=('git')
+options=('!strip')
+license=('GPL')
+source=('git+https://github.com/infobyte/faraday.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/faraday"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/faraday"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/$pkgname"
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/faraday"
+
+  cat > "$pkgdir/usr/bin/faraday" << EOF
+#!/bin/sh
+cd /usr/share/faraday/
+exec python2 faraday.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/faraday"
+}
