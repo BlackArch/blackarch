@@ -3,13 +3,13 @@
 
 pkgname='crowbar'
 pkgver=36.3b9b594
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-cracker')
 pkgdesc='A brute forcing tool that can be used during penetration tests. It is developed to support protocols that are not currently supported by thc-hydra and other popular brute forcing tools.'
 arch=('any')
 url='https://github.com/galkan/crowbar'
 license=('custom:unknown')
-depends=('python2')
+depends=('python2' 'python2-paramiko' 'openvpn' 'openssh' 'freerdp')
 makedepends=('git')
 source=('git+https://github.com/galkan/crowbar.git')
 sha1sums=('SKIP')
@@ -23,8 +23,21 @@ pkgver() {
 package() {
   cd "$srcdir/crowbar"
 
+  mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/crowbar"
 
   install -Dm644 README.md "$pkgdir/usr/share/doc/crowbar/README"
   install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/crowbar/LICENSE.txt"
+
+  rm README.md LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/crowbar"
+
+  cat > "$pkgdir/usr/bin/crowbar" << EOF
+#!/bin/sh
+cd /usr/share/crowbar
+exec python2 crowbar.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/crowbar"
 }
