@@ -3,53 +3,49 @@
 # Original: https://aur.archlinux.org/packages/fb/fbht-git/PKGBUILD
 
 pkgname='fbht'
-pkgver=r12.a284878
+pkgver=47.ac1955d
 pkgrel=1
+epoch=1
 pkgdesc='A Facebook Hacking Tool'
 arch=('any')
 url='https://github.com/chinoogawa/fbht-linux'
 groups=('blackarch' 'blackarch-webapp')
 license=('custom')
-depends=('python2' 'python2-mechanize' 'python2-networkx' 'python2-matplotlib' 'python2-numpy')
+depends=('python2' 'python2-mechanize' 'python2-networkx' 'python2-matplotlib'
+         'python2-numpy')
 makedepends=('git')
 provides=('fbht')
-source=('git+https://github.com/chinoogawa/fbht-linux.git')
+source=('git+https://github.com/chinoogawa/fbht.git')
 sha1sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/fbht-linux"
+  cd "$srcdir/fbht"
 
-  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare(){
-  cd "$srcdir/fbht-linux"
+  cd "$srcdir/fbht"
 
-  grep -iRl 'python' "$srcdir/fbht-linux" |
+  grep -iRl 'python' "$srcdir/fbht" |
   xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;
   s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
 }
 
 package() {
-  cd "$srcdir/fbht-linux"
+  cd "$srcdir/fbht"
 
-  # Make base directories.
-  mkdir -p "$pkgdir/usr/share/fbht"
   mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/fbht"
 
-  # Licenes and docs
-  mkdir -p "$pkgdir/usr/share/fbht/dumps"
-  mkdir -p "$pkgdir/usr/share/fbht/logs"
-  install -Dm644 "Lisence" "$pkgdir/usr/share/fbht/"
-  install -Dm644 Lisence "$pkgdir/usr/share/licenses/fbht/LICENSE"
-  install -Dm644 "README.md" "$pkgdir/usr/share/fbht/"
+  install -Dm644 "README.md" "$pkgdir/usr/share/doc/fbht/README.md"
+  install -Dm644 License "$pkgdir/usr/share/licenses/fbht/License"
 
-  cp -r dumps/* "$pkgdir/usr/share/fbht/dumps/"
-  cp -r logs/* "$pkgdir/usr/share/fbht/logs/"
+  cp -r dumps "$pkgdir/usr/share/fbht/dumps"
+  cp -r logs "$pkgdir/usr/share/fbht/logs"
 
   chmod 666 "$pkgdir/usr/share/fbht/logs/error.log"
 
-  # Bin
   install -m755 {MyParser,community,database,handlers,main,mainFunc,mainLib}.py \
     "$pkgdir/usr/share/fbht/"
   install -m644 fb_db.db "$pkgdir/usr/share/fbht/"
