@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='scrape-dns'
+pkgver=58.3df392f
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='Searches for interesting cached DNS entries.'
+arch=('any')
+url='https://github.com/304GEEK/Scrape-DNS'
+license=('GPL2')
+depends=('bash' 'dnsutils')
+makedepends=('git')
+source=("git+https://github.com/304GEEK/Scrape-DNS.git")
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Scrape-DNS"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Scrape-DNS"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm644 -t "$pkgdir/usr/share/scrape-dns" Timing-Scrape.sh bar.sh \
+    scrape.sh
+  install -m644 {all,custom,porn,updates}.list "$pkgdir/usr/share/scrape-dns/"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/scrape-dns/README.md"
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/scrape-dns/COPYING"
+
+  cat > "$pkgdir/usr/bin/scrape-dns" << EOF
+#!/bin/sh
+cd /usr/share/scrape-dns
+exec sh scrape.sh "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/scrape-dns"
+}
