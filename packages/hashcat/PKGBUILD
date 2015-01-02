@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname='hashcat'
-pkgver='0.47'
+pkgver='0.48'
 pkgrel=1
 groups=('blackarch' 'blackarch-cracker')
 pkgdesc="A multithreaded cross platform hash cracker."
@@ -12,10 +12,10 @@ license=('custom')
 makedepends=('p7zip')
 depends=('glibc')
 source=("https://hashcat.net/files/hashcat-${pkgver}.7z")
-sha1sums=('1f9040abc647d4c3351959cc80d432ce6e468484')
+sha1sums=('e2921a21999d36f3d3265010a4fb041a7d0a45c1')
 
 prepare() {
-  cd "${srcdir}/hashcat-${pkgver}"
+  cd "$srcdir/hashcat-$pkgver"
 
   if [[ "$CARCH" == 'x86_64' ]]; then
     mv hashcat-cli64.bin hashcat
@@ -25,21 +25,24 @@ prepare() {
 }
 
 package() {
-  cd "${srcdir}/hashcat-${pkgver}"
+  cd "$srcdir/hashcat-$pkgver"
 
   rm *.{exe,bin,app}
 
-  mkdir -p "${pkgdir}/usr/share/doc/hashcat"
-  mkdir -p "${pkgdir}/etc/hashcat"
+  mkdir -p "$pkgdir/usr/share/doc/hashcat"
+  mkdir -p "$pkgdir/etc/hashcat"
 
-  install -Dm755 hashcat "${pkgdir}/usr/bin/hashcat"
+  install -Dm755 hashcat "$pkgdir/usr/bin/hashcat"
 
-  cp -dpr --no-preserve=ownership "${srcdir}/hashcat-${pkgver}"/{rules,salts,tables} "${pkgdir}"/etc/"hashcat"/
-  cp -dpr --no-preserve=ownership "${srcdir}/hashcat-${pkgver}"/examples "${pkgdir}"/usr/share/doc/"hashcat"/
+  cp -a --no-preserve=ownership "$srcdir/hashcat-$pkgver"/{rules,salts,tables} \
+    "$pkgdir"/etc/"hashcat"/
+  cp -a --no-preserve=ownership "$srcdir/hashcat-$pkgver"/examples \
+    "$pkgdir"/usr/share/doc/"hashcat"/
 
-  # Fix permissions.
-  cd "${pkgdir}"
+  cd "$pkgdir"
+
   find . -type d -exec chmod 755 {} \+
   find . -type f -exec chmod 644 {} \+
+
   chmod a+x "${pkgdir}/usr/bin/hashcat"
 }
