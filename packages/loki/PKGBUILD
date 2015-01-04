@@ -3,22 +3,26 @@
 
 pkgname='loki'
 pkgver='0.2.7'
-pkgrel=3
-groups=('blackarch' 'blackarch-exploitation')
-pkgdesc="Python based framework implementing many packet generation and attack modules for Layer 2 and 3 protocols"
+pkgrel=4
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-networking')
+pkgdesc='Python based framework implementing many packet generation and attack modules for Layer 2 and 3 protocols.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-url="http://c0decafe.de/loki.html"
+url='http://c0decafe.de/loki.html'
 license=('BSD')
-depends=('python2' 'pygtk' 'python2-ipy' 'python2-pylibpcap' 'libdnet' 'python2-dpkt' 'libglade' 'autoconf' 'automake')
-source=("http://c0decafe.de/loki/loki-$pkgver.tar.gz")
+depends=('python2' 'pygtk' 'python2-ipy' 'python2-pylibpcap' 'libdnet'
+         'python2-dpkt' 'libglade')
+makedepends=('autoconf' 'automake')
+source=("http://c0decafe.de/loki/loki-${pkgver}.tar.gz")
 options=('!emptydirs')
 sha1sums=('42969aad191a5c62df141a4c5263786b033b37ef')
 
 prepare() {
   cd "$srcdir/loki-$pkgver"
 
-  sed -i 's|#!/usr/bin/env python|#!/usr/bin/env python2|' "$srcdir/loki-$pkgver/src/loki.py"
-  grep -rl 'python-config' "$srcdir/loki-$pkgver" | xargs sed -i 's|python-config|python2-config|g'
+  sed -i 's|#!/usr/bin/env python|#!/usr/bin/env python2|' \
+    "$srcdir/loki-$pkgver/src/loki.py"
+  grep -rl 'python-config' "$srcdir/loki-$pkgver" |
+  xargs sed -i 's|python-config|python2-config|g'
 }
 
 build() {
@@ -34,19 +38,20 @@ build() {
 package() {
   cd "$srcdir/loki-$pkgver"
 
-  # Base directories.
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/loki"
   mkdir -p "$pkgdir/usr/share/doc/loki"
   mkdir -p "$pkgdir/usr/share/licenses/loki"
 
-  make "DESTDIR=$pkgdir/" install
+  make DESTDIR="$pkgdir/" install
 
   install -m644 LICENSE "$pkgdir/usr/share/licenses/loki"
-  install -m644 AUTHORS "$pkgdir/usr/share/licenses/loki"
   install -m644 COPYING "$pkgdir/usr/share/licenses/loki"
 
-  for doc in ChangeLog README REQUIREMENTS; do
+  for doc in ChangeLog README REQUIREMENTS AUTHORS
+  do
     install -m644 $doc "$pkgdir/usr/share/doc/loki/$doc"
   done
+
+  mv "$pkgdir/usr/bin/loki.py" "$pkgdir/usr/bin/loki"
 }
