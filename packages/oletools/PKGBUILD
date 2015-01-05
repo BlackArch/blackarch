@@ -1,0 +1,35 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='oletools'
+pkgver='0.07'
+pkgrel=1
+groups=('blackarch' 'blackarch-binary' 'blackarch-forensics')
+pkgdesc="Tools to analyze Microsoft OLE2 files"
+arch=('any')
+url='http://www.decalage.info/python/oletools'
+license=('GPL2')
+depends=('python2' 'tk')
+source=("https://bitbucket.org/decalage/oletools/downloads/oletools-$pkgver.zip")
+sha1sums=('ec89aea86ac0dbbfbfeb35345aae172c4ad06874')
+
+prepare() {
+  cd "$srcdir/oletools-$pkgver"
+  sed -i 's/env python/env python2/' oletools/*.py
+}
+
+package() {
+  cd "$srcdir/oletools-$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin"
+  python2 setup.py install "--root=$pkgdir"
+  cd "$pkgdir/usr/lib/python2.7/site-packages/oletools"
+  rm __init__.py
+  for f in *.py ; do
+    cat > "$pkgdir/usr/bin/${f%.py}" <<EOF
+#!/bin/sh
+python2 /usr/lib/python2.7/site-packages/oletools/$f
+EOF
+    chmod +x "$pkgdir/usr/bin/${f%.py}"
+  done
+}
