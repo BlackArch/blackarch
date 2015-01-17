@@ -2,36 +2,39 @@
 # See COPYING for license details.
 
 pkgname='hackrf'
-pkgver='2013.07.1'
-pkgrel=3
-pkgdesc="Driver for HackRF, allowing general purpose software defined radio (SDR)."
+pkgver='2014.08.1'
+pkgrel=1
+pkgdesc='Driver for HackRF, allowing general purpose software defined radio (SDR).'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-url="https://github.com/mossmann/hackrf"
+url='https://github.com/mossmann/hackrf'
 license=('GPLv2')
 depends=('libusbx')
 makedepends=('cmake')
-source=("http://downloads.sourceforge.net/hackrf/hackrf-$pkgver.tar.xz"
+source=("http://downloads.sourceforge.net/hackrf/hackrf-${pkgver}.tar.xz"
         '52-hackrf.rules')
-sha1sums=('3a0931ded5f9aa0560603a7af6aa5f1656ff8b33'
+sha1sums=('f6e1372d128f86d374f58f9ca7b8a27aa54d1466'
           'f25ab50038edb1d995b255555f1ce6656160a6d8')
 
 build() {
   cd "$srcdir/hackrf-$pkgver/host"
 
   mkdir -p build
+
   cd build
 
   cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+
   make
 }
 
 package() {
   cd "$srcdir/hackrf-$pkgver/host/build"
-  make "DESTDIR=$pkgdir" install
 
-  cd "$srcdir"
-  install -Dm644 52-hackrf.rules "$pkgdir/usr/lib/udev/rules.d/52-hackrf.rules"
+  make DESTDIR="$pkgdir" install
+
+  install -Dm644 "$srcdir/52-hackrf.rules" \
+    "$pkgdir/usr/lib/udev/rules.d/52-hackrf.rules"
 
   cd "$srcdir/hackrf-$pkgver/firmware-bin"
-  install -Dm644 hackrf_usb_rom_to_ram.bin "$pkgdir/usr/share/hackrf/hackrf_usb_rom_to_ram.bin"
+  install -Dm644 -t "$pkgdir/usr/share/hackrf/" *.bin
 }
