@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sparta'
+pkgver=10.14b144a
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-cracker'
+        'blackarch-fingerprint' 'blackarch-networking')
+pkgdesc='Python GUI application which simplifies network infrastructure penetration testing by aiding the penetration tester in the scanning and enumeration phase.'
+arch=('any')
+url='http://sparta.secforce.com/'
+license=('GPL3')
+depends=('python2' 'python2-pyqt4' 'python2-lxml' 'impacket')
+makedepends=('git')
+source=('git+https://github.com/SECFORCE/sparta.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sparta"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/sparta"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/sparta"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/sparta" doc/* README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/sparta/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/sparta"
+
+  cat > "$pkgdir/usr/bin/sparta" << EOF
+#!/bin/sh
+cd /usr/share/sparta
+exec python2 sparta.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/sparta"
+}

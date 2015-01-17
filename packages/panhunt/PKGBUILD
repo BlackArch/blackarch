@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='panhunt'
+pkgver=26.cd58866
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='Searches for credit card numbers (PANs) in directories.'
+arch=('any')
+url='https://github.com/Dionach/PANhunt'
+license=('GPL3')
+depends=('python2' 'python2-colorama' 'python2-progressbar')
+makedepends=('git')
+source=('git+https://github.com/Dionach/PANhunt.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/PANhunt"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/PANhunt"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/panhunt"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/panhunt" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/panhunt/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/panhunt"
+
+  cat > "$pkgdir/usr/bin/panhunt" << EOF
+#!/bin/sh
+cd /usr/share/panhunt
+exec python2 panhunt.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/panhunt"
+}

@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cmsmap'
+pkgver=195.9593a98
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-automation'
+        'blackarch-webapp' 'blackarch-exploitation')
+pkgdesc='A python open source Content Management System scanner that automates the process of detecting security flaws of the most popular CMSs.'
+arch=('any')
+url='https://www.dionach.com/blog/cmsmap-%E2%80%93-a-simple-cms-vulnerability-scanner'
+license=('GPL3')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/Dionach/CMSmap.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/CMSmap"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/CMSmap"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/cmsmap"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/cmsmap" README.md CHANGELOG.txt \
+    DISCLAIMER.txt TODO.txt
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/cmsmap/LICENSE.txt"
+
+  rm README.md CHANGELOG.txt TODO.txt DISCLAIMER.txt LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/cmsmap"
+
+  cat > "$pkgdir/usr/bin/cmsmap" << EOF
+#!/bin/sh
+cd /usr/share/cmsmap
+exec python2 cmsmap.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/cmsmap"
+}

@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname='bokken'
-pkgver=376.1caaa65c431a8
+pkgver=380.40c0511647db
 pkgrel=1
 pkgdesc='GUI for radare2 and pyew.'
 arch=('any')
@@ -10,7 +10,8 @@ groups=('blackarch' 'blackarch-misc' 'blackarch-reversing'
         'blackarch-disassembler')
 url='http://inguma.eu/projects/bokken/'
 license=('GPL')
-depends=('python2' 'pygtksourceview2' 'graphviz' 'r2-bindings' 'pyew')
+depends=('python2' 'pygtksourceview2' 'graphviz' 'r2-bindings' 'pyew'
+         'gtksourceview2' 'python2-pillow')
 optdeps=('radare2-bindings-git: For r2 backend support (devel)')
 makedepends=('mercurial')
 options=('!strip')
@@ -23,13 +24,20 @@ pkgver() {
   echo $(hg identify -n).$(hg identify -i)
 }
 
+prepare() {
+  cd "$srcdir/bokken"
+
+  # hugo, please fix this on your own :/ greets!
+  sed -i 's|import Image|from PIL import Image|' ui/graph.py
+}
+
 package() {
   cd "$srcdir/bokken"
 
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/bokken"
 
-  cp -a * "$pkgdir/usr/share/bokken"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/bokken"
 
   cat > "$pkgdir/usr/bin/bokken" << EOF
 #!/bin/bash

@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='peframe'
+pkgver=77.180cdba
+pkgrel=1
+groups=('blackarch' 'blackarch-malware' 'blackarch-binary'
+        'blackarch-reversing')
+pkgdesc='Tool to perform static analysis on (portable executable) malware.'
+arch=('any')
+url='https://github.com/guelfoweb/peframe'
+license=('custom:unknown')
+depends=('python2' 'python2-simplejson')
+makedepends=('git')
+source=('git+https://github.com/guelfoweb/peframe.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/peframe"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/peframe"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/peframe"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/peframe/README.md" README.md \
+    changelog.txt
+
+  rm README.md changelog.txt
+
+  cp -a * "$pkgdir/usr/share/peframe"
+
+  cat > "$pkgdir/usr/bin/peframe" << EOF
+#!/bin/sh
+cd /usr/share/peframe
+exec python2 peframe.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/peframe"
+}
