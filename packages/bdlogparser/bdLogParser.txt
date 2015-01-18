@@ -1,0 +1,93 @@
+#!/usr/bin/perl
+# This is a utility to parse a Bit Defender log file, 
+# in order to sort them into a malware archive for easier 
+# maintanence of your malware collection.
+# By: magikh0e 
+# Version: 1a - 02-21-2011
+
+$arch = "bdvx";
+use Digest::MD5;
+use Getopt::Std;
+%opts=();
+getopts('vdr:hRpf:F:', \%opts);
+$VERSION = "1a";
+$bdscan_log = "bdscan.log" unless $bdscan_log = $opts{f};
+$report_file = "bdParserReport.txt" unless $report_file = $opts{F};
+usage() if $opts{h} || !$opts{p};
+$debugging = 0 unless $debugging = $opt{d};
+$verbose = 0 unless $verbose = $opts{v};
+$enable_report = 0 unless $enable_report = $opts{r};
+$report_only = 0 unless $report_only = $opts{R};
+$process_log_file = 0 unless $process_log_file = $opts{p};
+
+process_log_file() if $process_log_file;
+run_report() if $enable_report;
+
+sub process_log_file {
+open BDLOG, 'bdscan.log' or warn "unable to open file: $!";
+foreach $line (<BDLOG>) { 
+	if ($line =~ m/Files:\s{1,2}(\d+)/) { $stats_sfiles = $1; }  
+		if ($line =~ m/infected/) { 
+			($fileName, $status, $vx_name) = split(' ', $line);
+			($fileName, $gbg) = split(/=>/, $fileName) if ($fileName =~ m/=>/);
+    			@VX = $vx_name;
+       			foreach $X (@VX) { $cnt{$X}++; }
+      			($file, $ext) = split(/\./, $fileName);
+       			$md5 = md5sum($fileName);
+			system("mkdir -p $arch/$vx_name") unless $report_only;
+			system("cp $fileName $arch/$vx_name/$md5.$ext") unless $report_only;
+		}
+	}
+   }
+   close BDLOG;
+sub by_vx_count { $cnt{$b} <=> $cnt{$a}; }
+sub run_report { 
+open (REPORT, '>bdParserReport.txt') or warn "unable to open file: $!";
+        print REPORT "\n\n=Category Statistics=\n\n";
+	print REPORT "\tFiles Scanned: $stats_sfiles\n";
+	foreach $X (sort by_vx_count keys %cnt) { 
+			print REPORT "\t$X: $cnt{$X} \n";
+	}
+}
+
+print "\nReport file generated: $report_file\n" if $enable_report;
+close REPORT;
+
+sub md5sum{
+  my $file = shift;
+  my $digest = "";
+  eval{
+    open(FILE, $file) or die "Can't find file $file\n";
+    my $ctx = Digest::MD5->new;
+    $ctx->addfile(*FILE);
+    $digest = $ctx->hexdigest;
+    close(FILE);
+  };
+  
+  if($@){ print $@; return ""; }
+          return $digest;
+}
+
+sub usage {
+print <<eof;
+\n\t\t\t-$0 Ver: $VERSION-
+\t\tBy: magikh0e - <magikh0e\@ihtb.org>
+\t\tHttp://magikh0e.ihtb.org\n
+This is a utility to parse a Bit Defender log file, 
+in order to sort them into a malware archive for easier 
+maintanence of your malware collection.
+
+Usage:
+Notes: At a minimal, -p must be used. 
+       -v or -d must be enabled for reporting features to work.
+
+ -h Help. - You are here...
+ -d Enable Debugging - turn on debugging
+ -v Enable Verbosity - verbose output
+ -r Enable Reporting - Creates report/statistics file about scanned files
+ -F <file> - Path to report file. Default: $report_file
+ -R Report only - process files, but report only. No files are moved.
+ -p Process files - copy files from archive into collection directory defined by setting \$ArcPath
+ -f <file> - specifies the path to the F-Prot log file. Default: $bdscan_log-DISABLED
+eof
+}
