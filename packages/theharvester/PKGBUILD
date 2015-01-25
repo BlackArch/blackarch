@@ -2,40 +2,43 @@
 # See COPYING for license details.
 
 pkgname='theharvester'
-_pkgname=theHarvester
-pkgver='2.2a'
-pkgrel=5
+pkgver='8488.b6b1162'
+pkgrel=1
 groups=('blackarch' 'blackarch-recon')
-pkgdesc="Python tool for gathering e-mail accounts and subdomain names from different public sources (search engines, pgp key servers)"
+pkgdesc='Python tool for gathering e-mail accounts and subdomain names from different public sources (search engines, pgp key servers).'
 url='http://www.edge-security.com/theHarvester.php'
 arch=('any')
 license=('GPL2')
-depends=('python')
-source=("https://theharvester.googlecode.com/files/${_pkgname}-${pkgver}.tar.gz")
-sha1sums=('e02661ed6dd8d9d48d476ccee99878e15f67842a')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/laramies/theHarvester.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/theHarvester"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 prepare() {
-  cd ${srcdir}/${_pkgname}-$pkgver
+  cd "$srcdir/theHarvester"
 
-  sed -i 's|env python$|env python2|' ${_pkgname}.py
+  sed -i 's|env python$|env python2|' theHarvester.py
 }
 
 package() {
-  cd ${srcdir}/${_pkgname}-$pkgver
+  cd "$srcdir/theHarvester"
 
-  # Make base directories.
-  mkdir -p $pkgdir/usr/bin
-  mkdir -p $pkgdir/usr/share/theharvester
-  mkdir -p $pkgdir/usr/share/doc/theharvester
-  mkdir -p $pkgdir/usr/share/licenses/theharvester
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/theharvester"
 
-  # Install docs.
-  install -m644 README ${pkgdir}/usr/share/doc/theharvester/README
+  install -Dm755 *.py "$pkgdir/usr/share/theharvester"
+  install -Dm644 -t "$pkgdir/usr/share/doc/theharvester" README TODO \
+    changelog.txt
+  install -Dm644 -t "$pkgdir/usr/share/licenses/theharvester" COPYING LICENSES
 
-  # Install sharable.
-  cp --no-preserve=ownership -r discovery lib *.txt $pkgdir/usr/share/theharvester
-  install -m755 *.py $pkgdir/usr/share/theharvester
+  cp --no-preserve=ownership -a discovery lib *.txt \
+    "$pkgdir/usr/share/theharvester"
 
-  # Link to bin.
-  ln -s ../share/theharvester/theHarvester.py $pkgdir/usr/bin/theharvester
+  ln -s "/usr/share/theharvester/theHarvester.py" "$pkgdir/usr/bin/theharvester"
 }
