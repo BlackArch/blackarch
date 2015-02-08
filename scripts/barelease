@@ -63,6 +63,7 @@ usage: barelease [options and package files]
               released packages. This disables gpg signing.
   -o          Call scripts/group-official to handle any official packages. This
               implies -b.
+  -t <dir>    Specify path for mktemp (Default: /tmp)
 
   --remove    Remove a package from the repo by name.
 EOF
@@ -132,6 +133,10 @@ parse_args() {
 				handle_official=true
 				use_existing_sigs=true
 				;;
+      -t)
+        mktempdir=$2
+        shift
+        ;;
 			-h)
 				usage
 				exit
@@ -239,7 +244,7 @@ update_feed_info() {
 }
 
 do_release() {
-	tmp=$(mktemp -d /tmp/barelease.XXXXXXXX)
+	tmp=$(mktemp -d $mktempdir/barelease.XXXXXXXX)
 	mkdir -p "$tmp"/{i686,x86_64,armv6h,armv7h}
 
 	if ! $remove ; then
