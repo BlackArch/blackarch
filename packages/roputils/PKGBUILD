@@ -2,30 +2,41 @@
 # See COPYING for license details.
 
 pkgname='roputils'
-pkgver='1.0'
+pkgver=124.5ab25f5
 pkgrel=1
 groups=('blackarch' 'blackarch-exploitation')
-pkgdesc="A Return-oriented Programming toolkit"
+pkgdesc='A Return-oriented Programming toolkit.'
 arch=('any')
-url="https://github.com/inaz2/roputils"
-license=('GPL')
+url='https://github.com/inaz2/roputils'
+license=('custom:unknown')
 depends=('python2')
-source=(https://github.com/inaz2/roputils/archive/master.zip)
+makedepends=('git')
+source=('git+https://github.com/inaz2/roputils.git')
 sha1sums=('SKIP')
 
-prepare(){
-  cd "$srcdir/roputils-master"
+pkgver() {
+  cd "$srcdir/roputils"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/roputils"
 
   find "$srcdir/" -name "*.py" -exec sed -i '1s|env python|env python2|' {} \;
 }
 
 package() {
-  cd "$srcdir/roputils-master"
+  cd "$srcdir/roputils"
 
   mkdir -p "$pkgdir/usr/bin/"
   mkdir -p "$pkgdir/usr/share/roputils"
 
-  cp -R --no-preserve=ownership * "$pkgdir/usr/share/roputils"
+  install -Dm644 README.md "$pkgddir/usr/share/doc/roputils/README.md"
+
+  rm README.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/roputils"
 
   chmod +x "$pkgdir/usr/share/roputils/roputils.py"
 
