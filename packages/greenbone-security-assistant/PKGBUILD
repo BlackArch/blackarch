@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='greenbone-security-assistant'
+pkgver='5.0.5'
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc="OpenVAS web frontend"
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://www.openvas.org/'
+license=('GPL')
+depends=('libmicrohttpd' 'libxml2' 'libxslt' 'openvas-libraries')
+makedepends=('cmake' 'doxygen')
+conflicts=(gsa)
+provides=(gsa)
+replaces=(gsa)
+backup=('etc/openvas/gsad_log.conf')
+
+source=('http://wald.intevation.org/frs/download.php/1915/greenbone-security-assistant-5.0.5.tar.gz'
+        'gsad.service')
+sha1sums=('6f27f5eabbefde7cf90b8f1c359ee80f04bfc79b'
+          'bea7d5e5069c96f3fcefe8b80ba6a30ad582f226')
+
+build() {
+  cd $pkgname-$pkgver
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+    -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var . -DSBINDIR=/usr/bin
+  make
+}
+
+package() {
+  cd $pkgname-$pkgver
+
+  make DESTDIR="$pkgdir/" install
+  install -Dm644 "$srcdir/gsad.service" "$pkgdir/usr/lib/systemd/system/gsad.service"
+}
