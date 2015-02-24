@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='rtlamr'
+pkgver=197.03369d1
+pkgrel=1
+groups=('blackarch' 'blackarch-radio' 'blackarch-hardware')
+pkgdesc='An rtl-sdr receiver for smart meters operating in the 900MHz ISM band.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/bemasher/rtlamr/'
+license=('AGPL')
+depends=('fftw')
+makedepends=('go' 'git')
+source=('git://github.com/bemasher/rtlamr.git'
+        'https://raw.githubusercontent.com/bemasher/rtlamr/master/LICENSE')
+sha1sums=('SKIP'
+          'e661c402efe29291bf9729dcf28441a484aa589e')
+
+pkgver() {
+	cd "$srcdir/rtlamr"
+
+}
+
+build() {
+	cd "$srcdir"
+
+  local url="github.com/bemasher/rtlamr"
+
+  # makepkg doesn't support extracting sources to a specific directory (LOL!)
+	mkdir -p src/$url && rm -rf src/$url && mv rtlamr src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t github.com/bemasher/rtlamr
+}
+
+package() {
+	cd "$srcdir"
+
+	GOPATH="$srcdir" go build -v github.com/bemasher/rtlamr
+
+  install -Dm755 rtlamr "$pkgdir/usr/bin/rtlamr"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/rtlamr/LICENSE"
+}

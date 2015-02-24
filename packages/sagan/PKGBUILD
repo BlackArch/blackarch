@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sagan'
+pkgver='1.0.0RC4'
+pkgrel=1
+pkgdesc='A snort-like log analysis engine.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+groups=('blackarch' 'blackarch-ids' 'blackarch-defensive')
+url='http://sagan.softwink.com/'
+license=('GPL')
+depends=('sagan-rules' 'pcre' 'libdnet' 'libesmtp' 'mysql-clients'
+         'postgresql-libs' 'liblognorm' 'geoip' 'json-c')
+makedepends=('git')
+options=('!makeflags' '!emptydirs')
+conflicts=('sagan' 'sagan-svn')
+replaces=('sagan-svn')
+source=("https://github.com/beave/sagan/archive/sagan-${pkgver}.tar.gz")
+sha1sums=('8a9202077cb8c9b98c4c697c2eb4c76ca2f1ae45')
+
+build() {
+  cd "$srcdir/sagan-sagan-$pkgver"
+
+  ./configure --enable-esmtp --enable-geoip --prefix=/usr --sysconfdir=/etc \
+    --sbindir=/usr/bin
+
+  make
+
+  sed "s:^var RULE_PATH.*$:var RULE_PATH /usr/share/sagan-git/rules/:" \
+    etc/sagan.conf > etc/sagan.conf.new
+
+  mv etc/sagan.conf.new etc/sagan.conf
+}
+
+package() {
+  cd "$srcdir/sagan-sagan-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+}
