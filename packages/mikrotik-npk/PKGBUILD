@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='mikrotik-npk'
+pkgver=7.88d7e4b
+pkgrel=1
+groups=('blackarch' 'blackarch-reversing' 'blackarch-binary'
+        'blackarch-networking' 'blackarch-packer' 'blackarch-unpacker')
+pkgdesc='Python tools for manipulating Mikrotik NPK format.'
+arch=('any')
+url='https://github.com/kost/mikrotik-npk'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/kost/mikrotik-npk.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/mikrotik-npk"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/mikrotik-npk"
+
+  sed -i 's|/usr/bin/env python|/usr/bin/env python2|' *.py
+}
+
+package() {
+  cd "$srcdir/mikrotik-npk"
+
+  for i in *.py
+  do
+    install -Dm755 $i "$pkgdir/usr/bin/`echo $i | cut -d '.' -f 1`"
+  done
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/mikrotik-npk/README.md"
+  #install -Dm644 LICENSE "$pkgdir/usr/share/licenses/mikrotik-npk/LICENSE"
+}

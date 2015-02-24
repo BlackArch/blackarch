@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hyperfox'
+pkgver=45.79ffeb5
+pkgrel=1
+groups=('blackarch' 'blackarch-networking' 'blackarch-proxy' 'blackarch-webapp')
+pkgdesc='A security tool for proxying and recording HTTP and HTTPs traffic.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://hyperfox.org/'
+license=('custom:unknown')
+depends=('go')
+makedepends=('go' 'git')
+source=('git+https://github.com/xiam/hyperfox.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/hyperfox"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/hyperfox"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/hyperfox"
+
+  export GOPATH="$pkgdir/usr/share/hyperfox"
+
+  go get github.com/xiam/hyperfox/proxy
+  go get github.com/xiam/hyperfox/tools/capture
+  go get github.com/xiam/hyperfox/tools/logger
+  go get upper.io/db/sqlite
+  go get menteslibres.net/gosexy/to
+  go get github.com/gorilla/mux
+
+  go build -v
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/hyperfox/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/hyperfox/LICENSE"
+
+  rm -rf README.md LICENSE "$pkgdir/usr/share/hyperfox/src"
+
+  cp -a * "$pkgdir/usr/share/hyperfox"
+
+  ln -sf /usr/share/hyperfox/hyperfox "$pkgdir/usr/bin/hyperfox"
+}

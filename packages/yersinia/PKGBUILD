@@ -2,21 +2,30 @@
 # See COPYING for license details.
 
 pkgname='yersinia'
-pkgver='0.7.1'
-pkgrel=6
+pkgver='0.7.3'
+pkgrel=1
 groups=('blackarch' 'blackarch-networking' 'blackarch-scanner')
-pkgdesc="A network tool designed to take advantage of some weakness in different network protocols"
+pkgdesc='A network tool designed to take advantage of some weakness in different network protocols.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://www.yersinia.net/'
 depends=('libpcap' 'libnet' 'gtk2')
 license=('GPL')
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+source=("http://www.yersinia.net/download/yersinia-${pkgver}.tar.gz")
+sha1sums=('70dbc5dd3f53eb5e3fea68d207ad769f7066c11c')
 
-source=(http://www.yersinia.net/download/yersinia-$pkgver.tar.gz)
-sha1sums=('cacb446548d076149de0a71a6c03cd2edaa14660')
+build() {
+  cd "$srcdir"
+
+  ./configure --prefix=/usr --with-pcap-includes=/usr/include/pcap
+
+  make
+}
 
 package() {
-  cd "${srcdir}/${pkgname}-${pkgver}"
-  ./configure --prefix=/usr --with-pcap-includes=/usr/include/pcap
-  make
-  make DESTDIR=$pkgdir install
+  cd "$srcdir"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/yersinia" AUTHORS ChangeLog INSTALL \
+    NEWS THANKS FAQ
 }

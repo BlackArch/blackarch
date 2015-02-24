@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='malybuzz'
+pkgver='1.0'
+pkgrel=1
+groups=('blackarch' 'blackarch-fuzzer')
+pkgdesc='A Python tool focused in discovering programming faults in network software.'
+arch=('any')
+url='http://eternal-todo.com/tools/malybuzz-network-fuzzer'
+license=('BSD')
+depends=('python2' 'python2-lxml')
+makedepends=('git')
+source=("http://downloads.sourceforge.net/project/malybuzz/Malybuzz/Malybuzz%20Beta%201.0/Malybuzz_Beta_${pkgver}.tar.gz")
+sha1sums=('SKIP')
+
+prepare() {
+  cd "$srcdir/Malybuzz"
+
+  find . -type f -name '*.py' -exec chmod 644 {} +
+  find . -type f -name '*.pyc' -exec rm {} +
+}
+
+package() {
+  cd "$srcdir/Malybuzz"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/malybuzz"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/malybuzz" AUTHORS THANKS TODO FAQ
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/malybuzz/COPYING"
+
+  rm AUTHORS THANKS TODO FAQ COPYING
+
+  cp -a * "$pkgdir/usr/share/malybuzz"
+
+  cat > "$pkgdir/usr/bin/malybuzz" << EOF
+#!/bin/sh
+cd /usr/share/malybuzz
+exec python2 Malybuzz.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/malybuzz"
+}

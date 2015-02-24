@@ -2,31 +2,26 @@
 # See COPYING for license details.
 
 pkgname='shiboken'
-pkgver='1.2.1'
-pkgrel=4
-pkgdesc="Python bindings generator that uses API Extractor and outputs CPython code."
+pkgver='1.2.2'
+pkgrel=1
+pkgdesc='Python bindings generator that uses API Extractor and outputs CPython code.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 options=('!distcc')
 license=('LGPL')
-url="http://www.pyside.org"
-depends=("python2" "python3" "qt4>=4.8" 'libxslt')
-optdepends=("python-sphinx: Documentation")
+url='http://www.pyside.org/'
+depends=('python2' 'python3' 'qt4>=4.8' 'libxslt')
+optdepends=('python-sphinx: Documentation')
 makedepends=('cmake')
-conflicts=("libshiboken")
-provides=("libshiboken" "shiboken")
-source=("http://download.qt-project.org/official_releases/pyside/shiboken-$pkgver.tar.bz2"
-        "FindPython3Libs.cmake.patch")
-sha1sums=('f310ac163f3407109051ccebfd192bc9620e9124'
-          'ba43ea55bf5cb9531193a884831317f96b7dc749')
+conflicts=('libshiboken')
+provides=('libshiboken' 'shiboken')
+source=("http://download.qt-project.org/official_releases/pyside/shiboken-${pkgver}.tar.bz2")
+sha1sums=('55731616791500750ef373f382057a43e133fa08')
 
-prepare() {
-  cd "$srcdir"
-  patch $srcdir/shiboken-$pkgver/cmake/Modules/FindPython3Libs.cmake FindPython3Libs.cmake.patch
-}
-
-build(){
+build() {
   cd "$srcdir/shiboken-$pkgver"
+
   mkdir -p build_python2 && cd build_python2
+
   cmake ../ -DCMAKE_INSTALL_PREFIX=/usr  \
             -DCMAKE_BUILD_TYPE=Release   \
             -DBUILD_TESTS=OFF            \
@@ -37,28 +32,38 @@ build(){
   make
 
   cd "$srcdir/shiboken-$pkgver"
+
   mkdir -p build && cd build
+
   cmake ../ -DCMAKE_INSTALL_PREFIX=/usr  \
   -DCMAKE_BUILD_TYPE=Release   \
   -DBUILD_TESTS=OFF            \
   -DUSE_PYTHON3=yes            \
   -DQT_QMAKE_EXECUTABLE=qmake4
+
   make
 }
 
-package(){
+package() {
   cd "$srcdir/shiboken-$pkgver/build"
+
   make DESTDIR="$pkgdir" install
 
   cd data
-  install -D -m 755 ShibokenConfig.cmake "$pkgdir/usr/lib/cmake/Shiboken-$pkgver"
-  install -D -m 755 ShibokenConfigVersion.cmake "$pkgdir/usr/lib/cmake/Shiboken-$pkgver/"
-  install -D -m 755 ShibokenConfig.cpython-33m.cmake "$pkgdir/usr/lib/cmake/Shiboken-$pkgver/"
-  install -D -m 755 shiboken.pc "$pkgdir/usr/lib/pkgconfig/"
+
+  install -Dm755 ShibokenConfig.cmake "$pkgdir/usr/lib/cmake/Shiboken-$pkgver"
+  install -Dm755 ShibokenConfigVersion.cmake \
+    "$pkgdir/usr/lib/cmake/Shiboken-$pkgver/"
+  install -Dm755 ShibokenConfig.cpython-33m.cmake \
+    "$pkgdir/usr/lib/cmake/Shiboken-$pkgver/"
+  install -Dm755 shiboken.pc "$pkgdir/usr/lib/pkgconfig/"
 
   cd "$srcdir/shiboken-$pkgver/build_python2"
+
   make DESTDIR="$pkgdir" install
 
   cd data
-  install -D -m 755 ShibokenConfig-python2.7.cmake "$pkgdir/usr/lib/cmake/Shiboken-$pkgver/"
+
+  install -Dm755 ShibokenConfig-python2.7.cmake \
+    "$pkgdir/usr/lib/cmake/Shiboken-$pkgver/"
 }

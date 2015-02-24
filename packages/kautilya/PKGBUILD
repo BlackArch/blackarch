@@ -2,37 +2,37 @@
 # See COPYING for license details.
 
 pkgname='kautilya'
-pkgver='0.5.0'
-pkgrel=1
+pkgver='0.5.5'
+pkgrel=2
 groups=('blackarch' 'blackarch-hardware')
-pkgdesc='Pwnage with Human Interface Devices using Teensy++2.0 and Teensy 3.0 devices'
+pkgdesc='Pwnage with Human Interface Devices using Teensy++2.0 and Teensy 3.0 devices.'
 arch=('any')
-url='http://code.google.com/p/kautilya'
+url='https://github.com/samratashok/Kautilya/releases'
 license=('GPL3')
-makedepends=('subversion')
-depends=('libpcap' 'ruby-colored' 'ruby-highline')
-source=('svn+http://kautilya.googlecode.com/svn/trunk/')
-sha1sums=('SKIP')
+makedepends=('git')
+depends=('ruby' 'ruby-bundler' 'libpcap')
+source=("https://github.com/samratashok/Kautilya/archive/v${pkgver}.tar.gz")
+install='kautilya.install'
+sha1sums=('866305978d1fc3ae1c3e5b031180d89ed26e1856')
 
 package() {
-  cd "$srcdir/trunk"
+  cd "$srcdir/Kautilya-$pkgver"
 
   mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/opt/kautilya"
+  mkdir -p "$pkgdir/usr/share/kautilya/output"
 
-  cp -a * "$pkgdir/opt/kautilya"
+  install -Dm644 -t "$pkgdir/usr/share/doc/kautilya" CHANGELOG README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/kautilya/LICENSE"
+
+  rm CHANGELOG README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/kautilya"
 
   cat > "$pkgdir/usr/bin/kautilya" << EOF
-#!/bin/bash
-
-dir=$HOME/.kautilya
-echo >&2 "Creating '$dir'..."
-mkdir -p "$dir"
-cp -aru /opt/kautilya/* "$dir"
-
-cd "$dir"
-exec ruby "$dir"/kautilya.rb "$@"
+#!/bin/sh
+cd /usr/share/kautilya
+exec ruby /usr/share/kautilya/kautilya.rb "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/kautilya"
+  chmod a+x "$pkgdir/usr/bin/kautilya"
 }

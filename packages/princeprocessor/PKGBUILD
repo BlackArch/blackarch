@@ -9,7 +9,13 @@ pkgdesc='Standalone password candidate generator using the PRINCE algorithm.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='https://github.com/jsteube/princeprocessor/'
 license=('MIT')
-makedepends=('git')
+if [[ $CARCH == 'x86_64' ]]; then
+  depends=('lib32-glibc')
+  makedepends=('git' 'gcc-multilib')
+else
+  depends=('glibc')
+  makedepends=('git')
+fi
 source=('git+https://github.com/jsteube/princeprocessor.git')
 sha1sums=('SKIP')
 
@@ -22,13 +28,37 @@ pkgver() {
 build() {
   cd "$srcdir/princeprocessor/src"
 
-  make
+  if [ $CARCH == "i686" ]
+  then
+    make pp32.bin
+    mv pp32.bin pp32
+  fi
+
+  if [ $CARCH == "x86_64" ]
+  then
+    make pp64.bin
+    mv pp64.bin pp64
+  fi
+
 }
 
 package() {
   cd "$srcdir/princeprocessor"
 
-  install -Dm755 src/pp64.bin "$pkgdir/usr/bin/pp64"
+  cd src
+
+  if [ -f pp32 ]
+  then
+    install -Dm755 pp32 "$pkgdir/usr/bin/pp32"
+  fi
+
+  if [ -f pp64 ]
+  then
+    install -Dm755 pp64 "$pkgdir/usr/bin/pp64"
+  fi
+
+  cd ..
+
   install -Dm644 -t "$pkgdir/usr/share/princeprocessor" rules/*
   install -Dm644 -t "$pkgdir/usr/share/doc/princeprocessor/" README.md CHANGES
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/princeprocessor/LICENSE"

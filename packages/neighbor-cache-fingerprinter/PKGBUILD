@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='neighbor-cache-fingerprinter'
+pkgver=83.f1e596f
+pkgrel=1
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-networking')
+pkgdesc='An ARP based Operating System version scanner.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/PherricOxide/Neighbor-Cache-Fingerprinter'
+license=('GPL3')
+depends=('boost' 'libdnet' 'libpcap')
+makedepends=('git')
+source=('git+https://github.com/PherricOxide/Neighbor-Cache-Fingerprinter.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Neighbor-Cache-Fingerprinter"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/Neighbor-Cache-Fingerprinter"
+
+  sed -i \
+    's|/usr/local/share/ncf/ncf-fingerprints|/usr/share/neighbor-cache-fingerprinter/ncf-fingerprints|' \
+    src/Config.cpp
+}
+
+build() {
+  cd "$srcdir/Neighbor-Cache-Fingerprinter"
+
+  ./configure --prefix=/usr
+
+  make
+}
+
+package() {
+  cd "$srcdir/Neighbor-Cache-Fingerprinter"
+
+  install -Dm755 src/neighbor-fingerprint "$pkgdir/usr/bin/neighbor-fingerprint"
+  install -Dm644 ncf-fingerprints \
+    "$pkgdir/usr/share/neighbor-cache-fingerprinter/ncf-fingerprints"
+  install -Dm644 README \
+    "$pkgdir/usr/share/doc/neighbor-cache-fingerprinter/README"
+  install -Dm644 COPYING \
+    "$pkgdir/usr/share/licenses/neighbor-cache-fingerprinter/COPYING"
+}
