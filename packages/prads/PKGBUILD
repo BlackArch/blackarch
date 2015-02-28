@@ -2,30 +2,50 @@
 # See COPYING for license details.
 
 pkgname='prads'
-pkgver='0.3.3.5'
+pkgver=1113.7a66b39
 pkgrel=1
+pkgdesc='Is a "Passive Real-time Asset Detection System".'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-networking')
-pkgdesc='Is a "Passive Real-time Asset Detection System". It passively listen to network traffic and gathers information on hosts and services it sees on the network. This information can be used to map your network, letting you know what services and hosts are alive/used, or can be used together with your favorite IDS/IPS setup for "event to host/service" correlation.'
-url='http://gamelinux.github.io/prads/'
-license=('Unknown')
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://gamelinux.github.io/prads/'
+license=('Perl')
 depends=('python-docutils' 'libpcap')
-source=('http://github.com/gamelinux/prads/tarball/master')
-sha1sums=('d2560a981a3913128ae55dc72a5e786f70cc5a15')
+makedepends=('git')
+source=('git+https://github.com/gamelinux/prads.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/prads"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/prads"
+
+  sed -i 's|/usr/local|/usr|g' Makefile
+  sed -i 's|${PREFIX}/etc/prads|/etc/prads|' Makefile
+}
 
 build() {
-  cd "$srcdir/gamelinux-prads-7a66b39"
+  cd "$srcdir/prads"
 
-  make CONFDIR=/usr/share/prads/etc PREFIX=/usr/share/prads
+  make PREFIX=/
 }
 
 package() {
-  cd "$srcdir/gamelinux-prads-7a66b39"
+  cd "$srcdir/prads"
 
-  mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/share/prads"
+  mkdir -p "$pkgdir/usr/share/doc/prads"
 
-  cp -aR * "$pkgdir/usr/share/prads/"
+  for i in doc/*.txt
+  do
+    install -m644 $i "$pkgdir/usr/share/doc/prads"
+  done
 
-  ln -s "/usr/share/prads/src/prads" "$pkgdir/usr/bin/"
+  install -Dm644 doc/LICENSE "$pkgdir/usr/share/licenses/prads/LICENSE"
+
+  rm doc/LICENSE
+
+  make DESTDIR="$pkgdir" install
 }
