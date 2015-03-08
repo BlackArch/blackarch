@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='exabgp'
+pkgver=2619.2ea85f6
+pkgrel=1
+groups=('blackarch' 'blackarch-networking' 'blackarch-defensive')
+pkgdesc='The BGP swiss army knife of networking.'
+arch=('any')
+url='https://github.com/Exa-Networks/exabgp'
+license=('custom:unknown')
+depends=('python2' 'python2-ipaddr' 'python2-nose' 'python2-psutil')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/Exa-Networks/exabgp.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/exabgp"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/exabgp"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/exabgp"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  mv "$pkgdir/usr/etc" "$pkgdir/etc"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/exabgp" CHANGELOG PEP8 README.md
+  install -Dm644 COPYRIGHT "$pkgdir/usr/share/licenses/exabgp/COPYRIGHT"
+}
