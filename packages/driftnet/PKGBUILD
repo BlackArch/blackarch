@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname='driftnet'
-pkgver='0.1.6'
-pkgrel=14
+pkgver='1.1.5'
+pkgrel=2
 groups=('blackarch' 'blackarch-scanner' 'blackarch-sniffer')
 pkgdesc='Listens to network traffic and picks out images from TCP streams it observes.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
@@ -11,34 +11,31 @@ url='http://www.ex-parrot.com/~chris/driftnet/'
 license=('GPL')
 depends=('libjpeg' 'libpcap' 'gtk2' 'giflib')
 makedepends=('imake')
-source=("http://www.ex-parrot.com/~chris/driftnet/driftnet-${pkgver}.tar.gz"
-        'gif.patch'
-        'driftnet.patch'
-        'interface.patch')
-sha1sums=('279cb3a596f354e7e9c6ac3cc456b3d11dced2ff'
-          '3174a58ef3af882787eee251c51cb5bb890d316d'
-          'cecbac26761b94b4462c6dd08e070a917d0a1e7a'
-          '6d46c7c52c442cc12652ab5489ccd4cd483f3462')
+source=("https://github.com/deiv/driftnet/archive/upstream/${pkgver}.tar.gz"
+'gif.patch')
+sha1sums=('63e13982d9c9b55f2dbdc8cd0f3963b55ba83778'
+          '00255f54855e77e97b9d3153d3eaa254b737a249')
 
 prepare() {
-  cd "$srcdir/driftnet-$pkgver"
+  cd "$srcdir/driftnet-upstream-$pkgver"
 
-  # This library has been combined with giflib.
-  sed -i 's/-lungif//' Makefile
+  cd src/display
 
-  patch < "$srcdir/gif.patch"
-  patch < "$srcdir/driftnet.patch"
-  patch < "$srcdir/interface.patch"
+  patch -i $srcdir/gif.patch
 }
 
 build() {
-  cd "$srcdir/driftnet-$pkgver"
+  cd "$srcdir/driftnet-upstream-$pkgver"
+
+  autoreconf -fi
+
+  ./configure --prefix=/usr
 
   make
 }
 
 package() {
-  cd "$srcdir/driftnet-$pkgver"
+  cd "$srcdir/driftnet-upstream-$pkgver"
 
-  install -Dm755 driftnet "$pkgdir/usr/bin/driftnet"
+  make DESTDIR="$pkgdir" install
 }

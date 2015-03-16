@@ -3,7 +3,7 @@
 
 pkgname='arachni'
 pkgver=1.0.6
-pkgrel=1
+pkgrel=3
 groups=('blackarch' 'blackarch-webapp')
 pkgdesc='A feature-full, modular, high-performance Ruby framework aimed towards helping penetration testers and administrators evaluate the security of web applications.'
 arch=('any')
@@ -16,7 +16,7 @@ install='arachni.install'
 sha1sums=('SKIP')
 
 pkgver() {
-  cd arachni
+  cd "$srcdir/arachni"
 
   git describe --always | sed 's|-|.|g' | sed 's/^v//'
 }
@@ -24,58 +24,25 @@ pkgver() {
 package() {
   cd "$srcdir/arachni"
 
+  progs="arachni arachni_console arachni_multi arachni_rpc arachni_rpcd"
+  progs="$progs arachni_rpcd_monitor arachni_script"
+
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/arachni"
-  mkdir -p "$pkgdir/usr/share/doc/arachni"
-  mkdir -p "$pkgdir/usr/share/licenses/arachni"
 
-  install -m644 LICENSE.md "$pkgdir/usr/share/licenses/arachni"
+  install -Dm644 -t "$pkgdir/usr/share/doc/arachni" *.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/arachni/LICENSE.md"
 
-  install -m644 *.md "$pkgdir/usr/share/doc/arachni"
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/arachni"
 
-  cp --no-preserve=ownership -R * "$pkgdir/usr/share/arachni"
-
-  cat > "$pkgdir/usr/bin/arachni" << EOF
+  for prog in $progs
+  do
+    cat > "$pkgdir/usr/bin/$prog" << EOF
 #!/bin/sh
 cd /usr/share/arachni
-exec ruby /usr/share/arachni/bin/arachni "\$@"
+exec ruby /usr/share/arachni/bin/$prog "\$@"
 EOF
-
-  cat > "$pkgdir/usr/bin/arachni_console" << EOF
-#!/bin/sh
-cd /usr/share/arachni
-exec ruby /usr/share/arachni/bin/arachni_console "\$@"
-EOF
-
-  cat > "$pkgdir/usr/bin/arachni_multi" << EOF
-#!/bin/sh
-cd /usr/share/arachni
-exec ruby /usr/share/arachni/bin/arachni_multi "\$@"
-EOF
-
-  cat > "$pkgdir/usr/bin/arachni_rpc" << EOF
-#!/bin/sh
-cd /usr/share/arachni
-exec ruby /usr/share/arachni/bin/arachni_rpc "\$@"
-EOF
-
-  cat > "$pkgdir/usr/bin/arachni_rpcd" << EOF
-#!/bin/sh
-cd /usr/share/arachni
-exec ruby /usr/share/arachni/bin/arachni_rpcd "\$@"
-EOF
-
-  cat > "$pkgdir/usr/bin/arachni_rpcd_monitor" << EOF
-#!/bin/sh
-cd /usr/share/arachni
-exec ruby /usr/share/arachni/bin/arachni_rpcd_monitor "\$@"
-EOF
-
-  cat > "$pkgdir/usr/bin/arachni_script" << EOF
-#!/bin/sh
-cd /usr/share/arachni
-exec ruby /usr/share/arachni/bin/arachni_script "\$@"
-EOF
+  done
 
   chmod +x "$pkgdir"/usr/bin/*
 }
