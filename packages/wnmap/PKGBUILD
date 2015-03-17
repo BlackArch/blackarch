@@ -3,30 +3,38 @@
 
 pkgname='wnmap'
 pkgver='0.1'
-pkgrel=4
+pkgrel=5
 groups=('blackarch' 'blackarch-automation' 'blackarch-scanner')
 pkgdesc="A shell script written with the purpose to automate and chain scans via nmap. You can run nmap with a custom mode written by user and create directories for every mode with the xml/nmap files inside."
 arch=('any')
 url="http://nullsecurity.net/tools/automation.html"
-license=('GPL')
+license=('GPL3')
 depends=('nmap' 'vim')
-source=("https://github.com/nullsecuritynet/tools/raw/master/automation/wnmap/release/wnmap-$pkgver.tar.gz")
+source=("https://github.com/nullsecuritynet/tools/raw/master/automation/wnmap/release/wnmap-${pkgver}.tar.gz")
 sha1sums=('5436fe1667cecfa44d0a06b9c25ef12f8bfc8e23')
+
+prepare() {
+  cd "$srcdir/wnmap-$pkgver"
+
+  sed -i 's|WNMAP_PATH="/path_to/wnmap"|WNMAP_PATH="/usr/share/wnmap"|' \
+    src/core/wnmap
+}
 
 package() {
   cd "$srcdir/wnmap-$pkgver"
 
-  mkdir -p "$pkgdir/usr/bin/"
-  mkdir -p "$pkgdir/usr/share/wnmap/src"
-  mkdir -p "$pkgdir/usr/share/doc/wnmap"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/wnmap"
 
-  cp -LR --no-preserve=ownership src/* "$pkgdir/usr/share/wnmap/src/"
-  cp -L --no-preserve=ownership docs/* "$pkgdir/usr/share/doc/wnmap/"
+  install -Dm644 docs/LICENSE "$pkgdir/usr/share/licenses/wnmap/LICENSE"
 
-  sed -i 's|WNMAP_PATH="/path_to/wnmap"|WNMAP_PATH="/usr/share/wnmap"|' \
-    "$pkgdir/usr/share/wnmap/src/core/wnmap"
+  rm docs/LICENSE
 
-  chmod 755 "$pkgdir/usr/share/wnmap/src/core/wnmap"
+  install -Dm644 -t "$pkgdir/usr/share/doc/wnmap/" docs/*
+
+  cp -LR --no-preserve=ownership src/ "$pkgdir/usr/share/wnmap/"
+
+  chmod +x "$pkgdir/usr/share/wnmap/src/core/wnmap"
 
   ln -s "/usr/share/wnmap/src/core/wnmap" "$pkgdir/usr/share/wnmap/"
   ln -s "/usr/share/wnmap/src/core/wnmap" "$pkgdir/usr/bin/wnmap"
