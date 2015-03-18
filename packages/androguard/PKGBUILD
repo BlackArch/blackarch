@@ -2,30 +2,43 @@
 # See COPYING for license details.
 
 pkgname='androguard'
-pkgver='1.9'
-pkgrel=2
+pkgver=612.cc9c6fa
+pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-binary' 'blackarch-disassembler'
         'blackarch-malware')
 pkgdesc='Reverse engineering, Malware and goodware analysis of Android applications and more.'
 arch=('any')
 url='https://github.com/androguard/androguard'
-license=('Apache')
+license=('Apache2')
 depends=('python2' 'python2-lxml' 'sparsehash' 'muparser' 'snappy' 'bzip2'
          'zlib' 'python2-pydot' 'python2-magic' 'python2-networkx')
-makedepends=('python2-setuptools')
+makedepends=('git' 'python2-setuptools')
 optdepends=(
   'ipython2: interactive analysis support'
   'psyco2-svn: acceleration support'
   'python2-pygments'
 )
-source=("https://github.com/androguard/androguard/archive/${pkgver}.tar.gz")
-sha1sums=('1c2a594b604e33ce3fe9f5b62c2b5b515ce84d8a')
+source=('git+https://github.com/androguard/androguard.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/androguard"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/androguard"
+
+  python2 setup.py build
+}
 
 package() {
-  cd "$srcdir/androguard-$pkgver"
+  cd "$srcdir/androguard"
 
   install -Dm644 -t "$pkgdir/usr/share/doc/androguard/" README.txt CHANGELOG
-  install -Dm644 COPYING "$pkgdir/usr/share/licenses/androguard/COPYING"
+  install -Dm644 LICENCE-2.0 "$pkgdir/usr/share/licenses/androguard/LICENSE-2.0"
 
   python2 setup.py install --root="$pkgdir" --optimize=1
 
