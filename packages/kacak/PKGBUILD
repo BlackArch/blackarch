@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='kacak'
+pkgver='1.0'
+pkgrel=1
+groups=('blackarch' 'blackarch-recon')
+pkgdesc='Tools for penetration testers that can enumerate which users logged on windows system.'
+arch=('any')
+depends=('python2' 'python2-lxml' 'python2-nmap' 'metasploit')
+url='https://github.com/galkan/kacak'
+license=('custom:unknown')
+source=("https://github.com/galkan/kacak/archive/v${pkgver}.tar.gz")
+sha1sums=('74221f83974c8447aeb28aeab5dfbcff7a45b5bf')
+
+package() {
+  cd "$srcdir/kacak-$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/kacak"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/kacak/README.md"
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/kacak/LICENSE.txt"
+
+  rm README.md LICENSE.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/kacak"
+
+  cat > "$pkgdir/usr/bin/kacak" << EOF
+#!/bin/sh
+cd /usr/share/kacak
+exec python2 kacak.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/kacak"
+}
