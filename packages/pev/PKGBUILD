@@ -2,35 +2,32 @@
 # See COPYING for license details.
 
 pkgname='pev'
-pkgver='0.60'
-pkgrel=4
+pkgver='0.70'
+pkgrel=2
 groups=('blackarch' 'blackarch-forensic' 'blackarch-reversing')
-pkgdesc="Command line based tool for PE32/PE32+ file analysis"
+pkgdesc='Command line based tool for PE32/PE32+ file analysis.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://pev.sourceforge.net/'
-license=('GPL')
-depends=('glibc')
-source=("http://sourceforge.net/projects/pev/files/pev-$pkgver/pev-$pkgver.tar.gz")
-sha1sums=('8d5e0bafb6dd4da0dcda6837928ad4babb6c8a94')
+license=('GPL3')
+depends=('glibc' 'openssl' 'pcre')
+source=("http://sourceforge.net/projects/pev/files/pev-${pkgver}/pev-${pkgver}.tar.gz")
+sha1sums=('b2d1191c3b57049c78ef77b8f54f7f78838af129')
+
+prepare() {
+  cd "$srcdir/pev"
+
+  find . -type f -name "Makefile" -exec \
+    sed -i 's|^datarootdir = |datarootdir = \$(DESTDIR)/|' {} +
+}
 
 build() {
-  cd "$srcdir/pev-$pkgver"
+  cd "$srcdir/pev"
+
   make
 }
 
 package() {
-  cd "$srcdir/pev-$pkgver"
+  cd "$srcdir/pev"
 
-  # Create base directories.
-  mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/lib"
-  mkdir -p "$pkgdir/usr/share/man/man1"
-
-  # Correct hard coded DESTDIR in Makefiles.
-  sed -i "s|\$(DESTDIR)/\$(PREFIX)/bin|\$(DESTDIR)\$(PREFIX)/bin|" src/Makefile
-  sed -i "s|/usr/share/pev|$pkgdir/usr/share/pev|" src/Makefile
-  sed -i "s|/usr/share/man/man1|$pkgdir/usr/share/man/man1|" src/Makefile
-  sed -i "s|\$(DESTDIR)/\$(PREFIX)/lib|\$(DESTDIR)\$(PREFIX)/lib|" lib/libpe/Makefile
-
-  make "DESTDIR=$pkgdir" install
+  make DESTDIR="$pkgdir" install
 }
