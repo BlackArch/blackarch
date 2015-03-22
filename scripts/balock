@@ -1,0 +1,106 @@
+#!/bin/bash
+
+user=$USER
+
+# override with -s
+use_sudo=false
+# override with -u
+unlock=false
+# override with -q
+just_query=false
+# override with -w
+wait_for_lock=false
+
+for arg ; do
+	case "$arg" in
+		-s)
+			use_sudo=true
+			;;
+		-u)
+			unlock=true
+			;;
+		-q)
+			just_query=true
+			;;
+		-w)
+			wait_for_lock=true
+			;;
+	esac
+done
+
+remote_wait_for_lock() {
+	wait_for_release=${1:-true}
+	if $wait_for_release ; then
+		while [ -e /tmp/blackarch.lck ] ; do
+			sleep 1
+		done
+	else
+		while ! [ -e /tmp/blackarch.lck ] ; do
+			sleep 1
+		done
+	fi
+}
+
+# This runs on the remote host.
+remote_lock() {
+	if $wait_for_lock ; then
+		echo 'waiting for lock...'
+		remote_wait_for_lock
+	fi
+
+	if $use_sudo ; then
+		if ! sudo mkdir -m000 /tmp/blackarch.lck ; then
+			echo >&2 'unable to obtain lock.'
+			exit 1
+		fi
+	else
+		if ! mkdir -m000 /tmp/blackarch.lck ; then
+			echo >&2 'unable to obtain lock.'
+			exit 1
+		fi
+	fi
+}
+
+# This runs on the remote host.
+remote_unlock() {
+	if $use_sudo ; then
+		sudo rmdir /tmp/blackarch.lck > /dev/null 2>&1 || true
+	else
+		rmdir /tmp/blackarch.lck > /dev/null 2>&1 || true
+	fi
+}
+
+# This runs on the remote host.
+remote_query() {
+	if [ -e /tmp/blackarch.lck ] ; then
+		echo 'somebody has the lock'
+		if $wait_for_lock ; then
+			echo 'waiting for them to release it...'
+			remote_wait_for_lock
+			echo 'now it is free.'
+		fi
+	else
+		echo 'lock is free'
+		if $wait_for_lock ; then
+			echo 'waiting for somebody to grab it...'
+			remote_wait_for_lock false
+			echo 'somebody grabbed it.'
+		fi
+	fi
+}
+
+remote() {
+	ssh -l "$user" blackarch.org \
+	  "use_sudo=$use_sudo; unlock=$unlock;
+	   just_query=$just_query; wait_for_lock=$wait_for_lock;
+	   $(declare -f remote_unlock; declare -f remote_lock;
+	   declare -f remote_query; declare -f remote_wait_for_lock); $*"
+}
+
+if $unlock ; then
+	remote remote_unlock
+elif $just_query ; then
+	remote remote_query
+else
+	remote remote_lock
+fi

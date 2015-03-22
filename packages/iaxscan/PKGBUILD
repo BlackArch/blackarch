@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='iaxscan'
+pkgver='0.02'
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-cracker')
+pkgdesc='A Python based scanner for detecting live IAX/2 hosts and then enumerating (by bruteforce) users on those hosts.'
+arch=('any')
+url='http://code.google.com/p/iaxscan/'
+license=('mozilla')
+depends=('python2')
+source=("http://dl.packetstormsecurity.net/UNIX/scanners/iaxscan-${pkgver}.tar.gz")
+sha1sums=('4f28c34bbe814195b4b6041a4d061f8697b5e78b')
+
+package() {
+  cd "$srcdir/iaxscan-$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/iaxscan"
+
+  install -Dm644 README.txt "$pkgdir/usr/share/doc/iaxscan/README.txt"
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/iaxscan/LICENSE.txt"
+
+  rm README.txt LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/iaxscan"
+
+  cat > "$pkgdir/usr/bin/iax-scan-hosts" << EOF
+#!/bin/sh
+cd /usr/share/iaxscan
+python2 scan_hosts.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/iax-scan-hosts"
+
+  cat > "$pkgdir/usr/bin/iax-scan-users" << EOF
+#!/bin/sh
+cd /usr/share/iaxscan
+python2 scan_users.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/iax-scan-users"
+}

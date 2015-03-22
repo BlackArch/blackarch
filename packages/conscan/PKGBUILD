@@ -1,36 +1,41 @@
-pkgname=conscan
-pkgver=0.5
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='conscan'
+pkgver='1.2'
 pkgrel=2
-groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer')
-pkgdesc="Concrete5 blackbox vulnerability scanner"
+groups=('blackarch' 'blackarch-fuzzer' 'blackarch-scanner' 'blackarch-webapp')
+pkgdesc='A blackbox vulnerability scanner for the Concre5 CMS.'
 arch=('any')
-url='https://github.com/TheXerocouk/conscan'
-license=('GPL')
-source=('git+https://github.com/TheXerocouk/conscan')
-sha1sums=('SKIP')
+url='http://nullsecurity.net/tools/scanner.html'
+depends=('python2' 'python2-wget' 'python2-lxml')
+license=('custom:unknown')
+source=("https://github.com/nullsecuritynet/tools/raw/master/scanner/conscan/release/conscan-${pkgver}.tgz")
+sha1sums=('12674d045ab37840c32ea0a0fde92ee891e21e9e')
 
 prepare() {
-  cd "$srcdir/conscan"
+  cd "$srcdir"
 
   sed -i 's|/bin/python|/bin/python2|' conscan.py
 }
 
 package() {
-  cd "$srcdir/conscan"
+  cd "$srcdir"
 
-  # Base directories.
-  install -dm755 "$pkgdir/usr/share/conscan"
-  install -dm755 "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/conscan"
 
   cp -R --no-preserve=ownership data modules "$pkgdir/usr/share/conscan"
+
   chmod -R 644 "$pkgdir/usr/share/conscan"
   chmod -R a+X "$pkgdir/usr/share/conscan"
 
-  install -m755 conscan.py "$pkgdir/usr/share/conscan"
+  install -m755 conscan.py "$pkgdir/usr/share/conscan/"
 
-  cat > "$pkgdir/usr/bin/conscan" <<EOF
+  cat > "$pkgdir/usr/bin/conscan" << EOF
 cd /usr/share/conscan
-./conscan.py "\$@"
+exec python2 conscan.py "\$@"
 EOF
-chmod +x "$pkgdir/usr/bin/conscan"
+
+  chmod +x "$pkgdir/usr/bin/conscan"
 }

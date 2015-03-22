@@ -1,36 +1,42 @@
-pkgname=ipscan
-pkgver=3.2.1
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ipscan'
+pkgver='3.3.2'
 pkgrel=1
-pkgdesc="Angry IP scanner is a very fast IP address and port scanner."
-arch=('i686' 'x86_64')
+pkgdesc='Angry IP scanner is a very fast IP address and port scanner.'
+arch=('any')
 groups=('blackarch' 'blackarch-scanner')
 license=('GPL2')
-url="http://www.angryziber.com"
-depends=('java-runtime')
-if [[ $CARCH == "i686" ]]; then
-source=("http://downloads.sourceforge.net/project/ipscan/ipscan3-binary/3.2.1/ipscan-linux-$pkgver.jar"
-      "ipscan" 
-      "ipscan.desktop")
-elif [[ $CARCH == "x86_64" ]]; then
-     source=("http://downloads.sourceforge.net/project/ipscan/ipscan3-binary/3.2.1/ipscan-linux64-$pkgver.jar" 
-             "ipscan64"
-             "ipscan.desktop")
+url='http://www.angryziber.com/'
+depends=('java-environment')
+if [ "${CARCH}" = "x86_64" ]
+then
+  source=("http://downloads.sourceforge.net/project/ipscan/ipscan3-binary/$pkgver/ipscan-linux64-${pkgver}.jar")
+sha1sums=('e802f95e66e8bd3af2bd988088b5ed5dcc840ecc')
+else
+  source=("http://downloads.sourceforge.net/project/ipscan/ipscan3-binary/$pkgver/ipscan-linux-${pkgver}.jar")
+sha1sums=('50de173130ae8f9994ad4a090356e46e00c00864')
 fi
-md5sums=('d6f9d7186e530bfe56eaaa330c8ec3ba'
-         '2ddec9efc5bec219792d18d9024efcdc'
-         'fe5be3a3aab791a07641cc6d38126b73')
 
 package() {
-  cd $srcdir
-  if [[ $CARCH == "i686" ]]; then
-        install -Dm755 ipscan $pkgdir/usr/bin/ipscan
-        install -Dm644 ipscan.desktop $pkgdir/usr/share/applications/ipscan.desktop
-        install -Dm644 ipscan-linux-$pkgver.jar $pkgdir/usr/share/java/ipscan/ipscan-linux-$pkgver.jar
+  cd "$srcdir"
 
-  elif [[ $CARCH == "x86_64" ]]; then
-          install -Dm755 ipscan64 $pkgdir/usr/bin/ipscan
-          install -Dm644 ipscan.desktop $pkgdir/usr/share/applications/ipscan.desktop
-          install -Dm644 ipscan-linux64-$pkgver.jar $pkgdir/usr/share/java/ipscan/ipscan-linux64-$pkgver.jar
+  mkdir -p "$pkgdir/usr/bin"
+
+  if [ "${CARCH}" = "i686" ]
+  then
+    install -Dm644 ipscan-linux-${pkgver}.jar \
+      "$pkgdir/usr/share/ipscan/ipscan-linux-${pkgver}.jar"
+  else
+    install -Dm644 ipscan-linux64-${pkgver}.jar \
+      "$pkgdir/usr/share/ipscan/ipscan-linux-${pkgver}.jar"
   fi
-       
+
+  cat > "$pkgdir/usr/bin/ipscan" << EOF
+#!/bin/sh
+exec java -jar /usr/share/ipscan/ipscan-linux-${pkgver}.jar
+EOF
+
+  chmod +x "$pkgdir/usr/bin/ipscan"
 }

@@ -1,34 +1,40 @@
-pkgname=suricata
-pkgver=1.4.6
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='suricata'
+pkgver='2.0.7'
 pkgrel=1
-pkgdesc="An Open Source Next Generation Intrusion Detection and Prevention Engine"
-arch=('i686' 'x86_64')
-url="http://openinfosecfoundation.org/index.php/download-suricata"
+pkgdesc='An Open Source Next Generation Intrusion Detection and Prevention Engine.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://openinfosecfoundation.org/index.php/download-suricata'
+groups=('blackarch' 'blackarch-defensive')
 license=('GPL2')
-depends=('libcap-ng' 'libnet' 'libpcap' 'libyaml' 'pcre')
+depends=('zlib' 'nss' 'jansson' 'libcap-ng' 'libnetfilter_queue' 'libnfnetlink'
+         'libnet' 'libpcap' 'libyaml' 'pcre' 'python2-magic' 'file')
 optdepends=('snort: suricata can use rulesets provided by snort')
 backup=('etc/suricata/suricata.yaml')
-source=(http://openinfosecfoundation.org/download/$pkgname-$pkgver.tar.gz)
-sha256sums=('5cf5d76dd63d06b993912301edc8afa06f886d0b68740239cc7df49b00800f8e')
+source=("http://openinfosecfoundation.org/download/suricata-${pkgver}.tar.gz")
+sha1sums=('a79dfb9c8c1ddd169fb8836ddc4570e0c5ce42bb')
 
 build() {
-  cd ${srcdir}/$pkgname-$pkgver
+  cd "$srcdir/suricata-$pkgver"
 
-  ./configure --prefix=/usr --sysconfdir=/etc/$pkgname
+  ./configure --prefix=/usr --sysconfdir=/etc/suricata
+
   make
 }
 
 package() {
-  cd ${srcdir}/$pkgname-$pkgver
+  cd "$srcdir/suricata-$pkgver"
 
-  make DESTDIR=${pkgdir} install
+  mkdir -p "$pkgdir/var/log/suricata"
+  mkdir -p "$pkgdir/etc/suricata/rules"
 
-  install -d ${pkgdir}/var/log/$pkgname
+  make DESTDIR="$pkgdir" install
 
-  install -D -m644 $pkgname.yaml "${pkgdir}/etc/$pkgname/$pkgname.yaml"
-  install -D -m644 classification.config "${pkgdir}/etc/$pkgname/classification.config"
-  install -D -m644 reference.config "${pkgdir}/etc/$pkgname/reference.config"
- 
-  install -d "${pkgdir}/etc/$pkgname/rules"
-  install -D -m644 rules/*.rules "${pkgdir}/etc/$pkgname/rules/"
+  install -Dm644 suricata.yaml "$pkgdir/etc/suricata/suricata.yaml"
+  install -Dm644 classification.config \
+    "$pkgdir/etc/suricata/classification.config"
+  install -Dm644 reference.config "$pkgdir/etc/suricata/reference.config"
+  install -Dm644 rules/*.rules "$pkgdir/etc/suricata/rules/"
 }

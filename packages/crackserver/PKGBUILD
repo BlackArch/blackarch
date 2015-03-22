@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='crackserver'
+pkgver=33.e5763ab
+pkgrel=1
+groups=('blackarch' 'blackarch-cracker')
+pkgdesc='An XMLRPC server for password cracking.'
+arch=('any')
+url='https://github.com/averagesecurityguy/crack'
+license=('custom')
+depends=('python2' 'rcracki_mt' 'john' 'hashcat' 'ike-scan' 'pyrit')
+makedepends=('git')
+source=('git+https://github.com/averagesecurityguy/crack.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/crack"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/crack"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/crackserver"
+
+  install -Dm644 README.md "$pkgdir/usr/share/licenses/crackserver/README.md"
+
+  rm README.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/crackserver"
+
+  local tools="crackserver crackclient"
+
+  for tool in ${tools}
+  do
+    cat > "$pkgdir/usr/bin/${tool}" << EOF
+#!/bin/sh
+cd /usr/share/crackserver
+exec python2 ${tool}.py "\$@"
+EOF
+    chmod +x "$pkgdir/usr/bin/${tool}"
+  done
+
+  cat > "$pkgdir/usr/bin/crack-standalone" << EOF
+#!/bin/sh
+cd /usr/share/crackserver
+exec python2 crack.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/crack-standalone"
+}

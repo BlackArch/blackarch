@@ -1,0 +1,58 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='python-pin'
+pkgver=15.a5128a0
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-binary'
+        'blackarch-code-audit' 'blackarch-debugger' 'blackarch-disassembler'
+        'blackarch-malware')
+pkgdesc='Python bindings for pin.'
+url='https://github.com/blankwall/Python_Pin'
+license=('custom:unknown')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+depends=('python' 'gcc>=3.4')
+makedepends=('git')
+source=('http://software.intel.com/sites/landingpage/pintool/downloads/pin-2.14-67254-gcc.4.4.7-linux.tar.gz'
+        'git+https://github.com/blankwall/Python_Pin')
+sha1sums=('87f3e2fae333a4cb15871192dab6e2b4c36fa447'
+          'SKIP')
+
+pkgver() {
+  cd "$srcdir/Python_Pin"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  mv Python_Pin pin-2.14-67254-gcc.4.4.7-linux/source/tools/
+
+}
+
+build() {
+  cd "$srcdir/pin-2.14-67254-gcc.4.4.7-linux/source/tools"
+
+  make
+
+  cd Python_Pin
+
+  make
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share"
+
+  mv pin-2.14-67254-gcc.4.4.7-linux "$pkgdir/usr/share/python_pin"
+
+  chmod 755 "$pkgdir/usr/share/python_pin/ia32"
+  chmod 755 "$pkgdir/usr/share/python_pin/ia32/bin/pinbin"
+  chmod 755 "$pkgdir/usr/share/python_pin/intel64"
+  chmod 755 "$pkgdir/usr/share/python_pin/intel64/bin/pinbin"
+
+  ln -s "/usr/share/python_pin/pin" "$pkgdir/usr/bin/"
+}

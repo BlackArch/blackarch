@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cintruder'
+pkgver='0.2.0'
+pkgrel=1
+groups=('blackarch' 'blackarch-cracker' 'blackarch-webapp')
+pkgdesc='An automatic pentesting tool to bypass captchas.'
+arch=('any')
+url='http://cintruder.sourceforge.net/'
+license=('GPL3')
+depends=('python2' 'python2-pycurl' 'python2-lxml' 'python2-pillow')
+source=("http://downloads.sourceforge.net/project/cintruder/cintruder_v${pkgver}.tar.gz")
+sha1sums=('b8972968d1231341e5b43b88d09f13564beb0fdc')
+
+prepare() {
+  cd "$srcdir/cintruder"
+
+  sed -i 's|/usr/bin/env python|/usr/bin/env python2|' cintruder
+}
+
+package() {
+  cd "$srcdir/cintruder"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/cintruder"
+  mkdir -p "$pkgdir/usr/share/doc/cintruder"
+
+  cd doc
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/cintruder" AUTHOR CHANGELOG COPYING \
+    INSTALL README THANKS
+
+  cd ..
+
+  rm -rf doc/
+
+  cp -a * "$pkgdir/usr/share/cintruder"
+
+  cat > "$pkgdir/usr/bin/cintruder" << EOF
+#!/bin/sh
+cd /usr/share/cintruder
+exec python2 cintruder "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/cintruder"
+}

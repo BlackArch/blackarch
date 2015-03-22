@@ -1,0 +1,35 @@
+pkgname='paraxor-dwm'
+pkgver='6.0'
+pkgrel=4
+pkgdesc="Dynamic window manager for X (paraxor's fork)."
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://dwm.suckless.org/'
+license=('GPL')
+depends=('xorg-server' 'xorg-xsetroot' 'libx11' 'libxinerama')
+makedepends=('git')
+conflicts=('dwm')
+provides=('dwm')
+source=('git+http://github.com/paraxor/dwm')
+sha1sums=('SKIP')
+
+prepare() {
+  cd "$srcdir/dwm"
+
+  sed -i 's/CPPFLAGS =/CPPFLAGS +=/g' config.mk
+  sed -i 's/^CFLAGS = -g/#CFLAGS += -g/g' config.mk
+  sed -i 's/^#CFLAGS = -std/CFLAGS += -std/g' config.mk
+  sed -i 's/^LDFLAGS = -g/#LDFLAGS += -g/g' config.mk
+  sed -i 's/^#LDFLAGS = -s/LDFLAGS += -s/g' config.mk
+}
+
+build() {
+  cd "$srcdir/dwm"
+
+  make X11INC=/usr/include/X11 X11LIB=/usr/lib/X11
+}
+
+package() {
+  cd "$srcdir/dwm"
+
+  make PREFIX=/usr DESTDIR="$pkgdir" install
+}

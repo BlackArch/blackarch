@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='arpwner'
+pkgver='26.f300fdf'
+pkgrel=1
+arch=('any')
+groups=('blackarch' 'blackarch-networking')
+pkgdesc='GUI-based python tool for arp posioning and dns poisoning attacks.'
+url='https://github.com/ntrippar/ARPwner'
+license=('GPL3')
+depends=('python2' 'python2-pypcap' 'pygtk')
+makedepends=('git')
+source=('git+https://github.com/ntrippar/ARPwner.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ARPwner"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/ARPwner"
+
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/arpwner"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/arpwner/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/arpwner/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/arpwner"
+
+  cat > "$pkgdir/usr/bin/arpwner" << EOF
+#!/bin/sh
+cd /usr/share/arpwner
+python2 main.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/arpwner"
+}

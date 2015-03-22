@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='malmon'
+pkgver='0.3'
+pkgrel=1
+groups=('blackarch' 'blackarch-defensive' 'blackarch-malware')
+pkgdesc="Hosting exploit/backdoor detection daemon. It's written in python, and uses inotify (pyinotify) to monitor file system activity. It checks files smaller then some size, compares their md5sum and hex signatures against DBs with known exploits/backdoor."
+arch=('any')
+url='http://sourceforge.net/projects/malmon/'
+license=('unknown')
+depends=('python2' 'python2-pyinotify')
+source=("http://downloads.sourceforge.net/project/malmon/malmon-${pkgver}.tar.gz")
+sha1sums=('73c3f26e8306c8642ade9d1066f80a5cff04d53d')
+
+prepare() {
+  cd "$srcdir/v${pkgver}"
+
+  sed -i 's|/usr/bin/env python|/usr/bin/env python2|' src/malmon.py
+  sed -i 's|/usr/bin/env python|/usr/bin/env python2|' src/malmon-scan.py
+}
+
+package() {
+  cd "$srcdir/v${pkgver}"
+
+  mkdir -p "$pkgdir/etc/malmon"
+  mkdir -p "$pkgdir/var/cache/malmon"
+
+  install -Dm644 README "$pkgdir/usr/share/doc/malmon/README"
+  install -m644 ChangeLog "$pkgdir/usr/share/doc/malmon/ChangeLog"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/malmon/LICENSE"
+
+  cd src
+
+  install -Dm755 malmon.py "$pkgdir/usr/bin/malmon"
+  install -Dm755 malmon-scan.py "$pkgdir/usr/bin/malmon-scan"
+
+  cp -a conf/* "$pkgdir/etc/malmon/"
+  cp -a var/* "$pkgdir/var/cache/malmon/"
+}

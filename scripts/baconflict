@@ -1,0 +1,97 @@
+#!/bin/bash
+# Checks a package for file conflicts.
+
+repo=blackarch
+jobs=1
+
+parse_args() {
+	while (( $# )) ; do
+		case "$1" in
+			-j)
+				jobs=$2
+				shift
+				;;
+			-r)
+				repo=$2
+				shift
+				;;
+			-a)
+				# TODO: make this safer
+				dbpkgs+=($(pacman -Sql $repo))
+				;;
+			-d)
+				dbpkgs+=("$2")
+				shift
+				;;
+			*.pkg.tar.xz)
+				filepkgs+=("$1")
+				;;
+		esac
+		shift
+	done
+}
+
+check_file_helper() {
+	pack=$1
+	file=$2
+
+	pkgfile=$(pkgfile "$file" | grep -v "^blackarch/$pack")
+	#echo "checking $file..."
+	if [[ -n "$pkgfile" ]] ; then
+		cat <<MSG
+conflict: $file
+package: $pack
+conflicting:
+$pkgfile
+MSG
+	fi
+}
+
+cleanup() {
+	rm -f "$helper"
+}
+
+make_helper() {
+	helper=$(mktemp /tmp/baconflict.XXXXXXXX)
+
+	declare -f check_file_helper > "$helper"
+}
+
+list_db_files() {
+	for pkg in "${dbpkgs[@]}" ; do
+		pkgfile -l "blackarch/$pkg" |
+		sed 's/\t/\n/'
+	done
+}
+
+# sorry -_-
+list_file_files() {
+	for pkg in "${dbpkgs[@]}" ; do
+		pacman -Qlp "$pkg"
+		sed 's/ /\n/'
+	done
+}
+
+check_files() {
+	{ list_db_files
+	  list_file_files } |
+	if (( $jobs == 1 )) ; then
+		xargs -n2 check_file_helper
+	else
+		parallel --no-notice "-j$jobs" -n2 bash "$helper"
+	fi
+}
+
+#pacman -Sl blackarch | grep '^blackarch' |
+#  cut -d' ' -f1 | cut -d/ -f2 | sort -u |
+
+main() {
+	parse_args "$@"
+
+	trap cleanup EXIT
+	make_helper
+
+	check_files
+}
+
+main "$@"

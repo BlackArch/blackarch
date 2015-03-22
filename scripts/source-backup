@@ -1,9 +1,43 @@
 #!/bin/bash
 
-jobs=10
+jobs=20
 
+date=$(date +%s)
+tar=blackarch-source.$date.tar
+
+# Make tmp
+tmp=$(mktemp -d /tmp/blackarch-source.XXXXXXXX)
+trap "rm -rf $tmp" EXIT
+
+helper() {
+	cd "$1"
+	makepkg --allsource &> /dev/null || echo >&2 "$1"
+}
+
+# Make helper
+echo '#!/bin/sh' > $tmp/helper.sh
+declare -f >> $tmp/helper.sh
+echo 'helper "$@"' >> $tmp/helper.sh
+chmod +x $tmp/helper.sh
+
+(
 cd "${0%/*}/../packages"
 
-printf '%s\n' * | parallel -n1 -j$jobs -I{} cd {} \; makepkg -o
+echo 'cleaning up old source...'
+rm -f *.src.tar.gz
 
-tar czf packages.$(date +%s).tar.gz packages
+echo 'packaging each and listing failures on stderr...'
+# Package individual 
+printf '%s\n' * | parallel --no-notice -n1 -j$jobs -I{} $tmp/helper.sh {} \;
+
+# Package all
+echo 'packaging all...'
+mkdir -p $tmp/blackarch-source.$date
+cp */*.src.tar.gz $tmp/blackarch-source.$date
+cd $tmp
+tar cf "$tar" blackarch-source.$date
+)
+
+mv "$tmp/$tar" .
+
+# vim: set ft=zsh:

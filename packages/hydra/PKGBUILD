@@ -1,39 +1,36 @@
-pkgname=hydra
-pkgver=7.4.2
-pkgrel=4
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hydra'
+pkgver='8.1'
+pkgrel=1
 groups=('blackarch' 'blackarch-cracker')
-pkgdesc="A very fast network logon cracker which support many different services."
+pkgdesc='A very fast network logon cracker which support many different services.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://www.thc.org/thc-hydra/'
-license="GPL3"
-depends=('postgresql-libs' 'subversion' 'libssh' 'flamerobin' 'libmariadbclient' 'libidn')
-source=("git+https://github.com/BlackArch/hydra.git"
-        "fix-locations.patch")
-md5sums=('SKIP'
-         '869ca964fac894a670806d27a51ec843')
-
-prepare() {
-  cd $srcdir/hydra
-  patch -p1 < ../fix-locations.patch
-}
+license=('GPL3')
+depends=('postgresql-libs' 'subversion' 'libssh' 'libmariadbclient'
+         'libidn')
+source=("http://www.thc.org/releases/hydra-${pkgver}.tar.gz")
+sha1sums=('056442b6e382b22890f76152c794787678f90c5f')
 
 build() {
-  cd $srcdir/hydra
+  cd "$srcdir/hydra-$pkgver"
 
-  ./configure
+  ./configure --prefix=/usr
+
   make
 }
 
 package() {
-  cd $srcdir/hydra
+  cd "$srcdir/hydra-$pkgver"
 
-  # Needed or else make install will not
-  # install sample default password files.
-  install -dm755 $pkgdir/usr/etc
-  make PREFIX=$pkgdir/usr install
+  mkdir -p "$pkgdir/usr/etc"
 
-  # Conform to the FHS.
-  install -dm755 "$pkgdir/usr/share" "$pkgdir/etc"
+  make PREFIX="$pkgdir/usr" install
+
+  mkdir -p "$pkgdir/usr/share" "$pkgdir/etc"
+
   mv "$pkgdir/usr/man" "$pkgdir/usr/share"
   mv "$pkgdir/usr/etc" "$pkgdir/etc/hydra"
 }

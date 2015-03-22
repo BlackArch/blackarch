@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='perl-uri-fetch'
+pkgver='0.10'
+pkgrel='1'
+pkgdesc='Smart URI fetching/caching.'
+arch=('any')
+license=('PerlArtistic' 'GPL')
+options=('!emptydirs')
+depends=('perl>=5.8.1' 'perl-class-errorhandler' 'perl-libwww' 'perl-uri')
+url='http://search.cpan.org/dist/URI-Fetch'
+source=("http://search.cpan.org/CPAN/authors/id/N/NE/NEILB/URI-Fetch-${pkgver}.tar.gz")
+sha1sums=('b459db65a703b73f031c655238947d70163c7628')
+
+build() {
+  (
+    export PERL_MM_USE_DEFAULT=1 PERL5LIB="" PERL_AUTOINSTALL=--skipdeps \
+    PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'"     \
+    PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+    MODULEBUILDRC=/dev/null
+
+    cd "$srcdir/URI-Fetch-$pkgver"
+
+    perl Makefile.PL
+
+    make
+  )
+}
+
+check() {
+  cd "$srcdir/URI-Fetch-$pkgver"
+
+  (
+    export PERL_MM_USE_DEFAULT=1 PERL5LIB=""
+    make test
+  )
+}
+
+package() {
+  cd "$srcdir/URI-Fetch-$pkgver"
+
+  make install
+
+  find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}

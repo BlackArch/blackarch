@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bluebox-ng'
+pkgver=82.22fd93e
+pkgrel=1
+groups=('blackarch' 'blackarch-voip' 'blackarch-scanner' 'blackarch-fuzzer')
+pkgdesc='A GPL VoIP/UC vulnerability scanner.'
+url='https://github.com/jesusprubio/bluebox-ng'
+arch=('any')
+license=('GPL3')
+depends=('nodejs' 'coffee-script' 'python2')
+makedepends=('git')
+source=('git+https://github.com/jesusprubio/bluebox-ng.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/bluebox-ng"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/bluebox-ng"
+
+  mkdir -p "$pkgdir/usr/bin/"
+
+  rm -rf node_modules
+
+  npm install -g "--prefix=$pkgdir/usr"
+
+  cd "$pkgdir/usr/lib/node_modules/bluebox-ng/"
+
+  cat > "$pkgdir/usr/bin/bluebox" << EOF
+#!/bin/sh
+cd /usr/lib/node_modules/bluebox-ng/
+exec ./bluebox.sh "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/bluebox"
+}

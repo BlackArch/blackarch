@@ -1,26 +1,41 @@
-pkgname=websploit
-pkgver=2.0.4
-pkgrel=4
-groups=('blackarch' 'blackarch-exploitation' 'blackarch-social' 'blackarch-scanner' 'blackarch-fuzzer')
-pkgdesc="An Open Source Project For, Social Engineering Works, Scan, Crawler & Analysis Web, Automatic Exploiter, Support Network Attacks"
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='websploit'
+pkgver='3.0.0'
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-fuzzer' 'blackarch-scanner' 'blackarch-social')
+pkgdesc='An Open Source Project For, Social Engineering Works, Scan, Crawler & Analysis Web, Automatic Exploiter, Support Network Attacks'
 arch=('any')
 url='http://code.google.com/p/websploit/'
-license=('Unknown')
-source=("${pkgname}-${pkgver}.tar.gz::http://sourceforge.net/projects/websploit/files/WebSploit%20Framework%20V.${pkgver}/WebSploit%20Framework%20V.${pkgver}.tar.gz")
+license=('GPL3')
+source=("http://downloads.sourceforge.net/project/websploit/WebSploit%20Framework%20V.${pkgver}/WebSploit-Framework-${pkgver}.tar.gz")
 depends=('python2' 'scapy')
-md5sums=('e0f9f75aad766e1f6ffefae171550529')
+sha1sums=('5b5815b28b7f6e37383bb7fcb96b3b4355380ab4')
 
 package() {
-  cd "$srcdir/DEB Package"
+  cd "$srcdir/websploit"
 
-  ar x *.deb
-  tar xzf data.tar.gz -C "$pkgdir"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/websploit"
 
-  # Fix Python.
-  sed -i 's/^python\s/python2 /' "$pkgdir/usr/bin/websploit"
+  tar xzf wsf-`echo $pkgver | tr -d '.'`.tar.gz
+
+  cd "$srcdir/websploit/websploit"
+
+  install -Dm644 README.txt "$pkgdir/usr/share/doc/websploit/README.txt"
+  install -Dm644 COPYING.GPL "$pkgdir/usr/share/licenses/websploit/COPYING.GPL"
+
+  cp -a * "$pkgdir/usr/share/websploit"
 
   # Fix incompetence.
   find "$pkgdir" -name '*~' -delete
-  chmod -R go=rX,u=rwX "$pkgdir/usr"
-  chmod -R a+x "$pkgdir/usr/bin"
+
+  cat > "$pkgdir/usr/bin/websploit" << EOF
+#!/bin/sh
+cd /usr/share/websploit
+exec python2 websploit
+EOF
+
+  chmod +x "$pkgdir/usr/bin/websploit"
 }

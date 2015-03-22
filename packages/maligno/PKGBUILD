@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='maligno'
+pkgver='2.0'
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-exploitation')
+pkgdesc='An open source penetration testing tool written in python, that serves Metasploit payloads. It generates shellcode with msfvenom and transmits it over HTTP or HTTPS.'
+arch=('any')
+url='http://www.encripto.no/tools/'
+license=('FreeBSD')
+depends=('python2' 'python2-lxml' 'python2-crypto' 'metasploit' 'python-ipcalc')
+source=("http://www.encripto.no/tools/maligno-${pkgver}.tar.gz")
+sha1sums=('9618746643b23bae4b1df84c774e35a32c392fe9')
+
+prepare() {
+  cd "$srcdir/maligno-$pkgver"
+
+  sed -i 's|/usr/bin/python|/usr/bin/python2|g' maligno_srv.py
+  sed -i 's|/usr/bin/python|/usr/bin/python2|g' clientgen.py
+}
+
+package() {
+  cd "$srcdir/maligno-$pkgver"
+
+  local tools="maligno_srv clientgen"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/maligno"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/maligno/" docs/*
+
+  rm -rf docs
+
+  cp -a * "$pkgdir/usr/share/maligno"
+
+  for tool in $tools
+  do
+    cat > "$pkgdir/usr/bin/$tool" << EOF
+  #!/bin/sh
+  cd /usr/share/maligno
+  exec python2 ${tool}.py "\$@"
+EOF
+    chmod +x "$pkgdir/usr/bin/$tool"
+  done
+}

@@ -1,18 +1,21 @@
-pkgname=hashcat
-pkgver=0.46
-pkgrel=7
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hashcat'
+pkgver='0.49'
+pkgrel=1
 groups=('blackarch' 'blackarch-cracker')
-pkgdesc="A multithreaded cross platform hash cracker."
+pkgdesc='A multithreaded cross platform hash cracker.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://hashcat.net/hashcat/'
 license=('custom')
 makedepends=('p7zip')
 depends=('glibc')
 source=("https://hashcat.net/files/hashcat-${pkgver}.7z")
-md5sums=('0721adddc809b3b08332ee50ae325774')
+sha1sums=('3fa9cbbeac1d13ebb90f768e7456611c9b016be9')
 
 prepare() {
-  cd "${srcdir}/hashcat-${pkgver}"
+  cd "$srcdir/hashcat-$pkgver"
 
   if [[ "$CARCH" == 'x86_64' ]]; then
     mv hashcat-cli64.bin hashcat
@@ -22,21 +25,24 @@ prepare() {
 }
 
 package() {
-  cd "${srcdir}/hashcat-${pkgver}"
+  cd "$srcdir/hashcat-$pkgver"
 
   rm *.{exe,bin,app}
 
-  install -dm755 "${pkgdir}/usr/share/doc/hashcat"
-  install -dm755 "${pkgdir}/etc/hashcat"
+  mkdir -p "$pkgdir/usr/share/doc/hashcat"
+  mkdir -p "$pkgdir/etc/hashcat"
 
-  install -Dm755 hashcat "${pkgdir}/usr/bin/hashcat"
+  install -Dm755 hashcat "$pkgdir/usr/bin/hashcat"
 
-  cp -dpr --no-preserve=ownership "${srcdir}/hashcat-${pkgver}"/{rules,salts,tables} "${pkgdir}"/etc/"hashcat"/
-  cp -dpr --no-preserve=ownership "${srcdir}/hashcat-${pkgver}"/examples "${pkgdir}"/usr/share/doc/"hashcat"/
+  cp -a --no-preserve=ownership "$srcdir/hashcat-$pkgver"/{rules,salts,tables} \
+    "$pkgdir"/etc/"hashcat"/
+  cp -a --no-preserve=ownership "$srcdir/hashcat-$pkgver"/examples \
+    "$pkgdir"/usr/share/doc/"hashcat"/
 
-  # Fix permissions.
-  cd "${pkgdir}"
+  cd "$pkgdir"
+
   find . -type d -exec chmod 755 {} \+
   find . -type f -exec chmod 644 {} \+
+
   chmod a+x "${pkgdir}/usr/bin/hashcat"
 }

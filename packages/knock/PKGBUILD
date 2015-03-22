@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='knock'
+pkgver=28.308a325
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+pkgdesc='Subdomain scanner.'
+arch=('any')
+url='https://github.com/guelfoweb/knock'
+license=('GPL3')
+depends=('python2' 'python2-dnspython')
+makedepends=('git')
+source=('git+https://github.com/guelfoweb/knock.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/knock"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/knock"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/knock"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/knock/README.md" README.md \
+    changelog.txt
+
+  rm README.md changelog.txt
+
+  cp -a * "$pkgdir/usr/share/knock"
+
+  cat > "$pkgdir/usr/bin/knock" << EOF
+#!/bin/sh
+cd /usr/share/knock
+exec python2 knock.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/knock"
+}

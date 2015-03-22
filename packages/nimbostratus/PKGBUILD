@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='nimbostratus'
+pkgver='54.c7c206f'
+pkgrel=1
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-exploitation' 'blackarch-fuzzer')
+pkgdesc='Tools for fingerprintinging and exploiting Amazon cloud infrastructures.'
+url='https://github.com/andresriancho/nimbostratus'
+arch=('any')
+license=('GPL3')
+depends=('python2' 'python2-nose' 'python2-boto' 'python2-requests' 'python2-httpretty')
+makedepends=('git')
+source=('git+https://github.com/andresriancho/nimbostratus.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/nimbostratus"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/nimbostratus"
+
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/nimbostratus"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/nimbostratus/README"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/nimbostratus/LICENSE"
+
+  rm LICENSE README.md
+
+  cp -a * "$pkgdir/usr/share/nimbostratus"
+
+  cat > "$pkgdir/usr/bin/nimbostratus" << EOF
+#!/bin/sh
+cd /usr/share/nimbostratus
+exec python2 nimbostratus "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/nimbostratus"
+}

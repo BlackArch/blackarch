@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='o-saft'
+pkgver=580.0abab0e
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+pkgdesc='A tool to show informations about SSL certificate and tests the SSL connection according given list of ciphers and various SSL configurations.'
+arch=('any')
+url='https://www.owasp.org/index.php/O-Saft'
+license=('GPL2')
+depends=('perl' 'perl-io-socket-ssl' 'perl-net-ssleay' 'perl-io-socket-inet6')
+makedepends=('git')
+source=('git+https://github.com/OWASP/O-Saft.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/O-Saft"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/O-Saft"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/o-saft"
+
+  install -Dm644 README "$pkgdir/usr/share/doc/o-saft/README"
+  install -m644 CHANGES "$pkgdir/usr/share/doc/o-saft/CHANGES"
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/LICENSE.md"
+
+  rm README CHANGES LICENSE.md
+
+  cp -a * "$pkgdir/usr/share/o-saft/"
+
+  cat > "$pkgdir/usr/bin/o-saft" << EOF
+#!/bin/sh
+exec perl /usr/share/o-saft.pl "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/o-saft"
+}

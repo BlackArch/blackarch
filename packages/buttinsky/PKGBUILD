@@ -1,0 +1,63 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='buttinsky'
+pkgver='138.1a2a1b2'
+pkgrel=1
+pkgdesc='Provide an open source framework for automated botnet monitoring.'
+url='https://github.com/buttinsky/buttinsky'
+arch=('any')
+groups=('blackarch' 'blackarch-networking')
+license=('GPL3')
+depends=('python2' 'python2-configobj' 'python2-gevent' 'python2-validictory'
+        'python2-socks' 'hpfeeds')
+makedepends=('git')
+source=('git+https://github.com/buttinsky/buttinsky.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/buttinsky"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/buttinsky"
+
+  local bins="buttinsky cli netzobparse spawner stack"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/buttinsky"
+
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/buttinsky/LICENSE"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/buttinsky/README.md"
+
+  rm COPYING README.md
+
+  for bin in $bins
+  do
+    install -m755 "${bin}.py" "$pkgdir/usr/share/buttinsky/${bin}.py"
+  done
+
+  cp -a * "$pkgdir/usr/share/buttinsky"
+
+  mv "$pkgdir/usr/share/buttinsky/conf/buttinsky.cfg.dist" \
+    "$pkgdir/usr/share/buttinsky/conf/buttinsky.cfg"
+
+  chmod u+rwX,g+rwX,o+rX -R \
+    "$pkgdir/usr/share/buttinsky/"{behaviors,conf,docs,event_loops,logs,modules,protocols,settings}
+
+  # temporary an exception!
+  chmod 777 "$pkgdir/usr/share/buttinsky/logs"
+  chmod 777 "$pkgdir/usr/share/buttinsky/logs/buttinsky.log"
+
+  for bin in $bins
+  do
+    cat > "$pkgdir/usr/bin/$bin" << EOF
+#!/bin/sh
+cd /usr/share/buttinsky
+exec python2 ${bin}.py "\$@"
+EOF
+    chmod +x "$pkgdir/usr/bin/${bin}"
+  done
+}

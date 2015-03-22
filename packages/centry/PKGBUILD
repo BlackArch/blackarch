@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='centry'
+pkgver=72.6de2868
+pkgrel=1
+groups=('blackarch' 'blackarch-misc' 'blackarch-defensive')
+pkgdesc='Cold boot & DMA protection'
+url='https://github.com/0xPoly/Centry'
+arch=('any')
+license=('GPL3')
+depends=('python' 'python-pmw')
+makedepends=('git')
+source=('git+https://github.com/0xPoly/Centry')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Centry"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Centry"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share"
+
+  cp -aR $srcdir/Centry "$pkgdir/usr/share/centry"
+
+  cat > "$pkgdir/usr/bin/centry" << EOF
+#!/bin/bash
+cd /usr/share/centry
+exec python centry.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/centry"
+}

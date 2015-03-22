@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bamf-framework'
+pkgver=35.30d2b4b
+pkgrel=1
+pkgdesc='A modular framework designed to be a platform to launch attacks against botnets.'
+url='https://github.com/bwall/BAMF'
+arch=('any')
+license=('MIT')
+groups=('blackarch' 'blackarch-malware' 'blackarch-defensive')
+depends=('python2' 'python2-yara' 'yara' 'python2-simplejson' 'python2-pycurl'
+        'python2-pygeoip')
+makedepends=('git')
+source=('git+https://github.com/bwall/BAMF.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/BAMF"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/BAMF"
+
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/bamf"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/bamf/README.md"
+  install -Dm644 LICENSE.TXT "$pkgdir/usr/share/licenses/bamf/LICENSE.TXT"
+
+  rm README.md LICENSE.TXT
+
+  cp -a * "$pkgdir/usr/share/bamf"
+
+  chmod u+rwX,g+rwX,o+rX -R "$pkgdir/usr/share/bamf"
+
+  cat > "$pkgdir/usr/bin/bamfdetect" << EOF
+#!/bin/sh
+cd /usr/share/bamf
+exec python2 bamfdetect.py "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/bamfbrute" << EOF
+#!/bin/sh
+cd /usr/share/bamf
+exec python2 bamfbrute.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/bamfbrute"
+  chmod +x "$pkgdir/usr/bin/bamfdetect"
+}

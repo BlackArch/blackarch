@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+# Original: https://aur.archlinux.org/packages/python2-networkx
+
+pkgname='python2-networkx'
+pkgver='1.9.1'
+pkgrel=1
+pkgdesc='Python package for the creation, manipulation, and study of the structure, dynamics, and functions of complex networks.'
+arch=('any')
+license=('BSD')
+url="https://networkx.lanl.gov/"
+depends=('python2')
+makedepends=('python2-setuptools')
+optdepends=('python2-numpy: Provides sparse matrix representation of graphs and many numerical scientific tools.',
+            'python2-scipy: Provides flexible drawing of graphs.',
+            'python2-pygraphviz: Provides graph drawing and graph layout algorithms.',
+            'pydot: Provides graph drawing and graph layout algorithms.',
+            'python2-pyparsing: Required for pydot, GML file reading.',
+            'python2-yaml: Required for YAML format reading and writing.')
+source=("https://pypi.python.org/packages/source/n/networkx/networkx-$pkgver.zip")
+sha1sums=('bcb2100fed56fc0f0ab2c5be76c732685fc28e2a')
+
+prepare() {
+  cd "$srcdir/networkx-$pkgver"
+
+  find . -name '*.py' -exec \
+    sed -i -e 's/^#!\/usr\/bin\/env python$/#!\/usr\/bin\/env python2/' \
+           -e 's/^#!\/usr\/bin\/python$/#!\/usr\/bin\/python2/' {} \;
+}
+
+build() {
+  cd "$srcdir/networkx-$pkgver"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/networkx-$pkgver"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/python2-networkx/LICENSE.txt"
+  mv "$pkgdir/usr/share/doc/networkx-$pkgver" "$pkgdir/usr/share/doc/python2-networkx"
+}

@@ -1,21 +1,38 @@
-pkgname=whatweb
-pkgver=0.4.7
-pkgrel=4
-groups=('blackarch' 'blackarch-webapp' 'blackarch-recon')
-pkgdesc="Next generation web scanner that identifies what websites are running."
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='whatweb'
+pkgver=4023.36d2a13
+pkgrel=1
+groups=('blackarch' 'blackarch-recon' 'blackarch-webapp')
+pkgdesc='Next generation web scanner that identifies what websites are running.'
+arch=('any')
 url='http://www.morningstarsecurity.com/research/whatweb'
 license=('GPL')
 depends=('ruby1.8')
-source=("http://www.morningstarsecurity.com/downloads/whatweb-$pkgver.tar.gz")
-md5sums=('c1bdbc4a6d757f2aa3172b2c8c8c8be9')
+makedepends=('git')
+source=('git+https://github.com/urbanadventurer/WhatWeb.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/WhatWeb"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 prepare() {
-  cd "$srcdir/whatweb-$pkgver"
+  cd "$srcdir/WhatWeb"
+
   sed -i 's|/usr/bin/env ruby|/usr/bin/env ruby-1.8|' whatweb
 }
 
 package() {
-  cd "$srcdir/whatweb-$pkgver"
-  make DESTDIR=$pkgdir
+  cd "$srcdir/WhatWeb"
+
+  mkdir -p "$pkgdir/usr/share/doc/whatweb"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/whatweb" CHANGELOG README INSTALL
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/whatweb/LICENSE"
+
+  make DESTDIR="$pkgdir" install
 }

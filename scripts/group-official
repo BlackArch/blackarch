@@ -1,0 +1,48 @@
+#!/bin/bash
+# Calls dbmod to add all official packages to their groups.
+# Let barelease call this script for you please.
+
+db=$1
+# no other args
+
+base=${BASH_SOURCE[0]%/*}
+docs_official=$base/../docs/official
+
+err() {
+	echo >&2 "group-official: $*"
+}
+
+die() {
+	err "FATAL: $*"
+	exit 1
+}
+
+cleanup() {
+	rm -rf "$tmp"
+}
+trap cleanup EXIT
+
+if [[ ! -r "$docs_official" ]] ; then
+	die "failed to read '$docs_official'"
+fi
+
+if [[ -z "$db" ]] ; then
+	die 'no database specified'
+fi
+
+tmp=$(mktemp -d)
+
+tar xzf "$db" -C "$tmp"
+
+cd "$tmp" &> /dev/null
+pkgnames_db=(*)
+cd - &> /dev/null
+
+for pkgname_db in "${pkgnames_db[@]}" ; do
+	# remove the version number
+	pkgname=$(sed 's/-[^-]\+-[^-]\+$//' <<< "$pkgname_db")
+
+	if grep -q "^$pkgname " "$docs_official" ; then
+		"$base/dbmod" "$db" group "$pkgname" blackarch $(grep "^$pkgname " "$docs_official"  | cut -d' ' -f2-)
+	fi
+done

@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='silk'
+pkgver='3.10.1'
+pkgrel=1
+groups=('blackarch' 'blackarch-networking' 'blackarch-scanner')
+pkgdesc='A collection of traffic analysis tools developed by the CERT NetSA to facilitate security analysis of large networks.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://tools.netsa.cert.org/silk/'
+license=('GPL2')
+source=("https://tools.netsa.cert.org/releases/silk-${pkgver}.tar.gz")
+sha1sums=('a14653e8e7517298df963f035eb7ff7920591019')
+
+build() {
+  cd "$srcdir/silk-$pkgver"
+
+  ./configure --prefix=/usr --enable-ipv6 --sbindir=/usr/sbin
+
+  make
+}
+
+package() {
+  cd "$srcdir/silk-$pkgver"
+
+  mkdir -p "$pkgdir/usr/share/doc/silk"
+
+  install -Dm644 -t "$pkgdir/usr/share/licenses/silk" doc/GPL.txt \
+    doc/LICENSE.txt
+
+  rm doc/Makefile*
+
+  install -Dm644 doc/* "$pkgdir/usr/share/doc/silk"
+
+  make DESTDIR="$pkgdir" install
+
+  mv "$pkgdir/usr/sbin/"* "$pkgdir/usr/bin/"
+  rmdir "$pkgdir/usr/sbin"
+}

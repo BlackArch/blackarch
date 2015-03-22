@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='mitmer'
+pkgver=22.b01c7fe
+pkgrel=1
+groups=('blackarch' 'blackarch-sniffer' 'blackarch-networking')
+pkgdesc="A man-in-the-middle and phishing attack tool that steals the victim's credentials of some web services like Facebook."
+arch=('any')
+url='https://github.com/husam212/MITMer'
+license=('custom')
+depends=('python2' 'scapy' 'python2-nfqueue')
+makedepends=('git')
+source=('git+https://github.com/husam212/MITMer.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/MITMer"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/MITMer"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/mitmer"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/mitmer/README.md"
+
+  cp -a * "$pkgdir/usr/share/mitmer"
+
+  rm "$pkgdir/usr/share/mitmer/README.md"
+
+  cat > "$pkgdir/usr/bin/mitmer" << EOF
+#!/bin/sh
+cd /usr/share/mitmer
+exec python2 mitmer.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/mitmer"
+}

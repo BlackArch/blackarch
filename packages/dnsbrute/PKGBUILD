@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dnsbrute'
+pkgver=2.b1dc84a
+pkgrel=1
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
+pkgdesc='Multi-theaded DNS bruteforcing, average speed 80 lookups/second with 40 threads.'
+arch=('any')
+url='https://github.com/d4rkcat/dnsbrute'
+license=('GPL2')
+depends=('python2' 'python2-dnspython')
+makedepends=('git')
+source=('git+https://github.com/d4rkcat/dnsbrute.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/dnsbrute"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/dnsbrute"
+
+  sed -i 's|/usr/bin/python|/usr/bin/python2|' dnsbrute.py
+}
+
+package() {
+  cd "$srcdir/dnsbrute"
+
+  mkdir -p "$pkgdir/usr/share/dnsbrute"
+
+  install -Dm755 dnsbrute.py "$pkgdir/usr/bin/dnsbrute"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/dnsbrute/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/dnsbrute/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/dnsbrute/"
+}

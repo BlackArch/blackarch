@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bdfproxy'
+pkgver=58.79edcb2
+pkgrel=1
+groups=('blackarch' 'blackarch-proxy' 'blackarch-binary')
+pkgdesc='Patch Binaries via MITM: BackdoorFactory + mitmProxy'
+arch=('any')
+url='https://github.com/secretsquirrel/BDFProxy'
+license=('GPL3')
+depends=('python2' 'python2-simplejson' 'python2-configobj' 'python2-pefile'
+         'backdoor-factory' 'mitmproxy')
+makedepends=('git')
+source=('git+https://github.com/secretsquirrel/BDFProxy')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/BDFProxy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/BDFProxy"
+
+  sed -i '1s|python$|python2|' bdf_proxy.py
+  sed -i 's|bdfproxy\.cfg|/usr/share/bdfproxy/bdfproxy.cfg|g' bdf_proxy.py
+}
+
+package() {
+  cd "$srcdir/BDFProxy"
+
+  ./install.sh
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/bdfproxy"
+
+  cp -r * "$pkgdir/usr/share/bdfproxy"
+
+  chmod +x "$pkgdir/usr/share/bdfproxy/bdf_proxy.py"
+
+  cat > "$pkgdir/usr/bin/bdf-proxy" << EOF
+#!/bin/sh
+exec python2 /usr/share/bdfproxy/bdf_proxy.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/bdf-proxy"
+}

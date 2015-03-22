@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pytbull'
+pkgver='2.0'
+pkgrel=2
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer')
+pkgdesc='A python based flexible IDS/IPS testing framework shipped with more than 300 tests'
+arch=('any')
+url='http://pytbull.sourceforge.net/'
+license=('GPL2')
+depends=('python2' 'scapy' 'python2-feedparser')
+source=("https://downloads.sourceforge.net/project/pytbull/pytbull-$pkgver.tar.bz2")
+sha1sums=('87218120d58e88ec9e5c2e8340ca71dec3faf877')
+
+prepare() {
+  cd "$srcdir/pytbull"
+  sed -i 's/self.checkNewVersionAvailable()/False/' pytbull
+}
+
+package() {
+  cd "$srcdir/pytbull"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/pytbull"
+  mkdir -p "$pkgdir/usr/share/doc/"
+
+  install -Dm644 docs/COPYING "$pkgdir/usr/share/licenses/pytbull/COPYING"
+
+  cp -a * "$pkgdir/usr/share/pytbull"
+  cp -a docs "$pkgdir/usr/share/doc/pytbull"
+
+  cat > "$pkgdir/usr/bin/pytbull" << EOF
+#!/bin/sh
+cd /usr/share/pytbull
+python2 pytbull "\$@"
+EOF
+
+chmod +x "$pkgdir/usr/bin/pytbull"
+}

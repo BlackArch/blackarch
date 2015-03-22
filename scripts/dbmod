@@ -1,0 +1,82 @@
+#!/bin/bash
+
+shopt -s extglob
+
+err() {
+	echo "ERROR: $*"
+}
+
+parse_args() {
+	db=$1
+	if [[ "$db" != *.db.tar.gz ]] ; then
+		err "not a database: $db"
+		exit 1
+	fi
+	shift
+	case "$1" in
+		group)
+			action=group
+			package=$2
+			shift; shift
+			groups=("$@")
+
+			if (( ${#groups[@]} == 0 )) ; then
+				err 'no groups specified'
+				exit 1
+			fi
+			;;
+		*)
+			err "invalid action: $1"
+			exit 1
+			;;
+	esac
+	shift
+}
+
+cleanup() {
+	rm -rf "$tmp"
+}
+
+extract() {
+	tmp=$(mktemp -d)
+	tar xzf "$db" -C "$tmp"
+}
+
+take_action() {
+	package_ver=($tmp/$package-+([!-])-+([!-]))
+
+	if [[ ! -d "$package_ver" ]] ; then
+		err "$package is not in the database."
+		exit 1
+	fi
+
+	case "$action" in
+		group)
+			#echo "adding $package to groups: ${groups[@]}"
+			if grep -q '%GROUPS%' "$package_ver/desc" ; then
+				sed -i '/%GROUPS%/,/^$/d' "$package_ver/desc"
+			fi
+
+			printf '%%GROUPS%%\n' >> "$package_ver/desc"
+			printf '%s\n' "${groups[@]}" >>"$package_ver/desc"
+			;;
+	esac
+}
+
+archive() {
+	( cd "$tmp"
+	  tar czf "$db" * )
+	mv -f "$tmp/$db" "$db"
+}
+
+main() {
+	parse_args "$@"
+
+	trap cleanup EXIT
+
+	extract
+	take_action
+	archive
+}
+
+main "$@"

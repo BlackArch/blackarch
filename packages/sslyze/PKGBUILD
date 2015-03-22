@@ -1,28 +1,33 @@
-pkgname=sslyze
-pkgver=0.6
-pkgrel=4
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sslyze'
+pkgver='0.10'
+pkgrel=1
 groups=('blackarch' 'blackarch-misc')
-pkgdesc="Python tool for analyzing the configuration of SSL servers and for identifying misconfigurations"
-
-arch=('any')
-url='https://github.com/iSECPartners/sslyze'
+pkgdesc='Python tool for analyzing the configuration of SSL servers and for identifying misconfigurations.'
+arch=('i686' 'x86_64')
+url='https://github.com/nabla-c0d3/sslyze/'
 license=('GPL2')
-
 depends=('python2')
-source=(https://dl.dropbox.com/s/h4cc7q68jdmxay3/sslyze-${pkgver}_src.zip)
-md5sums=('d86b75faacb069a02c829fab2f45193c')
+if [ $CARCH = "x86_64" ]
+then
+  bit="64"
+  source=("https://github.com/nabla-c0d3/sslyze/releases/download/release-$pkgver/sslyze-0_10-linux64.zip")
+else
+  bit="i686"
+  source=("https://github.com/nabla-c0d3/sslyze/releases/download/release-$pkgver/sslyze-0_10-linux32.zip")
+fi
+sha1sums=('5b17aee4802f3c4bbc74b8e10f131522a4dbb320')
 
 package() {
-  # Install files.
-  install -dm755 "$pkgdir/usr/share"
-  cp --no-preserve=ownership -r $srcdir/sslyze-${pkgver}_src $pkgdir/usr/share/sslyze
+  cd "$srcdir/sslyze"
 
-  # Create an indirect launcher.
-  install -dm755 $pkgdir/usr/bin
-  cat > "$pkgdir/usr/bin/sslyze" <<\EOF
-#!/bin/sh
-cd /usr/share/sslyze
-python2 sslyze.py $@
-EOF
-  chmod 755 "$pkgdir/usr/bin/sslyze"
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  mv "$pkgdir/usr/bin/sslyze.py" "$pkgdir/usr/bin/sslyze"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/sslyze/README.md"
+  install -m644 AUTHORS.txt "$pkgdir/usr/share/doc/sslyze/AUTHORS.txt"
+  install -m644 CHANGELOG.md "$pkgdir/usr/share/doc/sslyze/CHANGELOG.md"
 }

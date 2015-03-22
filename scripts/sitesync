@@ -2,13 +2,13 @@
 
 cd "$(dirname "$0")"
 
-site=blackarch@blackarch.real
-sitedir=/var/www/blackarchlinux.org/blackarch
+site=blackarch.org
+sitedir=/nginx/var/www/blackarch
 testing=blackarch-testing/os
 real=blackarch/os
-real_bak=blackarch.bak
+real_bak=blackarch.bak/os
 
-real_local=$(realpath ../real-repo)
+real_local=$(realpath ../real-repo/os)
 
 eval $(ssh-agent)
 trap "kill $SSH_AGENT_PID" EXIT
@@ -19,37 +19,53 @@ fix_permissions() {
 	             chmod -R ug+rwX,o+rX $sitedir/* 2> /dev/null"
 }
 
+_rsync() {
+	rsync --delete-after --progress -vz -rlptD "$@"
+}
+
 ran=$RANDOM$RANDOM
 case "$1" in
 	# Copy Local -> Real
 	local-real)
 		echo >&2 'syncing local to real...'
-		rsync -avz --progress --delete-after "${real_local:-safety}/" $site:/$sitedir/$real.$ran
-		ssh "$site" "cp -a $sitedir/$testing $sitedir/$real.$ran
-		             rm -rf $sitedir/$real
-		             mv -v $sitedir/$real.$ran $sitedir/$real"
+		_rsync "${real_local:-safety}/" "${site:-safety}:/${sitedir:-safety}/${real:-safety}"
+		fix_permissions
+		;;
+
+	# Copy Real -> Local
+	# TODO: test
+	real-local)
+		echo >&2 'syncing real to local...'
+		_rsync "${site:-safety}:/${sitedir:-safety}/${real:-safety}/" "${real_local:-safety}"
 		fix_permissions
 		;;
 
 	# Sync Local -> Test
 	local-test)
 		echo >&2 'syncing local to test...'
-		rsync -avz --progress --delete-after "${real_local:-safety}/" $site:/$sitedir/$testing
+		ssh "$site" "mkdir -p '$sitedir/$testing'"
+		_rsync "${real_local:-safety}/" $site:/$sitedir/$testing
 		fix_permissions
 		;;
 
 	# Move Test -> Real
 	test-real)
 		echo >&2 'syncing test to real...'
-		ssh "$site" "mv -v $sitedir/$real $sitedir/$real_bak
-		             rm -rf $sitedir/$testing"
+		ssh "$site" "mkdir -p $sitedir/$real_bak
+		             rm -rf ${sitedir:-safety}/$real_bak
+		             mv -v $sitedir/$real $sitedir/$real_bak
+                     mv -v $sitedir/$testing $sitedir/$real
+		             rm -rf ${sitedir:-safety}/$real_bak"
 		;;
 
 	# Move Test -> Real and copy Real -> Test afterwards.
 	test-real-copy)
 		echo >&2 'syncing test to real...'
-		ssh "$site" "mv -v $sitedir/$real $sitedir/$real_bak
+		ssh "$site" "mkdir -p $sitedir/$real_bak
+		             rm -rf ${sitedir:-safety}/$real_bak
+		             mv -v $sitedir/$real $sitedir/$real_bak
 		             mv -v $sitedir/$testing $sitedir/$real
+		             rm -rf ${sitedir:-safety}/$real_bak/..
 		             cp -a $sitedir/$real $sitedir/$testing"
 		;;
 
@@ -59,7 +75,8 @@ case "$1" in
 		ssh "$site" "[ -d $sitedir/$real_bak ] || echo 'no backup'
 		             mv -v $sitedir/$real $sitedir/$real.$ran
 		             mv -v $sitedir/$real_bak $sitedir/$real
-		             mv -v $sitedir/$real.$ran $sitedir/$real_bak"
+		             mv -v $sitedir/$real.$ran $sitedir/$real_bak
+		             rm -rf ${sitedir:-safety}/$real_bak"
 		;;
 	*)
 		echo >&2 invalid

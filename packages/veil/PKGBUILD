@@ -1,49 +1,55 @@
-pkgname=veil
-pkgver=2.2.0.r116
-pkgrel=2
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='veil'
+pkgver=309.8d3c138
+pkgrel=1
+epoch=2
 groups=('blackarch' 'blackarch-automation' 'blackarch-exploitation')
-pkgdesc="A tool designed to generate metasploit payloads that bypass common anti-virus solutions."
-url="https://github.com/veil-evasion/Veil"
+pkgdesc='A tool designed to generate metasploit payloads that bypass common anti-virus solutions.'
+url='https://github.com/veil-evasion/Veil'
 arch=('any')
 license=('GPL2')
-depends=('python2' 'python2-crypto' 'metasploit')
-##
-# 'setup/setup.sh' wants to run the following to install deps ::
-#
-#  apt-get install mingw-w64 monodoc-browser monodevelop mono-mcs wine python python-crypto
-#
-#  wget https://www.veil-evasion.com/InstallMe/requiredfiles.zip --no-check-certificate
-#  wget https://www.veil-evasion.com/InstallMe/pyinstaller-2.0.zip --no-check-certificate
-##
-source=("git+https://github.com/veil-evasion/Veil")
-md5sums=('SKIP')
+depends=('python2' 'python2-crypto')
+makedepends=('git')
+source=('git+https://github.com/veil-evasion/Veil.git')
+sha1sums=('SKIP')
 
 pkgver() {
   cd "$srcdir/Veil"
-  printf "%s.r%s" $(grep -i "\[Version\]:" "$srcdir/Veil/modules/common/messages.py" |
-    cut -d" " -f6 | sed -e "s|'||") "$(git rev-list --count HEAD)"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
   cd "$srcdir/Veil"
+
   grep -iRl 'python' "$srcdir/Veil" |
     xargs sed -i -e 's|#!.*/usr/bin/python|#!/usr/bin/python2|' \
                  -e 's|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
+
   sed -i 's|python update.py|python2 update.py|' "$srcdir/Veil/setup/setup.sh"
 }
 
 package() {
   cd "$srcdir/Veil"
-  # Base directories.
-  install -dm755 "$pkgdir/usr/share/veil"
-  install -dm755 "$pkgdir/usr/bin/"
+
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/veil"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/veil/README.md"
+  install -m644 CHANGELOG "$pkgdir/usr/share/doc/veil/CHANGELOG"
+  install -Dm644 COPYRIGHT "$pkgdir/usr/share/licenses/veil/COPYRIGHT"
+
+  rm CHANGELOG COPYRIGHT README.md
 
   cp -a * "$pkgdir/usr/share/veil"
 
   cat > "$pkgdir/usr/bin/veil" << EOF
 #!/bin/sh
 cd /usr/share/veil/
-python2 Veil.py "\$@"
+exec python2 Veil-Evasion.py "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/veil"
 }

@@ -1,0 +1,110 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='qt3'
+pkgver='3.3.8b'
+pkgrel=1
+pkgdesc='A cross-platform application and UI framework.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://www.trolltech.com/products/qt/index.html'
+license=('GPL')
+depends=('libpng' 'libxmu' 'libxcursor' 'libxinerama' 'glu' 'libxft'
+         'libxrandr' 'libmng')
+makedepends=('mariadb' 'postgresql' 'unixodbc' 'sqlite' 'mesa')
+optdepends=('qtchooser: set the default Qt toolkit'
+            'libmariadbclient: MariaDB driver'
+            'postgresql-libs: PostgreSQL driver'
+            'unixodbc: ODBC driver')
+options=('!docs')
+source=("ftp://ftp.qt-project.org/qt/source/qt-x11-free-${pkgver}.tar.gz"
+        'qt3-png15.patch' 'qt-copy-kde-patches.tar.bz2' 'qt-patches.tar.bz2'
+        'eastern_asian_languagues.diff' 'qt-odbc.patch' 'gcc-4.6.patch'
+        'qt-x11-free-3.3.5-makelibshared.patch')
+sha1sums=('745def6250dc7f337dbb265e20bf38dcb41fd854'
+          '3d19510c46016a1a211d97bf8f82b01498b1b33c'
+          '33418e5b117458af23c72cdbffc0c339bc34bdc4'
+          '116afa0e737bdf27ea27f9b3653aeb56db9ec151'
+          '40c7b8f06a21f809ddeb8b5560e9da63ccac6a17'
+          '1346320614f6f86fbeb10b9fbad721dea29f5b61'
+          'd9b83b8f6f9c8bd98d290dc1d0e9913a00b62c3f'
+          'e89720eac87c3e925d0efae6a16f334c5159e4f6')
+
+prepare() {
+  cd "$srcdir/qt-x11-free-${pkgver}"
+
+  for i in ../qt-copy-kde-patches/*
+  do
+    patch -p0 -i $i
+  done
+
+  for i in ../qt-patches/*
+  do
+    patch -p1 -i $i
+  done
+
+  patch -p1 -i "$srcdir"/eastern_asian_languagues.diff
+  patch -p1 -i "$srcdir"/qt-odbc.patch
+  patch -p1 -i "$srcdir"/gcc-4.6.patch
+  patch -p0 -i "$srcdir"/qt3-png15.patch
+  patch -p1 -i "$srcdir"/qt-x11-free-3.3.5-makelibshared.patch
+
+  sed -i "s|-O2|$CXXFLAGS|" mkspecs/linux-g++{,-32,-64}/qmake.conf
+  sed -i "s|-I. |$CXXFLAGS -I. |" qmake/Makefile.unix
+  sed -i "s|read acceptance|acceptance=yes|" configure
+}
+
+build() {
+  cd "$srcdir"
+
+  export QTDIR="${srcdir}"/qt-x11-free-${pkgver}
+  export PATH=${QTDIR}/bin:${PATH}
+  export LD_LIBRARY_PATH=${QTDIR}/lib:${LD_LIBRARY_PATH}
+  export QMAKESPEC=$QTDIR/mkspecs/linux-g++
+
+  if [ "$CARCH" = "x86_64" ]
+  then
+    export ARCH="-64"
+  else
+    unset ARCH
+  fi
+
+  cd qt-x11-free-$pkgver
+
+  ./configure -prefix /usr -bindir /usr/lib/qt3/bin \
+    -headerdir /usr/include/qt3 -plugindir /usr/lib/qt3/plugins \
+    -datadir /usr/share/qt3 -translationdir /usr/share/qt3/translations \
+    -I/usr/include/mysql -I/usr/include/postgresql/server \
+    -platform linux-g++$ARCH -system-zlib -qt-gif -release -shared -sm -nis \
+    -thread -stl -system-lib{png,jpeg,mng} -no-g++-exceptions \
+    -plugin-sql-{mysql,psql,sqlite,odbc}
+
+  make
+}
+
+package() {
+  cd "$srcdir/qt-x11-free-$pkgver"
+
+  make INSTALL_ROOT="${pkgdir}" install
+
+  sed -i -e "s|-L${srcdir}/qt-x11-free-${pkgver}/lib ||g" -e "s|${srcdir}/||g" \
+    "${pkgdir}"/usr/lib/*.prl
+
+  rm -rf "${pkgdir}"/usr/share/qt3/{phrasebooks,templates,translations}
+  rm -rf "${pkgdir}"/usr/share/qt3/mkspecs/{aix*,*bsd*,cygwin*,dgux*,darwin*,hpux*,hurd*,irix*,linux-g++$ARCH/linux-g++$ARCH,lynxos*,macx*,qnx*,reliant*,sco*,solaris*,tru64*,unixware*,win32*}
+  mkdir -p "${pkgdir}"/usr/share/man
+
+  cp -r "${srcdir}"/qt-x11-free-${pkgver}/doc/man/{man1,man3} \
+    "${pkgdir}"/usr/share/man/
+
+  for i in "${pkgdir}"/usr/share/man/man1/*
+  do
+    mv $i ${i%.*}-qt3.1
+  done
+
+  mkdir -p "${pkgdir}"/usr/bin
+
+  for b in "${pkgdir}"/usr/lib/qt3/bin/*
+  do
+    ln -s /usr/lib/qt3/bin/$(basename $b) "${pkgdir}"/usr/bin/$(basename $b)-qt3
+  done
+}

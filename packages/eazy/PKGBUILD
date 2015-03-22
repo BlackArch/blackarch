@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='eazy'
+pkgver='0.1'
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
+pkgdesc='This is a small python tool that scans websites to look for PHP shells, backups, admin panels, and more.'
+arch=('any')
+url='http://packetstormsecurity.com/files/117572/EAZY-Web-Scanner.html'
+license=('unknown')
+depends=('python2')
+source=('http://packetstorm.foofus.com/UNIX/scanners/EAZY.zip')
+sha1sums=('c87f5c3dcf2b86bdfafaec6fcd7a54f3bd6f139d')
+
+prepare() {
+  cd "$srcdir/EAZY"
+
+  sed -i '1i\#!/usr/bin/env python2' my.py
+}
+
+package() {
+  cd "$srcdir/EAZY"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/eazy"
+
+  cp -a * "$pkgdir/usr/share/eazy"
+
+  cat > "$pkgdir/usr/bin/eazy" << EOF
+#!/bin/sh
+cd /usr/share/eazy
+exec python2 my.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/eazy"
+}

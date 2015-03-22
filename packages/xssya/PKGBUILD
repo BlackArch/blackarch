@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='xssya'
+pkgver=9.a0614ee
+pkgrel=2
+epoch=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+pkgdesc='A Cross Site Scripting Scanner & Vulnerability Confirmation.'
+arch=('any')
+url='https://github.com/yehia-mamdouh/XSSYA'
+license=('custom')
+depends=('python2' 'python2-colorama' 'python2-gdshortener')
+makedepends=('git')
+source=('git+https://github.com/yehia-mamdouh/XSSYA-V-2.0.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/XSSYA-V-2.0"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/XSSYA-V-2.0"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/xssya"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/xssya/" README.md Author.txt
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/xssya/LICENSE.txt"
+
+  rm README.md Author.txt LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/xssya"
+
+  cat > "$pkgdir/usr/bin/xssya" << EOF
+#!/bin/sh
+cd /usr/share/xssya
+exec python2 xssya.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/xssya"
+}

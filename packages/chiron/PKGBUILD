@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='chiron'
+pkgver='0.7'
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-networking'
+        'blackarch-exploitation' 'blackarch-proxy')
+pkgdesc='An all-in-one IPv6 Penetration Testing Framework.'
+arch=('any')
+url='http://www.secfu.net/tools-scripts/'
+license=('GPL2')
+depends=('python2' 'scapy')
+source=("http://www.secfu.net/app/download/9800872897/Chiron_${pkgver}.tar.gz")
+sha1sums=('3de64024d3b9a14dd7d5bd58c73759765870cad9')
+
+
+package() {
+  cd "$srcdir/Chiron_$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/chiron"
+
+  install -Dm644 Chiron_Tutorial.pdf \
+    "$pkgdir/usr/share/doc/chiron/Chiron_Tutorial.pdf"
+
+  tar xfvz Chiron.tar.gz
+
+  cd Chiron
+
+  cp -a * "$pkgdir/usr/share/chiron/"
+
+  local tools="chiron-combinations chiron-nd chiron-proxy chiron-scanner"
+
+  for tool in ${tools}
+  do
+    cat > "$pkgdir/usr/bin/$tool" << EOF
+#!/bin/sh
+cd /usr/share/chiron/bin
+exec python2 ${tool/-/_}.py "\$@"
+EOF
+    chmod +x "$pkgdir/usr/bin/$tool"
+  done
+}

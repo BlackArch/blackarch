@@ -1,40 +1,40 @@
-pkgname=artillery
-pkgver=0.7.3
-pkgrel=5
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='artillery'
+pkgver='1.0.3'
+pkgrel=1
 groups=('blackarch' 'blackarch-defensive' 'blackarch-honeypot')
 pkgdesc="A combination of a honeypot, file-system monitoring, system hardening, and overall health of a server to create a comprehensive way to secure a system"
 arch=('any')
 url='https://www.trustedsec.com/downloads/artillery/'
 license=('BSD')
-makedepends=('git')
 depends=('python2')
-source=('git+https://github.com/trustedsec/artillery/')
-md5sums=('SKIP')
+source=("https://github.com/trustedsec/artillery/archive/${pkgver}.tar.gz")
+sha1sums=('0d341c54658c8a6a76ee4775a0957109d0323a7c')
 
 prepare() {
-  cd "$srcdir/artillery"
+  cd "$srcdir/artillery-$pkgver"
 
-  # Fix incompetence.
   sed -i "s|/var|$pkgdir/var|g" setup.py
   sed -i "s|/etc|$pkgdir/etc|g" setup.py
 }
 
 package() {
-  cd "$srcdir/artillery"
+  cd "$srcdir/artillery-$pkgver"
 
-  # Who does this?
   python2 setup.py <<< $'y\nn\nn'
 
   rm "$pkgdir/var/artillery/setup.py"
 
-  install -dm755 "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/bin"
   cat > "$pkgdir/usr/bin/artillery" <<EOF
 #!/bin/sh
 if test \$EUID != 0 ; then
   echo 'Must be run as root.'
   exit 1
 fi
-python2 /var/artillery/artillery.py "\$@"
+exec python2 /var/artillery/artillery.py "\$@"
 EOF
   chmod +x "$pkgdir/usr/bin/artillery"
 }

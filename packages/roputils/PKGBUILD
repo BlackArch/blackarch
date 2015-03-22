@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='roputils'
+pkgver=133.84ccf75
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation')
+pkgdesc='A Return-oriented Programming toolkit.'
+arch=('any')
+url='https://github.com/inaz2/roputils'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/inaz2/roputils.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/roputils"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/roputils"
+
+  find "$srcdir/" -name "*.py" -exec sed -i '1s|env python|env python2|' {} \;
+}
+
+package() {
+  cd "$srcdir/roputils"
+
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/roputils"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/roputils/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/roputils"
+
+  chmod +x "$pkgdir/usr/share/roputils/roputils.py"
+
+  ln -s /usr/share/roputils/roputils.py "$pkgdir/usr/bin/roputils"
+}

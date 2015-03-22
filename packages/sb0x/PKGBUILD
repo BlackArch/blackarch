@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sb0x'
+pkgver=19.04f40fe
+pkgrel=2
+pkgdesc='A simple and Lightweight framework for Penetration testing.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-cracker'
+        'blackarch-backdoor' 'blackarch-recon')
+url='https://github.com/levi0x0/sb0x-project'
+arch=('any')
+license=('GPL3')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/levi0x0/sb0x-project.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sb0x-project"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/sb0x-project"
+
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/sb0x"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/sb0x/README.md"
+  install -Dm644 doc/LICENSE "$pkgdir/usr/share/licenses/sb0x/LICENSE"
+
+  cp -a doc/* "$pkgdir/usr/share/doc/sb0x"
+  cp -a * "$pkgdir/usr/share/sb0x/"
+
+  cat > "$pkgdir/usr/bin/sb0x" << EOF
+#!/bin/sh
+cd /usr/share/sb0x
+exec python2 sb0x.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/sb0x"
+}

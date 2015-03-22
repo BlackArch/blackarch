@@ -1,0 +1,34 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='eyepwn'
+pkgver='1.0'
+pkgrel=1
+pkgdesc="Exploit for Eye-Fi Helper directory traversal vulnerability"
+arch=('any')
+url="http://www.pentest.co.uk"
+license=('GPL')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-wireless')
+depends=('python2' 'scapy' 'net-tools')
+optdepends=('gnu-netcat: listen with GNU nc'
+            'openbsd-netcat: listen with OpenBSD nc')
+source=('http://www.pentest.co.uk/documents/eyepwn.zip'
+        'eyepwn.patch')
+sha256sums=('7236fbe061d2fba2576d1a82a003adfc791a41aecc8b61039872588c1d5f3e55'
+            'b96eef10e3c8ed8befca39146c1eaa6fab6d996b2c9af2623dc258d4c3be34df')
+
+prepare() {
+  cd "$srcdir/eyepwn"
+
+  # Add python2 exec line and point
+  # payload.exe -> /usr/share/eyepwn/payload.exe
+  # Modify how ifconfig output is parsed
+  patch -p1 -i "$srcdir/eyepwn.patch"
+}
+
+package() {
+  cd "$srcdir/eyepwn"
+
+  install -Dm755 eyepwn.py "$pkgdir/usr/bin/eyepwn"
+  install -Dm644 payload.exe "$pkgdir/usr/share/eyepwn/payload.exe"
+}

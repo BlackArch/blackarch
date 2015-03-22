@@ -1,0 +1,18 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='backports-drivers-frag+ack'
+_patch=mac80211.compat08082009.wl_frag+ack_v1.patch
+pkgver='1'
+pkgrel=1
+pkgdesc="$_patch for compat-drivers-patched"
+url='https://backports.wiki.kernel.org/index.php/Main_Page'
+arch=('any')
+license=('GPL')
+source=("http://patches.aircrack-ng.org/$_patch")
+sha256sums=('e04ed9997e1578cc1becd4ef9d9f2f6f606590aa91a56e42835963913e1b0f52')
+
+package() {
+  mkdir -p "$pkgdir/etc/makepkg.d/compat-drivers-patched/patches"
+  install "$srcdir/$_patch" "$pkgdir/etc/makepkg.d/compat-drivers-patched/patches/50-1-$_patch"
+}

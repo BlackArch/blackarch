@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pip3line'
+pkgver=30.eae2260
+pkgrel=2
+epoch=2
+groups=('blackarch' 'blackarch-crypto')
+pkgdesc='The Swiss army knife of byte manipulation.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/nccgroup/pip3line'
+license=('GAGPL3')
+if [[ "$CARCH" == 'i686' ]]; then
+  depends=('qt4' 'python2' 'python' 'gcc-libs' 'openssl' 'distorm' 'xdg-utils')
+elif [[ "$CARCH" == 'x86_64' ]]; then
+  depends=('qt4' 'python2' 'python' 'gcc-libs-multilib' 'openssl' 'distorm'
+           'xdg-utils')
+fi
+makedepends=('git' 'cmake')
+source=('git+https://github.com/nccgroup/pip3line.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/pip3line"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/pip3line"
+
+  mkdir build
+
+  cd build
+
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_SKIP_RPATH=ON -DALL=ON \
+    -DWITH_DISTORM=ON -DWITH_OPENSSL=ON -DWITH_PYTHON27=ON -DWITH_PYTHON3=ON ../
+}
+
+package() {
+  cd "$srcdir/pip3line"
+
+  cd build
+
+  make DESTDIR="$pkgdir" install
+}

@@ -1,0 +1,35 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='malwasm'
+pkgver='0.2'
+pkgrel=4
+pkgdesc="Offline debugger for malware's reverse engineering."
+url='https://code.google.com/p/malwasm/'
+license=('GPL2')
+arch=('any')
+groups=('blackarch' 'blackarch-reversing' 'blackarch-debugger')
+depends=('python2' 'python2-psycopg2' 'python2-flask' 'python2-progressbar' 'cuckoo' 'postgresql')
+install='malwasm.install'
+optdepens=('pintool')
+source=("https://malwasm.googlecode.com/files/malwasm-v$pkgver.tar.gz"
+        "malwasm.install")
+sha1sums=('4006e8cdd181a94306bf2dee25631394c2284cac'
+          'd260b3d1f89586c817650aeecbddf7eb026cf1cf')
+
+package() {
+  cd "$srcdir/malwasm-v$pkgver"
+
+  mkdir -p "$pkgdir/usr/share/malwasm"
+  mkdir -p "$pkgdir/usr/bin"
+
+  cp -a * "$pkgdir/usr/share/malwasm"
+
+  cat > "$pkgdir/usr/bin/malwasm" << EOF
+#!/bin/sh
+cd /usr/share/malwasm
+exec python2 web/malwasm_web.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/malwasm"
+}

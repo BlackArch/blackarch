@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='gnutls2'
+pkgver='2.12.23'
+pkgrel=2
+groups=('blackarch' 'blackarch-crypto')
+pkgdesc='A library which provides a secure layer over a reliable transport layer (Version 2)'
+url='http://gnutls.org/'
+license=('GPL' 'LGPL')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+depends=('zlib' 'libtasn1' 'p11-kit')
+if [[ $CARCH == i686 ]] ; then
+  depends+=('nettle')
+else
+  depends+=('lib32-nettle')
+fi
+makedepends=('pkg-config')
+source=("ftp://ftp.gnutls.org/gcrypt/gnutls/v2.12/gnutls-${pkgver}.tar.bz2")
+md5sums=('f3c1d34bd5f113395c4be0d5dfc2b7fe')
+
+build() {
+  cd "$srcdir/gnutls-$pkgver"
+  
+  ./configure --prefix=/usr/gnutls2 \
+    --with-libtasn1-prefix=/usr \
+    --with-libiconv-prefix=/usr \
+    --enable-threads=posix \
+    --disable-static \
+    --disable-guile
+  
+  make
+}
+
+package() {
+  cd "$srcdir/gnutls-${pkgver}"
+  
+  make DESTDIR="${pkgdir}" install
+  
+  mkdir -p "${pkgdir}"/etc/ld.so.conf.d
+  echo '/usr/gnutls2/lib/' > "${pkgdir}/etc/ld.so.conf.d/${pkgname}.conf"
+}

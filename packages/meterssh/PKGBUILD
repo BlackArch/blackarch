@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='meterssh'
+pkgver=10.ebb6f4e
+pkgrel=1
+groups=('blackarch' 'blackarch-backdoor' 'blackarch-networking')
+pkgdesc='A way to take shellcode, inject it into memory then tunnel whatever port you want to over SSH to mask any type of communications as a normal SSH connection.'
+arch=('any')
+url='https://github.com/trustedsec/meterssh'
+license=('custom:unknown')
+depends=('python2' 'metasploit')
+makedepends=('git')
+source=('git+https://github.com/trustedsec/meterssh.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/meterssh"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/meterssh"
+
+  sed -i 's|/usr/bin/python|/usr/bin/python2|' monitor.py
+}
+
+package() {
+  cd "$srcdir/meterssh"
+
+  mkdir -p "$pkgdir/usr/share/meterssh"
+
+  install -Dm755 monitor.py "$pkgdir/usr/bin/meterssh-monitor"
+  install -Dm644 meterssh.py "$pkgdir/usr/share/meterssh/meterssh.py"
+  install -Dm644 -t "$pkgdir/usr/share/doc/meterssh" README.md CHANGELOG.txt
+}

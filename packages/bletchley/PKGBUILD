@@ -1,22 +1,39 @@
-pkgname=bletchley
-pkgver=0.0.1
-pkgrel=3
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bletchley'
+pkgver='0.0.1'
+pkgrel=7
 groups=('blackarch' 'blackarch-crypto')
-pkgdesc="A collection of practical application cryptanalysis tools."
+pkgdesc='A collection of practical application cryptanalysis tools.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-url="https://code.google.com/p/bletchley/"
+url='https://code.google.com/p/bletchley/'
 license=('GPL')
-depends=('python')
+depends=('python3' 'python-requests')
 makedepends=('scons')
-source=("https://googledrive.com/host/0B6HCWPzk_jKoVHI5WV9EMURfbms/bletchley-src-$pkgver.tar.gz")
-md5sums=('2a1071f7a20a9cf18e143c989a686cfb')
+source=("https://googledrive.com/host/0B6HCWPzk_jKoVHI5WV9EMURfbms/bletchley-src-${pkgver}.tar.gz")
+sha1sums=('021e3d2a277f8f00c6d4295800eb65192e8785f2')
 
 build() {
   cd "$srcdir/bletchley-src-$pkgver"
+
   scons
 }
 
 package() {
   cd "$srcdir/bletchley-src-$pkgver"
-  PREFIX="$pkgdir/usr/" scons install
+
+  mkdir -p "$pkgdir/usr/share/bletchley"
+
+  PREFIX="$pkgdir" scons install
+
+  install -Dm644 INSTALL "$pkgdir/usr/share/doc/bletchley/INSTALL"
+  install -m644 doc/TODO "$pkgdir/usr/share/doc/bletchley/TODO"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/bletchley/LICENSE"
+
+  rm -rf build doc src bin INSTALL LICENSE SConstruct
+
+  cp -a * "$pkgdir/usr/share/bletchley/"
+
+  mv "$pkgdir/bin" "$pkgdir/usr/"
 }

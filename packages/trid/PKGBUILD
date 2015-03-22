@@ -1,33 +1,36 @@
-pkgname=trid
-pkgver=2.11
-pkgrel=3
-pkgdesc="An utility designed to identify file types from their binary signatures"
-arch=('i686' 'x86_64')
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='trid'
+pkgver='2.11'
+pkgrel=8
+pkgdesc='An utility designed to identify file types from their binary signatures'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url="http://mark0.net/soft-trid-e.html"
+groups=('blackarch' 'blackarch-forensic' 'blackarch-binary')
 license=('CUSTOM')
-if [ "$CARCH" == "x86_64" ];then
+depends=('trid-defs' 'ncurses')
+if [ "$CARCH" == "x86_64" ]; then
   depends=('trid-defs' 'lib32-ncurses')
-else
-  depends=('trid-defs' 'ncurses')
 fi
-source=(http://mark0.net/download/trid_linux.zip)
+source=('http://mark0.net/download/trid_linux.zip')
+sha1sums=('b7dadabcdb26d30c951d814cca5a15089bb322a3')
 
 package() {
   cd "$srcdir"
 
   install -Dm755 trid "$pkgdir/usr/share/trid/trid"
-  install -m 644 readme_e.txt "$pkgdir/usr/share/trid/README"
-  install -dm755 "$pkgdir/usr/share/licenses/trid"
+  install -m644 readme_e.txt "$pkgdir/usr/share/trid/README"
+  mkdir -p "$pkgdir/usr/share/licenses/trid"
+
   ln -s /opt/trid/README "$pkgdir/usr/share/licenses/trid/README"
 
-  install -dm755  "$pkgdir/usr/bin"
-  cat > "$pkgdir/usr/bin/trid" <<EOF
+  mkdir -p  "$pkgdir/usr/bin"
+
+  cat > "$pkgdir/usr/bin/trid" << EOF
 #!/bin/sh
-
-/usr/share/trid/trid -d:/usr/share/trid/triddefs.trd \$*
-
+exec /usr/share/trid/trid -d:/usr/share/trid/triddefs.trd "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/trid"
 }
-
-md5sums=('ee6327a79e1abf8ad36d1b0b96057f3f')

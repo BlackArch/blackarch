@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='prads'
+pkgver=1113.7a66b39
+pkgrel=2
+pkgdesc='Is a "Passive Real-time Asset Detection System".'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-networking')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://gamelinux.github.io/prads/'
+license=('Perl')
+depends=('python-docutils' 'libpcap')
+makedepends=('git')
+source=('git+https://github.com/gamelinux/prads.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/prads"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/prads"
+
+  sed -i 's|/usr/local|/usr|g' Makefile
+  sed -i 's|${PREFIX}/etc/prads|/etc/prads|' Makefile
+}
+
+build() {
+  cd "$srcdir/prads"
+
+  make PREFIX=/
+}
+
+package() {
+  cd "$srcdir/prads"
+
+  mkdir -p "$pkgdir/usr/share/doc/prads"
+
+  for i in doc/*.txt
+  do
+    install -m644 $i "$pkgdir/usr/share/doc/prads"
+  done
+
+  install -Dm644 doc/LICENSE "$pkgdir/usr/share/licenses/prads/LICENSE"
+
+  make DESTDIR="$pkgdir" install
+}

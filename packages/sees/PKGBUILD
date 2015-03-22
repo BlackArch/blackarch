@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sees'
+pkgver=67.cd741aa
+pkgrel=1
+pkgdesc="Increase the success rate of phishing attacks by sending emails to company users as if they are coming from the very same company's domain."
+url='https://github.com/galkan/sees/'
+groups=('blackarch' 'blackarch-social')
+arch=('any')
+license=('custom')
+depends=('python2' 'postfix')
+makedepends=('git')
+source=('git+https://github.com/galkan/sees.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sees"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/sees"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/sees"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/sees/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/sees"
+
+  cat > "$pkgdir/usr/bin/sees" << EOF
+#!/bin/sh
+cd /usr/share/sees
+exec python2 sees.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/sees"
+}

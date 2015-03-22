@@ -1,0 +1,133 @@
+#!/bin/bash
+
+site=http://blackarch.org/blackarch/blackarch/os
+
+base=$(realpath ${BASH_SOURCE[0]%/*}/..)
+
+# override with -u
+show_new=true
+# override with -n
+show_updates=true
+# override with -a and -e
+archs=("$(uname -m)")
+# override with -q
+verbose=true
+
+shopt -s extglob
+shopt -s nullglob
+
+err() {
+	echo >&2 "$*"
+}
+
+usage() {
+	cat <<EOF
+usage: outdated [-u] [-n] [-a] [-e] [-q] [-h]
+
+  -u            Only show updates.
+  -n            Only show new packages.
+  -a <arch>     Only check <arch> architecture.
+  -e            Check for all architectures (i686, x86_64, armv6h, armv7h).
+                By default, only the architecture of this machine is checked.
+  -q            Be quiet.
+  -h            Show this message.
+EOF
+}
+
+parse_args() {
+	while getopts una:eqh flags ; do
+		case "$flags" in
+			u)
+				show_new=false
+				;;
+			n)
+				show_updates=false
+				;;
+			a)
+				archs=("$OPTARG")
+				;;
+			e)
+				archs=(i686 x86_64 armv7h armv6h)
+				;;
+			q)
+				verbose=false
+				;;
+			h)
+				usage
+				exit
+				;;
+			*)
+				usage
+				exit 1
+		esac
+	done
+}
+
+get_db() {
+	local arch=$1
+	local db=$2
+
+	err "downloading and extracting database to $db ..."
+	if ! curl -s "$site/$arch/blackarch.db.tar.gz" |
+	     tar xz -C "$db" ; then
+		 err 'failed to get database.'
+		 exit 1
+	fi
+}
+
+clean_db() {
+	rm -rf "$db"/*
+}
+
+check() {
+	local arch=$1
+
+	( cd "$db"
+	for p in "$base"/packages/*/PKGBUILD ; do (
+		. "$p"
+
+		if [[ -n "$epoch" ]] ; then
+			epoch=$epoch:
+		fi
+		ver=${epoch}${pkgver}-${pkgrel}
+
+		entry=($pkgname-+([!-])-+([!-]))
+
+		if [[ -z "$entry" ]] ; then
+			$show_new || continue
+			if $verbose ; then
+				printf 'new: %s\n' "$pkgname"
+			else
+				printf '%s\n' "$pkgname"
+			fi
+			continue
+		fi
+
+		dbname=$(sed 's/[^-]\+-[^-]\+-[^-]\+$//' <<< "$entry")
+		dbver=$(sed 's/.*-\([^-]\+-[^-]\+$\)/\1/' <<< "$entry")
+
+		if [[ $entry != $pkgname-$epoch$pkgver-$pkgrel ]] && $show_updates; then
+			if $verbose ; then
+				printf 'update: %s %s -> %s\n' "$pkgname" "$dbver" "$epoch$pkgver-$pkgrel"
+			else
+				printf '%s\n' "$pkgname"
+			fi
+		fi
+	) done )
+}
+
+main() {
+	parse_args "$@"
+
+	db=$(mktemp -d /tmp/blackarch_outdated.XXXXXXXX)
+	trap "rm -rf $db" EXIT
+
+	for arch in "${archs[@]}" ; do
+		err "ARCH: $arch"
+		get_db $arch "$db"
+		check "$arch"
+		clean_db
+	done
+}
+
+main "$@"

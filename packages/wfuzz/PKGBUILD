@@ -1,19 +1,44 @@
-pkgname=wfuzz
-pkgver=2.0
-pkgrel=8
-groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer')
-pkgdesc="Utility to bruteforce web applications to find their not linked resources"
-url='http://code.google.com/p/wfuzz'
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-license=('GPL' 'other')
-depends=('python2-pycurl')
-source=("http://wfuzz.googlecode.com/files/${pkgname}-${pkgver}.tgz")
-md5sums=('ff45b5171a3039c03fee8031a1dd2c83')
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='wfuzz'
+pkgver=35.5e60f67
+pkgrel=1
+groups=('blackarch' 'blackarch-fuzzer' 'blackarch-webapp')
+pkgdesc='Utility to bruteforce web applications to find their not linked resources.'
+url='https://github.com/xmendez/wfuzz'
+arch=('any')
+license=('GPL2')
+depends=('python2' 'python2-pysqlite-legacy' 'python2-lxml' 'python2-pyxml'
+         'python2-pycurl')
+makedepends=('git')
+source=('git+https://github.com/xmendez/wfuzz.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/wfuzz"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 package() {
-  mkdir -p $pkgdir/opt/wfuzz
-  mkdir -p $pkgdir/usr/bin
-  cp -r $srcdir/wfuzz-read-only/* $pkgdir/opt/wfuzz/
-  echo -e "#!/bin/bash\npython2.7 /opt/wfuzz/wfuzz.py \$@" > $pkgdir/usr/bin/wfuzz
+  cd "$srcdir/wfuzz"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/wfuzz"
+
+  install -Dm644 README "$pkgdir/usr/share/doc/wfuzz/README"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/wfuzz/LICENSE"
+
+  rm LICENSE README README.md setup.py
+
+  cp -a * "$pkgdir/usr/share/wfuzz"
+
+  cat > "$pkgdir/usr/bin/wfuzz" << EOF
+#!/bin/sh
+cd /usr/share/wfuzz
+exec python2 wfuzz.py "\$@"
+EOF
+
   chmod a+x $pkgdir/usr/bin/wfuzz
 }

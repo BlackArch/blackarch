@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='speedpwn'
+pkgver=8.3dd2793
+pkgrel=1
+groups=('blackarch' 'blackarch-cracker' 'blackarch-wireless')
+pkgdesc='An active WPA/2 Bruteforcer, original created to prove weak standard key generation in different ISP labeled routers without a client is connected. '
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://gitorious.org/speedpwn/'
+license=('GPL2')
+depends=('openssl' 'aircrack-ng' 'perl')
+makedepends=('git')
+source=('git+https://gitorious.org/speedpwn/speedpwn.git'
+        'http://download.aircrack-ng.org/aircrack-ng-1.2-beta3.tar.gz')
+sha1sums=('SKIP'
+          '9b269412763fbcbc895a847be2f6d6c40c9da785')
+
+pkgver() {
+  cd "$srcdir/speedpwn"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/aircrack-ng-1.2-beta3/src/osdep"
+
+  make
+
+  cd ".."
+
+  cp -a "$srcdir/speedpwn/"* "."
+
+  gcc -o speedpwn speedpwn.c common.c osdep/libosdep.a crypto_branch.c \
+    -lssl -lcrypto -I include/
+}
+
+package() {
+  cd "$srcdir/speedpwn"
+
+  install -Dm755 "$srcdir/aircrack-ng-1.2-beta3/src/speedpwn" \
+    "$pkgdir/usr/bin/speedpwn"
+  install -Dm755 speedport-arcadyan.pl "$pkgdir/usr/bin/speedport-arcadyan"
+  install -Dm644 README "$pkgdir/usr/share/doc/speedpwn/README"
+}

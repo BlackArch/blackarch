@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hdcp-genkey'
+pkgver=18.e8d342d
+pkgrel=4
+groups=('blackarch' 'blackarch-crypto' 'blackarch-cracker')
+pkgdesc='Generate HDCP source and sink keys from the leaked master key.'
+arch=('any')
+url='https://github.com/rjw57/hdcp-genkey'
+license=('unknown')
+depends=('python2' 'python2-simplejson')
+makedepends=('git')
+source=('git+https://github.com/rjw57/hdcp-genkey.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/hdcp-genkey"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/hdcp-genkey"
+
+  sed -i 's|/usr/bin/env python|/usr/bin/env python2|' generate_key.py
+}
+
+package() {
+  cd "$srcdir/hdcp-genkey"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/hdcp-genkey"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/hdcp-genkey/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/hdcp-genkey"
+
+  cat > "$pkgdir/usr/bin/hdcp-genkey" << EOF
+#!/bin/sh
+cd /usr/share/hdcp-genkey
+exec python2 generate_key.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/hdcp-genkey"
+}

@@ -1,27 +1,48 @@
-pkgname=sslscan
-pkgver=1.8.2
-pkgrel=3
-groups=('blackarch' 'blackarch-scanner')
-pkgdesc="A fast tools to scan SSL services, such as HTTPS."
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sslscan'
+pkgver=239.1328b49
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-crypto')
+pkgdesc='Tests SSL/TLS enabled services to discover supported cipher suites.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-url='http://sourceforge.net/projects/sslscan/'
-license=('GPL')
-depends=('openssl')
-source=("http://sourceforge.net/projects/sslscan/files/sslscan/sslscan-$pkgver.tgz")
-md5sums=('1a890d031996ab252efb535511bd58db')
+url='https://github.com/DinoTools/sslscan'
+license=('GPL3')
+depends=('openssl' 'python3')
+makedepends=('git' 'cmake')
+source=('git+https://github.com/DinoTools/sslscan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sslscan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 build() {
-  cd "$srcdir/sslscan-$pkgver"
-  sed -i 's/-lssl/-lssl -lcrypto/g' Makefile
+  cd "$srcdir/sslscan"
+
+  mkdir build
+
+  cd build
+
+  cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=$pkgdir/usr
+
   make
 }
 
 package() {
-  cd "$srcdir/sslscan-$pkgver"
+  cd "$srcdir/sslscan"
 
-  # Make base directories.
-  install -dm755 $pkgdir/usr/bin
-  install -dm755 $pkgdir/usr/share/man/man1
+  mkdir -p "$pkgdir/usr/share/doc/sslscan"
 
-  make BINPATH="$pkgdir/usr/bin/" MANPATH="$pkgdir/usr/share/man/" install
+  install -Dm644 -t "$pkgdir/usr/share/doc/sslscan/" README.md Changelog TODO
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/sslscan/LICENSE"
+
+  cd build
+
+  make install
 }

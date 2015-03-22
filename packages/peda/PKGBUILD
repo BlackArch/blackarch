@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='peda'
+pkgver=55.8c831be
+pkgrel=1
+groups=('blackarch' 'blackarch-debugger' 'blackarch-exploitation')
+pkgdesc='Python Exploit Development Assistance for GDB.'
+arch=('any')
+url='https://github.com/longld/peda'
+license=('GPL3')
+depends=('python2' 'python2-httplib2' 'gdb' 'nasm' 'binutils')
+makedepends=('git')
+source=('git+https://github.com/longld/peda.git'
+        'peda.py.patch')
+install='peda.install'
+sha1sums=('SKIP'
+          '4dd4af79d62d5916985d80ec29d6bc9363f101bc')
+
+pkgver() {
+  cd "$srcdir/peda"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/peda"
+
+  patch -Np1 -i "$srcdir/peda.py.patch"
+}
+
+package() {
+  cd "$srcdir/peda"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/peda"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/peda" README README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/peda/LICENSE"
+
+  rm README README.md LICENSE
+
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/peda"
+
+  cat > "$pkgdir/usr/bin/peda" << EOF
+#!/bin/sh
+cd /usr/share/peda
+exec python2 peda.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/peda"
+}

@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='depdep'
+pkgver='2.0'
+pkgrel=1
+groups=('blackarch' 'blackarch-networking' 'blackarch-malware')
+pkgdesc='A merciless sentinel which will seek sensitive files containing critical info leaking through your network.'
+arch=('any')
+url='https://github.com/galkan/depdep'
+license=('custom:unknown')
+depends=('python2' 'smbclient' 'cifs-utils' 'java-environment' 'apache-tika')
+source=("https://github.com/galkan/depdep/archive/${pkgver}.tar.gz"
+        'https://raw.githubusercontent.com/galkan/depdep/master/LICENSE.txt')
+sha1sums=('750f3114a89b0df5b13ee4c2f6ce2db1296cb974'
+          '7dd722b5566b858b8d222dd3b3d49b08cebb0340')
+prepare(){
+  cd "$srcdir/depdep-$pkgver"
+
+  sed -i 's|python$|env python2|' *.py
+}
+
+package() {
+  cd "$srcdir/depdep-$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  for i in config lib script
+  do
+    install -dm755 "$pkgdir/usr/share/depdep/$i"
+    cp -a --no-preserve=ownership $i/* "$pkgdir/usr/share/depdep/$i/"
+  done
+
+  install -Dm755 depdep.py "$pkgdir/usr/share/depdep/depdep.py"
+  install -Dm644 $srcdir/LICENSE.txt \
+    "$pkgdir/usr/share/licenses/depdep/LICENSE.txt"
+
+  cat > "$pkgdir/usr/bin/depdep" << EOF
+#!/bin/sh
+cd /usr/share/depdep
+exec python2 depdep.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/depdep"
+}

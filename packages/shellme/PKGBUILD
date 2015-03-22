@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='shellme'
+pkgver='3.8c7919d'
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-automation')
+pkgdesc='Because sometimes you just need shellcode and opcodes quickly. This essentially just wraps some nasm/objdump calls into a neat script.'
+url='https://github.com/hatRiot/shellme'
+arch=('any')
+license=('MIT')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/hatRiot/shellme.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/shellme"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/shellme"
+
+  mkdir -p "$pkgdir/usr/bin/"
+
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/shellme/LICENSE.md"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/shellme/README.md"
+  install -Dm755 shellme.py "$pkgdir/usr/share/shellme/shellme.py"
+
+  cat > "$pkgdir/usr/bin/shellme" << EOF
+#!/bin/sh
+cd /usr/share/shellme
+exec python2 shellme.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/shellme"
+}

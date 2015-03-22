@@ -1,17 +1,23 @@
-pkgname=rawr
-pkgver=12.3570732
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='rawr'
+pkgver=45.a05c312
 pkgrel=1
-groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
-pkgdesc="Rapid Assessment of Web Resources. A web enumerator."
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
+pkgdesc='Rapid Assessment of Web Resources. A web enumerator.'
 arch=('any')
-url="https://bitbucket.org/al14s/rawr/wiki/Home"
+url='https://bitbucket.org/al14s/rawr/wiki/Home'
 license=('GPL3')
-depends=('nmap' 'python2' 'graphviz' 'python2-pygraphviz' 'python2-lxml')
-source=("git+https://bitbucket.org/al14s/rawr.git")
-md5sums=('SKIP')
+makedepends=('git')
+depends=('nmap' 'python2' 'graphviz' 'python2-pygraphviz' 'python2-lxml'
+         'phantomjs' 'python2-pillow' 'python2-imaging')
+source=('git+https://bitbucket.org/al14s/rawr.git')
+sha1sums=('SKIP')
 
 pkgver() {
-  cd rawr
+  cd "$srcdir/rawr"
+
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
@@ -19,20 +25,32 @@ prepare() {
   cd "$srcdir/rawr"
 
   sed -i '1s/env python/env python2/' rawr.py
+
+  sed -i 's|import Image|from PIL import Image|' lib/functions.py
 }
 
 package() {
   cd "$srcdir/rawr"
 
-  # Base directories.
-  install -dm755 "$pkgdir/usr/bin" 
-  install -dm755 "$pkgdir/usr/share/rawr" 
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/rawr"
+  mkdir -p "$pkgdir/usr/share/doc/rawr"
 
-  cp -R * "$pkgdir/usr/share/rawr"
+  cd docs
 
-  cat > "$pkgdir/usr/bin/rawr" <<EOF
+  install -Dm644 -t "$pkgdir/usr/share/doc/rawr" AUTHORS CHANGELOG README \
+    TESTS TODO
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/rawr/LICENSE"
+
+  cd ..
+
+  rm -rf docs/
+
+  cp -a * "$pkgdir/usr/share/rawr"
+
+  cat > "$pkgdir/usr/bin/rawr" << EOF
 #!/bin/sh
-python2 /usr/share/rawr/rawr.py
+exec python2 /usr/share/rawr/rawr.py
 EOF
 
   chmod +x "$pkgdir/usr/bin/rawr"

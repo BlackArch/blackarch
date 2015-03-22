@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='portspoof'
+pkgver=100.70b6bf2
+pkgrel=1
+pkgdesc="This program's primary goal is to enhance OS security through a set of new techniques."
+url='http://portspoof.org/'
+groups=('blackarch' 'blackarch-defensive' 'blackarch-spoof')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+license=('GPL2')
+depends=('gcc-libs')
+makedepends=('git' 'automake')
+source=('git+https://github.com/drk1wi/portspoof.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/portspoof"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/portspoof"
+
+  ./configure --prefix=/usr
+
+  make
+}
+
+package() {
+  cd "$srcdir/portspoof"
+
+  mkdir -p "$pkgdir"/{usr/bin,etc/portspoof}
+
+  install -Dm755 src/portspoof "$pkgdir/usr/bin/portspoof"
+
+  install -m644 -t "$pkgdir/etc/portspoof/" "tools/portspoof.conf" \
+    "tools/portspoof_signatures"
+
+  install -Dm644 AUTHORS "$pkgdir/usr/share/doc/portspoof/AUTHORS"
+  install -m644 -t "$pkgdir/usr/share/doc/portspoof/" \
+    CREDITS ChangeLog DOCS FAQ INSTALL README README.md NEWS
+
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/portspoof/COPYING"
+  install -m644 COPYRIGHT.GPL\
+    "$pkgdir/usr/share/licenses/portspoof/COPYRIGHT.GPL"
+}

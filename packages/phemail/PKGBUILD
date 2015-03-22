@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='phemail'
+pkgver=27.7ae21f2
+pkgrel=1
+groups=('blackarch' 'blackarch-social' 'blackarch-automation')
+pkgdesc='A python open source phishing email tool that automates the process of sending phishing emails as part of a social engineering test.'
+arch=('any')
+url='https://github.com/Dionach/PhEmail'
+license=('GPL3')
+depends=('python2' 'python2-beautifulsoup4' 'python2-dnspython')
+makedepends=('git')
+source=('git+https://github.com/Dionach/PhEmail.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/PhEmail"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/PhEmail"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/phemail"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/phemail" README.md CHANGELOG.txt \
+    DISCLAIMER.txt TODO.txt
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/phemail/LICENSE.txt"
+
+  rm README.md CHANGELOG.txt TODO.txt DISCLAIMER.txt LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/phemail"
+
+  cat > "$pkgdir/usr/bin/phemail" << EOF
+#!/bin/sh
+cd /usr/share/phemail
+exec python2 phemail.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/phemail"
+}

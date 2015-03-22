@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+_pkgname='CECster'
+pkgname='cecster'
+pkgver='5.15544cb'
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer')
+pkgdesc='A tool to perform security testing against the HDMI CEC (Consumer Electronics Control) and HEC (HDMI Ethernet Channel) protocols'
+arch=('any')
+url='https://github.com/nccgroup/CECster'
+license=('GPL3')
+depends=('python2' 'python2-pyserial' 'wxpython2.8' 'python2-pyusb-git')
+makedepends=('git')
+provides=('cecster')
+source=("cecster::git+https://github.com/nccgroup/$_pkgname.git")
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/cecster"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare(){
+  cd "$srcdir/cecster"
+
+  sed -i 's/.$//' CECSTeR.py
+}
+
+package() {
+  cd "$srcdir/cecster"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/cecster"
+  mkdir -p "$pkgdir/usr/share/cecster/images"
+
+  install -Dm644 "HDMI_Ethernet_Channel_whitepaper.pdf" \
+    "$pkgdir/usr/share/doc/cecster/HDMI_Ethernet_Channel_whitepaper.pdf"
+
+  cp -a images/* "$pkgdir/usr/share/cecster/images"
+  cp -a CECSTeR.py "$pkgdir/usr/share/cecster/"
+
+  cat > "$pkgdir/usr/bin/cecster" << EOF
+cd /usr/share/cecster
+exec python2 CECSTeR.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/cecster"
+}

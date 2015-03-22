@@ -1,17 +1,24 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
 pkgname='gwtenum'
-pkgver=20131217
-pkgrel=1
+pkgver=7.f27a5aa
+pkgrel=4
+epoch=1
 pkgdesc='Enumeration of GWT-RCP method calls.'
 url='http://www.gdssecurity.com/l/t/d.php?k=GwtEnum'
-groups=('blackarch' 'blackarch-webapp' 'blackarch-recon')
+groups=('blackarch' 'blackarch-recon' 'blackarch-webapp')
 license=('CCPL')
 arch=('any')
 depends=('python2')
+makedepends=('git')
 source=("git+https://github.com/GDSSecurity/GWT-Penetration-Testing-Toolset.git")
-md5sums=('SKIP')
+sha1sums=('SKIP')
 
 pkgver() {
-  date +%Y%m%d
+  cd "$srcdir/GWT-Penetration-Testing-Toolset"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
@@ -19,17 +26,17 @@ package() {
 
   _tools="gwtenum gwtfuzzer gwtparse"
 
-  install -d -m755 "$pkgdir/usr/share/gwtenum"
-  install -d -m755 "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/gwtenum"
+  mkdir -p "$pkgdir/usr/bin"
 
   cp -r * "$pkgdir/usr/share/gwtenum"
 
   for tool in $_tools
   do
-    cat > "$pkgdir/usr/bin/$tool" <<EOF
+    cat > "$pkgdir/usr/bin/$tool" << EOF
 #!/bin/sh
 cd /usr/share/gwtenum/$tool
-python2 $tool.py \$@
+exec python2 $tool.py "\$@"
 EOF
     chmod 755 "$pkgdir/usr/bin/$tool"
   done

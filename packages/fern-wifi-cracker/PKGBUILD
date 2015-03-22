@@ -1,33 +1,44 @@
-pkgname=fern-wifi-cracker
-pkgver=133
-pkgrel=3
-groups=('blackarch' 'blackarch-wireless' 'blackarch-cracker')
-pkgdesc="WEP, WPA wifi cracker for wireless penetration testing"
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='fern-wifi-cracker'
+pkgver='221'
+pkgrel=1
+groups=('blackarch' 'blackarch-cracker' 'blackarch-wireless')
+pkgdesc='WEP, WPA wifi cracker for wireless penetration testing'
+arch=('any')
 url='http://code.google.com/p/fern-wifi-cracker/'
 license=('GPL2')
-#'macchanger'
-depends=('python2' 'python2-pyqt4' 'aircrack-ng' 'xterm' 'subversion')
+depends=('python2' 'python2-pyqt4' 'aircrack-ng' 'xterm' 'subversion' 'scapy')
 makedepends=('subversion')
-_svnmod="fern-wifi-cracker"
-source=("svn+http://fern-wifi-cracker.googlecode.com/svn/Fern-Wifi-Cracker/")
-md5sums=('SKIP')
+_svnmod='fern-wifi-cracker'
+source=('svn+http://fern-wifi-cracker.googlecode.com/svn/Fern-Wifi-Cracker/')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Fern-Wifi-Cracker"
+
+  svn info | grep 'Revision:' | cut -d ' ' -f 2
+}
+
+prepare() {
+  cd "$srcdir/Fern-Wifi-Cracker"
+
+  sed -i 's|python$|python2|g' execute.py
+}
 
 package() {
   cd "$srcdir/Fern-Wifi-Cracker"
 
-  install -dm755 "$pkgdir/usr/bin"
-  install -dm755 "$pkgdir/usr/share/fern-wifi-cracker"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/fern-wifi-cracker/Settings"
 
-  cp -R --no-preserve=ownership * "$pkgdir/usr/share/fern-wifi-cracker"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/fern-wifi-cracker"
 
-  sed -i 's|python$|python2|g' execute.py
-
-  # Make joint script.
-  cat > "$pkgdir/usr/bin/fern" <<EOF
+  cat > "$pkgdir/usr/bin/fern" << EOF
 #!/bin/sh
 cd /usr/share/fern-wifi-cracker
-python2 ./execute.py "\$@"
+exec python2 ./execute.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/fern"

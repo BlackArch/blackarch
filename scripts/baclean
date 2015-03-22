@@ -1,0 +1,111 @@
+#!/bin/bash
+
+base=${BASH_SOURCE[0]%/*}
+
+export LC_ALL=C
+
+shopt -s extglob
+
+site=blackarch.org
+sitedir=/nginx/var/www
+# override with -r
+repo=blackarch
+# override with -u
+user=$USER
+
+has_lock=false
+we_started_ssh=false
+
+usage() {
+	cat <<EOF
+usage: baclean [-u <user>] [-r <repo>] [-h]
+
+  -u <user>     Set the ssh user.
+  -r <repo>     Set the repo.
+  -h            Display this message.
+EOF
+}
+
+parse_args() {
+	while (( $# )) ; do
+		case "$1" in
+			-r)
+				repo=$2
+				shift
+				;;
+			-u)
+				user=$2
+				shift
+				;;
+			-h)
+				usage
+				exit
+				;;
+			*)
+				usage
+				exit 1
+				;;
+		esac
+		shift
+	done
+}
+
+cleanup() {
+	$has_lock && "$base/balock" -u
+	# Kill ssh-agent.
+	$we_started_ssh && kill "$SSH_AGENT_PID" 2> /dev/null >&2
+}
+
+start_ssh_agent() {
+	if [[ -z "$SSH_AGENT_PID" ]] ; then
+		echo 'starting ssh-agent...'
+		eval $(ssh-agent)
+		ssh-add
+		we_started_ssh=true
+	else
+		echo 'ssh-agent already started.'
+	fi
+}
+
+# This runs on the remote host.
+# This is not meant to be efficient or portable.
+remote_old_cleanup() {
+	tmp=$(mktemp -d /tmp/baclean.XXXXXXXX)
+	trap "rm -rf $tmp" EXIT
+	for a in i686 x86_64 armv6h armv7h ; do
+		cd "$a"
+		echo "ARCH: $a"
+
+		tar xzf blackarch.db.tar.gz -C "$tmp"
+		for p in *.pkg.tar.xz ; do
+			pkgnamever=$(sed 's/-[^-]\+.pkg.tar.xz$//' <<< "$p")
+			[[ -e "$tmp/$pkgnamever" ]] || rm -v "$p" "$p.sig"
+		done
+		cd ..
+	done
+}
+
+main() {
+	parse_args "$@"
+
+	trap cleanup EXIT
+
+	start_ssh_agent
+
+	"$base/balock" -w
+	has_lock=true
+
+	echo "cleaning repo: $repo..."
+
+	# The user's shell must be bash.
+	# TODO: bash -c
+	ssh -l "$user" blackarch.org bash <<EOF
+shopt -s extglob
+shopt -s nullglob
+cd '$sitedir/blackarch/$repo/os'
+$(declare -f remote_old_cleanup)
+remote_old_cleanup
+EOF
+}
+
+main "$@"

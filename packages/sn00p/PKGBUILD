@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sn00p'
+pkgver='0.8'
+pkgrel=6
+groups=('blackarch' 'blackarch-automation' 'blackarch-scanner' 'blackarch-recon'
+        'blackarch-fingerprint' 'blackarch-networking' 'blackarch-fuzzer'
+        'blackarch-exploitation')
+pkgdesc='A modular tool written in bourne shell and designed to chain and automate security tools and tests.'
+url='http://www.nullsecurity.net/tools/automation.html'
+license=('GPL3')
+arch=('any')
+source=("https://github.com/nullsecuritynet/tools/raw/master/automation/sn00p/release/sn00p-${pkgver}.tar.gz")
+sha1sums=('4068f01c9e03cc93a59e802bbb57928f5d5ecf65')
+
+prepare() {
+  cd "$srcdir/sn00p-$pkgver"
+
+  sed -i 's|/home/noptrix/haxx/own/dev/|/usr/share/|' src/sn00p
+}
+
+package() {
+  cd "$srcdir/sn00p-$pkgver"
+
+  mkdir -p "$pkgdir/usr/share/sn00p"
+  mkdir -p "$pkgdir/usr/share/doc/sn00p"
+
+  install -Dm755 src/sn00p "$pkgdir/usr/bin/sn00p"
+  install -Dm644 docs/sn00p.1.gz "$pkgdir/usr/share/man/man1/sn00p.1.gz"
+  install -Dm644 docs/COPYING "$pkgdir/usr/share/licenses/sn00p/COPYING"
+
+  rm -rf README src/sn00p docs/COPYING docs/sn00p.1.gz
+
+  install -Dm644 docs/* "$pkgdir/usr/share/doc/sn00p/"
+
+  rm -rf docs
+
+  cp -a * "$pkgdir/usr/share/sn00p"
+
+  find "$pkgdir"/usr/share/sn00p/ -type f -exec chmod 644 {} \;
+}

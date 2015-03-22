@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='rtlsdr-scanner'
+pkgver=862.2831e0e
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='A cross platform Python frequency scanning GUI for the OsmoSDR rtl-sdr library.'
+url='https://github.com/EarToEarOak/RTLSDR-Scanner'
+arch=('any')
+license=('GPL3')
+depends=('python2' 'python2-pyrtlsdr' 'wxpython2.8' 'python2-pyserial'
+         'python2-pillow' 'python2-numpy' 'rtl-sdr' 'python2-matplotlib')
+makedepends=('git')
+source=('git+https://github.com/EarToEarOak/RTLSDR-Scanner.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/RTLSDR-Scanner"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/RTLSDR-Scanner"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/rtlsdr-scanner"
+
+  install -Dm644 readme.md "$pkgdir/usr/share/doc/rtlsdr-scanner/readme.md"
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/rtlsdr-scanner/COPYING"
+
+  cp -a doc/* "$pkgdir/usr/share/doc/rtlsdr-scanner/"
+
+  rm -rf readme.md COPYING doc/
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/rtlsdr-scanner"
+
+  cat > "$pkgdir/usr/bin/rtlsdr-scanner" << EOF
+#!/bin/sh
+cd /usr/share/rtlsdr-scanner
+exec python2 src/rtlsdr_scan.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/rtlsdr-scanner"
+}

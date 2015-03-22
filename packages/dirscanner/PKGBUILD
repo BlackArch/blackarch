@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dirscanner'
+pkgver='0.1'
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
+pkgdesc='This is a python script that scans webservers looking for administrative directories, php shells, and more.'
+arch=('any')
+url='http://packetstormsecurity.com/files/117773/Directory-Scanner-Tool.html'
+license=('unknown')
+depends=('python2')
+source=('http://packetstorm.foofus.com/UNIX/scanners/Scanner.tar.gz')
+sha1sums=('674ca3c896b1afa7a651632732a289a34d78786f')
+
+prepare() {
+  cd "$srcdir/DirScanner"
+
+  sed -i '1i\#!/usr/bin/env python2' scanner.py
+}
+
+package() {
+  cd "$srcdir/DirScanner"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/dirscanner"
+
+  install -Dm644 "Read Me" "$pkgdir/usr/share/doc/dir-scanner/README"
+  install -m644 "about us" "$pkgdir/usr/share/doc/dir-scanner/aboutus"
+
+  rm -rf "Read Me" "about us"
+
+  cp -a * "$pkgdir/usr/share/dirscanner"
+
+  cat > "$pkgdir/usr/bin/dirscanner" << EOF
+#!/bin/sh
+cd /usr/share/dirscanner
+exec python2 scanner.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/dirscanner"
+}

@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='vane'
+pkgver=1855.6a47cd8
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp' 'blackarch-fuzzer')
+pkgdesc='A vulnerability scanner which checks the security of WordPress installations using a black box approach.'
+arch=('any')
+url='https://github.com/delvelabs/vane'
+license=('GPL3')
+makedepends=('git')
+depends=('ruby' 'libxslt' 'ruby-bundler')
+install='vane.install'
+options=(!strip)
+source=('git+https://github.com/delvelabs/vane.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/vane"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/vane"
+
+  mkdir -p "$pkgdir/usr/share/vane"
+  mkdir -p "$pkgdir/usr/bin"
+
+  cp -a * "$pkgdir/usr/share/vane"
+
+  cat > "$pkgdir/usr/bin/vane" << EOF
+#!/bin/sh
+exec ruby /usr/share/vane/vane.rb "\$@"
+EOF
+
+  sed -i "s/ROOT_DIR, 'log.txt'/ENV['HOME'], 'vane.log'/" "$pkgdir/usr/share/vane/lib/common/common_helper.rb"
+
+  sed -i "s/ROOT_DIR, 'cache'/ENV['HOME'], '.vane-cache'/" "$pkgdir/usr/share/vane/lib/common/common_helper.rb"
+
+  chmod +x "$pkgdir/usr/bin/vane"
+}

@@ -1,0 +1,63 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ld-shatner'
+pkgver=4.5c215c4
+pkgrel=1
+groups=('blackarch' 'blackarch-backdoor' 'blackarch-binary')
+pkgdesc='ld-linux code injector.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/sduverger/ld-shatner'
+license=('unknown')
+makedepends=('git')
+source=('git+https://github.com/sduverger/ld-shatner.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ld-shatner"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/ld-shatner"
+
+  if [[ "${CARCH}" == "x86_64" ]]
+  then
+    sed -i 's|ld-shatner.c -o $@|ld-shatner.c -m32 -o $@|' Makefile
+  fi
+}
+
+build() {
+  cd "$srcdir/ld-shatner"
+
+  local opt=""
+
+  gcc -fpie -c obj.c -o obj.o
+  ld -pie obj.o -o obj.elf -e func
+
+  if [[ "${CARCH}" == "x86_64" ]]
+  then
+    opt="-m32"
+  fi
+
+  gcc hooked.s ld-shatner.c ${opt} -o ld-shatner
+
+  gcc interpatch.c -o interpatch
+
+  #make
+}
+
+package() {
+  cd "$srcdir/ld-shatner"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/ld-shatner"
+
+  cp -a interpatch ld-shatner obj.elf "$pkgdir/usr/share/ld-shatner/"
+
+  install -Dm644 README "$pkgdir/usr/share/doc/ld-shatner/README"
+
+  ln -s "/usr/share/ld-shatner/ld-shatner" "$pkgdir/usr/bin/ld-shatner"
+  ln -s "/usr/share/ld-shatner/interpatch" "$pkgdir/usr/bin/interpatch"
+}

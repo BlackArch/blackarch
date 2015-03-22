@@ -1,36 +1,41 @@
-pkgname=masscan
-pkgver=1.0
-pkgrel=2
-groups=('blackarch' 'blackarch-scanner' 'blackarch-cracker')
-pkgdesc="TCP port scanner, spews SYN packets asynchronously, scanning entire Internet in under 5 minutes"
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='masscan'
+pkgver=391.a60cc70
+pkgrel=1
+groups=('blackarch' 'blackarch-cracker' 'blackarch-scanner')
+pkgdesc='TCP port scanner, spews SYN packets asynchronously, scanning entire Internet in under 5 minutes.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='https://github.com/robertdavidgraham/masscan'
-license=('AGPL')
-depends=('libpcap')
+license=('GPL3')
+depends=('libpcap' 'libusb')
 makedepends=('git')
-conflicts=('masscan-git')
-provides=('masscan-git')
-source=('git+http://github.com/robertdavidgraham/masscan.git')
-md5sums=('SKIP')
+source=('git+https://github.com/robertdavidgraham/masscan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/masscan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 build() {
-  cd "masscan"
-
-  git checkout "kali_$(sed 's/\./_/' <<< "$pkgver")"
+  cd "$srcdir/masscan"
 
   make
 }
 
 package() {
-  cd "masscan"
+  cd "$srcdir/masscan"
 
-  install -dm755 "$pkgdir/usr/bin"
-  install -dm755 "$pkgdir/usr/share/man/man8"
-  install -dm755 "$pkgdir/usr/share/licenses/masscan"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/man/man8"
 
   install -m755 bin/masscan "$pkgdir/usr/bin"
 
   gzip -c doc/masscan.8 > "$pkgdir/usr/share/man/man8/masscan.8.gz"
 
-  install -m644 LICENSE "$pkgdir/usr/share/licenses/masscan"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/masscan/LICENSE"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/masscan/README.md"
 }

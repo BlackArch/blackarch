@@ -1,0 +1,72 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='fuzzgrind'
+pkgver='090622'
+pkgrel=3
+pkgdesc='A fully automatic fuzzing tool, generating test files with the purpose of discovering new execution paths likely to trigger bugs and potentially vulnerabilities.'
+url='http://seclabs.org/fuzzgrind/'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+depends=('glibc')
+license=('GPL')
+groups=('blackarch' 'blackarch-analysis')
+source=("http://esec-lab.sogeti.com/dotclear/public/fuzzgrind/fuzzgrind_${pkgver}.tar.gz"
+        'stp.tar.gz::https://github.com/stp/stp/tarball/master'
+        'http://valgrind.org/downloads/valgrind-3.4.1.tar.bz2'
+        'glibc-2.12.patch'
+        'valgrind-3.5.0-stat_h.patch')
+noextract=('stp.tar.gz'
+           'valgrind-3.4.1.tar.bz2')
+sha1sums=('bf45d5c854e68273faf9b2138b8c31d2d729c97a'
+          'ed21a849e34fcc3af321b59d7cb7828525fbd14b'
+          '935ea4642b6d9b33a6686c5b0ce70f2f0929fe0d'
+          'f16f5744b952b8c25c622ebcd622039d22bda444'
+          '8fbdd3ae81d4a0cb9e3d415f2e492f7529c8a7d0')
+
+prepare() {
+  cd "$srcdir/fuzzgrind/"
+
+  tar --ignore-failed-read -jkxf "$srcdir"/valgrind-3.4.1.tar.bz2
+
+  cd valgrind-3.4.1
+
+  patch -Np0 -i ${srcdir}/glibc-2.12.patch
+  patch -Np1 -i ${srcdir}/valgrind-3.5.0-stat_h.patch
+}
+
+build() {
+  cd "$srcdir/fuzzgrind/valgrind-3.4.1"
+
+  autoreconf
+
+  ./configure --prefix="/usr/share/fuzzgrind/valgrind"
+
+  make
+}
+
+package() {
+  cd "$srcdir/fuzzgrind/valgrind-3.4.1"
+
+  mkdir -p $pkgdir/usr/share/fuzzgrind/valgrind
+  make DESTDIR="$pkgdir" install
+
+  rm -rf $pkgdir/usr/share/fuzzgrind/valgrind/share/
+  rm -rf $pkgdir/usr/share/fuzzgrind/valgrind/lib/pkgconfig/
+  rm -rf $pkgdir/usr/share/fuzzgrind/valgrind/include/
+
+  cd "$srcdir/fuzzgrind/testcase"
+  make
+
+  cd "$srcdir/fuzzgrind/fault_detection"
+  make
+
+  cd "$srcdir/fuzzgrind/"
+  sed -i "s:./valgrind-3.4.1/build/bin/valgrind:/usr/share/fuzzgrind/valgrind/bin/valgrind:" fuzz/valgrind.py
+  cp -r testcase fault_detection fuzz session $pkgdir/usr/share/fuzzgrind/
+
+  cd $pkgdir/usr/share/fuzzgrind
+  mkdir -p stp/
+  tar -C stp/ -xzf "$srcdir"/stp.tar.gz
+
+  chown root:root stp -R
+}

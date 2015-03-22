@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='fuzzap'
+pkgver=14.f13932c
+pkgrel=1
+groups=('blackarch' 'blackarch-wireless')
+pkgdesc='A python script for obfuscating wireless networks.'
+arch=('any')
+url='https://github.com/lostincynicism/FuzzAP'
+license=('custom')
+depends=('python2' 'scapy')
+makedepends=('git')
+source=('git+https://github.com/lostincynicism/FuzzAP.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/FuzzAP"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/FuzzAP"
+
+  sed -i 's|python$|python2|' *.py
+}
+
+package() {
+  cd "$srcdir/FuzzAP"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/fuzzap"
+
+  install -Dm755 fuzzap.py "$pkgdir/usr/share/fuzzap/fuzzap.py"
+  install -Dm644 common.txt "$pkgdir/usr/share/fuzzap/common.txt"
+  install -m644 ssid.txt "$pkgdir/usr/share/fuzzap/ssid.txt"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/fuzzap/README.md"
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/fuzzap/COPYING"
+
+  cat > "$pkgdir/usr/bin/fuzzap" << EOF
+#!/bin/sh
+cd /usr/share/fuzzap
+exec python2 fuzzap.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/fuzzap"
+}

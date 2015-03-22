@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pompem'
+pkgver=78.bc9a0de
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation')
+pkgdesc='A python exploit tool finder.'
+arch=('any')
+url='https://github.com/rfunix/Pompem'
+license=('custom')
+depends=('python2' 'python2-beautifulsoup3' 'python2-requests')
+makedepends=('git')
+source=('git+https://github.com/rfunix/Pompem.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Pompem"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Pompem"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/pompem"
+
+  install -Dm644 README.markdown \
+    "$pkgdir/usr/share/licenses/pompem/README.markdown"
+
+  rm README.markdown
+
+  cp -a * "$pkgdir/usr/share/pompem"
+
+  cat > "$pkgdir/usr/bin/pompem" << EOF
+#!/bin/sh
+cd /usr/share/pompem
+exec python2 pompem.py "\$@"
+EOF
+
+chmod +x "$pkgdir/usr/bin/pompem"
+}

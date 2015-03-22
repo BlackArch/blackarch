@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pyqt3'
+pkgver='3.18.1'
+pkgrel=1
+pkgdesc='A set of Python bindings for the Qt3 toolkit.'
+arch=('armv6h' 'armv7h' 'i686' 'x86_64')
+url='http://www.riverbankcomputing.com/software/pyqt/intro'
+depends=('python2-sip' 'qscintilla-qt3')
+license=('GPL')
+source=("http://downloads.sourceforge.net/project/pyqt/PyQt3/PyQt-x11-gpl-${pkgver}.tar.gz"
+        'sip415_fix.patch')
+sha1sums=('310c17bd3b0f81f8b516c5b755250171fa9c9a04'
+          '8ff26c993a059453f20c1daa98aac29f8791ceb5')
+
+_dir="PyQt-x11-gpl-${pkgver}"
+
+prepare() {
+  cd "${_dir}"
+
+  patch -p0 -i '../sip415_fix.patch'
+}
+
+build() {
+  cd "${_dir}"
+
+  export QTDIR=/usr
+  export QMAKESPEC=/usr/share/qt3/mkspecs/linux-g++
+
+  echo yes | python2 configure.py -b /usr/bin \
+    -d /usr/lib/python2.7/site-packages -v /usr/share/sip \
+    INCDIR_QT=/usr/include/qt3
+
+  make CXX="g++ -DANY=void"
+}
+
+package() {
+  cd "${_dir}"
+
+  make DESTDIR="$pkgdir" install
+}

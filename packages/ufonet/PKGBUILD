@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ufonet'
+pkgver=12.dc92621
+pkgrel=1
+groups=('blackarch' 'blackarch-dos' 'blackarch-webapp')
+pkgdesc="A tool designed to launch DDoS attacks against a target, using
+'Open Redirect' vectors on third party web applications, like botnet."
+arch=('any')
+url='https://github.com/epsylon/ufonet'
+license=('custom:unknown')
+depends=('python2' 'python2-pycurl')
+makedepends=('git')
+source=('git+https://github.com/epsylon/ufonet.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ufonet"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/ufonet"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/ufonet"
+
+  install -Dm644 ufonet/README "$pkgdir/usr/share/doc/ufonet/README"
+
+  rm -rf ufonet/README
+
+  cp -a ufonet/* "$pkgdir/usr/share/ufonet"
+
+  cat > "$pkgdir/usr/bin/ufonet" << EOF
+#!/bin/sh
+cd /usr/share/ufonet
+exec python2 ufonet "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/ufonet"
+}

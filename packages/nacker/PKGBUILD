@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='nacker'
+pkgver=23.b67bb39
+pkgrel=1
+groups=('blackarch' 'blackarch-networking')
+pkgdesc='A tool to circumvent 802.1x Network Access Control on a wired LAN.'
+arch=('any')
+url='https://github.com/carmaa/nacker'
+license=('GPL2')
+depends=('python2' 'python2-netifaces' 'python2-netaddr' 'scapy')
+makedepends=('git')
+source=('git+https://github.com/carmaa/nacker.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/nacker"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/nacker"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm644 nacker "$pkgdir/usr/share/nacker/nacker"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/nacker/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/nacker/LICENSE"
+
+  cp -a caravan "$pkgdir/usr/share/nacker/caravan"
+
+  cat > "$pkgdir/usr/bin/nacker" << EOF
+#!/bin/sh
+cd /usr/share/nacker
+exec python2 nacker "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/nacker"
+}

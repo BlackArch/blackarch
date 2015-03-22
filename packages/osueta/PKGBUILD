@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='osueta'
+pkgver=65.90323e2
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation')
+pkgdesc='A simple Python script to exploit the OpenSSH User Enumeration Timing Attack.'
+arch=('any')
+url='https://github.com/c0r3dump3d/osueta'
+license=('GPL2')
+depends=('python2' 'python2-ipy' 'python2-nmap' 'python2-paramiko')
+makedepends=('git')
+source=('git+https://github.com/c0r3dump3d/osueta.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/osueta"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/osueta"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/osueta"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/osueta/README.md"
+  install -Dm644 README "$pkgdir/usr/share/doc/osueta/README"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/osueta/LICENSE"
+
+  cp -a *.py "$pkgdir/usr/share/osueta"
+
+  cat > "$pkgdir/usr/bin/osueta" << EOF
+#!/bin/sh
+cd /usr/share/osueta
+exec python2 osueta.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/osueta"
+}

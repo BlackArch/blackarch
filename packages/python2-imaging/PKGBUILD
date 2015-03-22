@@ -1,0 +1,60 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='python2-imaging'
+pkgver='1.1.7'
+pkgrel=1
+pkgdesc='PIL. Provides image processing capabilities for python.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://www.pythonware.com/products/pil/index.htm'
+license=('custom:"pil"')
+depends=('python2' 'libjpeg' 'freetype2' 'lcms')
+makedepends=('tk' 'sane')
+optdepends=('tk: for the ImageTK module'
+            'sane: for the ImageSane module')
+provides=("pil=$pkgver" "python-imaging=$pkgver" 'python2-pillow=1.0')
+conflicts=('pil' 'python-imaging')
+replaces=('pil' 'python-imaging')
+source=("http://effbot.org/downloads/Imaging-${pkgver}.tar.gz"
+        'patch_freetype_includes.patch')
+sha1sums=('76c37504251171fda8da8e63ecb8bc42a69a5c81'
+          '1475a3187e238f131451aa47e39e40f841ce283f')
+
+prepare() {
+  cd "$srcdir"
+
+  patch "Imaging-$pkgver/_imagingft.c" patch_freetype_includes.patch
+}
+
+build() {
+  cd "$srcdir/Imaging-$pkgver"
+
+  export CFLAGS="$CFLAGS -fno-strict-aliasing"
+
+  python2 setup.py build_ext
+
+  cd Sane
+
+  python2 setup.py build_ext
+}
+
+package() {
+  cd "$srcdir/Imaging-$pkgver"
+
+  python2 setup.py install --root="${pkgdir}" --optimize=1
+
+  pushd Sane
+  python2 setup.py install --root="${pkgdir}" --optimize=1
+  popd
+
+  mkdir -p "$pkgdir/usr/include/python2.7/"
+  install -m644 -t "$pkgdir/usr/include/python2.7/" libImaging/*.h
+
+  for f in pildriver pilprint pilconvert pilfile pilfont
+  do
+    mv "$pkgdir"/usr/bin/${f}{.py,}
+  done
+
+  install -Dm644 "$srcdir/Imaging-$pkgver/README" \
+    "$pkgdir/usr/share/licenses/python2-imaging/README"
+}

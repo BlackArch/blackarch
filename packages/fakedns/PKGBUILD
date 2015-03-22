@@ -1,29 +1,40 @@
-pkgname=fakedns
-pkgver=0.1
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='fakedns'
+pkgver=36.90bd7e1
 pkgrel=1
-groups=('blackarch' 'blackarch-spoof' 'blackarch-proxy')
-pkgdesc="A regular-expression based python MITM DNS server with correct DNS request passthrough and \"Not Found\" responses."
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+groups=('blackarch' 'blackarch-proxy' 'blackarch-spoof')
+pkgdesc='A regular-expression based python MITM DNS server with correct DNS request passthrough and "Not Found" responses.'
+arch=('any')
 url="https://github.com/Crypt0s/FakeDns"
-license=('unknown')
+license=('GPL3')
 depends=('python2')
-source=("https://github.com/Crypt0s/FakeDns/archive/master.zip")
-md5sums=('8ab54a8b7a138bc9d5e5c1bbd801a8b4')
+makedepends=('git')
+source=('git+https://github.com/Crypt0s/FakeDns.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/FakeDns"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 prepare() {
-  cd "$srcdir/FakeDns-master"
+  cd "$srcdir/FakeDns"
+
   sed -i 's|bin/python$|bin/python2|' *.py
 }
 
 package() {
-  cd "$srcdir/FakeDns-master"
+  cd "$srcdir/FakeDns"
 
-  install -dm755 "$pkgdir/usr/bin/"
-  install -dm755 "$pkgdir/usr/share/fakedns"
-  install -dm755 "$pkgdir/usr/share/doc/fakedns"
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/fakedns"
+  mkdir -p "$pkgdir/usr/share/doc/fakedns"
 
-  cp --no-preserve=ownership dns.conf fakedns.py "$pkgdir/usr/share/fakedns/"
-  cp --no-preserve=ownership README.md "$pkgdir/usr/share/doc/fakedns/"
+  cp -a dns.conf.example fakedns.py "$pkgdir/usr/share/fakedns/"
+  cp -a README.md "$pkgdir/usr/share/doc/fakedns/"
 
   chmod +x "$pkgdir/usr/share/fakedns/fakedns.py"
 

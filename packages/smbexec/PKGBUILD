@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='smbexec'
+pkgver=148.7827616
+pkgrel=1
+epoch=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-fuzzer' 'blackarch-exploitation')
+pkgdesc="A rapid psexec style attack with samba tools."
+depends=('ruby' 'ruby-bundler' 'make')
+arch=('any')
+makedepends=('git')
+url='https://github.com/pentestgeek/smbexec'
+license=('custom:unknown')
+options=('!strip')
+install='smbexec.install'
+source=('git+https://github.com/pentestgeek/smbexec.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/smbexec"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/smbexec"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/smbexec"
+
+  install -Dm644 README "$pkgdir/usr/share/doc/smbexec"
+
+  cp -a * "$pkgdir/usr/share/smbexec"
+  rm "$pkgdir/usr/share/smbexec/README"
+
+  cat > "$pkgdir/usr/bin/smbexec" << EOF
+#!/bin/sh
+exec ruby /usr/share/smbexec/smbexec.rb "\$@"
+EOF
+
+  chmod +x "$pkgdir"/usr/bin/smbexec
+}

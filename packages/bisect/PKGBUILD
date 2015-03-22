@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bisect'
+pkgver='1.3'
+pkgrel=1
+pkgdesc='Code coverage tool for OCaml.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url=('http://bisect.x9c.fr/')
+license=('GPL3')
+depends=('ocaml' 'ocaml-findlib')
+makedepends=('ocaml')
+source=("http://bisect.x9c.fr/distrib/bisect-${pkgver}.tar.gz")
+sha1sums=('68b30334d57534ace350dfba383df65fd9b38ce9')
+
+build () {
+  cd "$srcdir/bisect-$pkgver"
+
+  chmod +x ./configure
+
+  ./configure
+
+  make all
+}
+
+package () {
+  cd "$srcdir/bisect-$pkgver"
+
+  OCAMLFIND_DESTDIR="${pkgdir}$(ocamlfind printconf destdir)"
+
+  sed "s|PATH_INSTALL=|PATH_INSTALL=$pkgdir/|" -i Makefile
+
+  mkdir -p "$OCAMLFIND_DESTDIR"
+
+  OCAMLFIND_DESTDIR="$OCAMLFIND_DESTDIR" DESTDIR="$pkgdir" PREFIX="/usr" \
+    make install
+
+  install -Dm644 "doc/bisect.pdf" "$pkgdir/usr/share/doc/bisect/bisect.pdf"
+}

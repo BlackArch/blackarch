@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='xsssniper'
+pkgver='0.9'
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer')
+pkgdesc='An automatic XSS discovery tool'
+arch=('any')
+url='https://github.com/gbrindisi/xsssniper'
+license=('GPL2')
+depends=('python2' 'python2-mechanize' 'python2-hgapi')
+source=("https://github.com/gbrindisi/xsssniper/archive/v${pkgver}.tar.gz")
+sha1sums=('2dc7c1d98777eb3f914843bfe5669829d59ef101')
+
+prepare() {
+  cd "$srcdir/xsssniper-$pkgver"
+
+  sed -i 's|env python|env python2|' core/scanner.py
+}
+
+package() {
+  cd "$srcdir/xsssniper-$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/xsssniper"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/xsssniper/README.md"
+  install -Dm644 CHANGELOG "$pkgdir/usr/share/doc/xsssniper/CHANGELOG"
+
+  rm README.md CHANGELOG
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/xsssniper"
+
+  cat > "$pkgdir/usr/bin/xsssniper" << EOF
+#!/bin/sh
+cd /usr/share/xsssniper
+exec python2 xsssniper.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/xsssniper"
+}

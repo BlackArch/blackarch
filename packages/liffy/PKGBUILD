@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='liffy'
+pkgver=63.238ce6d
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation'
+        'blackarch-fuzzer')
+pkgdesc='A Local File Inclusion Exploitation tool.'
+arch=('any')
+url='https://github.com/rotlogix/liffy'
+license=('GPL2')
+depends=('python2' 'python2-blessings' 'python2-requests')
+makedepends=('git')
+source=('git+https://github.com/rotlogix/liffy.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/liffy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/liffy"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/liffy"
+
+  install -Dm755 *.py "$pkgdir/usr/share/liffy/"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/liffy/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/liffy/LICENSE"
+
+  cat > "$pkgdir/usr/bin/liffy" << EOF
+#!/bin/sh
+cd /usr/share/liffy
+exec python2 liffy.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/liffy"
+}

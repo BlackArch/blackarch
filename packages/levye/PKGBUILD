@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='levye'
+pkgver=84.5406303
+pkgrel=1
+epoch=1
+groups=('blackarch' 'blackarch-cracker')
+pkgdesc='A brute force tool which is support sshkey, vnckey, rdp, openvpn.'
+arch=('any')
+url='https://github.com/galkan/levye'
+license=('custum')
+depends=('python2' 'python2-paramiko' 'openvpn' 'openssh' 'freerdp')
+makedepends=('git')
+source=('git+https://github.com/heybe/levye')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/levye"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/levye"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/levye"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/levye/README.md"
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/levye/LICENSE.txt"
+
+  rm -rf README.md LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/levye"
+
+  cat > "$pkgdir/usr/bin/levye" << EOF
+#!/bin/sh
+exec python2 /usr/share/levye/levye.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/levye"
+}

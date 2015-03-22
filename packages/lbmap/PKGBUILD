@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='lbmap'
+pkgver=145.93e6b71
+pkgrel=1
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-webapp')
+pkgdesc='Proof of concept scripts for advanced web application fingerprinting, presented at OWASP AppSecAsia 2012.'
+arch=('any')
+url='https://github.com/wireghoul/lbmap'
+license=('GPL3')
+depends=('perl' 'perl-data-dump' 'perl-io-socket-ssl' 'perl-getopt-long')
+makedepends=('git')
+source=('git+https://github.com/wireghoul/lbmap.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/lbmap"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/lbmap"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/lbmap"
+
+  install -Dm644 README "$pkgdir/usr/share/doc/lbmap/README"
+  install -Dm644 Changelog "$pkgdir/usr/share/doc/lbmap/Changelog"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/lbmap/LICENSE"
+
+  rm README Changelog
+
+  cp -a lib lbmap aprof "$pkgdir/usr/share/lbmap"
+
+  cat > "$pkgdir/usr/bin/lbmap" << EOF
+#!/bin/sh
+cd /usr/share/lbmap
+exec perl lbmap "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/lbmap"
+
+  cat > "$pkgdir/usr/bin/aprof" << EOF
+#!/bin/sh
+cd /usr/share/lbmap
+exec perl aprof "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/aprof"
+}

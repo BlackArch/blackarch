@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bytecode-viewer'
+pkgver=95.a1dc3ae
+pkgrel=1
+groups=('blackarch' 'blackarch-binary' 'blackarch-reversing')
+pkgdesc='A Java 8/Android APK Reverse Engineering Suite.'
+arch=('any')
+url='https://github.com/Konloch/bytecode-viewer'
+license=('')
+depends=('java-environment')
+makedepends=('git')
+source=('git+https://github.com/Konloch/bytecode-viewer.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/bytecode-viewer"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/bytecode-viewer"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/bytecode-viewer"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/bytecode-viewer/" README.txt VERSION
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/bytecode-viewer/LICENSE"
+
+  rm README.txt VERSION LICENSE
+
+  cp -a * "$pkgdir/usr/share/bytecode-viewer/"
+
+  cat > "$pkgdir/usr/bin/bytecode-viewer" << EOF
+#!/bin/sh
+exec java -jar "/usr/share/bytecode-viewer/BytecodeViewer 2.8.0.jar" "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/bytecode-viewer"
+}

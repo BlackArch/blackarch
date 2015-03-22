@@ -1,16 +1,17 @@
-pkgname=bulk-extractor
-pkgver=1.3.1
-pkgrel=4
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bulk-extractor'
+pkgver='1.5.5'
+pkgrel=1
 groups=('blackarch' 'blackarch-forensic' 'blackarch-misc')
-pkgdesc="Bulk Email and URL extraction tool"
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-url='http://afflib.org'
+pkgdesc='Bulk Email and URL extraction tool.'
+arch=('i686' 'x86_64')
+url='https://github.com/simsong/bulk_extractor'
 license=('GPL')
-depends=('tre' 'java-runtime' 'openssl' 'exiv2')
-optdepends=('libewf: for reading EnCase E01 evidence files'
-            'afflib: for reading AFF evidence files')
-source=(http://digitalcorpora.org/downloads/bulk_extractor/bulk_extractor-${pkgver}.tar.gz)
-md5sums=('811ec55285d74d41837f3ffe66de57ba')
+depends=('tre' 'java-environment' 'openssl' 'exiv2' 'afflib' 'libewf')
+source=("http://digitalcorpora.org/downloads/bulk_extractor/bulk_extractor-${pkgver}.tar.gz")
+sha1sums=('59cab1d96089043ad4a74483bd09179262b136ab')
 
 prepare() {
   cd "$srcdir/bulk_extractor-$pkgver"
@@ -22,15 +23,19 @@ build() {
   cd "$srcdir/bulk_extractor-$pkgver"
 
   ./configure --prefix=/usr --sysconfdir=/etc
+
   make
+
+  make -C java_gui
 }
 
 package() {
   cd "$srcdir/bulk_extractor-$pkgver"
 
-  install -dm755 "$pkgdir/usr/share/bulk-extractor"
+  mkdir -p "$pkgdir/usr/share/bulk-extractor"
 
-  make "DESTDIR=$pkgdir" install
+  make DESTDIR="$pkgdir" install
 
-  #mv "$pkgdir/usr/bin/BEViewer.jar" "$pkgdir/usr/share/bulk-extractor"
+  install -m644 java_gui/BEViewer.jar "$pkgdir/usr/share/bulk-extractor"
+  install -m755 java_gui/BEViewer "$pkgdir/usr/bin"
 }

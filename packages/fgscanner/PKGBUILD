@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='fgscanner'
+pkgver=11.893372c
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='An advanced, opensource URL scanner.'
+arch=('any')
+url='http://www.fantaghost.com/fgscanner'
+license=('GPL3')
+depends=('perl' 'perl-io-socket-portstate' 'perl-libwww' 'perl-getopt-long')
+makedepends=('git')
+source=('git+https://github.com/FantaGhost/FGscanner.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/FGscanner"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/FGscanner"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/fgscanner"
+
+  install -Dm644 AUTHORS "$pkgdir/usr/share/doc/fgscanner/AUTHORS"
+  install -m644 INSTALL "$pkgdir/usr/share/doc/fgscanner/INSTALL"
+  install -m644 README "$pkgdir/usr/share/doc/fgscanner/README"
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/fgscanner/COPYING"
+
+  rm AUTHORS INSTALL README COPYING
+
+  cp -a * "$pkgdir/usr/share/fgscanner/"
+
+  cat > "$pkgdir/usr/bin/fgscan" << EOF
+#!/bin/sh
+cd /usr/share/fgscanner
+exec perl fgscan.pl "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/fgscan"
+}

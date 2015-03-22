@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sasm'
+pkgver='3.1.0'
+pkgrel=1
+pkgdesc='A simple crossplatform IDE for NASM, MASM, GAS and FASM assembly languages.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/Dman95/SASM'
+license=('custom')
+if [[ $CARCH == 'x86_64' ]]; then
+  depends=('nasm' 'libxcb' 'gdb' 'qt5-base' 'mesa')
+else
+  depends=('nasm' 'libxcb' 'gdb' 'gcc-libs' 'qt5-base' 'mesa')
+fi
+makedepends=('qt4>=4.8')
+sha1sums=('bfc382f4ab5eba9639b34602bd1cd105319bab15')
+source=("https://github.com/Dman95/SASM/archive/v${pkgver}.tar.gz")
+
+build() {
+  cd "$srcdir/SASM-$pkgver"
+
+  qmake QMAKE_CXXFLAGS="$CFLAGS -Wa,--noexecstack -Wl,-z,noexecstack -W \
+    -D_REENTRANT -fPIE" QMAKE_LFLAGS="-Wl,-z,noexecstack"
+
+  make CXXFLAGS="$CXXFLAGS -Wa,--noexecstack -W -D_REENTRANT -fPIE" \
+    LDFLAGS="-Wl,-z,noexecstack"
+}
+
+package() {
+  cd "$srcdir/SASM-$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/sasm"
+  mkdir -p "$pkgdir/usr/share/doc/sasm"
+  mkdir -p "$pkgdir/usr/share/sasm/NASM"
+  mkdir -p "$pkgdir/usr/share/sasm/Projects"
+  mkdir -p "$pkgdir/usr/share/sasm/include"
+
+  # Bins
+  install -Dm755 Linux/bin/fasm "$pkgdir/usr/bin/fasm"
+  install -Dm755 Linux/bin/listing "$pkgdir/usr/bin/listing"
+  install -Dm755 sasm "$pkgdir/usr/bin/sasm"
+
+  # Docs & License
+  install -Dm644 Linux/share/doc/sasm/* "$pkgdir/usr/share/doc/sasm/"
+  install -Dm644 Linux/share/doc/sasm/copyright "$pkgdir/usr/share/licenses/sasm/copyright"
+
+  # Share dir
+  install -Dm644 Linux/share/sasm/keys.ini "$pkgdir/usr/share/sasm/"
+  install -Dm644 Linux/share/sasm/sasm.png "$pkgdir/usr/share/sasm/"
+  install -Dm644 Linux/share/sasm/NASM/* "$pkgdir/usr/share/sasm/NASM/"
+  install -Dm644 Linux/share/sasm/Projects/* "$pkgdir/usr/share/sasm/Projects/"
+  install -Dm644 Linux/share/sasm/include/* "$pkgdir/usr/share/sasm/include/"
+
+}

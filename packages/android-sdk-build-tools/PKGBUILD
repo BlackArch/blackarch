@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='android-sdk-build-tools'
+pkgver='r19.0.3'
+_pkgver=19.0.3
+_android='android-4.4.2'
+pkgrel=1
+pkgdesc='Build-Tools for Google Android SDK (aapt, aidl, dexdump, dx, llvm-rs-cc)'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://developer.android.com/sdk/index.html'
+license=('custom')
+depends=('gcc-libs' 'zlib')
+if [[ $CARCH == x86_64 ]]; then
+  depends=('lib32-gcc-libs' 'lib32-zlib')
+fi
+source=("http://dl-ssl.google.com/android/repository/build-tools_${pkgver}-linux.zip")
+sha1sums=('c2d6055478e9d2d4fba476ee85f99181ddd1160c')
+options=('!strip')
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/opt"
+  mkdir -p "$pkgdir/etc/profile.d"
+
+  install -Dm644 "$srcdir/$_android/NOTICE.txt" \
+    "$pkgdir/usr/share/licenses/android-sdk-build-tools/NOTICE.txt"
+
+  echo "export PATH=\$PATH:/opt/android-sdk/build-tools/$_pkgver/" \
+    > "$pkgdir/etc/profile.d/android-sdk-build-tools.sh"
+  echo "setenv PATH \${PATH}:/opt/android-sdk/build-tools/$_pkgver/" \
+    > "$pkgdir/etc/profile.d/android-sdk-build-tools.csh"
+  chmod 755 "$pkgdir"/etc/profile.d/android-sdk-build-tools.{csh,sh}
+
+  mkdir -p "$pkgdir/opt/android-sdk/build-tools/$_pkgver"
+
+  cp -r "$srcdir/$_android"/* "$pkgdir/opt/android-sdk/build-tools/$_pkgver"
+
+  chmod +Xr -R "$pkgdir/opt/android-sdk/build-tools/$_pkgver"
+}

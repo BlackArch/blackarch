@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='filibuster'
+pkgver=161.37b7f9c
+pkgrel=1
+groups=('blackarch' 'blackarch-networking')
+pkgdesc='A Egress filter mapping application with additional functionality.'
+arch=('any')
+url='https://github.com/subinacls/Filibuster'
+license=('GPL3')
+depends=('python2' 'python2-numpy' 'python2-configparser' 'python2-dnspython'
+         'python2-pyliblzma' 'python2-crypto')
+makedepends=('git')
+source=('git+https://github.com/subinacls/Filibuster.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Filibuster"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Filibuster"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/filibuster"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/filibuster/README.md"
+  install -Dm644 GPLv3 "$pkgdir/usr/share/licenses/filibuster/GPLv3"
+
+  rm README.md GPLv3
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/filibuster"
+
+cat > "$pkgdir/usr/bin/filibuster" << EOF
+#!/bin/sh
+cd /usr/share/filibuster
+exec python2 filterbuster.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/filibuster"
+}

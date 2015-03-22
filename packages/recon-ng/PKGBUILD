@@ -1,5 +1,8 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
 pkgname='recon-ng'
-pkgver=556.05e25d0
+pkgver=888.e3a09d1
 pkgrel=1
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='A full-featured Web Reconnaissance framework written in Python.'
@@ -7,8 +10,9 @@ arch=('any')
 url='https://bitbucket.org/LaNMaSteR53/recon-ng'
 license=('GPL3')
 depends=('python2')
+makedepends=('git')
 source=("git+https://bitbucket.org/LaNMaSteR53/recon-ng.git")
-md5sums=('SKIP')
+sha1sums=('SKIP')
 
 pkgver() {
   cd "$srcdir/recon-ng"
@@ -25,9 +29,20 @@ prepare() {
 package() {
   cd "$srcdir/recon-ng"
 
-  install -d -m755 "$pkgdir/usr/bin"
-  install -D -m755 "recon-ng" "$pkgdir/usr/bin/recon-ng"
-  install -d -m755 "$pkgdir/usr/share/recon-ng"
+  local _bins='recon-ng recon-cli recon-rpc'
 
-  cp -R * "$pkgdir/usr/share/recon-ng"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/recon-ng"
+
+  cp -a * "$pkgdir/usr/share/recon-ng"
+
+  for bin in $_bins
+  do
+    cat >> "$pkgdir/usr/bin/$bin" << EOF
+#!/bin/sh
+cd /usr/share/$bin
+exec python2 $bin
+EOF
+    chmod +x "$pkgdir/usr/bin/$bin"
+  done
 }

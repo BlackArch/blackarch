@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='python2-configparser'
+pkgver='3.5.0b2'
+pkgrel=1
+pkgdesc='Brings the updated configparser from Python 3.2+ to Python 2.6-2.7.'
+arch=('any')
+url='https://bitbucket.org/ambv/configparser'
+depends=('python2')
+makedepends=('python2-setuptools')
+license=('MIT')
+options=(!libtool)
+source=("https://pypi.python.org/packages/source/c/configparser/configparser-${pkgver}.tar.gz"
+        'license')
+sha1sums=('253a8eeb97e1a6b983a4d5dcaa74d8f15078e0a4'
+          '5690f6b0a0d5c90b92c603fa54352c4fc5f9deaf')
+
+build() {
+  cd "$srcdir/configparser-$pkgver"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/configparser-$pkgver"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1
+
+  sed -i -e "s|#![ ]*/usr/bin/env python$|#!/usr/bin/env python2|" \
+    $(find "${pkgdir}" -name '*.py')
+
+  install -Dm644 "$srcdir/license" \
+    "$pkgdir/usr/share/licenses/python2-configparser/LICENSE"
+}
+

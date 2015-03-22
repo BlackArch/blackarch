@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='isme'
+pkgver='0.12'
+pkgrel=2
+groups=('blackarch' 'blackarch-voip' 'blackarch-recon' 'blackarch-scanner')
+pkgdesc='Scans a VOIP environment, adapts to enterprise VOIP, and exploits the
+possibilities of being connected directly to an IP Phone VLAN.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://freecode.com/projects/ip-phone-scanning-made-easy-isme'
+license=('GPL3')
+depends=('perl' 'perl-libwww' 'perl-html-parser' 'perl-net-ping' 'perl-net-tftp'
+        'perl-net-netmask' 'perl-net-subnet' 'perl-http-date' 'perl-net-rawip'
+        'perl-net-libdnet' 'perl-crypt-ssleay' 'perl-lwp-protocol-https'
+        'perl-mozilla-ca' 'perl-http-message' 'perl-net-ssh-perl'
+        'perl-net-dhcp')
+makedepends=('unzip')
+source=("http://www.cedric-baillet.fr/IMG/zip/isme_v${pkgver}.zip")
+sha1sums=('80a5e481c8d59aaba0bfcd146a66ef4ae72707df')
+
+package() {
+  cd "$srcdir/isme_v$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/isme"
+  mkdir -p "$pkgdir/usr/share/doc/isme"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/" Doc/"ISME Documentation v0.12.pdf"
+  install -Dm644 Doc/LICENSE "$pkgdir/usr/share/licenses/isme/LICENSE"
+
+  rm -rf Doc
+
+  cp -a * "$pkgdir/usr/share/isme"
+
+  cat > "$pkgdir/usr/bin/isme" << EOF
+#!/bin/sh
+cd /usr/share/isme
+exec perl isme.pl "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/isme"
+}

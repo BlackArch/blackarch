@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='balbuzard'
+pkgver=67.1d6349ef1bc55
+pkgrel=1
+pkgdesc='A package of malware analysis tools in python to extract patterns of interest from suspicious files (IP addresses, domain names, known file headers, interesting strings, etc).'
+arch=('any')
+groups=('blackarch' 'blackarch-malware' 'blackarch-cracker'
+        'blackarch-reversing')
+url='https://bitbucket.org/decalage/balbuzard/'
+license=('GPL')
+depends=('python2' 'yara' 'python2-yara')
+makedepends=('mercurial' 'python2-setuptools')
+options=('!strip')
+source=('hg+https://bitbucket.org/decalage/balbuzard')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/balbuzard"
+
+  echo $(hg identify -n).$(hg identify -i) | cut -d ' ' -f 2- | tr -d ' '
+}
+
+package() {
+  cd "$srcdir/balbuzard"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/balbuzard"
+  mkdir -p "$pkgdir/usr/share/doc/balbuzard"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  cp -a INSTALL.txt README.md balbuzard/README.html balbuzard/README.txt \
+    balbuzard/doc/* "$pkgdir/usr/share/doc/balbuzard"
+
+  rm -rf INSTALL.txt README.md balbuzard/README.html balbuzard/README.txt \
+    balbuzard/doc
+
+  cp -a balbuzard/* "$pkgdir/usr/share/balbuzard"
+
+  local tools="balbuzard bbcrack bbharvest bbtrans"
+
+  for tool in $tools
+  do
+    cat > "$pkgdir/usr/bin/$tool" << EOF
+#!/bin/sh
+cd /usr/share/balbuzard
+exec python2 ${tool}.py "\$@"
+EOF
+
+    chmod +x "$pkgdir/usr/bin/$tool"
+  done
+}

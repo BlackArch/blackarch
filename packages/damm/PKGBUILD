@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='damm'
+pkgver=28.9af34b4
+pkgrel=1
+groups=('blackarch' 'blackarch-malware' 'blackarch-binary' 'blackarch-reversing')
+pkgdesc='Differential Analysis of Malware in Memory.'
+arch=('any')
+url='https://github.com/504ensicsLabs/DAMM'
+license=('GPL2')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/504ensicsLabs/DAMM.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/DAMM"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/DAMM"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/damm"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/damm/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/damm/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/damm"
+
+  cat > "$pkgdir/usr/bin/damm" << EOF
+#!/bin/sh
+cd /usr/share/damm
+exec python2 damm.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/damm"
+}

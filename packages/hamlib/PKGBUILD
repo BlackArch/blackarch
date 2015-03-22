@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hamlib'
+pkgver='1.2.15.3'
+pkgrel=1
+pkgdesc='Ham radio equipment control libraries.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://hamlib.org/'
+license=('GPL' 'LGPL')
+depends=('perl' 'python2' 'tcl' 'libxml2' 'libusb')
+makedepends=('libtool' 'swig')
+source=("http://downloads.sourceforge.net/project/hamlib/hamlib/$pkgver/hamlib-${pkgver}.tar.gz")
+options=('!emptydirs')
+changelog='hamlib.ChangeLog.markdown'
+sha1sums=('15ab404ea37e5627abea89f9e051d393966918ba')
+
+build() {
+	cd "$srcdir/hamlib-$pkgver"
+
+	export PYTHON=/usr/bin/python2
+
+	./configure --prefix=/usr --sbindir=/usr/bin --with-perl-binding \
+    --with-python-binding --enable-tcl-binding
+
+	make
+}
+
+package() {
+	cd "$srcdir/hamlib-$pkgver"
+
+	make DESTDIR=$pkgdir install
+
+	# fix perl module location
+	cd $pkgdir/usr/lib/perl5/site_perl/
+	mkdir current/
+	mv auto current
+	mv Hamlib.pm current
+	rm perltest.pl
+
+	/usr/bin/find $pkgdir -name '.packlist' -delete
+	/usr/bin/find $pkgdir -name '*.pod' -delete
+}

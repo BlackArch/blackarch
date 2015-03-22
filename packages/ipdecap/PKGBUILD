@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ipdecap'
+pkgver=69.f3a08f6
+pkgrel=1
+groups=('blackarch' 'blackarch-networking')
+pkgdesc='Can decapsulate traffic encapsulated within GRE, IPIP, 6in4, ESP (ipsec) protocols, and can also remove IEEE 802.1Q (virtual lan) header.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://www.loicp.eu/ipdecap#dependances'
+license=('GPL3')
+depends=('openssl' 'libpcap')
+makedepends=('git')
+source=('git+https://github.com/lpefferkorn/ipdecap.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ipdecap"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/ipdecap"
+
+  chmod +x autogen.sh
+  ./autogen.sh
+
+  ./configure --prefix=/usr
+
+  make
+}
+
+package() {
+  cd "$srcdir/ipdecap"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm644 AUTHORS "$pkgdir/usr/share/doc/ipdecap/AUTHORS"
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/ipdecap/COPYING"
+  install -m644 -t "$pkgdir/usr/share/doc/ipdecap/" ChangeLog \
+    Contributors INSTALL NEWS README TODO
+}

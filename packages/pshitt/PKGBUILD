@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pshitt'
+pkgver=21.85cde65
+pkgrel=1
+groups=('blackarch' 'blackarch-honeypot')
+pkgdesc='A lightweight fake SSH server designed to collect authentication data
+sent by intruders.'
+arch=('any')
+url='https://github.com/regit/pshitt'
+license=('GPL3')
+depends=('python2' 'python2-paramiko' 'python2-daemon')
+makedepends=('git')
+install='pshitt.install'
+source=('git+https://github.com/regit/pshitt.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/pshitt"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/pshitt"
+
+  sed -i 's|/usr/bin/env python|/usr/bin/env python2|' pshitt
+}
+
+package() {
+  cd "$srcdir/pshitt"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm755 pshitt "$pkgdir/usr/bin/pshitt"
+  install -Dm644 test_rsa.key "$pkgdir/usr/share/pshitt/test_rsa.key"
+  install -Dm644 README.rst "$pkgdir/usr/share/doc/pshitt/README.rst"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/pshitt/LICENSE"
+}

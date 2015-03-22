@@ -1,44 +1,48 @@
-pkgname=armitage
-pkgver=2013.08.21
-pkgrel=4
-epoch=2
-groups=('blackarch' 'blackarch-exploitation')
-pkgdesc="A graphical cyber attack management tool for Metasploit"
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='armitage'
+pkgver=141120
+pkgrel=1
+epoch=4
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-automation')
+pkgdesc='A graphical cyber attack management tool for Metasploit.'
 url='http://www.fastandeasyhacking.com/'
 arch=('any')
 license=('GPL')
-depends=('metasploit' 'java-runtime')
+depends=('metasploit' 'java-environment' 'nmap' 'postgresql' 'ruby-msgpack')
 makedepends=('apache-ant' 'zip' 'unzip' 'subversion')
-provides=('armitage')
-install=armitage.install
-source=('svn+http://armitage.googlecode.com/svn/trunk/'
+install='armitage.install'
+source=("http://www.fastandeasyhacking.com/download/armitage${pkgver}.tgz"
         'armitage.install')
-md5sums=('SKIP'
-         '5234326f9ff41ff8694cb35a557af895')
-
-prepare() {
-  cd "$srcdir/trunk"
-  sed -i 's|/usr/share/java/apache-ant/bin/||g' package.sh
-}
-
-build() {
-  cd "$srcdir/trunk"
-  bash package.sh
-}
+sha1sums=('e708f7a1983737704ec363b1669938c6954b66ca'
+          'c48183769a92176ac3b60f84dfde01903a765ae4')
 
 package() {
-  cd "$srcdir/trunk"
-  # Base directories.
-  install -dm755 "$pkgdir/usr/share"
-  install -dm755 "$pkgdir/usr/bin"
+  cd "$srcdir/armitage"
 
-  # Joint script.
-  cat > "$pkgdir/usr/bin/armitage" <<\EOF
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/armitage"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/armitage" readme.txt whatsnew.txt
+
+  rm readme.txt whatsnew.txt
+
+  cp -a * "$pkgdir/usr/share/armitage"
+
+  cat > "$pkgdir/usr/bin/armitage" << EOF
 #!/bin/sh
-java -jar /usr/share/armitage/armitage.jar "$@"
+cd /usr/share/armitage
+exec ./armitage "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/armitage"
 
-  # Everything else.
-  tar -xzf "$srcdir/trunk/armitage.tgz" -C "$pkgdir/usr/share"
+  cat > "$pkgdir/usr/bin/teamserver" << EOF
+#!/bin/sh
+cd /usr/share/armitage
+exec ./teamserver "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/teamserver"
 }

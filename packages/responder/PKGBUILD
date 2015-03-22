@@ -1,35 +1,53 @@
-pkgname=responder
-pkgver=1.9
-pkgrel=2
-groups=('blackarch' 'blackarch-networking')
-pkgdesc="A LLMNR and NBT-NS poisoner, with built-in HTTP/SMB/MSSQL/FTP/LDAP rogue authentication server supporting NTLMv1/NTLMv2/LMv2, Extended Security NTLMSSP and Basic HTTP authentication."
-url="https://github.com/SpiderLabs/Responder"
-license=('custom')
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='responder'
+pkgver=119.889bc59
+pkgrel=1
+epoch=1
+pkgdesc='A LLMNR and NBT-NS poisoner, with built-in HTTP/SMB/MSSQL/FTP/LDAP rogue authentication server supporting NTLMv1/NTLMv2/LMv2, Extended Security NTLMSSP and Basic HTTP authentication.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-spoof'
+        'blackarch-networking')
 arch=('any')
 depends=('python2')
-source=("git+https://github.com/SpiderLabs/Responder")
-md5sums=('SKIP')
+makedepends=('git')
+url='https://github.com/SpiderLabs/Responder/'
+license=('GPL3')
+source=('git+https://github.com/SpiderLabs/Responder.git')
+sha1sums=('SKIP')
 
 pkgver() {
   cd "$srcdir/Responder"
 
-  # We have to get the version number from the CHANGELOG file. It's better than
-  #  nothing.
-  grep -m1 'ChangeLog ' CHANGELOG.txt | sed 's/.* //;s/:$//'
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd "$srcdir"
+  cd "$srcdir/Responder"
 
-  # Base directories.
-  install -dm755 "$pkgdir/usr/share"
-  install -dm755 "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/responder"
+  mkdir -p "$pkgdir/usr/share/doc/responder"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/responder" README.md CHANGELOG
+
+  rm README.md CHANGELOG
 
   cp -a * "$pkgdir/usr/share/responder"
 
-  cat > "$pkgdir/usr/bin/responder" <<EOF
+  cat > "$pkgdir/usr/bin/responder" << EOF
 #!/bin/sh
-python2 /usr/share/responder/Responder.py "\$@"
+cd /usr/share/responder
+exec python2 Responder.py "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/responder"
+
+  cat > "$pkgdir/usr/bin/dhcp-responder" << EOF
+#!/bin/sh
+cd /usr/share/responder
+exec python2 DHCP.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/dhcp-responder"
 }

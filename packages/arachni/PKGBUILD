@@ -1,22 +1,48 @@
-pkgname=arachni
-_gemname=arachni
-pkgver=0.4.5.2
-pkgrel=0
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='arachni'
+pkgver=1.0.6
+pkgrel=3
 groups=('blackarch' 'blackarch-webapp')
-pkgdesc="Arachni is a feature-full, modular, high-performance Ruby framework aimed towards helping penetration testers and administrators evaluate the security of web applications."
+pkgdesc='A feature-full, modular, high-performance Ruby framework aimed towards helping penetration testers and administrators evaluate the security of web applications.'
 arch=('any')
-license=('')
-makedepends=('ruby')
-depends=('ruby-arachni-rpc-em=0.2' 'ruby-typhoeus>=0.3.3'
-         'ruby-addressable>=2.3.2' 'ruby-nokogiri>=1.5.7.rc1'
-         'ruby-sys-proctable>=0.9.1' 'ruby-terminal-table>=1.4.2')
+license=('apache')
+makedepends=('git')
+depends=('ruby' 'ruby-bundler')
 url='https://www.arachni-scanner.com'
-source=("http://rubygems.org/downloads/arachni-$pkgver.gem")
-md5sums=('927fb46409e0ced8c058d339f10412d1')
-noextract=("arachni-$pkgver.gem")
+source=('git+git://github.com/Arachni/arachni.git')
+install='arachni.install'
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/arachni"
+
+  git describe --always | sed 's|-|.|g' | sed 's/^v//'
+}
 
 package() {
-  cd "$srcdir"
-  local _gemdir=$(ruby -e 'puts Gem.default_dir')
-  gem install --ignore-dependencies --no-user-install -i "$pkgdir$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
+  cd "$srcdir/arachni"
+
+  progs="arachni arachni_console arachni_multi arachni_rpc arachni_rpcd"
+  progs="$progs arachni_rpcd_monitor arachni_script"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/arachni"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/arachni" *.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/arachni/LICENSE.md"
+
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/arachni"
+
+  for prog in $progs
+  do
+    cat > "$pkgdir/usr/bin/$prog" << EOF
+#!/bin/sh
+cd /usr/share/arachni
+exec ruby /usr/share/arachni/bin/$prog "\$@"
+EOF
+  done
+
+  chmod +x "$pkgdir"/usr/bin/*
 }

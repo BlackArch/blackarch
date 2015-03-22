@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='python2-fusepy'
+pkgver=86.27d76e4
+pkgrel=2
+pkgdesc='Simple ctypes bindings for FUSE'
+url='https://github.com/terencehonles/fusepy'
+license=('custom:ISCL')
+arch=('any')
+depends=('python2' 'fuse')
+makedepends=('python-distribute' 'python2-distribute' 'fuse' 'git'
+             'python2-setuptools')
+conflicts=('fusepy')
+provides=('fusepy')
+source=('git://github.com/terencehonles/fusepy.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/fusepy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/fusepy"
+
+  sed -n '/Copyright/,/ THIS SOFTWARE[.]/p' fuse.py > LICENSE
+}
+
+package() {
+  cd "$srcdir/fusepy"
+
+  python2 setup.py install --root="$pkgdir/" --optimize=1
+
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/python2-fusepy/LICENSE"
+}

@@ -1,20 +1,25 @@
-pkgname=plecost
-pkgver=2
-pkgrel=5
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='plecost'
+pkgver='2'
+pkgrel=9
 groups=('blackarch' 'blackarch-fingerprint' 'blackarch-webapp')
-pkgdesc="Wordpress finger printer tool search and retrieve information about the plugins versions installed in Wordpress systems."
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+pkgdesc='Wordpress finger printer tool search and retrieve information about the plugins versions installed in Wordpress systems.'
+arch=('any')
 url='http://code.google.com/p/plecost/'
 license=('GPL3')
 depends=('python2')
 makedepends=('subversion')
 provides=('plecost')
+sha1sums=('SKIP')
 
-_svntrunk=http://plecost.googlecode.com/svn/trunk/
-_svnmod=plecost
+_svntrunk='http://plecost.googlecode.com/svn/trunk/'
+_svnmod='plecost'
 
 build() {
   cd "$srcdir"
+
   msg "Connecting to SVN server...."
 
   if [[ -d "$_svnmod/.svn" ]]; then
@@ -34,20 +39,22 @@ package() {
   cd "$srcdir/$_svnmod-build"
 
   # Make base directory structure.
-  install -dm755 "$pkgdir/usr/share"
-  install -dm755 "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share"
+  mkdir -p "$pkgdir/usr/bin"
 
   # Install docs.
   cp --no-preserve=ownership -r "$srcdir/$_svnmod" "$pkgdir/usr/share"
 
   # Install bin.
-  sed -i "s|!/usr/bin/python|!/usr/bin/python2|g" "$pkgdir/usr/share/plecost/plecost-0.2.2-8-beta.py"
+  sed -i "s|!/usr/bin/python|!/usr/bin/python2|g" \
+    "$pkgdir/usr/share/plecost/plecost-0.2.2-8-beta.py"
 
   # Make joint script.
   touch "$pkgdir/usr/bin/plecost"
-  cat > "$pkgdir/usr/bin/plecost" <<EOF
+  cat > "$pkgdir/usr/bin/plecost" << EOF
 #!/bin/sh
-/usr/share/plecost/plecost-0.2.2-8-beta.py "\$@"
+exec /usr/share/plecost/plecost-0.2.2-8-beta.py "\$@"
 EOF
-  chmod 755 "$pkgdir/usr/bin/plecost"
+
+  chmod +x "$pkgdir/usr/bin/plecost"
 }

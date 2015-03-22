@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='backfuzz'
+pkgver='36.8e54ed6'
+pkgrel=1
+groups=('blackarch' 'blackarch-fuzzer' 'blackarch-networking')
+pkgdesc='A network protocol fuzzing toolkit.'
+arch=('any')
+url='https://github.com/localh0t/backfuzz'
+license=('GPL3')
+depends=('python2')
+makedepends=('git')
+source=("git+https://github.com/localh0t/backfuzz.git")
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/backfuzz"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/backfuzz"
+
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/backfuzz"
+
+  install -Dm644 README "$pkgdir/usr/share/doc/backfuzz/README"
+  install -m644 VERSION "$pkgdir/usr/share/doc/backfuzz/VERSION"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/backfuzz/LICENSE"
+  install -m644 "LICENSE - mona" \
+    "$pkgdir/usr/share/licenses/backfuzz/LICENSE - mona"
+
+  rm README VERSION LICENSE "LICENSE - mona"
+
+  cp -a * "$pkgdir/usr/share/backfuzz"
+
+  cat > "$pkgdir/usr/bin/backfuzz" << EOF
+#!/bin/sh
+cd /usr/share/backfuzz
+python2 backfuzz.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/backfuzz"
+}

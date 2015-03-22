@@ -1,0 +1,53 @@
+--- eyepwn/eyepwn.py	2013-01-03 13:58:28.000000000 +0000
++++ eyepwn.py	2014-03-05 21:40:04.047167159 +0000
+@@ -28,6 +29,7 @@
+ import scapy.config
+ scapy.config.conf.ipv6_enabled = False
+ import scapy.all as sc
++import netifaces
+ 
+ parser = optparse.OptionParser(usage="usage: %prog [options]")
+ parser.add_option("-e", dest="helper_ip", default=None,
+@@ -50,13 +52,17 @@
+ def find_my_ips():
+     """Get IP address(es) of this machine."""
+     ips = []
+-    for iface in os.popen('/sbin/ifconfig').read().split('\n\n'):
+-        m = re.search('^(\w+).*inet addr:(\S+)', iface, re.S)
+-        if m:
+-            if not options.interface:
+-                options.interface = m.group(1)
+-            if m.group(1) == options.interface:
+-                ips.append(m.group(2))
++    try:
++        for iface in netifaces.interfaces():
++            if iface == "lo":
++                continue
++            for addr in netifaces.ifaddresses(iface)[netifaces.AF_INET]:
++                if not options.interface:
++                    options.interface = iface
++                if iface == options.interface:
++                    ips.append(addr['addr'])
++    except KeyError:
++        pass
+     return ips
+ 
+ def arp_scan(network):
+@@ -263,7 +269,15 @@
+     def find_alias():
+         mitm_ip = find_mitm_ip(network, find_card(), my_ips)
+         if mitm_ip:
+-            os.system('ifconfig %s add %s' % (options.interface, mitm_ip))
++            netmask = ''
++            for addr in netifaces.ifaddresses(options.interface)[netifaces.AF_INET]:
++                if addr['addr'] == mitm_ip:
++                    netmask = addr['netmask']
++                    break
++            if netmask:
++                netmask = str(sum([bin(int(x)).count('1') for x in netmask.split('.')]))
++                os.system('ip addr add %s/%s dev %s' % (mitm_ip, netmask, options.interface))
++            #os.system('ifconfig %s add %s' % (options.interface, mitm_ip))
+     
+     thread.start_new_thread(find_alias, ())
+     start_proxy()
+

@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='gpredict'
+pkgver='1.3'
+pkgrel=2
+pkgdesc='A real-time satellite tracking and orbit prediction application.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+groups=('blackarch' 'blackarch-radio' 'blackarch-scanner')
+license=('GPL')
+url='http://gpredict.oz9aec.net/'
+depends=('curl' 'gtk2' 'glib2' 'grig' 'goocanvas1' 'hamlib')
+makedepends=('git' 'intltool')
+source=("https://github.com/csete/gpredict/archive/v${pkgver}.tar.gz")
+sha1sums=('1db01c55182f9044c3efe598b80eb005333cf30d')
+
+build() {
+	cd "$srcdir/gpredict-$pkgver"
+
+  ./autogen.sh
+
+  ./configure --prefix=/usr
+
+  make
+}
+
+package() {
+	cd "$srcdir/gpredict-$pkgver"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/gpredict" README NEWS TODO AUTHORS \
+    ChangeLog
+
+  gzip doc/man/gpredict.1
+  install -Dm644 doc/man/gpredict.1.gz "$pkgdir/usr/share/man/man1/gpredict.1.gz"
+
+  make DESTDIR="$pkgdir" install
+
+  # desktop files can be used by archassault lamers
+  rm -rf "$pkgdir"/usr/share/{gpredict,applications}
+}

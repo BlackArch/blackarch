@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dirs3arch'
+pkgver=130.8f37c7d
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+pkgdesc='HTTP(S) directory/file brute forcer.'
+arch=('any')
+url='https://github.com/maurosoria/dirs3arch'
+license=('GPL2')
+depends=('python2' 'python2-simplejson' 'python2-beautifulsoup4')
+makedepends=('git')
+source=('git+https://github.com/maurosoria/dirs3arch.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/dirs3arch"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/dirs3arch"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/dirs3arch"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/dirs3arch/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/dirs3arch"
+
+  cat > "$pkgdir/usr/bin/dirs3arch" << EOF
+#!/bin/sh
+cd /usr/share/dirs3arch
+exec python2 dirs3arch.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/dirs3arch"
+}

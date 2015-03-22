@@ -1,38 +1,46 @@
-pkgname=creepy
-pkgver=20121023
-pkgrel=4
-groups=('blackarch' 'blackarch-scanner' 'blackarch-social')
-pkgdesc="A geolocation information gatherer. Offers geolocation information gathering through social networking platforms."
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-url='http://github.com/ilektrojohn/creepy'
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='creepy'
+pkgver=137.9f60449
+pkgrel=2
+epoch=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-social' 'blackarch-recon')
+pkgdesc='A geolocation information gatherer. Offers geolocation information gathering through social networking platforms.'
+arch=('any')
+url='http://github.com/ilektrojohn/creepy.git'
 license=('GPL3')
 provides=('creepy')
 makedepends=('git')
 depends=('python2' 'python2-tweepy' 'python2-osmgpsmap' 'python2-flickrapi'
-         'python2-beautifulsoup3' 'python2-pyexiv2' 'python2-configobj'
-         'python2-simplejson')
+         'python2-beautifulsoup3' 'python2-exiv2' 'python2-configobj'
+         'python2-simplejson' 'python2-yapsy' 'python2-pyqt4')
 source=('git+https://github.com/ilektrojohn/creepy.git')
-md5sums=('SKIP')
+sha1sums=('SKIP')
 
-#prepare() {
-  # Fix a spacing error. This should be fixed by the upstream in the near future.
-#  sed -i '127s/         /        /' "$srcdir/creepy/creepy/creepymap.py"
-#}
+pkgver() {
+  cd "$srcdir/creepy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 package() {
   cd "$srcdir/creepy"
 
-  # Make base directories.
-  install -d -m755 "$pkgdir/usr/share/creepy"
-  install -d -m755 "$pkgdir/usr/bin"
-  install -d -m755 "$pkgdir/usr/share/creepy/doc"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/creepy"
 
-  python2 creepy/setup.py install "--root=$pkgdir"
+  install -Dm644 README.md "$pkgdir/usr/share/creepy/doc/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/creepy/LICENSE"
 
-  # Make joint script.
-  cat > "$pkgdir/usr/bin/creepy" <<EOF
+  rm README.md LICENSE
+
+  cp -a creepy/* "$pkgdir/usr/share/creepy/"
+
+  cat > "$pkgdir/usr/bin/creepy" << EOF
 #!/bin/sh
-python2 /usr/lib/python2.7/site-packages/creepy/creepymap.py "\$@"
+exec python2 "/usr/share/creepy/CreepyMain.py" "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/creepy"
 }

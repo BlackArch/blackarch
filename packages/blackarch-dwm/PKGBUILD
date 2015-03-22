@@ -1,9 +1,12 @@
-pkgname=blackarch-dwm
-pkgver=6.0
-pkgrel=1
-pkgdesc="Dynamic window manager for X"
-arch=('i686' 'x86_64')
-url="dwm.suckless.org"
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='blackarch-dwm'
+pkgver='6.0'
+pkgrel=7
+pkgdesc="Dynamic window manager for X with BlackArch colors."
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url="http://dwm.suckless.org"
 license=('GPL')
 depends=('dmenu' 'xorg-server' 'xorg-xsetroot' 'libx11' 'libxinerama')
 conflicts=('dwm')
@@ -11,21 +14,32 @@ provides=('dwm')
 source=("http://git.suckless.org/dwm/snapshot/dwm-$pkgver.tar.bz2"
         'config.h'
         'blackarch-dwm')
-md5sums=('b6521aa6bd9d58839a1cc759f693c52c'
-         '1e8199b1a266a1141dbaa27f41c872c8'
-         '97145db923b2d6e499f7b8f4488d250b')
+sha1sums=('19a083f68e6556a118d7802ca74938c680bb141f'
+          '10a865b3fd5c9db3bb6b42f7abd0dfb8db29726a'
+          '688a4333b7fb6603ee7886484ae799e8ae84a095')
 
 prepare(){
   cd "$srcdir/dwm-$pkgver"
 
-  cp "$srcdir/config.h" .
-  make
+  cp -f "$srcdir/config.h" .
+
+  sed -i 's/CPPFLAGS =/CPPFLAGS +=/g' config.mk
+  sed -i 's/^CFLAGS = -g/#CFLAGS += -g/g' config.mk
+  sed -i 's/^#CFLAGS = -std/CFLAGS += -std/g' config.mk
+  sed -i 's/^LDFLAGS = -g/#LDFLAGS += -g/g' config.mk
+  sed -i 's/^#LDFLAGS = -s/LDFLAGS += -s/g' config.mk
+}
+
+build() {
+  cd "$srcdir/dwm-$pkgver"
+
+  make X11INC=/usr/include/X11 X11LIB=/usr/lib/X11
 }
 
 package() {
   cd "$srcdir/dwm-$pkgver"
 
-  make DESTDIR="$pkgdir" install
+  make PREFIX=/usr DESTDIR="$pkgdir" install
 
-  cp "$srcdir/blackarch-dwm" "$pkgdir/usr/local/bin/"
+  install -m755 "$srcdir/blackarch-dwm" "$pkgdir/usr/bin/"
 }

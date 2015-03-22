@@ -1,26 +1,33 @@
-pkgname=pcapsipdump
-pkgver=0.1.4
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pcapsipdump'
+pkgver='0.2'
 pkgrel=1
-pkgdesc="pcapsipdump is a tool for dumping SIP sessions (+RTP traffic, if available) to disk in a fashion similar to 'tcpdump -w' (format is exactly the same), but one file per sip session (even if there is thousands of concurrect SIP sessions)."
-url="http://pcapsipdump.sourceforge.net/"
+pkgdesc="A tool for dumping SIP sessions (+RTP traffic, if available) to disk in a fashion similar to 'tcpdump -w' (format is exactly the same), but one file per sip session (even if there is thousands of concurrect SIP sessions)."
+url='http://pcapsipdump.sourceforge.net/'
 groups=('blackarch' 'blackarch-voip')
 license=('GPL')
 depends=('libpcap' 'gcc-libs')
-arch=(i686 x86_64)
-source=(http://downloads.sourceforge.net/pcapsipdump/${pkgname}-${pkgver}.tar.gz
-        header-fix.patch)
-md5sums=('95ed26caf66237a654cae2cacdaa3386'
-         '7c0536c4023ac420116bc4e27534b589')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+source=("http://downloads.sourceforge.net/pcapsipdump/pcapsipdump-${pkgver}.tar.gz")
+sha1sums=('7a6d3317bcccb5e0430b6e30f866783957904684')
 
 build() {
   cd "$srcdir/pcapsipdump-$pkgver"
-  patch -Np0 -i "$srcdir"/header-fix.patch
-  make CPPFLAGS="$CXXFLAGS"
+
+  g++ -lpcap -lstdc++ pcapsipdump.cpp calltable.cpp -o pcapsipdump
+  #make CPPFLAGS="$CFLAGS"
 }
 
 package(){
   cd "$srcdir/pcapsipdump-$pkgver"
-  install -Dm755 pcapsipdump $pkgdir/usr/bin/pcapsipdump
-  install -Dm644 README.txt $pkgdir/usr/share/doc/pcapsipdump/README
-}
 
+  mkdir -p "$pkgdir/usr/share/doc/pcapsipdump"
+
+  install -Dm755 pcapsipdump "$pkgdir/usr/bin/pcapsipdump"
+  install -Dm644 -t "$pkgdir/usr/share/doc/pcapsipdump" README.txt ChangeLog \
+    README.solaris
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/pcapsipdump/LICENSE"
+
+}

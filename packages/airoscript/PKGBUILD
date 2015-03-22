@@ -1,20 +1,27 @@
-pkgname=airoscript
-pkgver=20131212
-pkgrel=1
-pkgdesc="Script to simplify the use of aircrack-ng tools"
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-url="http://midnightresearch.com/projects/wicrawl/"
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='airoscript'
+pkgver=45.0a122ee
+pkgrel=4
+epoch=2
+pkgdesc='A script to simplify the use of aircrack-ng tools.'
+arch=('any')
+url='http://midnightresearch.com/projects/wicrawl/'
 groups=('blackarch' 'blackarch-wireless')
 license=('GPL')
-depends=('mdk3' 'aircrack-ng' 'dhclient')
+depends=('mdk3' 'aircrack-ng' 'dhclient' 'perl-yaml-syck')
 options=(!makeflags)
+makedepends=('git')
 source=('git+http://github.com/patrickhno/Airoscript'
         'Makefile.patch')
-md5sums=('SKIP'
-         '441dd3a5f804f3c65c4da93b367199c1')
+sha1sums=('SKIP'
+          'a25b188f590dbbe8ebf8574a6f1a04019707625f')
 
 pkgver() {
-  date +%Y%m%d
+  cd "$srcdir/Airoscript"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
@@ -30,12 +37,13 @@ package() {
 
   rm -rf src/locale/*
 
-  make "prefix=$pkgdir/usr" "aircrack_prefix=/usr" "etcdir=$pkgdir/etc/airoscript" install
+  make prefix="$pkgdir/usr" aircrack_prefix="/usr" \
+    etcdir="$pkgdir/etc/airoscript" install
 
   # Fix conflict with extra/screen.
   #mv "$pkgdir/etc/screenrc" "$pkgdir/etc/airoscript/screenrc"
 
   sed -i 's|/local||' "$pkgdir"/etc/airoscript/*
   sed -i 's|/minimal.theme|defaul.theme|' "$pkgdir"/etc/airoscript/*
-# TODO: wordlist
+  # TODO: wordlist
 }

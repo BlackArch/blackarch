@@ -1,17 +1,22 @@
-pkgname=gsa
-pkgver=4.0.2
-pkgrel=2
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='gsa'
+pkgver='5.0.1'
+pkgrel=3
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc="OpenVAS web frontend"
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://www.openvas.org/'
 license=('GPL')
-depends=('glibc' 'libmicrohttpd' 'libxml2' 'glib2' 'libxslt' 'gnutls' 'openvas-libraries')
-makedepends=('gcc' 'automake' 'cmake' 'doxygen')
+depends=('glibc' 'libmicrohttpd' 'libxml2' 'glib2' 'libxslt' 'gnutls2' 'openvas-libraries')
+makedepends=('gcc' 'automake' 'cmake' 'doxygen' 'pkg-config')
 backup=('etc/openvas/gsad_log.conf')
 options=('!buildflags')
-source=('http://wald.intevation.org/frs/download.php/1422/greenbone-security-assistant-4.0.2.tar.gz')
-md5sums=('d0c81070cb58cad1b7b41e51d69d3288')
+source=('http://wald.intevation.org/frs/download.php/1675/greenbone-security-assistant-5.0.1.tar.gz'
+        'gsad.service')
+sha1sums=('bbc322fa8176b6ca6f1edd230748679504117227'
+          'bea7d5e5069c96f3fcefe8b80ba6a30ad582f226')
 
 prepare() {
   cd "$srcdir/greenbone-security-assistant-$pkgver"
@@ -22,7 +27,11 @@ prepare() {
 build() {
   cd "$srcdir/greenbone-security-assistant-$pkgver"
 
-  cmake -DSBINDIR=/usr/bin -DCMAKE_INSTALL_PREFIX=/usr -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var .
+  export PKG_CONFIG_PATH=/usr/gnutls2/lib/pkgconfig/:$PKG_CONFIG_PATH
+  CFLAGS="-I/usr/gnutls2/include" LDFLAGS="-L/usr/gnutls2/lib"
+
+  cmake -D CMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_RPATH="/usr/gnutls2/lib/" -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE -DSBINDIR=/usr/bin \
+  -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE -DCMAKE_INSTALL_PREFIX=/usr -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var -DLIBDIR=/usr/lib .
   make
 }
 
@@ -30,4 +39,5 @@ package() {
   cd "$srcdir/greenbone-security-assistant-$pkgver"
 
   make DESTDIR="$pkgdir/" install
+  install -Dm644 "$srcdir/gsad.service" "$pkgdir/usr/lib/systemd/system/gsad.service"
 }

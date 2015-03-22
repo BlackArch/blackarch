@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='freeipmi'
+pkgver='1.4.8'
+pkgrel=1
+pkgdesc='Sensor monitoring, system event monitoring, power control, and serial-over-LAN (SOL).'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+groups=('blackarch' 'blackarch-networking' 'blackarch-misc')
+url='http://www.gnu.org/software/freeipmi/'
+license=('GPL')
+depends=('libgcrypt')
+options=('!libtool')
+source=("http://ftp.gnu.org/gnu/freeipmi/freeipmi-${pkgver}.tar.gz")
+sha1sums=('64f3400922a273f4b2f591b13517608876b6bf98')
+
+build() {
+  cd "$srcdir/freeipmi-$pkgver"
+
+  ./configure --prefix=/usr --sbindir=/usr/bin --mandir=/usr/share/man \
+    --sysconfdir=/etc --localstatedir=/var/lib --infodir=/usr/share/info
+
+  make
+}
+
+package() {
+  cd "$srcdir/freeipmi-$pkgver"
+
+  make DESTDIR=$pkgdir/ install
+
+  mv "$pkgdir/etc/init.d" "$pkgdir/etc/rc.d"
+  mv "$pkgdir/etc/sysconfig" "$pkgdir/etc/conf.d"
+
+  sed -e 's|/etc/init.d/|/etc/rc.d/|g' \
+    -e 's|/etc/rc.d/init.d/functions|/etc/rc.d/functions|g' \
+    -i "$pkgdir"/etc/rc.d/*
+
+  sed -e 's|CONFFILE=/etc/sysconfig/bmc-watchdog|CONFFILE=/etc/cond.f/bmc-watchdog|g' \
+    -i "$pkgdir/etc/rc.d/bmc-watchdog"
+
+  rm -Rf "$pkgdir/usr/share/info/dir"
+}

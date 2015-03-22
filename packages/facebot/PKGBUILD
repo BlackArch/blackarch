@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='facebot'
+pkgver=23.57f6025
+pkgrel=2
+groups=('blackarch' 'blackarch-recon' 'blackarch-webapp')
+pkgdesc='A facebook profile and reconnaissance system.'
+arch=('any')
+url='https://github.com/pun1sh3r/facebot'
+license=('GPL2')
+depends=('python2' 'python2-beautifulsoup4' 'python2-configparser'
+         'python2-facepy' 'python2-binaryornot' 'python2-wsgiref'
+         'python2-cookiecutter' 'python2-jinja' 'python2-yaml'
+         'python2-multipartposthandler' 'mysql-python' 'python2-gdata'
+         'python2-markupsafe' 'python2-six' 'python2-pager' 'cookiejar'
+         'python2-setuptools')
+makedepends=('git')
+source=('git+https://github.com/pun1sh3r/facebot.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/facebot"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/facebot"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/facebot"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/facebot" README.md Dependencies \
+    requirements.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/facebot"
+
+  cat > "$pkgdir/usr/bin/facebot" << EOF
+#!/bin/sh
+cd /usr/share/facebot
+exec python2 facebotv2.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/facebot"
+}

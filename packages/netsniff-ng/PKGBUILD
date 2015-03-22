@@ -1,26 +1,37 @@
-pkgname=netsniff-ng
-pkgver=0.5.7
-pkgrel=4
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='netsniff-ng'
+pkgver='0.5.9'
+pkgrel=1
 groups=('blackarch' 'blackarch-sniffer')
-pkgdesc="A high performance Linux network sniffer for packet inspection."
-makedepends=(cmake)
+pkgdesc='A high performance Linux network sniffer for packet inspection.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://netsniff-ng.org/'
 license=('GPL2')
-source=(http://pub.netsniff-ng.org/netsniff-ng/netsniff-ng-${pkgver}.tar.gz)
-md5sums=('d2da7a75d163f839129c9ebb8b0004d0')
+depends=('libpcap' 'ncurses' 'geoip' 'libsodium' 'libnetfilter_conntrack'
+        'liburcu' 'libnl' 'libcli' 'libnet')
+makedepends=('cmake' 'bison' 'flex')
+source=("http://pub.netsniff-ng.org/netsniff-ng/netsniff-ng-${pkgver}-rc4.tar.gz")
+sha1sums=('e04f2a6e5e124b03832080e1741b3b00447b7670')
 
 build() {
-  cd "$srcdir/netsniff-ng-${pkgver}/src"
-  [[ -d build ]] || mkdir build
-  cd build
-  cmake ..
-  make
+  cd "$srcdir/netsniff-ng-$pkgver-rc4"
+
+  ./configure --prefix=/usr
+
+  make PREFIX="/usr"
 }
 
 package() {
-  cd "$srcdir/netsniff-ng-${pkgver}/src"
-  cd build
-  make DESTDIR="$pkgdir" install
+  cd "$srcdir/netsniff-ng-$pkgver-rc4"
+
+  mkdir -p "$pkgdir/usr/share/doc/netsniff-ng"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/netsniff-ng" README INSTALL \
+    AUTHORS REPORTING-BUGS
+
+  make PREFIX="/usr" DESTDIR="$pkgdir" install
+
   mv "$pkgdir/usr/sbin" "$pkgdir/usr/bin"
 }

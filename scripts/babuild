@@ -1,0 +1,208 @@
+#!/bin/bash
+
+origdir=$PWD
+outdir=$origdir
+basedir=${BASH_SOURCE[0]%/*}
+
+export LC_ALL=POSIX
+
+# override with -t
+tmpdir=/tmp
+
+note() {
+	echo >&2 "babuild: NOTE: $*"
+}
+
+err() {
+	echo >&2 "babuild: ERROR: $*"
+}
+
+usage() {
+	cat <<EOF
+usage: babuild [-g <package in git>] [-a <arch>] [-o <outdir>] [-p <packager>] [-- archbuild args [-- makechrootpkg args [-- makepkg args]]]
+
+  -g <package in git>    Change the CWD to a package's directory in git before building.
+  -a <arch>              Whitelist architectures to build for. You may use this
+                         flag multiple times. This does not apply to 'any' packages.
+  -o <directory>         Specify an out directory to copy built packages to.
+  -p <packager>          Specify the packager for makepkg. You can set the
+                         PACKAGER environmental variable instead.
+  -t <directory>         Specify a temporary directory
+EOF
+}
+
+cleanup() {
+	rm -rf "$tmp"
+}
+
+parse_args() {
+	while [[ -n "$1" ]] ; do
+		case "$1" in
+			-a|--arch)
+				arch+=("$2")
+				shift
+				;;
+			-g|--git)
+				git_package="$2"
+				shift
+				;;
+			-o|--out)
+				outdir=$2
+				shift
+				;;
+			-p|--packager)
+				export PACKAGER=$2
+				shift
+				;;
+			-t|--tmpdir)
+				tmpdir=$2
+				shift
+				;;
+			-h)
+				usage
+				exit
+				;;
+			--)
+				shift
+				pass_through+=("$@")
+				break
+				;;
+			*)
+				err "unknown argument: $1"
+				exit 1
+				;;
+		esac
+		shift
+	done
+
+	# archbuild -> makechrootpkg -> makepkg
+	state=0
+	set -- "${pass_through[@]}"
+	for arg ; do
+		if [[ "$arg" == -- ]] ; then
+			(( state++ ))
+		else
+			case "$state" in
+				0)
+					archbuild_args+=("$arg")
+					;;
+				1)
+					makechrootpkg_args+=("$arg")
+					;;
+				2)
+					makepkg_args+=("$arg")
+					;;
+				*)
+					echo "invalid argument depth: $state"
+					exit 1
+					;;
+			esac
+		fi
+	done
+
+	if (( ${#arch[@]} == 0 )) ; then
+		case "$(uname -m)" in
+			arm*)
+				arch=("$(uname -m | sed 's/l$/h/')")
+				;;
+			i686|x86_64)
+				arch=(i686 x86_64)
+				;;
+			*)
+				err "unknown arch: $(uname -m)"
+				;;
+		esac
+	fi
+
+	if [[ -n "$git_package" ]] ; then
+		cd "$basedir/../packages/$git_package"
+	fi
+}
+
+check_for_root() {
+	if (( $EUID != 0 )) ; then
+		err "you must have root privledges."
+		exit 1
+	fi
+}
+
+copy_files() {
+	# The temporary directory and its contents must be world-readable and
+	# world-writeable.
+	tmp=$tmpdir/babuild.$RANDOM$RANDOM
+	mkdir "$tmp"
+	(
+	CARCH=$(uname -m)
+	. ./PKGBUILD
+	copy=(PKGBUILD "$install" "$changelog")
+	for s in "${source[@]}" ; do
+		if [[ -r "$s" ]] ; then
+			copy+=("$s")
+		fi
+	done
+	cp "${copy[@]}" "$tmp" 2> /dev/null
+	)
+	chmod -R a+wrX "$tmp"
+}
+
+build_for_arch() {
+	arch=$1
+	case "$arch" in
+		i686)
+			archbuild=blackarch32-i686-build
+			;;
+		x86_64)
+			archbuild=blackarch64-x86_64-build
+			;;
+		*)
+			archbuild=blackarcharm-$arch-build
+			;;
+	esac
+
+	$archbuild "${archbuild_args[@]}" \
+	  -- -D /dev/input \
+	  "${makechrootpkg_args[@]}" \
+	  -- "${makepkg_args[@]}"
+}
+
+do_build() {
+	cd "$tmp"
+
+	if grep -q '^arch.*any' PKGBUILD ; then
+		echo "NOTE: package's architecture is set to 'any'"
+		build_for_arch i686
+	else
+		for arch in "${arch[@]}" ; do
+			if grep -q "^arch.*$arch" PKGBUILD ; then
+				build_for_arch "$arch"
+			else
+				note "package is not compatible with $arch"
+			fi
+		done
+	fi
+}
+
+copy_build() {
+	echo "copying built packages to '$outdir'..."
+	# TODO: make this prettier
+	if [[ $outdir == /* ]] ; then
+		mkdir -p "$outdir"
+		cp *.pkg.tar.xz "$outdir"
+	else
+		mkdir -p "$origdir/$outdir"
+		cp *.pkg.tar.xz "$origdir/$outdir"
+	fi
+}
+
+main() {
+	parse_args "$@"
+	check_for_root
+
+	trap cleanup EXIT
+
+	copy_files
+	do_build
+	copy_build
+}
+
+main "$@"

@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='htrosbif'
+pkgver=134.9dc3f86
+pkgrel=4
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-recon')
+pkgdesc='Active HTTP server fingerprinting and recon tool.'
+arch=('any')
+url='https://github.com/lkarsten/htrosbif'
+license=('GPL3')
+depends=('perl' 'perl-json-xs' 'perl-list-moreutils' 'perl-test-deep')
+makedepends=('git')
+source=('git+https://github.com/lkarsten/htrosbif.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/htrosbif"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/htrosbif"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/htrosbif"
+
+  install -Dm644 REQUIREMENTS "$pkgdir/usr/share/doc/htrosbif/REQUIREMENTS"
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/htrosbif/COPYING"
+
+  rm COPYING REQUIREMENTS
+
+  cp -a * "$pkgdir/usr/share/htrosbif"
+
+  cat > "$pkgdir/usr/bin/htrosbif" << EOF
+#!/bin/sh
+cd /usr/share/htrosbif
+exec perl htrosbif "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/htrosbif"
+}

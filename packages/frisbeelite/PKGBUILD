@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='frisbeelite'
+pkgver='1.2'
+pkgrel=1
+groups=('blackarch' 'blackarch-fuzzer')
+pkgdesc='A GUI-based USB device fuzzer.'
+arch=('any')
+url='https://github.com/nccgroup/FrisbeeLite'
+license=('GPL3')
+depends=('python2' 'libusb' 'python2-pyusb-git' 'wxgtk')
+makedepends=('git')
+source=('git+https://github.com/nccgroup/FrisbeeLite.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/FrisbeeLite"
+
+  ls FrisbeeLite_v*.py | cut -d 'v' -f 2 |  sed 's/\.py//'
+}
+
+prepare() {
+  cd "$srcdir/FrisbeeLite"
+
+  mv FrisbeeLite_v${pkgver}.py frisbeelite.py
+
+  sed -i '/#!\/usr\/bin\/python/d' frisbeelite.py
+  sed -i '1i\#!/usr/bin/python2' frisbeelite.py
+  sed -i 's/.$//g' frisbeelite.py
+}
+
+package() {
+  cd "$srcdir/FrisbeeLite"
+
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/frisbeelite"
+
+  cp -a frisbeelite.py images dependencies \
+    "$pkgdir/usr/share/frisbeelite"
+
+  install -Dm644 Fuzzing_USB_devices_with_FrisbeeLite.pdf \
+    "$pkgdir/usr/share/doc/frisbeelite/Fuzzing_USB_devices_with_FrisbeeLite.pdf"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/frisbeelite/README.md"
+
+  cat > "$pkgdir/usr/bin/frisbeelite" << EOF
+#!/bin/sh
+cd /usr/share/frisbeelite
+exec python2 frisbeelite.py
+EOF
+
+  chmod +x "$pkgdir/usr/bin/frisbeelite"
+}

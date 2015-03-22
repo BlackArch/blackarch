@@ -1,0 +1,43 @@
+# AUR Maintainer: Alexej Magura <agm2819*gmail*>
+# Contributor: Jeremy Whiting <jpwhiting@kde.org>
+# Contributor: Lisa Denia <eiffel56@gmail.com>
+# Contributor: Allan McRae <allan@archlinux.org>
+# Contributor: judd <jvinet@zeroflux.org>
+
+pkgname=automake-1.11
+pkgver=1.11.6
+pkgrel=3
+pkgdesc="A GNU tool for automatically creating Makefiles"
+arch=('any')
+license=('GPL')
+url="http://www.gnu.org/software/automake"
+depends=('perl' 'bash')
+provides=('automake=1.11')
+install=automake.install
+source=("ftp://ftp.gnu.org/gnu/automake/automake-${pkgver}.tar.gz")
+md5sums=('0286dc30295b62985ca51919202ecfcc')
+
+prepare() {
+  cd "$srcdir/automake-$pkgver"
+
+  ./configure --prefix=/usr
+}
+
+build() {
+  cd "$srcdir/automake-$pkgver"
+
+  make
+}
+
+package() {
+  cd "$srcdir/automake-$pkgver"
+  make DESTDIR="$pkgdir" install
+
+  rm -rf "$pkgdir/usr/"{bin/{aclocal,automake},share/{doc,aclocal}}
+
+  for files in "$pkgdir"/usr/share/info/*; do
+    rename "$files" "$(echo $files | sed -r 's/(\.info)/-1.11\1/')" "$files"
+  done
+
+  rm "$pkgdir/usr/share/man/man1/"{aclocal,automake}.1
+}

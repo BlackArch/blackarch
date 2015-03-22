@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='plown'
+pkgver=13.ccf998c
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp')
+pkgdesc='A security scanner for Plone CMS.'
+arch=('any')
+url='https://github.com/unweb/plown'
+license=('unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/unweb/plown.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/plown"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/plown"
+
+  sed -i 's|/usr/bin/python|/usr/bin/python2|' plown.py
+}
+
+package() {
+  cd "$srcdir/plown"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/plown"
+
+  cp -a * "$pkgdir/usr/share/plown"
+
+  cat > "$pkgdir/usr/bin/plown" << EOF
+#!/bin/sh
+exec python2 /usr/share/plown/plown.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/plown"
+}

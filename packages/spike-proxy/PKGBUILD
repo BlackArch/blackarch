@@ -1,40 +1,39 @@
-pkgname=spike-proxy
-pkgver=148
-pkgrel=3
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='spike-proxy'
+pkgver='148'
+pkgrel=7
 pkgdesc="A Proxy for detecting vulnerabilities in web applications"
-arch=("i686" "x86_64")
+arch=('any')
 url="http://www.immunitysec.com/resources-freesoftware.shtml"
 license=('GPL')
 groups=('blackarch' 'blackarch-webapp')
 depends=("python2" "python2-pyopenssl" "bash")
 source=(http://www.immunitysec.com/downloads/SP148.tgz
         fix-encoding.patch)
-md5sums=('e5851a07067945eb2b0475dbdb4adf1c'
-         '788dfce53e4df9591dbfaa47f97dba97')
+sha1sums=('c755057bf345b285ef47e8ae664c911bba69625f'
+          'c26fd70de945c78f8c017f04b9e9ad76cb06c962')
 
 prepare(){
   cd "$srcdir/spkproxy"
   patch -Np1 -i $srcdir/fix-encoding.patch
 }
 
-
 package() {
   cd "$srcdir/spkproxy"
 
   # Base directories
-  install -dm755 $pkgdir/usr/share/spike-proxy
-  install -dm755 $pkgdir/usr/share/doc/spike-proxy
-  install -dm755 $pkgdir/usr/bin
-
+  mkdir -p $pkgdir/usr/share/spike-proxy
+  mkdir -p $pkgdir/usr/share/doc/spike-proxy
+  mkdir -p $pkgdir/usr/bin
 
   mv *.txt $pkgdir/usr/share/doc/spike-proxy/
   cp -a --no-preserve=ownership * $pkgdir/usr/share/spike-proxy/
   cat > $pkgdir/usr/bin/spike-proxy << EOF
 #!/bin/bash
 cd /usr/share/spike-proxy
-python2 ./spkproxy.py "\$@"
-cd \$OLDPWD
+exec python2 ./spkproxy.py "\$@"
 EOF
   chmod 755 $pkgdir/usr/bin/spike-proxy
 }
-

@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='fakenetbios'
+pkgver='7.b83701e'
+pkgrel=2
+groups=('blackarch' 'blackarch-spoof' 'blackarch-honeypot' 'blackarch-networking')
+pkgdesc='A family of tools designed to simulate Windows hosts (NetBIOS) on a LAN.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/mubix/FakeNetBIOS'
+license=('custom')
+makedepends=('git')
+source=('git+https://github.com/mubix/FakeNetBIOS.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/FakeNetBIOS"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build(){
+  cd "$srcdir/FakeNetBIOS/Sources"
+
+  make -f Makefile.linux
+}
+
+package() {
+  cd "$srcdir/FakeNetBIOS"
+
+  install -Dm755 Sources/FakeNetbiosDGM "$pkgdir/usr/bin/fakenetbiosdgm"
+  install -Dm755 Sources/FakeNetbiosNS  "$pkgdir/usr/bin/fakenetbiosns"
+  install -Dm644 License.txt \
+    "$pkgdir/usr/share/licenses/fakenetbios/License.txt"
+
+  rm License.txt
+
+  for i in `ls *.txt`
+  do
+    install -Dm644 $i "$pkgdir/usr/share/doc/fakenetbios/$i"
+  done
+}

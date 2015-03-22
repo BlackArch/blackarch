@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dinouml'
+pkgver='0.9.5'
+pkgrel=1
+pkgdesc='A network simulation tool, based on UML (User Mode Linux) that can simulate big Linux networks on a single PC'
+url='http://kernel.embedromix.ro/us/'
+license=('GPL')
+groups=('blackarch' 'blackarch-networking')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+source=("http://kernel.embedromix.ro/us/DinoUML/DinoUML-${pkgver}.tar.bz2"
+        'dinouml.1.gz')
+sha1sums=('8ccb90aba97dbae4a8a3d5d705bfe5141d8778e0'
+          '9d896c27ea65d233f19fa96a14c4114cb2d31750')
+
+prepare() {
+  cd "DinoUML-$pkgver"
+
+  chmod a+x examples/ospf2/overlay
+  chmod a+x examples/bgp-v4/overlay
+}
+
+build() {
+  cd "DinoUML-$pkgver"
+
+  make
+}
+
+package() {
+  cd "DinoUML-$pkgver"
+
+  install -Dm755 "src/dinouml" "$pkgdir/usr/bin/dinouml"
+  mkdir -p "$pkgdir/usr/share/dinouml"
+
+  install -Dm644 README "$pkgdir/usr/share/doc/dinouml/README"
+  install -m644 Changelog "$pkgdir/usr/share/doc/dinouml/Changelog"
+  install -m644 TODO "$pkgdir/usr/share/doc/dinouml/TODO"
+
+  rm README Changelog TODO
+
+  cp -a cfg examples external kernels roots "$pkgdir/usr/share/dinouml/"
+
+  install -Dm644 "../dinouml.1.gz" "$pkgdir/usr/share/man/man1/$dinouml.1.gz"
+}

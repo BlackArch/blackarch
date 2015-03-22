@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='netzob'
+pkgver='0.4.1'
+pkgrel=4
+pkgdesc='An open source tool for reverse engineering, traffic generation and fuzzing of communication protocols.'
+groups=('blackarch' 'blackarch-reversing' 'blackarch-fuzzer'
+        'blackarch-networking')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://www.netzob.org/'
+license=('GPL3')
+depends=('python2' 'python2-gobject' 'gtk3' 'impacket' 'libxml2' 'libxslt'
+        'python2-lxml' 'graphviz')
+makedepends=('setuptools')
+source=("http://www.netzob.org/repository/0.4.1/Netzob-${pkgver}.tar.gz")
+sha1sums=('b058ba5c644d8ad75d9fa38f666ad890e2e9df3b')
+
+build() {
+  cd "$srcdir/Netzob-$pkgver"
+
+  python2 setup.py build
+  python2 setup.py develop --user
+}
+
+package() {
+  cd "$srcdir/Netzob-$pkgver"
+
+  install -Dm644 AUTHORS.txt "$pkgdir/usr/share/doc/netzob/AUTHORS.txt"
+  install -m644 README.rst "$pkgdir/usr/share/doc/netzob/README.rst"
+  install -m644 NEWS.rst "$pkgdir/usr/share/doc/netzob/NEWS.rst"
+  install -Dm644 COPYING.txt "$pkgdir/usr/share/licenses/netzob/COPYING.txt"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  find "$pkgdir/usr/share" -type f -exec chmod 644 {} \;
+
+  chmod 644 \
+    "$pkgdir"/usr/lib/python2.7/site-packages/Netzob-${pkgver}-py2.7.egg-info/*
+}

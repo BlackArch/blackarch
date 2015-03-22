@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hdmi-sniff'
+pkgver=5.f7fbc0e
+pkgrel=1
+groups=('blackarch' 'blackarch-hardware' 'blackarch-sniffer' 'blackarch-cracker')
+pkgdesc='HDMI DDC (I2C) inspection tool. It is designed to demonstrate just how easy it is to recover HDCP crypto keys from HDMI devices.'
+arch=('any')
+url='https://github.com/ApertureLabsLtd/hdmi-sniff'
+license=('custom:unknown')
+depends=('python2' 'hdcp-genkey')
+makedepends=('git')
+source=('git+https://github.com/ApertureLabsLtd/hdmi-sniff.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/hdmi-sniff"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/hdmi-sniff"
+
+  sed -i 's|/usr/bin/env python|/usr/bin/env python2|' hdmi-sniff.py
+  sed -i 's|/usr/bin/env python|/usr/bin/env python2|' hdmi_ddc.py
+  sed -i 's|/hdcp-master.txt|/usr/share/hdmi-sniff/hdcp-master.txt|' hdmi_ddc.py
+  sed -i 's|/master-key.txt|/usr/share/hdmi-sniff/master-key.txt|' hdmi_ddc.py
+}
+
+package() {
+  cd "$srcdir/hdmi-sniff"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm755 hdmi-sniff.py "$pkgdir/usr/share/hdmi-sniff/hdmi-sniff.py"
+  install -m644 hdmi_ddc.py "$pkgdir/usr/share/hdmi-sniff/hdmi_ddc.py"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/hdmi-sniff/README.md"
+
+  cat > "$pkgdir/usr/bin/hdmi-sniff" << EOF
+#!/bin/sh
+cd /usr/share/hdmi-sniff
+exec python2 hdmi-sniff.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/hdmi-sniff"
+}

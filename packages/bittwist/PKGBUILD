@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bittwist'
+pkgver='2.0'
+pkgrel=2
+pkgdesc='A simple yet powerful libpcap-based Ethernet packet generator. It is designed to complement tcpdump, which by itself has done a great job at capturing network traffic.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+groups=('blackarch' 'blackarch-sniffer' 'blackarch-networking')
+url='http://bittwist.sourceforge.net/'
+license=('GPL')
+depends=('libpcap>=1.2.1')
+source=("http://downloads.sourceforge.net/bittwist/bittwist-linux-${pkgver}.tar.gz")
+sha1sums=('1e010d8bb0bb9dc0bfe8143f013547be287fbecd')
+
+prepare() {
+  cd "$srcdir/bittwist-linux-$pkgver"
+
+  sed -i "s|^INSTALL =.*$|INSTALL = $(which install) -c|" Makefile
+}
+
+build() {
+  cd "$srcdir/bittwist-linux-$pkgver"
+
+  make
+}
+
+package() {
+  cd "$srcdir/bittwist-linux-$pkgver"
+
+  mkdir -p "$pkgdir/usr/share/doc/bittwist"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/bittwist" AUTHORS BUGS CHANGES \
+    README  VERSION
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/bittwist/COPYING"
+
+  make prefix="$pkgdir/usr" install
+}

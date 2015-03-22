@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pacumen'
+pkgver=1.92a0884
+pkgrel=3
+groups=('blackarch' 'blackarch-crypto' 'blackarch-networking')
+pkgdesc='Packet Acumen - Analyse encrypted network traffic and more (side-channel attacks).'
+arch=('any')
+url='https://github.com/bniemczyk/pacumen'
+license=('custom')
+depends=('python2' 'python2-scipy' 'python2-numpy' 'scapy' 'python2-symath'
+         'python2-pydot' 'python2-pyqt5')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/bniemczyk/pacumen.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/pacumen"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/pacumen"
+
+  sed -i '1i\#!/usr/bin/python2' pacumen_timeseries.py
+}
+
+package() {
+  cd "$srcdir/pacumen"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/pacumen" README.md TODO.md \
+    paper/pacumen.pdf
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/pacumen/LICENSE"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1
+}

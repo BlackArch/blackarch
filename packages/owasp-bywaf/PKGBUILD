@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='owasp-bywaf'
+pkgver=26.e730d1b
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+pkgdesc='A web application penetration testing framework (WAPTF).'
+arch=('any')
+url='https://github.com/depasonico/OWASP-ByWaf'
+license=('custom')
+depends=('python2' 'python2-sqlalchemy')
+makedepends=('python2-setuptools' 'git')
+source=('git+https://github.com/depasonico/OWASP-ByWaf.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/OWASP-ByWaf"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/OWASP-ByWaf"
+
+  sed -i 's|python$|python2|' "hostdb.py"
+}
+
+package() {
+  cd "$srcdir/OWASP-ByWaf"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/doc/owasp-bywaf"
+
+  for i in *.py
+  do
+    install -Dm755 $i "$pkgdir/usr/share/owasp-bywaf/$i"
+  done
+
+  install -Dm644 doc/* "$pkgdir/usr/share/doc/owasp-bywaf"
+  install -Dm644 copyright.txt \
+    "$pkgdir/usr/share/licenses/owasp-bywaf/copyright.txt"
+
+  cat > "$pkgdir/usr/bin/owasp-bywaf" << EOF
+#!/bin/sh
+cd /usr/share/owasp-bywaf/
+exec python2 ./bywaf.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/owasp-bywaf"
+}

@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='regeorg'
+pkgver=26.22fb8a9
+pkgrel=1
+groups=('blackarch' 'blackarch-automation' 'blackarch-cracker' 'blackarch-proxy'
+        'blackarch-scanner')
+pkgdesc='The successor to reDuh, pwn a bastion webserver and create SOCKS proxies through the DMZ. Pivot and pwn.'
+arch=('any')
+url='https://github.com/sensepost/reGeorg'
+license=('custom:unknown')
+depends=('python2' 'python2-urllib3' 'python2-httplib2')
+makedepends=('git')
+source=('git+https://github.com/sensepost/reGeorg.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/reGeorg"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/reGeorg"
+
+  sed -i 's|/usr/bin/env python|/usr/bin/env python2|' reGeorgSocksProxy.py
+}
+
+package() {
+  cd "$srcdir/reGeorg"
+
+  mkdir -p "$pkgdir/usr/share/regeorg"
+
+  install -Dm755 reGeorgSocksProxy.py "$pkgdir/usr/bin/regeorg"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/regeorg/README.md"
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/regeorg/LICENSE.txt"
+
+  rm README.md LICENSE.txt LICENSE.html reGeorgSocksProxy.py
+
+  cp -a * "$pkgdir/usr/share/regeorg"
+}

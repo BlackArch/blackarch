@@ -1,34 +1,46 @@
-pkgname=sniffjoke
-pkgver=0.4.1
-pkgrel=3
-license=(GPL)
-groups=('blackarch' 'blackarch-defensive')
-pkgdesc="Injects packets in the transmission flow that are able to seriously disturb passive analysis like sniffing, interception and low level information theft"
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sniffjoke'
+pkgver='0.4.1'
+pkgrel=7
+license=('GPL')
+groups=('blackarch' 'blackarch-defensive' 'blackarch-networking'
+        'blackarch-sniffer')
+pkgdesc='Injects packets in the transmission flow that are able to seriously disturb passive analysis like sniffing, interception and low level information theft.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://www.delirandom.net/sniffjoke/'
-depends=('cmake' 'gcc' 'iptables' 'tcpdump')
+depends=('iptables' 'tcpdump')
+makedepends=('git' 'cmake')
 source=('git+https://github.com/vecna/sniffjoke'
-	 CMake.patch)
-md5sums=('SKIP'
-         '3684e50ae4a6c0f31cccd76aee54abc1')
+        'CMake.patch')
+sha1sums=('SKIP'
+          'fb450ec22afd161a90aa128d20d8258d6acddeba')
 
 prepare() {
+  cd "$srcdir"
+
   patch -p1 -i CMake.patch
 }
 
 build() {
-  cd $srcdir/sniffjoke
+  cd "$srcdir/sniffjoke"
+
   [[ -d build ]] || mkdir build
+
   cd build
 
   cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+
   make
 }
 
 package() {
-  cd $srcdir/sniffjoke
+  cd "$srcdir/sniffjoke"
+
   cd build
 
-  make DESTDIR=$pkgdir install
-}
+  make "DESTDIR=$pkgdir" install
 
+  mv "$pkgdir/usr/etc" "$pkgdir/etc"
+}

@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cisco-snmp-slap'
+pkgver=5.daf0589
+pkgrel=1
+groups=('blackarch' 'blackarch-spoof' 'blackarch-networking'
+        'blackarch-exploitation')
+pkgdesc='IP address spoofing tool in order to bypass an ACL protecting an SNMP service on Cisco IOS devices.'
+arch=('any')
+url='https://github.com/nccgroup/cisco-snmp-slap'
+license=('GPL3')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/nccgroup/cisco-snmp-slap.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/cisco-snmp-slap"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/cisco-snmp-slap"
+
+  sed -i 's|/usr/bin/env python|/usr/bin/env python2|' slap.py
+}
+
+package() {
+  cd "$srcdir/cisco-snmp-slap"
+
+  install -Dm755 slap.py "$pkgdir/usr/bin/cisco-snmp-slap"
+  install -Dm644 list.txt "$pkgdir/usr/share/cisco-snmp-slap/list.txt"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/cisco-snmp-slap/README.md"
+  install -Dm644 LICENSE.txt \
+    "$pkgdir/usr/share/licenses/cisco-snmp-slap/LICENSE.txt"
+}

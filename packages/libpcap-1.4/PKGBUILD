@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='libpcap-1.4'
+pkgver='1.4.0'
+pkgrel=3
+pkgdesc="A system-independent interface for user-level packet capture"
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url="http://www.tcpdump.org/"
+license=('BSD')
+depends=('glibc' 'libnl' 'sh' 'libusbx')
+makedepends=('flex')
+source=(http://www.tcpdump.org/release/libpcap-$pkgver.tar.gz{,.sig})
+sha1sums=('9c9710aab68be58ed1d41b5c36dc2599419a80e0'
+          'SKIP')
+
+build() {
+  cd "$srcdir/libpcap-$pkgver"
+  ./configure --prefix=/usr --enable-ipv6 --with-libnl
+  sed -i 's/libpcap\.so/libpcap-1.4.so/g' Makefile
+  sed -i 's/^shared: libpcap/shared: libpcap-1.4/' Makefile
+  make
+}
+
+package() {
+  cd "$srcdir/libpcap-$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin"
+  make "DESTDIR=$pkgdir" install
+
+  # backwards compatibility, programs often look for net/bpf.h
+  mkdir -p "$pkgdir/usr/include/net"
+  cd "$pkgdir/usr/include/net"
+  ln -s ../pcap-bpf.h bpf.h
+
+  # install the license
+  #install -D -m644 ${srcdir}/libpcap-$pkgver/LICENSE ${pkgdir}/usr/share/licenses/libpcap/LICENSE
+
+  # Avoid conflicting with normal libpcap
+  rm -rf "$pkgdir/usr/share"
+  rm -rf "$pkgdir/usr/bin"
+  rm -rf "$pkgdir/usr/include"
+}
