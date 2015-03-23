@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname='cewl'
-pkgver='4.3'
-pkgrel=5
+pkgver='5.1'
+pkgrel=1
 groups=('blackarch' 'blackarch-automation' 'blackarch-cracker')
 pkgdesc='A custom word list generator'
 arch=('any')
@@ -11,30 +11,35 @@ url="http://www.digininja.org/projects/cewl.php"
 license=('CCPL')
 depends=('ruby' 'ruby-spider' 'ruby-mini_exiftool' 'ruby-nokogiri'
          'ruby-http_configuration' 'ruby-rubyzip' 'ruby-zip' 'ruby-mime-types')
-source=("http://www.digininja.org/files/cewl_4.3.tar.bz2"
-        "fix-modules-invocation.patch"
-        "fix-usage.patch")
-sha1sums=('2565e4cb3adf55650812bf1966a653f1930fd6c7'
-          '4acd64a2cbbcdd3198bbc9b1815f0348ebad824f'
-          '3f51b3506b27d17b15de6b7401409ed28d534bf3')
-
-prepare() {
-  cd "$srcdir/cewl"
-
-  patch -Np1 -i "$srcdir/fix-modules-invocation.patch"
-  patch -Np1 -i "$srcdir/fix-usage.patch"
-}
+source=("http://www.digininja.org/files/cewl_${pkgver}.tar.bz2")
+install='cewl.install'
+sha1sums=('d3ed1ea3fd13f7343cf55e00e815ddc7a899073c')
 
 package() {
   cd "$srcdir/cewl"
 
-  # Base directories.
   mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/share/doc/cewl"
-  mkdir -p "$pkgdir/usr/lib/ruby/vendor_ruby/cewl"
+  mkdir -p "$pkgdir/usr/share/cewl"
 
-  install -m755 "$srcdir/cewl/cewl.rb" "$pkgdir/usr/bin/cewl"
-  install -m755 "$srcdir/cewl/fab.rb" "$pkgdir/usr/bin/cewl-fab"
-  install -m644 "$srcdir/cewl/README" "$pkgdir/usr/share/doc/cewl/README"
-  install -m644 "$srcdir/cewl/cewl_lib.rb" "$pkgdir/usr/lib/ruby/vendor_ruby/cewl/cewl_lib.rb"
+  install -Dm644 README "$pkgdir/usr/share/doc/cewl/README"
+
+  rm README
+
+  cp -a * "$pkgdir/usr/share/cewl"
+
+  cat > "$pkgdir/usr/bin/cewl" << EOF
+#!/bin/sh
+cd /usr/share/cewl
+exec ruby cewl.rb "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/cewl"
+
+  cat > "$pkgdir/usr/bin/cewl-fab" << EOF
+#!/bin/sh
+cd /usr/share/cewl
+exec ruby fab.rb "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/cewl-fab"
 }
