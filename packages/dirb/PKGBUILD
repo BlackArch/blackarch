@@ -2,35 +2,41 @@
 # See COPYING for license details.
 
 pkgname='dirb'
-pkgver='2.04'
-pkgrel=7
+pkgver='2.22'
+pkgrel=1
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
-pkgdesc="A web content scanner, brute forceing for hidden files"
+pkgdesc='A web content scanner, brute forceing for hidden files.'
 url='http://dirb.sourceforge.net/'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-license=("GPL2")
+license=('GPL2')
 depends=('curl')
-source=("http://open-labs.org/dirb204.tar.gz")
-sha1sums=('fa6e9253ad9655390cc8a583485f5178545d7e91')
+source=("http://downloads.sourceforge.net/project/dirb/dirb/${pkgver}/dirb${pkgver//./}.tar.gz")
+sha1sums=('21851ad341357917a9672c834ccf90509c957f75')
 
 prepare() {
-  sed -i 's|wordlists/|/usr/share/dirb/wordlists/|' "$srcdir/dirb/src/dirb.c"
+  cd "$srcdir"
+
+  chmod -R 744 dirb${pkgver//./}
+
+  sed -i 's|wordlists/|/usr/share/dirb/wordlists/|' "dirb${pkgver//./}/src/dirb.c"
 }
 
 build () {
-  cd $srcdir/dirb
+  cd "$srcdir/dirb${pkgver//./}"
+
   ./configure --prefix=/usr
+
   make
 }
 
 package() {
-  cd "$srcdir/dirb"
+  cd "$srcdir/dirb${pkgver//./}"
 
   make DESTDIR="$pkgdir" install
 
   mkdir -p "$pkgdir/usr/share/dirb"
 
-  cp --no-preserve=ownership -r "$srcdir/dirb/wordlists" "$pkgdir/usr/share/dirb/"
+  cp -a "wordlists" "$pkgdir/usr/share/dirb/"
 
   chmod -R 644 "$pkgdir/usr/share/dirb/wordlists"
   chmod -R +X "$pkgdir/usr/share/dirb/wordlists"
