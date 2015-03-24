@@ -1,0 +1,102 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='mana'
+pkgver=44.2c6a106
+pkgrel=1
+groups=('blackarch' 'blackarch-wireless')
+pkgdesc='A toolkit for rogue access point (evilAP) attacks first presented at Defcon 22.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/sensepost/mana'
+license=('BSD' 'GPL3')
+depends=('libnl1' 'apache' 'dsniff'  'macchanger' 'metasploit' 'procps'
+         'iptables' 'python2-dnspython' 'python2-pcapy' 'scapy' 'sslsplit'
+         'stunnel' 'tinyproxy' 'asleap')
+makedepends=('git')
+options=('!emptydirs')
+source=('git+https://github.com/sensepost/mana.git'
+        'apache-fix.patch'
+        'archfixes.patch')
+sha1sums=('SKIP'
+          '0a04fbf179d1493ec18b8d773b808e4f978f2433'
+          'b2c1196a2444d2a91469783d8c8b5c7c71dbe1fb')
+
+pkgver() {
+  cd "$srcdir/mana"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  grep -iRl 'python' "mana" |
+  xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
+
+  cd "$srcdir/mana"
+
+  patch -i $srcdir/apache-fix.patch
+
+  cd run-mana
+
+  patch < $srcdir/archfixes.patch
+}
+
+
+build(){
+  cd "$srcdir/mana"
+
+  make
+}
+
+package() {
+  cd "$srcdir/mana"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/var/lib/mana-toolkit/"{lamb_braai,sslsplit}
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm644 hostapd-manna/COPYING \
+    "$pkgdir/usr/share/licenses/hostapd-manna/COPYING"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/mana/LICENSE"
+
+  sed -i 's|python22.6|python2|' \
+    "$pkgdir/usr/share/mana-toolkit/sslstrip-hsts/dns2proxy.py"
+
+  cat > "$pkgdir/usr/bin/mana-firelamb-view" << EOF
+#!/bin/sh
+cd /usr/share/mana-toolkit/run-mana
+exec sh firelamb-view.sh "\$@"
+EOF
+
+cat > "$pkgdir/usr/bin/mana-nat-full" << EOF
+#!/bin/sh
+cd /usr/share/mana-toolkit/run-mana
+exec sh start-nat-full.sh "\$@"
+EOF
+
+cat > "$pkgdir/usr/bin/mana-nat-simple" << EOF
+#!/bin/sh
+cd /usr/share/mana-toolkit/run-mana
+exec sh start-nat-simple.sh "\$@"
+EOF
+
+cat > "$pkgdir/usr/bin/mana-noupstream-eap" << EOF
+#!/bin/sh
+cd /usr/share/mana-toolkit/run-mana
+exec sh start-noupstream-eap.sh "\$@"
+EOF
+
+cat > "$pkgdir/usr/bin/mana-noupstream" << EOF
+#!/bin/sh
+cd /usr/share/mana-toolkit/run-mana
+exec sh start-noupstream.sh "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/mana-firelamb-view"
+  chmod +x "$pkgdir/usr/bin/mana-nat-full"
+  chmod +x "$pkgdir/usr/bin/mana-nat-simple"
+  chmod +x "$pkgdir/usr/bin/mana-noupstream-eap"
+  chmod +x "$pkgdir/usr/bin/mana-noupstream"
+}

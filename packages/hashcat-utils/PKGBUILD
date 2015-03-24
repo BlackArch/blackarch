@@ -3,12 +3,17 @@
 
 pkgname='hashcat-utils'
 pkgver='1.1'
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-cracker')
 pkgdesc='Utilites for Hashcat'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://hashcat.net/wiki/doku.php?id=hashcat_utils'
 license=('custom')
+if [[ ${CARCH} == "x86_64" ]]; then
+  depends=('lib32-glibc')
+else
+  depends=('glibc')
+fi
 makedepends=('p7zip')
 source=("http://hashcat.net/tools/hashcat-utils/hashcat-utils-${pkgver}.7z")
 sha1sums=('871215bfb5083170f0c47ccb34147f7219619c6d')
@@ -16,6 +21,11 @@ sha1sums=('871215bfb5083170f0c47ccb34147f7219619c6d')
 prepare() {
   cd "$srcdir/hashcat-utils-$pkgver"
 
+  sed -i 's|/opt/hashcat-toolchain/linux32/bin/i686-hashcat-linux-gnu-gcc|gcc|'\
+    Makefile
+  sed -i \
+    's|/opt/hashcat-toolchain/linux32/bin/i686-hashcat-linux-gnu-strip|strip|' \
+    Makefile
   sed -i 's/release: posix windows/release: posix/' Makefile
   sed -i '/WINDOWS/d' Makefile
   sed -i '/*.exe/d' Makefile

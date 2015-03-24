@@ -2,39 +2,60 @@
 # See COPYING for license details.
 
 pkgname='artillery'
-pkgver='1.0.3'
-pkgrel=1
+pkgver=113.510134f
+pkgrel=2
 groups=('blackarch' 'blackarch-defensive' 'blackarch-honeypot')
-pkgdesc="A combination of a honeypot, file-system monitoring, system hardening, and overall health of a server to create a comprehensive way to secure a system"
+pkgdesc='A combination of a honeypot, file-system monitoring, system hardening, and overall health of a server to create a comprehensive way to secure a system.'
 arch=('any')
 url='https://www.trustedsec.com/downloads/artillery/'
 license=('BSD')
 depends=('python2')
-source=("https://github.com/trustedsec/artillery/archive/${pkgver}.tar.gz")
-sha1sums=('0d341c54658c8a6a76ee4775a0957109d0323a7c')
+makedepends=('git')
+options=('!emptydirs')
+source=('git+https://github.com/trustedsec/artillery.git'
+        'artillery.service')
+sha1sums=('SKIP'
+          '395a9b70f9222cb216e1d97551b82d348e8c3c3a')
+
+pkgver() {
+  cd "$srcdir/artillery"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 prepare() {
-  cd "$srcdir/artillery-$pkgver"
+  cd "$srcdir/artillery"
 
   sed -i "s|/var|$pkgdir/var|g" setup.py
   sed -i "s|/etc|$pkgdir/etc|g" setup.py
+  sed -i "s|/var/artillery|/usr/share/artillery|g" artillery.py \
+    src/ssh_monitor.py src/monitor.py restart_server.py src/core.py \
+    src/email_handler.py src/ftp_monitor.py src/monitor.py src/startup_artillery
+  sed -i "s|/var/log/apache|/var/log/httpd|g" src/apache_monitor.py
 }
 
 package() {
-  cd "$srcdir/artillery-$pkgver"
+  cd "$srcdir/artillery"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/artillery"
 
   python2 setup.py <<< $'y\nn\nn'
 
-  rm "$pkgdir/var/artillery/setup.py"
+  install -Dm644 readme/LICENSE "$pkgdir/usr/share/licenses/artillery/LICENSE"
+  rm readme/LICENSE
+  install -Dm644 -t "$pkgdir/usr/share/doc/artillery" readme/*
 
-  mkdir -p "$pkgdir/usr/bin"
-  cat > "$pkgdir/usr/bin/artillery" <<EOF
+  mv "$pkgdir/var/artillery/"* "$pkgdir/usr/share/artillery"
+
+  cat > "$pkgdir/usr/bin/artillery" << EOF
 #!/bin/sh
 if test \$EUID != 0 ; then
   echo 'Must be run as root.'
   exit 1
 fi
-exec python2 /var/artillery/artillery.py "\$@"
+exec python2 /usr/share/artillery/artillery.py "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/artillery"
 }

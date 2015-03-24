@@ -2,21 +2,36 @@
 # See COPYING for license details.
 
 pkgname='pwnat'
-pkgver='0.3'
-pkgrel=4
+pkgver=9.1d07c2e
+pkgrel=1
 groups=('blackarch' 'blackarch-networking')
-pkgdesc="A tool that allows any number of clients behind NATs to communicate with a server behind a separate NAT with *no* port forwarding and *no* DMZ setup on any routers in order to directly communicate with each other"
+pkgdesc='A tool that allows any number of clients behind NATs to communicate with a server behind a separate NAT with *no* port forwarding and *no* DMZ setup on any routers in order to directly communicate with each other.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://samy.pl/pwnat/'
 license=('GPL')
-source=("http://samy.pl/pwnat/pwnat-0.3-beta.tgz")
-sha1sums=('6faaeef76a2b62635def8fdef06fce0dfa3e870e')
+depends=('glibc')
+makedepends=('git')
+source=('git+https://github.com/samyk/pwnat'
+        'http://samy.pl/pwnat/pwnat.pdf')
+sha1sums=('SKIP'
+          '2112172d79789cbe6175f9671604d02144655a86')
+
+pkgver() {
+  cd "$srcdir/pwnat"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 build() {
-  cd "$srcdir/pwnat-$pkgver-beta"
+  cd "$srcdir/pwnat"
+
   make
 }
 
 package() {
-  install -Dm755 "$srcdir/pwnat-$pkgver-beta/pwnat" "$pkgdir/usr/bin/pwnat"
+  cd "$srcdir/pwnat"
+
+  install -Dm755 pwnat "$pkgdir/usr/bin/pwnat"
+  install -Dm644 -t "$pkgdir/usr/share/doc/pwnat/" README-udptunnel README \
+    Changes $srcdir/pwnat.pdf
 }

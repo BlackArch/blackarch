@@ -10,7 +10,7 @@ pkgdesc='A python-based Web Content Discovery Tool.'
 arch=('any')
 url='https://github.com/deibit/cansina'
 license=('GPL3')
-depends=('python2' 'python2-requests' 'java-environment')
+depends=('python2' 'python2-requests' 'java-environment' 'fuzzdb')
 makedepends=('git')
 source=('git+https://github.com/deibit/cansina.git')
 sha1sums=('SKIP')
@@ -24,20 +24,15 @@ pkgver() {
 package() {
   cd "$srcdir/cansina"
 
-  mkdir -p "$pkgdir/usr/share/cansina"
   mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/cansina"
 
-  for p in *.py
+  install -Dm644 -t "$pkgdir/usr/share/cansina/" *.py
+
+  for i in core plugins utils
   do
-    install -Dm755 $p "$pkgdir/usr/share/cansina"
-  done
-
-  #install -Dm644 payload_test.txt "$pkgdir/usr/share/cansina"
-
-  for a in assets fuzzdb
-  do
-    mkdir -p $a "$pkgdir/usr/share/cansina/$a"
-    cp -a $a/* "$pkgdir/usr/share/cansina/$a/"
+    install -dm755 "${i}" "${pkgdir}/usr/share/cansina/$i"
+    cp -a --no-preserve=ownership "${i}"/* "$pkgdir/usr/share/cansina/$i"
   done
 
   cat > "$pkgdir/usr/bin/cansina" << EOF

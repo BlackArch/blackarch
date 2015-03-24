@@ -3,18 +3,22 @@
 
 pkgname='mitmf'
 pkgver=217.5e56049
-pkgrel=1
+pkgrel=3
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-proxy'
         'blackarch-networking' 'blackarch-spoof')
 pkgdesc='A Framework for Man-In-The-Middle attacks written in Python.'
 arch=('any')
 url='https://github.com/byt3bl33d3r/MITMf'
 license=('GPL3')
-depends=('python2' 'python2-twisted' 'python2-msgpack' 'python2-requests'
-         'scapy' 'capstone' 'python2-pefile' 'python2-capstone')
+depends=('python2-configobj' 'python2-pillow' 'python2-user-agents'
+         'python2-twisted' 'python2-netfilterqueue' 'python2-msgpack'
+         'python2-requests'  'scapy' 'capstone' 'python2-pefile'
+         'python2-dnspython' 'systemd' 'backdoor-factory')
 makedepends=('git')
-source=('git+https://github.com/byt3bl33d3r/MITMf.git')
-sha1sums=('SKIP')
+source=('git+https://github.com/byt3bl33d3r/MITMf.git'
+        'mitmf.tmpfiles.conf')
+sha1sums=('SKIP'
+          'a849d018df8e659f0d2fa955b8dd31f8d12dd66b')
 
 pkgver() {
   cd "$srcdir/MITMf"
@@ -25,8 +29,8 @@ pkgver() {
 prepare() {
   cd "$srcdir/MITMf"
 
-  git submodule init
-  git submodule update
+  grep -iRl 'python' "$srcdir/MITMf" |
+  xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
 }
 
 package() {
@@ -35,12 +39,20 @@ package() {
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/mitmf"
 
+  install -Dm644 $srcdir/mitmf.tmpfiles.conf \
+    "$pkgdir/usr/lib/tmpfiles.d/mitm.conf"
   install -Dm644 README.md "$pkgdir/usr/share/doc/mitmf/README.md"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/mitmf/LICENSE"
 
   rm README.md LICENSE
 
   cp -a * "$pkgdir/usr/share/mitmf"
+
+  find ./ -type d -exec chmod 755 {} \+
+  find ./ -type f -exec chmod 644 {} \+
+
+  # symlink current build of bdf to mitmf dir
+  cp -a /usr/share/backdoor-factory/* "$pkgdir/usr/share/mitmf/libs/bdfactory"
 
   cat > "$pkgdir/usr/bin/mitmf" << EOF
 #!/bin/sh

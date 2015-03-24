@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bindead'
+pkgver=4478.e696006
+pkgrel=1
+pkgdesc='A static analysis tool for binaries'
+groups=('blackarch' 'blackarch-binary' 'blackarch-debugger'
+        'blackarch-reversing')
+arch=('any')
+url='https://bitbucket.org/mihaila/bindead'
+license=('GPL3')
+depends=('bash' 'java-runtime')
+makedepends=('git' 'java-environment' 'maven')
+source=('git+https://bitbucket.org/mihaila/bindead')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/bindead"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/bindead"
+
+  unset _JAVA_OPTIONS
+
+  export MAVEN_OPTS="-Dmaven.repo.local=$srcdir -Xms256m -Xmx512m"
+
+  ./build.sh
+}
+
+package() {
+  cd "$srcdir/bindead"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm644 bindead.jar "$pkgdir/usr/share/bindead/bindead.jar"
+  install -Dm644 -t "$pkgdir/usr/share/doc/bindead/" README.md Changelog.md \
+    AUTHORS.txt
+
+  cat > "$pkgdir/usr/bin/bindead" << EOF
+#!/bin/sh
+java -jar /usr/share/bindead/bindead.jar "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/bindead"
+}
+

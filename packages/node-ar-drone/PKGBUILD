@@ -1,27 +1,40 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgname=node-ar-drone
-pkgver=v0.3.3.2.g228bd45
+pkgname='node-ar-drone'
+pkgver=273.228bd45
 pkgrel=1
-pkgdesc="A node.js client for controlling Parrot AR Drone 2.0 quad-copters"
+pkgdesc='A node.js client for controlling Parrot AR Drone 2.0 quad-copters.'
 arch=('any')
 url='https://github.com/felixge/node-ar-drone'
 license=('MIT')
 depends=('nodejs')
 makedepends=('git')
 source=('git+https://github.com/felixge/node-ar-drone')
-md5sums=('SKIP')
+sha1sums=('SKIP')
 
 pkgver() {
-  cd node-ar-drone
-  git describe --always | sed 's|-|.|g'
+  cd "$srcdir/node-ar-drone"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/node-ar-drone"
+
+  npm install
 }
 
 package() {
-  cd "$srcdir"
+  cd "$srcdir/node-ar-drone"
 
-  npm install node-ar-drone -g "--prefix=$pkgdir/usr"
+ mkdir -p "$pkgdir/usr/lib/node_modules/node-ar-drone"
 
-  chown -R root:root "$pkgdir"/*
+ cp --no-preserve=ownership -r \
+   {lib,examples,node_modules,test,index.js,Makefile,package.json} \
+     "$pkgdir/usr/lib/node_modules/node-ar-drone/"
+
+ install -Dm644 -t "$pkgdir/usr/share/doc/node-ar-dron/" README.md Changes.md \
+   CONTRIBUTING.md
+ install -Dm644 LICENSE "$pkgdir/usr/share/licenses/node-ar-dron/LICENSE"
 }

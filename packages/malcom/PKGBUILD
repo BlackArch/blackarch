@@ -1,0 +1,59 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='malcom'
+pkgver=467.9894fbe
+pkgrel=1
+pkgdesc="Analyze a system's network communication using graphical representations of network traffic."
+groups=('blackarch' 'blackarch-networking' 'blackarch-defensive'
+        'blackarch-malware')
+url='https://github.com/tomchop/malcom'
+arch=('any')
+license=('CUSTOM')
+depends=('python2' 'python2-virtualenv' 'scapy' 'mongodb' 'libxml2' 'libxslt'
+         'python2-flask' 'python2-pymongo' 'python2-pygeoip'
+         'python2-gevent-websocket' 'python2-dateutil' 'python2-netifaces'
+         'python2-lxml' 'python2-twisted' 'python2-pyopenssl' 'python2-redis'
+         'python2-geoip2')
+optdepends=('python2-celery')
+makedepends=('git')
+install='malcom.install'
+source=('git+https://github.com/tomchop/malcom.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/malcom"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  find "$srcdir" -type f -name '*.py' | xargs sed -i \
+    's|#!/usr/bin/env python|#!/usr/bin/env python2|'
+  find "$srcdir" -type f -name '*.py' | xargs sed -i \
+    's|#!/usr/bin/python|#!/usr/bin/env python2|'
+}
+
+package() {
+  cd "$srcdir/malcom"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/malcom"
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/malcom"
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/malcom/LICENSE.md"
+
+  cat > "$pkgdir/usr/bin/malcom" << EOF
+#!/bin/sh
+cd /usr/share/malcom
+if [[ ! -d "/usr/share/malcom/env-malcom" ]] ; then
+  virtualenv2 --system-site-packages env-malcom
+fi
+source env-malcom/bin/activate
+exec env-malcom/bin/python2 ./malcom.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/malcom"
+}

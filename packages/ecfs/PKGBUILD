@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ecfs'
+pkgver=229.faf2fc2
+pkgrel=2
+groups=('blackarch' 'blackarch-binary')
+pkgdesc='Extended core file snapshot format.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/elfmaster/ecfs'
+license=('custom:unknown')
+depends=('libdwarf' 'glibc')
+makedepends=('git' 'clang')
+source=('git+https://github.com/elfmaster/ecfs.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ecfs"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/ecfs"
+
+  if [[ "$CARCH" = 'x86_64' ]];
+  then
+    make V="prod" B="64"
+  else
+    make V="prod" B="32"
+  fi
+}
+
+package() {
+  cd "$srcdir/ecfs"
+
+  if [[ "$CARCH" == 'x86_64' ]];
+  then
+    cd bin/prod/64
+  else
+    cd bin/prod/32
+  fi
+
+  install -Dm755 -t "$pkgdir/usr/bin" ecfs ecfs_handler et_flip readecfs
+
+  mv "$pkgdir/usr/bin/ecfs_handler" "$pkgdir/usr/bin/ecfs-handler"
+  mv "$pkgdir/usr/bin/et_flip" "$pkgdir/usr/bin/et-flip"
+
+  cd "$srcdir/ecfs"
+
+  install -Dm644 manual/man.txt "$pkgdir/usr/share/doc/ecfs/man.txt"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/ecfs/" README.md README INSTALL
+}

@@ -3,17 +3,40 @@
 
 pkgname='capstone'
 pkgver='3.0.2'
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-reversing' 'blackarch-disassembler')
 pkgdesc='A lightweight multi-platform, multi-architecture disassembly framework.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://www.capstone-engine.org/index.html'
+depends=('glibc')
+makedepends=('python-setuptools' 'python2-setuptools')
 license=('GPL')
-source=("http://www.capstone-engine.org/download/$pkgver/capstone-${pkgver}.tgz")
-sha1sums=('7f206c853c6b8d05de22e919c2455ab661654093')
+source=("http://www.capstone-engine.org/download/$pkgver/capstone-${pkgver}.tgz"
+        'makefile.patch')
+sha1sums=('7e2cb9a94f4cda478bc011bcf409d55fcdab6aec'
+          '323e30109fb32303229f95b4ffe748542932ac50')
+
+prepare() {
+  cd "$srcdir/capstone-$pkgver"
+
+  cd "$srcdir/capstone-$pkgver/bindings/python"
+  sed -i 's|^python|python2|' Makefile
+
+  patch -i $srcdir/makefile.patch
+
+  cd "$srcdir/capstone-$pkgver/bindings/java"
+  sed -i 's|python|python2|' Makefile
+
+  cd "$srcdir/capstone-$pkgver/bindings/ocaml"
+   sed -i 's|python|python2|' Makefile
+}
 
 build() {
   cd "$srcdir/capstone-$pkgver"
+
+  ./make.sh
+
+  cd bindings/python
 
   make
 }
@@ -22,4 +45,14 @@ package() {
   cd "$srcdir/capstone-$pkgver"
 
   make DESTDIR="$pkgdir" install
+
+  # install py2 bindings
+  cd bindings/python
+  sed -i 's|--root=|--root='"$pkgdir"'|' Makefile
+  msg "Building python2 bindings"
+  make DESTDIR="$pkgdir" install
+
+  # install py3 bindings
+  msg "Building python bindings"
+  make DESTDIR="$pkgdir" install3
 }

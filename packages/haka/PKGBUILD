@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='haka'
+pkgver='0.2.2'
+pkgrel=3
+groups=('blackarch' 'blackarch-networking' 'blackarch-sniffer')
+pkgdesc='A collection of tool that allows capturing TCP/IP packets and filtering them based on Lua policy files.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/haka-security/haka'
+license=('Mozilla2')
+depends=('libpcap' 'wireshark-cli' 'rsync' 'gawk' 'libedit' 'pcre' 'ncurses'
+         'lua')
+makedepends=('cmake' 'swig')
+source=("http://github.com/haka-security/haka/releases/download/v${pkgver}/haka_${pkgver}_source.tar.gz")
+sha1sums=('34a8943499c8fc7b775447bde050299f2ef8d12d')
+
+prepare() {
+  cd "$srcdir/haka_${pkgver}_source"
+
+  sed -i 's|${CMAKE_INSTALL_PREFIX}/sbin|${CMAKE_INSTALL_PREFIX}/bin|' \
+    CMakeLists.txt
+  sed -i 's|-Wall -Werror|-Wall -Werror -lm|' CMakeLists.txt
+  sed -i 's|-D_FORTIFY_SOURCE=2|-D_FORTIFY_SOURCE=2 -lm|' CMakeLists.txt
+}
+
+build() {
+  cd "$srcdir/haka_${pkgver}_source"
+
+  mkdir make
+
+  cd make
+
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr ..
+
+  make
+}
+
+package() {
+  cd "$srcdir/haka_${pkgver}_source"
+
+  cd make
+
+  make DESTDIR="$pkgdir" install
+
+  mv "$pkgdir/usr/sbin/"{haka,hakactl} "$pkgdir/usr/bin"
+  rmdir "$pkgdir/usr/sbin"
+}

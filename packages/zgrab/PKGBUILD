@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='zgrab'
+pkgver=133.1eec769
+pkgrel=2
+groups=('blackarch' 'blackarch-recon')
+pkgdesc='Grab banners (optionally over TLS).'
+url='https://github.com/zmap/zgrab'
+license=('Apache2')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+depends=('go')
+makedepends=('git')
+source=('git+https://github.com/zmap/zgrab.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/zgrab"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  local url="github.com/zmap/zgrab"
+
+  mkdir -p src/$url && rm -rf src/$url && mv zgrab src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t github.com/zmap/zgrab
+  GOPATH="$srcdir" go build -v github.com/zmap/zgrab
+}
+
+package() {
+  cd "$srcdir"
+
+  cd src/github.com/zmap/zgrab/
+
+  install -Dm755 zgrab "$pkgdir/usr/bin/zgrab"
+  install -Dm644 -t "$pkgdir/usr/share/doc/zgrab" README.md INSTALL
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/zgrab/LICENSE"
+}

@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sherlocked'
+pkgver=1.f190c2b
+pkgrel=1
+groups=('blackarch' 'blackarch-packer' 'blackarch-binary' 'blackarch-crypto'
+        'blackarch-backdoor')
+pkgdesc='Universal script packer-- transforms any type of script into a protected ELF executable, encrypted with anti-debugging.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/elfmaster/sherlocked'
+license=('custom:unknown')
+depends=('glibc')
+makedepends=('git')
+source=('git+https://github.com/elfmaster/sherlocked.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sherlocked"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/sherlocked"
+
+  make
+}
+
+package() {
+  cd "$srcdir/sherlocked"
+
+  install -Dm755 -t "$pkgdir/usr/bin" sherlocked stub utils/gen_shellcode \
+    utils/stripx
+
+  mv "$pkgdir/usr/bin/gen_shellcode" "$pkgdir/usr/bin/gen-shellcode"
+
+  install -Dm644 README "$pkgdir/usr/share/doc/sherlocked/README"
+}

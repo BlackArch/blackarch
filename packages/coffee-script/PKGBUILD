@@ -3,7 +3,7 @@
 
 pkgname='coffee-script'
 pkgver='1.9.0'
-pkgrel=1
+pkgrel=2
 pkgdesc='A little language that compiles into JavaScript.'
 arch=('any')
 url='http://coffeescript.org'
@@ -24,25 +24,31 @@ prepare() {
 build() {
   cd "$srcdir/coffeescript-$pkgver"
 
-  bin/cake build
-  bin/cake build:parser
-  bin/cake build:browser
+  MINIFY=false bin/cake build
+  MINIFY=false bin/cake build:parser
+  MINIFY=false bin/cake build:browser
 }
 
 package() {
   cd "$srcdir/coffeescript-$pkgver"
 
+  mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/lib/node_modules"
 
-  HOME="$PWD" bin/cake --prefix "$pkgdir/usr" install
-
-  mv "$pkgdir/usr/lib/coffee-script" "$pkgdir/usr/lib/node_modules/"
-
-  ln -sf /usr/lib/node_modules/coffee-script/bin/{cake,coffee} "$pkgdir/usr/bin/"
-
   install -Dm644 "$srcdir/coffee-script.1" "$pkgdir/usr/share/man/man1/coffee.1"
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/coffee-script/LICENSE"
-  install -Dm644 README "$pkgdir/usr/share/doc/coffee-script/README"
+  install -Dm644 -t "$pkgdir/usr/share/doc/coffee-script" README README.md \
+    CONTRIBUTING.md
+  cp -a {documentation,examples} "$pkgdir/usr/share/doc/coffee-script/"
 
-  npm install
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/coffee-script/LICENSE"
+
+  install -Dm644 package.json \
+    "$pkgdir/usr/lib/node_modules/coffee-script/package.json"
+
+  cp -a {bin,extras,lib,node_modules,src,test} \
+    "$pkgdir/usr/lib/node_modules/coffee-script/"
+
+  install -m644 *.js "$pkgdir/usr/lib/node_modules/coffee-script/"
+
+  ln -s /usr/lib/node_modules/coffee-script/bin/{cake,coffee} "$pkgdir/usr/bin/"
 }

@@ -3,14 +3,14 @@
 
 pkgname='bdfproxy'
 pkgver=58.79edcb2
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-proxy' 'blackarch-binary')
 pkgdesc='Patch Binaries via MITM: BackdoorFactory + mitmProxy'
 arch=('any')
 url='https://github.com/secretsquirrel/BDFProxy'
 license=('GPL3')
 depends=('python2' 'python2-simplejson' 'python2-configobj' 'python2-pefile'
-         'backdoor-factory' 'mitmproxy')
+         'backdoor-factory' 'mitmproxy' 'capstone')
 makedepends=('git')
 source=('git+https://github.com/secretsquirrel/BDFProxy')
 sha1sums=('SKIP')
@@ -24,6 +24,9 @@ pkgver() {
 prepare() {
   cd "$srcdir/BDFProxy"
 
+  git submodule init
+  git submodule update
+
   sed -i '1s|python$|python2|' bdf_proxy.py
   sed -i 's|bdfproxy\.cfg|/usr/share/bdfproxy/bdfproxy.cfg|g' bdf_proxy.py
 }
@@ -35,6 +38,11 @@ package() {
 
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/bdfproxy"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/bdfproxy/README.md"
+  install -Dm644 bdf/COPYING "$pkgdir/usr/share/licenses/bdfproxy/COPYING"
+
+  rm README.md bdf/COPYING bdf/README.md
 
   cp -r * "$pkgdir/usr/share/bdfproxy"
 

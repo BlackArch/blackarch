@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname='js-beautify'
-pkgver='1.5.4'
+pkgver='1.5.5'
 pkgrel=1
 groups=('blackarch' 'blackarch-reversing' 'blackarch-unpacker')
 pkgdesc='This little beautifier will reformat and reindent bookmarklets, ugly JavaScript, unpack scripts packed by Dean Edward?s popular packer, as well as deobfuscate scripts processed by javascriptobfuscator.com.'
@@ -11,13 +11,15 @@ url='https://github.com/einars/js-beautify'
 license=('MIT')
 depends=('gcc' 'nodejs')
 source=("https://github.com/einars/js-beautify/archive/v${pkgver}.tar.gz")
-sha1sums=('56c488c631daa261f4951f43bdee398728d87f0b')
+sha1sums=('e1008f5bb9f26072166edd0086d831dca4bc2c86')
 
 prepare(){
   cd "$srcdir/js-beautify-$pkgver/python/"
 
   sed -i 's|env python|env python2|' js-beautify
   sed -i 's|env python|env python2|' *.py
+
+  npm install
 }
 
 package() {
@@ -26,11 +28,20 @@ package() {
   mkdir -p "$pkgdir/usr/bin/"
   mkdir -p "$pkgdir/usr/share/js-beautify/"
 
-  cp -a python/* "$pkgdir/usr/share/js-beautify/"
-
+  install -Dm644 package.json "$pkgdir/usr/share/js-beautify/package.json"
   install -Dm644 -t "$pkgdir/usr/share/doc/js-beautify" README.md \
     CONTRIBUTING.md
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/js-beautify/LICENSE"
+  cp -r --no-preserve=ownership node_modules "$pkgdir/usr/share/js-beautify/"
+  cp -r --no-preserve=ownership js "$pkgdir/usr/share/js-beautify/"
+  cp -a python/* "$pkgdir/usr/share/js-beautify/"
 
-  ln -s "/usr/share/js-beautify/js-beautify" "$pkgdir/usr/bin/js-beautify"
+  rm -rf "$pkgdir/usr/share/js-beautify/js/test"
+
+  ln -s "/usr/share/js-beautify/js/bin/js-beautify.js" \
+    "$pkgdir/usr/bin/js-beautify"
+  ln -s "/usr/share/js-beautify/js/bin/css-beautify.js" \
+    "$pkgdir/usr/bin/css-beautify"
+  ln -s "/usr/share/js-beautify/js/bin/html-beautify.js" \
+    "$pkgdir/usr/bin/html-beautify"
 }

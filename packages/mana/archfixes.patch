@@ -1,0 +1,114 @@
+diff -aur run-mana.orig/start-nat-full.sh run-mana/start-nat-full.sh
+--- run-mana.orig/start-nat-full.sh	2014-10-09 18:17:44.216949760 -0400
++++ run-mana/start-nat-full.sh	2014-10-10 17:35:08.796355852 -0400
+@@ -9,7 +9,7 @@
+ echo hostname WRT54G
+ sleep 2
+ 
+-service network-manager stop
++systemctl stop network-manager 
+ rfkill unblock wlan
+ 
+ ifconfig $phy down
+@@ -37,9 +37,9 @@
+ 
+ #SSLStrip with HSTS bypass
+ cd /usr/share/mana-toolkit/sslstrip-hsts/
+-python sslstrip.py -l 10000 -a -w /var/lib/mana-toolkit/sslstrip.log&
++python2 sslstrip.py -l 10000 -a -w /var/lib/mana-toolkit/sslstrip.log&
+ iptables -t nat -A PREROUTING -i $phy -p tcp --destination-port 80 -j REDIRECT --to-port 10000
+-python dns2proxy.py $phy&
++python2 dns2proxy.py $phy&
+ cd -
+ 
+ #SSLSplit
+@@ -89,7 +89,7 @@
+ pkill sslstrip
+ pkill sslsplit
+ pkill hostapd
+-pkill python
++pkill python2
+ iptables --policy INPUT ACCEPT
+ iptables --policy FORWARD ACCEPT
+ iptables --policy OUTPUT ACCEPT
+diff -aur run-mana.orig/start-nat-simple.sh run-mana/start-nat-simple.sh
+--- run-mana.orig/start-nat-simple.sh	2014-10-09 18:17:44.216949760 -0400
++++ run-mana/start-nat-simple.sh	2014-10-10 17:35:16.719573027 -0400
+@@ -5,7 +5,7 @@
+ conf=/etc/mana-toolkit/hostapd-karma.conf
+ hostapd=/usr/lib/mana-toolkit/hostapd
+ 
+-service network-manager stop
++systemctl stop network-manager
+ rfkill unblock wlan
+ 
+ ifconfig $phy up
+@@ -33,5 +33,5 @@
+ pkill sslstrip
+ pkill sslsplit
+ pkill hostapd
+-pkill python
++pkill python2
+ iptables -t nat -F
+diff -aur run-mana.orig/start-noupstream-eap.sh run-mana/start-noupstream-eap.sh
+--- run-mana.orig/start-noupstream-eap.sh	2014-10-09 18:17:44.216949760 -0400
++++ run-mana/start-noupstream-eap.sh	2014-10-10 17:34:53.489913589 -0400
+@@ -16,7 +16,7 @@
+ mkfifo $EXNODE
+ $crackapd&
+ 
+-service network-manager stop
++systemctl stop network-manager
+ rfkill unblock wlan
+ 
+ # Start hostapd
+@@ -36,8 +36,8 @@
+ dhcpd -pf /var/run/dhcpd-two.pid -lf /var/lib/dhcp/dhcpd-two.leases -cf /etc/mana-toolkit/dhcpd-two.conf $phy0
+ dnsspoof -i $phy -f /etc/mana-toolkit/dnsspoof.conf&
+ dnsspoof -i $phy0 -f /etc/mana-toolkit/dnsspoof.conf&
+-service apache2 start
+-service stunnel4 start
++systemctl start httpd
++systemctl start stunnel4
+ tinyproxy -c /etc/mana-toolkit/tinyproxy.conf&
+ msfconsole -r /etc/mana-toolkit/karmetasploit.rc&
+ 
+@@ -58,5 +58,5 @@
+ pkill tinyproxy
+ pkill stunnel4
+ pkill msfconsole
+-service apache2 stop
++systemctl stop httpd
+ iptables -t nat -F
+diff -aur run-mana.orig/start-noupstream.sh run-mana/start-noupstream.sh
+--- run-mana.orig/start-noupstream.sh	2014-10-09 18:17:44.216949760 -0400
++++ run-mana/start-noupstream.sh	2014-10-10 17:34:33.326875860 -0400
+@@ -8,7 +8,7 @@
+ echo hostname WRT54G
+ sleep 2
+ 
+-service network-manager stop
++systemctl stop network-manager
+ rfkill unblock wlan
+ 
+ ifconfig $phy down
+@@ -24,8 +24,8 @@
+ 
+ dhcpd -cf /etc/mana-toolkit/dhcpd.conf $phy
+ dnsspoof -i $phy -f /etc/mana-toolkit/dnsspoof.conf&
+-service apache2 start
+-service stunnel4 start
++systemctl start httpd 
++service start stunnel4
+ tinyproxy -c /etc/mana-toolkit/tinyproxy.conf&
+ msfconsole -r /etc/mana-toolkit/karmetasploit.rc&
+ 
+@@ -43,6 +43,6 @@
+ pkill dnsspoof
+ pkill tinyproxy
+ pkill stunnel4
+-pkill ruby
+-service apache2 stop
++pkill ruby-1.9
++systemctl stop httpd
+ iptables -t nat -F

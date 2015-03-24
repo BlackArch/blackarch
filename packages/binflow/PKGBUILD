@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='binflow'
+pkgver=4.c4140d7
+pkgrel=1
+groups=('blackarch' 'blackarch-binary' 'blackarch-debugger')
+pkgdesc='POSIX function tracing. Much better and faster than ftrace.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/elfmaster/binflow'
+license=('custom:unknown')
+depends=('glibc' 'linux-headers' 'capstone')
+makedepends=('git')
+source=('git+https://github.com/elfmaster/binflow.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/binflow"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+#prepare() {
+#  cd "$srcdir/binflow"
+
+#  sed -i 's|capstone/libcapstone.a|/usr/lib/libcapstone.a|' Makefile
+#}
+
+build() {
+  cd "$srcdir/binflow"
+
+  mv capstone-2.1.2 capstone
+
+  cd capstone
+
+  make
+
+  cd ..
+
+  make
+}
+
+package() {
+  cd "$srcdir/binflow"
+
+  install -Dm755 binflow "$pkgdir/usr/bin/binflow"
+}
