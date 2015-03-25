@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dirbuster-ng'
+pkgver=9.0c34920
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+pkgdesc='C CLI implementation of the Java dirbuster tool.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/digination/dirbuster-ng'
+license=('custom:unknown')
+depends=('curl')
+makedepends=('git' 'cmake')
+source=('git+https://github.com/digination/dirbuster-ng.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/dirbuster-ng"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/dirbuster-ng"
+
+  mkdir build
+
+  cd build
+
+  cmake ..
+
+  make
+}
+
+package() {
+  cd "$srcdir/dirbuster-ng"
+
+  mkdir -p "$pkgdir/usr/share/dirbuster-ng"
+
+  install -Dm755 build/dirbuster-ng "$pkgdir/usr/bin/dirbuster-ng"
+  install -Dm644 README "$pkgdir/usr/share/doc/dirbuster-ng/README"
+  cp -a wordlists "$pkgdir/usr/share/dirbuster-ng/wordlists"
+
+  find "$pkgdir/usr/share/dirbuster-ng/" -type d -exec chmod 755 {} +
+  find "$pkgdir/usr/share/dirbuster-ng/" -type f -exec chmod 644 {} +
+}

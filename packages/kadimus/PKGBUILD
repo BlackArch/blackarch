@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='kadimus'
+pkgver=19.4d7ae5b
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation'
+        'blackarch-scanner')
+pkgdesc='LFI Scan & Exploit Tool.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/P0cL4bs/Kadimus'
+license=('MIT')
+depends=('curl' 'pcre' 'libssh' 'openssl')
+makedepends=('git')
+source=('git+https://github.com/P0cL4bs/Kadimus.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Kadimus"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/Kadimus"
+
+  sed -i 's|-lssh|-lssh -lcrypto|' Makefile
+}
+
+build() {
+  cd "$srcdir/Kadimus"
+
+  make
+}
+
+package() {
+  cd "$srcdir/Kadimus"
+
+  install -Dm755 kadimus "$pkgdir/usr/bin/kadimus"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/kadimus/README.md"
+  install -Dm644 license.txt "$pkgdir/usr/share/licenses/kadimus/license.txt"
+}

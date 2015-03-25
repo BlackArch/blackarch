@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='gerix-wifi-cracker'
+pkgver=1.1c3cd73
+pkgrel=1
+groups=('blackarch' 'blackarch-wireless' 'blackarch-misc')
+pkgdesc='A graphical user interface for aircrack-ng and pyrit.'
+arch=('any')
+url='https://github.com/TigerSecurity'
+license=('GPL')
+depends=('aircrack-ng' 'xterm' 'pyqt3' 'python2')
+makedepends=('git')
+source=('git+git://github.com/TigerSecurity/gerix-wifi-cracker')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/gerix-wifi-cracker"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/gerix-wifi-cracker"
+
+  make
+}
+
+package() {
+  cd "$srcdir/gerix-wifi-cracker"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/gerix-wifi-cracker"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/gerix-wifi-cracker" README \
+    README-DEV CHANGELOG
+
+  rm README README-DEV CHANGELOG
+
+  cp -a * "$pkgdir/usr/share/gerix-wifi-cracker"
+
+  cat > "$pkgdir/usr/bin/gerix-wifi-cracker" << EOF
+#!/bin/sh
+cd /usr/share/gerix-wifi-cracker
+exec python2 gerix.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/gerix-wifi-cracker"
+}
