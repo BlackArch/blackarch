@@ -2,20 +2,25 @@
 # See COPYING for license details.
 
 pkgname='r2-bindings'
-pkgver='0.9.8'
+pkgver=428.5129b2f
 pkgrel=1
+epoch=1
 pkgdesc='Language bindings of the radare2 api for valabind and friends.'
 url='http://radare.org'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-depends=('radare2' 'python2')
+depends=('radare2' 'python2' 'ruby')
 makedepends=('valabind')
 license=('GPL3')
-options=(!emptydirs)
-source=("http://www.radare.org/get/radare2-bindings-${pkgver}.tar.xz")
-sha1sums=('94f91dc0ac6ceba5cf7adf1de26f902991099a81')
+source=('git+https://github.com/radare/radare2-bindings')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd radare2-bindings
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 build() {
-  cd "radare2-bindings-$pkgver"
+  cd "$srcdir/radare2-bindings"
 
   ./configure --prefix=/usr --enable=ctypes --enable=python
 
@@ -23,7 +28,10 @@ build() {
 }
 
 package() {
-  cd "radare2-bindings-$pkgver"
+  cd "$srcdir/radare2-bindings"
 
   make DESTDIR="$pkgdir" install
+
+  cd r2pipe/python
+  python2 setup.py install --prefix=/usr "--root=$pkgdir"
 }
