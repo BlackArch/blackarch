@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='peepingtom'
+pkgver=53.6fa5d29
+pkgrel=1
+epoch=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-recon')
+pkgdesc='A tool to take screenshots of websites. Much like eyewitness.'
+arch=('any')
+url='https://bitbucket.org/LaNMaSteR53/peepingtom'
+license=('GPL3')
+depends=('python2' 'curl' 'phantomjs')
+makedepends=('git')
+source=('git+https://bitbucket.org/LaNMaSteR53/peepingtom.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/peepingtom"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/peepingtom"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/peepingtom"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/peepingtom/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/peepingtom/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/peepingtom"
+
+  ln -s /usr/bin/phantomjs "$pkgdir/usr/share/peepingtom/phantomjs"
+
+  cat > "$pkgdir/usr/bin/peepingtom" << EOF
+#!/bin/sh
+cd /usr/share/peepingtom
+exec python2 peepingtom.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/peepingtom"
+}

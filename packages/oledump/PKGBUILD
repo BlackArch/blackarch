@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='oledump'
+pkgver='0.0.13'
+pkgrel=1
+groups=('blackarch' 'blackarch-binary' 'blackarch-malware')
+pkgdesc='Analyze OLE files (Compound File Binary Format). These files contain streams of data. This tool allows you to analyze these streams.'
+arch=('any')
+url='http://blog.didierstevens.com/programs/oledump-py/'
+license=('custom:unknown')
+depends=('python2' 'python2-lxml' 'python2-yara')
+source=("https://didierstevens.com/files/software/oledump_V${pkgver//./_}.zip")
+sha1sums=('7b44ecd40025f8e187bf6add6e90a163e2dcc3d2')
+
+prepare() {
+  cd "$srcdir"
+
+  find . -type f -name '*.py' -exec sed -i 's|env python|env python2|' {} +
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/oledump"
+
+  rm oledump_V${pkgver//./_}.zip
+
+  cp -a * "$pkgdir/usr/share/oledump"
+
+  cat > "$pkgdir/usr/bin/oledump" << EOF
+#!/bin/sh
+cd /usr/share/oledump
+exec python2 oledump.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/oledump"
+}

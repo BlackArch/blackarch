@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='jaidam'
+pkgver=7.26b3356
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-automation'
+        'blackarch-exploitation')
+pkgdesc='Penetration testing tool that would take as input a list of domain names, scan them, determine if wordpress or joomla platform was used and finally check them automatically, for web vulnerabilities using two well-known open source tools, WPScan and Joomscan. '
+arch=('any')
+url='https://github.com/stasinopoulos/jaidam'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/stasinopoulos/jaidam.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/jaidam"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+}
+
+package() {
+  cd "$srcdir/jaidam"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/jaidam"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/jaidam/" README VERSION
+
+  rm README VERSION
+
+  cp -a * "$pkgdir/usr/share/jaidam"
+
+  cat > "$pkgdir/usr/bin/jaidam" << EOF
+#!/bin/sh
+cd /usr/share/jaidam
+exec python2 jaidam.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/jaidam"
+}

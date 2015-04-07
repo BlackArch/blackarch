@@ -3,23 +3,37 @@
 
 pkgname='suricata'
 pkgver='2.0.7'
-pkgrel=1
+pkgrel=2
 pkgdesc='An Open Source Next Generation Intrusion Detection and Prevention Engine.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://openinfosecfoundation.org/index.php/download-suricata'
 groups=('blackarch' 'blackarch-defensive')
 license=('GPL2')
 depends=('zlib' 'nss' 'jansson' 'libcap-ng' 'libnetfilter_queue' 'libnfnetlink'
-         'libnet' 'libpcap' 'libyaml' 'pcre' 'python2-magic' 'file')
+         'libnet' 'libpcap' 'libyaml' 'pcre' 'python2-magic' 'file' 'lua'
+         'luajit' 'geoip' 'libnetfilter_log')
 optdepends=('snort: suricata can use rulesets provided by snort')
 backup=('etc/suricata/suricata.yaml')
 source=("http://openinfosecfoundation.org/download/suricata-${pkgver}.tar.gz")
 sha1sums=('a79dfb9c8c1ddd169fb8836ddc4570e0c5ce42bb')
 
+prepare() {
+  cd "$srcdir/suricata-$pkgver"
+
+
+  find "$srcdir" -type f -name '*.py' -exec \
+    sed -i 's|#!/usr/bin/env python|#!/usr/bin/env python2|' {} +
+  find "$srcdir" -type f -name '*.py' -exec \
+    sed -i 's|#!/usr/bin/python|#!/usr/bin/python2|' {} +
+}
+
 build() {
   cd "$srcdir/suricata-$pkgver"
 
-  ./configure --prefix=/usr --sysconfdir=/etc/suricata
+  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var \
+    HAVE_PYTHON_CONFIG=/usr/bin/python2 --enable-gccprotect \
+    --enable-nfqueue --enable-nflog --enable-lua --enable-luajit \
+    --enable-geoip --disable-coccinelle --enable-old-barnyard2 --with-pic
 
   make
 }

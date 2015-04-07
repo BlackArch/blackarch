@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='commix'
+pkgver=41.da1cb44
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-automation'
+        'blackarch-exploitation')
+pkgdesc='Automated All-in-One OS Command Injection and Exploitation Tool.'
+arch=('any')
+url='https://github.com/stasinopoulos/commix'
+license=('custom:unknown' 'GAGPL')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/stasinopoulos/commix.git'
+        'settings.py.patch')
+sha1sums=('SKIP'
+          '7c02c24ce0662abfaa834fcf698db2db36a6dbb8')
+
+pkgver() {
+  cd "$srcdir/commix"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < settings.py.patch
+}
+
+package() {
+  cd "$srcdir/commix"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/commix"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/commix/" README.md readme/AUTHOR \
+    readme/CHANGELOG.md
+  install -Dm644 readme/COPYING "$pkgdir/usr/share/licenses/commix/COPYING"
+
+  rm -rf README.md readme/
+
+  cp -a * "$pkgdir/usr/share/commix"
+
+  cat > "$pkgdir/usr/bin/commix" << EOF
+#!/bin/sh
+cd /usr/share/commix
+exec python2 commix.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/commix"
+}

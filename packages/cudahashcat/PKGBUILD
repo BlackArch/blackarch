@@ -2,16 +2,16 @@
 # See COPYING for license details.
 
 pkgname='cudahashcat'
-pkgver='1.32'
-pkgrel=1
+pkgver='1.35'
+pkgrel=2
 pkgdesc='Worlds fastest WPA cracker with dictionary mutation engine.'
 url=('http://hashcat.net/oclhashcat/')
 arch=('i686' 'x86_64')
 license=('custom')
-groups=('blackarch' 'blackarch-cracker')
+groups=('blackarch-cracker')
 optdepends=('nvidia-utils>=319.37: For gpu support via Nvidia CUDA')
 source=("http://hashcat.net/files/cudaHashcat-${pkgver}.7z")
-sha1sums=('b96bc5b9ca15ace94ed6c971e518c57e106e9e42')
+sha1sums=('dfc226afe845cb7e885b3ef2c906582f19fed0a9')
 options=('!strip')
 
 package() {
@@ -20,22 +20,26 @@ package() {
   find . \( -name "*.cmd" -o -name "*.exe" \) -exec rm {} +
 
   mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/share/cudaHashcat"
+  mkdir -p "$pkgdir/usr/share/cudahashcat"
 
-  if [ "$CARCH" = "x86_64" ]
+  install -Dm644 -t "$pkgdir/usr/share/doc/cudahashcat" docs/*
+
+  rm -rf docs
+
+  cp -a * "$pkgdir/usr/share/cudahashcat"
+
+  if [[ "$CARCH" == 'x86_64' ]];
   then
-    cat > "$pkgdir/usr/bin/cudaHashcat" << EOF
+    cat > "$pkgdir/usr/bin/cudahashcat" << EOF
 #!/bin/bash
 /usr/share/cudaHashcat/cudaHashcat64.bin "\$@"
 EOF
-    chmod a+x "$pkgdir/usr/bin/cudaHashcat"
+    chmod a+x "$pkgdir/usr/bin/cudahashcat"
   else
-    cat > "$pkgdir/usr/bin/cudaHashcat" << EOF
+    cat > "$pkgdir/usr/bin/cudahashcat" << EOF
 #!/bin/bash
 /usr/share/cudaHashcat/cudaHashcat32.bin "\$@"
 EOF
-    chmod a+x "$pkgdir/usr/bin/cudaHashcat"
+    chmod a+x "$pkgdir/usr/bin/cudahashcat"
   fi
-
-  cp -a * "$pkgdir/usr/share/cudaHashcat"
 }
