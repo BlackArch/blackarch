@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='lisa.py'
+pkgver=28.5b3156b
+pkgrel=7
+groups=('blackarch' 'blackarch-exploitation')
+pkgdesc='An Exploit Dev Swiss Army Knife.'
+arch=('any')
+url='https://github.com/ant4g0nist/lisa.py'
+license=('Apache2')
+depends=('python2' 'lldb')
+makedepends=('git')
+source=('git+https://github.com/ant4g0nist/lisa.py.git')
+install='lisa.py.install'
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/lisa.py"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/lisa.py"
+
+  sed -i 's|/usr/bin/env python|/usr/bin/env python2|' lisa.py
+}
+
+package() {
+  cd "$srcdir/lisa.py"
+
+  install -Dm644 lisa.py "$pkgdir/usr/share/lisa.py/lisa.py"
+  install -Dm644 .lldbinit "$pkgdir/usr/share/lisa.py/lldbinit"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/lisa.py/README"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/lisa.py/LICENSE"
+
+  cat > "$pkgdir/usr/share/lisa.py/lldbinit" << EOF
+settings set prompt "(lisa)"
+settings set target.x86-disassembly-flavor intel
+command script import /usr/share/lisa.py/lisa.py
+command script import lldb
+command script add -f lisa.alias lisa
+lisa
+EOF
+
+  chmod 644 $pkgdir/usr/share/lisa.py/lldbinit
+}
