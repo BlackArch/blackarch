@@ -3,7 +3,7 @@
 
 pkgname='hasher'
 pkgver=42.0de1936
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-cracker' 'blackarch-crypto')
 pkgdesc='A tool that allows you to quickly hash plaintext strings, or compare hashed values with a plaintext locally.'
 arch=('any')
@@ -29,8 +29,18 @@ prepare() {
 package() {
   cd "$srcdir/Hasher"
 
-  install -Dm755 Hasher.py "$pkgdir/usr/bin/hasher"
-  install -Dm644 README.md "$pkgdir/usr/share/doc/hasher/README.md"
-  install -m644 CHANGELOG "$pkgdir/usr/share/doc/hasher/CHANGELOG"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/hasher"
+
+  cp -a Hasher.py hash_ops common "$pkgdir/usr/share/hasher/"
+  install -Dm644 -t "$pkgdir/usr/share/doc/hasher/" README.md CHANGELOG
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/hasher/LICENSE"
+
+  cat > "$pkgdir/usr/bin/hasher" << EOF
+#!/bin/sh
+cd /usr/share/hasher
+exec python2 Hasher.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/hasher"
 }
