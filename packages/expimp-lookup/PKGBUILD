@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='expimp_lookup'
+pkgver=4.79a96c7
+pkgrel=1
+groups=('blackarch' 'blackarch-binary' 'blackarch-recon')
+pkgdesc='Looks for all export and import names that contain a specified string in all Portable Executable in a directory tree.'
+arch=('any')
+url='https://github.com/tr3w/ExpImp-Lookup'
+license=('GPL2')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/tr3w/ExpImp-Lookup.git'
+        'git+https://github.com/tr3w/PEace.git')
+sha1sums=('SKIP'
+          'SKIP')
+
+pkgver() {
+  cd "$srcdir/ExpImp-Lookup"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  sed -i 's|/usr/bin/python|/usr/bin/python2|' ExpImp-Lookup/expimp_lookup.py
+  sed -i 's|/usr/bin/python|/usr/bin/python2|' PEace/PEace.py
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm755 ExpImp-Lookup/expimp_lookup.py \
+    "$pkgdir/usr/share/expimp-lookup/expimp_lookup.py"
+  install -Dm644 ExpImp-Lookup/README \
+    "$pkgdir/usr/share/doc/expimp-lookup/README"
+  install -Dm644 ExpImp-Lookup/LICENSE \
+    "$pkgdir/usr/share/licenses/expimp-lookup/LICENSE"
+
+  install -Dm644 PEace/PEace.py "$pkgdir/usr/share/expimp-lookup/PEace.py"
+  install -Dm644 PEace/README "$pkgdir/usr/share/doc/peace/README"
+  install -Dm644 PEace/LICENSE "$pkgdir/usr/share/licenses/peace/LICENSE"
+
+  cat > "$pkgdir/usr/bin/expimp-lookup" << EOF
+#!/bin/sh
+exec python2 /usr/share/expimp-lookup/expimp_lookup.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/expimp-lookup"
+}
