@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='neglected'
+pkgver=5.84ee7a9
+pkgrel=1
+groups=('blackarch' 'blackarch-recon')
+pkgdesc='Facebook CDN Photo Resolver.'
+arch=('any')
+url='https://github.com/GuerrillaWarfare/neglected'
+license=('custom:unknown')
+depends=('python2' 'python2-requests')
+makedepends=('git')
+source=('git+https://github.com/GuerrillaWarfare/neglected.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/neglected"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/neglected"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/neglected"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/neglected/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/neglected"
+
+  cat > "$pkgdir/usr/bin/neglected" << EOF
+#!/bin/sh
+cd /usr/share/neglected
+python2 neglected.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/neglected"
+}
