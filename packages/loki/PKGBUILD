@@ -2,56 +2,58 @@
 # See COPYING for license details.
 
 pkgname='loki'
-pkgver='0.2.7'
-pkgrel=4
-groups=('blackarch' 'blackarch-exploitation' 'blackarch-networking')
+pkgver=0.3.0_r497
+pkgrel=1
 pkgdesc='Python based framework implementing many packet generation and attack modules for Layer 2 and 3 protocols.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://c0decafe.de/loki.html'
 license=('BSD')
-depends=('python2' 'pygtk' 'python2-ipy' 'python2-pylibpcap' 'libdnet'
-         'python2-dpkt' 'libglade')
-makedepends=('autoconf' 'automake')
-source=("http://c0decafe.de/loki/loki-${pkgver}.tar.gz")
-options=('!emptydirs')
-sha1sums=('42969aad191a5c62df141a4c5263786b033b37ef')
+depends=('python2' 'pygtk' 'python2-ipy' 'python2-dpkt' 'python2-urwid'
+         'python2-pylibpcap' 'libpcap' 'libdnet' 'libglade')
+makedepends=('autoconf' 'automake' 'subversion' 'cython2')
+source=('loki::svn+http://c0decafe.de/svn/codename_loki/trunk')
+sha1sums=('SKIP')
+options=(!emptydirs)
+
+pkgver() {
+	cd "$srcdir/loki"
+
+	local ver="$(svnversion)"
+
+  printf "0.3.0_r%s" "${ver//[[:alpha:]]}"
+}
 
 prepare() {
-  cd "$srcdir/loki-$pkgver"
+	cd "$srcdir/loki"
 
-  sed -i 's|#!/usr/bin/env python|#!/usr/bin/env python2|' \
-    "$srcdir/loki-$pkgver/src/loki.py"
-  grep -rl 'python-config' "$srcdir/loki-$pkgver" |
-  xargs sed -i 's|python-config|python2-config|g'
+	sed -i 's|#!/usr/bin/env python|#!/usr/bin/env python2|' src/loki_*.py
+        grep -rl 'python-config' . | \
+          xargs sed -i 's|python-config|python2-config|g'
+
+	for i in build.sh misc test pkg_scripts modules/module_test.py \
+    modules/module_snmp.py modules/module_snmp.glade modules/module_802_1X.py \
+    modules/module_802_1X.glade
+  do
+    rm -rf $i
+	done
 }
 
 build() {
-  cd "$srcdir/loki-$pkgver"
+	cd "$srcdir/loki"
 
-  aclocal
-  automake --add-missing
-  autoconf
+  autoreconf -fvi -I m4
+
   ./configure --prefix=/usr PYTHON=/usr/bin/python2
+
   make
 }
 
 package() {
-  cd "$srcdir/loki-$pkgver"
+  cd "$srcdir/loki"
 
-  mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/share/loki"
-  mkdir -p "$pkgdir/usr/share/doc/loki"
-  mkdir -p "$pkgdir/usr/share/licenses/loki"
+	make DESTDIR="$pkgdir/" install
 
-  make DESTDIR="$pkgdir/" install
-
-  install -m644 LICENSE "$pkgdir/usr/share/licenses/loki"
-  install -m644 COPYING "$pkgdir/usr/share/licenses/loki"
-
-  for doc in ChangeLog README REQUIREMENTS AUTHORS
-  do
-    install -m644 $doc "$pkgdir/usr/share/doc/loki/$doc"
-  done
-
-  mv "$pkgdir/usr/bin/loki.py" "$pkgdir/usr/bin/loki"
+  install -Dm644 -t "$pkgdir/usr/share/licenses/loki/" LICENSE COPYING
+  install -Dm644 -t "$pkgdir/usr/share/doc/loki/" AUTHORS ChangeLog README \
+    REQUIREMENTS
 }
