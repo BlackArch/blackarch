@@ -1,0 +1,64 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='doozer'
+pkgver=9.5cfc8f8
+pkgrel=1
+groups=('blackarch' 'blackarch-cracker')
+pkgdesc='A Password cracking utility.'
+arch=('any')
+url='https://github.com/CoalfireLabs/crackHOR'
+license=('GPL2')
+depends=('python2' 'python2-requests' 'python2-django' 'ophcrack' 'hashcat')
+makedepends=('git')
+source=('git+https://github.com/CoalfireLabs/Doozer.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Doozer"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/Doozer"
+
+  find . -type f -name '*.py' -exec sed -i 's|python$|python2|' {} +
+}
+
+package() {
+  cd "$srcdir/Doozer"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/doozer"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/doozer/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/doozer"
+
+  cat > "$pkgdir/usr/bin/doozer" << EOF
+#!/bin/sh
+cd /usr/share/doozer/doozer
+exec python2 doozer.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/doozer"
+
+  cat > "$pkgdir/usr/bin/doozestop" << EOF
+#!/bin/sh
+cd /usr/share/doozer/doozer
+exec python2 doozestop.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/doozestop"
+
+  cat > "$pkgdir/usr/bin/doozer-monitor" << EOF
+#!/bin/sh
+cd /usr/share/doozer/doozer
+exec python2 monitor.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/doozer-monitor"
+}
