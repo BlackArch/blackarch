@@ -19,7 +19,7 @@ source=('git+https://github.com/sensepost/mana.git'
         'archfixes.patch')
 sha1sums=('SKIP'
           '0a04fbf179d1493ec18b8d773b808e4f978f2433'
-          'b2c1196a2444d2a91469783d8c8b5c7c71dbe1fb')
+          'cb19f60953d89ee5b1ce0e7827461091f1d17941')
 
 pkgver() {
   cd "$srcdir/mana"
@@ -40,11 +40,17 @@ prepare() {
   cd run-mana
 
   patch < $srcdir/archfixes.patch
+
+  sed -i 's|python ssltrip.py|python2 sslstrip.py|' start-nat-full.sh
+  sed -i 's|python dnsproxy.py|python2 dnsproxy.py|' start-nat-full.sh
 }
 
 
-build(){
+build() {
   cd "$srcdir/mana"
+
+  git submodule init
+  git submodule update
 
   make
 }
@@ -57,12 +63,12 @@ package() {
 
   make DESTDIR="$pkgdir" install
 
-  install -Dm644 hostapd-manna/COPYING \
+  install -Dm644 hostapd-mana/COPYING \
     "$pkgdir/usr/share/licenses/hostapd-manna/COPYING"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/mana/LICENSE"
 
   sed -i 's|python22.6|python2|' \
-    "$pkgdir/usr/share/mana-toolkit/sslstrip-hsts/dns2proxy.py"
+    "$pkgdir/usr/share/mana-toolkit/sslstrip-hsts/dns2proxy/dns2proxy.py"
 
   cat > "$pkgdir/usr/bin/mana-firelamb-view" << EOF
 #!/bin/sh

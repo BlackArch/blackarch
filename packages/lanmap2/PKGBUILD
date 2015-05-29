@@ -10,7 +10,7 @@ arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url="http://github.com/rflynn/lanmap2"
 license=('GPL')
 groups=('blackarch' 'blackarch-recon')
-depends=('sqlite3' 'libpcap' 'php' 'graphviz')
+depends=('sqlite3' 'libpcap' 'php' 'graphviz' 'libbsd')
 makedepends=('git' 'make' 'gcc-libs')
 install='lanmap2.install'
 source=('git+http://github.com/rflynn/lanmap2.git')
@@ -30,6 +30,13 @@ prepare() {
   # Fix PHP.
   sed -i '1a\[ -z "$PHP_INI" ] && PHP_INI=/etc/php/php.ini' graph/graph.sh
   sed -i 's/^php/php -c $PHP_INI/' graph/graph.sh
+
+  # add missing ldflags
+  sed -i 's|LDFLAGS = -ggdb|LDFLAGS = -lbsd -ggdb|' tools/Makefile
+  sed -i 's|LDFLAGS = -lpcap -lsqlite3|LDFLAGS = -lbsd -lpcap -lsqlite3|' \
+    src/Makefile
+  sed -i 's|#include <string.h>|#include <bsd/string.h>\n#include <string.h>|' \
+    src/cap.c src/report.c src/util.h src/util.c src/dns.c
 }
 
 build() {
