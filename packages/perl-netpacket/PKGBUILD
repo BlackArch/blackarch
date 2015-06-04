@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname='perl-netpacket'
-pkgver='1.5.0'
+pkgver='1.6.0'
 pkgrel=1
 pkgdesc='Assemble/disassemble network packets at the protocol level.'
 arch=('any')
@@ -16,20 +16,27 @@ provides=('perl-netpacket-arp=0.43.1' 'perl-netpacket-ethernet=0.43.1'
           'perl-netpacket-tcp=0.43.1' 'perl-netpacket-udp=0.43.1')
 options=(!emptydirs)
 source=("http://search.cpan.org/CPAN/authors/id/Y/YA/YANICK/NetPacket-${pkgver}.tar.gz")
-sha1sums=('f7b1f3f2f49f04c9ceede16319d7ae0a83ec3d6d')
+sha1sums=('7c8b931730c87b5538d98d4b5d717f1025ab60f7')
 
 build() {
   cd "$srcdir/NetPacket-$pkgver"
 
-  PERL_MM_USE_DEFAULT=1 perl Build.PL INSTALLDIRS=vendor
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""                 \
+      PERL_AUTOINSTALL=--skipdeps                            \
+      PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'"     \
+      PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+      MODULEBUILDRC=/dev/null
 
-  ./Build
+    /usr/bin/perl Makefile.PL
+
+    make
+  )
 }
 
 package() {
   cd "$srcdir/NetPacket-$pkgver"
 
-  ./Build install destdir=${pkgdir}
+  make install destdir="$pkgdir"
 
   # Remove perllocal.pod and .packlist.
   find ${pkgdir} -name perllocal.pod -delete
