@@ -2,30 +2,44 @@
 # See COPYING for license details.
 
 pkgname='ubertooth'
-pkgver='2012.10.R1'
-pkgrel=4
+pkgver='2014.04.R1'
+pkgrel=1
 groups=('blackarch' 'blackarch-bluetooth')
-pkgdesc="A 2.4 GHz wireless development board suitable for Bluetooth experimentation. Open source hardware and software. Tools only"
-url="http://sourceforge.net/projects/ubertooth/"
+pkgdesc='A 2.4 GHz wireless development board suitable for Bluetooth experimentation. Open source hardware and software. Tools only.'
+url='https://github.com/greatscottgadgets/ubertooth/releases'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 license=('GPL')
-depends=('libusbx' 'libbtbb' 'bluez-libs')
-source=("http://downloads.sourceforge.net/project/ubertooth/ubertooth-${pkgver//./-}.tar.xz")
-sha1sums=('c865e639eaec12cdd225576f78a37d187c437de2')
+depends=('libusbx' 'libbtbb' 'bluez-libs' 'libpcap' 'python2' 'python2-numpy'
+         'python2-pyside' 'python2-pyqt4' 'python2-pyusb')
+makedepends=('cmake')
+source=("https://github.com/greatscottgadgets/ubertooth/archive/${pkgver//./-}.tar.gz")
+sha1sums=('9383556cf2df1deddc8a9da838c9b20a81911bd1')
+
+prepare() {
+  cd "$srcdir/ubertooth-${pkgver//./-}/host"
+
+  find "$srcdir/" -name "*.py" -exec sed -i 's|env python|env python2|' {} \;
+  find "$srcdir/" -name "*.py" -exec \
+    sed -i 's|/usr/bin/python|/usr/bin/python2|' {} \;
+}
 
 build() {
-  cd "$srcdir/ubertooth-${pkgver//./-}/host/bluetooth_rxtx"
-  make clock_debug=true
+  cd "$srcdir/ubertooth-${pkgver//./-}/host"
+
+  mkdir build
+
+  cd build
+
+  cmake -DPYTHON_EXECUTABLE:FILEPATH=/usr/bin/python2.7 \
+    -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+
+  make
 }
 
 package() {
-  cd "$srcdir/ubertooth-${pkgver//./-}/host/bluetooth_rxtx"
+  cd "$srcdir/ubertooth-${pkgver//./-}/host"
 
-  # Base directories.
-  mkdir -p "$pkgdir/usr/include"
-  mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/lib"
+  cd build
 
-  make clock_debug=true LDCONFIG= INSTALL_DIR="$pkgdir/usr/bin/" \
-       INCLUDE_DIR="$pkgdir/usr/include/" LIB_DIR="$pkgdir/usr/lib/" install
+  make DESTDIR="$pkgdir" install
 }
