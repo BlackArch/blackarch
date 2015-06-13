@@ -2,36 +2,49 @@
 # See COPYING for license details.
 
 pkgname='r2-bindings'
-pkgver=428.5129b2f
+pkgver='0.9.9'
 pkgrel=1
-epoch=1
 pkgdesc='Language bindings of the radare2 api for valabind and friends.'
 url='http://radare.org'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-depends=('radare2' 'python2' 'ruby')
-makedepends=('valabind')
+depends=('radare2' 'python2' 'ruby' 'lua' 'ruby1.8' 'ruby1.9' 'gawk'
+         'java-environment' 'vala')
+makedepends=('valabind' 'swig' 'vala' 'gnuradio-fcdproplus')
 license=('GPL3')
-source=('git+https://github.com/radare/radare2-bindings')
-sha1sums=('SKIP')
-
-pkgver() {
-  cd radare2-bindings
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
+source=("https://github.com/radare/radare2-bindings/archive/${pkgver}.tar.gz")
+sha1sums=('e34151b6f50608eb8fadba22d81625614aafd7a9')
 
 build() {
-  cd "$srcdir/radare2-bindings"
+  cd "$srcdir/radare2-bindings-$pkgver"
 
-  ./configure --prefix=/usr --enable=ctypes --enable=python
+  ./configure --enable=awk,ctypes,cxx,go,duktape,guile,lua,perl,php5,python,valac,newlisp,dlang,ocaml,r2pipe,vapi
 
   make
 }
 
 package() {
-  cd "$srcdir/radare2-bindings"
+  cd "$srcdir/radare2-bindings-$pkgver"
 
+  mkdir -p "$pkgdir/usr/lib/perl5/site_perl/r2"
+
+  make DESTDIR="$pkgdir" install-plugins
+  make DESTDIR="$pkgdir" install-python
+  make DESTDIR="$pkgdir" install-ctypes
+  make DESTDIR="$pkgdir" install-awk
+
+  # Fixing awkdir in r2awk
+  sed -i "s|$pkgdir/usr/lib/radare2/0.9.8/awk|/usr/lib/radare2/0.9.8/awk|" \
+    "$pkgdir/usr/bin/r2awk"
+
+  cp -rf perl/*.so "$pkgdir/usr/lib/perl5/site_perl/r2"
+  cp -rf perl/*.pm "$pkgdir/usr/lib/perl5/site_perl/r2"
+
+  make DESTDIR="$pkgdir" install-vapi
+  make DESTDIR="$pkgdir" install-ruby
+  make DESTDIR="$pkgdir" lua-install
   make DESTDIR="$pkgdir" install
 
   cd r2pipe/python
+
   python2 setup.py install --prefix=/usr "--root=$pkgdir"
 }
