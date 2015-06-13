@@ -24,7 +24,6 @@ set -e
 NAME='REPL_NAME'
 VERSION='REPL_VERSION'
 LANGUAGE="REPL_LANGUAGE"
-PKGARCH="REPL_ARCH"
 
 ARCH=$(getconf LONG_BIT)
 
@@ -52,7 +51,7 @@ update() {
 		\nCheck permissions of $INSTALL_DIRECTORY. \
 		\nThe error log can be found in $LOG_FILE."
 
-	[[ -f $INSTALL_DIRECTORY/start-tor-browser ]] && echo $VERSION > $VERSION_FILE
+	[[ -f $INSTALL_DIRECTORY/Browser/start-tor-browser ]] && echo $VERSION > $VERSION_FILE
 }
 
 usage() {
@@ -108,4 +107,4 @@ else
 fi
 
 # start tor-browser
-cd $INSTALL_DIRECTORY && ./start-tor-browser --class Tor\ Browser "${args[@]}"
+cd $INSTALL_DIRECTORY/Browser && ./start-tor-browser --class Tor\ Browser "${args[@]}"
