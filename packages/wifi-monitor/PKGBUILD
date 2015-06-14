@@ -2,37 +2,37 @@
 # See COPYING for license details.
 
 pkgname='wifi-monitor'
-pkgver='0.r22.71340a3'
+pkgver=22.71340a3
 pkgrel=1
 groups=('blackarch' 'blackarch-sniffer')
-pkgdesc="Prints the IPs on your local network that're sending the most packets"
-url="https://github.com/DanMcInerney/wifi-monitor"
+pkgdesc="Prints the IPs on your local network that're sending the most packets."
+url='https://github.com/DanMcInerney/wifi-monitor'
 arch=('any')
 license=('custom')
 depends=('python2' 'scapy')
 makedepends=('git')
-source=("git+https://github.com/DanMcInerney/wifi-monitor.git")
+source=('git+https://github.com/DanMcInerney/wifi-monitor.git')
 sha1sums=('SKIP')
 
 pkgver() {
   cd "$srcdir/wifi-monitor"
-  printf "0.r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare(){
-  grep -iRl 'python' "$srcdir/wifi-monitor" | xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
+prepare() {
+  cd "$srcdir"
+
+  find . -type f -name '*.py' -exec sed -i \
+    's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|' {} \;
 }
 
 package() {
   cd "$srcdir/wifi-monitor"
 
-  # Base directories.
-  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/licenses/wifi-monitor"
 
   install -Dm644 README.md "$pkgdir/usr/share/licenses/wifi-monitor/"
-
   install -m755 wifi-monitor.py "$pkgdir/usr/bin/wifi-monitor"
-
 }
-
