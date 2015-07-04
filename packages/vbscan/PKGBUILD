@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='vbscan'
+pkgver=7.466253e
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer' 'blackarch-scanner')
+pkgdesc='A black box vBulletin vulnerability scanner written in perl.'
+arch=('any')
+url='https://github.com/rezasp/vbscan'
+license=('GPL3')
+depends=('perl')
+makedepends=('git')
+source=('git+https://github.com/rezasp/vbscan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/vbscan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/vbscan"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/vbscan"
+
+  install -Dm644 README.txt "$pkgdir/usr/share/doc/vbscan/README.txt"
+  install -Dm644 -t "$pkgdir/usr/share/licenses/vbscan/" COPYING.GPL LICENCE
+
+  rm README.txt COPYING.GPL LICENCE
+
+  cp -a * "$pkgdir/usr/share/vbscan/"
+
+  cat > "$pkgdir/usr/bin/vbscan" << EOF
+#!/bin/sh
+cd /usr/share/vbscan
+exec perl vbscan.pl "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/vbscan"
+}

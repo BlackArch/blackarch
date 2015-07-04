@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='wpa2-halfhandshake-crack'
+pkgver=25.0d564b1
+pkgrel=1
+groups=('blackarch' 'blackarch-wireless' 'blackarch-cracker')
+pkgdesc='A POC to show it is possible to capture enough of a handshake with a user from a fake AP to crack a WPA2 network without knowing the passphrase of the actual AP.'
+arch=('any')
+url='https://github.com/dxa4481/WPA2-HalfHandshake-Crack'
+license=('MIT')
+depends=('python2' 'python2-pcapfile' 'python2-pbkdf2_ctypes')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/dxa4481/WPA2-HalfHandshake-Crack.git')
+sha1sums=('SKIP')
+
+prepare() {
+  cd "$srcdir/WPA2-HalfHandshake-Crack"
+
+  sed -i '1 i\#!/usr/bin/python2' halfHandshake.py
+}
+
+pkgver() {
+  cd "$srcdir/WPA2-HalfHandshake-Crack"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/WPA2-HalfHandshake-Crack"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/wpa2-halfhandshake-crack"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/wpa2-halfhandshake-crack/" \
+    README.md wifihacking.md
+  install -Dm644 LICENSE \
+    "$pkgdir/usr/share/licenses/wpa2-halfhandshake-crack/LICENSE"
+
+  rm -rf README.md wifihacking.md LICENSE WPA2_HalfHandshake_Crack.egg-info
+
+  cp -a * "$pkgdir/usr/share/wpa2-halfhandshake-crack"
+
+  cat > "$pkgdir/usr/bin/wpa2-halfhandshake-crack" << EOF
+#!/bin/sh
+cd /usr/share/wpa2-halfhandshake-crack
+exec python2 halfHandshake.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/wpa2-halfhandshake-crack"
+}

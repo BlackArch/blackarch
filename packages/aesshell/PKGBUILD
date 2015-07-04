@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='aesshell'
+pkgver='0.7'
+pkgrel=1
+groups=('blackarch' 'blackarch-backdoor' 'blackarch-windows')
+pkgdesc='A backconnect shell for Windows and Unix written in python and uses AES
+in CBC mode in conjunction with HMAC-SHA256 for secure transport.'
+arch=('any')
+url='https://packetstormsecurity.com/files/132438/AESshell-0.7.html'
+license=('custom:unknown')
+depends=('python2' 'python2-crypto')
+source=("http://packetstorm.sigterm.no/UNIX/penetration/rootkits/aesshell-${pkgver}.tar.bz2")
+sha1sums=('0a3b547d59c94ddae5dc148d845b29312210f5cc')
+
+package() {
+  cd "$srcdir/aesshell"
+
+  local tools="bc listen prepare"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/aesshell/windows"
+
+  install -Dm644 readme.txt "$pkgdir/usr/share/doc/aesshell/readme.txt"
+
+  rm readme.txt
+
+  install -Dm644 -t "$pkgdir/usr/share/aesshell/windows/" bc.exe *.dll
+
+  rm bc.exe *.dll
+
+  cp -a * "$pkgdir/usr/share/aesshell/"
+
+  for i in ${tools}
+  do
+    if [ "${i}" = "prepare" ]
+    then
+      cat > "$pkgdir/usr/bin/aesshell-${i}" << EOF
+#!/bin/sh
+cd /usr/share/aesshell
+exec python2 ${i}.py
+EOF
+    else
+      cat > "$pkgdir/usr/bin/aesshell-${i}" << EOF
+#!/bin/sh
+exec python2 /usr/share/aesshell/${i}.py "\$@"
+EOF
+    fi
+    chmod a+x "$pkgdir/usr/bin/aesshell-${i}"
+  done
+}

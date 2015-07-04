@@ -2,59 +2,29 @@
 # See COPYING for license details.
 
 pkgname='plecost'
-pkgver='2'
-pkgrel=9
-groups=('blackarch' 'blackarch-fingerprint' 'blackarch-webapp')
-pkgdesc='Wordpress finger printer tool search and retrieve information about the plugins versions installed in Wordpress systems.'
+pkgver=64.cc9540f
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fingerprint')
+pkgdesc='Wordpress finger printer Tool.'
 arch=('any')
-url='http://code.google.com/p/plecost/'
-license=('GPL3')
-depends=('python2')
-makedepends=('subversion')
-provides=('plecost')
+url='https://github.com/iniqua/plecost'
+license=('BSD')
+depends=('python' 'python-lxml' 'python-lxml' 'python-termcolor'
+         'python-simplejson' 'python-aiohttp' 'python-chardet')
+makedepends=('git' 'python-setuptools')
+source=('git+https://github.com/iniqua/plecost.git')
 sha1sums=('SKIP')
 
-_svntrunk='http://plecost.googlecode.com/svn/trunk/'
-_svnmod='plecost'
+pkgver() {
+  cd "$srcdir/plecost"
 
-build() {
-  cd "$srcdir"
-
-  msg "Connecting to SVN server...."
-
-  if [[ -d "$_svnmod/.svn" ]]; then
-    (cd "$_svnmod" && svn up -r "$pkgver")
-  else
-    svn co "$_svntrunk" --config-dir ./ -r "$pkgver" "$_svnmod"
-  fi
-
-  msg "SVN checkout done or server timeout"
-  msg "Starting build..."
-
-  rm -rf "$srcdir/$_svnmod-build"
-  cp -r "$srcdir/$_svnmod" "$srcdir/$_svnmod-build"
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd "$srcdir/$_svnmod-build"
+  cd "$srcdir/plecost"
 
-  # Make base directory structure.
-  mkdir -p "$pkgdir/usr/share"
-  mkdir -p "$pkgdir/usr/bin"
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1
 
-  # Install docs.
-  cp --no-preserve=ownership -r "$srcdir/$_svnmod" "$pkgdir/usr/share"
-
-  # Install bin.
-  sed -i "s|!/usr/bin/python|!/usr/bin/python2|g" \
-    "$pkgdir/usr/share/plecost/plecost-0.2.2-8-beta.py"
-
-  # Make joint script.
-  touch "$pkgdir/usr/bin/plecost"
-  cat > "$pkgdir/usr/bin/plecost" << EOF
-#!/bin/sh
-exec /usr/share/plecost/plecost-0.2.2-8-beta.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/plecost"
+  install -Dm644 -t "$pkgdir/usr/share/doc/plecost/" README.md CHANGELOG
 }

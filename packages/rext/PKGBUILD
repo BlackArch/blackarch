@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='rext'
+pkgver=9.af19630
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-scanner')
+pkgdesc='Router EXploitation Toolkit - small toolkit for easy creation and usage of various python scripts that work with embedded devices.'
+arch=('any')
+url='https://github.com/j91321/rext'
+license=('GPL3')
+depends=('python' 'python-requests')
+makedepends=('git')
+source=('git+https://github.com/j91321/rext.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/rext"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/rext"
+
+  sed -i '5d' rext.py
+}
+
+package() {
+  cd "$srcdir/rext"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/rext"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/rext/" README.md \
+    requirements.txt
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/rext/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/rext"
+
+  cat > "$pkgdir/usr/bin/rext" << EOF
+#!/bin/sh
+cd /usr/share/rext
+exec python rext.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/rext"
+}

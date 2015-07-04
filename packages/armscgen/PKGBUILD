@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='armscgen'
+pkgver=63.abf3ccb
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-automation')
+pkgdesc='ARM Shellcode Generator (Mostly Thumb Mode).'
+arch=('any')
+url='https://github.com/alexpark07/ARMSCGen'
+license=('GPL' 'GPL2' 'MIT')
+depends=('python2' 'capstone')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/alexpark07/ARMSCGen.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ARMSCGen"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/ARMSCGen"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/ARMSCGen"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir"
+
+  install -Dm755 scgen.py "$pkgdir/usr/bin/armscgen"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/armscgen" README.md \
+    shellcodes_lists.md requirements.txt
+
+  cp -a docs/* "$pkgdir/usr/share/doc/armscgen"
+
+  install -Dm644 -t "$pkgdir/usr/share/licenses/armscgen" LICENSE \
+    LICENSE-ARMSCGen.txt
+}
