@@ -21,3 +21,28 @@ diff -Nur winexe-1.00.orig/source4/lib/tls/tls.c winexe-1.00/source4/lib/tls/tls
  	tls->tls_detect = false;
  
  	tls->output_pending  = false;
+diff -Nur winexe-1.00.orig/source4/lib/tls/tls.c winexe-1.00/source4/lib/tls/tls.c
+--- winexe-1.00.orig/source4/lib/tls/tls.c	2015-07-16 18:10:12.636658106 +0200
++++ winexe-1.00/source4/lib/tls/tls.c	2015-07-16 17:51:55.528385030 +0200
+@@ -542,7 +542,9 @@
+ {
+ 	struct tls_context *tls;
+ 	int ret = 0;
++#if GNUTLS_VERSION_NUMBER < 0x030000
+ 	const int cert_type_priority[] = { GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0 };
++#endif
+ 	struct socket_context *new_sock;
+ 	NTSTATUS nt_status;
+ 	
+@@ -568,7 +570,11 @@
+ 	gnutls_certificate_set_x509_trust_file(tls->xcred, ca_path, GNUTLS_X509_FMT_PEM);
+ 	TLSCHECK(gnutls_init(&tls->session, GNUTLS_CLIENT));
+ 	TLSCHECK(gnutls_set_default_priority(tls->session));
++#if GNUTLS_VERSION_NUMBER < 0x030000
+ 	gnutls_certificate_type_set_priority(tls->session, cert_type_priority);
++#else
++	gnutls_priority_set_direct(tls->session, "NORMAL:+CTYPE-OPENPGP", NULL);
++#endif
+ 	TLSCHECK(gnutls_credentials_set(tls->session, GNUTLS_CRD_CERTIFICATE, tls->xcred));
+ 
+ 	talloc_set_destructor(tls, tls_destructor);
