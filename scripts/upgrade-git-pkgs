@@ -10,7 +10,7 @@
 #   - use 'git ls-remote $URL HEAD' instead of makepkg -o. thanks to elken.
 
 # upgrade-git-pkg version
-VERSION="upgrade-git-pkgs v0.1.1"
+VERSION="upgrade-git-pkgs v0.2"
 
 # true / false
 FALSE=0
@@ -44,6 +44,21 @@ err()
 {
     echo "[-] ERROR: ${@}"
     exit $FAILURE
+
+    return $SUCCESS
+}
+
+
+# exclude given packages
+exclude_packages()
+{
+    echo "[*] excluding given packages"
+
+    for ex in ${excludes}
+    do
+        echo "  -> ${ex}"
+        sed -i "/\<${ex}\>/d" /tmp/git-packages
+    done
 
     return $SUCCESS
 }
@@ -153,6 +168,7 @@ usage()
     echo "  -u <user>   - username for babuild/barelease"
     echo "  -k <keyid>  - gpg key id for babuild/barelease"
     echo "  -n <name>   - your real name for package signing (e.g. 'Foo bar')"
+    echo "  -e <pkgs>   - exclude given packages (e.g. foo,bar,foobar)"
     echo "  -s          - skip updating versions step (default: off)"
     echo "  -l          - dry-run, do not upgrade just list the packages"
     echo "  -v          - verbose mode (default: off)"
@@ -205,7 +221,7 @@ check_args()
 # parse command line options
 get_opts()
 {
-    while getopts u:k:n:slvVH flags
+    while getopts u:k:n:e:slvVH flags
     do
         case ${flags} in
             u)
@@ -216,6 +232,9 @@ get_opts()
                 ;;
             n)
                 name="${OPTARG}"
+                ;;
+            e)
+                excludes="`echo ${OPTARG} | tr -s ',' ' '`"
                 ;;
             s)
                 SKIP_UPDATE=$TRUE
@@ -254,6 +273,7 @@ main()
     get_opts ${@}
     check_args ${@}
     get_git_packages
+    exclude_packages
     update_version
     cmp_version
 
