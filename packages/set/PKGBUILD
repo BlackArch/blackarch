@@ -1,0 +1,98 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='set'
+pkgver='6.5.5'
+pkgrel=1
+epoch=1
+groups=('blackarch' 'blackarch-social' 'blackarch-exploitation')
+pkgdesc='Social-engineer toolkit. Aimed at penetration testing around Social-Engineering.'
+arch=('any')
+url='https://www.trustedsec.com/downloads/social-engineer-toolkit'
+license=('BSD')
+makedepends=('git')
+depends=('python2' 'python2-beautifulsoup3' 'python2-pexpect'
+         'java-environment')
+optdepends=('ettercap: DNS spoofing and ARP cache poisoning capabilities'
+            'sendmail: email address spoofing'
+            'python2-pefile: advanced AV evasion via hijacking a legit digital certificate'
+            'apache: increase speed of web attack vectors'
+            'openssl: create self-signed SSL certificates'
+            'xterm: default terminal for SET command center'
+            'upx: executable packer for better AV evasion'
+            'aircrack-ng: rouge access point capabilities'
+            'dsniff: DNS spoofing capabilities'
+            'python2-cryptography: Encrypted communications'
+            'metasploit: metasploit exploit payloads')
+options=('!strip')
+source=("https://github.com/trustedsec/social-engineer-toolkit/archive/${pkgver}.tar.gz")
+sha1sums=('6cc04c68486e760aa72fd2c943b991fd40726dd2')
+backup=('usr/share/set/config/set_config')
+
+prepare() {
+  cd "$srcdir/social-engineer-toolkit-$pkgver"
+
+  # Fix shebands in all se*
+  sed -i -e "s|#![ ]*/usr/bin/python$|#!/usr/bin/python2|" \
+      -i -e "s|#![ ]*/usr/bin/env python$|#!/usr/bin/env python2|" \
+      se*
+
+  # Fix tab-space inconsistencies.
+  sed -i 's/\t/    /g' se*
+
+  # Fix all calls to 'python-pycrypto' change to 'python2-crypto'
+  grep -Rl python-pycrypto ./ | xargs sed -i 's|python-pycrypto|python2-crypto|g'
+
+  cd "src/core/"
+
+  ## Check if Metasploit is installed
+  if [ -d /usr/share/metasploit ]; then
+    sed -i 's|/opt/metasploit/apps/pro/msf3|/usr/share/metasploit|g' \
+      config.baseline
+
+  fi
+
+  ## Apply httpd directory
+  sed -i 's|/var/www|/srv/http|g' config.baseline
+
+  ## Set proper dnsspoof bin
+  sed -i 's|/usr/local/sbin/dnsspoof|/usr/bin/dnsspoof|g' config.baseline
+
+  ## Set proper airbase-ng bin
+  sed -i 's|/usr/local/sbin/airbase-ng|/usr/bin/airbase-ng|g' config.baseline
+}
+
+package() {
+  cd "$srcdir/social-engineer-toolkit-$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/set"
+  mkdir -p "$pkgdir/usr/share/doc/set"
+
+  cp --no-preserve=ownership -R * "$pkgdir/usr/share/set"
+  cp --no-preserve=ownership -R readme/* "$pkgdir/usr/share/doc/set"
+
+  # Remove `setup.py`.
+  rm "$pkgdir/usr/share/set/setup.py"
+
+  # Fix shebangs in all .py files
+  sed -i -e "s|/usr/bin/python$|/usr/bin/python2|" \
+      -i -e "s|/usr/bin/env python$|/usr/bin/env python2|" \
+      $(find "${pkgdir}" -type f)
+
+  # Joint script to handle default configuration.
+  cat > "$pkgdir/usr/bin/setoolkit" << EOF
+#!/bin/sh
+
+# Make sure only root can run our script
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root" 1>&2
+   exit 1
+fi
+
+cd /usr/share/set
+./setoolkit
+EOF
+
+  chmod +x "$pkgdir/usr/bin/setoolkit"
+}
