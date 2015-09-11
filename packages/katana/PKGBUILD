@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='katana'
+pkgver='0.0.0.7'
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-dos' 'blackarch-cracker'
+        'blackarch-scanner' 'blackarch-recon')
+pkgdesc='A framework that seekss to unite general auditing tools, which are general pentesting tools (Network,Web,Desktop and others).'
+arch=('any')
+url='http://sourceforge.net/projects/katanas/'
+license=('GPL3')
+depends=('python2' 'python2-lxml')
+source=("http://downloads.sourceforge.net/project/katanas/katana_${pkgver}.rar")
+sha1sums=('f8f919efa90f65b05d69be2cdf8ac70b1080fff9')
+
+package() {
+  cd "$srcdir"
+
+  local tools="ktfconsole ktflab ktflinker ktfrun"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/katana"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/katana/" doc/*
+  install -Dm644 -t "$pkgdir/usr/share/licenses/katana/" COPYING.GPL LICENCE
+
+  rm -rf doc/ COPYING.GPL LICENCE
+
+  cp -a * "$pkgdir/usr/share/katana"
+
+  for i in ${tools}
+  do
+    cat > "$pkgdir/usr/bin/${i}" << EOF
+#!/bin/sh
+cd /usr/share/katana
+exec python2 ${i}.py "\$@"
+EOF
+    chmod a+x "$pkgdir/usr/bin/${i}"
+  done
+}
