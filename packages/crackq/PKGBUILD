@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='crackq'
+pkgver=47.c5b8c5e
+pkgrel=1
+groups=('blackarch' 'blackarch-cracker')
+pkgdesc='Hashcrack.org GPU-accelerated password cracker.'
+arch=('any')
+url='https://github.com/vnik5287/Crackq'
+license=('custom:unknown')
+makedepends=('git')
+depends=('python2' 'python2-simplejson')
+source=('git+https://github.com/vnik5287/Crackq.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Crackq"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Crackq"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/crackq"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/crackq/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/crackq"
+
+  cat > "$pkgdir/usr/bin/crackqcli" << EOF
+#!/bin/sh
+exec python2 /usr/share/crackq/crackqcli.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/crackqcli"
+}

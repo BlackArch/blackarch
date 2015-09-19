@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='shareenum'
+pkgver=46.3bfa81d
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='Tool to enumerate shares from Windows hosts.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/CroweCybersecurity/shareenum'
+license=('GPL3')
+depends=('samba' 'tdb')
+makedepends=('git')
+source=('git+https://github.com/CroweCybersecurity/shareenum.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/shareenum"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/shareenum"
+
+  sed -i 's|/usr/local/samba/include|/usr/include/samba-4.0|' src/Makefile
+  sed -i 's|/usr/local/samba/lib/private|/usr/lib/samba|' src/Makefile
+}
+
+package() {
+  cd "$srcdir/shareenum"
+
+  cd src
+
+  make
+
+  install -Dm755 shareenum "$pkgdir/usr/bin/shareenum"
+  install -Dm644 ../README.md "$pkgdir/usr/share/doc/shareenum/README.md"
+  install -Dm644 ../LICENSE "$pkgdir/usr/share/licenses/shareenum/LICENSE"
+}

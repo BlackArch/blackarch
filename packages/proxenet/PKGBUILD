@@ -1,0 +1,67 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='proxenet'
+pkgver=589.3e07775
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-proxy' 'blackarch-sniffer')
+pkgdesc='THE REAL hacker friendly proxy for web application pentests.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/hugsy/proxenet'
+license=('GPL2')
+depends=('mbedtls' 'lua' 'ruby' 'python3' 'python2')
+makedepends=('git' 'cmake')
+source=('git+https://github.com/hugsy/proxenet.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/proxenet"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/proxenet"
+
+  sed -i 's|"/opt/${PROGNAME}"|"/usr/"|' CMakeLists.txt
+
+  git submodule init
+  git submodule update
+}
+
+build() {
+  cd "$srcdir/proxenet"
+
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr -DUSE_PERL_PLUGIN=OFF .
+
+  make
+
+  make -C keys
+}
+
+package() {
+  cd "$srcdir/proxenet"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/proxenet"
+
+  install -Dm755 control-web.py "$pkgdir/usr/bin/proxenet-control-web"
+  install -Dm755 control-client.py "$pkgdir/usr/bin/proxenet-control-client"
+  install -Dm644 proxenet.1 "$pkgdir/usr/share/man/man1/proxenet.1"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/proxenet/LICENSE"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/proxenet/README.md"
+
+  cp -a proxenet keys proxenet-plugins "$pkgdir/usr/share/proxenet"
+  cp -a docs/* "$pkgdir/usr/share/doc/proxenet/"
+
+  mkdir "$pkgdir/usr/share/proxenet/proxenet-plugins/autoload"
+
+  cat > "$pkgdir/usr/bin/proxenet" << EOF
+#!/bin/sh
+exec /usr/share/proxenet/proxenet -x /usr/share/proxenet/proxenet-plugins \\
+  -c /usr/share/proxenet/keys/proxenet.crt \\
+  -k /usr/share/proxenet/keys/proxenet.key "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/proxenet"
+}
