@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bettercap'
+pkgver=255.fae1cd9
+pkgrel=1
+groups=('blackarch' 'blackarch-sniffer' 'blackarch-exploitation'
+        'blackarch-networking')
+pkgdesc='A complete, modular, portable and easily extensible MITM framework.'
+arch=('any')
+url='https://github.com/evilsocket/bettercap'
+license=('GPL3')
+depends=('ruby' )
+makedepends=('git' 'libpcap')
+source=('git+https://github.com/evilsocket/bettercap.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/bettercap"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+
+}
+
+build() {
+  cd "$srcdir/bettercap"
+
+  gem build bettercap.gemspec
+}
+
+package() {
+  cd "$srcdir/bettercap"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/bettercap"
+
+  local _gemdir="$(ruby -e'puts Gem.default_dir')"
+
+  gem install --no-user-install -n "$pkgdir/usr/bin" \
+    -i "$pkgdir/$_gemdir" bettercap*.gem
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/bettercap/" README.md TODO.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/bettercap/LICENSE.md"
+}

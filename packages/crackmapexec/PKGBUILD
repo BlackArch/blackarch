@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='crackmapexec'
+pkgver=52.6e8f58a
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation')
+pkgdesc='A swiss army knife for pentesting Windows/Active Directory environments.'
+arch=('any')
+url='https://github.com/byt3bl33d3r/CrackMapExec'
+license=('custom:unknown')
+depends=('python2' 'impacket' 'python2-gevent' 'python2-netaddr'
+         'python2-crypto' 'python2-pyasn1' 'python2-termcolor')
+makedepends=('git')
+source=('git+https://github.com/byt3bl33d3r/CrackMapExec.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/CrackMapExec"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/CrackMapExec"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/crackmapexec/"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/crackmapexec/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/crackmapexec/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/crackmapexec"
+
+  cat > "$pkgdir/usr/bin/crackmapexec" << EOF
+#!/bin/sh
+cd /usr/share/crackmapexec
+exec python2 crackmapexec.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/crackmapexec"
+}

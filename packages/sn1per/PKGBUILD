@@ -1,0 +1,58 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sn1per'
+pkgver=11.19e9677
+pkgrel=1
+pkgdesc='Automated Pentest Recon Scanner.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-automation' 'blackarch-scanner'
+        'blackarch-cracker')
+url='https://github.com/1N3/Sn1per'
+license=('custom:unknown')
+arch=('any')
+depends=('whois' 'theharvester' 'dnsenum' 'curl' 'nmap' 'php' 'w3af' 'amap'
+         'wapiti' 'hydra' 'firefox' 'wpscan' 'sqlmap' 'arachni' 'golismero'
+         'nbtscan' 'enum4linux' 'cisco-torch' 'metasploit' 'nikto' 'bind-tools'
+         'smtp-user-enum' 'whatweb' 'python' 'sslscan')
+makedepends=('git')
+source=('git+https://github.com/1N3/Sn1per.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Sn1per"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/Sn1per"
+
+  sed -i '/apt-get install/d' install.sh
+}
+
+build() {
+  cd "$srcdir/Sn1per"
+
+  sh ./install.sh
+}
+
+package() {
+  cd "$srcdir/Sn1per"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/sn1per"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/sn1per/README.md"
+
+  rm README.md install.sh
+
+  cp -a * "$pkgdir/usr/share/sn1per"
+
+  cat > "$pkgdir/usr/bin/sn1per" << EOF
+#!/bin/sh
+cd /usr/share/sn1per
+exec ./sniper "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/sn1per"
+}

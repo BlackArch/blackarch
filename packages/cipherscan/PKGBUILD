@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cipherscan'
+pkgver=336.73b21d3
+pkgrel=1
+pkgdesc='A very simple way to find out which SSL ciphersuites are supported by a target.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-crypto')
+url='https://github.com/jvehent/cipherscan'
+license=('OpenSSL')
+arch=('any')
+depends=('bash' 'python2' 'openssl')
+makedepends=('git')
+source=('git+https://github.com/jvehent/cipherscan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/cipherscan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/cipherscan"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/cipherscan"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/cipherscan/README.md"
+  install -Dm644 OpenSSL-LICENSE \
+    "$pkgdir/usr/share/licenses/cipherscan/OpenSSL-LICENSE"
+
+  rm README.md OpenSSL-LICENSE
+
+  cp -a * "$pkgdir/usr/share/cipherscan"
+
+  cat > "$pkgdir/usr/bin/cipherscan" << EOF
+#!/bin/sh
+cd /usr/share/cipherscan
+exec ./cipherscan "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/cipherscan"
+}

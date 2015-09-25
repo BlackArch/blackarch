@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dhcpf'
+pkgver=2.96bc8a9
+pkgrel=1
+groups=('blackarch' 'blackarch-fingerprint')
+pkgdesc='Passive DHCP fingerprinting implementation.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/elceef/dhcpf'
+license=('custom:unknown')
+makedepends=('git')
+depends=('libpcap')
+source=('git+https://github.com/elceef/dhcpf.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/dhcpf"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/dhcpf"
+
+  ./Build.sh
+}
+
+package() {
+  cd "$srcdir/dhcpf"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/dhcpf"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/dhcpf/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/dhcpf/"
+
+  cat > "$pkgdir/usr/bin/dhcpf" << EOF
+#!/bin/sh
+exec /usr/share/dhcpf/dhcpf "$\@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/dhcpf"
+}
