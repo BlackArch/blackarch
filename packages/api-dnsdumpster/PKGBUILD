@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='api-dnsdumpster'
+pkgver=9.18466eb
+pkgrel=1
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
+pkgdesc='Unofficial Python API for http://dnsdumpster.com/.'
+arch=('any')
+url='https://github.com/PaulSec/API-dnsdumpster.com'
+license=('custom:unknown')
+depends=('python2-beautifulsoup4')
+makedepends=('git')
+source=('git+https://github.com/PaulSec/API-dnsdumpster.com.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/API-dnsdumpster.com"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/API-dnsdumpster.com"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/api-dnsdumpster"
+
+  install -Dm644 -t "$pkgdir/usr/share/api-dnsdumpster/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/api-dnsdumpster"
+
+  cat > "$pkgdir/usr/bin/api-dnsdumpster" << EOF
+#!/bin/sh
+exec python2 /usr/share/api-dnsdumpster/API_example.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/api-dnsdumpster"
+}
