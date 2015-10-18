@@ -1,0 +1,1573 @@
+--- src/sctpscan/sctpscan.c	2015-10-13 13:09:00.799796981 +0200
++++ sctpscan.c	2015-10-13 13:06:50.763834780 +0200
+@@ -26,7 +26,7 @@
+ //
+ // On MacOSX:
+ // cc -g sctpscan.c -o sctpscan -L/sw/lib/ -I /sw/include/glib-2.0/ -I /sw/lib/glib-2.0/include/ -lglib-2.0
+-// (it seems that on some Tiger install, the glib2.0 path is not accessible to non-priviledged users, 
++// (it seems that on some Tiger install, the glib2.0 path is not accessible to non-priviledged users,
+ // check this in case of problem), or manually add the path to the added libraries, in this case:
+ //
+ // Compile Problems:
+@@ -38,11 +38,11 @@
+ //
+ // Compile Problems:
+ // Q: I try to run the Dummy SCTP server for testing, and I get: "socket: Socket type not supported"
+-// A: Your kernel does not support SCTP sockets. 
++// A: Your kernel does not support SCTP sockets.
+ //    	SCTP sockets are supported by Linux Kernel 2.6 or Solaris 10.
+ //    For Linux, you may want to try as root something like: modprobe sctp
+ //    	Then rerun: sctpscan --dummyserver
+-//    	Note: you only need a SCTP-aware kernel to run dummyserver. 
++//    	Note: you only need a SCTP-aware kernel to run dummyserver.
+ //    	Scanning is ok with 2.4 linux kernels!
+ //    For Mac Os X, you may add support for SCTP in Tiger 10.4.8 by downloading:
+ //	http://sctp.fh-muenster.de/sctp-nke.html
+@@ -59,19 +59,19 @@
+ // VERSION HISTORY
+ //
+ // v1: added -Frequent or -F to scan for frequently used ports in SCTP
+-// 
+-// v2: added select() before writing, 
++//
++// v2: added select() before writing,
+ //     option to display the list of ports.
+-// 
++//
+ // v3: ICMP code display in decimal, not hexadecimal
+ //     SCTP packets display finally working
+-// 
+-// v4: personnalized, 
++//
++// v4: personnalized,
+ //     removed ref to sctpping
+ //     password protection
+-// 
++//
+ // v5: changed usage location tracking to wave with FPID as dest port: 48888+FPID
+-// 
++//
+ // v6:
+ //     added mode for autoportscan live SCTP hosts
+ //     added new common ports in Frequent Ports to scan: 7102, 7103, 7105, 7551, 7701, 7800, 8001
+@@ -81,7 +81,7 @@
+ // v7: added scan option for class A, B, C, ... scans
+ //
+ // v8: add the differentiation between packets for this host to do portscan and residual packets from previous scanned host
+-//	
++//
+ // v9: added automatic inferface lookup, can be enhanced
+ //     add the interface and ip address detection at each start of C-Class scan or start of program
+ //     added ICMP packet type decoding
+@@ -127,9 +127,9 @@
+ //	Doesn't see returned packets if the SCTP kernel support is present
+ //		Need libpcap support to circumvent this.
+ //	Doesn't scan correctly with -B (both) scan fashion... only SHUTDOWN_ACKs are sent....
+-//		anyway, this scan method is kind of useless since it doesn't show open ports... 
++//		anyway, this scan method is kind of useless since it doesn't show open ports...
+ //		Just mention SCTP presence
+-//	Bug in received packet statistics: says it received one SCTP packets when it never actually 
++//	Bug in received packet statistics: says it received one SCTP packets when it never actually
+ //		reveived one, but received an INIT packet sent to itself.
+ //
+ 
+@@ -150,14 +150,14 @@
+ //	Add reporting of scanned C-class netblock
+ //	Add server side validation of already scanned zone.
+ //	Add public access to the SCTP collaboration platform
+-// 
++//
+ //	enhance the setting/auto-setting of scan timeouts & waits / MODE
+ //	add fuzzy logic control on packet emission delays
+ //
+-//	IPv6 support would be very nice. 
++//	IPv6 support would be very nice.
+ //	specify multiple local addresses to test the multi-homing (sctp_bindx()).
+ //	specify a port range
+-//	improve fuzzing/fingerprinting (ECN support, supported address types, Add-IP, 
++//	improve fuzzing/fingerprinting (ECN support, supported address types, Add-IP,
+ //	  Authentication, PR-SCTP, Stream Reset, maximum number of in and out streams)
+ //
+ 
+@@ -166,7 +166,7 @@
+ // Kernel support for SCTP sockets can have adverse effect with our scanning results
+ 
+ // Under Linux 2.6 kernel
+-// 
++//
+ // [root@nubuntu] ./sctpscan -s -r 192.168.0 -p 10000
+ // Netscanning with Crc32 checksumed packet
+ // 192.168.0.3 SCTP present on port 10000
+@@ -174,29 +174,29 @@
+ // End of scan: duration=5 seconds packet_sent=254 packet_rcvd=205 (SCTP=2, ICMP=203)
+ // [root@nubuntu] uname -a
+ // Linux nubuntu 2.6.17-10-386 #2 Fri Oct 13 18:41:40 UTC 2006 i686 GNU/Linux
+-// [root@nubuntu] 
++// [root@nubuntu]
+ //
+-// If after this scan, we test the dummy server SCTP daemon built in SCTPscan, 
++// If after this scan, we test the dummy server SCTP daemon built in SCTPscan,
+ // we'll notice that further scans from this host will have different behaviours.
+-// 
++//
+ // [root@nubuntu] ./sctpscan -d
+ // Trying to bind SCTP port
+ // Listening on SCTP port 10000
+-// ^C    
+-// [root@nubuntu] 
+-// [root@nubuntu] 
++// ^C
++// [root@nubuntu]
++// [root@nubuntu]
+ // [root@nubuntu] ./sctpscan -s -r 192.168.0 -p 10000
+ // Netscanning with Crc32 checksumed packet
+ // 192.168.0.3 SCTP present on port 10000
+ // SCTP packet received from 192.168.0.4 port 10000 type 1 (Initiation (INIT))
+ // SCTP packet received from 192.168.0.4 port 10000 type 6 (Abort (ABORT))
+ // End of scan: duration=5 seconds packet_sent=254 packet_rcvd=206 (SCTP=3, ICMP=203)
+-// [root@nubuntu] 
+-// 
++// [root@nubuntu]
++//
+ 
+-// 
++//
+ // Under Mac OS X:
+-// 
++//
+ // localhost:~/Documents/sctpscan/ root# kextload /System/Library/Extensions/SCTP.kext
+ // kextload: /System/Library/Extensions/SCTP.kext loaded successfully
+ // localhost:~/Documents/sctpscan/ root# ./sctpscan -s -r 192.168.0 -p 10000
+@@ -209,17 +209,17 @@
+ // SCTP packet received from 127.0.0.1 port 10000 type 1 (Initiation (INIT))
+ // 192.168.0.4 SCTP present on port 10000
+ // End of scan: duration=9 seconds packet_sent=254 packet_rcvd=5 (SCTP=2, ICMP=3)
+-// localhost:~/Documents/sctpscan/ root# 
+-// 
++// localhost:~/Documents/sctpscan/ root#
++//
+ // You saw in this example that loading the SCTP kernel module prevents SCTPscan to receive
+ // the response packets, and thus is not capable to detect presence of a remote open port.
+-// 
++//
+ 
+ // strss7 :
+ // ports: 10000, 10001, 10002
+ //
+ // lksctp-2_5_29-0_5_0:
+-// test/funtest.h ports: 
++// test/funtest.h ports:
+ //	SCTP_TESTPORT_1 1024
+ //	SCTP_TESTPORT_2 (SCTP_TESTPORT_1+1)
+ //	SCTP_TESTPORT_FOO (SCTP_TESTPORT_1+0xFF)
+@@ -282,7 +282,7 @@
+ 
+ #if defined(HAVE_STDIN_H)
+ #include <stdin.h>
+-#endif 
++#endif
+ 
+ #ifdef __linux__
+ #define __FAVOR_BSD				/* should be __FAVOUR_BSD ;) */
+@@ -303,7 +303,7 @@
+ #include <stdio.h>
+ #ifdef HAVE_STROPTS_H
+ #include <stropts.h>
+-#endif 
++#endif
+ #include <getopt.h>
+ #include <string.h>
+ #include <assert.h>
+@@ -348,7 +348,7 @@
+ #define IPPROTO_SCTP	132
+ #endif
+ 
+-/* 
++/*
+  * SCTP Checksum functions
+  */
+ 
+@@ -360,110 +360,110 @@
+ #ifdef linux
+ #include <linux/types.h>
+ #endif
+-     
+-#define CRC32C_POLY 0x1EDC6F41 
+-#define CRC32C(c,d) (c=(c>>8)^crc_c[(c^(d))&0xFF]) 
+-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */ 
+-/* Copyright 2001, D. Otis.  Use this program, code or tables    */ 
+-/* extracted from it, as desired without restriction.            */ 
+-/*                                                               */ 
+-/* 32 Bit Reflected CRC table generation for SCTP.               */ 
+-/* To accommodate serial byte data being shifted out least       */ 
+-/* significant bit first, the table's 32 bit words are reflected */ 
+-/* which flips both byte and bit MS and LS positions.  The CRC   */ 
+-/* is calculated MS bits first from the perspective of the serial*/ 
+-/* stream.  The x^32 term is implied and the x^0 term may also   */ 
+-/* be shown as +1.  The polynomial code used is 0x1EDC6F41.      */ 
+-/* Castagnoli93                                                  */ 
+-/* x^32+x^28+x^27+x^26+x^25+x^23+x^22+x^20+x^19+x^18+x^14+x^13+  */ 
+-/* x^11+x^10+x^9+x^8+x^6+x^0                                     */ 
+-/* Guy Castagnoli Stefan Braeuer and Martin Herrman              */ 
+-/* "Optimization of Cyclic Redundancy-Check Codes                */ 
+-/* with 24 and 32 Parity Bits",                                  */ 
+-/* IEEE Transactions on Communications, Vol.41, No.6, June 1993  */ 
+-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */ 
+-unsigned long  crc_c[256] = 
+-  { 
+-    0x00000000L, 0xF26B8303L, 0xE13B70F7L, 0x1350F3F4L,  
+-    0xC79A971FL, 0x35F1141CL, 0x26A1E7E8L, 0xD4CA64EBL,  
+-    0x8AD958CFL, 0x78B2DBCCL, 0x6BE22838L, 0x9989AB3BL,  
+-    0x4D43CFD0L, 0xBF284CD3L, 0xAC78BF27L, 0x5E133C24L,  
+-    0x105EC76FL, 0xE235446CL, 0xF165B798L, 0x030E349BL,  
+-    0xD7C45070L, 0x25AFD373L, 0x36FF2087L, 0xC494A384L,  
+-    0x9A879FA0L, 0x68EC1CA3L, 0x7BBCEF57L, 0x89D76C54L,  
+-    0x5D1D08BFL, 0xAF768BBCL, 0xBC267848L, 0x4E4DFB4BL,  
+-    0x20BD8EDEL, 0xD2D60DDDL, 0xC186FE29L, 0x33ED7D2AL,  
+-    0xE72719C1L, 0x154C9AC2L, 0x061C6936L, 0xF477EA35L,  
+-    0xAA64D611L, 0x580F5512L, 0x4B5FA6E6L, 0xB93425E5L,  
+-    0x6DFE410EL, 0x9F95C20DL, 0x8CC531F9L, 0x7EAEB2FAL,  
+-    0x30E349B1L, 0xC288CAB2L, 0xD1D83946L, 0x23B3BA45L,  
+-    0xF779DEAEL, 0x05125DADL, 0x1642AE59L, 0xE4292D5AL,  
+-    0xBA3A117EL, 0x4851927DL, 0x5B016189L, 0xA96AE28AL,  
+-    0x7DA08661L, 0x8FCB0562L, 0x9C9BF696L, 0x6EF07595L,  
+-    0x417B1DBCL, 0xB3109EBFL, 0xA0406D4BL, 0x522BEE48L,  
+-    0x86E18AA3L, 0x748A09A0L, 0x67DAFA54L, 0x95B17957L,  
+-    0xCBA24573L, 0x39C9C670L, 0x2A993584L, 0xD8F2B687L,  
+-    0x0C38D26CL, 0xFE53516FL, 0xED03A29BL, 0x1F682198L,  
+-    0x5125DAD3L, 0xA34E59D0L, 0xB01EAA24L, 0x42752927L,  
+-    0x96BF4DCCL, 0x64D4CECFL, 0x77843D3BL, 0x85EFBE38L,  
+-    0xDBFC821CL, 0x2997011FL, 0x3AC7F2EBL, 0xC8AC71E8L,  
+-    0x1C661503L, 0xEE0D9600L, 0xFD5D65F4L, 0x0F36E6F7L,  
+-    0x61C69362L, 0x93AD1061L, 0x80FDE395L, 0x72966096L,  
+-    0xA65C047DL, 0x5437877EL, 0x4767748AL, 0xB50CF789L,  
+-    0xEB1FCBADL, 0x197448AEL, 0x0A24BB5AL, 0xF84F3859L,  
+-    0x2C855CB2L, 0xDEEEDFB1L, 0xCDBE2C45L, 0x3FD5AF46L,  
+-    0x7198540DL, 0x83F3D70EL, 0x90A324FAL, 0x62C8A7F9L,  
+-    0xB602C312L, 0x44694011L, 0x5739B3E5L, 0xA55230E6L,  
+-    0xFB410CC2L, 0x092A8FC1L, 0x1A7A7C35L, 0xE811FF36L,  
+-    0x3CDB9BDDL, 0xCEB018DEL, 0xDDE0EB2AL, 0x2F8B6829L,  
+-    0x82F63B78L, 0x709DB87BL, 0x63CD4B8FL, 0x91A6C88CL,  
+-    0x456CAC67L, 0xB7072F64L, 0xA457DC90L, 0x563C5F93L,  
+-    0x082F63B7L, 0xFA44E0B4L, 0xE9141340L, 0x1B7F9043L,  
+-    0xCFB5F4A8L, 0x3DDE77ABL, 0x2E8E845FL, 0xDCE5075CL,  
+-    0x92A8FC17L, 0x60C37F14L, 0x73938CE0L, 0x81F80FE3L,  
+-    0x55326B08L, 0xA759E80BL, 0xB4091BFFL, 0x466298FCL,  
+-    0x1871A4D8L, 0xEA1A27DBL, 0xF94AD42FL, 0x0B21572CL,  
+-    0xDFEB33C7L, 0x2D80B0C4L, 0x3ED04330L, 0xCCBBC033L,  
+-    0xA24BB5A6L, 0x502036A5L, 0x4370C551L, 0xB11B4652L,  
+-    0x65D122B9L, 0x97BAA1BAL, 0x84EA524EL, 0x7681D14DL,  
+-    0x2892ED69L, 0xDAF96E6AL, 0xC9A99D9EL, 0x3BC21E9DL,  
+-    0xEF087A76L, 0x1D63F975L, 0x0E330A81L, 0xFC588982L,  
+-    0xB21572C9L, 0x407EF1CAL, 0x532E023EL, 0xA145813DL,  
+-    0x758FE5D6L, 0x87E466D5L, 0x94B49521L, 0x66DF1622L,  
+-    0x38CC2A06L, 0xCAA7A905L, 0xD9F75AF1L, 0x2B9CD9F2L,  
+-    0xFF56BD19L, 0x0D3D3E1AL, 0x1E6DCDEEL, 0xEC064EEDL,  
+-    0xC38D26C4L, 0x31E6A5C7L, 0x22B65633L, 0xD0DDD530L,  
+-    0x0417B1DBL, 0xF67C32D8L, 0xE52CC12CL, 0x1747422FL,  
+-    0x49547E0BL, 0xBB3FFD08L, 0xA86F0EFCL, 0x5A048DFFL,  
+-    0x8ECEE914L, 0x7CA56A17L, 0x6FF599E3L, 0x9D9E1AE0L,  
+-    0xD3D3E1ABL, 0x21B862A8L, 0x32E8915CL, 0xC083125FL,  
+-    0x144976B4L, 0xE622F5B7L, 0xF5720643L, 0x07198540L,  
+-    0x590AB964L, 0xAB613A67L, 0xB831C993L, 0x4A5A4A90L,  
+-    0x9E902E7BL, 0x6CFBAD78L, 0x7FAB5E8CL, 0x8DC0DD8FL,  
+-    0xE330A81AL, 0x115B2B19L, 0x020BD8EDL, 0xF0605BEEL,  
+-    0x24AA3F05L, 0xD6C1BC06L, 0xC5914FF2L, 0x37FACCF1L,  
+-    0x69E9F0D5L, 0x9B8273D6L, 0x88D28022L, 0x7AB90321L,  
+-    0xAE7367CAL, 0x5C18E4C9L, 0x4F48173DL, 0xBD23943EL,  
+-    0xF36E6F75L, 0x0105EC76L, 0x12551F82L, 0xE03E9C81L,  
+-    0x34F4F86AL, 0xC69F7B69L, 0xD5CF889DL, 0x27A40B9EL,  
+-    0x79B737BAL, 0x8BDCB4B9L, 0x988C474DL, 0x6AE7C44EL,  
+-    0xBE2DA0A5L, 0x4C4623A6L, 0x5F16D052L, 0xAD7D5351L,  
+-  }; 
+ 
+-uint32_t 
++#define CRC32C_POLY 0x1EDC6F41
++#define CRC32C(c,d) (c=(c>>8)^crc_c[(c^(d))&0xFF])
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++/* Copyright 2001, D. Otis.  Use this program, code or tables    */
++/* extracted from it, as desired without restriction.            */
++/*                                                               */
++/* 32 Bit Reflected CRC table generation for SCTP.               */
++/* To accommodate serial byte data being shifted out least       */
++/* significant bit first, the table's 32 bit words are reflected */
++/* which flips both byte and bit MS and LS positions.  The CRC   */
++/* is calculated MS bits first from the perspective of the serial*/
++/* stream.  The x^32 term is implied and the x^0 term may also   */
++/* be shown as +1.  The polynomial code used is 0x1EDC6F41.      */
++/* Castagnoli93                                                  */
++/* x^32+x^28+x^27+x^26+x^25+x^23+x^22+x^20+x^19+x^18+x^14+x^13+  */
++/* x^11+x^10+x^9+x^8+x^6+x^0                                     */
++/* Guy Castagnoli Stefan Braeuer and Martin Herrman              */
++/* "Optimization of Cyclic Redundancy-Check Codes                */
++/* with 24 and 32 Parity Bits",                                  */
++/* IEEE Transactions on Communications, Vol.41, No.6, June 1993  */
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++unsigned long  crc_c[256] =
++  {
++    0x00000000L, 0xF26B8303L, 0xE13B70F7L, 0x1350F3F4L,
++    0xC79A971FL, 0x35F1141CL, 0x26A1E7E8L, 0xD4CA64EBL,
++    0x8AD958CFL, 0x78B2DBCCL, 0x6BE22838L, 0x9989AB3BL,
++    0x4D43CFD0L, 0xBF284CD3L, 0xAC78BF27L, 0x5E133C24L,
++    0x105EC76FL, 0xE235446CL, 0xF165B798L, 0x030E349BL,
++    0xD7C45070L, 0x25AFD373L, 0x36FF2087L, 0xC494A384L,
++    0x9A879FA0L, 0x68EC1CA3L, 0x7BBCEF57L, 0x89D76C54L,
++    0x5D1D08BFL, 0xAF768BBCL, 0xBC267848L, 0x4E4DFB4BL,
++    0x20BD8EDEL, 0xD2D60DDDL, 0xC186FE29L, 0x33ED7D2AL,
++    0xE72719C1L, 0x154C9AC2L, 0x061C6936L, 0xF477EA35L,
++    0xAA64D611L, 0x580F5512L, 0x4B5FA6E6L, 0xB93425E5L,
++    0x6DFE410EL, 0x9F95C20DL, 0x8CC531F9L, 0x7EAEB2FAL,
++    0x30E349B1L, 0xC288CAB2L, 0xD1D83946L, 0x23B3BA45L,
++    0xF779DEAEL, 0x05125DADL, 0x1642AE59L, 0xE4292D5AL,
++    0xBA3A117EL, 0x4851927DL, 0x5B016189L, 0xA96AE28AL,
++    0x7DA08661L, 0x8FCB0562L, 0x9C9BF696L, 0x6EF07595L,
++    0x417B1DBCL, 0xB3109EBFL, 0xA0406D4BL, 0x522BEE48L,
++    0x86E18AA3L, 0x748A09A0L, 0x67DAFA54L, 0x95B17957L,
++    0xCBA24573L, 0x39C9C670L, 0x2A993584L, 0xD8F2B687L,
++    0x0C38D26CL, 0xFE53516FL, 0xED03A29BL, 0x1F682198L,
++    0x5125DAD3L, 0xA34E59D0L, 0xB01EAA24L, 0x42752927L,
++    0x96BF4DCCL, 0x64D4CECFL, 0x77843D3BL, 0x85EFBE38L,
++    0xDBFC821CL, 0x2997011FL, 0x3AC7F2EBL, 0xC8AC71E8L,
++    0x1C661503L, 0xEE0D9600L, 0xFD5D65F4L, 0x0F36E6F7L,
++    0x61C69362L, 0x93AD1061L, 0x80FDE395L, 0x72966096L,
++    0xA65C047DL, 0x5437877EL, 0x4767748AL, 0xB50CF789L,
++    0xEB1FCBADL, 0x197448AEL, 0x0A24BB5AL, 0xF84F3859L,
++    0x2C855CB2L, 0xDEEEDFB1L, 0xCDBE2C45L, 0x3FD5AF46L,
++    0x7198540DL, 0x83F3D70EL, 0x90A324FAL, 0x62C8A7F9L,
++    0xB602C312L, 0x44694011L, 0x5739B3E5L, 0xA55230E6L,
++    0xFB410CC2L, 0x092A8FC1L, 0x1A7A7C35L, 0xE811FF36L,
++    0x3CDB9BDDL, 0xCEB018DEL, 0xDDE0EB2AL, 0x2F8B6829L,
++    0x82F63B78L, 0x709DB87BL, 0x63CD4B8FL, 0x91A6C88CL,
++    0x456CAC67L, 0xB7072F64L, 0xA457DC90L, 0x563C5F93L,
++    0x082F63B7L, 0xFA44E0B4L, 0xE9141340L, 0x1B7F9043L,
++    0xCFB5F4A8L, 0x3DDE77ABL, 0x2E8E845FL, 0xDCE5075CL,
++    0x92A8FC17L, 0x60C37F14L, 0x73938CE0L, 0x81F80FE3L,
++    0x55326B08L, 0xA759E80BL, 0xB4091BFFL, 0x466298FCL,
++    0x1871A4D8L, 0xEA1A27DBL, 0xF94AD42FL, 0x0B21572CL,
++    0xDFEB33C7L, 0x2D80B0C4L, 0x3ED04330L, 0xCCBBC033L,
++    0xA24BB5A6L, 0x502036A5L, 0x4370C551L, 0xB11B4652L,
++    0x65D122B9L, 0x97BAA1BAL, 0x84EA524EL, 0x7681D14DL,
++    0x2892ED69L, 0xDAF96E6AL, 0xC9A99D9EL, 0x3BC21E9DL,
++    0xEF087A76L, 0x1D63F975L, 0x0E330A81L, 0xFC588982L,
++    0xB21572C9L, 0x407EF1CAL, 0x532E023EL, 0xA145813DL,
++    0x758FE5D6L, 0x87E466D5L, 0x94B49521L, 0x66DF1622L,
++    0x38CC2A06L, 0xCAA7A905L, 0xD9F75AF1L, 0x2B9CD9F2L,
++    0xFF56BD19L, 0x0D3D3E1AL, 0x1E6DCDEEL, 0xEC064EEDL,
++    0xC38D26C4L, 0x31E6A5C7L, 0x22B65633L, 0xD0DDD530L,
++    0x0417B1DBL, 0xF67C32D8L, 0xE52CC12CL, 0x1747422FL,
++    0x49547E0BL, 0xBB3FFD08L, 0xA86F0EFCL, 0x5A048DFFL,
++    0x8ECEE914L, 0x7CA56A17L, 0x6FF599E3L, 0x9D9E1AE0L,
++    0xD3D3E1ABL, 0x21B862A8L, 0x32E8915CL, 0xC083125FL,
++    0x144976B4L, 0xE622F5B7L, 0xF5720643L, 0x07198540L,
++    0x590AB964L, 0xAB613A67L, 0xB831C993L, 0x4A5A4A90L,
++    0x9E902E7BL, 0x6CFBAD78L, 0x7FAB5E8CL, 0x8DC0DD8FL,
++    0xE330A81AL, 0x115B2B19L, 0x020BD8EDL, 0xF0605BEEL,
++    0x24AA3F05L, 0xD6C1BC06L, 0xC5914FF2L, 0x37FACCF1L,
++    0x69E9F0D5L, 0x9B8273D6L, 0x88D28022L, 0x7AB90321L,
++    0xAE7367CAL, 0x5C18E4C9L, 0x4F48173DL, 0xBD23943EL,
++    0xF36E6F75L, 0x0105EC76L, 0x12551F82L, 0xE03E9C81L,
++    0x34F4F86AL, 0xC69F7B69L, 0xD5CF889DL, 0x27A40B9EL,
++    0x79B737BAL, 0x8BDCB4B9L, 0x988C474DL, 0x6AE7C44EL,
++    0xBE2DA0A5L, 0x4C4623A6L, 0x5F16D052L, 0xAD7D5351L,
++  };
++
++uint32_t
+ count_crc(uint8_t *buffer, uint16_t length)
+-{	
++{
+   unsigned int i;
+-  unsigned long crc32 = ~0L; 
++  unsigned long crc32 = ~0L;
+   unsigned long result;
+   unsigned char byte0, byte1, byte2, byte3;
+-     
++
+   /* Calculate the CRC. */
+   for (i = 0; i < length ; i++)
+     {
+       CRC32C(crc32, buffer[i]);
+     }
+-	
++
+   result = ~crc32;
+ 
+   /*  result  now holds the negated polynomial remainder;
+@@ -471,19 +471,19 @@
+    *  That is,  result has the same value as if we mapped the message
+    *  to a polyomial, computed the host-bit-order polynomial
+    *  remainder, performed final negation, then did an end-for-end
+-   *  bit-reversal.  
++   *  bit-reversal.
+    *  Note that a 32-bit bit-reversal is identical to four inplace
+    *  8-bit reversals followed by an end-for-end byteswap.
+    *  In other words, the bytes of each bit are in the right order,
+    *  but the bytes have been byteswapped.  So we now do an explicit
+-   *  byteswap.  On a little-endian machine, this byteswap and 
++   *  byteswap.  On a little-endian machine, this byteswap and
+    *  the final ntohl cancel out and could be elided.
+    */
+   byte0 = result & 0xff;
+   byte1 = (result>>8) & 0xff;
+   byte2 = (result>>16) & 0xff;
+   byte3 = (result>>24) & 0xff;
+-	
++
+   crc32 = ((byte0 << 24) |
+ 	   (byte1 << 16) |
+ 	   (byte2 << 8)  |
+@@ -518,7 +518,7 @@
+ 
+ /* nifty idea stolen from 'skin'.. better than my own roting sockets
+  * magic! ;-) */
+- 
++
+ 
+ #ifdef SIOCGIFADDR
+ struct in_addr xp_get_iface_addr(char *iname) {
+@@ -575,7 +575,7 @@
+ 	if ((getsockname(sockfd, (struct sockaddr *) &src, &socklen)) < 0) {
+ 		perror("xp_get_src_addr(): getsockname");
+ 		return src.sin_addr;
+-	}	
++	}
+ 	return src.sin_addr;
+ }
+ 
+@@ -619,45 +619,45 @@
+     case 0 : /* icmp echo reply received */
+       return("received icmp echo reply");
+       break;
+-      
++
+     case 3 : /* destination unreachable message */
+       if (code < sizeof(unreach)/sizeof(char *) ) {
+ 	return(unreach[code]);
+       }
+       break;
+-      
++
+     case 4  : /* source quench */
+       return("Source Quench");
+       break;
+-      
++
+     case 5  : /* redirect */
+       if (code < sizeof(redirect)/sizeof(char *)) return(redirect[code]);
+       break;
+-      
++
+     case 8  : /* icmp echo request */
+       return( "PING requested of us");
+       break;
+-      
++
+     case 11 : /* time exceeded message */
+       if (code < sizeof(exceed)/sizeof(char *) ) return(exceed[code]);
+       break;
+-      
++
+     case 12 : /* parameter problem message */
+       return("IP Parameter problem");
+       break;
+-      
++
+     case 13 : /* timestamp message */
+       return("Timestamp message");
+       break;
+-      
++
+     case 14 : /* timestamp reply */
+       return("Timestamp reply");
+       break;
+-      
++
+     case 15 : /* info request */
+       return("Info requested");
+       break;
+-      
++
+     case 16 : /* info reply */
+       return("Info reply");
+       break;
+@@ -707,68 +707,68 @@
+   struct sockaddr_in dest_host;
+   struct hostent *host_address;
+   int fd;
+-  
++
+   if ((host_address = gethostbyname(hostname)) == NULL)
+     return(-1);
+-  
++
+   if ((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
+     return(-1);
+-  
++
+   dest_host.sin_family = AF_INET;
+   dest_host.sin_addr = *((struct in_addr *)host_address->h_addr);
+   dest_host.sin_port = htons(port);
+   memset(&(dest_host.sin_zero), '\0', 8);
+-  
++
+   if (connect(fd, (struct sockaddr *)&dest_host, sizeof(struct sockaddr)) == -1)
+     {
+       close(fd);
+       return(-1);
+     }
+-  
++
+   return(fd);
+ }
+ 
+ int collab_http_recv(int fd, gchar **buffer)
+ {
+   int n = 0; /* 1: ok, 0: connection terminated, -1: problem */
+-  gchar thisbuffer[1024]; 
+-        
++  gchar thisbuffer[1024];
++
+   n = recv(fd, thisbuffer, 1023, 0);
+ 
+   if (n == -1)
+     {
+       *buffer = NULL;
+     }
+-  else if (n == 0) 
++  else if (n == 0)
+     {
+       *buffer = NULL;
+     }
+-  else 
++  else
+     {
+       thisbuffer[n] = '\0';
+-      *buffer = g_strdup((const gchar *)thisbuffer); 
++      *buffer = g_strdup((const gchar *)thisbuffer);
+     }
+ 
+   return(n);
+ }
+-                
++
+ gboolean collab_http_get_header(int fd, gchar **buffer)
+ {
+   gchar lastchar = 0, *thisbuffer;
+   int l;
+-  
++
+   while((l = collab_http_recv(fd, &thisbuffer)) > 0)
+     {
+       gboolean found = FALSE;
+       gchar *where;
+       gchar *p;
+-      
+-      if (lastchar == '\r' && (p = g_strstr_len(thisbuffer, 3, "\n\r\n"))) 
++
++      if (lastchar == '\r' && (p = g_strstr_len(thisbuffer, 3, "\n\r\n")))
+ 	{
+ 	  where = p + 3;
+ 	  found = TRUE;
+ 	}
+-      else if ((p = strstr(thisbuffer, "\r\n\r\n"))) 
++      else if ((p = strstr(thisbuffer, "\r\n\r\n")))
+ 	{
+ 	  where = p + 4;
+ 	  found = TRUE;
+@@ -779,17 +779,17 @@
+ 	}
+       else
+ 	lastchar = thisbuffer[l];
+-      
++
+       g_free(thisbuffer);
+-      
+-      if (found) 
++
++      if (found)
+ 	return(TRUE);
+     }
+ 
+   return(FALSE);
+ }
+ 
+-gboolean collab_http_get(gchar *url, gchar *hostname, gint port, gboolean savefile, gchar **fname_buff, 
++gboolean collab_http_get(gchar *url, gchar *hostname, gint port, gboolean savefile, gchar **fname_buff,
+                 gchar *proxy_host, gint proxy_port)
+ {
+   int fd, error;
+@@ -797,43 +797,43 @@
+   gchar *buffer = NULL;
+   gchar *retstr = NULL;
+   gchar *request = NULL;
+-  
++
+   if (port == 0)
+     port = 80;
+   if (proxy_host)
+     fd = collab_http_connect(proxy_host, proxy_port);
+   else
+     fd = collab_http_connect(hostname, port); /* used to be 80 */
+-  
++
+   if (fd == -1)
+     return(FALSE);
+-  
++
+   if (proxy_host)
+     request = g_strdup_printf("GET http://%s%s HTTP/1.0\r\n\r\n",
+ 			      hostname, url);
+   else
+     request = g_strdup_printf("GET %s HTTP/1.0\r\n"
+ 			      "Host: %s\r\n\r\n", url, hostname);
+-  
++
+   if (request == NULL)
+     {
+       close(fd);
+       return(FALSE);
+     }
+-  
++
+   error = send(fd, request, strlen(request), 0);
+   g_free(request);
+-  
++
+   if (error == -1)
+-    { 
++    {
+       close(fd);
+       return(FALSE);
+     }
+-  
++
+   if (savefile)
+     {
+       file = fopen(*fname_buff, "w");
+-      
++
+       if (!file)
+ 	{
+ 	  DEBUG_PRINT("Error opening file %s\n", *fname_buff);
+@@ -841,36 +841,36 @@
+ 	  return(FALSE);
+ 	}
+     }
+-  
+-  
++
++
+   if (collab_http_get_header(fd, &buffer) == FALSE)
+     {
+       close(fd);
+       return(FALSE);
+     }
+-  
++
+   if (buffer)
+     {
+       int l = strlen(buffer);
+-      
++
+       if (savefile)
+ 	fwrite(buffer, sizeof(char), l, file);
+       else
+ 	retstr = g_strdup(buffer);
+-      
++
+       g_free(buffer);
+     }
+-  
++
+   while((error = collab_http_recv(fd, &buffer)) > 0)
+     {
+-      if (savefile) 
++      if (savefile)
+ 	{
+ 	  int l = strlen(buffer);
+ 	  fwrite(buffer, sizeof(char), l, file);
+ 	}
+       else
+ 	{
+-	  if (retstr) 
++	  if (retstr)
+ 	    {
+ 	      gchar *str;
+ 	      str = g_strconcat(retstr, buffer, NULL);
+@@ -882,7 +882,7 @@
+ 	}
+       g_free(buffer);
+     }
+-  
++
+   if (error == -1)
+     {
+       fclose(file);
+@@ -890,18 +890,18 @@
+       g_free(retstr);
+       return(FALSE);
+     }
+-  
++
+   if (savefile)
+     fclose(file);
+   else
+     *fname_buff = retstr;
+-  
++
+   close(fd);
+-  
++
+   return(TRUE);
+ }
+ 
+-gboolean collab_http_get_file(gchar *url, gchar *hostname, gint port, gchar *filename, 
++gboolean collab_http_get_file(gchar *url, gchar *hostname, gint port, gchar *filename,
+ 			      gchar *proxy_host, gint proxy_port)
+ {
+   return(collab_http_get(url, hostname, port, TRUE, &filename, proxy_host, proxy_port));
+@@ -910,9 +910,9 @@
+ gchar *collab_http_get_buffer(gchar *url, gchar *hostname, gint port, gchar *proxy_host, gint proxy_port)
+ {
+   gchar *buffer = NULL;
+-  
++
+   collab_http_get(url, hostname, port, FALSE, &buffer, proxy_host, proxy_port);
+-  
++
+   return(buffer);
+ }
+ 
+@@ -935,9 +935,9 @@
+ #define MAXPACKET 4096
+ #define P 7777		/* used for destination only */
+ 
+-#ifndef min 
+-#define min(x,y)      ((x)>(y)?(y):(x)) 
+-#endif 
++#ifndef min
++#define min(x,y)      ((x)>(y)?(y):(x))
++#endif
+ 
+ 
+ // -------------------- PROTOCOL DESCRIPTION
+@@ -970,7 +970,7 @@
+   // chunk follows
+ };
+ 
+-// chunk identifier 
++// chunk identifier
+ #define SH_DATA 0
+ #define SH_INIT 1
+ #define SH_INIT_ACK 2
+@@ -1002,7 +1002,7 @@
+   unsigned char		flags;
+   unsigned short int	length;
+   unsigned int		inittag;// same as init_tsn but not in same byteorder
+-  unsigned int		a_rwnd; // Advertised Receiver Window Credit (a_rwnd) 
++  unsigned int		a_rwnd; // Advertised Receiver Window Credit (a_rwnd)
+   unsigned short int		outstreams;
+   unsigned short int		instreams;
+   unsigned int		init_tsn;	// same as inittag but not in same byteorder
+@@ -1063,14 +1063,14 @@
+ {
+   char *hostl;		// local sending IP
+   char *hostr;		// target (destination) IP or range
+-  
++
+   int sctpscan_version;
+   int portscan_opt;
+   int netscan_opt;
+   int autoportscan_opt;
+   int linein_opt;
+   int fuzz_opt;
+-  // both_checksum_opt: 
++  // both_checksum_opt:
+   // 0 : send only the specified checksum
+   // 1 : send both new crc32 and old legacy-driven adler32
+   int both_checksum_opt;
+@@ -1081,13 +1081,13 @@
+   int zombie_opt;			// Does not contribute reports to collaboration platform. No reporting. (feat 105)
+   char *exec_on_port_opt;		// Execution of external command on new SCTP port (--exec / -E) (feat 109)
+   int tcp_bridge_opt;			// TCP to SCTP bridge
+-  
++
+   // Runtime Datas
+ #ifdef __G_LIB_H__
+   gchar *cmd_line;
+ #endif
+ 
+-  // Checksum: 
++  // Checksum:
+   // 3 : Adler32
+   // 2 : max value
+   // 1 : null
+@@ -1106,7 +1106,7 @@
+   // Last Fuzz infos
+   char fuzzcase_name[255];
+ 
+-  // Fuzz Option Convention: 
++  // Fuzz Option Convention:
+   // 0 : default normal behaviour
+   // 1 : null value
+   // 2 : max value (christmas tree packet)
+@@ -1266,13 +1266,13 @@
+ 		     9911,	// iua test port for some CISCO default configurations
+ 		     9900,	// sua (SCCP User Adaptation layer) or iua (ISDN Q.921 User Adaptation -- http://rfc.archivesat.com/rfc4166.htm)  (default for Huawei UMG8900 MGW)
+ 		     9901,	// enrp-sctp - enrp server channel
+-		     9902, 	// enrp-sctp-tls - enrp/tls server channel 
++		     9902, 	// enrp-sctp-tls - enrp/tls server channel
+ 		     10000,
+ 		     10001,
+ 		     11146,	// Local port for M3UA, Cisco BTS 10200 Softswitch
+-		     11997,	// wmereceiving - WorldMailExpress 
+-		     11998,	// wmedistribution - WorldMailExpress 
+-		     11999,	// wmereporting - WorldMailExpress 
++		     11997,	// wmereceiving - WorldMailExpress
++		     11998,	// wmedistribution - WorldMailExpress
++		     11999,	// wmereporting - WorldMailExpress
+ 		     12205,	// Local port for SUA, Cisco BTS uses for FSAIN communication is usually 12205,
+ 		     12235,	// Local port for SUA, Cisco BTS usage for FSPTC
+ 		     13000,	// m3ua -- py sms m3ua default ports
+@@ -1378,15 +1378,15 @@
+   servaddr.sin_family = AF_INET;
+   servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+   servaddr.sin_port = htons(listen_port);
+-  
++
+   printf("Trying to bind SCTP port\n");
+   if (bind(sd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
+     perror("bind");
+-  
++
+   listen(sd, 10);
+   printf("Listening on SCTP port %d\n", listen_port);
+   printf("Note that if kernel supports SCTP sockets (such as provided by SCTPlib), even if this listen in raw socket mode, you may receive ABORT to your INIT packets.");
+-  
++
+   for(;;)
+     {
+       addrlen = sizeof(clientaddr);
+@@ -1396,7 +1396,7 @@
+ 	  exit(EXIT_FAILURE);
+ 	}
+       printf("Connection received...\n");
+-      
++
+       write(s, "1234567890", 10);
+       while((len = read(s, buffer, sizeof(buffer))) > 0)
+ 	{
+@@ -1564,7 +1564,7 @@
+ 
+ void sctp_assocStatusPrint(struct SCTP_Association_Status *p)
+ {
+-  printf("p->state=%d\n", (int)p->state); 
++  printf("p->state=%d\n", (int)p->state);
+   printf("p->numberOfAddresses=%d\n",(int)p->numberOfAddresses);
+   // unsigned char  primaryDestinationAddress[SCTP_MAX_IP_LEN];
+   printf("p->primaryDestinationAddress=%s	\n",p->primaryDestinationAddress);
+@@ -1597,13 +1597,13 @@
+ #endif /* HAVE_SCTP_H */
+ 
+ // --- TCP bridge
+-// 
++//
+ // Problems when testing client and server on the same host with SCTPlib.
+ // No problem when testing client and server on two different hosts:
+ // Linux machine running SCTPlib chargen_server:
+ // linux13# ./chargen_server -V
+ // MacOSX10.4-12# ./sctpscan -r 192.168.1.13 -p 19 -t 12346
+-// 
++//
+ int TCPtoSCTP(int tcp_port, char *hostl, int portl, unsigned char *hostr, int portr, int inoutstreams)
+ {
+   int tcp_sd, tcp_s, tcp_len;
+@@ -1622,16 +1622,16 @@
+ 	  perror("socket (could open TCP socket)");
+ 	  exit(EXIT_FAILURE);
+ 	}
+-      
++
+       memset((void *)&tcp_servaddr, 0, sizeof(tcp_servaddr));
+       tcp_servaddr.sin_family = AF_INET;
+       tcp_servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+       tcp_servaddr.sin_port = htons(tcp_listen_port);
+-      
++
+       printf("Trying to bind TCP port\n");
+       if (bind(tcp_sd, (struct sockaddr *)&tcp_servaddr, sizeof(tcp_servaddr)) < 0)
+ 	perror("bind (not bind TCP port)");
+-      
++
+       listen(tcp_sd, 10);
+       printf("Listening on TCP port %d\n", tcp_listen_port);
+     }
+@@ -1667,7 +1667,7 @@
+       strncpy((char *)ip_l[0], (const char *)(hostl), SCTP_MAX_IP_LEN - 1);
+ 
+       instreams = outstreams = inoutstreams;
+-      con->instanceID = sctp_registerInstance(portl, instreams, outstreams, 
++      con->instanceID = sctp_registerInstance(portl, instreams, outstreams,
+ 					      1 /* =noOfLocalAddresses */, ip_l, (con->uc));
+       if (con->instanceID > 0) {
+ 	printf("SCTP instance initialized (instanceID=%d)\n", con->instanceID);
+@@ -1705,7 +1705,7 @@
+ 
+ #else
+       fprintf(stderr,"ERROR: No SCTPlib support\n");
+-      exit(EXIT_FAILURE);      
++      exit(EXIT_FAILURE);
+ #endif /* HAVE_SCTP_H */
+     }
+   else
+@@ -1713,7 +1713,7 @@
+       fprintf(stderr,"ERROR: Missing remote host or port to bridge to (remote host at %x, remote port=%d.\n", (unsigned int)hostr, portr);
+       exit(EXIT_FAILURE);
+     }
+-  
++
+   // Listen / Accept / Bridge all packets from SCTP to TCP
+   for(;;)
+     {
+@@ -1725,14 +1725,14 @@
+ 	  exit(EXIT_FAILURE);
+ 	}
+       printf("Connection received...\n");
+-      
++
+       //write(tcp_s, "1234567890", 10); // old code, send SCTP received content.
+       // from TCP to SCTP
+       while((tcp_len = read(tcp_s, tcp_buffer, sizeof(tcp_buffer))) > 0)
+ 	{
+ 	  //buffer[len]='\0'; // old code
+ 	  printf("Content received: %s\n", tcp_buffer);
+-	  //write(tcp_s, tcp_buffer, tcp_len); // old code, send 
++	  //write(tcp_s, tcp_buffer, tcp_len); // old code, send
+ 	}
+       close(tcp_s);
+     }
+@@ -1755,86 +1755,86 @@
+   return(~sum);
+ }
+ 
+-unsigned int Adler32( unsigned char* buf, 
+-		      // Buffer address. 
+-		      // 
+-		      unsigned int HowManyBytes, 
+-		      // Size of buffer in bytes. 
+-		      // 
+-		      unsigned int adler ) 
+-// Cumulative Adler32 checksum computed so far. 
+-// 
+-// Always use 1 as the initial value. 
+-{ 
+-  signed short int HowManyThisPass; 
+-  unsigned int s1; 
+-  unsigned int s2; 
+-
+-  // Separate the check sum into two 16-bit parts and put 
+-  // them into 32-bit variables. 
+-  s1 = adler & 0xFFFF; 
+-  s2 = (adler >> 16) & 0xFFFF; 
+-
+-  // Until all of the input has been processed. 
+-  while( HowManyBytes ) 
+-    { 
+-      // Calculate how many bytes to process on this pass 
+-      // so that the 32-bit accumulators don't overflow: 
+-      // 
+-      // 65521 is the largest prime smaller than 65536. 
+-      // 5552 is the largest n such that 
+-      // 255n (n+1)/2 + (n+1)(65520) <= 2^32-1. 
+-      // 
+-      HowManyThisPass = (signed short int) min( HowManyBytes, 5552 ); 
+-
+-      // Account for the bytes to be processed on this pass. 
+-      HowManyBytes -= HowManyThisPass; 
+-
+-      // As long as 16 or more bytes remain to be 
+-      // processed on this pass. 
+-      while( HowManyThisPass >= 16 ) 
+-	{ 
+-	  // Sum the input bytes in 's1' and sum the 
+-	  // running 's1' values in 's2'. 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-	  s1 += *buf++; s2 += s1; 
+-
+-	  // Account for the bytes processed. 
+-	  HowManyThisPass -= 16; 
+-	} 
+-
+-      // As long as any bytes remain to be processed. 
+-      while( HowManyThisPass-- ) 
+-	{ 
+-	  // Sum the input bytes in 's1' and sum the 
+-	  // running 's1' values in 's2'. 
+-	  s1 += *buf++; s2 += s1; 
+-	} 
+-
+-      // Compute the remainder mod 65521 of each 
+-      // accumulator: 65521 is the largest 
+-      // prime smaller than 65536. 
+-      s1 %= 65521L; 
+-      s2 %= 65521L; 
+-    } 
+-
+-  // Merge the two accumulators and return the result. 
+-  return( (s2 << 16) | s1 ); 
+-} 
++unsigned int Adler32( unsigned char* buf,
++		      // Buffer address.
++		      //
++		      unsigned int HowManyBytes,
++		      // Size of buffer in bytes.
++		      //
++		      unsigned int adler )
++// Cumulative Adler32 checksum computed so far.
++//
++// Always use 1 as the initial value.
++{
++  signed short int HowManyThisPass;
++  unsigned int s1;
++  unsigned int s2;
++
++  // Separate the check sum into two 16-bit parts and put
++  // them into 32-bit variables.
++  s1 = adler & 0xFFFF;
++  s2 = (adler >> 16) & 0xFFFF;
++
++  // Until all of the input has been processed.
++  while( HowManyBytes )
++    {
++      // Calculate how many bytes to process on this pass
++      // so that the 32-bit accumulators don't overflow:
++      //
++      // 65521 is the largest prime smaller than 65536.
++      // 5552 is the largest n such that
++      // 255n (n+1)/2 + (n+1)(65520) <= 2^32-1.
++      //
++      HowManyThisPass = (signed short int) min( HowManyBytes, 5552 );
++
++      // Account for the bytes to be processed on this pass.
++      HowManyBytes -= HowManyThisPass;
++
++      // As long as 16 or more bytes remain to be
++      // processed on this pass.
++      while( HowManyThisPass >= 16 )
++	{
++	  // Sum the input bytes in 's1' and sum the
++	  // running 's1' values in 's2'.
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++	  s1 += *buf++; s2 += s1;
++
++	  // Account for the bytes processed.
++	  HowManyThisPass -= 16;
++	}
++
++      // As long as any bytes remain to be processed.
++      while( HowManyThisPass-- )
++	{
++	  // Sum the input bytes in 's1' and sum the
++	  // running 's1' values in 's2'.
++	  s1 += *buf++; s2 += s1;
++	}
++
++      // Compute the remainder mod 65521 of each
++      // accumulator: 65521 is the largest
++      // prime smaller than 65536.
++      s1 %= 65521L;
++      s2 %= 65521L;
++    }
++
++  // Merge the two accumulators and return the result.
++  return( (s2 << 16) | s1 );
++}
+ 
+ char *get_frequent_ports_str()
+ {
+@@ -1984,7 +1984,7 @@
+       else
+ 	{
+ #ifdef SIGTSTP /* BSD */
+-	  setpgrp(0, getpid());
++	  setpgrp();
+ #else /* Sys V */
+ 	  setpgrp();
+ 	  signal(SIGHUP, SIG_IGN);
+@@ -2075,7 +2075,7 @@
+ {
+   char static static_host[40];
+   char *host;
+-  
++
+ #ifndef __G_LIB_H__
+   return(app->host_to_portscan);
+ #else
+@@ -2177,7 +2177,7 @@
+ 
+   fprintf(stderr,"  -B  --bothpackets\n");
+   fprintf(stderr,"      Send packets with INIT chunk for one, and SHUTDOWN_ACK for the other\n");
+-  
++
+   fprintf(stderr,"  -b  --both_checksum\n");
+   fprintf(stderr,"      Send both checksum: new crc32 and old legacy-driven adler32\n");
+   fprintf(stderr,"  -C  --crc32\n");
+@@ -2191,9 +2191,9 @@
+   fprintf(stderr,"  -E  --exec <script_name>\n"); // (feat 109)
+   fprintf(stderr,"      Executes <script_name> each time an open SCTP port is found.\n");
+   fprintf(stderr,"      Execution arguments: <script_name> host_ip sctp_port\n");
+-  fprintf(stderr,"  -t  --tcpbridge <listen TCP port>\n"); // 
++  fprintf(stderr,"  -t  --tcpbridge <listen TCP port>\n"); //
+   fprintf(stderr,"      Bridges all connection from <listen TCP port> to remote designated SCTP port.\n");
+-  fprintf(stderr,"  -S  --streams <number of streams>\n"); // 
++  fprintf(stderr,"  -S  --streams <number of streams>\n"); //
+   fprintf(stderr,"      Tries to establish SCTP association with the specified <number of streams> to remote designated SCTP destination.\n");
+   //  fprintf(stderr,"  -R  --randomscan\n");
+   //  fprintf(stderr,"      Randomly scan class C networks forever\n");
+@@ -2242,10 +2242,10 @@
+   //XXX defined for ADSL
+   // WOW... seems we never need to wait_for_send
+   return(0);
+-  
++
+   // Reception of packets
+   mytimeout.tv_sec = 0;
+-  mytimeout.tv_usec = 10; 
++  mytimeout.tv_usec = 10;
+ 
+   FD_ZERO(&r);
+   FD_SET(s,&r);
+@@ -2325,18 +2325,18 @@
+ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
+ {
+ #define SIZE_ETHERNET 14
+-  
++
+   const struct sniff_ethernet *ethernet; /* The ethernet header */
+   const struct sniff_ip *ip; /* The IP header */
+   struct pkt_holder_s *here_pkt_holder;
+   int	gp_debug;
+-  
++
+   u_int size_ip;
+ 
+   gp_debug = 0;
+   if (gp_debug) printf("got_packet() called!\n");	// DEBUG
+   here_pkt_holder = (struct pkt_holder_s *)args;
+-  
++
+   if (header->caplen < header->len)
+     printf("got_packet() did not capture the totality of the packet\n");
+ 
+@@ -2404,15 +2404,15 @@
+ 	handle = app->rcv_icmp_pcap;
+ 	if (swg_debug > 10) { printf("select_wait_generic ICMP\n"); fflush(NULL); }
+       }
+-    
++
+     //mytimeout.tv_sec = 0;
+-    //mytimeout.tv_usec = PCAP_TIMEOUT; 
++    //mytimeout.tv_usec = PCAP_TIMEOUT;
+     //FD_ZERO(&r);
+     //FD_SET(pcap_sock,&r);
+ 
+     //if (swg_debug) { printf("select_wait_generic : going into select\n"); fflush(NULL); }
+     //retval = select((pcap_sock+1), &r, (fd_set *)0, (fd_set *)0, &mytimeout);
+-    
++
+     //if (swg_debug) { printf("select_wait_generic : select return something, dispatching with:\n");  fflush(NULL); }
+     pcap_max_packet_count = 1;
+     pcap_dispatch(handle, pcap_max_packet_count, got_packet, (u_char *)&pkt_holder);
+@@ -2427,7 +2427,7 @@
+ 
+   // Reception of packets
+   mytimeout.tv_sec = app->select_timeout_sec;
+-  mytimeout.tv_usec = app->select_timeout_usec; 
++  mytimeout.tv_usec = app->select_timeout_usec;
+ 
+   //printf("select_wait_generic(): app->listen_retries = %d app->select_timeout_sec=%d app->select_timeout_usec=%d\n", app->listen_retries, app->select_timeout_sec, app->select_timeout_usec);
+ 
+@@ -2437,7 +2437,7 @@
+   retval = select((s+1), &r, (fd_set *)0, (fd_set *)0, &mytimeout);
+   //printf("plop i=%d retval=%d\n", i, retval);
+   //printf("retval=%d on socket=%d\n", retval, s);
+-  
++
+   if(retval)
+     {
+       /* We got an answer lets check if its the one we want. */
+@@ -2456,21 +2456,21 @@
+ 
+       // Stats
+       app->ctr_packet_rcvd++;
+-      
++
+       /* Problem with getting back the address of the host
+ 	 is that not all hosts will answer icmp unreachable
+ 	 directly from thier own host. */
+-      
++
+       iphdr = (struct ip *)recvbuff;
+       iplen = iphdr->ip_hl << 2;
+       //printf("Packet Type=%d on socket=%d\n", iphdr->ip_p, s);
+-      if (iphdr->ip_p == 0x84 ) 
++      if (iphdr->ip_p == 0x84 )
+ 	{
+ 	  struct sctphdr_chunk *r_sctph = (struct sctphdr_chunk *) (recvbuff + iplen);
+ 
+ 	  // Stats
+ 	  app->ctr_packet_sctp_rcvd++;
+-	  
++
+ 	  retcode = r_sctph->identifier;
+ 	  // GZZ
+ 	  add_to_host_to_portscan(app, inet_ntoa(iphdr->ip_src));  //replaces: strcpy(app->host_to_portscan, inet_ntoa(iphdr->ip_src));
+@@ -2486,7 +2486,7 @@
+ 	  else
+ 	    {
+ 	      // I think we are looking at packets we just sent (bugfix #101)
+-	      if ( (r_sctph->identifier == SH_INIT || r_sctph->identifier == SH_SHUTDOWN_ACK) 
++	      if ( (r_sctph->identifier == SH_INIT || r_sctph->identifier == SH_SHUTDOWN_ACK)
+ 		   && !strcmp(app->hostl, inet_ntoa(iphdr->ip_src)))
+ 		return(0);
+ 
+@@ -2496,8 +2496,8 @@
+  		{
+  		  if (ntohs(r_sctph->sport) == 1)  // Only report Aborts on port 1
+  		    collab_report(app, inet_ntoa(iphdr->ip_src), ntohs(r_sctph->sport), get_sctp_code(r_sctph->identifier), "ABORTs / SHUTDOWN_ACKs flood prevention: only port 1 will be reported.");
+- 		} 
+- 	      else 
++ 		}
++ 	      else
+  		{ // DO report the all other packets
+  		  collab_report(app, inet_ntoa(iphdr->ip_src), ntohs(r_sctph->sport), get_sctp_code(r_sctph->identifier), NULL);
+  		}
+@@ -2506,8 +2506,8 @@
+ 		  if (app->compact_opt)
+ 		    compact_progress_print(r_sctph->identifier);
+ 		  else
+-		    printf("SCTP packet received from %s port %d type %s\n", 
+-			   inet_ntoa(iphdr->ip_src), 
++		    printf("SCTP packet received from %s port %d type %s\n",
++			   inet_ntoa(iphdr->ip_src),
+ 			   ntohs(r_sctph->sport),
+ 			   get_sctp_id_str(r_sctph->identifier));
+ 		} // end of !quiet_sendsctp_opt
+@@ -2523,10 +2523,10 @@
+ 
+ 	  // Stats
+ 	  app->ctr_packet_icmp_rcvd++;
+-	  
++
+ 	  strcpy(s_icmp_source, inet_ntoa(iphdr->ip_src));
+ 	  strcpy(s_embeded_source, inet_ntoa(r_icmph->icmp_ip.ip_dst));
+-	  	  
++
+ 	  // process rejects
+ 	  // if we get a HOST/NET unreach from some host and we are currently scanning THIS host, well... drop it :)
+ 	  if (iphdr->ip_src.s_addr == app->cur_dstaddr &&
+@@ -2604,7 +2604,7 @@
+   retcode = RETCODE_NO_PACKETS_FROM_HOST;	// returns -1 ONLY IF NO PACKET was ever received during the select_wait()
+   for (i = 0; i < app->listen_retries; i++)
+     {
+-      // BUG below? 
++      // BUG below?
+       retcode = select_wait_generic(app->rcv_sctp_socket, app);
+       retcode_icmp = select_wait_generic(app->rcv_icmp_socket, app);
+       if (retcode_icmp == RETCODE_HOST_OR_NET_REJECT_SCTP)
+@@ -2613,7 +2613,7 @@
+ 	{
+ 	  //printf("retcode_icmp=%d\n", retcode_icmp);
+ 	  return(retcode_icmp);
+-	}      
++	}
+     } // stops retrying to get packets
+ 
+   return(retcode);
+@@ -2727,7 +2727,7 @@
+ 
+   memset (datagram, 0, 4096);	/* zero out the buffer */
+ 
+-  if (getenv("DEBUG")) printf("iph=%x, sctph=%x offset between the two=%d\n", (unsigned int)iph, (unsigned int)sctph, (int)sctph - (int)iph); 
++  if (getenv("DEBUG")) printf("iph=%x, sctph=%x offset between the two=%d\n", (unsigned int)iph, (unsigned int)sctph, (int)sctph - (int)iph);
+ 
+   /* we'll now fill in the ip/tcp header values, see above for explanations */
+   iph->ip_hl = 5;
+@@ -2740,28 +2740,28 @@
+   switch ( app->fuzz_ip_frag )
+     {
+     case 5:
+-      iph->ip_off = htons(IP_RF); 
++      iph->ip_off = htons(IP_RF);
+       strcpy(app->fuzzcase_name, "Reserved fragment");
+       break;
+     case 4:
+-      iph->ip_off = htons(IP_DF); 
++      iph->ip_off = htons(IP_DF);
+       strcpy(app->fuzzcase_name, "Don't fragment");
+       break;
+     case 3:
+-      iph->ip_off = htons(IP_MF); 
++      iph->ip_off = htons(IP_MF);
+       strcpy(app->fuzzcase_name, "Multiple fragments");
+       break;
+     case 2:
+-      iph->ip_off = htons(0xffff); 
++      iph->ip_off = htons(0xffff);
+       strcpy(app->fuzzcase_name, "Fragment flag = 0xffff");
+       break;
+     case 1:
+-      iph->ip_off = 0; 
++      iph->ip_off = 0;
+       strcpy(app->fuzzcase_name, "Fragment flag = 0");
+       break;
+     case 0:
+     default:
+-      iph->ip_off = 0; 
++      iph->ip_off = 0;
+       //strcpy(app->fuzzcase_name, "Fragment flag = 0 (default)");
+       break;
+     }
+@@ -2777,7 +2777,7 @@
+   //sctph->sport = htons(10000);
+   //sctph->dport = htons(10001);
+ #define MAX_FUZZ_SCTP_SPORT 2
+-  switch ( app->fuzz_sctp_sport ) 
++  switch ( app->fuzz_sctp_sport )
+     {
+     case 2:
+       sctph->sport = htons(0xffff); // FUZZ: ok
+@@ -2795,7 +2795,7 @@
+     }
+ 
+ #define MAX_FUZZ_SCTP_DPORT 2
+-  switch ( app->fuzz_sctp_dport ) 
++  switch ( app->fuzz_sctp_dport )
+     {
+     case 2:
+       sctph->dport = htons(0xffff); // FUZZ: no result
+@@ -2850,7 +2850,7 @@
+       c_shutdown_ack->length = htons( sizeof (struct chunk_shutdown_ack) );	//equiv to: c_init->length = htons( psize + 2 );
+       chunk_len = c_shutdown_ack->length;
+     }
+-  
++
+   if (packet_type == SH_INIT)
+     {
+       c_init->identifier = SH_INIT;
+@@ -3093,7 +3093,7 @@
+       //strcpy(app->fuzzcase_name, "crc32 checksum (default)");
+       break;
+     }
+-  
++
+   iph->ip_sum = csum ((unsigned short *) datagram, iph->ip_len >> 1);
+ 
+   /* finally, it is very advisable to do a IP_HDRINCL call, to make sure
+@@ -3108,7 +3108,7 @@
+ 	printf ("Warning: Cannot set HDRINCL! Maybe you're not root, exiting!\n");
+ 	exit(1);
+       }
+-    
++
+   }
+ 
+   wait_for_send(s);		// Make sure the socket is ready to send packets
+@@ -3124,7 +3124,7 @@
+ 
+   // Stats
+   app->ctr_packet_sent++;
+-  
++
+   //app->listen_retries = 3;
+   app->select_timeout_sec = 0;
+   app->select_timeout_usec = SELECT_TIMEOUT;
+@@ -3212,12 +3212,12 @@
+   if (app->frequentportscan_opt)
+     {
+       int res;
+-      
++
+       res = frequent_portscan(s, hostl, tempt_host, portl, portr, app);
+       if (res > 0 && app->autoportscan_opt )
+ 	{
+ 	  char *host;
+-	  
++
+ 	  host = get_host_to_portscan(app);
+ 	  portscan(s, hostl, host, portl, portr, app);
+ 	  add_host_to_already_portscanned(app, host);
+@@ -3236,11 +3236,11 @@
+       int res;
+       res = send_sctp(s, hostl, tempt_host, portl, portr, app);
+       //printf("netscan_send(): retcode=%d\n",res);
+-      
++
+       if (res > 0 && app->autoportscan_opt && !app->in_portscan  && check_more_host_to_portscan(app) )
+ 	{
+ 	  char *host;
+-	  
++
+ 	  host = get_host_to_portscan(app);
+ 	  printf("DEBUG: host = get_host_to_portscan(app) = %s\n", host);
+ 	  frequent_portscan(s, hostl, host, portl, portr, app);
+@@ -3251,7 +3251,7 @@
+       //scan (s, hostl, tempt_host, portl, 10000);
+       //scan (s, hostl, tempt_host, portl, 10001);
+     }
+-  usleep(SCAN_SLEEP_TIME); // when you REMOVE this, it goes SLOWER  
++  usleep(SCAN_SLEEP_TIME); // when you REMOVE this, it goes SLOWER
+   return(0);
+ }
+ 
+@@ -3263,7 +3263,7 @@
+   char *pt;
+   time_t time_scanstart;
+   time_t time_scanend;
+-  
++
+   pt=strchr(hostr,'.');
+   if (pt==NULL) { /* ANET */
+     for (k=0;k<=255;k++) {
+@@ -3272,11 +3272,11 @@
+ 	int start_packet_rcvd = app->ctr_packet_rcvd;
+ 	int start_packet_sctp_rcvd = app->ctr_packet_sctp_rcvd;
+ 	int start_packet_icmp_rcvd = app->ctr_packet_icmp_rcvd;
+-	
++
+ 	printf("Scanning network %s.%u.%u.*\n", hostr, k, j);
+ 	time_scanstart = time(NULL);
+ 	for ( i = 1; i < 255; i++ ) {
+-	  sprintf(tempt_host, "%s.%u.%u.%u", hostr, k, j, i ); 
++	  sprintf(tempt_host, "%s.%u.%u.%u", hostr, k, j, i );
+ 	  netscan_send(s, hostl, tempt_host, portl, portr, app);
+ 	}
+ 	time_scanend = time(NULL);
+@@ -3305,7 +3305,7 @@
+ 	int start_packet_icmp_rcvd = app->ctr_packet_icmp_rcvd;
+ 
+ 	for ( i = 1; i < 255; i++ ) {
+-	  sprintf(tempt_host, "%s.%u.%u", hostr, j, i ); 
++	  sprintf(tempt_host, "%s.%u.%u", hostr, j, i );
+ 	  netscan_send(s, hostl, tempt_host, portl, portr, app);
+ 	}
+ 	time_scanend = time(NULL);
+@@ -3321,7 +3321,7 @@
+       }
+     } else { /* CNET */
+       for ( i = 1; i < 255; i++ ) {
+-	sprintf(tempt_host, "%s.%u", hostr, i ); 
++	sprintf(tempt_host, "%s.%u", hostr, i );
+ 	netscan_send(s, hostl, tempt_host, portl, portr, app);
+       }
+     }
+@@ -3337,7 +3337,7 @@
+   int fuzz_state;		// state of the fuzz send_sctp();
+ 
+   saved = *fuzzmember;
+-  
++
+   for (f = 0; f <= max; f++)	// we test normal case and the exception conditions (0 to max)
+     {
+       int count;
+@@ -3514,7 +3514,7 @@
+ #ifdef __G_LIB_H__
+   app.cmd_line = get_cmd_line(argc, argv);
+ #endif
+-  
++
+   init_sctp_identifier();
+ 
+   if (argc < 2) {usage(); close(s); exit(1);}
+@@ -3522,7 +3522,7 @@
+   fprintf(stderr,"SCTPscan - Copyright (C) 2002 - 2009 Philippe Langlois.\n");
+ 
+   time_start = time(NULL);
+-  while (1) 
++  while (1)
+     {
+       int option_index = 0;
+       static struct option long_options[] =
+@@ -3552,10 +3552,10 @@
+       c = getopt_long(argc,argv,"l:r:shp:P:mACfbFaiBcZdE:t:S:",long_options,&option_index);
+       if ( c == -1 )
+ 	break;
+-      switch ( c ) 
++      switch ( c )
+ 	{
+ 	case 0:
+-	  switch ( option_index ) 
++	  switch ( option_index )
+ 	    {
+ 	    case 0: /* loc_host */
+ 	      strncpy(hostbufl,optarg,HOST_BUF_LEN);
+@@ -3663,7 +3663,7 @@
+ 	case 'C': /* CRC 32 */
+ 	  app.checksum = 0;
+ 	  break;
+-	case 'f': /* fuzz */	  
++	case 'f': /* fuzz */
+ 	  app.fuzz_opt = 1;
+ 	  break;
+ 	case 'b': /* send both checksum */
+@@ -3706,7 +3706,7 @@
+ 	  exit(1);
+ 	}
+     }
+-  if ( optind < argc ) 
++  if ( optind < argc )
+     {
+       fprintf(stderr, "ERROR: Option syntax: ");
+       while ( optind < argc )
+@@ -3812,13 +3812,13 @@
+       if (app.frequentportscan_opt && !app.portscan_opt && !app.netscan_opt)
+ 	{
+ 	  app.listen_retries = listen_retries = 1;
+-      
++
+ 	  if (app.both_checksum_opt)
+ 	    {
+ 	      printf("Portscanning with CRC32 checksumed packet\n");
+ 	      app.checksum = 0;
+ 	      frequent_portscan(s, hostl, hostr, portl, portr, &app);
+-	  
++
+ 	      printf("Portscanning with Adler32 checksumed packet\n");
+ 	      app.checksum = 3;
+ 	      frequent_portscan(s, hostl, hostr, portl, portr, &app);
+@@ -3828,7 +3828,7 @@
+ 	      //printf("Portscanning with %s checksumed packet\n", app.checksum ? "Adler32" : "CRC32");
+ 	      printf("Portscanning with %s checksumed packet\n", get_checksum_str(app.checksum));
+ 	      frequent_portscan(s, hostl, hostr, portl, portr, &app);
+-	    }      
++	    }
+ 	}
+ 
+       if (app.fuzz_opt)
