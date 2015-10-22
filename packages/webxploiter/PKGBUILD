@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='webxploiter'
+pkgver=20.41a11d1
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation'
+        'blackarch-fuzzer' 'blackarch-scanner')
+pkgdesc='An OWASP Top 10 Security scanner.'
+arch=('any')
+url='https://github.com/xionsec/WebXploiter'
+license=('GPL3')
+depends=('python2' 'python2-requests' 'python2-termcolor' 'libffi' 'openssl'
+         'ghost-py' 'python2-ndg-httpsclient')
+makedepends=('git')
+source=('git+https://github.com/xionsec/WebXploiter.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/WebXploiter"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/WebXploiter"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/webxploiter"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/webxploiter/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/webxploiter/LICENSE"
+
+  cp -a * "$pkgdir/usr/share/webxploiter"
+
+  cat > "$pkgdir/usr/bin/webxploiter" << EOF
+#!/bin/sh
+cd /usr/share/webxploiter
+exec python2 WebXploiter.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/webxploiter"
+}

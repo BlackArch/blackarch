@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='wpbrute-rpc'
+pkgver=3.e7d8145
+pkgrel=1
+groups=('blackarch' 'blackarch-cracker' 'blackarch-webapp')
+pkgdesc='Tool for amplified bruteforce attacks on wordpress based website via xmlrcp API.'
+arch=('any')
+license=('custom:unknown')
+makedepends=('git')
+depends=('ruby' 'ruby-bundler')
+url='https://github.com/zendoctor/wpbrute-rpc'
+source=('git+https://github.com/zendoctor/wpbrute-rpc.git')
+install='wpbrute-rpc.install'
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/wpbrute-rpc"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/wpbrute-rpc"
+
+  if [ -f GemFile ]
+  then
+    mv GemFile Gemfile
+  fi
+}
+
+package() {
+  cd "$srcdir/wpbrute-rpc"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/wpbrute-rpc"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/wpbrute-rpc" README.md
+
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/wpbrute-rpc"
+
+  rm README.md
+
+  cat > "$pkgdir/usr/bin/wpbrute-rpc" << EOF
+#!/bin/sh
+cd /usr/share/wpbrute-rpc
+exec ruby /usr/share/wpbrute-rpc/wpbrute-rpc.rb "\$@"
+EOF
+
+  chmod +x "$pkgdir"/usr/bin/wpbrute-rpc
+}
