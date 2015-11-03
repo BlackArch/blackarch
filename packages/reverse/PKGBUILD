@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='reverse'
+pkgver=442.3704b2b
+pkgrel=2
+groups=('blackarch' 'blackarch-disassembler' 'blackarch-binary'
+        'blackarch-debugger')
+pkgdesc='Reverse engineering tool for x86/ARM/MIPS. Generates indented pseudo-C with colored syntax code.'
+arch=('any')
+url='https://github.com/joelpx/reverse'
+license=('GPL3')
+makedepends=('git')
+depends=('python3' 'python-capstone' 'python-pyelftools' 'pefile-py3k')
+source=('git+https://github.com/joelpx/reverse.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/reverse"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/reverse"
+
+  find . -type f -exec sed -i 's|/bin/python3|/usr/bin/env python3|' {} +
+}
+
+build() {
+  cd "$srcdir/reverse"
+
+  make
+}
+
+package() {
+  cd "$srcdir/reverse"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/reverse"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/reverse" README.md KNOWN_BUGS
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/reverse/LICENSE"
+
+  rm README.md KNOWN_BUGS LICENSE
+
+  cp -a * "$pkgdir/usr/share/reverse/"
+
+  cat > "$pkgdir/usr/bin/reverse" << EOF
+#!/bin/sh
+cd /usr/share/reverse
+exec python3 reverse.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/reverse"
+}

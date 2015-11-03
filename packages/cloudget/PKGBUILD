@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cloudget'
+pkgver=53.807d08e
+pkgrel=1
+pkgdesc='Python script to bypass cloudflare from command line. Built upon cfscrape module.'
+groups=('blackarch' 'blackarch-webapp')
+arch=('any')
+url='https://github.com/eudemonics/cloudget'
+license=('custom:unknown')
+depends=('python2' 'cloudflare-scrape')
+makedepends=('git')
+source=('git+https://github.com/eudemonics/cloudget.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/cloudget"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/cloudget"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/cloudget"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/cloudget/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/cloudget"
+
+  cat > "$pkgdir/usr/bin/cloudget" << EOF
+#!/bin/sh
+cd /usr/share/cloudget
+exec python2 cloudget.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/cloudget"
+}
