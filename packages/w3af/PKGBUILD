@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname='w3af'
-pkgver='1.6'
-pkgrel=2
+pkgver='1.6.49'
+pkgrel=1
 groups=('blackarch' 'blackarch-fuzzer' 'blackarch-scanner' 'blackarch-webapp')
 pkgdesc='Web Application Attack and Audit Framework.'
 arch=('any')
@@ -16,15 +16,15 @@ depends=('python2' 'python2-clamd' 'python2-pybloomfiltermmap' 'python2-esmre'
          'sqlite' 'python2-ntlm' 'python2-pygithub' 'python2-gitpython'
          'graphviz' 'pygtksourceview2' 'pygtk' 'gtk2' 'python2-beautifulsoup3'
          'python2-xdot' 'libxml2' 'libxslt' 'libyaml' 'python2-yaml'
-         'python2-pip')
+         'python2-vulndb' 'python2-pip' 'python2-stopit')
 options=('!strip')
-source=('git+https://github.com/andresriancho/w3af'
+source=("https://github.com/andresriancho/w3af/archive/${pkgver}.tar.gz"
         'w3af.desktop')
-sha1sums=('SKIP'
+sha1sums=('872ce20ecb216aede0a04a58cf2a63ddd38f2af8'
           'fe0416f1dcca30e817d19c79c57a6a62b9579685')
 
 prepare() {
-  cd "$srcdir/w3af"
+  cd "$srcdir/w3af-$pkgver"
 
   # Enforce python2
   sed -i -e 's|#!\s*/usr/bin/python[^\d.]*$|#!/usr/bin/python2|' \
@@ -36,24 +36,21 @@ prepare() {
 }
 
 package() {
-  cd "$srcdir/w3af"
+  cd "$srcdir/w3af-$pkgver"
 
-  # Base directories.
-  mkdir -p "$pkgdir/usr/share/w3af"
   mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/w3af"
   mkdir -p "$pkgdir/usr/share/applications"
 
   cp --no-preserve=ownership -a * "$pkgdir/usr/share/w3af"
 
   install -Dm644 "$srcdir/w3af.desktop" "$pkgdir/usr/share/applications"
 
-  # Joint script for w3af_console.
   cat > "$pkgdir/usr/bin/w3af" << EOF
 #!/bin/sh
 exec python2 /usr/share/w3af/w3af_console "\$@"
 EOF
 
-  # Joint script for w3af_gui.
   cat > "$pkgdir/usr/bin/w3af-gui" << EOF
 #!/bin/sh
 exec python2 /usr/share/w3af/w3af_gui "\$@"
