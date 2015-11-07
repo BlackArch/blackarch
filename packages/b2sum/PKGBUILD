@@ -2,19 +2,25 @@
 # See COPYING for license details.
 
 pkgname='b2sum'
-pkgver=20140114
+pkgver=27.1c2b66c
 pkgrel=1
 pkgdesc='BLAKE2 file hash sum check. Computes the BLAKE2 (BLAKE2b or -s, -bp, -sp) cryptographic hash of a given file.'
 arch=('i686' 'x86_64')
 groups=('blackarch' 'blackarch-crypto')
 url='https://blake2.net/'
 license=('custom')
-makedepends=('unzip' 'gnuplot')
-source=("https://blake2.net/blake2_code_${pkgver}.zip")
-sha512sums=('9a906bfdc38d4a032323f9ce1dd6d59186d602a0b2a58c5b0236a7eaea8840aa2dd4d5128dc0ad1b721e58f594698424b69b295a21748efd19c2f0a042c35e59')
+makedepends=('git' 'unzip' 'gnuplot')
+source=('git+https://github.com/BLAKE2/BLAKE2.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/BLAKE2"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 prepare() {
-  cd "$srcdir/blake2_code_${pkgver}/b2sum"
+  cd "$srcdir/BLAKE2/b2sum"
 
   sed -i "s# -fopenmp##" makefile
 
@@ -22,15 +28,15 @@ prepare() {
 }
 
 build() {
-  cd "$srcdir/blake2_code_${pkgver}/b2sum"
+  cd "$srcdir/BLAKE2/b2sum"
 
   make all
 }
 
 package() {
-  cd "$srcdir/blake2_code_${pkgver}/b2sum"
+  cd "$srcdir/BLAKE2/b2sum"
 
   install -Dm755 b2sum "$pkgdir/usr/bin/b2sum"
+  install -Dm644 ../README.md "$pkgdir/usr/share/b2sum/README"
   install -Dm644 ../COPYING "$pkgdir/usr/share/licenses/b2sum/COPYING"
-  install -Dm644 ../README "$pkgdir/usr/share/b2sum/README"
 }
