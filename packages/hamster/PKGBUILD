@@ -5,32 +5,37 @@ pkgname='hamster'
 pkgver='2.0.0'
 pkgrel=15
 groups=('blackarch' 'blackarch-exploitation')
-pkgdesc="Tool for HTTP session sidejacking."
+pkgdesc='Tool for HTTP session sidejacking.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
 url='http://hamster.erratasec.com/'
 license=('GPL')
 depends=('libpcap')
 makedepends=(unzip)
-source=(http://www.clshack.it/nopaste/hamster-$pkgver.zip)
+source=("http://www.clshack.it/nopaste/hamster-${pkgver}.zip")
 sha1sums=('fc1a3e221399cb451c3a4e41b887421cf5a319db')
 
 prepare() {
+  cd "$srcdir"
+
   # execvp looks for commands in PATH
   sed -i 's/execv/execvp/g' "${srcdir}/hamster/src/pixie.c"
 }
 
 build() {
   cd "$srcdir/hamster/build/gcc4"
+
   make
 
   cd "$srcdir/ferret/build/gcc4"
+
   make
 }
 
 package() {
-  # Make base directories.
-  mkdir -p "$pkgdir/usr/share/hamster"
+  cd "$srcdir"
+
   mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/hamster"
 
   cp --no-preserve=ownership "$srcdir"/hamster/bin/* "$pkgdir/usr/share/hamster"
   cp --no-preserve=ownership "$srcdir"/ferret/bin/* "$pkgdir/usr/share/hamster"

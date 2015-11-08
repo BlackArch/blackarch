@@ -2,17 +2,18 @@
 # See COPYING for license details.
 
 pkgname='haskell-openafp'
-pkgver='1.3.2'
-pkgrel=3
-pkgdesc="IBM AFP document format parser and generator"
+pkgver='1.4.2'
+pkgrel=1
+pkgdesc='IBM AFP document format parser and generator.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-url="http://hackage.haskell.org/package/OpenAFP"
+url='http://hackage.haskell.org/package/OpenAFP'
 license=('GPL')
 makedepends=('ghc')
-depends=('haskell-regex-compat' 'haskell-mtl')
-install=haskell-openafp.install
-source=(http://hackage.haskell.org/packages/archive/OpenAFP/$pkgver/OpenAFP-$pkgver.tar.gz)
-sha1sums=('8f4d11a7dc8f033d93a6cb867d71bd50c23c0e61')
+depends=('haskell-regex-compat' 'haskell-mtl' 'haskell-hashable'
+         'haskell-hashtables')
+install='haskell-openafp.install'
+source=("http://hackage.haskell.org/packages/archive/OpenAFP/$pkgver/OpenAFP-${pkgver}.tar.gz")
+sha1sums=('c476d4ee8815054385ee758cdf5adc59f9b44140')
 options=('staticlibs')
 
 build() {
@@ -25,15 +26,22 @@ build() {
   runhaskell Setup haddock
   runhaskell Setup register   --gen-script
   runhaskell Setup unregister --gen-script
+
   sed -i -r -e "s|ghc-pkg.*unregister[^ ]* |&'--force' |" unregister.sh
 }
 
 package() {
   cd "$srcdir/OpenAFP-$pkgver"
 
-  install -Dm744 register.sh   "$pkgdir/usr/share/haskell/haskell-openafp/register.sh"
-  install -m744 unregister.sh "$pkgdir/usr/share/haskell/haskell-openafp/unregister.sh"
   mkdir -p "$pkgdir/usr/share/doc/ghc/html/libraries"
-  ln -s "/usr/share/doc/haskell-openafp/html" "$pkgdir/usr/share/doc/ghc/html/libraries/OpenAFP"
+
+  install -Dm744 register.sh \
+    "$pkgdir/usr/share/haskell/haskell-openafp/register.sh"
+  install -m744 unregister.sh \
+    "$pkgdir/usr/share/haskell/haskell-openafp/unregister.sh"
+
+  ln -s "/usr/share/doc/haskell-openafp/html" \
+    "$pkgdir/usr/share/doc/ghc/html/libraries/OpenAFP"
+
   runhaskell Setup copy --destdir="$pkgdir"
 }
