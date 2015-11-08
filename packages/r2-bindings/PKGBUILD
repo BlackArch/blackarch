@@ -17,7 +17,9 @@ sha1sums=('e34151b6f50608eb8fadba22d81625614aafd7a9')
 build() {
   cd "$srcdir/radare2-bindings-$pkgver"
 
-  ./configure --enable=awk,ctypes,cxx,go,duktape,guile,lua,perl,php5,python,valac,newlisp,dlang,ocaml,r2pipe,vapi
+  ./configure --prefix=/usr \
+    --enable=ctypes,cxx,duktape,guile,lua,php5,python,valac,newlisp,dlang,\
+    r2pipe,vapi
 
   make
 }
@@ -25,23 +27,6 @@ build() {
 package() {
   cd "$srcdir/radare2-bindings-$pkgver"
 
-  mkdir -p "$pkgdir/usr/lib/perl5/site_perl/r2"
-
-  make DESTDIR="$pkgdir" install-plugins
-  make DESTDIR="$pkgdir" install-python
-  make DESTDIR="$pkgdir" install-ctypes
-  make DESTDIR="$pkgdir" install-awk
-
-  # Fixing awkdir in r2awk
-  sed -i "s|$pkgdir/usr/lib/radare2/0.9.8/awk|/usr/lib/radare2/0.9.8/awk|" \
-    "$pkgdir/usr/bin/r2awk"
-
-  cp -rf perl/*.so "$pkgdir/usr/lib/perl5/site_perl/r2"
-  cp -rf perl/*.pm "$pkgdir/usr/lib/perl5/site_perl/r2"
-
-  make DESTDIR="$pkgdir" install-vapi
-  make DESTDIR="$pkgdir" install-ruby
-  make DESTDIR="$pkgdir" lua-install
   make DESTDIR="$pkgdir" install
 
   cd r2pipe/python
