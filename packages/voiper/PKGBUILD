@@ -10,13 +10,39 @@ groups=('blackarch' 'blackarch-voip')
 depends=('python' 'wxpython')
 license=('GPL')
 arch=('any')
-source=("http://downloads.sourceforge.net/voiper/voiper-$pkgver.tar.gz")
+source=("http://downloads.sourceforge.net/voiper/voiper-${pkgver}.tar.gz")
 sha1sums=('2b5b7a1ef0049c24a2c4fdda4402bdb2be708ea8')
 
 package() {
   cd "$srcdir/trunk"
 
+  mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/voiper"
-  cp -r * "$pkgdir/usr/share/voiper/"
-  chmod 0755 $pkgdir/usr/share/voiper/*.py
+
+  cp -a * "$pkgdir/usr/share/voiper/"
+
+  cat > "$pkgdir/usr/bin/voiper-fuzzer" << EOF
+#!/bin/sh
+cd /usr/share/voiper
+exec python2 fuzzer.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/voiper-fuzzer"
+
+  cat > "$pkgdir/usr/bin/voiper-crash-replay" << EOF
+#!/bin/sh
+cd /usr/share/voiper
+exec python2 crash_replay.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/voiper-crash-replay"
+
+  cat > "$pkgdir/usr/bin/voiper-torturer" << EOF
+#!/bin/sh
+cd /usr/share/voiper
+exec python2 torturer.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/voiper-torturer"
+
 }
