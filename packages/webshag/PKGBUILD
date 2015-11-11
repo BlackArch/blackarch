@@ -5,15 +5,15 @@ pkgname='webshag'
 pkgver='1.10'
 pkgrel=7
 groups=('blackarch' 'blackarch-fuzzer' 'blackarch-scanner' 'blackarch-webapp')
-pkgdesc="A multi-threaded, multi-platform web server audit tool."
-url="http://www.scrt.ch/en/attack/downloads/webshag"
+pkgdesc='A multi-threaded, multi-platform web server audit tool.'
+url='http://www.scrt.ch/en/attack/downloads/webshag'
 arch=('any')
 license=('GPL3')
 depends=('python2' 'wxpython' 'nmap' 'nikto')
 makedepends=('dos2unix')
-source=("http://www.scrt.ch/outils/webshag/ws110.tar.gz"
-        "webshag.install"
-        "core_file.patch")
+source=("http://www.scrt.ch/outils/webshag/ws${pkgver//.}.tar.gz"
+        'webshag.install'
+        'core_file.patch')
 install='webshag.install'
 sha1sums=('10650325f13f7e1df0ac416ab1b91cb26801b676'
           'f8daee3d9fd1db2a08336e036b423dbe1e857f09'
@@ -27,31 +27,33 @@ prepare(){
     dos2unix $i
   done
 
-  grep -iRl python "$srcdir" | xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
+  grep -iRl python "$srcdir" |
+  xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
 
   cd "webshag/core"
+
   patch < "$srcdir/core_file.patch"
 }
 
 package() {
   cd "$srcdir"
 
-  # Base directories.
-  mkdir -p "$pkgdir/usr/share/webshag"
   mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/webshag"
 
   cp -La --no-preserve=ownership * "$pkgdir/usr/share/webshag"
 
-  # Bin.
   cat > "$pkgdir/usr/bin/webshag_cli" << EOF
 #!/bin/sh
 exec /usr/share/webshag/webshag_cli.py "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/webshag_cli"
 
 cat > "$pkgdir/usr/bin/webshag_gui" << EOF
 #!/bin/sh
 exec /usr/share/webshag/webshag_gui.py "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/webshag_gui"
 }
