@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# check for outdated mirrors
+
+if [ $# != 1 ]
+then
+    echo "usage: check-mirror <mirrorlist>"
+    exit 1337
+else
+    mirror_list="${1}"
+fi
+
+urls=`cut -d '|' -f 2 ${mirror_list} | egrep -v 'ftpes|blackarch.org' |
+cut -d '$' -f 1`
+file='blackarch/os/x86_64/blackarch.db'
+
+orig_db_size=`curl -so /dev/null \
+  http://blackarch.org/blackarch/blackarch/os/x86_64/blackarch.db \
+  -w %{size_download}`
+
+for url in $urls
+do
+    #echo "checking: ${url}${file}"
+
+    db_size=`curl -so /dev/null "${url}${file}" -w '%{size_download}'`
+
+    if [ $db_size -ne $orig_db_size ]
+    then
+        echo "outdated mirror: ${url} -> orig: $orig_db_size mirror: $db_size"
+    fi
+done
