@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bbscan'
+pkgver=9.655a258
+pkgrel=1
+pkgdesc='A tiny Batch weB vulnerability Scanner.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
+arch=('any')
+url='https://github.com/lijiejie/bbscan'
+license=('Apache2')
+depends=('python2' 'python2-beautifulsoup4' 'python2-ipaddress')
+makedepends=('git')
+source=('git+https://github.com/lijiejie/BBScan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/BBScan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+	cd "$srcdir/BBScan"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/bbscan"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/bbscan" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/bbscan"
+
+  cat > "$pkgdir/usr/bin/bbscan" << EOF
+#!/bin/sh
+cd /usr/share/bbscan
+exec python2 BBScan.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/bbscan"
+}

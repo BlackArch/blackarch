@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='backdoorme'
+pkgver=42.7614932
+pkgrel=1
+pkgdesc='A powerful utility capable of backdooring Unix machines with a slew of backdoors.'
+groups=('blackarch' 'blackarch-backdoor' 'blackarch-automation')
+arch=('any')
+url='https://github.com/Kkevsterrr/backdoorme'
+license=('custom:unknown')
+depends=('python2' 'python2-colorama' 'python2-paramiko' 'python2-rpyc'
+         'python2-scp')
+makedepends=('git')
+options=(!strip)
+source=('git+https://github.com/Kkevsterrr/backdoorme.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/backdoorme"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/backdoorme"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/backdoorme"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/backdoorme/README.md"
+
+  cp -a * "$pkgdir/usr/share/backdoorme/"
+
+  cat > "$pkgdir/usr/bin/backdoorme" << EOF
+#!/bin/sh
+cd /usr/share/backdoorme
+exec python2 master.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/backdoorme"
+}

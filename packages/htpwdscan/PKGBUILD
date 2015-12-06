@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='htpwdscan'
+pkgver=16.99697fc
+pkgrel=1
+pkgdesc='A python HTTP weak pass scanner.'
+groups=('blackarch' 'blackarch-cracker')
+arch=('any')
+url='https://github.com/lijiejie/htpwdScan'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/lijiejie/htpwdScan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/htpwdScan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+	cd "$srcdir/htpwdScan"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/htpwdscan"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/htpwdscan" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/htpwdscan"
+
+  cat > "$pkgdir/usr/bin/htpwdscan" << EOF
+#!/bin/sh
+cd /usr/share/htpwdscan
+exec python2 htpwdScan.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/htpwdscan"
+}
