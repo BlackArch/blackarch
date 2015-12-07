@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ssrf-proxy'
+pkgver=70.399a486
+pkgrel=1
+pkgdesc='Facilitates tunneling HTTP communications through servers vulnerable to Server-Side Request Forgery.'
+groups=('blackarch' 'blackarch-proxy' 'blackarch-tunnel')
+arch=('any')
+url='https://github.com/bcoles/ssrf_proxy'
+license=('MIT')
+depends=('ruby')
+makedepends=('git' 'ruby-bundler')
+source=('git+https://github.com/bcoles/ssrf_proxy.git')
+sha1sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/ssrf_proxy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/ssrf_proxy"
+
+  gem build ssrf_proxy.gemspec
+}
+
+package() {
+	cd "$srcdir/ssrf_proxy"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/ssrf-proxy"
+
+  local _gemdir="$(ruby -e'puts Gem.default_dir')"
+
+  gem install --no-user-install -n "$pkgdir/usr/bin" \
+    -i "$pkgdir/$_gemdir" ssrf_proxy*.gem
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/ssrf-proxy" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/ssrf-proxy/LICENSE"
+}

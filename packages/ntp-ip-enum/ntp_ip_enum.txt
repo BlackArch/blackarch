@@ -1,0 +1,154 @@
+#!/usr/bin/env python2
+"""
+Basic script to pull addresses from a NTP server using the monlist command. Can also output Maltego resultset.
+
+Gert Burger <gert A@T sensepost.com>
+SensePost (Pty) Ltd
+www.sensepost.com
+
+This work is licensed under the Creative Commons Attribution 2.5 South Africa License available at http://creativecommons.org/licenses/by/2.5/za/
+
+Edited by SECUREPLA.NET
+"""
+from struct import unpack, pack
+import socket
+import select
+import sys
+import string
+
+OUTPUT_FORMAT='normal'  #'maltego' for maltego xml or any other string for normal output
+DEBUG=False             #Enables basic debug info
+TIMEOUT=2               #Read timeout in seconds
+TRIES=3                 #Number of times to do the monlist request
+filename="NTP.txt"
+
+
+def int_ip_to_str(ip_num):
+    return socket.inet_ntoa(pack('!L', ip_num))
+
+def str_ip_to_int(ip):
+    return unpack('!L',socket.inet_aton(ip))
+
+def get_payload():
+    return """\x17\x00\x02\x2a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"""
+
+def parse_monlist_packet(data):
+    result = dict(response=False, more=False, error=None, records=[])
+
+    if len(data) < 8:
+        result['error'] = 'NO_HEADER'
+        return result
+
+    ntp_flags, ntp_auth, ntp_vers, ntp_req_code, num_items, item_size  = unpack('!BBBBHH', data[0:8])
+    data = data[8:]
+
+    result['response'] = ntp_flags & (1 << 7) > 0
+    result['more'] = ntp_flags & (1 << 6) > 0
+
+    if not result['response']: #Return if its a request
+        result['error'] = "REQUEST_PACKET"
+    elif ntp_req_code == 42: #Check if its a monlist packet
+        if DEBUG: print "item_size[%s] \tnum_items[%s] \tlen(data)[%s]" % (item_size, num_items, len(data))
+
+        if item_size != 32:
+            result['error'] = "WRONG_ITEM_SIZE"
+        elif num_items < 1:
+            result['error'] = "WRONG_ITEM_COUNT"
+        elif len(data) < num_items*item_size:
+            result['error'] = "SHORT_PACKET"
+        else:
+            for offset in range(0, num_items*item_size, item_size):
+                parts = unpack('!IIIIIIII', data[offset:offset+item_size])
+                ip = int_ip_to_str(parts[4])
+                port = parts[7]
+                result['records'].append((ip, port))
+    else:
+        result['error'] = "WRONG_REQUEST_CODE"
+
+    return result
+
+def fetch(ntp_server, timeout=5):
+    def send_payload(sock, target):
+        data = get_payload()
+        bytes_sent = sock.sendto(data, (target, 123))
+        if bytes_sent != len(data) and DEBUG:
+            print "Failed to send payload"
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(('0.0.0.0', 0))
+
+    send_payload(sock, ntp_server)
+
+    results = set()
+    count = 0
+    while True:
+        rlist, wlist, xlist = select.select([sock], [], [], TIMEOUT)
+        if sock in rlist:
+            data, addr = sock.recvfrom(1024)
+            ret = parse_monlist_packet(data)
+            if ret['error']:
+                if DEBUG: print "Error parsing packet[%s]" % ret['error']
+            else:
+                results.update([x[0] for x in ret['records']])
+        else:
+            count += 1
+            if count >= TRIES:
+                break
+            send_payload(sock, ntp_server)
+
+    return list(results)
+
+
+def print_maltego(results):
+    from xml.dom.minidom import Document
+    doc = Document()
+    mm = doc.createElement('MaltegoMessage')
+    doc.appendChild(mm)
+    mtrm = doc.createElement('MaltegoTransformResponseMessage')
+    mm.appendChild(mtrm)
+    entities = doc.createElement('Entities')
+    mtrm.appendChild(entities)
+
+    for result in results:
+        entity = doc.createElement('Entity')
+        entity.setAttribute('Type', 'IPAddress')
+
+        value = doc.createElement('Value')
+        value_node = doc.createTextNode(result)
+
+        value.appendChild(value_node)
+        entity.appendChild(value)
+        entities.appendChild(entity)
+
+    output = doc.toxml()
+    print output[output.index("<Maltego"):] # Hack to rip out <? xml ?> so that maltego can function
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        targets = sys.argv[1:]
+    else:
+        print "Usage: %s target ntp servers\n\nThis script will return a unique set of IP's obtained from the list of ntp servers via the monlist command" % sys.argv[0]
+        sys.exit(-1)
+
+    results = set()
+    for target in targets:
+        results.update(fetch(target))
+    results = sorted(results, key=str_ip_to_int)
+
+    if str(OUTPUT_FORMAT).lower() == 'maltego':
+        print_maltego(results)
+    else:
+	FILE = open(filename,"a")
+	FILE.writelines("-------------------------------NTP List------------------------------")
+	FILE.writelines("\n")
+	FILE.writelines("Target host: ")
+	FILE.writelines(targets)
+	FILE.writelines("\n")
+	#print "\n".join(results)
+	FILE.writelines("\n".join(results))
+	FILE.writelines("\n")
+	FILE.writelines("Number of results %s" % len(results))
+	print "Completed.  Check NTP.txt"
+
+#spidermark sensepostdata ntp_monlist.py

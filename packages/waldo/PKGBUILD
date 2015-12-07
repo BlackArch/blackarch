@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='waldo'
+pkgver=28.a33de7a
+pkgrel=1
+pkgdesc='A lightweight and multithreaded directory and subdomain bruteforcer implemented in Python.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/red-team-labs/waldo'
+license=('MIT')
+depends=('python2' 'python2-simplejson')
+makedepends=('git')
+source=('git+https://github.com/red-team-labs/waldo.git')
+sha1sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/waldo"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+	cd "$srcdir/waldo"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/waldo"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/waldo" README.rst CONTRIBUTING.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/waldo/LICENSE"
+
+  rm README.rst CONTRIBUTING.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/waldo"
+
+  cat > "$pkgdir/usr/bin/waldo" << EOF
+#!/bin/sh
+cd /usr/share/waldo
+exec python2 waldo.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/waldo"
+}
