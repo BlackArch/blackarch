@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='phpsploit'
+pkgver=640.420e3f7
+pkgrel=3
+pkgdesc='Stealth post-exploitation framework.'
+groups=('blackarch' 'blackarch-webapp')
+arch=('any')
+url='https://github.com/nil0x42/phpsploit'
+license=('GPL3')
+depends=('python' 'python-colorama' 'python-pygments' 'python-tornado'
+         'python-termcolor' 'python-pyparsing')
+makedepends=('git')
+source=('git+https://github.com/nil0x42/phpsploit.git')
+sha1sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/phpsploit"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+	cd "$srcdir/phpsploit"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/phpsploit"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/phpsploit" README.md CHANGELOG.md \
+    CONTRIBUTE DISCLAIMER INSTALL.md TODO
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/phpsploit"
+
+  cat > "$pkgdir/usr/bin/phpsploit" << EOF
+#!/bin/sh
+cd /usr/share/phpsploit
+exec python phpsploit "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/phpsploit"
+}
