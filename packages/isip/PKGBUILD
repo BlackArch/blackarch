@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='isip'
+pkgver=2.fad1f10
+pkgrel=1
+groups=('blackarch' 'blackarch-voip' 'blackarch-networking' 'blackarch-fuzzer'
+        'blackarch-dos')
+pkgdesc='Interactive sip toolkit for packet manipulations, sniffing, man in the middle attacks, fuzzing, simulating of dos attacks.'
+arch=('any')
+url='https://github.com/halitalptekin/isip'
+license=('MIT')
+depends=('python2' 'scapy' 'python2-termcolor' 'python2-dpkt' 'python2-wsgiref')
+makedepends=('git')
+source=('git+https://github.com/halitalptekin/isip.git' 'options.patch')
+sha1sums=('SKIP'
+          '84e8bd2007fa64a1f9e6f1becb41fbf7b7c95ac3')
+
+pkgver() {
+  cd "$srcdir/isip"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < options.patch
+}
+
+package() {
+  cd "$srcdir/isip"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/isip"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/isip/" README.md HISTORY
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/isip/LICENSE"
+
+  rm README.md LICENSE HISTORY
+
+  cp -a test isip/* "$pkgdir/usr/share/isip"
+
+  cat > "$pkgdir/usr/bin/isip" << EOF
+#!/bin/sh
+cd /usr/share/isip
+exec python2 isip.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/isip"
+}
