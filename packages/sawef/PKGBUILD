@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sawef'
+pkgver=27.4ff01ed
+pkgrel=1
+pkgdesc='Send Attack Web Forms.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-recon')
+url='https://github.com/danilovazb/sawef'
+license=('GPL3')
+arch=('any')
+depends=('python2' 'python2-requests' 'python2-simplejson'
+         'python2-beautifulsoup4')
+makedepends=('git')
+source=('git+https://github.com/danilovazb/sawef.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sawef"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/sawef"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/sawef"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/sawef/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/sawef/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/sawef"
+
+  cat > "$pkgdir/usr/bin/sawef" << EOF
+#!/bin/sh
+cd /usr/share/sawef
+exec python2 sawef.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/sawef"
+}

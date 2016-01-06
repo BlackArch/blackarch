@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='simplyemail'
+pkgver=184.07b2df5
+pkgrel=1
+pkgdesc='Email recon made fast and easy, with a framework to build on http://CyberSyndicates.com.'
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/killswitch-GUI/SimplyEmail'
+license=('GPL2')
+arch=('any')
+depends=('python2' 'python2-requests' 'python2-pdfminer' 'python2-docx2txt'
+         'python2-beautifulsoup4' 'python2-xlsx2csv' 'antiword' 'odt2txt'
+         'wget')
+makedepends=('git')
+source=('git+https://github.com/killswitch-GUI/SimplyEmail.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/SimplyEmail"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/SimplyEmail"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/simplyemail"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/simplyemail/README.md"
+  install -Dm644 License/LICENSE-SimplyEmail \
+    "$pkgdir/usr/share/licenses/simplyemail/LICENSE"
+
+  rm -rf README.md License/
+
+  cp -a * "$pkgdir/usr/share/simplyemail/"
+
+  cat > "$pkgdir/usr/bin/simplyemail" << EOF
+#!/bin/sh
+cd /usr/share/simplyemail
+exec python2 SimplyEmail.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/simplyemail"
+}
