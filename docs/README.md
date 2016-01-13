@@ -2,7 +2,7 @@ About BlackArch Linux
 ---------------------
 
 **BlackArch Linux** is an Arch Linux-based distribution for penetration testers
-and security researchers. The repository contains 1330 tools. You can install
+and security researchers. The repository contains 1340 tools. You can install
 tools individually or in groups. BlackArch Linux is compatible with existing Arch
 installs. For more information, see the installation instructions.
 
