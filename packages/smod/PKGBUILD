@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='smod'
+pkgver=11.7111dcc
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-recon'
+        'blackarch-dos')
+pkgdesc='A modular framework with every kind of diagnostic and offensive feature you could need in order to pentest modbus protocol.'
+arch=('any')
+url='https://github.com/enddo/smod'
+license=('GPL2')
+depends=('python2' 'scapy' 'python2-pexpect')
+makedepends=('git')
+source=('git+https://github.com/enddo/smod.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/smod"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/smod"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/smod"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/smod/" README.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/smod/LICENSE.md"
+
+  rm README.md LICENSE.md
+
+  cp -a * "$pkgdir/usr/share/smod"
+
+  cat > "$pkgdir/usr/bin/smod" << EOF
+#!/bin/sh
+cd /usr/share/smod
+exec python2 smod.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/smod"
+}
