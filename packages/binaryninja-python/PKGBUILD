@@ -3,7 +3,7 @@
 
 pkgname='binaryninja-python'
 pkgver=11.0b25d69
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-binary')
 pkgdesc='Binary Ninja prototype written in Python.'
 arch=('any')
@@ -11,13 +11,21 @@ url='https://github.com/Vector35/binaryninja-python'
 license=('custom:unknown')
 depends=('python2' 'python2-pyside' 'python2-crypto')
 makedepends=('git')
-source=('git+https://github.com/Vector35/binaryninja-python.git')
-sha1sums=('SKIP')
+source=('git+https://github.com/Vector35/binaryninja-python.git'
+        'MachOFile.py.patch')
+sha1sums=('SKIP'
+          '2196f674a94d9fae667b074da1038b465cb43c02')
 
 pkgver() {
   cd "$srcdir/binaryninja-python"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < MachOFile.py.patch
 }
 
 package() {
@@ -28,7 +36,7 @@ package() {
 
   install -Dm644 -t "$pkgdir/usr/share/doc/binaryninja-python/" readme.md docs/*
 
-  rm -rf README.md docs/
+  rm -rf readme.md docs/
 
   cp -a * "$pkgdir/usr/share/binaryninja-python/"
 
