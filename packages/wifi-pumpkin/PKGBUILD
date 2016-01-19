@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='wifi-pumpkin'
+pkgver=56.664320d
+pkgrel=1
+groups=('blackarch' 'blackarch-wireless' 'blackarch-dos' 'blackarch-spoof'
+        'blackarch-exploitation' 'blackarch-sniffer' 'blackarch-social')
+pkgdesc='Framework for Rogue Wi-Fi Access Point Attack.'
+arch=('any')
+url='https://github.com/P0cL4bs/WiFi-Pumpkin'
+license=('MIT')
+depends=('python2' 'python2-twisted' 'scapy' 'python2-beautifulsoup4'
+         'python2-nmap' 'python2-netaddr' 'python2-dnspython' 'python2-config'
+         'python2-isc_dhcp_leases' 'python2-pyqt4' 'python2-pcapy'
+         'python2-lxml' 'ipython2' 'hostapd' 'rfkill' 'php-cgi' 'dhcp')
+makedepends=('git')
+source=('git+https://github.com/P0cL4bs/WiFi-Pumpkin.git'
+        'Main.py.patch')
+sha1sums=('SKIP'
+          '8954803a53b2b46ce9dfd6d466a61c40f6e1aad0')
+
+pkgver() {
+  cd "$srcdir/WiFi-Pumpkin"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < Main.py.patch
+}
+
+package() {
+  cd "$srcdir/WiFi-Pumpkin"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/wifi-pumpkin"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/wifi-pumpkin/" README.md CHANGELOG \
+    CONTRIBUTING.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/wifi-pumpkin/LICENSE"
+
+  rm README.md CONTRIBUTING.md CHANGELOG LICENSE
+
+  cp -a * "$pkgdir/usr/share/wifi-pumpkin"
+
+  cat > "$pkgdir/usr/bin/wifi-pumpkin" << EOF
+#!/bin/sh
+cd /usr/share/wifi-pumpkin
+exec python2 wifi-pumpkin.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/wifi-pumpkin"
+}
