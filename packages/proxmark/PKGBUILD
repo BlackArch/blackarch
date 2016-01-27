@@ -1,0 +1,70 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='proxmark'
+pkgver=1386.7ede3c7
+pkgrel=3
+groups=('blackarch' 'blackarch-radio' 'blackarch-recon' 'blackarch-scanner')
+pkgdesc='A powerful general purpose RFID tool, the size of a deck of cards, designed to snoop, listen and emulate everything from Low Frequency (125kHz) to High Frequency (13.56MHz) tags.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/Proxmark/proxmark3'
+license=('GPL2')
+depends=('libusb' 'perl' 'qt4')
+makedepends=('git' 'arm-none-eabi-gcc' 'arm-none-eabi-newlib')
+source=('git+https://github.com/Proxmark/proxmark3.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/proxmark3"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/proxmark3"
+
+  make -j1
+}
+
+package() {
+  cd "$srcdir/proxmark3"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/proxmark"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/proxmark/" README.txt HACKING.txt \
+    COMPILING.txt CHANGELOG.md doc/*
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/proxmark/LICENSE.txt"
+
+  rm -rf *.txt *.md doc/
+
+  cp -a * "$pkgdir/usr/share/proxmark"
+
+  cat > "$pkgdir/usr/bin/proxmark" << EOF
+#!/bin/sh
+exec /usr/share/proxmark/client/proxmark3 "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/proxmark"
+
+  cat > "$pkgdir/usr/bin/proxmark-flasher" << EOF
+#!/bin/sh
+exec /usr/share/proxmark/client/flasher "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/proxmark-flasher"
+
+  cat > "$pkgdir/usr/bin/proxmark-fpga-compress" << EOF
+#!/bin/sh
+exec /usr/share/proxmark/client/fpga_compress "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/proxmark-fpga-compress"
+
+  cat > "$pkgdir/usr/bin/proxmark-unbind-proxmark" << EOF
+#!/bin/sh
+exec /usr/share/proxmark/client/unbind-proxmark "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/proxmark-unbind-proxmark"
+}
