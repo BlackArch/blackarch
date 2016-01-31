@@ -1,5 +1,11 @@
---- src/BruteX/brutex	2015-10-01 15:35:40.429063305 +0200
-+++ brutex	2015-10-01 15:36:12.168891356 +0200
+--- src/BruteX/brutex	2016-02-01 00:03:16.581457828 +0100
++++ brutex	2016-02-01 00:04:49.470954602 +0100
+@@ -1,4 +1,4 @@
+-#!/bin/bash 
++#!/bin/bash
+ # BruteX v1.3 by 1N3
+ # http://crowdshield.com
+ #
 @@ -14,13 +14,13 @@
  # 3. SNMPWalk
  # 4. DNSEnum
@@ -13,34 +19,40 @@
  PORT="$2"
 -LOOT_DIR=loot
 +LOOT_DIR=/tmp/loot
- USER_FILE="simple-users.txt"
- PASS_FILE="password.lst"
- DNS_FILE="namelist.txt"
-@@ -64,8 +64,13 @@
- echo ""
- echo ""
+ FTP_USER_PASS="wordlists/ftp-default-userpass.txt"
+ MYSQL_USER_PASS="wordlists/mssql-default-userpass.txt"
+ ORACLE_USER_PASS="wordlists/oracle-default-userpass.txt"
+@@ -37,6 +37,11 @@
+ COLOR3='\033[92m'
+ RESET='\e[0m'
  
-+if [ ! -d "${LOOT_DIR}" ]
++if [ ! -d ${LOOT_DIR} ]
 +then
-+  mkdir "${LOOT_DIR}"
++  mkdir ${LOOT_DIR}
 +fi
 +
+ # UN-COMMENT TO ENABLE PROXY
+ #export HYDRA_PROXY=socks4://127.0.0.1:9050
+ 
+@@ -71,7 +76,7 @@
+ echo ""
+ 
  echo -e "$COLOR3################################### Running Port Scan ##############################$RESET"
 -if [ -z "$PORT" ] 
 +if [ -z "$PORT" ]
  then
- 	nmap -T4 --open $TARGET -oX $LOOT_DIR/nmap-$TARGET.xml
+ 	nmap -T4 --open $TARGET -p21,22,23,25,53,80,110,139,162,389,443,445,512,513,514,993,1433,1521,3306,3389,5432,5900,5901,8000,8080,6667 -oX $LOOT_DIR/nmap-$TARGET.xml
  else
-@@ -103,7 +108,7 @@
+@@ -110,7 +115,7 @@
  then
  	echo -e "$COLOR1 + -- --=[Port 21 closed... skipping.$RESET"
  else
 -	echo -e "$COLOR2 + -- --=[Port 21 opened... running tests...$RESET"	
 +	echo -e "$COLOR2 + -- --=[Port 21 opened... running tests...$RESET"
- 	hydra -L $USER_FILE -P $PASS_FILE $TARGET ftp -t $THREADS -e ns
+ 	hydra -C $FTP_USER_PASS $TARGET ftp -t $THREADS -e ns
  fi
  
-@@ -144,7 +149,7 @@
+@@ -151,7 +156,7 @@
  then
  	echo -e "$COLOR1 + -- --=[Port 110 closed... skipping.$RESET"
  else
@@ -49,7 +61,7 @@
  	hydra -L $USER_FILE -P $PASS_FILE $TARGET pop3 -t $THREADS -e ns
  fi
  
-@@ -170,7 +175,7 @@
+@@ -177,7 +182,7 @@
  	echo -e "$COLOR1 + -- --=[Port 443 closed... skipping.$RESET"
  else
  	echo -e "$COLOR2 + -- --=[Port 443 opened... running tests...$RESET"
@@ -58,16 +70,16 @@
  fi
  
  if [ -z "$port_445" ]
-@@ -178,7 +183,7 @@
+@@ -185,7 +190,7 @@
  	echo -e "$COLOR1 + -- --=[Port 445 closed... skipping.$RESET"
  else
  	echo -e "$COLOR2 + -- --=[Port 445 opened... running tests...$RESET"
--	hydra -L $USER_FILE -P $PASS_FILE $TARGET smb -S 445 -t $THREADS -e ns 
-+	hydra -L $USER_FILE -P $PASS_FILE $TARGET smb -S 445 -t $THREADS -e ns
+-	hydra -L $WINDOWS_USER_LIST -P $PASS_FILE $TARGET smb -S 445 -t $THREADS -e ns 
++	hydra -L $WINDOWS_USER_LIST -P $PASS_FILE $TARGET smb -S 445 -t $THREADS -e ns
  fi
  
  if [ -z "$port_512" ]
-@@ -186,7 +191,7 @@
+@@ -193,7 +198,7 @@
  	echo -e "$COLOR1 + -- --=[Port 512 closed... skipping.$RESET"
  else
  	echo -e "$COLOR2 + -- --=[Port 512 opened... running tests...$RESET"
@@ -76,7 +88,7 @@
  fi
  
  if [ -z "$port_513" ]
-@@ -194,7 +199,7 @@
+@@ -201,7 +206,7 @@
  	echo -e "$COLOR1 + -- --=[Port 513 closed... skipping.$RESET"
  else
  	echo -e "$COLOR2 + -- --=[Port 513 opened... running tests...$RESET"
@@ -85,7 +97,7 @@
  fi
  
  if [ -z "$port_514" ]
-@@ -202,7 +207,7 @@
+@@ -209,7 +214,7 @@
  	echo -e "$COLOR1 + -- --=[Port 514 closed... skipping.$RESET"
  else
  	echo -e "$COLOR2 + -- --=[Port 514 opened... running tests...$RESET"
@@ -94,7 +106,7 @@
  fi
  
  if [ -z "$port_993" ]
-@@ -210,7 +215,7 @@
+@@ -217,7 +222,7 @@
  	echo -e "$COLOR1 + -- --=[Port 993 closed... skipping.$RESET"
  else
  	echo -e "$COLOR2 + -- --=[Port 993 opened... running tests...$RESET"
@@ -103,12 +115,21 @@
  fi
  
  if [ -z "$port_1433" ]
-@@ -218,7 +223,7 @@
+@@ -225,7 +230,7 @@
  	echo -e "$COLOR1 + -- --=[Port 1433 closed... skipping.$RESET"
  else
  	echo -e "$COLOR2 + -- --=[Port 1433 opened... running tests...$RESET"
--	hydra -L $USER_FILE -P $PASS_FILE $TARGET mssql -S 1433 -t $THREADS -e ns 
-+	hydra -L $USER_FILE -P $PASS_FILE $TARGET mssql -S 1433 -t $THREADS -e ns
+-	hydra -L $WINDOWS_USER_LIST -P $PASS_FILE $TARGET mssql -S 1433 -t $THREADS -e ns 
++	hydra -L $WINDOWS_USER_LIST -P $PASS_FILE $TARGET mssql -S 1433 -t $THREADS -e ns
+ fi
+ 
+ if [ -z "$port_1521" ]
+@@ -233,7 +238,7 @@
+ 	echo -e "$COLOR1 + -- --=[Port 1521 closed... skipping.$RESET"
+ else
+ 	echo -e "$COLOR2 + -- --=[Port 1521 opened... running tests...$RESET"
+-	hydra -C $ORACLE_USER_PASS $TARGET oracle -S 1521 -t $THREADS -e ns 
++	hydra -C $ORACLE_USER_PASS $TARGET oracle -S 1521 -t $THREADS -e ns
  fi
  
  if [ -z "$port_3306" ]
