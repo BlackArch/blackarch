@@ -19,7 +19,7 @@ You can get in touch with the BlackArch Linux team. Just check out the following
 
 **Web:** http://www.blackarch.org/
 
-**Mail:** blackarchlinux@gmail.com
+**Mail:** team@blackarch.org
 
 **IRC:** [irc://irc.freenode.net/blackarch](irc://irc.freenode.net/blackarch)
 
