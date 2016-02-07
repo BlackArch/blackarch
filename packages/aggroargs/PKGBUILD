@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='aggroargs'
+pkgver=50.d56728a
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-fuzzer')
+pkgdesc='Bruteforce commandline buffer overflows, linux, aggressive arguments.'
+arch=('any')
+url='https://github.com/tintinweb/aggroArgs'
+license=('GPL2')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/tintinweb/aggroArgs.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/aggroArgs"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/aggroArgs"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/aggroargs"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/aggroargs/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/aggroargs/LICENSE"
+
+  rm README.* LICENSE
+
+  cp -a src/* "$pkgdir/usr/share/aggroargs"
+
+  cat > "$pkgdir/usr/bin/aggroargs" << EOF
+#!/bin/sh
+cd /usr/share/aggroargs
+exec python2 __main__.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/aggroargs"
+}
