@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dnsfilexfer'
+pkgver=14.20743e0
+pkgrel=1
+groups=('blackarch' 'blackarch-networking' 'blackarch-misc')
+pkgdesc='File transfer via DNS.'
+arch=('any')
+url='https://github.com/leonjza/dnsfilexfer'
+license=('MIT')
+depends=('python2' 'python2-dnspython' 'python2-crypto')
+makedepends=('git')
+source=('git+https://github.com/leonjza/dnsfilexfer.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/dnsfilexfer"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/dnsfilexfer"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/dnsfilexfer"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/dnsfilexfer/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/dnsfilexfer/LICENSE"
+
+  rm README.* LICENSE
+
+  cp -a * "$pkgdir/usr/share/dnsfilexfer"
+
+  cat > "$pkgdir/usr/bin/dnsfilexfer-send" << EOF
+#!/bin/sh
+cd /usr/share/dnsfilexfer
+exec python2 dns_send.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/dnsfilexfer-send"
+
+  cat > "$pkgdir/usr/bin/dnsfilexfer-recv" << EOF
+#!/bin/sh
+cd /usr/share/dnsfilexfer
+exec python2 dns_recv.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/dnsfilexfer-recv"
+}

@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='netscan2'
+pkgver=43.c225f25
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+pkgdesc='Active / passive network scanner.'
+arch=('any')
+url='https://github.com/walchko/netscan2'
+license=('MIT')
+depends=('python2' 'python2-pcapy' 'python2-netlib' 'python2-dpkt'
+         'python2-nose' 'python2-requests' 'python2-netaddr' 'python2-awake')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/walchko/netscan2.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/netscan2"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/netscan2"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/netscan2"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/netscan2/" README.rst MANIFEST.in
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/netscan2/LICENSE"
+
+  cd "$pkgdir/usr/bin"
+
+  for tool in *
+  do
+    mv ${tool} "netscan2-${tool}"
+  done
+}
