@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='python-pefile'
+pkgver='1.2.10_139'
+pkgrel=1
+pkgdesc='This is a Python library for PE file support and investigation.'
+arch=('any')
+url='http://code.google.com/p/pefile/'
+license=('MIT')
+depends=('python')
+makedepends=('python-distribute')
+source=("http://pefile.googlecode.com/files/pefile-${pkgver//_/-}.tar.gz"
+        'https://reverse-engineering-scripts.googlecode.com/files/UserDB.TXT'
+        'http://research.pandasecurity.com/blogs/images/userdb.txt')
+sha1sums=('a1bc91758ed1ff8c2df661511023360fcf9bbf77'
+          'e63369562182c8da5a4e7a59cebad0455b4c250f'
+          '2f332fd81bf96eadd6b349a2edbcf5f447a13fa6')
+
+build() {
+  cd "$srcdir"
+
+  cat userdb.txt UserDB.TXT > UserDB-concat.txt
+
+  cd "pefile-${pkgver//_/-}"
+
+  python3 setup.py build
+}
+
+package() {
+  cd "$srcdir/pefile-${pkgver//_/-}"
+
+  python3 setup.py install -O1 --skip-build --root="$pkgdir" --prefix="/usr"
+
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/python-pefile/COPYING"
+
+  cd ../
+
+  install -Dm644 UserDB-concat.txt "$pkgdir/usr/share/pefile/UserDB.TXT"
+}
