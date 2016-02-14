@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='shitflood'
+pkgver=12.9b49c80
+pkgrel=1
+groups=('blackarch' 'blackarch-dos')
+pkgdesc='A Socks5 clone flooder for the Internet Relay Chat (IRC) protocol.'
+arch=('any')
+url='https://github.com/acidvegas/shitflood'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/acidvegas/shitflood.git'
+        'shitflood.py.patch')
+sha1sums=('SKIP'
+          '13c3e39e12d319fc498b4baed8edfd65e96d7b5e')
+
+pkgver() {
+  cd "$srcdir/shitflood"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < shitflood.py.patch
+}
+
+package() {
+  cd "$srcdir/shitflood"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/shitflood"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/shitflood/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/shitflood"
+
+  cat > "$pkgdir/usr/bin/shitflood" << EOF
+#!/bin/sh
+cd /usr/share/shitflood
+exec python2 shitflood.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/shitflood"
+}
