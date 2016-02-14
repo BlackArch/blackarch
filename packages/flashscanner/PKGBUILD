@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='flashscanner'
+pkgver=8.72c7933
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
+pkgdesc='Flash XSS Scanner.'
+arch=('any')
+url='https://github.com/riusksk/FlashScanner'
+license=('custom:unknown')
+depends=('perl' 'perl-uri')
+makedepends=('git')
+source=('git+https://github.com/riusksk/FlashScanner.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/FlashScanner"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/FlashScanner"
+
+  sed -i 's|# !/url/bin/perl -w|#!/usr/bin/perl -w|' FlashScanner.pl
+}
+
+package() {
+  cd "$srcdir/FlashScanner"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/flashscanner"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/FlashScanner/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/flashscanner"
+
+  cat > "$pkgdir/usr/bin/flashscanner" << EOF
+#!/bin/sh
+cd /usr/share/flashscanner
+exec perl FlashScanner.pl "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/flashscanner"
+}
