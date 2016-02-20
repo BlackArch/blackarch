@@ -3,7 +3,7 @@
 
 pkgname='nosqlmap'
 pkgver=165.8d408b4
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation')
 pkgdesc='Automated Mongo database and NoSQL web application exploitation tool'
 arch=('any')
@@ -24,14 +24,20 @@ pkgver() {
 package() {
   cd "$srcdir/NoSQLMap"
 
-  python2 setup.py install --root="$pkgdir" --optimize=1
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/nosqlmap"
 
   install -Dm644 -t "$pkgdir/usr/share/doc/nosqlmap/" README.md TODO
   install -Dm644 COPYING "$pkgdir/usr/share/licenses/nosqlmap/COPYING"
 
-  rm "$pkgdir/usr/bin/NoSQLMap"
+  rm README.md TODO COPYING
 
-  mv "$pkgdir/usr/bin/nosqlmap.py" "$pkgdir/usr/bin/nosqlmap"
-  mv "$pkgdir/usr/bin/nsmcouch.py" "$pkgdir/usr/bin/nsmcouch"
-  mv "$pkgdir/usr/bin/nsmmongo.py" "$pkgdir/usr/bin/nsmmongo"
+  cp -a * "$pkgdir/usr/share/nosqlmap/"
+
+  cat > "$pkgdir/usr/bin/nosqlmap" << EOF
+#!/bin/sh
+exec python2 /usr/share/nosqlmap/nosqlmap.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/nosqlmap"
 }
