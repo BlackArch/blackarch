@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='minimodem'
+pkgver=319.3a8d490
+pkgrel=1
+groups=('blackarch' 'blackarch-misc')
+pkgdesc='A command-line program which decodes (or generates) audio modem tones at any specified baud rate, using various framing protocols.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/kamalmostafa/minimodem'
+license=('GPL3')
+depends=('alsa-lib' 'libpulse' 'fftw')
+makedepends=('git')
+source=('git+https://github.com/kamalmostafa/minimodem.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/minimodem"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/minimodem"
+
+  aclocal
+  autoheader
+  automake --add-missing
+  autoconf
+
+  ./configure --prefix=/usr --sbindir=/usr/bin
+
+  make
+}
+
+package() {
+  cd "$srcdir/minimodem"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/minimodem/" AUTHORS ChangeLog NEWS \
+    INSTALL README THANKS
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/minimodem/COPYING"
+}
