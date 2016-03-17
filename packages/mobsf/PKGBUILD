@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='mobsf'
+pkgver=129.a594b08
+pkgrel=1
+groups=('blackarch' 'blackarch-mobile')
+pkgdesc='An intelligent, all-in-one open source mobile application (Android/iOS) automated pen-testing framework capable of performing static, dynamic analysis and web API testing.'
+arch=('any')
+url='https://github.com/ajinabraham/Mobile-Security-Framework-MobSF'
+license=('GPL3')
+depends=('python2' 'python2-django' 'python2-tornado' 'python2-pyopenssl'
+         'python2-xhtml2pdf' 'python2-psutil' 'java-environment')
+makedepends=('git')
+source=('mobsf::git+https://github.com/ajinabraham/Mobile-Security-Framework-MobSF.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/mobsf"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/mobsf"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/mobsf"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/mobsf/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/mobsf/LICENSE"
+
+  rm README.* LICENSE
+
+  cp -a * "$pkgdir/usr/share/mobsf"
+
+  cat > "$pkgdir/usr/bin/mobsf-mobsfy" << EOF
+#!/bin/sh
+cd /usr/share/mobsf
+exec python2 mobsfy.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/mobsf-mobsfy"
+
+  cat > "$pkgdir/usr/bin/mobsf-manage" << EOF
+#!/bin/sh
+cd /usr/share/mobsf
+exec python2 manage.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/mobsf-manage"
+}
