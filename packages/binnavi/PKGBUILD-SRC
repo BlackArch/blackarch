@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='binnavi'
+pkgver='6.1.0'
+pkgrel=1
+pkgdesc='A binary analysis IDE that allows to inspect, navigate, edit and annotate control flow graphs and call graphs of disassembled code.'
+groups=('blackarch' 'blackarch-disassembler' 'blackarch-reversing'
+        'blackarch-binary')
+arch=('any')
+url='https://github.com/google/binnavi'
+license=('Apache')
+depends=('java-environment' 'postgresql')
+makedepends=('maven' 'apache-ant')
+source=("https://github.com/google/binnavi/archive/v${pkgver}.tar.gz")
+sha1sums=('070b5f351d02d1259e1014c107e8e5fc03c64ddd')
+
+build() {
+  cd "$srcdir/binnavi-$pkgver"
+
+  mvn dependency:copy-dependencies -Dmaven.repo.local="$srcdir/binnavi-$pkgver"
+
+  ant -f build.xml
+}
+
+package() {
+  cd "$srcdir/binnavi-$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/binnavi"
+
+  install -Dm644 target/binnavi-all.jar \
+    "$pkgdir/usr/share/binnavi/binnavi-all.jar"
+  install -Dm644 -t "$pkgdir/usr/share/doc/binnavi" README.md CONTRIBUTING.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/binnavi/LICENSE"
+
+  cat > "$pkgdir/usr/bin/binnavi" << EOF
+#!/bin/sh
+exec java -jar /usr/share/binnavi/binnavi-all.jar "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/binnavi"
+}
