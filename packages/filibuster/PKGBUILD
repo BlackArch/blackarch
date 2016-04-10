@@ -3,7 +3,7 @@
 
 pkgname='filibuster'
 pkgver=164.f343308
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-networking')
 pkgdesc='A Egress filter mapping application with additional functionality.'
 arch=('any')
@@ -12,7 +12,7 @@ license=('GPL3')
 depends=('python2' 'python2-numpy' 'python2-configparser' 'python2-dnspython'
          'python2-pyliblzma' 'python2-crypto')
 makedepends=('git')
-source=('git+https://github.com/subinacls/Filibuster.git')
+source=('git+https://github.com/subinacls/Filibuster.git' 'lulz.patch')
 sha1sums=('SKIP')
 
 pkgver() {
@@ -21,16 +21,24 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd "$srcdir"
+
+  # some noobs think assassault is original...really? LOL
+  patch -p1 < lulz.patch
+
+}
+
 package() {
   cd "$srcdir/Filibuster"
 
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/filibuster"
 
-  install -Dm644 README.md "$pkgdir/usr/share/doc/filibuster/README.md"
+  install -Dm644 README "$pkgdir/usr/share/doc/filibuster/README"
   install -Dm644 GPLv3 "$pkgdir/usr/share/licenses/filibuster/GPLv3"
 
-  rm README.md GPLv3
+  rm README GPLv3
 
   cp -a --no-preserve=ownership * "$pkgdir/usr/share/filibuster"
 
