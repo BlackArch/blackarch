@@ -10,7 +10,7 @@
 #   - use 'git ls-remote $URL HEAD' instead of makepkg -o. thanks to elken.
 
 # upgrade-git-pkg version
-VERSION="upgrade-git-pkgs v0.2"
+VERSION="upgrade-git-pkgs v0.3"
 
 # true / false
 FALSE=0
@@ -28,6 +28,12 @@ SKIP_UPDATE=$FALSE
 
 # dry-run: list packages that have to be upgraded
 LIST_UPGRADES=$FALSE
+
+# default exclude packages
+EXCLUDES="impacket,ipmitool,ld-shatner,levye,liffy,loot,masscan,metasploit,
+mysql2sqlite,neglected,netcommander,osinterator,owasp-bywaf,passcracking,
+python2-ctags,radare2,ropper,sb0x,sqlmap,subbrute,sysdig,treasure,valabind,
+webxploiter"
 
 
 # print warning
@@ -52,7 +58,7 @@ err()
 # exclude given packages
 exclude_packages()
 {
-    echo "[*] excluding given packages"
+    echo "[+] excluding given packages"
 
     for ex in ${excludes}
     do
@@ -67,7 +73,7 @@ exclude_packages()
 # get git based packages
 get_git_packages()
 {
-    echo "[*] getting git packages"
+    echo "[+] getting git packages"
 
     pkgs=`grep -r "^source=(.*['\"]git" * | cut -d '/' -f 1 | tr -s '\n' ' ' |
     sort -u`
@@ -91,7 +97,7 @@ update_version()
 {
     if [ $SKIP_UPDATE -eq $FALSE ]
     then
-        echo "[*] updating version numbers"
+        echo "[+] updating version numbers"
 
         for pkg in `cut -d ' ' -f 1 /tmp/git-packages`
         do
@@ -112,7 +118,7 @@ update_version()
 # compare updated git version number with old one
 cmp_version()
 {
-    echo "[*] comparing version numbers"
+    echo "[+] comparing version numbers"
 
     for p in ${pkgs}
     do
@@ -167,8 +173,8 @@ usage()
     echo ""
     echo "  -u <user>   - username for babuild/barelease"
     echo "  -k <keyid>  - gpg key id for babuild/barelease"
-    echo "  -n <name>   - your real name for package signing (e.g. 'Foo bar')"
-    echo "  -e <pkgs>   - exclude given packages (e.g. foo,bar,foobar)"
+    echo "  -n <name>   - your real name for package signing (e.g.: 'Foo bar')"
+    echo "  -e <pkgs>   - exclude given packages (e.g.: foo,bar,foobar)"
     echo "  -s          - skip updating versions step (default: off)"
     echo "  -l          - dry-run, do not upgrade just list the packages"
     echo "  -v          - verbose mode (default: off)"
@@ -234,7 +240,7 @@ get_opts()
                 name="${OPTARG}"
                 ;;
             e)
-                excludes="`echo ${OPTARG} | tr -s ',' ' '`"
+                EXCLUDES="${EXCLUDES} `echo ${OPTARG} | tr -s ',' ' '`"
                 ;;
             s)
                 SKIP_UPDATE=$TRUE
