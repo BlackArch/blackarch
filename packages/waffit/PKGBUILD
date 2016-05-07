@@ -2,31 +2,33 @@
 # See COPYING for license details.
 
 pkgname='waffit'
-pkgver='39'
+pkgver=128.9ee55e6
 pkgrel=1
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
-pkgdesc='A set of security tools to identify and fingerprint Web Application Firewall/WAF products protecting a website.'
+pkgdesc='Identify and fingerprint Web Application Firewall (WAF) products protecting a website.'
 arch=('any')
-url='http://code.google.com/p/waffit/'
+url='https://github.com/sandrogauci/wafw00f'
 license=('GPL')
-depends=('python2' 'subversion')
-source=('svn+http://waffit.googlecode.com/svn/trunk')
+depends=('python2' 'python2-pluginbase' 'python2-httpretty'
+         'python2-functools32' 'python2-beautifulsoup4')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/sandrogauci/wafw00f.git')
 sha1sums=('SKIP')
 
-prepare(){
-  cd "$srcdir/trunk"
-  grep -iRl 'python' "$srcdir/trunk" | xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
+pkgver() {
+  cd "$srcdir/wafw00f"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/wafw00f"
+
+  python2 setup.py build
 }
 
 package() {
-  cd "$srcdir/trunk"
+  cd "$srcdir/wafw00f"
 
-  mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/share/waffit"
-
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/waffit"
-
-  chmod +x "$pkgdir/usr/share/waffit/wafw00f.py"
-
-  ln -s /usr/share/waffit/wafw00f.py "$pkgdir/usr/bin/wafw00f"
+  python2 setup.py install --root="$pkgdir" --optimize=1
 }
