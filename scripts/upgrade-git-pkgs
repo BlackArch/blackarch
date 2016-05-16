@@ -10,7 +10,7 @@
 #   - use 'git ls-remote $URL HEAD' instead of makepkg -o. thanks to elken.
 
 # upgrade-git-pkg version
-VERSION="upgrade-git-pkgs v0.3"
+VERSION="upgrade-git-pkgs v0.4"
 
 # true / false
 FALSE=0
@@ -34,6 +34,9 @@ EXCLUDES="impacket ipmitool ld-shatner levye liffy loot masscan metasploit
 mysql2sqlite neglected netcommander osinterator owasp-bywaf passcracking
 python2-ctags radare2 ropper sb0x sqlmap subbrute sysdig treasure valabind
 webxploiter"
+
+# new to build and release packages
+PKGS=""
 
 
 # print warning
@@ -62,7 +65,7 @@ exclude_packages()
 
     for ex in ${EXCLUDES}
     do
-        echo "  -> ${ex}"
+        echo "    > ${ex}"
         sed -i "/\<${ex}\>/d" /tmp/git-packages
     done
 
@@ -101,7 +104,7 @@ update_version()
 
         for pkg in `cut -d ' ' -f 1 /tmp/git-packages`
         do
-            echo "  -> ${pkg}"
+            echo "    > ${pkg}"
             cd ${pkg}
             makepkg -o > ${VERBOSE} 2>&1
             rm -rf src
@@ -123,21 +126,21 @@ cmp_version()
     for p in ${pkgs}
     do
         pkg="`cut -d ' ' -f 1 /tmp/git-packages | grep ${p}`"
-        old="`grep ${pkg} /tmp/git-packages | cut -d ' ' -f 2 |
+        old="`grep ${p} /tmp/git-packages | cut -d ' ' -f 2 |
         cut -d ':' -f 2- |cut -d '-' -f 1`"
-        new="`grep -r "^pkgver=" ${pkg} | cut -d '=' -f 2 | tr -d "'"`"
+        new="`grep -r "^pkgver=" ${p} | cut -d '=' -f 2 | tr -d "'"`"
 
         if [ "${new}" != "${old}" ]
         then
             if [ $LIST_UPGRADES -eq $TRUE ]
             then
-                echo "  -> upgrade: ${pkg} (${old} -> ${new})"
+                echo "    > upgrade: ${p} (${old} -> ${new})"
             else
-                sed -i 's/pkgrel=.*/pkgrel=1/' ${pkg}/PKGBUILD
-                upgrade_package
+                sed -i 's/pkgrel=.*/pkgrel=1/' ${p}/PKGBUILD
+                PKGS="${PKGS} ${p}"
             fi
         else
-            echo "  -> skipping ${pkg}" > $VERBOSE 2>&1
+            echo "    > skipping ${p}" > $VERBOSE 2>&1
         fi
     done
 
@@ -145,18 +148,33 @@ cmp_version()
 }
 
 
-# build and release new package
-upgrade_package()
+# build packages
+build_packages()
 {
-    echo "  -> upgrading ${pkg}"
+    echo "[+] upgrading packages"
 
-    sudo rm -rf /tmp/${pkg} > $VERBOSE 2>&1
-
-    sudo ${base}/../scripts/babuild -g "${pkg}" -o "/tmp/${pkg}" -p "${name}" \
+    for p in ${PKGS}
+    do
+        sudo rm -rf /tmp/${p} > $VERBOSE 2>&1
+        sudo ${base}/../scripts/babuild -g "${p}" -o "/tmp/${p}" \
+            -p "${name}" \
         2> $VERBOSE
+    done
 
-    ${base}/../scripts/barelease -u ${user} -k ${key} -f -w /tmp/${pkg}/* \
+    return $SUCCESS
+}
+
+
+# release packages
+release_packages()
+{
+    echo "[+] releasing packages"
+
+    for p in ${PKGS}
+    do
+        ${base}/../scripts/barelease -u ${user} -k ${key} -f -w /tmp/${p}/* \
         2> $VERBOSE
+    done
 
     return $SUCCESS
 }
@@ -282,6 +300,8 @@ main()
     exclude_packages
     update_version
     cmp_version
+    build_packages
+    release_packages
 
     return $SUCCESS
 }
