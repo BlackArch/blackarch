@@ -1,12 +1,13 @@
 # Maintainer: Yardena Cohen <yardenack at gmail dot com>
 # Contributor: Max Roder <maxroder@web.de>
+# Contributor: Sebastian Jug <seb AT stianj DOT ug>
 
 # To port this PKGBUILD to another language of tor-browser you 
 # have to change $pkgname, $_language, $pkgdesc and $url in PKGBUILD
 # AND (!) the first line in the .install file!
 
 pkgname='tor-browser-en'
-pkgver='5.5.4'
+pkgver='5.5.5'
 _language='en-US'
 pkgrel=1
 pkgdesc='Tor Browser Bundle: Anonymous browsing using firefox and tor'
@@ -32,8 +33,8 @@ source+=("${pkgname}.desktop"
          "${pkgname}.png"
          "${pkgname}.sh")
 
-sha256sums_x86_64=('aa23ebc39aa865edb2f38eddd28863728467e10d53f5a49f0f7de8f34f165d6a' 'SKIP')
-sha256sums_i686=(  'ebc24ad69a27531dac62c25f939d4028c5494c1759137a3a841e9e32619a3c71' 'SKIP')
+sha256sums_x86_64=('f28d7209ad1199d8569b9a96b8792e5fb51feb1c6187d9db27cb01846420db4c' 'SKIP')
+sha256sums_i686=(  'ea4f4ba44b2d9eda3e2879cf8580ed6fc69fff6c8ab7fa50f4e528de6d95b812' 'SKIP')
 sha256sums+=('3d5fc01f2cfbae0a00b7117b0b0a24028d1686e6f81a347809f74de2d8522ff7'
              '17fc2f5784d080233aca16e788d62ab6fe3e57cf781b123cfe32767de97d6d3b'
              '89ed1cda6611abcbfdafef9aec78ada146643455d6675b22b72319ae286ea67e')
