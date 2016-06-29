@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='profuzz'
+pkgver=9.aa6dded
+pkgrel=1
+pkgdesc='Simple PROFINET fuzzer based on Scapy.'
+groups=('blackarch' 'blackarch-fuzzer')
+arch=('any')
+url='https://github.com/HSASec/ProFuzz'
+license=('GPL3')
+depends=('python2' 'python2-pyqt4' 'python2-gnuplot' 'python2-pyx' 'scapy'
+         'python2-crypto' 'tcpdump' 'graphviz')
+makedepends=('git')
+source=('git+https://github.com/HSASec/ProFuzz')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ProFuzz"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/ProFuzz"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/profuzz"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/profuzz/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/profuzz/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/profuzz"
+
+  cat > "$pkgdir/usr/bin/profuzz" << EOF
+#!/bin/sh
+cd /usr/share/profuzz
+exec python2 Fuzzer.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/profuzz"
+}

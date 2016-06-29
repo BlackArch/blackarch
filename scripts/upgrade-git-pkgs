@@ -10,7 +10,7 @@
 #   - use 'git ls-remote $URL HEAD' instead of makepkg -o. thanks to elken.
 
 # upgrade-git-pkg version
-VERSION="upgrade-git-pkgs v0.2"
+VERSION="upgrade-git-pkgs v0.4.1"
 
 # true / false
 FALSE=0
@@ -28,6 +28,16 @@ SKIP_UPDATE=$FALSE
 
 # dry-run: list packages that have to be upgraded
 LIST_UPGRADES=$FALSE
+
+# default exclude packages
+EXCLUDES="impacket ipmitool ld-shatner levye liffy loot masscan metasploit"
+EXCLUDES="${EXCLUDES} mysql2sqlite neglected netcommander osinterator"
+EXCLUDES="${EXCLUDES} owasp-bywaf peda passcracking python2-ctags radare2"
+EXCLUDES="${EXCLUDES} ropper sb0x scrapy sqlmap subbrute sysdig treasure"
+EXCLUDES="${EXCLUDES} valabind webxploiter"
+
+# new to build and release packages
+PKGS=""
 
 
 # print warning
@@ -52,11 +62,11 @@ err()
 # exclude given packages
 exclude_packages()
 {
-    echo "[*] excluding given packages"
+    echo "[+] excluding given packages"
 
-    for ex in ${excludes}
+    for ex in ${EXCLUDES}
     do
-        echo "  -> ${ex}"
+        echo "    > ${ex}"
         sed -i "/\<${ex}\>/d" /tmp/git-packages
     done
 
@@ -67,7 +77,7 @@ exclude_packages()
 # get git based packages
 get_git_packages()
 {
-    echo "[*] getting git packages"
+    echo "[+] getting git packages"
 
     pkgs=`grep -r "^source=(.*['\"]git" * | cut -d '/' -f 1 | tr -s '\n' ' ' |
     sort -u`
@@ -91,11 +101,11 @@ update_version()
 {
     if [ $SKIP_UPDATE -eq $FALSE ]
     then
-        echo "[*] updating version numbers"
+        echo "[+] updating version numbers"
 
         for pkg in `cut -d ' ' -f 1 /tmp/git-packages`
         do
-            echo "  -> ${pkg}"
+            echo "    > ${pkg}"
             cd ${pkg}
             makepkg -o > ${VERBOSE} 2>&1
             rm -rf src
@@ -112,26 +122,26 @@ update_version()
 # compare updated git version number with old one
 cmp_version()
 {
-    echo "[*] comparing version numbers"
+    echo "[+] comparing version numbers"
 
     for p in ${pkgs}
     do
         pkg="`cut -d ' ' -f 1 /tmp/git-packages | grep ${p}`"
-        old="`grep ${pkg} /tmp/git-packages | cut -d ' ' -f 2 |
+        old="`grep ${p} /tmp/git-packages | cut -d ' ' -f 2 |
         cut -d ':' -f 2- |cut -d '-' -f 1`"
-        new="`grep -r "^pkgver=" ${pkg} | cut -d '=' -f 2 | tr -d "'"`"
+        new="`grep -r "^pkgver=" ${p} | cut -d '=' -f 2 | tr -d "'"`"
 
         if [ "${new}" != "${old}" ]
         then
             if [ $LIST_UPGRADES -eq $TRUE ]
             then
-                echo "  -> upgrade: ${pkg} (${old} -> ${new})"
+                echo "    > upgrade: ${p} (${old} -> ${new})"
             else
-                sed -i 's/pkgrel=.*/pkgrel=1/' ${pkg}/PKGBUILD
-                upgrade_package
+                sed -i 's/pkgrel=.*/pkgrel=1/' ${p}/PKGBUILD
+                PKGS="${PKGS} ${p}"
             fi
         else
-            echo "  -> skipping ${pkg}" > $VERBOSE 2>&1
+            echo "    > skipping ${p}" > $VERBOSE 2>&1
         fi
     done
 
@@ -139,18 +149,33 @@ cmp_version()
 }
 
 
-# build and release new package
-upgrade_package()
+# build packages
+build_packages()
 {
-    echo "  -> upgrading ${pkg}"
+    echo "[+] upgrading packages"
 
-    sudo rm -rf /tmp/${pkg} > $VERBOSE 2>&1
-
-    sudo ${base}/../scripts/babuild -g "${pkg}" -o "/tmp/${pkg}" -p "${name}" \
+    for p in ${PKGS}
+    do
+        sudo rm -rf /tmp/${p} > $VERBOSE 2>&1
+        sudo ${base}/../scripts/babuild -g "${p}" -o "/tmp/${p}" \
+            -p "${name}" \
         2> $VERBOSE
+    done
 
-    ${base}/../scripts/barelease -u ${user} -k ${key} -f -w /tmp/${pkg}/* \
+    return $SUCCESS
+}
+
+
+# release packages
+release_packages()
+{
+    echo "[+] releasing packages"
+
+    for p in ${PKGS}
+    do
+        ${base}/../scripts/barelease -u ${user} -k ${key} -f -w /tmp/${p}/* \
         2> $VERBOSE
+    done
 
     return $SUCCESS
 }
@@ -167,8 +192,8 @@ usage()
     echo ""
     echo "  -u <user>   - username for babuild/barelease"
     echo "  -k <keyid>  - gpg key id for babuild/barelease"
-    echo "  -n <name>   - your real name for package signing (e.g. 'Foo bar')"
-    echo "  -e <pkgs>   - exclude given packages (e.g. foo,bar,foobar)"
+    echo "  -n <name>   - your real name for package signing (e.g.: 'Foo bar')"
+    echo "  -e <pkgs>   - exclude given packages (e.g.: foo,bar,foobar)"
     echo "  -s          - skip updating versions step (default: off)"
     echo "  -l          - dry-run, do not upgrade just list the packages"
     echo "  -v          - verbose mode (default: off)"
@@ -234,7 +259,7 @@ get_opts()
                 name="${OPTARG}"
                 ;;
             e)
-                excludes="`echo ${OPTARG} | tr -s ',' ' '`"
+                EXCLUDES="${EXCLUDES} `echo ${OPTARG} | tr -s ',' ' '`"
                 ;;
             s)
                 SKIP_UPDATE=$TRUE
@@ -269,19 +294,21 @@ main()
 
     cd "${base}/../packages"
 
-    check_argc ${@}
-    get_opts ${@}
-    check_args ${@}
+    check_argc "${@}"
+    get_opts "${@}"
+    check_args "${@}"
     get_git_packages
     exclude_packages
     update_version
     cmp_version
+    build_packages
+    release_packages
 
     return $SUCCESS
 }
 
 
 # program start
-main ${@}
+main "${@}"
 
 # EOF

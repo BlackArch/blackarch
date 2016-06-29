@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='shellsploit-framework'
+pkgver=256.8198e14
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-backdoor')
+pkgdesc='New Generation Exploit Development Kit.'
+arch=('any')
+url='https://github.com/b3mb4m/shellsploit-framework'
+license=('MIT')
+depends=('python2' 'python2-capstone' 'python2-psutil' 'python2-colorama'
+         'python2-pefile')
+makedepends=('git')
+source=('git+https://github.com/b3mb4m/shellsploit-framework.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/shellsploit-framework"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/shellsploit-framework"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/shellsploit-framework"
+
+  install -Dm644 README.md \
+    "$pkgdir/usr/share/doc/shellsploit-framework/README.md"
+  install -Dm644 LICENSE \
+    "$pkgdir/usr/share/licenses/shellsploit-framework/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/shellsploit-framework/"
+
+  cat > "$pkgdir/usr/bin/shellsploit" << EOF
+#!/bin/sh
+cd /usr/share/shellsploit-framework
+exec python2 shellsploit "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/shellsploit"
+}

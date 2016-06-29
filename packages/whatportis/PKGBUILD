@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='whatportis'
+pkgver=34.66a04b2
+pkgrel=1
+groups=('blackarch' 'blackarch-misc')
+pkgdesc='A command to search port names and numbers.'
+arch=('any')
+url='https://github.com/ncrocfer/whatportis'
+license=('MIT')
+depends=('python2' 'python2-click' 'python2-simplejson' 'python2-flask'
+         'python2-tinydb' 'python2-prettytable')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/ncrocfer/whatportis.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/whatportis"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/whatportis"
+
+  cut -d '=' -f 1 requirements.txt | sort -u -o requirements.txt
+}
+
+build() {
+  cd "$srcdir/whatportis"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/whatportis"
+
+  mkdir -p "$pkgdir/usr/share/whatportis"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/whatportis/" README.rst
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/whatportis/LICENSE.txt"
+}

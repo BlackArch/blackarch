@@ -2,30 +2,31 @@
 # See COPYING for license details.
 
 pkgname='sslyze'
-pkgver='0.12'
+pkgver='0.13.5'
 pkgrel=1
 groups=('blackarch' 'blackarch-misc')
 pkgdesc='Python tool for analyzing the configuration of SSL servers and for identifying misconfigurations.'
-arch=('i686' 'x86_64')
+arch=('any')
 url='https://github.com/nabla-c0d3/sslyze/'
 license=('GPL2')
-depends=('python2')
-if [[ $CARCH == 'x86_64' ]]; then
-  source=("https://github.com/nabla-c0d3/sslyze/releases/download/release-$pkgver/sslyze-0_12-linux64.zip")
-  sha1sums=('a8f3f7b7b728281611793c380055c027318c4a47')
-else
-  source=("https://github.com/nabla-c0d3/sslyze/releases/download/release-$pkgver/sslyze-0_12-linux32.zip")
-  sha1sums=('1bb34e313a93c57264171446e0bd6c89cf8828c9')
-fi
+depends=('python2' 'python2-nassl')
+makedepends=('python2-setuptools')
+source=("https://github.com/nabla-c0d3/sslyze/archive/${pkgver}.tar.gz")
+sha1sums=('410b50bfaf66a75d810628e9afa1a3d619e73645')
+
+build() {
+  cd "$srcdir/sslyze-$pkgver"
+
+  python2 setup.py build
+}
 
 package() {
-    cd "$srcdir/sslyze"
+  cd "$srcdir/sslyze-$pkgver"
 
   python2 setup.py install --root="$pkgdir" --optimize=1
 
-  mv "$pkgdir/usr/bin/sslyze.py" "$pkgdir/usr/bin/sslyze"
+  mv "$pkgdir/usr/bin/sslyze_cli.py" "$pkgdir/usr/bin/sslyze"
 
   install -Dm644 README.md "$pkgdir/usr/share/doc/sslyze/README.md"
-  install -m644 AUTHORS.txt "$pkgdir/usr/share/doc/sslyze/AUTHORS.txt"
-  install -m644 CHANGELOG.md "$pkgdir/usr/share/doc/sslyze/CHANGELOG.md"
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/sslyze/LICENSE.txt"
 }

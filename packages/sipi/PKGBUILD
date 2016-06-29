@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sipi'
+pkgver=10.10f087f
+pkgrel=1
+pkgdesc='Simple IP Information Tools for Reputation Data Analysis.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-misc')
+arch=('any')
+url='https://github.com/ST2Labs/SIPI'
+license=('GPL2')
+depends=('python2' 'python2-requests' 'shodan')
+makedepends=('git')
+source=('git+https://github.com/ST2Labs/SIPI.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/SIPI"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/SIPI"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/sipi"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/sipi/README.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/sipi/"
+
+  cat > "$pkgdir/usr/bin/sipi" << EOF
+#!/bin/sh
+cd /usr/share/sipi
+exec python2 sipi.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/sipi"
+}

@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cantoolz'
+pkgver=275.ffc1761
+pkgrel=1
+pkgdesc='Framework for black-box CAN network analysis https://asintsov.blogspot.de/.'
+groups=('blackarch' 'blackarch-automobile' 'blackarch-recon' 'blackarch-fuzzer'
+        'blackarch-scanner')
+arch=('any')
+url='https://github.com/eik00d/CANToolz'
+license=('Apache2')
+depends=('python' 'python-pyserial' 'python-numpy' 'python-mido')
+makedepends=('git' 'python-setuptools')
+source=('git+https://github.com/eik00d/CANToolz.git' 'setup.py.patch')
+sha1sums=('SKIP'
+          '6e89b4fd01265e30bf8b407d319f60ed55a09544')
+
+pkgver() {
+  cd "$srcdir/CANToolz"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < setup.py.patch
+}
+
+package() {
+  cd "$srcdir/CANToolz"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/cantoolz"
+
+  python3 setup.py install --root="$pkgdir" --optimize=1
+
+  install -Dm755 cantoolz.py "$pkgdir/usr/bin/cantoolz"
+  install -Dm644 -t "$pkgdir/usr/share/doc/cantoolz/" README.md NOTICE.md \
+    CONTRIBUTORS.md VERSION.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/cantoolz/LICENSE.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/cantoolz"
+
+  cat > "$pkgdir/usr/bin/cantoolz" << EOF
+#!/bin/sh
+python /usr/share/cantoolz/cantoolz.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/cantoolz"
+}

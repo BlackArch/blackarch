@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='nosqlmap'
+pkgver=182.0ff71dc
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation')
+pkgdesc='Automated Mongo database and NoSQL web application exploitation tool'
+arch=('any')
+url='https://github.com/tcstool/NoSQLMap.git'
+license=('GPL3')
+depends=('python2' 'python2-pymongo' 'python2-httplib2' 'python2-pbkdf2'
+         'python2-ipcalc' 'python2-couchdb' 'mongodb')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/tcstool/NoSQLMap.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/NoSQLMap"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/NoSQLMap"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/nosqlmap"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/nosqlmap/" README.md TODO
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/nosqlmap/COPYING"
+
+  rm README.md TODO COPYING
+
+  cp -a * "$pkgdir/usr/share/nosqlmap/"
+
+  cat > "$pkgdir/usr/bin/nosqlmap" << EOF
+#!/bin/sh
+exec python2 /usr/share/nosqlmap/nosqlmap.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/nosqlmap"
+}

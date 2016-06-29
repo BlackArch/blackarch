@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname='bokken'
-pkgver=452.c6a2831bd48f
-pkgrel=2
+pkgver=1.8
+pkgrel=1
+epoch=1
 pkgdesc='GUI for radare2 and pyew.'
 arch=('any')
 groups=('blackarch' 'blackarch-misc' 'blackarch-reversing'
@@ -11,28 +12,23 @@ groups=('blackarch' 'blackarch-misc' 'blackarch-reversing'
 url='http://inguma.eu/projects/bokken/'
 license=('GPL')
 depends=('python2' 'pygtksourceview2' 'graphviz' 'r2-bindings' 'pyew'
-         'gtksourceview2' 'python2-pillow' 'gtksourceview3')
-optdeps=('radare2-bindings-git: For r2 backend support (devel)')
+         'gtksourceview2' 'python2-pillow' 'gtksourceview3' 'radare2'
+         'python2-cairo' 'pygtk' 'python2-xdot')
 makedepends=('mercurial')
 options=('!strip')
-source=('hg+http://inguma.eu/repos/bokken')
+source=("https://inguma.eu/attachments/download/212/bokken-${pkgver}.tar.gz")
 sha1sums=('SKIP')
 
-pkgver() {
-  cd "$srcdir/bokken"
-
-  echo $(hg identify -n).$(hg identify -i)
-}
-
 prepare() {
-  cd "$srcdir/bokken"
+  cd "$srcdir/bokken-$pkgver"
 
-  # hugo, please fix this on your own :/ greets!
-  # sed -i 's|import Image|from PIL import Image|' ui/graph.py
+  sed -e 's/env python$/env python2/g' -i ui/xdot.py lib/web/__init__.py \
+    lib/web/utils.py
+  sed -e 's|/usr/bin/python|/usr/bin/env python2|g' -i bokken.py
 }
 
 package() {
-  cd "$srcdir/bokken"
+  cd "$srcdir/bokken-$pkgver"
 
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/bokken"

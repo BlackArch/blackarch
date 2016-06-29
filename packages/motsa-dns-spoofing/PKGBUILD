@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='motsa-dns-spoofing'
+pkgver=2.6ac6980
+pkgrel=1
+pkgdesc='ManOnTheSideAttack-DNS Spoofing.'
+groups=('blackarch' 'blackarch-spoof' 'blackarch-networking')
+arch=('any')
+url='https://github.com/waytoalpit/ManOnTheSideAttack-DNS-Spoofing'
+license=('custom:unknown')
+depends=('python2' 'scapy' 'python2')
+makedepends=('git')
+source=('git+https://github.com/waytoalpit/ManOnTheSideAttack-DNS-Spoofing.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ManOnTheSideAttack-DNS-Spoofing"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/ManOnTheSideAttack-DNS-Spoofing"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/motsa-dns-spoofing"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/motsa-dns-spoofing/" README.md \
+    README.txt
+
+  rm *.md README.txt
+
+  cp -a * "$pkgdir/usr/share/motsa-dns-spoofing"
+
+  cat > "$pkgdir/usr/bin/motsa-dnsinject" << EOF
+#!/bin/sh
+cd /usr/share/motsa-dns-spoofing
+exec python2 dnsinject.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/motsa-dnsinject"
+
+  cat > "$pkgdir/usr/bin/motsa-dnsdetect" << EOF
+#!/bin/sh
+cd /usr/share/motsa-dns-spoofing
+exec python2 dnsdetect.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/motsa-dnsdetect"
+}

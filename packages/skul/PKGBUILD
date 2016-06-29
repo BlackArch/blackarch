@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='skul'
+pkgver=14.e2c33ef
+pkgrel=1
+groups=('blackarch' 'blackarch-cracker' 'blackarch-cryptography')
+pkgdesc='A PoC to bruteforce the Cryptsetup implementation of Linux Unified Key Setup (LUKS).'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/cryptcoffee/skul'
+license=('GPL2')
+depends=('openssl')
+makedepends=('git')
+source=('git+https://github.com/cryptcoffee/skul.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/skul"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/skul"
+
+  ./configure
+
+  make
+}
+
+package() {
+  cd "$srcdir/skul"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/skul"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/skul/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/skul/LICENSE"
+
+  rm README.* LICENSE
+
+  cp -a * "$pkgdir/usr/share/skul"
+
+  cat > "$pkgdir/usr/bin/skul" << EOF
+#!/bin/sh
+cd /usr/share/skul
+exec ./skul "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/skul"
+}

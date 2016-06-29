@@ -2,16 +2,17 @@
 # See COPYING for license details.
 
 pkgname='ssrf-proxy'
-pkgver=72.a01a2fe
+pkgver=208.655d935
 pkgrel=1
 pkgdesc='Facilitates tunneling HTTP communications through servers vulnerable to Server-Side Request Forgery.'
 groups=('blackarch' 'blackarch-proxy' 'blackarch-tunnel')
 arch=('any')
 url='https://github.com/bcoles/ssrf_proxy'
 license=('MIT')
-depends=('ruby')
-makedepends=('git' 'ruby-bundler')
+depends=('ruby' 'ruby-bundler')
+makedepends=('git')
 source=('git+https://github.com/bcoles/ssrf_proxy.git')
+install='ssrf-proxy.install'
 sha1sums=('SKIP')
 
 pkgver() {
@@ -38,5 +39,15 @@ package() {
     -i "$pkgdir/$_gemdir" ssrf_proxy*.gem
 
   install -Dm644 -t "$pkgdir/usr/share/doc/ssrf-proxy" README.md
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/ssrf-proxy/LICENSE"
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/ssrf-proxy/LICENSE.md"
+
+  cp -a * "$pkgdir/usr/share/ssrf-proxy"
+
+  cat > "$pkgdir/usr/bin/ssrf-proxy" << EOF
+#!/bin/sh
+cd /usr/share/ssrf-proxy
+exec ruby bin/ssrf-proxy "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/ssrf-proxy"
 }

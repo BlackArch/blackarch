@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='httppwnly'
+pkgver=36.a55b6f6
+pkgrel=1
+pkgdesc='"Repeater" style XSS post-exploitation tool for mass browser control.'
+groups=('blackarch' 'blackarch-webapp')
+arch=('any')
+url='https://github.com/Danladi/HttpPwnly'
+license=('custom:unknown')
+depends=('python2' 'python2-flask' 'python2-pysqlite' 'python2-flask-sqlalchemy'
+         'python2-flask-cors')
+makedepends=('git')
+source=('git+https://github.com/Danladi/HttpPwnly.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/HttpPwnly"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/HttpPwnly"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/httppwnly"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/httppwnly/README.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/httppwnly"
+
+  cat > "$pkgdir/usr/bin/httppwnly" << EOF
+#!/bin/sh
+cd /usr/share/httppwnly/
+exec python2 httppwnly.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/httppwnly"
+}

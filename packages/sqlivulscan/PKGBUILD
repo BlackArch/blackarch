@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sqlivulscan'
+pkgver=20.0d6655f
+pkgrel=1
+pkgdesc='This will give you the SQLi Vulnerable Website Just by Adding the Dork.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
+arch=('any')
+url='https://github.com/Hadesy2k/sqlivulscan'
+license=('GPL2')
+depends=('python2' 'python2-simplejson')
+makedepends=('git')
+source=('git+https://github.com/Hadesy2k/sqlivulscan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sqlivulscan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/sqlivulscan"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/sqlivulscan"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/sqlivulscan/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/sqlivulscan/LICENSE"
+
+  rm *.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/sqlivulscan/"
+
+  cat > "$pkgdir/usr/bin/sqlivulscan" << EOF
+#!/bin/sh
+cd /usr/share/sqlivulscan
+exec python2 sqlivul.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/sqlivulscan"
+}
