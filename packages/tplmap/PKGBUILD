@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='tplmap'
+pkgver=166.1304f0c
+pkgrel=1
+pkgdesc='Automatic Server-Side Template Injection Detection and Exploitation Tool.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/epinna/tplmap'
+license=('custom:unknown')
+depends=('python2' 'python2-requests' 'python2-yaml' 'python2-flask')
+makedepends=('git')
+source=('git+https://github.com/epinna/tplmap.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/tplmap"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/tplmap"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/tplmap"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/tplmap/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/tplmap"
+
+  cat > "$pkgdir/usr/bin/tplmap" << EOF
+#!/bin/sh
+cd /usr/share/tplmap
+exec python2 tplmap.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/tplmap"
+}

@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pythem'
+pkgver=69.a0c8cd2
+pkgrel=1
+pkgdesc='Python penetration testing framework.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-sniffer' 'blackarch-recon'
+        'blackarch-cracker' 'blackarch-webapp')
+arch=('any')
+url='https://github.com/m4n3dw0lf/PytheM'
+license=('GPL3')
+depends=('python2' 'python2-praw' 'python2-pysqlite' 'python2-mechanize'
+         'python2-pyttsx' 'python2-netaddr' 'python2-pygeoip' 'python2-paramiko'
+         'python2-netfilterqueue' 'python2-speechrecognition' 'scapy' 'espeak')
+makedepends=('git')
+source=('git+https://github.com/m4n3dw0lf/PytheM.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/PytheM"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/PytheM"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/pythem"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/pythem/README.md"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/pythem"
+
+  cat > "$pkgdir/usr/bin/pythem" << EOF
+#!/bin/sh
+cd /usr/share/pythem
+exec python2 pythem.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/pythem"
+}

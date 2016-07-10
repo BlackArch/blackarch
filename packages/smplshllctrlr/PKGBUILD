@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='smplshllctrlr'
+pkgver=8.c90d73e
+pkgrel=1
+pkgdesc='PHP Command Injection exploitation tool.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/z0noxz/smplshllctrlr'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/z0noxz/smplshllctrlr.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/smplshllctrlr"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/smplshllctrlr"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/smplshllctrlr"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/smplshllctrlr/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/smplshllctrlr"
+
+  cat > "$pkgdir/usr/bin/smplshllctrlr" << EOF
+#!/bin/sh
+cd /usr/share/smplshllctrlr
+exec python2 simple-shell-controller.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/smplshllctrlr"
+}
