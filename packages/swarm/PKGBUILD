@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='swarm'
+pkgver=10.d09b320
+pkgrel=1
+pkgdesc='A distributed penetration testing tool.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-cracker'
+        'blackarch-exploitation' 'blackarch-webapp')
+arch=('any')
+url='https://github.com/Arvin-X/swarm'
+license=('GPL3')
+depends=('python2' 'python2-ipy')
+makedepends=('git')
+source=('git+https://github.com/Arvin-X/swarm.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/swarm"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/swarm"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/swarm"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/swarm/" README.md doc/*
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/swarm/LICENSE"
+
+  rm -rf doc README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/swarm"
+
+  cat > "$pkgdir/usr/bin/swarm" << EOF
+#!/bin/sh
+cd /usr/share/swarm
+exec python2 swarm.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/swarm"
+}

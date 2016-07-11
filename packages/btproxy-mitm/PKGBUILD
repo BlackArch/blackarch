@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='btproxy-mitm'
+pkgver=62.f4fd4e2
+pkgrel=1
+pkgdesc='Man in the Middle analysis tool for Bluetooth.'
+groups=('blackarch' 'blackarch-bluetooth')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/conorpp/btproxy'
+license=('GPL3')
+depends=('python2' 'python2-dbus' 'bluez-libs' 'gcc')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/conorpp/btproxy.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/btproxy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/btproxy"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/btproxy"
+
+  python2 setup.py install --root="$pkgdir"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/btproxy/" README.md
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/btproxy/LICENSE"
+
+  rm README.md LICENSE.txt
+
+  mv "$pkgdir/usr/bin/btproxy" "$pkgdir/usr/bin/btproxy-mitm"
+}
