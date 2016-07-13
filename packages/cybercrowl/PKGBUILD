@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cybercrowl'
+pkgver=57.651071d
+pkgrel=1
+pkgdesc='A Python Web path scanner tool.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/chamli/CyberCrowl'
+license=('custom:unknown')
+depends=('python2' 'python2-requests' 'python2-requests_file' 'python2-idna')
+makedepends=('git')
+source=('git+https://github.com/chamli/CyberCrowl.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/CyberCrowl"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/CyberCrowl"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/cybercrowl"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/cybercrowl/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/cybercrowl"
+
+  cat > "$pkgdir/usr/bin/cybercrowl" << EOF
+#!/bin/sh
+cd /usr/share/cybercrowl
+exec python2 cybercrowl.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/cybercrowl"
+}
