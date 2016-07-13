@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='vulnerabilities-spider'
+pkgver=1.426e70f
+pkgrel=1
+pkgdesc='A tool to scan for web vulnerabilities.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/muhammad-bouabid/Vulnerabilities-spider'
+license=('custom:unknown')
+depends=('python2' 'python2-beautifulsoup4' 'python2-selenium')
+makedepends=('git')
+source=('git+https://github.com/muhammad-bouabid/Vulnerabilities-spider.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Vulnerabilities-spider"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Vulnerabilities-spider"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/vulnerabilities-spider"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/vulnerabilities-spider/" README.txt
+
+  rm -rf README.txt
+
+  cp -a * "$pkgdir/usr/share/vulnerabilities-spider"
+
+  cat > "$pkgdir/usr/bin/vulnerabilities-spider" << EOF
+#!/bin/sh
+cd /usr/share/vulnerabilities-spider
+exec python2 VulnerabilitiesSpider.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/vulnerabilities-spider"
+}
