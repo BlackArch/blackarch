@@ -3,14 +3,15 @@
 
 pkgname='wifiphisher'
 pkgver=253.da713a2
-pkgrel=1
+pkgrel=3
 groups=('blackarch' 'blackarch-wireless' 'blackarch-social')
 pkgdesc='Fast automated phishing attacks against WPA networks.'
 arch=('any')
 url='https://github.com/sophron/wifiphisher'
 license=('MIT')
-depends=('python2' 'python2-httplib2' 'scapy' 'aircrack-ng')
-makedepends=('git')
+depends=('python2' 'python2-httplib2' 'scapy' 'aircrack-ng' 'python2-pyopenssl'
+         'python2-pyric' 'hostapd' 'dnsmasq')
+makedepends=('git' 'python2-setuptools')
 source=('git+https://github.com/sophron/wifiphisher.git')
 sha1sums=('SKIP')
 
@@ -20,24 +21,23 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd "$srcdir/wifiphisher"
+
+  python2 setup.py build
+}
+
 package() {
   cd "$srcdir/wifiphisher"
 
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/wifiphisher"
 
+  python2 setup.py install --root="$pkgdir"
+
   install -Dm644 README.md "$pkgdir/usr/share/doc/wifiphisher/README.md"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/wifiphisher"
 
-  rm README.md LICENSE
-
-  cp -a * "$pkgdir/usr/share/wifiphisher"
-
-  cat > "$pkgdir/usr/bin/wifiphisher" << EOF
-#!/bin/sh
-cd /usr/share/wifiphisher
-exec python2 wifiphisher.py "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/wifiphisher"
+  rm "$pkgdir/usr/lib/python2.7/site-packages/tests/__init__.py"
+  rm "$pkgdir/usr/lib/python2.7/site-packages/tests/__init__.pyc"
 }
