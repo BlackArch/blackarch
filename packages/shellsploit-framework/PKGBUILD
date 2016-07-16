@@ -3,7 +3,7 @@
 
 pkgname='shellsploit-framework'
 pkgver=261.09c00ba
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-backdoor')
 pkgdesc='New Generation Exploit Development Kit.'
 arch=('any')
@@ -11,7 +11,7 @@ url='https://github.com/b3mb4m/shellsploit-framework'
 license=('MIT')
 depends=('python2' 'python2-capstone' 'python2-psutil' 'python2-colorama'
          'python2-pefile')
-makedepends=('git')
+makedepends=('git' 'python2-setuptools')
 source=('git+https://github.com/b3mb4m/shellsploit-framework.git')
 sha1sums=('SKIP')
 
@@ -21,26 +21,20 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd "$srcdir/shellsploit-framework"
+
+  python2 easyinstall.py build
+}
+
 package() {
   cd "$srcdir/shellsploit-framework"
 
-  mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/share/shellsploit-framework"
+
+  python2 easyinstall.py install --root="$pkgdir"
 
   install -Dm644 README.md \
     "$pkgdir/usr/share/doc/shellsploit-framework/README.md"
   install -Dm644 LICENSE \
     "$pkgdir/usr/share/licenses/shellsploit-framework/LICENSE"
-
-  rm README.md LICENSE
-
-  cp -a * "$pkgdir/usr/share/shellsploit-framework/"
-
-  cat > "$pkgdir/usr/bin/shellsploit" << EOF
-#!/bin/sh
-cd /usr/share/shellsploit-framework
-exec python2 shellsploit "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/shellsploit"
 }
