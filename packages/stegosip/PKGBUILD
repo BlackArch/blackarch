@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='stegosip'
+pkgver=7.64d5491
+pkgrel=1
+pkgdesc='TCP tunnel over RTP/SIP.'
+groups=('blackarch' 'blackarch-tunnel' 'blackarch-networking')
+arch=('any')
+url='https://github.com/epinna/Stegosip'
+license=('custom:unknown')
+depends=('python2' 'python2-dpkt' 'python2-nfqueue')
+makedepends=('git')
+source=('git+https://github.com/epinna/Stegosip.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Stegosip"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Stegosip"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/stegosip"
+
+  install -Dm644 README "$pkgdir/usr/share/doc/stegosip/README"
+
+  rm README
+
+  cp -a * "$pkgdir/usr/share/stegosip"
+
+  cat > "$pkgdir/usr/bin/stegosip" << EOF
+#!/bin/sh
+cd /usr/share/stegosip
+exec python2 stegosip.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/stegosip"
+}
