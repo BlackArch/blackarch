@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bof-detector'
+pkgver=19.e08367d
+pkgrel=1
+pkgdesc='A simple detector of BOF vulnerabilities by source-code-level check.'
+groups=('blackarch' 'blackarch-code-audit')
+arch=('any')
+url='https://github.com/st9140927/BOF_Detector'
+license=('custom:unknown')
+depends=('python2' 'python2-lxml')
+makedepends=('git')
+source=('git+https://github.com/st9140927/BOF_Detector.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/BOF_Detector"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/BOF_Detector"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/bof-detector"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/bof-detector/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/bof-detector"
+
+  cat > "$pkgdir/usr/bin/bof-detector" << EOF
+#!/bin/sh
+cd /usr/share/bof-detector/execution/BOF_analyzer
+exec python2 main.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/bof-detector"
+}
