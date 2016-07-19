@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='spfmap'
+pkgver=8.a42d15a
+pkgrel=1
+groups=('blackarch' 'blackarch-recon')
+pkgdesc='A program to map out SPF and DKIM records for a large number of domains.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/BishopFox/spfmap'
+license=('custom:unknown')
+depends=('glibc' 'go')
+makedepends=('go' 'git')
+source=('git+https://github.com/BishopFox/spfmap')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/spfmap"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/$url && rm -rf src/$url && mv spfmap src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t $url
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v $url
+
+  install -Dm755 "$srcdir/spfmap" "$pkgdir/usr/bin/spfmap"
+  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/spfmap/README.md"
+}
