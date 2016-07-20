@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='choronzon'
+pkgver=3.71a46b9
+pkgrel=1
+pkgdesc='An evolutionary knowledge-based fuzzer.'
+groups=('blackarch' 'blackarch-fuzzer')
+arch=('any')
+url='https://github.com/CENSUS/choronzon'
+license=('BSD')
+depends=('python2' 'python2-sortedcontainers')
+makedepends=('git')
+source=('git+https://github.com/CENSUS/choronzon.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/choronzon"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/choronzon"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/choronzon"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/choronzon/" README.md AUTHORS
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/choronzon/LICENSE"
+
+  rm README.md AUTHORS LICENSE
+
+  cp -a * "$pkgdir/usr/share/choronzon"
+
+  cat > "$pkgdir/usr/bin/choronzon" << EOF
+#!/bin/sh
+cd /usr/share/choronzon
+exec python2 choronzon.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/choronzon"
+}
