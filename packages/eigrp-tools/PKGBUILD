@@ -1,0 +1,32 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='eigrp-tools'
+pkgver='0.1'
+pkgrel=1
+pkgdesc='This is a custom EIGRP packet generator and sniffer developed to test the security and overall operation quality of this brilliant Cisco routing protocol.'
+groups=('blackarch' 'blackarch-sniffer' 'blackarch-networking'
+        'blackarch-recon' 'blackarch-scanner')
+arch=('any')
+url='http://www.hackingciscoexposed.com/?link=tools'
+license=('GPL2')
+depends=('perl' 'perl-net-rawip' 'perl-netpacket')
+source=('http://www.hackingciscoexposed.com/tools/eigrp-tools.tar.gz')
+sha1sums=('29957bc42db7bcba584abdf2f9bd53de244dfdb9')
+
+package() {
+  cd "$srcdir/eigrp-tools"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm644 -t "$pkgdir/usr/share/eigrp/" eigrp.pl eigrp.conf
+  install -Dm644 MINI-README "$pkgdir/usr/share/doc/eigrp-tools/MINI-README"
+
+  cat > "$pkgdir/usr/bin/eigrp" << EOF
+#!/bin/sh
+cd /usr/share/eigrp
+exec perl eigrp.pl "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/eigrp"
+}
