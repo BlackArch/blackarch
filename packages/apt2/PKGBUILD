@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='apt2'
+pkgver=47.4ca45f5
+pkgrel=1
+pkgdesc='Automated penetration toolkit.'
+groups=('blackarch' 'blackarch-automation')
+arch=('any')
+url='https://github.com/MooseDojo/apt2'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/MooseDojo/apt2.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/apt2"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/apt2"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/apt2"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/apt2/" README.md TODO.txt VERSION
+
+  rm README.md TODO.txt VERSION
+
+  cp -a * "$pkgdir/usr/share/apt2"
+
+  cat > "$pkgdir/usr/bin/apt2" << EOF
+#!/bin/sh
+cd /usr/share/apt2
+exec python2 apt2.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/apt2"
+}
