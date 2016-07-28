@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='anti-xss'
+pkgver=83.a95e62f
+pkgrel=1
+pkgdesc='A XSS vulnerability scanner.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/lewangbtcc/anti-XSS'
+license=('MIT')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/lewangbtcc/anti-XSS')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/anti-XSS"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/anti-XSS"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/anti-xss"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/anti-xss/" README.md doc/*
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/anti-xss/LICENSE"
+
+  rm -rf README.md LICENSE doc
+
+  cp -a * "$pkgdir/usr/share/anti-xss"
+
+  cat > "$pkgdir/usr/bin/anti-xss" << EOF
+#!/bin/sh
+cd /usr/share/anti-xss
+exec python2 anti-XSS.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/anti-xss"
+}
