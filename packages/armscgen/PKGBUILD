@@ -2,14 +2,14 @@
 # See COPYING for license details.
 
 pkgname='armscgen'
-pkgver=82.15702b5
+pkgver=83.dfb0bb7
 pkgrel=1
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-automation')
 pkgdesc='ARM Shellcode Generator (Mostly Thumb Mode).'
 arch=('any')
 url='https://github.com/alexpark07/ARMSCGen'
 license=('GPL' 'GPL2' 'MIT')
-depends=('python2' 'capstone')
+depends=('python2' 'capstone' 'python2-keystone')
 makedepends=('git' 'python2-setuptools')
 source=('git+https://github.com/alexpark07/ARMSCGen.git')
 sha1sums=('SKIP')
@@ -20,24 +20,29 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-build() {
-  cd "$srcdir/ARMSCGen"
-
-  python2 setup.py build
-}
-
 package() {
   cd "$srcdir/ARMSCGen"
 
-  python2 setup.py install --prefix=/usr --root="$pkgdir"
-
-  install -Dm755 scgen.py "$pkgdir/usr/bin/armscgen"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/armscgen"
 
   install -Dm644 -t "$pkgdir/usr/share/doc/armscgen" README.md \
     shellcodes_lists.md requirements.txt
-
-  cp -a docs/* "$pkgdir/usr/share/doc/armscgen"
+  cp -a docs/* "$pkgdir/usr/share/doc/armscgen/"
 
   install -Dm644 -t "$pkgdir/usr/share/licenses/armscgen" LICENSE \
     LICENSE-ARMSCGen.txt
+
+  rm -rf docs shellcodes_lists.md requirements.txt README.md LICENSE \
+    LICENSE-ARMSCGen.txt
+
+  cp -a * "$pkgdir/usr/share/armscgen/"
+
+  cat > "$pkgdir/usr/bin/armscgen" << EOF
+#!/bin/sh
+cd /usr/share/armscgen
+exec python2 scgen.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/armscgen"
 }
