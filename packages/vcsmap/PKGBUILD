@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='vcsmap'
+pkgver=24.3f3c6ce
+pkgrel=1
+pkgdesc='A plugin-based tool to scan public version control systems for sensitive information.'
+groups=('blackarch' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/melvinsh/vcsmap'
+license=('MIT')
+depends=('ruby')
+makedepends=('git')
+source=('git+https://github.com/melvinsh/vcsmap.git')
+install='vcsmap.install'
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/vcsmap"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/vcsmap"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/vcsmap"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/vcsmap/" README.md CONTRIBUTORS.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/vcsmap/LICENSE.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/vcsmap"
+
+  cat > "$pkgdir/usr/bin/vcsmap" << EOF
+#!/bin/sh
+cd /usr/share/vcsmap
+exec ruby vcsmap.rb "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/vcsmap"
+}
