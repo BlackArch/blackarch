@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dutas'
+pkgver=10.37fa3ab
+pkgrel=1
+pkgdesc='Analysis PE file or Shellcode.'
+groups=('blackarch' 'blackarch-binary' 'blackarch-reversing')
+arch=('any')
+url='https://github.com/dungtv543/Dutas'
+license=('custom:unknown')
+depends=('python2' 'python2-capstone' 'capstone' 'unicorn' 'python2-unicorn')
+makedepends=('git')
+source=('git+https://github.com/dungtv543/Dutas.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Dutas"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Dutas"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/dutas"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/dutas/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/dutas"
+
+  cat > "$pkgdir/usr/bin/dutas" << EOF
+#!/bin/sh
+cd /usr/share/dutas
+exec python2 UniAna.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/dutas"
+}
