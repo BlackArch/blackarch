@@ -2,22 +2,32 @@
 # See COPYING for license details.
 
 pkgname='jd-gui'
-pkgver='0.3.5'
-pkgrel=4
+pkgver='1.4.0'
+pkgrel=1
 groups=('blackarch' 'blackarch-decompiler' 'blackarch-reversing')
-pkgdesc='A standalone graphical utility that displays Java source codes of .class files'
+pkgdesc='A standalone graphical utility that displays Java source codes of .class files.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-url="http://java.decompiler.free.fr/?q=jdgui"
+url='http://java.decompiler.free.fr/?q=jdgui'
 license=('custom')
 depends=('gtk2')
 [[ "$CARCH" == x86_64 ]] && depends=('lib32-gtk2' 'lib32-libsm' 'lib32-libxxf86vm')
 options=('!strip')
-source=(http://jd.benow.ca/jd-gui/downloads/jd-gui-$pkgver.linux.i686.tar.gz)
-sha1sums=('16283bd9f90ffcba9bf26b1b9eac74b154d4ae99')
+source=("https://github.com/java-decompiler/jd-gui/releases/download/v${pkgver}/jd-gui-${pkgver}.jar")
+noextract=("jd-gui-${pkgver}.jar")
+sha1sums=('35bec04dcf240d915da97f7a6522288155725163')
 
 package() {
   cd "$srcdir"
 
-  install -Dm755 jd-gui "$pkgdir/usr/bin/jd-gui"
-  install -Dm644 readme.txt "$pkgdir/usr/share/licenses/jd-gui/readme.txt"
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm644 jd-gui-${pkgver}.jar \
+    "$pkgdir/usr/share/jd-gui/jd-gui-${pkgver}.jar"
+
+  cat > "$pkgdir/usr/bin/jd-gui" << EOF
+#!/bin/sh
+exec java -jar /usr/share/jd-gui/jd-gui-${pkgver}.jar "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/jd-gui"
 }

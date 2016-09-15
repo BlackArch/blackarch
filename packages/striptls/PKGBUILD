@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='striptls'
+pkgver=48.65a7078
+pkgrel=1
+groups=('blackarch' 'blackarch-proxy')
+pkgdesc='Proxy PoC implementation of STARTTLS stripping attacks.'
+arch=('any')
+url='https://github.com/tintinweb/striptls'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/tintinweb/striptls.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/striptls"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/striptls"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/striptls"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/striptls/" README.md README.rst
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/striptls/LICENSE"
+
+  rm README.* LICENSE
+
+  cp -a striptls/* "$pkgdir/usr/share/striptls"
+
+  cat > "$pkgdir/usr/bin/striptls" << EOF
+#!/bin/sh
+cd /usr/share/striptls
+exec python2 striptls.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/striptls"
+}

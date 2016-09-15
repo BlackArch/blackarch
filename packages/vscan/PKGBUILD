@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='vscan'
+pkgver=10.da4e47e
+pkgrel=3
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='HTTPS / Vulnerability scanner.'
+arch=('any')
+url='https://github.com/pasjtene/Vscan'
+license=('custom:unknown')
+depends=('java-environment')
+makedepends=('git' 'apache-ant')
+source=('git+https://github.com/pasjtene/Vscan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Vscan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/Vscan"
+
+  sed -i 's|1.8|1.7|g' nbproject/project.properties
+}
+
+build() {
+  cd "$srcdir/Vscan"
+
+  ant -q --noconfig --nouserlib
+}
+
+package() {
+  cd "$srcdir/Vscan"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm755 dist/Vscan.jar "$pkgdir/usr/share/vscan/Vscan.jar"
+
+  cat > "$pkgdir/usr/bin/vscan" << EOF
+#!/bin/sh
+exec java -jar /usr/share/vscan/Vscan.jar "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/vscan"
+}

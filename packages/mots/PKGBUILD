@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='mots'
+pkgver=5.34017ca
+pkgrel=1
+groups=('blackarch' 'blackarch-sniffer' 'blackarch-networking' 'blackarch-spoof'
+        'blackarch-defensive')
+pkgdesc='Man on the Side Attack - experimental packet injection and detection.'
+arch=('any')
+url='https://github.com/kevinkoo001/MotS'
+license=('custom:unknown')
+depends=('python2' 'python2-netifaces' 'scapy')
+makedepends=('git')
+source=('git+https://github.com/kevinkoo001/MotS.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/MotS"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/MotS"
+
+  local tools="quantumdetect quantuminject"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/mots"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/eapeak/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/mots"
+
+  for i in ${tools}
+  do
+    cat > "$pkgdir/usr/bin/${i}" << EOF
+#!/bin/sh
+cd /usr/share/mots
+exec python2 ${i}.py "\$@"
+EOF
+    chmod a+x "$pkgdir/usr/bin/${i}"
+  done
+}

@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname='wifite'
-pkgver=2.28fc5cd
-pkgrel=2
+pkgver=50.8381fed
+pkgrel=3
+epoch=1
 groups=('blackarch' 'blackarch-cracker' 'blackarch-wireless')
 pkgdesc='A tool to attack multiple WEP and WPA encrypted networks at the same time.'
 arch=('any')
@@ -11,17 +12,28 @@ url='http://code.google.com/p/wifite/'
 license=('GPL')
 depends=('python2' 'aircrack-ng' 'reaver' 'wireshark-cli' 'pyrit' 'cowpatty')
 makedepends=('git')
-source=('git+https://github.com/BlackArch/wifite.git')
+source=('git+https://github.com/derv82/wifite2.git')
 sha1sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/wifite"
+  cd "$srcdir/wifite2"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd "$srcdir/wifite"
+  cd "$srcdir/wifite2"
 
-  install -Dm755 wifite.py "$pkgdir/usr/bin/wifite"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/wifite"
+
+  cp -a * "$pkgdir/usr/share/wifite"
+
+  cat > "$pkgdir/usr/bin/wifite" << EOF
+#!/bin/sh
+cd /usr/share/wifite
+exec python2 Wifite.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/wifite"
 }

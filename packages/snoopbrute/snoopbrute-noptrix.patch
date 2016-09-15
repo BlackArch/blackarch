@@ -1,0 +1,96 @@
+--- src/snoopbrute/snoopboot.py	2015-09-26 00:15:50.167434224 +0200
++++ snoopboot.py	2015-09-26 00:13:51.344744608 +0200
+@@ -14,7 +14,7 @@
+ 
+ hosts = []
+ threads = []
+-num_threads = 5
++num_threads = 4
+ target_dns = ""
+ VERSION = "1.1.3"
+ 
+@@ -44,39 +44,40 @@
+ 
+ def dns_cache_lookup(host, target_ns, x):
+ 
++        res = 0
+ 	resolved = []
+ 	host=host.strip().lower()
+ 
+ 	q = dns.message.make_query(host, "A")	# create bespoke dns message so we can alter query flags below...
+ 	q.flags &= ~dns.flags.RD		# UNSET RECURSION FLAG
+ 
++
+ 	try:
+-		res = dns.query.tcp(q, target_ns)
++	    res = dns.query.tcp(q, target_ns)
++	    if len(res.answer) > 0:
++	    	    if '\x0a' in str(res.answer[0]):
++			    list = str(res.answer[0]).split("\n")
++			    for item in list:
++				    host_list = str(item.strip()).split(" ")
++				    host_id = host_list[len(host_list)-1]
++				    resolved.append(host_id)
++				    print "\033[1;32m[Thread id: %d] Host identified: %s:%s\033[0m" % (x, host, host_id)
++		    else:
++			    host_list = str(res.answer[0]).strip().split(" ")
++			    host_id = host_list[len(host_list)-1]
++
++			    resolved.append(host_id)
++			    print "\033[1;32m[Thread id: %d] Host identified: %s:%s\033[0m" % (x, host, host_id)
++	    else:
++		    return
++
++	    if not "www." in host:
++		    dns_cache_lookup("www." + host, target_ns, x)
+ 	except:
+ 		#connection refused?
+-		print "\033[1;31m[!] Connection refused by %s when looking up %s\033[0m\n" % (target_ns, host)
++		print "\033[1;31m[!] Connection refused by %s when looking up %s\033[0m" % (target_ns, host)
+ 		dns_cache_lookup(host, target_ns, x)
+ 
+-	if len(res.answer) > 0:
+-		if '\x0a' in str(res.answer[0]):
+-			list = str(res.answer[0]).split("\n")
+-			for item in list:
+-				host_list = str(item.strip()).split(" ")
+-				host_id = host_list[len(host_list)-1]
+-				resolved.append(host_id)
+-				print "\033[1;32m[Thread id: %d] Host identified: %s:%s\033[0m" % (x, host, host_id)
+-		else:
+-			host_list = str(res.answer[0]).strip().split(" ")
+-			host_id = host_list[len(host_list)-1]
+-
+-			resolved.append(host_id)
+-			print "\033[1;32m[Thread id: %d] Host identified: %s:%s\033[0m" % (x, host, host_id)
+-	else:
+-		return
+-
+-	if not "www." in host:
+-		dns_cache_lookup("www." + host, target_ns, x)
+-
+ 
+ 	return
+ 
+@@ -119,11 +120,9 @@
+ 
+ if __name__ == "__main__":
+ 
+-	path = os.getcwd() + "/"
+-
+ 	if (len(sys.argv) == 2):
+ 		target_dns = sys.argv[1]
+-		if (os.path.isfile(path + "domain_wordlist.txt")):
++		if (os.path.isfile("/usr/share/snoopbrute/domain_wordlist.txt")):
+ 			parse_host_file("domain_wordlist.txt")
+ 		else:
+ 			help()
+@@ -131,7 +130,7 @@
+ 
+ 	elif (len(sys.argv) == 3):
+ 		target_dns = sys.argv[1]
+-		if (os.path.isfile(path + sys.argv[2])):
++		if (os.path.isfile(sys.argv[2])):
+ 			parse_host_file(sys.argv[2])
+ 		else:
+ 			help()

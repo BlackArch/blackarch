@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bonesi'
+pkgver=12.733c9e9
+pkgrel=1
+pkgdesc='The DDoS Botnet Simulator.'
+groups=('blackarch' 'blackarch-dos')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/Markus-Go/bonesi'
+license=('Apache2')
+depends=('libnet' 'libpcap')
+makedepends=('git' 'automake' 'autoconf')
+source=('git+https://github.com/Markus-Go/bonesi.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/bonesi"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/bonesi"
+
+  aclocal
+  autoconf
+  ./configure --prefix=/usr
+  automake --add-missing
+}
+
+build() {
+  cd "$srcdir/bonesi"
+
+  make
+}
+
+package() {
+  cd "$srcdir/bonesi"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm644 -t "$pkgdir/usr/share/bonesi/" browserlist.txt urllist.txt \
+    50k-bots
+  install -Dm644 README.md "$pkgdir/usr/share/doc/bonesi/README.md"
+  install -Dm644 man/bonesi.1 "$pkgdir/usr/share/man/man1/bonesi.1"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/bonesi/LICENSE"
+}

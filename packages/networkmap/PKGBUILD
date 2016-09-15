@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='networkmap'
+pkgver=58.f5faf17
+pkgrel=1
+groups=('blackarch' 'blackarch-networking' 'blackarch-misc')
+pkgdesc='Post-exploitation network mapper.'
+arch=('any')
+url='https://github.com/lorenzog/NetworkMap'
+license=('GPL3')
+depends=('python2' 'python2-decorator' 'python2-networkx' 'python2-pydotplus'
+         'python2-pyparsing' 'python2-nose' 'python2-ipaddress')
+makedepends=('git')
+source=('git+https://github.com/lorenzog/NetworkMap.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/NetworkMap"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/NetworkMap"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/networkmap"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/networkmap/" README.md
+  install -Dm644 -t "$pkgdir/usr/share/licenses/networkmap/" license.txt
+
+  rm README.md license.txt
+
+  cp -a * "$pkgdir/usr/share/networkmap/"
+
+  cat > "$pkgdir/usr/bin/networkmap" << EOF
+#!/bin/sh
+cd /usr/share/networkmap/networkmap
+exec python2 __main__.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/networkmap"
+}

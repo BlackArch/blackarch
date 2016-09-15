@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='mosquito'
+pkgver=39.fe54831
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-webapp')
+pkgdesc='XSS exploitation tool - access victims through HTTP proxy.'
+arch=('any')
+url='https://github.com/koto/mosquito'
+license=('custom:unknown')
+depends=('python2' 'python2-simplejson' 'python2-lxml' 'python2-urwid'
+         'python2-pyopenssl' 'python2-pyasn1' 'python2-pyasn1-modules'
+         'python2-flask' 'js-beautify')
+makedepends=('git')
+source=('git+https://github.com/koto/mosquito.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/mosquito"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/mosquito"
+
+  git submodule update --init --recursive
+}
+
+package() {
+  cd "$srcdir/mosquito"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/mosquito"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/mosquito/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/mosquito"
+
+  cat > "$pkgdir/usr/bin/mosquito" << EOF
+#!/bin/sh
+cd /usr/share/mosquito
+exec python2 mosquito/start.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/mosquito"
+}

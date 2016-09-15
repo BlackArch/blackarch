@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='scratchabit'
+pkgver=377.a1462e3
+pkgrel=2
+pkgdesc='Easily retargetable and hackable interactive disassembler with IDAPython-compatible plugin API.'
+groups=('blackarch' 'blackarch-disassembler')
+arch=('any')
+url='https://github.com/pfalcon/ScratchABit'
+license=('custom:unknown')
+depends=('python3')
+makedepends=('git')
+_gitroot='https://github.com/pfalcon/ScratchABit'
+
+pkgver() {
+  cd "$srcdir/ScratchABit"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  git clone --recursive $_gitroot
+}
+
+package() {
+  cd "$srcdir/ScratchABit"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/scratchabit"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/scratchabit" README.md docs/*
+
+  rm -rf README.md docs
+
+  cp -a * "$pkgdir/usr/share/scratchabit"
+
+  cat > "$pkgdir/usr/bin/scratchabit" << EOF
+#!/bin/sh
+cd /usr/share/scratchabit
+exec python3 scratchabit.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/scratchabit"
+}

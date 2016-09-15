@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='yasca'
+pkgver='2.1'
+pkgrel=2
+groups=('blackarch' 'blackarch-code-audit')
+pkgdesc='Multi-Language Static Analysis Toolset.'
+arch=('any')
+url='http://www.scovetta.com/yasca.html'
+license=('BSD')
+depends=('php' 'java-environment')
+source=("http://downloads.sourceforge.net/project/yasca/Yasca%202.x/Yasca%202.1/yasca-${pkgver}.zip")
+sha1sums=('bdafe238b77cc210989a3f50b0107c8c746fd2c0')
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/yasca"
+
+  install -Dm644 -t "$pkgdir/usr/share/licenses/yasca/" doc/LICENSE \
+    doc/3rdparty/licenses/*
+
+  rm -r doc/{LICENSE,3rdparty}
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/yasca/" doc/*
+
+  rm -rf doc yasca-2.1.zip
+
+  cp -a * "$pkgdir/usr/share/yasca"
+
+  cat > "$pkgdir/usr/bin/yasca" << EOF
+#!/bin/sh
+cd /usr/share/yasca
+exec php -c ./resources/php_linux.ini -q yasca.php ${@}
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/yasca"
+}

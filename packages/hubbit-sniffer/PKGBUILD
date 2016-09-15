@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hubbit-sniffer'
+pkgver=73.5f3b0a2
+pkgrel=1
+groups=('blackarch' 'blackarch-sniffer' 'blackarch-wireless')
+pkgdesc='Simple application that listens for WIFI-frames and records the mac-address of the sender and posts them to a REST-api.'
+arch=('any')
+url='https://github.com/cthit/hubbIT-sniffer'
+license=('GPL3')
+depends=('python' 'python-requests')
+makedepends=('git')
+source=('git+https://github.com/cthit/hubbIT-sniffer.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/hubbIT-sniffer"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/hubbIT-sniffer"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/hubbit-sniffer"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/hubbit-sniffer/README.md"
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/hubbit-sniffer/COPYING"
+
+  rm README.md COPYING
+
+  cp -a * "$pkgdir/usr/share/hubbit-sniffer"
+
+  cat > "$pkgdir/usr/bin/hubbit-sniffer" << EOF
+#!/bin/sh
+cd /usr/share/hubbit-sniffer/sniffer
+exec python sniffer.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/hubbit-sniffer"
+}

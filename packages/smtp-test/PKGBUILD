@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='smtp-test'
+pkgver=3.acbe743
+pkgrel=2
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='Automated testing of SMTP servers for penetration testing.'
+arch=('any')
+url='https://github.com/isaudits/smtp-test'
+license=('custom:unknown')
+depends=('python2' 'python2-dnspython' 'cutycapt' 'nmap')
+makedepends=('git')
+source=('git+https://github.com/isaudits/smtp-test.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/smtp-test"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/smtp-test"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/smtp-test"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/smtp-test/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/smtp-test"
+
+  cat > "$pkgdir/usr/bin/smtp-test" << EOF
+#!/bin/sh
+cd /usr/share/smtp-test
+exec python2 smtp-test.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/smtp-test"
+}

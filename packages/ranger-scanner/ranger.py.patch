@@ -1,0 +1,226 @@
+--- src/ranger/ranger.py	2016-02-29 10:16:49.605029454 +0100
++++ ranger.py	2016-02-29 10:17:04.871613414 +0100
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ '''
+ Libraries
+ '''
+@@ -31,9 +31,9 @@
+     from impacket.dcerpc.v5.dcomrt import DCOMConnection
+     from impacket.dcerpc.v5.dcom import wmi
+     from impacket.dcerpc.v5.dtypes import NULL
+-    from impacket.examples import remcomsvc, serviceinstall, logger 
++    from impacket.examples import remcomsvc, serviceinstall, logger
+     from impacket.dcerpc.v5 import transport, scmr, wkst, srvs, samr, rpcrt, rrp
+-    from impacket.dcerpc import ndrutils, atsvc
++    from impacket.dcerpc.v5 import ndr, atsvc
+     from impacket.dcerpc.v5.rpcrt import DCERPCException
+     from impacket.nt_errors import STATUS_MORE_ENTRIES
+     from impacket.structure import Structure
+@@ -2286,7 +2286,7 @@
+                 else:
+                     raise
+         smbConnection.deleteFile('ADMIN$', 'Temp\\%s' % tmpFileName)
+- 
++
+         dce.disconnect()
+ 
+ '''
+@@ -2725,7 +2725,7 @@
+         if smbConnection is not None:
+             smbConnection.logoff()
+         dcom.disconnect()
+-        
++
+     def return_data(self):
+         return self.shell.return_data()
+ 
+@@ -2733,7 +2733,7 @@
+     def __init__(self, share, win32Process, smbConnection):
+         cmd.Cmd.__init__(self)
+         self.__share = share
+-        self.__output = '\\' + WMIEXEC_OUTPUT_FILENAME 
++        self.__output = '\\' + WMIEXEC_OUTPUT_FILENAME
+         self.__outputBuffer = ''
+         self.__shell = 'cmd.exe /Q /c '
+         self.__win32Process = win32Process
+@@ -2757,9 +2757,9 @@
+  lcd {path}                 - changes the current local directory to {path}
+  exit                       - terminates the server process (and this session)
+  put {src_file, dst_path}   - uploads a local file to the dst_path (dst_path = default current directory)
+- get {file}                 - downloads pathname to the current local dir 
++ get {file}                 - downloads pathname to the current local dir
+  ! {cmd}                    - executes a local shell cmd
+-""" 
++"""
+ 
+     def do_lcd(self, s):
+         if s == '':
+@@ -2771,7 +2771,7 @@
+         try:
+             import ntpath
+             newPath = ntpath.normpath(ntpath.join(self.__pwd, src_path))
+-            drive, tail = ntpath.splitdrive(newPath) 
++            drive, tail = ntpath.splitdrive(newPath)
+             filename = ntpath.basename(tail)
+             fh = open(filename,'wb')
+             logging.info("Downloading %s\\%s" % (drive, tail))
+@@ -2828,7 +2828,7 @@
+         if len(line) == 2 and line[1] == ':':
+             # Execute the command and see if the drive is valid
+             self.execute_remote(line)
+-            if len(self.__outputBuffer.strip('\r\n')) > 0: 
++            if len(self.__outputBuffer.strip('\r\n')) > 0:
+                 # Something went wrong
+                 #print(self.__outputBuffer)
+                 self.__outputBuffer = ''
+@@ -2862,11 +2862,11 @@
+                     pass
+                 else:
+                     #print str(e)
+-                    pass 
++                    pass
+         self.__transferClient.deleteFile(self.__share, self.__output)
+ 
+     def execute_remote(self, data):
+-        command = self.__shell + data 
++        command = self.__shell + data
+         if self.__noOutput is False:
+             command += ' 1> ' + '\\\\127.0.0.1\\%s' % self.__share + self.__output  + ' 2>&1'
+         obj = self.__win32Process.Create(command, self.__pwd, None)
+@@ -3417,7 +3417,7 @@
+                 else:
+                     print("[-] Could not execute the command against %s using the domain %s user %s and password %s at: %s") % (dst, dom, usr, pwd, st)
+                 return
+-    else:         
++    else:
+         with Timeout(timeout_value):
+             try:
+                 if hash:
+@@ -3442,7 +3442,7 @@
+         if not state:
+             if verbose > 1:
+                 print("[-] Host %s port %s is closed") % (dst, verify_port)
+-            return #replaced continue inside a function 
++            return #replaced continue inside a function
+     if attacks:
+         print(instructions)
+     if hash:
+@@ -3572,7 +3572,7 @@
+                     print("[-] Could not execute the command against %s using the domain %s user %s and password %s at: %s") % (dst, dom, usr, pwd, st)
+                 return # changed from continue inside a function
+ 
+-def netview_func(dst, usr, pwd, dom, hash, aes, kerberos, final_targets, methods, scan_type, verbose, verify_port, timeout_value, logger_obj, output_cat, st): 
++def netview_func(dst, usr, pwd, dom, hash, aes, kerberos, final_targets, methods, scan_type, verbose, verify_port, timeout_value, logger_obj, output_cat, st):
+     if scan_type:
+         state = verify_open(verbose, scan_type, verify_port, dst)
+         if not state:
+@@ -3589,7 +3589,7 @@
+     try:
+         shell = USERENUM(username = usr, password = pwd, domain = dom, hashes = hash, aesKey = aes, doKerberos = kerberos, options=opted)
+         shell.run()
+-        data = shell.return_data() 
++        data = shell.return_data()
+         output_handler(logger_obj, output_cat, data, dst, verbose)
+     except (Exception, KeyboardInterrupt), e:
+         print("[!] An error occurred: %s") % (e)
+@@ -3738,7 +3738,7 @@
+ '''
+ CREDENTIAL Functions
+ '''
+-        
++
+ def pwd_test(pwd, verbose, usr = None):
+     SID = None
+     NTLM = ""
+@@ -3823,7 +3823,7 @@
+         temp_list[11] = cached_temp
+     creds_dict[temp_key] = temp_list
+     return(creds_dict)
+-			
++
+ def not_in_cred_dict(verbose, temp_list, SID_temp, LM_temp, NTLM_temp, hash_temp, usr_temp, pwd_temp, dom_temp, local_admin_temp, groups_temp, logged_in_temp, temp_key, creds_dict, access_to_temp, cached_temp):
+     temp_list = []
+     if LM_temp == ":" or LM_temp == "" or LM_temp == " ":
+@@ -3999,7 +3999,7 @@
+ 	    sys.exit("[!] Credential %s is not correctly formatted") % (cred)
+     else:
+         sys.exit("[!] Credential %s is not correctly formatted") % (cred)
+-    return(creds_dict)    
++    return(creds_dict)
+ 
+ def is_empty(structure):
+     if structure:
+@@ -4023,7 +4023,7 @@
+             filename = k + "_" + dst
+             dir = invoker_file + filename
+             with open(dir, 'w') as f:
+-                f.write(data)            
++                f.write(data)
+         elif "executor" in k:
+             if verbose > 0:
+                 print(data)
+@@ -4118,14 +4118,14 @@
+     elif sam_dump:
+         sam_dump_func(dst, usr, hash, dom, aes, kerberos, system, security, sam, ntds, pwd, scan_type, verbose, verify_port, timeout_value, logger_obj, output_cat, st)
+     else:
+-        print(instructions)   
++        print(instructions)
+ 
+ def matrix_read(creds_matrix):
+     with open(creds_matrix, 'r') as f:
+         s = f.read()
+         creds_dict = ast.literal_eval(s)
+     return(creds_dict)
+-    
++
+ def matrix_write(creds_dict, recovery):
+     st = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d-%H:%M:%S')
+     if recovery:
+@@ -4509,8 +4509,8 @@
+     else:
+         creds_dict = add_to_creds_dict(verbose, creds_dict, dom, cred, usr, pwd)
+ 
+-     
+- 
++
++
+     #print(creds_dict) #DEBUG
+ 
+     if smbexec_cmd:
+@@ -4547,7 +4547,7 @@
+            src_ip = network_ifaces[interface]['addr']
+         except Exception, e:
+             print("[!] No IP address found on interface %s") % (interface)
+-	
++
+     if src_ip == None:
+         sys.exit("No IP address is assigned to interface %s") % (str(interface))
+ 
+@@ -4587,7 +4587,7 @@
+                 sys.exit(1)
+     else:
+         tgt_list.extend(targets_list)
+-    
++
+     # Process exceptions
+     if exception_filename:
+         with open(exception_filename) as f:
+@@ -4806,14 +4806,14 @@
+                     for dst in final_targets:
+                         method_func(psexec_cmd, wmiexec_cmd, netview_cmd, smbexec_cmd, atexec_cmd, sam_dump, dst, src_port, cwd, delivery, share_name, usr, hash, pwd, dom, command, unprotected_command, protocol, attacks, kerberos, aes, mode, share, instructions, directory, scan_type, verbose, verify_port, final_targets, system, security, sam, ntds, no_output, encoder, timeout_value, sleep_value, logger_obj, output_cat, methods)
+                         time.sleep(sleep_value)
+-            else: 
++            else:
+                 for dst in final_targets:
+                     method_func(psexec_cmd, wmiexec_cmd, netview_cmd, smbexec_cmd, atexec_cmd, sam_dump, dst, src_port, cwd, delivery, share_name, usr, hash, pwd, dom, command, unprotected_command, protocol, attacks, kerberos, aes, mode, share, instructions, directory, scan_type, verbose, verify_port, final_targets, system, security, sam, ntds, no_output, encoder, timeout_value, sleep_value, logger_obj, output_cat, methods)
+                     time.sleep(sleep_value)
+         except (Exception, KeyboardInterrupt), e:
+             print("[!] An error occurred: %s") % (e)
+ 
+-    data_writer(creds_dict, dst, final_targets, recovery)   
++    data_writer(creds_dict, dst, final_targets, recovery)
+ 
+ if __name__ == '__main__':
+     main()

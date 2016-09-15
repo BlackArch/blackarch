@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cheetah-suite'
+pkgver=21.2364713
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fingerprint'
+        'blackarch-cracker')
+pkgdesc='Complete penetration testing suite (port scanning, brute force attacks, services discovery, common vulnerabilities searching, reporting etc.)'
+arch=('any')
+url='https://github.com/bl4de/Cheetah'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/bl4de/Cheetah.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Cheetah"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Cheetah"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/cheetah"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/cheetah/README.md"
+
+  rm -rf README.md
+
+  cp -a * "$pkgdir/usr/share/cheetah"
+
+  cat > "$pkgdir/usr/bin/cheetah" << EOF
+#!/bin/sh
+cd /usr/share/cheetah
+exec python2 cheetah.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/cheetah"
+}

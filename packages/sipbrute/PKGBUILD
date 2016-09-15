@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sipbrute'
+pkgver=11.5be2fdd
+pkgrel=1
+groups=('blackarch' 'blackarch-voip' 'blackarch-cracker')
+pkgdesc='A utility to perform dictionary attacks against the VoIP SIP Register hash.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/packetassailant/sipbrute'
+license=('MIT')
+depends=('glibc' 'go')
+makedepends=('go' 'git')
+source=('git+https://github.com/packetassailant/sipbrute.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sipbrute"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/$url && rm -rf src/$url && mv sipbrute src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t github.com/packetassailant/sipbrute
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v github.com/packetassailant/sipbrute
+
+  install -Dm755 "$srcdir/sipbrute" "$pkgdir/usr/bin/sipbrute"
+  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/sipbrute/README.md"
+  install -Dm644 src/$url/LICENSE "$pkgdir/usr/share/licenses/sipbrute/LICENSE"
+}

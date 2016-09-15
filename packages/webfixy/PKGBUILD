@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='webfixy'
+pkgver=24.41d8671
+pkgrel=1
+pkgdesc='On-the-fly decryption proxy for MikroTik RouterOS WebFig sessions.'
+groups=('blackarch' 'blackarch-proxy' 'blackarch-crypto' 'blackarch-networking')
+arch=('any')
+url='https://github.com/takeshixx/webfixy'
+license=('GPL3')
+depends=('python' 'python-passlib' 'python-demjson' 'python-aiohttp')
+makedepends=('git')
+source=('git+https://github.com/takeshixx/webfixy.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/webfixy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/webfixy"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/webfixy"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/webfixy/README.md"
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/webfixy/LICENSE.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/webfixy"
+
+  cat > "$pkgdir/usr/bin/webfixy" << EOF
+#!/bin/sh
+cd /usr/share/webfixy
+exec python3 webfixy.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/webfixy"
+}

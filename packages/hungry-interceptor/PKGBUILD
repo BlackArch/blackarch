@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hungry-interceptor'
+pkgver=358.8d28133
+pkgrel=1
+groups=('blackarch' 'blackarch-sniffer')
+pkgdesc='Intercepts data, does something with it, stores it.'
+arch=('any')
+url='https://github.com/nbuechler/hungry-interceptor'
+license=('GPL3')
+depends=('python2' 'python2-flask-wtf' 'python2-flask-cors'
+         'python2-flask-pymongo' 'python2-py2neo')
+makedepends=('git')
+source=('git+https://github.com/nbuechler/hungry-interceptor.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/hungry-interceptor"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/hungry-interceptor"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/hungry-interceptor"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/hungry-interceptor/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/hungry-interceptor/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/hungry-interceptor"
+
+  cat > "$pkgdir/usr/bin/hungry-interceptor" << EOF
+#!/bin/sh
+cd /usr/share/hungry-interceptor/app
+exec python2 runserver.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/hungry-interceptor"
+}

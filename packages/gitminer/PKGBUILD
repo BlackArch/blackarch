@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='gitminer'
+pkgver=29.e25f339
+pkgrel=1
+groups=('blackarch' 'blackarch-recon')
+pkgdesc='Tool for advanced mining for content on Github.'
+arch=('any')
+url='https://github.com/danilovazb/GitMiner'
+license=('GPL3')
+depends=('python2' 'python2-lxml' 'python2-requests')
+makedepends=('git')
+source=('git+https://github.com/danilovazb/GitMiner.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/GitMiner"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/GitMiner"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/gitminer"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/gitminer/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/gitminer/LICENSE"
+
+  rm README.* LICENSE
+
+  cp -a * "$pkgdir/usr/share/gitminer"
+
+  cat > "$pkgdir/usr/bin/gitminer" << EOF
+#!/bin/sh
+cd /usr/share/gitminer
+exec python2 git_miner.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/gitminer"
+}

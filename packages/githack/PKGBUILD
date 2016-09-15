@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='githack'
+pkgver=6.b83a744
+pkgrel=1
+pkgdesc='A `.git` folder disclosure exploit.'
+groups=('blackarch' 'blackarch-recon')
+arch=('any')
+url='https://github.com/lijiejie/githack'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/lijiejie/githack.git')
+sha1sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/githack"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+	cd "$srcdir/githack"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/githack"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/githack" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/githack"
+
+  cat > "$pkgdir/usr/bin/githack" << EOF
+#!/bin/sh
+cd /usr/share/githack
+exec python2 GitHack.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/githack"
+}

@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='wsuspect-proxy'
+pkgver=22.0f79a2f
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-proxy')
+pkgdesc="A tool for MITM'ing insecure WSUS connections."
+arch=('any')
+url='https://github.com/ctxis/wsuspect-proxy'
+license=('MIT')
+makedepends=('git')
+depends=('python' 'python-twisted' 'python-lxml')
+source=('git+https://github.com/ctxis/wsuspect-proxy.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/wsuspect-proxy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/wsuspect-proxy"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/wsuspect-proxy"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/wsuspect-proxy/README.md"
+  install -Dm644 LICENSE.txt \
+    "$pkgdir/usr/share/licenses/wsuspect-proxy/LICENSE.txt"
+
+  rm README.md LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/wsuspect-proxy/"
+
+  cat > "$pkgdir/usr/bin/wsuspect-proxy" << EOF
+#!/bin/sh
+cd /usr/share/wsuspect-proxy
+python wsuspect_proxy.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/wsuspect-proxy"
+}
