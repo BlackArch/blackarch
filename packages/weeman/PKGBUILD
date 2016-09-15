@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='weeman'
+pkgver=87.e4720de
+pkgrel=1
+groups=('blackarch' 'blackarch-social')
+pkgdesc='HTTP Server for phishing in Python.'
+arch=('any')
+url='https://github.com/Hypsurus/weeman'
+license=('GPL3')
+depends=('python2' 'python2-beautifulsoup4')
+makedepends=('git')
+source=('git+https://github.com/Hypsurus/weeman.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/weeman"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/weeman"
+
+  find . -type f -name '*.py' -exec \
+    sed -i 's|history.log|/tmp/history.log|' {} \;
+}
+
+package() {
+  cd "$srcdir/weeman"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/weeman"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/weeman/" README.md ChangeLog
+
+  rm README.md ChangeLog
+
+  cp -a * "$pkgdir/usr/share/weeman/"
+
+  cat > "$pkgdir/usr/bin/weeman" << EOF
+#!/bin/sh
+cd /usr/share/weeman
+exec python2 weeman.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/weeman"
+}

@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ncurses5-compat-libs'
+pkgver='6.0'
+pkgrel=1
+pkgdesc='System V Release 4.0 curses emulation library, ABI 5'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='http://invisible-island.net/ncurses/ncurses.html'
+license=('MIT')
+depends=('glibc' 'gcc-libs' 'sh')
+source=("http://invisible-mirror.net/archives/ncurses/ncurses-${pkgver}.tar.gz")
+sha1sums=('acd606135a5124905da770803c05f1f20dd3b21c')
+
+build() {
+  cd "ncurses-${pkgver/_/-}"
+
+  ./configure --prefix=/usr --mandir=/usr/share/man --with-shared \
+    --with-normal --without-debug --without-ada --enable-widec \
+    --disable-pc-files --with-cxx-binding --with-cxx-shared --with-abi-version=5
+
+  make
+}
+
+package() {
+  cd "ncurses-${pkgver/_/-}"
+
+  make DESTDIR="$pkgdir" install.libs
+
+  rm -rf "$pkgdir"/usr/include/ "$pkgdir"/usr/lib/pkgconfig "$pkgdir"/usr/lib/*.so
+
+  # fool packages looking to link to non-wide-character ncurses libraries
+  for lib in ncurses ncurses++ form panel menu; do
+    ln -s /usr/lib/lib${lib}w.so.5 "$pkgdir"/usr/lib/lib${lib}.so.5
+  done
+}

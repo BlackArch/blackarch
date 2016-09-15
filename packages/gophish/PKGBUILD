@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='gophish'
+pkgver='0.1.2'
+pkgrel=3
+groups=('blackarch' 'blackarch-social')
+pkgdesc='Open-Source Phishing Framework.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://getgophish.com/'
+license=('MIT')
+options=(!strip)
+if [[ "${CARCH}" == "x86_64" ]]; then
+  source=("https://github.com/gophish/gophish/releases/download/v${pkgver}/gophish_linux_64bit.zip")
+  sha1sums=('62dca6cb2174d6dee8089eb335a9d852898cf8d0')
+else
+  source=("https://github.com/gophish/gophish/releases/download/v${pkgver}/gophish_linux_32bit.zip")
+  sha1sums=('6bd2b8a9de1be223432af56dbd026928ed4ad3f3')
+fi
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share"
+
+  if [ -d "gophish_linux_64bit" ]; then
+    mv "gophish_linux_64bit" "$pkgdir/usr/share/gophish"
+  else
+    mv "gophish_linux_32bit" "$pkgdir/usr/share/gophish"
+  fi
+
+  chmod -R g-w "$pkgdir/usr/share/gophish"
+  chmod +x "$pkgdir/usr/share/gophish/gophish"
+
+  cat > "$pkgdir/usr/bin/gophish" << EOF
+#!/bin/sh
+cd /usr/share/gophish
+exec ./gophish
+EOF
+
+  chmod +x "$pkgdir/usr/bin/gophish"
+}

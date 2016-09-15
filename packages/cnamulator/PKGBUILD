@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cnamulator'
+pkgver=5.4667c68
+pkgrel=1
+groups=('blackarch' 'blackarch-mobile' 'blackarch-recon')
+pkgdesc='A phone CNAM lookup utility using the OpenCNAM API.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/packetassailant/cnamulator'
+license=('MIT')
+depends=('glibc' 'go')
+makedepends=('go' 'git')
+source=('git+https://github.com/packetassailant/cnamulator.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/cnamulator"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/$url && rm -rf src/$url && mv cnamulator src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t github.com/packetassailant/cnamulator
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v github.com/packetassailant/cnamulator
+
+  install -Dm755 "$srcdir/cnamulator" "$pkgdir/usr/bin/cnamulator"
+  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/cnamulator/README.md"
+  install -Dm644 src/$url/LICENSE "$pkgdir/usr/share/licenses/cnamulator/LICENSE"
+}

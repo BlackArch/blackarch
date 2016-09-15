@@ -1,0 +1,71 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='drozer'
+pkgver='2.3.4'
+pkgrel=3
+groups=('blackarch' 'blackarch-mobile' 'blackarch-scanner' 'blackarch-fuzzer')
+pkgdesc='A security testing framework for Android - Precompiled binary from official repository.'
+arch=('any')
+url='https://github.com/mwrlabs/drozer'
+license=('BSD')
+depends=('jre7-openjdk' 'python2' 'python2-protobuf')
+options=(!strip)
+sha1sums=('fdbfd82172dd4a717df50b55a3c1f8dc5a7e7cee')
+source=("https://www.mwrinfosecurity.com/system/assets/931/original/drozer_${pkgver}.deb")
+
+prepare() {
+  cd "$srcdir"
+
+  bsdtar xf data.tar.gz
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/drozer"
+
+  cp -a usr/local/lib/python2.7/dist-packages/* "$pkgdir/usr/share/drozer"
+
+  install -Dm644 usr/bin/drozer "$pkgdir/usr/share/drozer/_drozer.py"
+
+  install -Dm644 usr/bin/drozer-complete \
+    "$pkgdir/usr/share/drozer/drozer-complete"
+
+  install -Dm644 usr/bin/drozer-repository \
+    "$pkgdir/usr/share/drozer/drozer-repository"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/drozer/" \
+    usr/share/doc/drozer/{CONTRIBUTORS,README.md}
+
+  install -Dm644 usr/share/doc/drozer/LICENSE \
+    "$pkgdir/usr/share/licenses/drozer/LICENSE"
+
+  install -Dm644 etc/bash_completion.d/drozer \
+    "$pkgdir/etc/bash_completion.d/drozer"
+
+  cat > "$pkgdir/usr/bin/drozer" << EOF
+#!/bin/sh
+cd /usr/share/drozer
+exec python2 _drozer.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/drozer"
+
+  cat > "$pkgdir/usr/bin/drozer-complete" << EOF
+#!/bin/sh
+cd /usr/share/drozer
+exec python2 drozer-complete.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/drozer-complete"
+
+cat > "$pkgdir/usr/bin/drozer-repository" << EOF
+#!/bin/sh
+cd /usr/share/drozer
+exec python2 drozer-repository.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/drozer-repository"
+}

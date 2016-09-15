@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='featherduster'
+pkgver=83.6520c7a
+pkgrel=2
+pkgdesc='An automated, modular cryptanalysis tool.'
+groups=('blackarch' 'blackarch-crypto')
+arch=('any')
+url='https://github.com/nccgroup/featherduster'
+license=('custom:unknown')
+depends=('python2' 'python2-gmpy' 'python2-crypto' 'python2-ishell')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/nccgroup/featherduster.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/featherduster"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/featherduster"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/featherduster"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/featherduster"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/featherduster" README.md INSTALL.md \
+    CONTRIBUTING.md
+
+  cp -a cryptanalib examples featherduster.py feathermodules tests util \
+    "$pkgdir/usr/share/featherduster/"
+
+  cat > "$pkgdir/usr/bin/featherduster" << EOF
+#!/bin/sh
+cd /usr/share/featherduster
+exec python2 featherduster.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/featherduster"
+}

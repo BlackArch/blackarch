@@ -1,0 +1,35 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pcapteller'
+pkgver='1.1'
+pkgrel=1
+groups=('blackarch' 'blackarch-sniffer' 'blackarch-networking')
+pkgdesc='A tool designed for traffic manipulation and replay.'
+arch=('any')
+url='https://www.encripto.no/nb/downloads/tools/'
+license=('BSD')
+depends=('python2' 'scapy' 'python2-ipcalc')
+source=("https://www.encripto.no/tools/pcapteller-${pkgver}.tar.gz")
+sha1sums=('b5f4df95cc98cba8aad3526d90323f80d0935074')
+
+package() {
+  cd "$srcdir/pcapteller-$pkgver"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/pcapteller"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/pcapteller" docs/*
+
+  rm -rf docs
+
+  cp -a * "$pkgdir/usr/share/pcapteller"
+
+  cat > "$pkgdir/usr/bin/pcapteller" << EOF
+#!/bin/sh
+cd /usr/share/pcapteller
+exec python2 pcapteller.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/pcapteller"
+}

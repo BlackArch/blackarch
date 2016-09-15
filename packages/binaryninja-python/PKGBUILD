@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='binaryninja-python'
+pkgver=13.83f59f7
+pkgrel=1
+groups=('blackarch' 'blackarch-binary')
+pkgdesc='Binary Ninja prototype written in Python.'
+arch=('any')
+url='https://github.com/Vector35/binaryninja-python'
+license=('custom:unknown')
+depends=('python2' 'python2-pyside' 'python2-crypto')
+makedepends=('git')
+source=('git+https://github.com/Vector35/binaryninja-python.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/binaryninja-python"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/binaryninja-python"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/binaryninja-python"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/binaryninja-python/" readme.md docs/*
+
+  rm -rf readme.md docs/
+
+  cp -a * "$pkgdir/usr/share/binaryninja-python/"
+
+  cat > "$pkgdir/usr/bin/binaryninja-python" << EOF
+#!/bin/sh
+cd /usr/share/binaryninja-python
+exec python2 binja.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/binaryninja-python"
+}

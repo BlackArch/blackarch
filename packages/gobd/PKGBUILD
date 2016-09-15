@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='gobd'
+pkgver=81.e64b5a5
+pkgrel=1
+groups=('blackarch' 'blackarch-backdoor')
+pkgdesc='A Golang covert backdoor.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/razc411/GoBD'
+license=('custom:unknown')
+depends=('glibc' 'go' 'libpcap')
+makedepends=('go' 'git' 'libpcap')
+source=('git+https://github.com/razc411/GoBD.git')
+sha1sums=('SKIP')
+
+_url='https://github.com/razc411/GoBD'
+
+pkgver() {
+  cd "$srcdir/GoBD"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/$url && rm -rf src/$url && mv GoBD src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t github.com/razc411/GoBD
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v github.com/razc411/GoBD
+
+  install -Dm755 "$srcdir/GoBD" "$pkgdir/usr/bin/gobd"
+
+  #cd src/github.com/razc411/GoBD
+  cd src/$url
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/gobd/" README.md 8505FinalDocs.pdf
+}

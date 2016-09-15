@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='riwifshell'
+pkgver=38.40075d5
+pkgrel=1
+pkgdesc='Web backdoor - infector - explorer.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-backdoor')
+arch=('any')
+url='https://github.com/graniet/riwifshell'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/graniet/riwifshell.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/riwifshell"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/riwifshell"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/riwifshell"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/riwifshell/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/riwifshell"
+
+  cat > "$pkgdir/usr/bin/riwifshell" << EOF
+#!/bin/sh
+cd /usr/share/riwifshell
+exec python2 generate.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/riwifshell"
+}

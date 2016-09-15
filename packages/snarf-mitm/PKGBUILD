@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='snarf-mitm'
+pkgver=40.49cc8cb
+pkgrel=2
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-proxy')
+pkgdesc='SMB Man in the Middle Attack Engine / relay suite.'
+arch=('any')
+url='https://github.com/purpleteam/snarf'
+license=('GPL2')
+depends=('nodejs')
+makedepends=('git')
+source=('git+https://github.com/purpleteam/snarf.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/snarf"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/snarf"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/snarf-mitm"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/snarf-mitm/" docs/* CHANGELOG
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/snarf-mitm/LICENSE"
+
+  rm -rf docs CHANGELOG LICENSE
+
+  cp -a * "$pkgdir/usr/share/snarf-mitm"
+
+  cat > "$pkgdir/usr/bin/snarf-mitm" << EOF
+#!/bin/sh
+cd /usr/share/snarf-mitm
+exec node ./snarf.js "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/snarf-mitm"
+}

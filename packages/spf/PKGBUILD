@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='spf'
+pkgver=65.0d14a8e
+pkgrel=1
+groups=('blackarch' 'blackarch-social')
+pkgdesc='A python tool designed to allow for quick recon and deployment of simple social engineering phishing exercises.'
+arch=('any')
+url='https://github.com/tatanus/SPF'
+license=('custom:unknown')
+depends=('python2' 'python2-dnspython' 'twisted' 'phantomjs')
+optdepends=('beef' 'theharvester')
+makedepends=('git')
+source=('git+https://github.com/tatanus/SPF.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/SPF"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/SPF"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/spf"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/spf/" README.md Install.txt \
+    Requirements.txt
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/spf/LICENSE"
+
+  rm README.md LICENSE Install.txt Requirements.txt
+
+  cp -a spf/* "$pkgdir/usr/share/spf/"
+
+  cat > "$pkgdir/usr/bin/spf" << EOF
+#!/bin/sh
+cd /usr/share/spf
+exec python2 spf.py "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/spf-report" << EOF
+#!/bin/sh
+cd /usr/share/spf
+exec python2 report.py "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/spf-web" << EOF
+#!/bin/sh
+cd /usr/share/spf
+exec python2 web.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/"*
+}

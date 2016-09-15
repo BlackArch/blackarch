@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='xsstracer'
+pkgver=5.f2ed21a
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='Python script that checks remote web servers for Clickjacking, Cross-Frame Scripting, Cross-Site Tracing and Host Header Injection.'
+arch=('any')
+url='https://github.com/1N3/XSSTracer'
+license=('custom:unknown')
+makedepends=('git')
+depends=('python2')
+source=('git+https://github.com/1N3/XSSTracer.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/XSSTracer"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/XSSTracer"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/xsstracer"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/xsstracer/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/xsstracer"
+
+  cat > "$pkgdir/usr/bin/xsstracer" << EOF
+#!/bin/sh
+cd /usr/share/xsstracer
+python2 xsstracer.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/xsstracer"
+}

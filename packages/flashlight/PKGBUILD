@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='flashlight'
+pkgver=107.39594b5
+pkgrel=1
+groups=('blackarch' 'blackarch-recon')
+pkgdesc='Automated Information Gathering Tool for Penetration Testers.'
+arch=('any')
+url='https://github.com/galkan/flashlight'
+license=('custom:unknown')
+depends=('python2' 'python2-yaml')
+makedepends=('git')
+source=('git+https://github.com/galkan/flashlight.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/flashlight"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/flashlight"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/flashlight"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/flashlight/README.md"
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/flashlight/LICENSE.txt"
+
+  rm README.md LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/flashlight"
+
+  cat > "$pkgdir/usr/bin/flashlight" << EOF
+#!/bin/sh
+cd /usr/share/flashlight
+exec python2 flashlight.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/flashlight"
+}

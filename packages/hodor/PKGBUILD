@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hodor'
+pkgver=1.01be107
+pkgrel=2
+pkgdesc='A general-use fuzzer that can be configured to use known-good input and delimiters in order to fuzz specific locations.'
+groups=('blackarch' 'blackarch-fuzzer')
+arch=('any')
+url='https://github.com/nccgroup/hodor'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/nccgroup/hodor.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/hodor"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/hodor"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/hodor"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/hodor/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/hodor"
+
+  cat > "$pkgdir/usr/bin/hodor" << EOF
+#!/bin/sh
+cd /usr/share/hodor
+exec python2 hodor.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/hodor"
+}

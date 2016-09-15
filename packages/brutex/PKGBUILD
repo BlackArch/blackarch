@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='brutex'
+pkgver=43.6c199b1
+pkgrel=2
+groups=('blackarch' 'blackarch-automation' 'blackarch-cracker')
+pkgdesc='Automatically brute force all services running on a target.'
+arch=('any')
+url='https://github.com/1N3/BruteX'
+license=('custom:unknown')
+makedepends=('git')
+depends=('bash' 'hydra' 'masscan' 'nmap' 'net-snmp' 'dnsenum')
+source=('git+https://github.com/1N3/BruteX.git'
+        'brutex.patch')
+sha1sums=('SKIP'
+          'f036e12dc346b0fb1c8f7a9fac57272071e00eb6')
+
+pkgver() {
+  cd "$srcdir/BruteX"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < brutex.patch
+}
+
+package() {
+  cd "$srcdir/BruteX"
+
+  local tools="brutex brutex-masscan"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/brutex"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/brutex/README.md"
+
+  rm README.md loot/README.md
+
+  cp -a * "$pkgdir/usr/share/brutex/"
+
+  for i in ${tools}
+  do
+    cat > "$pkgdir/usr/bin/${i}" << EOF
+#!/bin/sh
+cd /usr/share/brutex
+exec bash ${i} "\$@"
+EOF
+    chmod a+x "$pkgdir/usr/bin/${i}"
+  done
+}

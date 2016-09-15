@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='iptv'
+pkgver=135.0e7d49d
+pkgrel=1
+pkgdesc='Search and brute force illegal iptv server.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-cracker')
+url='https://github.com/Pinperepette/IPTV'
+license=('custom:unknown')
+arch=('any')
+depends=('python2' 'python2-google' 'python2-psutil' 'python2-clint'
+         'python2-colored' 'python2-pyprind' 'python2-pyqt4')
+makedepends=('git')
+source=('git+https://github.com/Pinperepette/IPTV.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/IPTV"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/IPTV"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/iptv"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/iptv/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/iptv/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/iptv"
+
+  mv "$pkgdir/usr/share/iptv/iptv/"* "$pkgdir/usr/share/iptv/"
+
+  rmdir "$pkgdir/usr/share/iptv/iptv"
+
+  cat > "$pkgdir/usr/bin/iptv-cli" << EOF
+#!/bin/sh
+cd /usr/share/iptv
+exec python2 iptv_cli.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/iptv-cli"
+
+  cat > "$pkgdir/usr/bin/iptv-gui" << EOF
+#!/bin/sh
+cd /usr/share/iptv
+exec python2 iptv_gui.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/iptv-gui"
+}

@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='iis-shortname-scanner'
+pkgver=4.b92772a
+pkgrel=1
+pkgdesc='An IIS shortname Scanner.'
+groups=('blackarch' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/lijiejie/IIS_shortname_Scanner'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/lijiejie/IIS_shortname_Scanner.git')
+sha1sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/IIS_shortname_Scanner"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+	cd "$srcdir/IIS_shortname_Scanner"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/iis-shortname-scanner"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/iis-shortname-scanner" README
+
+  rm README
+
+  cp -a * "$pkgdir/usr/share/iis-shortname-scanner"
+
+  cat > "$pkgdir/usr/bin/iis-shortname-scanner" << EOF
+#!/bin/sh
+cd /usr/share/iis-shortname-scanner
+exec python2 iis_shortname_Scan.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/iis-shortname-scanner"
+}

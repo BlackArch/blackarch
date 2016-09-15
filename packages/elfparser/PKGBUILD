@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='elfparser'
+pkgver=7.39d21ca
+pkgrel=1
+groups=('blackarch' 'blackarch-binary')
+pkgdesc='Cross Platform ELF analysis.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/jacob-baines/elfparser'
+license=('MIT')
+depends=('boost')
+makedepends=('git' 'cmake')
+source=('git+https://github.com/jacob-baines/elfparser.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/elfparser"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/elfparser"
+
+  mkdir build
+
+  cd build
+
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+
+  make
+}
+
+package() {
+  cd "$srcdir/elfparser"
+
+  cd build
+
+  make DESTDIR="$pkgdir" install
+
+  cd ..
+
+  mv "$pkgdir/usr/local/bin/" "$pkgdir/usr/bin"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/elfparser/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/elfparser/LICENSE"
+}

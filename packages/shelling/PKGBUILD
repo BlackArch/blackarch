@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='shelling'
+pkgver=28.825155f
+pkgrel=1
+pkgdesc='An offensive approach to the anatomy of improperly written OS command injection sanitisers.'
+groups=('blackarch' 'blackarch-misc')
+arch=('any')
+url='https://github.com/ewilded/shelling'
+license=('custom:unknown')
+depends=('perl')
+makedepends=('git')
+source=('git+https://github.com/ewilded/shelling')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/shelling"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/shelling"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/shelling"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/shelling/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/shelling"
+
+  cat > "$pkgdir/usr/bin/shelling" << EOF
+#!/bin/sh
+cd /usr/share/shelling
+exec perl shelling.pl "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/shelling"
+}

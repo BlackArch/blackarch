@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='rspet'
+pkgver=97.70cd210
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-backdoor'
+        'blackarch-dos')
+pkgdesc='A Python based reverse shell equipped with functionalities that assist in a post exploitation scenario.'
+arch=('any')
+url='https://github.com/panagiks/RSPET'
+license=('MIT')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/panagiks/RSPET.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/RSPET"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/RSPET"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/rspet"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/rspet/" README.md CHANGELOG.md \
+    EXPANDING.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/rspet/LICENSE"
+
+  rm *.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/rspet"
+
+  cat > "$pkgdir/usr/bin/rspet-client" << EOF
+#!/bin/sh
+exec python2 /usr/share/rspet/Client/RSPET_client.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/rspet-client"
+
+  cat > "$pkgdir/usr/bin/rspet-server" << EOF
+#!/bin/sh
+exec python2 /usr/share/rspet/Server/RSPET_server.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/rspet-server"
+}

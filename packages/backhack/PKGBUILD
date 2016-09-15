@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='backhack'
+pkgver=25.e40b76a
+pkgrel=1
+pkgdesc='Tool to perform Android app analysis by backing up and extracting apps, allowing you to analyze and modify file system contents for apps.'
+groups=('blackarch' 'blackarch-mobile')
+arch=('any')
+url='https://github.com/l0gan/backHack'
+license=('Apach2')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/l0gan/backHack.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/backHack"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/backHack"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/backhack"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/backhack/" README.txt
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/backhack/LICENSE"
+
+  rm README.txt LICENSE
+
+  cp -a * "$pkgdir/usr/share/backhack"
+
+  cat > "$pkgdir/usr/bin/backhack" << EOF
+#!/bin/sh
+cd /usr/share/backhack
+exec python2 backHack.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/backhack"
+}

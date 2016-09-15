@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ranger-scanner'
+pkgver=108.0c70888
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+pkgdesc='A tool to support security professionals to access and interact with remote Microsoft Windows based systems.'
+arch=('any')
+url='https://github.com/funkandwagnalls/ranger'
+license=('custom:unknown')
+depends=('python2' 'python2-nmap' 'impacket' 'python2-lxml' 'python2-netifaces'
+         'python2-netaddr' 'python2-crypto')
+makedepends=('git')
+source=('git+https://github.com/funkandwagnalls/ranger.git'
+        'ranger.py.patch')
+sha1sums=('SKIP'
+          'b0be535ef80ec2e3619d0913f6a1adef61a41aee')
+
+pkgver() {
+  cd "$srcdir/ranger"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < ranger.py.patch
+}
+
+package() {
+  cd "$srcdir/ranger"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/ranger"
+
+  install -Dm755 ranger.py "$pkgdir/usr/bin/ranger-scanner"
+  install -Dm644 -t "$pkgdir/usr/share/doc/ranger-scanner/" README.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/ranger-scanner/LICENSE.md"
+}

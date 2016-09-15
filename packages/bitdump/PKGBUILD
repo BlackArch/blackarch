@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bitdump'
+pkgver=34.6a5cbd8
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-webapp')
+pkgdesc='A tool to extract database data from a blind SQL injection vulnerability.'
+arch=('any')
+url='https://github.com/nbshelton/bitdump'
+license=('GPL2')
+depends=('python')
+makedepends=('git')
+source=('git+https://github.com/nbshelton/bitdump.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/bitdump"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/bitdump"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm644 -t "$pkgdir/usr/share/bitdump/" *.py
+  install -Dm644 README.md "$pkgdir/usr/share/doc/bitdump/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/bitdump/LICENSE"
+
+  cat > "$pkgdir/usr/bin/bitdump" << EOF
+#!/bin/sh
+cd /usr/share/bitdump
+exec python bitdump.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/bitdump"
+}

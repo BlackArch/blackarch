@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pr0cks'
+pkgver=19.39331bd
+pkgrel=1
+groups=('blackarch' 'blackarch-proxy' 'blackarch-tunnel' 'blackarch-networking')
+pkgdesc='python script setting up a transparent proxy to forward all TCP and DNS traffic through a SOCKS / SOCKS5 or HTTP(CONNECT) proxy using iptables -j REDIRECT target.'
+arch=('any')
+url='https://github.com/n1nj4sec/pr0cks'
+license=('GPL2')
+depends=('python2' 'python2-dnslib' 'iptables')
+makedepends=('git')
+source=('git+https://github.com/n1nj4sec/pr0cks.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/pr0cks"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/pr0cks"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/pr0cks"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/pr0cks/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/pr0cks/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/pr0cks/"
+
+  cat > "$pkgdir/usr/bin/pr0cks" << EOF
+#!/bin/sh
+cd /usr/share/pr0cks
+exec python2 pr0cks.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/pr0cks"
+}

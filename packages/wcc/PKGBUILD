@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='wcc'
+pkgver=27.1a7a00c
+pkgrel=1
+pkgdesc='The Witchcraft Compiler Collection.'
+groups=('blackarch' 'blackarch-binary' 'blackarch-misc')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/endrazine/wcc'
+license=('MIT' 'BSD' 'custom:unknown')
+depends=('capstone' 'libelf' 'zlib' 'gsl')
+makedepends=('git' 'clang')
+_gitroot='https://github.com/endrazine/wcc.git'
+
+pkgver() {
+  cd "$srcdir/wcc"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  rm -rf wcc
+  git clone --recursive ${_gitroot}
+}
+
+build() {
+  cd "$srcdir/wcc"
+
+  make
+}
+
+package() {
+  cd "$srcdir/wcc"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/doc/wcc"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm644 -t "$pkgdir/usr/share/man/man8/" doc/manpages/wcc.8 \
+    doc/manpages/wld.8
+
+  cp -a README.md doc/* "$pkgdir/usr/share/doc/wcc/"
+
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/wcc/LICENSE"
+}
