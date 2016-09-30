@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='daredevil'
+pkgver=14.c04a8a5
+pkgrel=1
+pkgdesc='A tool to perform (higher-order) correlation power analysis attacks (CPA).'
+groups=('blackarch' 'blackarch-crypto')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/SideChannelMarvels/Daredevil'
+license=('GPL3')
+depends=('openmp')
+makedepends=('git' 'clang')
+source=('git+https://github.com/SideChannelMarvels/Daredevil.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Daredevil"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/Daredevil"
+
+  make
+}
+
+package() {
+  cd "$srcdir/Daredevil"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/daredevil"
+
+  cp -a LUT CONFIG "$pkgdir/usr/share/daredevil/"
+
+  install -Dm755 daredevil "$pkgdir/usr/share/daredevil/daredevil"
+  install -Dm644 -t "$pkgdir/usr/share/doc/daredevil/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/daredevil/LICENSE"
+
+  cat > "$pkgdir/usr/bin/daredevil" << EOF
+#!/bin/sh
+cd /usr/share/daredevil
+exec ./daredevil "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/daredevil"
+}
