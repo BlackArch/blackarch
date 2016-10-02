@@ -1,0 +1,62 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='mousejack'
+pkgver=5.58b69c1
+pkgrel=1
+pkgdesc='Wireless mouse/keyboard attack with replay/transmit poc.'
+groups=('blackarch' 'blackarch-wireless')
+arch=('any')
+url='https://github.com/iamckn/mousejack_transmit'
+license=('custom:unknown')
+depends=('python2' 'python2-pyusb')
+makedepends=('git')
+source=('git+https://github.com/iamckn/mousejack_transmit')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/mousejack_transmit"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/mousejack_transmit"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/mousejack"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/mousejack/" readme.md
+
+  rm readme.md
+
+  cp -a * "$pkgdir/usr/share/mousejack"
+
+  cat > "$pkgdir/usr/bin/mousejack-replay" << EOF
+#!/bin/sh
+cd /usr/share/mousejack
+exec python2 mousejack-replay.py "\${@}"
+EOF
+  cat > "$pkgdir/usr/bin/mousejack-nrf24-replay" << EOF
+#!/bin/sh
+cd /usr/share/mousejack
+exec python2 nrf24-replay.py "\${@}"
+EOF
+  cat > "$pkgdir/usr/bin/mousejack-nrf24-scanner" << EOF
+#!/bin/sh
+cd /usr/share/mousejack
+exec python2 nrf24-scanner.py "\${@}"
+EOF
+  cat > "$pkgdir/usr/bin/mousejack-nrf24-sniffer" << EOF
+#!/bin/sh
+cd /usr/share/mousejack
+exec python2 nrf24-sniffer.py "\${@}"
+EOF
+  cat > "$pkgdir/usr/bin/mousejack-nrf24-static-channel-replay" << EOF
+#!/bin/sh
+cd /usr/share/mousejack
+exec python2 nrf24-static-channel-replay.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/mousejack"*
+}
