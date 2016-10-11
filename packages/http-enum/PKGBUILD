@@ -2,34 +2,36 @@
 # See COPYING for license details.
 
 pkgname='http-enum'
-pkgver='0.3'
-pkgrel=3
+pkgver='0.4'
+pkgrel=1
 pkgdesc='A tool to enumerate the enabled HTTP methods supported on a webserver.'
 arch=('any')
 url='https://www.thexero.co.uk/tools/http-enum/'
 license=('custom:unknown')
 depends=('python2')
 groups=('blackarch' 'blackarch-scanner')
-source=('https://www.thexero.co.uk/downloads/http-enum.tar')
-sha1sums=('846d121596a1f68893555e282298a1205fe01990')
+source=("https://github.com/nullsecuritynet/tools/raw/master/scanner/http-enum/release/http-enum-${pkgver}.tar.gz")
+sha1sums=('cd36a55a30de1e7a72f7eb70173dba7e2b77dac8')
 
 prepare() {
-  cd "$srcdir/http-enum"
+  cd "$srcdir/http-enum-$pkgver"
 
-  sed -i '1s|python$|env python2|' http-enum.py
+  sed -i '1s|python$|env python2|' http-enum
 }
 
 package() {
-  cd "$srcdir"
+  cd "$srcdir/http-enum-$pkgver"
 
-  install -D -m755 "$srcdir/http-enum/http-enum.py" \
-    "$pkgdir/usr/bin/http-enum"
-  install -D -m644 "$srcdir/http-enum/enum/apache" \
-    "$pkgdir/usr/share/http-enum/enum/apache"
-  install -D -m644 "$srcdir/http-enum/enum/frontpage" \
-    "$pkgdir/usr/share/http-enum/enum/frontpage"
-  install -D -m644 "$srcdir/http-enum/enum/sharepoint" \
-    "$pkgdir/usr/share/http-enum/enum/sharepoint"
-  install -D -m644 "$srcdir/http-enum/enum/tsweb" \
-    "$pkgdir/usr/share/http-enum/enum/tsweb"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/http-enum"
+
+  cp -a * "$pkgdir/usr/share/http-enum"
+
+  cat > "$pkgdir/usr/bin/http-enum" << EOF
+#!/bin/sh
+cd /usr/share/http-enum
+exec python2 http-enum "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/http-enum"
 }
