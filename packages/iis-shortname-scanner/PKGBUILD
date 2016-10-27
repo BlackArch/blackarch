@@ -20,23 +20,15 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd "$srcdir/IIS_shortname_Scanner"
+
+  sed -i 's|env python|env python2|' iis_shortname_Scan.py
+}
+
 package() {
 	cd "$srcdir/IIS_shortname_Scanner"
 
-  mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/share/iis-shortname-scanner"
-
-  install -Dm644 -t "$pkgdir/usr/share/doc/iis-shortname-scanner" README
-
-  rm README
-
-  cp -a * "$pkgdir/usr/share/iis-shortname-scanner"
-
-  cat > "$pkgdir/usr/bin/iis-shortname-scanner" << EOF
-#!/bin/sh
-cd /usr/share/iis-shortname-scanner
-exec python2 iis_shortname_Scan.py "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/iis-shortname-scanner"
+  install -Dm755 iis_shortname_Scan.py "$pkgdir/usr/bin/iis-shortname-scanner"
+  install -Dm644 -t "$pkgdir/usr/share/doc/iis-shortname-scanner" README.md
 }
