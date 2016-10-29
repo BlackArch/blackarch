@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='tracedump'
+pkgver=23.921e0f2
+pkgrel=2
+pkgdesc='tcpdump of single programs - captures all tcp andudp packets of a signle program.'
+groups=('blackarch' 'blackarch-sniffer')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/iitis/tracedump'
+license=('GPL3')
+if [[ $CARCH == "x86_64" ]]
+then
+  depends=('gcc-libs-multilib' 'gcc-multilib' 'libpcap' 'libpjf' 'pcre'
+           'linux-headers')
+else
+  depends=('glibc' 'gcc' 'libpcap' 'pcre' 'libpjf' 'linux-headers')
+fi
+makedepends=('git')
+source=('git+https://github.com/iitis/tracedump.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/tracedump"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/tracedump"
+
+  make
+}
+
+package() {
+  cd "$srcdir/tracedump"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/tracedump/" README.markdown doc/*
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/tracedump/LICENSE"
+}
