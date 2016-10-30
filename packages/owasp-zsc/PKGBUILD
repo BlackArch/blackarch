@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='owasp-zsc'
+pkgver=272.c89a9b2
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation')
+arch=('any')
+pkgdesc='Shellcode/Obfuscate Code Generator.'
+url='https://github.com/zscproject/OWASP-ZSC'
+license=('GPL3')
+depends=('python2' 'java-environment' 'ironpython')
+makedepends=('git')
+source=('git+https://github.com/zscproject/OWASP-ZSC.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/OWASP-ZSC"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/OWASP-ZSC"
+
+  mkdir -p "${pkgdir}/usr/bin"
+  mkdir -p "${pkgdir}/usr/share/owasp-zsc"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/owasp-zsc/" readme.md CHANGELOG.md
+  install -Dm644 LICENSE.md "${pkgdir}/usr/share/licenses/owasp-zsc/LICENSE.md"
+
+  cp -a * "$pkgdir/usr/share/owasp-zsc"
+
+  cat > "$pkgdir/usr/bin/owasp-zsc" << EOF
+#!/bin/sh
+cd /usr/share/owasp-zsc
+exec python2 zsc.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/owasp-zsc"
+}
