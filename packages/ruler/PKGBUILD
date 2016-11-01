@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ruler'
+pkgver=32.0a61a50
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation')
+pkgdesc='A tool to abuse Exchange services.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/sensepost/ruler'
+license=('CC0')
+depends=('go')
+makedepends=('git')
+source=('git+https://github.com/sensepost/ruler.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ruler"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/ruler"
+
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/ruler"
+
+  export GOPATH="$pkgdir/usr/share/ruler"
+
+  go get github.com/sensepost/ruler
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/ruler/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/ruler/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/ruler"
+
+  cat > "$pkgdir/usr/bin/ruler" << EOF
+#!/bin/sh
+export GOPATH=/usr/share/ruler/
+exec go run /usr/share/ruler/ruler.go "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/ruler"
+}
