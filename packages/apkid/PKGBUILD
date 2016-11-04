@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='apkid'
+pkgver=73.6665d82
+pkgrel=1
+pkgdesc='Android Application Identifier for Packers, Protectors, Obfuscators and Oddities.'
+groups=('blackarch' 'blackarch-mobile')
+arch=('any')
+url='https://github.com/rednaga/APKiD'
+license=('GPL3')
+depends=('python2' 'python2-yara')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/rednaga/APKiD.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/APKiD"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/APKiD"
+
+  sed -i 's|yara-python==3.5.0.999|yara-python|' setup.py
+}
+
+build() {
+  cd "$srcdir/APKiD"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/APKiD"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/apkid/" README.md README.rst \
+    AUTHORS.txt
+  install -Dm644 -t "$pkgdir/usr/share/licenses/apkid" LICENSE.GPL \
+    LICENSE.COMMERCIAL
+}
