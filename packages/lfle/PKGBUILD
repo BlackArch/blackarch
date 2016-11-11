@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='lfle'
+pkgver=24.f28592c
+pkgrel=1
+pkgdesc='Recover event log entries from an image by heurisitically looking for record structures.'
+groups=('blackarch' 'blackarch-forensic')
+arch=('any')
+url='https://github.com/williballenthin/LfLe'
+license=('custom:unknown')
+depends=('python2' 'python2-python-evt')
+makedepends=('git')
+source=('git+https://github.com/williballenthin/LfLe.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/LfLe"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/LfLe"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/lfle"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/lfle/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/lfle"
+
+  cat > "$pkgdir/usr/bin/lfle" << EOF
+#!/bin/sh
+cd /usr/share/lfle
+exec python2 lfle.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/lfle"
+}
