@@ -1,0 +1,34 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='yawast'
+pkgver=327.b6e39f8
+pkgrel=1
+pkgdesc='The YAWAST Antecedent Web Application Security Toolkit.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url='https://github.com/adamcaudill/yawast'
+license=('BSD')
+depends=('ruby')
+makedepends=('git')
+source=('git+https://github.com/adamcaudill/yawast.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/yawast"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/yawast"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+	local _gemdir="$(ruby -e'puts Gem.default_dir')"
+
+	gem install --no-user-install -n "$pkgdir/usr/bin" -i "$pkgdir/$_gemdir" \
+    yawast
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/yawast/" README.md
+}
