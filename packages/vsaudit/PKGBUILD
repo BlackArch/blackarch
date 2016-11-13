@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='vsaudit'
+pkgver=16.6c8c40f
+pkgrel=1
+pkgdesc='VOIP Security Audit Framework.'
+groups=('blackarch' 'blackarch-voip' 'blackarch-scanner' 'blackarch-fuzzer')
+arch=('any')
+url='https://github.com/sanvil/vsaudit'
+license=('MIT')
+depends=('ruby')
+makedepends=('git')
+source=('git+https://github.com/sanvil/vsaudit.git')
+install='vsaudit.install'
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/vsaudit"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/vsaudit"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/vsaudit"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/vsaudit/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/vsaudit/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/vsaudit"
+
+  cat > "$pkgdir/usr/bin/vsaudit" << EOF
+#!/bin/sh
+cd /usr/share/vsaudit
+exec ruby vsaudit.rb "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/vsaudit"
+}
