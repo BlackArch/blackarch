@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='nosqlattack'
+pkgver=71.18201cc
+pkgrel=1
+pkgdesc='Python tool to automate exploit MongoDB server IP on Internet anddisclose the database data by MongoDB default configuration weaknesses and injection attacks.'
+groups=('blackarch' 'blackarch-automation' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/youngyangyang04/NoSQLAttack'
+license=('GPL3')
+depends=('python2' 'python2-httplib2' 'python2-pymongo' 'python2-requests'
+         'python2-ipcalc' 'shodan' 'mongodb')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/youngyangyang04/NoSQLAttack.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/NoSQLAttack"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/NoSQLAttack"
+
+#  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/NoSQLAttack"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/nosqlattack"
+
+#  python2 setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/nosqlattack/" README.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/nosqlattack/LICENSE.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/nosqlattack"
+
+  cat > "$pkgdir/usr/bin/nosqlattack" << EOF
+#!/bin/sh
+cd /usr/share/nosqlattack
+exec python2 main.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/nosqlattack"
+}
