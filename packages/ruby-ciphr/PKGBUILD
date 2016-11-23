@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+_gemname=ciphr
+pkgname=ruby-$_gemname
+pkgver=120.f1f049d
+_pkgver='0.0.3'
+pkgrel=3
+pkgdesc='A CLI tool for encoding, decoding, encryption, decryption, and hashing streams of data.'
+groups=('blackarch' 'blackarch-crypto')
+url='https://github.com/frohoff/ciphr'
+arch=('any')
+license=('MIT')
+depends=('ruby' 'ruby-parslet' 'ruby-base32' 'ruby-slop')
+makedepends=('git' 'ruby-bundler')
+source=('git+https://github.com/frohoff/ciphr.git')
+sha256sums=('SKIP')
+replaces=($_gemname)
+conflicts=($_gemname)
+provides=($_gemname)
+
+pkgver() {
+  cd "$srcdir/ciphr"
+
+  echo $(git rev-list --count master).$(git rev-parse --short master)
+}
+
+build() {
+  cd "$srcdir/ciphr"
+
+  gem build $_gemname.gemspec
+}
+
+package() {
+  cd "$srcdir/ciphr"
+
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$_pkgver.gem
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$_pkgver.gem"
+
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$_pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
+  install -D -m644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH-linux/2.3.0/$_gemname-$_pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
+  fi
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_pkgver"/{LICENSE.txt,README.md}
+}

@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+_gemname=whitewidow
+pkgname=ruby-$_gemname
+pkgver=350.8458fcc
+pkgrel=1
+pkgdesc='SQL Vulnerability Scanner.'
+groups=('blackarch' 'blackarch-scanner')
+arch=(any)
+url='https://github.com/Ekultek/whitewidow'
+license=('GPL3' 'custom:unknown')
+depends=(ruby ruby-mechanize ruby-nokogiri ruby-rest-client)
+makedepends=('git')
+source=('git+https://github.com/Ekultek/whitewidow.git')
+install='whitewidow.install'
+sha1sums=('SKIP')
+replaces=($_gemname)
+conflicts=($_gemname)
+provides=($_gemname)
+
+pkgver() {
+  cd "$srcdir/whitewidow"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/whitewidow"
+
+  echo -e "\ngem 'test-unit'" >> Gemfile
+}
+
+package() {
+  cd "$srcdir/whitewidow"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/whitewidow"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/whitewidow/" README.md docs/*
+
+  cp -a * "$pkgdir/usr/share/whitewidow/"
+
+  rm README.md
+
+  cat > "$pkgdir/usr/bin/whitewidow" << EOF
+#!/bin/sh
+cd /usr/share/whitewidow
+exec ruby whitewidow.rb "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/whitewidow"
+}

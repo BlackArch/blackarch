@@ -1,29 +1,45 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
+_gemname=net-http-digest_auth
+pkgname=ruby-$_gemname
+pkgver=1.4
+pkgrel=7
+pkgdesc=An\ implementation\ of\ RFC\ 2617\ -\ Digest\ Access\ Authentication
+arch=(any)
+url=http://github.com/drbrain/net-http-digest_auth
+license=()
+depends=(ruby)
+makedepends=()
+groups=()
+replaces=()
+conflicts=()
+provides=()
+optdepends=()
+options=(!emptydirs)
+source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
+    
+)
+noextract=($_gemname-$pkgver.gem)
+sha1sums=('2b2826cf85fe307c4b770de5c077880d8d8f1fe2'
+    
+)
 
-pkgname='ruby-net-http-digest_auth'
-_gemname='net-http-digest_auth'
-pkgver='1.4'
-pkgrel=6
-pkgdesc='An implementation of RFC 2617 - Digest Access Authentication.'
-arch=('any')
-license=('unknown')
-makedepends=('ruby')
-url='http://github.com/drbrain/net-http-digest_auth'
-source=("http://rubygems.org/downloads/net-http-digest_auth-${pkgver}.gem")
-sha1sums=('2b2826cf85fe307c4b770de5c077880d8d8f1fe2')
-noextract=("net-http-digest_auth-${pkgver}.gem")
+prepare() {
+
+  true
+}
 
 package() {
-  cd "$srcdir"
-
-  local _gemdir=$(ruby -rubygems -e 'puts Gem.default_dir')
-
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
-      -i "$pkgdir$_gemdir" net-http-digest_auth-${pkgver}.gem
-  else
-    gem install --ignore-dependencies --no-user-install -i "$pkgdir/$_gemdir" \
-      -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
   fi
+
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.autotest,.gemtest,History.txt,Manifest.txt,README.txt,Rakefile,sample,test}
 }

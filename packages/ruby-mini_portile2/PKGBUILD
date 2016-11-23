@@ -1,30 +1,46 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
-
-pkgname='ruby-mini_portile2'
-pkgver='2.2.0.rc1'
-pkgrel=1
-pkgdesc='Simplistic port-like solution for developers. Version 2.x, which is incompatible with v0.6/v0.7.'
-arch=('any')
-url='https://github.com/flavorjones/mini_portile'
-license=('MIT')
-depends=('ruby')
+_gemname=mini_portile2
+pkgname=ruby-$_gemname
+pkgver=2.1.0
+pkgrel=2
+pkgdesc=Simplistic\ port-like\ solution\ for\ developers
+arch=(any)
+url=http://github.com/flavorjones/mini_portile
+license=(MIT)
+depends=(ruby)
+makedepends=()
+groups=()
+replaces=()
+conflicts=()
+provides=()
+optdepends=()
 options=(!emptydirs)
-source=("https://rubygems.org/downloads/mini_portile2-${pkgver}.gem")
-noextract=("mini_portile2-${pkgver}.gem")
-sha1sums=('e696830f6128fc3df2ff4ce273ccff8db04afc37')
+source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
+    
+)
+noextract=($_gemname-$pkgver.gem)
+sha1sums=('aea77f06baad406f15e156c86098bdcd140756c2'
+    
+)
 
+prepare() {
+
+  true
+}
 
 package() {
-  cd "$srcdir"
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
+  fi
 
-  local _gemdir="$(ruby -e'puts Gem.default_dir')"
-
-  gem install --ignore-dependencies --no-user-install -i "$pkgdir/$_gemdir" \
-    -n "$pkgdir/usr/bin" mini_portile2-${pkgver}.gem
-
-  rm "$pkgdir/$_gemdir/cache/mini_portile2-${pkgver}.gem"
-
-  install -Dm644 "$pkgdir/$_gemdir/gems/mini_portile2-$pkgver/LICENSE.txt" \
-    "$pkgdir/usr/share/licenses/ruby-mini_potile2/LICENSE.txt"
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.gitignore,.travis.yml,CHANGELOG.md,Gemfile,LICENSE.txt,README.md,Rakefile,appveyor.yml,mini_portile2.gemspec,test}
 }

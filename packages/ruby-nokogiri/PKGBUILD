@@ -1,31 +1,46 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
+_gemname=nokogiri
+pkgname=ruby-$_gemname
+pkgver=1.6.8.1
+pkgrel=2
+pkgdesc=Nokogiri\ \(\鋸\)\ is\ an\ HTML,\ XML,\ SAX,\ and\ Reader\ parser
+arch=(i686 x86_64)
+url=http://nokogiri.org
+license=(MIT)
+depends=(ruby ruby-mini_portile2)
+makedepends=()
+groups=()
+replaces=()
+conflicts=()
+provides=()
+optdepends=()
+options=(!emptydirs)
+source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
+    
+)
+noextract=($_gemname-$pkgver.gem)
+sha1sums=('63111f6eda5a7cbe442e2b6ec6c492250da9fa39'
+    
+)
 
-pkgname='ruby-nokogiri'
-_gemname='nokogiri'
-pkgver='1.6.8.rc3'
-pkgrel=1
-pkgdesc='An HTML, XML, SAX, and Reader parser.'
-arch=('any')
-license=('')
-makedepends=('ruby')
-depends=('ruby-mini_portile2')
-options=('!distcc')
-url='http://nokogiri.org'
-source=("http://rubygems.org/downloads/nokogiri-${pkgver}.gem")
-sha1sums=('6aaadadbd504dc5d2e5cced20769a8169ba773f9')
-noextract=("nokogiri-${pkgver}.gem")
+prepare() {
+
+  true
+}
 
 package() {
-  cd "$srcdir"
-
-  local _gemdir=$(ruby -e 'puts Gem.default_dir')
-
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
-      -i "${pkgdir}${_gemdir}" nokogiri-${pkgver}.gem
-  else
-    gem install --no-user-install --ignore-dependencies -i "$pkgdir${_gemdir}" \
-      nokogiri-${pkgver}.gem
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
   fi
+
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.autotest,.cross_rubies,.editorconfig,.gemtest,.travis.yml,CHANGELOG.rdoc,CONTRIBUTING.md,C_CODING_STYLE.rdoc,Gemfile,LICENSE.txt,Manifest.txt,README.md,ROADMAP.md,Rakefile,STANDARD_RESPONSES.md,Y_U_NO_GEMSPEC.md,appveyor.yml,build_all,dependencies.yml,ext,patches,ports,suppressions,tasks,test,test_all}
 }

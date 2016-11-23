@@ -1,28 +1,46 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
+_gemname=uuidtools
+pkgname=ruby-$_gemname
+pkgver=2.1.5
+pkgrel=3
+pkgdesc=UUID\ generator
+arch=(any)
+url=https://github.com/sporkmonger/uuidtools
+license=()
+depends=(ruby)
+makedepends=()
+groups=()
+replaces=()
+conflicts=()
+provides=()
+optdepends=()
+options=(!emptydirs)
+source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
+    
+)
+noextract=($_gemname-$pkgver.gem)
+sha1sums=('c66138adb04e0c082bfe43c45df7f097be7a5b95'
+    
+)
 
-pkgname='ruby-uuidtools'
-pkgver='2.1.5'
-pkgrel=2
-pkgdesc='UUID generator.'
-arch=('any')
-license=('custom:unknown')
-makedepends=('ruby')
-url='http://uuidtools.rubyforge.org/'
-source=("http://rubygems.org/downloads/uuidtools-${pkgver}.gem")
-sha1sums=('c66138adb04e0c082bfe43c45df7f097be7a5b95')
-noextract=("uuidtools-${pkgver}.gem")
+prepare() {
+
+  true
+}
 
 package() {
-  cd "$srcdir"
-
-  local _gemdir=$(ruby -e 'puts Gem.default_dir')
-
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-rdoc --no-ri --no-user-install --ignore-dependencies \
-      -i "${pkgdir}${_gemdir}" -n "$pkgdir/usr/bin" uuidtools-$pkgver.gem
-  else
-    gem install --ignore-dependencies --no-user-install -i "$pkgdir$_gemdir" \
-      -n "$pkgdir/usr/bin" uuidtools-$pkgver.gem
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
   fi
+
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{CHANGELOG,LICENSE.txt,README.md,Rakefile,spec,tasks,website}
 }

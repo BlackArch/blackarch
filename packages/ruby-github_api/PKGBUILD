@@ -1,0 +1,46 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+_gemname=github_api
+pkgname=ruby-$_gemname
+pkgver=0.14.5
+pkgrel=1
+pkgdesc=Ruby\ client\ for\ the\ official\ GitHub\ API
+arch=(any)
+url=http://piotrmurach.github.io/github/
+license=(MIT)
+depends=(ruby ruby-addressable-2.4 ruby-descendants_tracker ruby-faraday-0.9 ruby-hashie ruby-oauth2)
+makedepends=()
+groups=()
+replaces=()
+conflicts=()
+provides=()
+optdepends=()
+options=(!emptydirs)
+source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
+    
+)
+noextract=($_gemname-$pkgver.gem)
+sha1sums=('1b5517d0d45cc73f9dde3f0c58bb1d289ff0f04b'
+    
+)
+
+prepare() {
+
+  true
+}
+
+package() {
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
+  fi
+
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{LICENSE.txt,README.md}
+}

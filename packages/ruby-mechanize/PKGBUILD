@@ -1,32 +1,46 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
+_gemname=mechanize
+pkgname=ruby-$_gemname
+pkgver=2.7.5
+pkgrel=2
+pkgdesc=The\ Mechanize\ library\ is\ used\ for\ automating\ interaction\ with\ websites
+arch=(any)
+url=http://docs.seattlerb.org/mechanize/
+license=(MIT)
+depends=(ruby ruby-domain_name ruby-http-cookie ruby-mime-types ruby-net-http-digest_auth ruby-net-http-persistent-2 ruby-nokogiri ruby-ntlm-http ruby-webrobots)
+makedepends=()
+groups=()
+replaces=()
+conflicts=()
+provides=()
+optdepends=()
+options=(!emptydirs)
+source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
+    
+)
+noextract=($_gemname-$pkgver.gem)
+sha1sums=('318210b10ba357c8588c9f2cb85684c1e0dd1a98'
+    
+)
 
-pkgname='ruby-mechanize'
-_gemname='mechanize'
-pkgver='2.7.4'
-pkgrel=1
-pkgdesc='Automates interaction with websites, handling cookies, redirects and forms.'
-arch=('any')
-url='http://mechanize.rubyforge.org/'
-license=('GPL2')
-epends=('ruby' 'ruby-net-http-digest_auth' 'ruby-net-http-persistent'
-        'ruby-mime-types' 'ruby-http-cookie' 'ruby-nokogiri' 'ruby-ntlm-http'
-        'ruby-webrobots ruby-domain_name')
-makedepends=('ruby')
-source=("https://rubygems.org/downloads/${_gemname}-${pkgver}.gem")
-noextract=("${_gemname}-${pkgver}.gem")
-sha1sums=('c4119437399f794ee78d549220da4eab13239f3d')
+prepare() {
+
+  true
+}
 
 package() {
-  cd "$srcdir"
-
-  local _gemdir="$(ruby -rubygems -e'puts Gem.default_dir')"
-
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
-      -i "$pkgdir$_gemdir" mechanize-$pkgver.gem
-  else
-    gem install --ignore-dependencies --no-user-install -i "$pkgdir/$_gemdir" \
-      -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.rdoc" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.rdoc"
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
   fi
+
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.autotest,.gitignore,.travis.yml,CHANGELOG.rdoc,EXAMPLES.rdoc,GUIDE.rdoc,Gemfile,LICENSE.rdoc,README.rdoc,Rakefile,examples,mechanize.gemspec,test}
 }
