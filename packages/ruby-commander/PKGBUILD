@@ -1,0 +1,46 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+_gemname=commander
+pkgname=ruby-$_gemname
+pkgver=4.4.0
+pkgrel=1
+pkgdesc=The\ complete\ solution\ for\ Ruby\ command-line\ executables
+arch=(any)
+url=https://github.com/commander-rb/commander
+license=(MIT)
+depends=(ruby ruby-highline)
+makedepends=()
+groups=()
+replaces=()
+conflicts=()
+provides=()
+optdepends=()
+options=(!emptydirs)
+source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
+    
+)
+noextract=($_gemname-$pkgver.gem)
+sha1sums=('b36286dff459c1f5602eafc74a7863603cc451ba'
+    
+)
+
+prepare() {
+
+  true
+}
+
+package() {
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
+  fi
+
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.gitignore,.rspec,.rubocop.yml,.rubocop_todo.yml,.travis.yml,DEVELOPMENT,Gemfile,History.rdoc,LICENSE,Manifest,README.md,Rakefile,commander.gemspec,spec}
+}

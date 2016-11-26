@@ -1,0 +1,46 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+_gemname=celluloid
+pkgname=ruby-$_gemname-0.16
+pkgver=0.16.0
+pkgrel=1
+pkgdesc=Actor-based\ concurrent\ object\ framework\ for\ Ruby
+arch=(any)
+url=https://github.com/celluloid/celluloid
+license=(MIT)
+depends=(ruby ruby-timers-4.0)
+makedepends=()
+groups=()
+replaces=()
+conflicts=()
+provides=()
+optdepends=()
+options=(!emptydirs)
+source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
+    
+)
+noextract=($_gemname-$pkgver.gem)
+sha1sums=('9a3250de9d3e15ca872c2dc834ed7b4ce065c890'
+    
+)
+
+prepare() {
+
+  true
+}
+
+package() {
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
+  fi
+
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{LICENSE.txt,README.md,spec}
+}

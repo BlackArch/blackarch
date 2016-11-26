@@ -1,30 +1,46 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
+_gemname=domain_name
+pkgname=ruby-$_gemname
+pkgver=0.5.20161021
+pkgrel=2
+pkgdesc=Domain\ Name\ manipulation\ library\ for\ Ruby
+arch=(any)
+url=https://github.com/knu/ruby-domain_name
+license=(BSD-2-Clause, BSD-3-Clause, MPL-2.0)
+depends=(ruby ruby-unf)
+makedepends=()
+groups=()
+replaces=()
+conflicts=()
+provides=()
+optdepends=()
+options=(!emptydirs)
+source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
+    
+)
+noextract=($_gemname-$pkgver.gem)
+sha1sums=('7a458a3a8580ff3a4a6adaa24ba33136b6af67b4'
+    
+)
 
-pkgname='ruby-domain_name'
-_gemname='domain_name'
-pkgver='0.5.20160310'
-pkgrel=1
-pkgdesc='Domain Name manipulation library for Ruby.'
-arch=('any')
-license=('unknown')
-makedepends=('ruby')
-depends=('ruby-unf<1.0.0' 'ruby-unf>=0.0.5' 'ruby-unf_ext>=0.0.6')
-url='https://github.com/knu/ruby-domain_name'
-source=("http://rubygems.org/downloads/domain_name-${pkgver}.gem")
-sha1sums=('cb78b6ed059376a69164d6c9b411804b5ca4e56d')
-noextract=("domain_name-${pkgver}.gem")
+prepare() {
+
+  true
+}
 
 package() {
-  cd "$srcdir"
-
-  local _gemdir=$(ruby -e 'puts Gem.default_dir')
-
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
-      -i "$pkgdir$_gemdir" domain_name-${pkgver}.gem
-  else
-    gem install --no-user-install --ignore-dependencies -i "$pkgdir$_gemdir" \
-      domain_name-${pkgver}.gem
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
   fi
+
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.document,.gitignore,.travis.yml,CHANGELOG.md,Gemfile,LICENSE.txt,README.md,Rakefile,data,domain_name.gemspec,test,tool}
 }

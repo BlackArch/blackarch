@@ -1,29 +1,46 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
-
-pkgname='ruby-slop'
-pkgver='4.3.0'
-pkgrel=1
-pkgdesc='Simple Lightweight Option Parsing.'
-arch=('any')
-url='http://github.com/leejarvis/slop'
-license=('MIT')
-depends=('ruby')
+_gemname=slop
+pkgname=ruby-$_gemname
+pkgver=4.4.1
+pkgrel=2
+pkgdesc=Simple\ Lightweight\ Option\ Parsing
+arch=(any)
+url=http://github.com/leejarvis/slop
+license=(MIT)
+depends=(ruby)
+makedepends=()
+groups=()
+replaces=()
+conflicts=()
+provides=()
+optdepends=()
 options=(!emptydirs)
-source=("https://rubygems.org/downloads/slop-${pkgver}.gem")
-noextract=("slop-${pkgver}.gem")
-sha1sums=('cee0b073054e25365f100a22dcb885d82dc3d5e5')
+source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
+    
+)
+noextract=($_gemname-$pkgver.gem)
+sha1sums=('965a69db00b34c5ea7b827a8b56a14a7f9c26f6c'
+    
+)
+
+prepare() {
+
+  true
+}
 
 package() {
-  cd "$srcdir"
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
+  fi
 
-  local _gemdir="$(ruby -e'puts Gem.default_dir')"
-
-  gem install --ignore-dependencies --no-user-install -i "$pkgdir/$_gemdir" \
-    -n "$pkgdir/usr/bin" slop-${pkgver}.gem
-
-  rm "$pkgdir/$_gemdir/cache/slop-${pkgver}.gem"
-
-  install -D -m644 "$pkgdir/$_gemdir/gems/slop-${pkgver}/LICENSE" \
-    "$pkgdir/usr/share/licenses/ruby-slop/LICENSE"
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.gitignore,.travis.yml,CHANGELOG.md,Gemfile,LICENSE,README.md,Rakefile,slop.gemspec,test}
 }

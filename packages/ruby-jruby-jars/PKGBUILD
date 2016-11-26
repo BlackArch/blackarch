@@ -1,0 +1,45 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+_gemname=jruby-jars
+pkgname=ruby-$_gemname
+pkgver=9.1.6.0
+pkgrel=1
+pkgdesc=The\ core\ JRuby\ code\ and\ the\ JRuby\ stdlib\ as\ jar\ files.
+arch=(any)
+url=https://github.com/jruby/jruby/tree/master/maven/jruby-jars
+license=(EPL-1.0, GPL-2.0, LGPL-2.1)
+depends=(ruby)
+makedepends=()
+groups=()
+replaces=()
+conflicts=()
+provides=()
+optdepends=()
+options=(!emptydirs)
+source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
+    
+)
+noextract=($_gemname-$pkgver.gem)
+sha1sums=('ebe38781752bfe95edcfcc6023437b47d08bddc3'
+    
+)
+
+prepare() {
+
+  true
+}
+
+package() {
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
+  fi
+
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{DEV_INSTRUCTIONS,Mavenfile,README.txt,jruby-jars.gemspec}
+}

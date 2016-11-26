@@ -1,28 +1,46 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
+_gemname=rprogram
+pkgname=ruby-$_gemname
+pkgver=0.3.2
+pkgrel=3
+pkgdesc=A\ library\ for\ creating\ wrappers\ around\ command-line\ programs.
+arch=(any)
+url=https://github.com/postmodern/rprogram\#readme
+license=(MIT)
+depends=(ruby)
+makedepends=()
+groups=()
+replaces=()
+conflicts=()
+provides=()
+optdepends=()
+options=(!emptydirs)
+source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
+    
+)
+noextract=($_gemname-$pkgver.gem)
+sha1sums=('fdf67d5fa64a154caab00cd8304329016f29021e'
+    
+)
 
-pkgname='ruby-rprogram'
-pkgver='0.3.2'
-pkgrel=2
-pkgdesc='A library for creating wrappers around command-line programs.'
-arch=('any')
-license=('GPL3')
-depends=('ruby')
-url='https://github.com/postmodern/rprogram#readme'
-source=("http://rubygems.org/downloads/rprogram-${pkgver}.gem")
-sha1sums=('fdf67d5fa64a154caab00cd8304329016f29021e')
-noextract=("rprogram-${pkgver}.gem")
+prepare() {
+
+  true
+}
 
 package() {
-  cd "$srcdir"
-
-  local _gemdir=$(ruby -rubygems -e 'puts Gem.default_dir')
-
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
-      -n "$pkgdir/usr/bin" -i "$pkgdir$_gemdir" rprogram-$pkgver.gem
-  else
-    gem install --no-user-install --ignore-dependencies -i "$pkgdir$_gemdir" \
-      -n "$pkgdir/usr/bin" rprogram-$pkgver.gem
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
   fi
+
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.document,.gemtest,.gitignore,.rspec,.yardopts,ChangeLog.md,LICENSE.txt,README.md,Rakefile,gemspec.yml,rprogram.gemspec,spec}
 }

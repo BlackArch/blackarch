@@ -1,33 +1,45 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
+_gemname=json
+pkgname=ruby-$_gemname
+pkgver=2.0.2
+pkgrel=4
+pkgdesc=JSON\ Implementation\ for\ Ruby
+arch=(i686 x86_64)
+url=http://flori.github.com/json
+license=(Ruby)
+depends=(ruby)
+makedepends=()
+groups=()
+replaces=()
+conflicts=()
+provides=()
+optdepends=()
+options=(!emptydirs)
+source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
+    
+)
+noextract=($_gemname-$pkgver.gem)
+sha1sums=('3de6d643ca30b0d91aa8d75d2bca81453c8a6bdb'
+    
+)
 
-pkgname='ruby-json'
-pkgver='1.8.3'
-pkgrel=3
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
-pkgdesc='JSON implementation as a Ruby extension in C'
-url='http://rubygems.org/gems/json'
-license=('GPL')
-depends=('ruby')
-makedepends=('rubygems')
-optdepends=('jruby' 'java-environment')
-source=("http://rubygems.org/downloads/json-${pkgver}.gem")
-noextract=("json-${pkgver}.gem")
-sha1sums=('dcd00a477bbb8c0c722f68f9c28bc8460a7b1d6f')
+prepare() {
+
+  true
+}
 
 package() {
-  cd "$srcdir"
-
-  local _gemdir=$(ruby -e 'puts Gem.default_dir')
-
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
-      -i "$pkgdir$_gemdir" json-$pkgver.gem
-  else
-    gem install --no-user-install --ignore-dependencies -i "$pkgdir$_gemdir" \
-      json-$pkgver.gem
+  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
+  if [ -d "$_extdir" ]; then
+    rm -rf "$_extdir"/*
+    touch "$_extdir/gem.build_complete"
   fi
 
-  # Removing files with references to $pkgdir
-  find "$pkgdir" -depth -type f -name "Makefile*" -exec rm {} \;
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{tests,.gitignore,.travis.yml,CHANGES.md,Gemfile,README-json-jruby.md,README.md,Rakefile,VERSION,data,diagrams,ext,install.rb,java,json-java.gemspec,json.gemspec,json_pure.gemspec,references,tools}
 }
