@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pwdlogy'
+pkgver=14.8b92bcf
+pkgrel=1
+pkgdesc='A target specific wordlist generating tool for social engineers and security researchers.'
+groups=('blackarch' 'blackarch-misc')
+arch=('any')
+url='https://github.com/tch1001/pwdlogy'
+license=('custom:unknown')
+depends=('python3')
+makedepends=('git')
+source=('git+https://github.com/tch1001/pwdlogy.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/pwdlogy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/pwdlogy"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/pwdlogy/README.md"
+
+  rm README.md
+
+  install -Dm644 -t "$pkgdir/usr/share/pwdlogy" *
+
+  cat > "$pkgdir/usr/bin/pwdlogy" << EOF
+#!/bin/sh
+cd /usr/share/pwdlogy
+exec python3 pwdlogy.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/pwdlogy"
+}
