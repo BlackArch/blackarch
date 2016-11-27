@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='onioff'
+pkgver=17.83c5e99
+pkgrel=1
+groups=('blackarch' 'blackarch-recon' 'blackarch-recon')
+arch=('any')
+pkgdesc='An onion url inspector for inspecting deep web links.'
+url='https://github.com/k4m4/onioff'
+license=('MIT')
+depends=('python2' 'python2-requests' 'python2-beautifulsoup4'
+         'python2-termcolor')
+makedepends=('git')
+source=('git+https://github.com/k4m4/onioff.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/onioff"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/onioff"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/onioff"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/onioff/" README.rst CHANGES.rst \
+    VERSION
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/onioff/LICENSE"
+
+  rm README.rst CHANGES.rst LICENSE
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/onioff"
+
+cat > "$pkgdir/usr/bin/onioff" << EOF
+#!/bin/sh
+cd /usr/share/onioff
+exec python2 onioff.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/onioff"
+}
