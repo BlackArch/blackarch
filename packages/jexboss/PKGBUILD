@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='jexboss'
+pkgver=78.0ae8ee4
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation')
+arch=('any')
+pkgdesc='Jboss verify and Exploitation Tool.'
+url='https://github.com/joaomatosf/jexboss'
+license=('Apache')
+depends=('python2' 'python2-urllib3' 'python2-ipaddress')
+makedepends=('git')
+source=('git+https://github.com/joaomatosf/jexboss.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/jexboss"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/jexboss"
+
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/jexboss"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/jexboss/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/jexboss/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/jexboss"
+
+cat > "$pkgdir/usr/bin/jexboss" << EOF
+#!/bin/sh
+cd /usr/share/jexboss
+exec python2 jexboss.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/jexboss"
+}
