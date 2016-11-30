@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='zackattack'
+pkgver=6.9c8eaca
+pkgrel=1
+pkgdesc='A new tool set to do NTLM Authentication relaying unlike any other tool currently out there.'
+groups=('blackarch' 'blackarch-networking' 'blackarch-scanner'
+        'blackarch-cracker')
+arch=('any')
+url='https://github.com/urbanesec/ZackAttack/'
+license=('unknown')
+depends=('ruby' 'ruby-sqlite3' 'ruby-webrick')
+makedepends=('git')
+source=('ZackAttack::git+https://github.com/b00stfr3ak/ZackAttack.git#branch=cleanup')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ZackAttack"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+# prepare() {
+  # cd "$srcdir/ZackAttack"
+  # patch -Np1 -R -i ../sqlite_ver.patch
+# }
+
+package() {
+  cd "$srcdir/ZackAttack"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/zackattack"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/zackattack/README.md"
+  install -Dm644 ChangeLog.md "$pkgdir/usr/share/doc/zackattack/ChangeLog.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/zackattack/LICENSE"
+
+  rm README.md ChangeLog.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/zackattack"
+
+  cat > "$pkgdir/usr/bin/zackattack" << EOF
+#!/bin/sh
+cd /usr/share/zackattack
+exec ruby zackattack.rb "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/zackattack"
+}
