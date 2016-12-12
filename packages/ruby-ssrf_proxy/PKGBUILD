@@ -2,9 +2,9 @@
 # See COPYING for license details.
 
 _gemname=ssrf_proxy
-_pkgver=0.0.4.pre
+_gemver=0.0.4.pre
+pkgname=ruby-ssrf-proxy
 pkgver=224.2e4c4a7
-pkgname=ruby-$_gemname
 pkgrel=1
 pkgdesc='Facilitates tunneling HTTP communications through servers vulnerable to Server-Side Request Forgery.'
 groups=('blackarch' 'blackarch-proxy' 'blackarch-tunnel')
@@ -21,32 +21,33 @@ provides=(ssrf-proxy)
 conflicts=(ssrf-proxy)
 
 pkgver() {
-	cd "$srcdir/ssrf_proxy"
+	cd "$srcdir/$_gemname"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$srcdir/ssrf_proxy"
+  cd "$srcdir/$_gemname"
 
-  gem build ssrf_proxy.gemspec
+  gem build $_gemname.gemspec
 }
 
 package() {
-  cd "$srcdir/ssrf_proxy"
+  cd "$srcdir/$_gemname"
 
-  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+local _gemdir="$(ruby -e'puts Gem.default_dir')"
 
-  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$_pkgver.gem
-  rm "$pkgdir/$_gemdir/cache/$_gemname-$_pkgver.gem"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$_gemver.gem
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$_gemver.gem"
 
-  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$_pkgver/LICENSE.md" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$_gemver/LICENSE.md" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
   install -D -m644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
 
-  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH-linux/2.3.0/$_gemname-$_pkgver"
+  local _extdir="$pkgdir/$_gemdir/extensions/$CARCH-linux/2.3.0/$_gemname-$_gemver"
   if [ -d "$_extdir" ]; then
     rm -rf "$_extdir"/*
     touch "$_extdir/gem.build_complete"
   fi
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_pkgver"/{LICENSE.md,README.md}
+
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_gemver"/{LICENSE.md,README.md}
 }
