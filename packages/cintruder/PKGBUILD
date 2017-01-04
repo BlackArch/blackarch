@@ -2,16 +2,22 @@
 # See COPYING for license details.
 
 pkgname='cintruder'
-pkgver='0.2.0'
-pkgrel=2
+pkgver=4.84384c7
+pkgrel=1
 groups=('blackarch' 'blackarch-cracker' 'blackarch-webapp')
 pkgdesc='An automatic pentesting tool to bypass captchas.'
 arch=('any')
-url='http://cintruder.sourceforge.net/'
+url='https://github.com/epsylon/cintruder'
 license=('GPL3')
 depends=('python2' 'python2-pycurl' 'python2-lxml' 'python2-pillow')
-source=("http://downloads.sourceforge.net/project/cintruder/cintruder_v${pkgver}.tar.gz")
-sha1sums=('b8972968d1231341e5b43b88d09f13564beb0fdc')
+source=('git+https://github.com/epsylon/cintruder.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/cintruder"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 prepare() {
   cd "$srcdir/cintruder"
@@ -26,21 +32,19 @@ package() {
   mkdir -p "$pkgdir/usr/share/cintruder"
   mkdir -p "$pkgdir/usr/share/doc/cintruder"
 
-  cd doc
+  install -Dm644 docs/LICENSE "$pkgdir/usr/share/licenses/cintruder/LICENSE"
+  rm docs/LICENSE
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/cintruder" AUTHOR CHANGELOG COPYING \
-    INSTALL README THANKS
+  install -Dm644 -t "$pkgdir/usr/share/doc/cintruder" docs/*
 
-  cd ..
-
-  rm -rf doc/
+  rm -rf docs/
 
   cp -a * "$pkgdir/usr/share/cintruder"
 
   cat > "$pkgdir/usr/bin/cintruder" << EOF
 #!/bin/sh
 cd /usr/share/cintruder
-exec python2 cintruder "\$@"
+exec python2 cintruder "\${@}"
 EOF
 
   chmod +x "$pkgdir/usr/bin/cintruder"
