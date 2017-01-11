@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='proctal'
+pkgver=175.56e7853
+pkgrel=1
+pkgdesc='Provides a command line interface and a C library to manipulate the address space of a running program on Linux.'
+url='https://github.com/daniel-araujo/proctal'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+groups=('blackarch' 'blackarch-binary' 'blackarch-misc')
+license=("GPL3")
+depends=('keystone' 'capstone')
+makedepends=('git' 'yuck')
+source=('git://github.com/daniel-araujo/proctal.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/proctal"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/proctal"
+
+  autoreconf -i
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd "$srcdir/proctal"
+
+  make DESTDIR="$pkgdir/" install
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/proctal" INSTALL
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/proctal/COPYING"
+}
