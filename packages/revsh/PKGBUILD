@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='revsh'
+pkgver=215.174e309
+pkgrel=1
+pkgdesc='A reverse shell with terminal support, data tunneling, and advanced pivoting capabilities.'
+groups=('blackarch' 'blackarch-backdoor' 'blackarch-networking')
+url='https://github.com/emptymonkey/revsh/'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+license=('MIT')
+depends=('openssl')
+makedepends=('git')
+source=('git+https://github.com/emptymonkey/revsh.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/revsh"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/revsh"
+
+  sed -i 's|/usr/local|/usr/|g' Makefile
+
+  # just for now
+  sed -i 's|-static||' Makefile
+}
+
+build() {
+  cd "$srcdir/revsh"
+
+  make
+}
+
+package() {
+  cd "$srcdir/revsh"
+
+  make DESTDIR="$pkgdir/" install
+
+  install -Dm755 revsh "$pkgdir/usr/bin/revsh"
+  install -Dm755 in_the_key_of_c "$pkgdir/usr/bin/revsh-in_the_key_of_c"
+  install -Dm644 Documentation/revsh.1 "$pkgdir/usr/share/man/man1/revsh.1"
+
+  rm Documentation/revsh.1
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/revsh" INSTALL Documentation/*
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/revsh/LICENSE"
+}

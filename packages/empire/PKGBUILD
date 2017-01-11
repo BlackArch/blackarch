@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='empire'
+pkgver=513.65b15a9
+pkgrel=2
+pkgdesc='A PowerShell and Python post-exploitation agent.'
+groups=('blackarch' 'blackarch-automation')
+arch=('any')
+url='https://github.com/adaptivethreat/Empire'
+license=('custom:unknown')
+depends=('python2-m2crypto' 'swig' 'python2-iptools' 'python2-crypto'
+         'python2-pydispatcher' 'python2-flask' 'python2-pyopenssl')
+makedepends=('git')
+source=('git+https://github.com/adaptivethreat/Empire.git')
+sha1sums=('SKIP')
+install='empire.install'
+
+pkgver() {
+  cd "$srcdir/Empire"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Empire"
+
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/empire"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/empire/" README.md changelog
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/empire/LICENSE"
+
+  rm changelog LICENSE README.md
+
+  cp -a * "$pkgdir/usr/share/empire"
+
+  cat > "$pkgdir/usr/bin/empire" << EOF
+#!/bin/sh
+cd /usr/share/empire/
+exec python2 empire "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/empire"
+}
