@@ -1,0 +1,62 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='arduino'
+epoch=1
+pkgver='1.0.5'
+pkgrel=6
+groups=('blackarch' 'blackarch-hardware')
+pkgdesc="Arduino SDK (includes patched avrdude and librxtx)"
+arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+url="http://arduino.cc/en/Main/Software"
+options=('!strip')
+license=('GPL')
+depends=('avr-libc' 'libusb-compat' 'java-environment')
+install="arduino.install"
+source=("http://arduino.googlecode.com/files/arduino-$pkgver-linux32.tgz"
+        "http://arduino.googlecode.com/files/arduino-$pkgver-linux64.tgz"
+        'arduino'
+        'arduino.png'
+        'arduino.desktop')
+sha1sums=('169035aaffbce881dc24863ebbd06a66679abceb'
+          '1d199c68280449cdfabbd41c04eaf8c88ca87226'
+          '9a3296e9d33e8b6a2c5db81814591cb8e40c05e0'
+          '26328e197e95330ed26e7f35254a7cd7e352a17c'
+          'b7a6801d6e1bc48306795a92f2af3a0dbe1d38f7')
+
+if   [ "$CARCH" == 'i686' ]; then
+  unset source[1]
+  unset sha1sums[1]
+elif [ "$CARCH" == 'x86_64' ]; then
+  unset source[0]
+  unset sha1sums[0]
+fi
+
+package() {
+  cd "$srcdir/arduino-$pkgver"
+
+  # Arduino excutable should accept arguments.
+  sed -i 's/^java .* processing.app.Base$/\0 "$*"/' arduino
+
+  # Base directories.
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/doc"
+  mkdir -p "$pkgdir/usr/share/pixmaps"
+  mkdir -p "$pkgdir/usr/share/applications"
+  mkdir -p "$pkgdir/usr/share/arduino"
+
+  cp -a --no-preserve=ownership . "$pkgdir/usr/share/arduino"
+
+  # At least support the FHS a little bit.
+  install -m755 "$srcdir/arduino" "$pkgdir/usr/bin/arduino"
+  ln -s /usr/share/arduino/reference "$pkgdir/usr/share/doc/arduino"
+
+  # Desktop icon.
+  install -m644 "$srcdir/arduino.desktop" "$pkgdir/usr/share/applications/"
+  install -m644 "$srcdir/arduino.png" "$pkgdir/usr/share/pixmaps/"
+
+  # Make arduino use the avr-gcc toolchain.
+  # See https://bbs.archlinux.org/viewtopic.php?id=171950
+  # and hardware/tools/readme.txt
+  ln -sf /usr/bin/avr-gcc "$pkgdir/usr/share/arduino/hardware/tools/avr-gcc"
+}

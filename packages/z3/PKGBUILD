@@ -1,0 +1,49 @@
+# Maintainer: rudy.matela
+#
+# based on z3-git
+pkgname=z3
+pkgver=4.4.1
+pkgrel=2
+pkgdesc="A high-performance theorem prover"
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url="https://github.com/Z3Prover/z3"
+license=('MIT')
+depends=('gcc-libs')
+makedepends=('git' 'python2')
+optdepends=('python2: bindings for python2')
+conflicts=('z3-bin' 'z3-codeplex' 'z3-git')
+provides=('z3')
+source=("https://github.com/Z3Prover/z3/archive/z3-4.4.1.tar.gz"
+        z3-static-cast.patch)
+md5sums=('4336a9df24f090e711c6d42fd4e2b1fc'
+         '07746336b6334af4191f81e2f0f93ff3')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgname-$pkgver"
+  python2 scripts/mk_make.py
+
+  patch -p1 < $srcdir/$pkgname-static-cast.patch
+  cd "build"
+  make
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgname-$pkgver"
+
+  # If we specify --prefix in build(), it tries to create
+  # "$pkgdir/usr/lib/python2.7/dist-packages" immediately, which we can't have.
+  python2 scripts/mk_make.py --prefix="$pkgdir/usr"
+
+  cd "build"
+  make install
+
+  cd ".."
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  # Arch uses site-packages over dist-packages
+  mv "$pkgdir/usr/lib/python2.7/dist-packages" "$pkgdir/usr/lib/python2.7/site-packages"
+
+  # These are identical, so make a symlink and save 18M
+  rm "$pkgdir/usr/lib/python2.7/site-packages/libz3.so"
+  ln -s ../../libz3.so "$pkgdir/usr/lib/python2.7/site-packages/libz3.so"
+}

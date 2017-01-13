@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='perl-furl'
+pkgver='3.09'
+pkgrel=2
+pkgdesc='Lightning-fast URL fetcher.'
+url='http://search.cpan.org/~syohex/Furl-3.09/lib/Furl.pm'
+arch=('any')
+depends=('perl')
+makedepends=('perl-module-build-tiny')
+license=('Perl')
+options=('!emptydirs')
+source=("http://search.cpan.org/CPAN/authors/id/S/SY/SYOHEX/Furl-${pkgver}.tar.gz")
+sha1sums=('015a5e028a3511c129c9fcdbdf983b437fad53ac')
+
+build() {
+  cd  "$srcdir/Furl-$pkgver"
+
+  export PERL_MM_USE_DEFAULT=1 PERL_AUTOINSTALL=--skipdeps \
+    PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'" \
+    PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+    MODULEBUILDRC=/dev/null
+
+  /usr/bin/perl Build.PL INSTALLDIRS=vendor && ./Build
+}
+
+package() {
+  cd  "$srcdir/Furl-$pkgver"
+
+  ./Build install
+
+  # Removing unnecessary items.
+  find "$pkgdir" -type f -name 'perllocal.pod' -delete;
+  find "$pkgdir" -type f -name '.packlist' -delete;
+}

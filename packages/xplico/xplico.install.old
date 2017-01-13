@@ -1,0 +1,74 @@
+post_install() {
+  XPLICO_BASE=/opt/xplico
+  DB=$XPLICO_BASE/xplico.db
+  DB_OLD=$XPLICO_BASE/xplico_old.db
+  DB_NEW=$XPLICO_BASE/xplico_new.db
+  XI=$XPLICO_BASE/xi/app/
+  XPLICO_SQLITE_BASE=$XPLICO_BASE/script/db/sqlite
+  PHPINI=/etc/php/php.ini
+  HTTPDCONF=/etc/httpd/conf/httpd.conf
+
+  if grep -q '^post_max_size = 100M' $PHPINI ; then
+    echo "Variable post_max_size in $PHPINI has already been set to the recommended 100M."
+  elif grep -q '^post_max_size = 8M' $PHPINI ; then
+    echo "Resetting post_max_size in $PHPINI"
+    sed --in-place '/post_max_size = 8M/s/^/post_max_size = 100M ; XPLICO /' \
+      $PHPINI
+  else
+	  echo "Variable post_max_size in $PHPINI is not the default (8M). Recommended value for xplico is 100M. Set by hand."
+fi
+
+  if grep -q '^upload_max_filesize = 100M' $PHPINI ; then
+	  echo "Variable upload_max_filesize in $PHPINI has already been set to the recommended 100M."
+  elif grep -q '^upload_max_filesize = 2M' $PHPINI ; then
+    echo "Resetting upload max file size in $PHPINI"
+    sed --in-place '/upload_max_filesize = 2M/s/^/upload_max_filesize = 100M ; XPLICO /' $PHPINI
+  else
+    echo "Variable upload_max_filesize in $PHPINI is not the default (2M). Recommended value for xplico is 100M. Set by hand."
+  fi
+
+  if grep -q '^short_open_tag = Off' $PHPINI ; then
+    echo "Setting short open tag in $PHPINI"
+    sed --in-place '/^short_open_tag = Off/s/^/short_open_tag = On ; XPLICO /' \
+      $PHPINI
+  else
+	  echo "Variable short_open_tag in $PHPINI is already set."
+  fi
+
+  if grep -q '^date.timezone' $PHPINI ; then
+    echo "Timezone already set in $PHPINI - no change made."
+  else
+    echo "Setting timezone to US/Eastern in $PHPINI - change by hand for different time zones."
+    echo 'date.timezone = US/Eastern ; XPLICO' >> $PHPINI
+  fi
+
+  echo "Don't forget to enable sqlite extension in $PHPINI"
+  echo "Don't forget to enable mod_rewrite module in $HTTPDCONF"
+  echo "Default Xplico daemon port is 9876"
+
+  mkdir -p "$XI/tmp/cache/"{persistent,models}
+  chmod 777 -R $XI/tmp/cache/
+
+  cd $XPLICO_SQLITE_BASE
+
+  if [ -e "$DB" ]; then
+	  echo "Preserving previous Xplico database"
+	  mv $DB $DB_OLD
+	  sh create_xplico_db.sh
+	  mv $DB $DB_NEW
+	  mv $DB_OLD $DB
+	  sh create_xplico_db.sh
+	  python3 upgrade_db.py
+	  rm -f $DB_NEW
+	  rm -rf /opt/xplico/xi/app/tmp/cache/models/*
+	  rm -rf /opt/xplico/xi/app/tmp/cache/views/*
+  else
+	  echo "Creating new Xplico database"
+	  sh create_xplico_db.sh
+  fi
+}
+
+post_remove(){
+  echo "Don't forget to remove $XPLICO_BASE directory"
+  echo "Don't forget to restore php.ini and httpd.conf files"
+}

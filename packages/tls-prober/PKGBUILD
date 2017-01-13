@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='tls-prober'
+pkgver=264.d56de68
+pkgrel=2
+pkgdesc='A tool to fingerprint SSL/TLS servers.'
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-crypto')
+arch=('any')
+url='https://github.com/WestpointLtd/tls_prober'
+license=('MIT')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/WestpointLtd/tls_prober')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/tls_prober"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/tls_prober"
+
+  git submodule update --init
+}
+
+package() {
+  cd "$srcdir/tls_prober"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/tls-prober"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/tls-prober/" README.md doc/*
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/tls-prober/LICENSE"
+
+  rm -rf README.md doc LICENSE
+
+  cp -a * "$pkgdir/usr/share/tls-prober/"
+
+  cat > "$pkgdir/usr/bin/tls-prober" << EOF
+#!/bin/sh
+cd /usr/share/tls-prober
+exec python2 prober.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/tls-prober"
+}

@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='quicksand-lite'
+pkgver=13.607728c
+pkgrel=2
+groups=('blackarch' 'blackarch-defensive' )
+pkgdesc='Command line tool for scanning streams within office documents plus xor db attack.'
+arch=('x86_64' 'i686' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/tylabs/quicksand_lite'
+license=('MPL2')
+depends=('zlib' 'libzip' 'yara')
+makedepends=('git')
+source=('git+https://github.com/tylabs/quicksand_lite.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/quicksand_lite"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/quicksand_lite"
+
+  gcc -g -o quicksand quicksand.c -L/usr/lib -lyara -lzip -lz
+}
+
+package() {
+  cd "$srcdir/quicksand_lite"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/quicksand-lite"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/quicksand-lite" INSTALL.txt
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/quicksand-lite/LICENSE"
+
+  rm INSTALL.txt LICENSE
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/quicksand-lite"
+
+  cat > "$pkgdir/usr/bin/quicksand" << EOF
+#!/bin/sh
+export QS=/usr/share/quicksand-lite
+exec /usr/share/quicksand-lite/quicksand "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/quicksand"
+}
