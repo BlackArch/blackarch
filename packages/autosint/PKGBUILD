@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='autosint'
+pkgver=78.432b2ae
+pkgrel=3
+pkgdesc='Tool to automate common osint tasks.'
+groups=('blackarch' 'blackarch-recon')
+arch=('any')
+url='https://github.com/bharshbarger/AutOSINT'
+license=('GPL2')
+depends=('python2' 'python2-python-docx' 'python2-google' 'shodan')
+makedepends=('git')
+source=('git+https://github.com/bharshbarger/AutOSINT.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/AutOSINT"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/AutOSINT"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/autosint"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/autosint/" README.md
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/autosint"
+
+  cat > "$pkgdir/usr/bin/autosint" << EOF
+#!/bin/sh
+cd /usr/share/autosint
+exec python2 AutOSINT.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/autosint"
+}

@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='drupal-module-enum'
+pkgver=7.58a8e69
+pkgrel=2
+pkgdesc='Enumerate on drupal modules.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/Tethik/drupal-module-enumeration'
+license=('MIT')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/Tethik/drupal-module-enumeration.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/drupal-module-enumeration"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/drupal-module-enumeration"
+
+  sed -i 's|bin/python|bin/python2|' scanner.py
+}
+
+package() {
+  cd "$srcdir/drupal-module-enumeration"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm655 -t "$pkgdir/usr/share/drupal-module-enum" scanner.py \
+    drupal-modules.lst
+  install -Dm644 -t "$pkgdir/usr/share/doc/drupal-module-enum/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/drupal-module-enum/LICENSE"
+
+  cat > "$pkgdir/usr/bin/drupal-module-enum" << EOF
+#!/bin/sh
+cd /usr/share/drupal-module-enum
+exec python2 scanner.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/drupal-module-enum"
+}

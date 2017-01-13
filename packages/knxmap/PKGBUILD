@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='knxmap'
+pkgver=190.8e75c08
+pkgrel=2
+pkgdesc='KNXnet/IP scanning and auditing tool for KNX home automation installations.'
+groups=('blackarch' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/ernw/knxmap'
+license=('GPL3')
+depends=('python' 'python-ipaddress')
+makedepends=('git' 'python-setuptools')
+source=('git+https://github.com/ernw/knxmap.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/knxmap"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/knxmap"
+
+  #python setup.py build
+}
+
+package() {
+  cd "$srcdir/knxmap"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/knxmap"
+
+  #python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/knxmap/" README.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/knxmap/LICENSE.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/knxmap"
+
+  #mv "$pkgdir/usr/bin/knxmap.py" "$pkgdir/usr/bin/knxmap"
+
+  cat > "$pkgdir/usr/bin/knxmap" << EOF
+#!/bin/sh
+cd /usr/share/knxmap
+exec python3 knxmap.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/knxmap"
+}

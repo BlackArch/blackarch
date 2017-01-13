@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='mylg'
+pkgver=652.019bbdc
+pkgrel=1
+groups=('blackarch' 'blackarch-networking' 'blackarch-recon'
+        'blackarch-sniffer')
+pkgdesc='Network Diagnostic Tool.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/mehrdadrad/mylg'
+license=('MIT')
+depends=('glibc' 'go' 'libpcap')
+makedepends=('go' 'git')
+url='https://github.com/mehrdadrad/mylg'
+source=('git+https://github.com/mehrdadrad/mylg.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/mylg"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/$url && rm -rf src/$url && mv mylg src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t $url
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v $url
+
+  install -Dm755 "$srcdir/mylg" "$pkgdir/usr/bin/mylg"
+  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/mylg/README.md"
+  install -Dm644 src/$url/LICENSE "$pkgdir/usr/share/licenses/mylg/LICENSE"
+}

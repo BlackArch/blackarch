@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='androwarn'
+pkgver=124.e0e5ad0
+pkgrel=2
+pkgdesc='Yet another static code analyzer for malicious Android applications.'
+groups=('blackarch' 'blackarch-mobile' 'blackarch-code-audit')
+arch=('any')
+url='https://github.com/maaaaz/androwarn'
+license=('GPL3')
+depends=('python2' 'python2-lxml' 'androguard')
+makedepends=('git')
+source=('git+https://github.com/maaaaz/androwarn.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/androwarn"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/androwarn"
+
+  sed -i 's|/env python|/env python2|' androwarn.py
+}
+
+package() {
+  cd "$srcdir/androwarn"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/androwarn"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/androwarn/README.md"
+  install -Dm644 -t "$pkgdir/usr/share/licenses/androwarn/" COPYING \
+    COPYING.LESSER
+
+  rm README.md COPYING COPYING.LESSER
+
+  cp -a * "$pkgdir/usr/share/androwarn/"
+
+  cat > "$pkgdir/usr/bin/androwarn" << EOF
+#!/bin/sh
+cd /usr/share/androwarn
+exec python2 androwarn.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/androwarn"
+}

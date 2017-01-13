@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='nohidy'
+pkgver=56.f94a2a3
+pkgrel=2
+pkgdesc='The system admins best friend, multi platform auditing tool.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-networking'
+        'blackarch-defensive')
+arch=('any')
+url='https://github.com/flipchan/Nohidy'
+license=('GPL2')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/flipchan/Nohidy')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Nohidy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/Nohidy"
+
+  grep -iRl 'python' . | xargs sed -i 's|python$|python2|g'
+}
+
+package() {
+  cd "$srcdir/Nohidy"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/nohidy"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/nohidy/" README.md README.txt Help/*
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/nohidy/LICENSE"
+
+  rm -rf README* LICENSE Help
+
+  cp -a * "$pkgdir/usr/share/nohidy"
+
+  cat > "$pkgdir/usr/bin/nohidy" << EOF
+#!/bin/sh
+cd /usr/share/nohidy
+exec python2 main.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/nohidy"
+}

@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='triton'
+pkgver=1856.7e0282c6
+pkgrel=1
+pkgdesc='A Dynamic Binary Analysis (DBA) framework.'
+groups=('blackarch' 'blackarch-binary' 'blackarch-reversing')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/JonathanSalwan/Triton'
+license=('BSD')
+depends=('capstone' 'z3' 'python2' 'boost')
+makedepends=('git' 'cmake' 'python2-setuptools')
+source=('git+https://github.com/JonathanSalwan/Triton.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Triton"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/Triton"
+
+  mkdir build
+  cd build
+  cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+  make
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/Triton"
+
+  cd build
+  make DESTDIR="$pkgdir" install
+  python2 setup.py install --root="$pkgdir"
+  cd ..
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/triton/" README.md
+  install -Dm644 LICENSE_BSD.txt \
+    "$pkgdir/usr/share/licenses/triton/LICENSE_BSD.txt"
+
+  mv "$pkgdir/lib/"* "$pkgdir/usr/lib/"
+
+  rmdir "$pkgdir/lib"
+}

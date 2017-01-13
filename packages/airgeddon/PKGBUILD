@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='airgeddon'
+pkgver=352.9b96078
+pkgrel=1
+pkgdesc='Multi-use bash script for Linux systems to audit wireless networks.'
+groups=('blackarch' 'blackarch-wireless' 'blackarch-automation')
+arch=('any')
+url='https://github.com/v1s1t0r1sh3r3/airgeddon'
+license=('GPL')
+depends=('bash' 'xterm' 'iw' 'gawk' 'aircrack-ng')
+optdepends=('hashcat' 'crunch' 'wpaclean' 'mdk3')
+makedepends=('git')
+source=('git+https://github.com/v1s1t0r1sh3r3/airgeddon.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/airgeddon"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/airgeddon"
+
+  sed -i 's|auto_update=1|auto_update=0|' airgeddon.sh
+}
+
+package() {
+  cd "$srcdir/airgeddon"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/airgeddon"
+
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/airgeddon/LICENSE"
+
+  rm LICENSE
+
+	cp -a --no-preserve=ownership * "$pkgdir/usr/share/airgeddon"
+
+  cat > "$pkgdir/usr/bin/airgeddon" << EOF
+#!/bin/sh
+cd /usr/share/airgeddon
+exec bash airgeddon.sh "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/airgeddon"
+}

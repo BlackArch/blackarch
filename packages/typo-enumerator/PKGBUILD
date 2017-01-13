@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='typo-enumerator'
+pkgver=73.0e37596
+pkgrel=2
+pkgdesc='Enumerate Typo3 version and extensions.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/whoot/Typo-Enumerator'
+license=('GPL2')
+depends=('python3' 'python-requests' 'python-colorama' 'python-lxml')
+makedepends=('git')
+source=('git+https://github.com/whoot/Typo-Enumerator.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Typo-Enumerator"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Typo-Enumerator"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/typo-enumerator"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/typo-enumerator/" README.md doc/*
+  install -Dm644 LICENSE.txt \
+    "$pkgdir/usr/share/licenses/typo-enumerator/LICENSE.txt"
+
+  rm -rf doc README.md LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/typo-enumerator/"
+
+  cat > "$pkgdir/usr/bin/typo-enumerator" << EOF
+#!/bin/sh
+cd /usr/share/typo-enumerator
+python3 typo3_enumerator.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/typo-enumerator"
+}

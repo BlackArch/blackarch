@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='mybff'
+pkgver=94.6547c51
+pkgrel=1
+pkgdesc='A Brute Force Framework.'
+groups=('blackarch' 'blackarch-cracker')
+arch=('any')
+url='https://github.com/MooseDojo/myBFF'
+license=('BSD')
+depends=('python2' 'python2-requests' 'python2-lxml' 'python2-selenium'
+         'python2-beautifulsoup4')
+makedepends=('git')
+source=('git+https://github.com/MooseDojo/myBFF.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/myBFF"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/myBFF"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/mybff"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/mybff/" README.md
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/mybff/LICENSE.txt"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/mybff"
+
+  cat > "$pkgdir/usr/bin/mybff" << EOF
+#!/bin/sh
+cd /usr/share/mybff
+exec python2 myBFF.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/mybff"
+}

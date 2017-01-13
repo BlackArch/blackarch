@@ -2,17 +2,19 @@
 # See COPYING for license details.
 
 pkgname='atscan'
-pkgver=852.78b02a9
-pkgrel=2
+pkgver=1494.5ea11f4
+pkgrel=3
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp' 'blackarch-fuzzer'
         'blackarch-exploitation' 'blackarch-automation')
 pkgdesc='Server, Site and Dork Scanner.'
 arch=('any')
 url='https://github.com/AlisamTechnology/ATSCAN-V3.1'
-license=('custom:unknown')
+license=('MIT')
 depends=('perl' 'perl-io-socket' 'perl-uri' 'perl-term-ansicolor'
-         'perl-html-parser')
-makedepends=('git')
+         'perl-html-parser' 'perl-term-readkey' 'perl-http-cookies'
+         'perl-getopt-long' 'perl-http-message' 'perl-encode-locale'
+         'perl-file-copy-recursive')
+makedepends=('git' 'dos2unix')
 source=('git+https://github.com/AlisamTechnology/ATSCAN-V3.1.git')
 sha1sums=('SKIP')
 
@@ -25,12 +27,28 @@ pkgver() {
 prepare() {
   cd "$srcdir/ATSCAN-V3.1"
 
+  dos2unix atscan.pl
+
   sed -i 's|defined @ARGV|@ARGV|' atscan.pl
 }
 
 package() {
   cd "$srcdir/ATSCAN-V3.1"
 
-  install -Dm755 atscan.pl "$pkgdir/usr/bin/atscan"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/atscan"
+
   install -Dm644 -t "$pkgdir/usr/share/doc/atscan/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/atscan/"
+
+  cat > "$pkgdir/usr/bin/atscan" << EOF
+#!/bin/sh
+cd /usr/share/atscan
+exec perl atscan.pl "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/atscan"
 }
