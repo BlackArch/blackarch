@@ -1,27 +1,29 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
-
-_gemname=ssrf_proxy
-_gemver=0.0.4.pre
-pkgname=ruby-ssrf-proxy
+pkgname='ruby-ssrf-proxy'
 pkgver=224.2e4c4a7
+_gemname='ssrf_proxy'
+_gemver='0.0.4.pre'
 pkgrel=2
-pkgdesc='Facilitates tunneling HTTP communications through servers vulnerable to Server-Side Request Forgery.'
+pkgdesc="SSRF Proxy facilitates tunneling HTTP communications through servers vulnerable to SSRF."
 groups=('blackarch' 'blackarch-proxy' 'blackarch-tunnel')
 arch=('any')
 url='https://github.com/bcoles/ssrf_proxy'
-license=('MIT')
-depends=(ruby ruby-base32 ruby-celluloid ruby-celluloid-io ruby-colorize ruby-htmlentities ruby-ipaddress ruby-logger ruby-socksify ruby-webrick)
+license=("MIT")
+depends=('ruby' 'ruby-base32' 'ruby-celluloid' 'ruby-celluloid-io' 'ruby-colorize' 'ruby-htmlentities' 'ruby-ipaddress' 'ruby-logger' 'ruby-socksify' 'ruby-webrick')
 makedepends=('git')
 source=('git+https://github.com/bcoles/ssrf_proxy.git')
-options=(!emptydirs)
-sha1sums=('SKIP')
-replaces=(ssrf-proxy)
-provides=(ssrf-proxy)
-conflicts=(ssrf-proxy)
+replaces=('ssrf-proxy')
+conflicts=('ssrf-proxy')
+provides=('ssrf-proxy')
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+sha1sums=('SKIP' )
 
 pkgver() {
-	cd "$srcdir/$_gemname"
+  cd "$srcdir/$_gemname"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
@@ -33,21 +35,11 @@ build() {
 }
 
 package() {
-  cd "$srcdir/$_gemname"
-
-local _gemdir="$(ruby -e'puts Gem.default_dir')"
-
-  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$_gemver.gem
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$_gemver.gem 
   rm "$pkgdir/$_gemdir/cache/$_gemname-$_gemver.gem"
-
   install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$_gemver/LICENSE.md" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
   install -D -m644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
-
-  local _extdir="$pkgdir/$_gemdir/extensions/$CARCH-linux/2.3.0/$_gemname-$_gemver"
-  if [ -d "$_extdir" ]; then
-    rm -rf "$_extdir"/*
-    touch "$_extdir/gem.build_complete"
-  fi
 
   rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_gemver"/{LICENSE.md,README.md}
 }

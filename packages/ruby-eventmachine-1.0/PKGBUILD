@@ -2,45 +2,28 @@
 # Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
-_gemname=eventmachine
-pkgname=ruby-$_gemname-1.0
-pkgver=1.0.9.1
+pkgname='ruby-eventmachine-1.0'
+_gemname='eventmachine'
+pkgver='1.0.9.1'
 pkgrel=3
-pkgdesc=Ruby/EventMachine\ library
-arch=(i686 x86_64 armv6h armv7h aarch64)
-url=http://rubyeventmachine.com
-license=(Ruby, GPL)
-depends=(ruby)
-makedepends=()
-groups=()
-replaces=()
-conflicts=()
-provides=()
-optdepends=()
-options=(!emptydirs)
-source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
-    
-)
-noextract=($_gemname-$pkgver.gem)
-sha1sums=('18c08a4995fde24aeedde4c78e83aa74141a838d'
-    
-)
+pkgdesc="Ruby/EventMachine library"
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='http://rubyeventmachine.com'
+license=("Ruby', 'GPL")
+depends=('ruby')
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+noextract=("$_gemname-$pkgver.gem")
+sha1sums=('18c08a4995fde24aeedde4c78e83aa74141a838d' )
 
-prepare() {
-
-  true
-}
 
 package() {
-  local _gemdir="/usr/lib/ruby/gems/2.3.0"
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
   gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
   rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
   install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$pkgver"
-  if [ -d "$_extdir" ]; then
-    rm -rf "$_extdir"/*
-    touch "$_extdir/gem.build_complete"
-  fi
 
   rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.gitignore,.travis.yml,.yardopts,CHANGELOG.md,GNU,Gemfile,LICENSE,README.md,Rakefile,docs,eventmachine.gemspec,examples,ext,java,rakelib,tests}
+  mkdir -p "$pkgdir$_gemdir/extensions/$CARCH/$(ruby -rubygems -e puts Gem.extension_api_version)/$_gemname-$pkgver/"
+  touch "$pkgdir$_gemdir/extensions/$CARCH/$(ruby -rubygems -e puts Gem.extension_api_version)/$_gemname-$pkgver/gem.build_complete"
 }

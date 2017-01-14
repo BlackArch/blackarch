@@ -1,51 +1,58 @@
-# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
-# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
-_gemname=arachni
-pkgname=ruby-$_gemname
-pkgver=1.4.4.gcd7b47bff
-_gemver=1.4
-pkgrel=2
-pkgdesc=Arachni\ is\ a\ feature-full,\ modular,\ high-performance\ Ruby\ framework\ aimed\ towards\ helping\ penetration\ testers\ and\ administrators\ evaluate\ the\ security\ of\ web\ applications.
-arch=(any)
-url=https://www.arachni-scanner.com
-license=(Arachni\ Public\ Source\ License\ v1.0)
-depends=(ruby ruby-addressable-2.3.6 ruby-arachni-rpc-0.2.1.3 ruby-awesome_print ruby-bundler ruby-childprocess-0.5.3 ruby-coderay-1.1.0 ruby-concurrent-ruby-1.0.0 ruby-concurrent-ruby-ext-1.0.0 ruby-http_parser.rb ruby-kramdown-1.4.1 ruby-loofah ruby-msgpack-0.7.0 ruby-nokogiri-1.6.8.rc2 ruby-oj-2.14 ruby-oj_mimic_json ruby-pony-1.8 ruby-puma-2.14 ruby-rack ruby-rb-readline-0.5.1 ruby-rubyzip-1.1.6 ruby-sinatra-1.4.6 ruby-sinatra-contrib-1.4.6 ruby-terminal-table-1.4 ruby-typhoeus-1.0.1 ruby-watir-webdriver-0.8)
-makedepends=(git)
-groups=(blackarch blackarch-webapp)
-replaces=(arachni)
-conflicts=(arachni)
-provides=(arachni)
-optdepends=()
-options=(!emptydirs)
-source=('git+git://github.com/Arachni/arachni.git')
-sha1sums=('SKIP')
+
+pkgname='arachni'
+pkgver=9237.20113e782
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp')
+pkgdesc='A feature-full, modular, high-performance Ruby framework aimed towards helping penetration testers and administrators evaluate the security of web applications.'
+arch=('any')
+license=('apache')
+makedepends=('git')
+depends=('ruby' 'ruby-bundler')
+source=('git+git://github.com/Arachni/arachni.git#branch=experimental'
+        'setup_fix.patch')
+url='https://www.arachni-scanner.com'
+sha1sums=('SKIP'
+          '5c0ed7ee946271d42747121d108a73ac5de377c3')
 
 pkgver() {
-	cd "$srcdir/$_gemname"
+  cd "$srcdir/arachni"
 
-
-  git describe --always | sed 's|-|.|g' | sed 's/^v//'  # echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-build() {
-  cd "$srcdir/$_gemname"
-
-  gem build $_gemname.gemspec
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  # git describe --always | sed 's|-|.|g' | sed 's/^v//'
 }
 
 package() {
-  cd "$srcdir/$_gemname"
+  cd "$srcdir/arachni"
 
-  local _gemdir="/usr/lib/ruby/gems/2.3.0"
-  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$_gemver.gem
-  rm "$pkgdir/$_gemdir/cache/$_gemname-$_gemver.gem"
-  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$_gemver/LICENSE.md" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
-  local _extdir="$pkgdir//usr/lib/ruby/gems/2.3.0/extensions/$CARCH/2.3.0/$_gemname-$_gemver"
-  if [ -d "$_extdir" ]; then
-    rm -rf "$_extdir"/*
-    touch "$_extdir/gem.build_complete"
-  fi
+  progs="arachni arachni_console arachni_multi arachni_reporter arachni_restore"
+  progs="${progs} arachni_rest_server arachni_rpc arachni_rpcd"
+  progs="$progs arachni_rpcd_monitor arachni_script"
 
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_gemver"/{ACKNOWLEDGMENTS.md,AUTHORS.md,CHANGELOG.md,CONTRIBUTORS.md,Gemfile,LICENSE.md,README.md,Rakefile,arachni.gemspec,components,config,logs,profiles,spec,ui}
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/arachni"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/arachni" *.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/arachni/LICENSE.md"
+
+  patch -Np1 -i ../setup_fix.patch
+
+  bundle config build.nokogiri --use-system-libraries
+  bundle install --path vendor/bundle --without prof
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/arachni"
+  cp --no-preserve=ownership -a .bundle "$pkgdir/usr/share/arachni"
+
+  for prog in ${progs}
+  do
+    cat > "$pkgdir/usr/bin/${prog//_/-}" << EOF
+#!/bin/sh
+cd /usr/share/arachni
+exec ruby /usr/share/arachni/bin/$prog "\$@"
+EOF
+  done
+
+  chmod +x "$pkgdir"/usr/bin/*
 }
+
+
