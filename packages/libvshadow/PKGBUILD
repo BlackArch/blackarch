@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='libvshadow'
+pkgver=20161225.e22b93f
+pkgrel=1
+pkgdesc='A library to access the Volume Shadow Snapshot (VSS) format.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/libyal/libvshadow'
+license=('LGPL3')
+groups=('blackarch', 'blackarch-forensic')
+depends=('libbfio')
+makedepends=('git' 'autoconf' 'automake' 'libtool' 'gettext' 'pkg-config'
+             'bison' 'flex')
+source=('git+https://github.com/libyal/libvshadow.git')
+sha1sums=('SKIP')
+
+_gitname="libvshadow"
+
+pkgver() {
+  cd "$srcdir/$_gitname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$_gitname"
+
+  ./synclibs.sh
+  ./autogen.sh
+  ./configure \
+    --prefix=/usr \
+    --sysconfdir=/etc
+
+  make
+}
+
+package() {
+  cd "$_gitname"
+
+  make DESTDIR="$pkgdir/" install
+}
