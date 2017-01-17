@@ -35,11 +35,21 @@ build() {
   # fix glibc 2.16.0-2
   export ncp_cv_pam_directory='/usr/lib/security'
 
-  if [ $_with_php -eq 1 ]; then
-    ./configure --prefix=/usr --mandir=/usr/share
-    sed 's/function_entry/zend_function_entry/' -i contrib/php/php_auth_nds.c
+  if [[ "$CARCH" == "i686" || "$CARCH" == "x86_64" ]];
+  then
+    if [ $_with_php -eq 1 ]; then
+      ./configure --prefix=/usr --mandir=/usr/share
+      sed 's/function_entry/zend_function_entry/' -i contrib/php/php_auth_nds.c
+    else
+      ./configure --prefix=/usr --mandir=/usr/share --disable-php
+    fi
   else
-    ./configure --prefix=/usr --mandir=/usr/share --disable-php
+    if [ $_with_php -eq 1 ]; then
+      ./configure --prefix=/usr --mandir=/usr/share --build=arm
+      sed 's/function_entry/zend_function_entry/' -i contrib/php/php_auth_nds.c
+    else
+      ./configure --prefix=/usr --mandir=/usr/share --disable-php --build=arm
+    fi
   fi
 
   make
