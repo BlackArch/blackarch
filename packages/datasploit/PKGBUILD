@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='datasploit'
+pkgver=174.b18e4fe
+pkgrel=1
+pkgdesc='.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/upgoingstar/datasploit'
+license=('GPL3')
+depends=('python2' 'python2-requests' 'python2-tweepy' 'python2-dnspython'
+         'python2-pymongo' 'python2-python-whois' 'python2-python-wappalyzer'
+         'python2-celery' 'python2-beautifulsoup4' 'python2-django' 'shodan'
+         'python2-termcolor' 'python2-ipwhois' 'python2-clearbit'
+         'python2-json2html')
+makedepends=('git')
+source=('git+https://github.com/upgoingstar/datasploit')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/datasploit"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/datasploit"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/datasploit"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/datasploit/" README.md docs/*
+  install -Dm644 License.txt "$pkgdir/usr/share/licenses/datasploit/License.txt"
+
+  rm -rf docs README.md License.txt
+
+  cp -a * "$pkgdir/usr/share/datasploit/"
+
+  cat > "$pkgdir/usr/bin/datasploit" << EOF
+#!/bin/sh
+cd /usr/share/datasploit
+exec python2 domainOsint.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/datasploit"
+}

@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bingoo'
+pkgver=3.698132f
+pkgrel=1
+pkgdesc='A Linux bash based Bing and Google Dorking Tool.'
+groups=('blackarch' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/Hood3dRob1n/BinGoo'
+license=('custom:unknown')
+depends=('bash' 'lynx' 'curl')
+makedepends=('git')
+source=('git+https://github.com/Hood3dRob1n/BinGoo.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/BinGoo"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/BinGoo"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/bingoo"
+
+  install -Dm755 bingoo "$pkgdir/usr/bin/bingoo"
+  install -Dm644 -t "$pkgdir/usr/share/doc/bingoo/" README.txt
+
+  rm README.txt
+
+  cp -a * "$pkgdir/usr/share/bingoo/"
+
+  cat > "$pkgdir/usr/bin/bingoo" << EOF
+#!/bin/sh
+cd /usr/share/bingoo/
+exec bash bingoo "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/bingoo"
+}
