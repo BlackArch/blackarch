@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hercules-payload'
+pkgver=211.87e1a7d
+pkgrel=2
+groups=('blackarch' 'blackarch-binary' 'blackarch-windows' 'blackarch-backdoor')
+pkgdesc='A special payload generator that can bypass all antivirus software.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/EgeBalci/HERCULES'
+license=('MIT')
+depends=('go')
+makedepends=('git')
+source=('git+https://github.com/EgeBalci/HERCULES.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/HERCULES"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/HERCULES"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/hercules-payload"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/hercules-payload/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/hercules-payload/LICENSE"
+
+  rm LICENSE README.md
+
+  cp -a * "$pkgdir/usr/share/hercules-payload"
+
+  cat > "$pkgdir/usr/bin/hercules-payload" << EOF
+#!/bin/sh
+cd /usr/share/hercules-payload/SOURCE
+exec ./HERCULES "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/hercules-payload"
+}

@@ -1,0 +1,55 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='morpheus'
+pkgver=26.8d8140b
+pkgrel=1
+pkgdesc='Automated Ettercap TCP/IP Hijacking Tool.'
+groups=('blackarch' 'blackarch-automation')
+arch=('any')
+url='https://github.com/r00t-3xp10it/morpheus'
+license=('custom:unknown')
+#TODO: add metasploit as dep once the fucking ruby issues are solved
+depends=('bash' 'xterm' 'zenity' 'ettercap' 'dsniff' 'apache' 'nmap' 'driftnet'
+         'sudo')
+makedepends=('git')
+source=('git+https://github.com/r00t-3xp10it/morpheus.git'
+        'settings.patch'
+        'morpheus.sh.patch')
+sha1sums=('SKIP'
+          '6877635a82d1eefa2bcf0cf0c0548c9c6de1e2b0'
+          'f54ea548532236a855ed320b29efa14366f5dc99')
+
+pkgver() {
+  cd "$srcdir/morpheus"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < settings.patch
+  patch -p1 < morpheus.sh.patch
+}
+
+package() {
+  cd "$srcdir/morpheus"
+
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/morpheus"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/morpheus/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/morpheus"
+
+  cat > "$pkgdir/usr/bin/morpheus" << EOF
+#!/bin/sh
+cd /usr/share/morpheus
+exec bash ./morpheus.sh "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/morpheus"
+}
