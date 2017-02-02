@@ -3,19 +3,29 @@
 
 pkgname='twofi'
 pkgver='2.0'
-pkgrel=4
+pkgrel=6
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='Twitter Words of Interest.'
 arch=('any')
 url='http://www.digininja.org/projects/twofi.php'
 license=('CCPL')
-depends=('ruby' 'ruby-json')
+depends=('ruby' 'ruby-json' 'ruby-twitter')
 source=("http://www.digininja.org/files/twofi_${pkgver}-beta.tar.bz2")
 sha1sums=('664bb4b6d39d59bd72c45853ea29c79fff7eddea')
 
 package() {
   cd "$srcdir"
 
-  install -Dm755 "$srcdir/twofi/twofi.rb" "$pkgdir/usr/bin/twofi"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/twofi"
+
+  install -Dm644 "$srcdir/twofi/twofi.rb" "$pkgdir/usr/share/twofi"
   install -Dm644 "$srcdir/twofi/README" "$pkgdir/usr/share/doc/twofi/README"
+
+  cat > "$pkgdir/usr/bin/twofi" << EOF
+#!/bin/sh
+exec ruby-2.3 /usr/share/twofi/twofi.rb "\${@}"
+EOF
+
+  chmod a+x "${pkgdir}/usr/bin/twofi"
 }

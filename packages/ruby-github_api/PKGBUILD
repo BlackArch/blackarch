@@ -5,17 +5,30 @@
 pkgname='ruby-github_api'
 _gemname='github_api'
 pkgver='0.14.5'
-pkgrel=4
+pkgrel=5
 pkgdesc="Ruby client for the official GitHub API"
 arch=('any')
 url='http://piotrmurach.github.io/github/'
 license=("MIT")
 depends=('ruby' 'ruby-addressable-2.4' 'ruby-descendants_tracker' 'ruby-faraday-0.9' 'ruby-hashie' 'ruby-oauth2')
 options=('!emptydirs')
-source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" 
+       'patch')
 noextract=("$_gemname-$pkgver.gem")
-sha1sums=('1b5517d0d45cc73f9dde3f0c58bb1d289ff0f04b' )
+sha1sums=('1b5517d0d45cc73f9dde3f0c58bb1d289ff0f04b' 
+          '016d0cf33aa305aeba899f109c2a923e5363f879')
 
+prepare() {
+  gem unpack $_gemname-$pkgver.gem
+  gem spec $_gemname-$pkgver.gem --ruby > $_gemname.gemspec
+  cd $_gemname-$pkgver
+  patch -p1 < ../patch
+  gem build ../$_gemname.gemspec
+  mv $_gemname-$pkgver.gem ..
+  cd ..
+
+  true
+}
 
 package() {
   local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
