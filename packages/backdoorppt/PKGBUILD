@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='backdoorppt'
+pkgver=61.1fe609e
+pkgrel=1
+pkgdesc='Transform your payload.exe into one fake word doc (.ppt).'
+groups=('blackarch' 'blackarch-backdoor')
+arch=('any')
+url='https://github.com/r00t-3xp10it/backdoorppt'
+license=('custom:unknown')
+depends=('bash' 'wine' 'zenity' 'xterm' 'ruby')
+makedepends=('git')
+source=('git+https://github.com/r00t-3xp10it/backdoorppt.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/backdoorppt"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/backdoorppt"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/backdoorppt/"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/backdoorppt/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/backdoorppt"
+
+  cat > "$pkgdir/usr/bin/backdoorppt" << EOF
+#!/bin/sh
+cd /usr/share/backdoorppt
+exec ./backdoorppt.sh "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/backdoorppt"
+}
