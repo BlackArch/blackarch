@@ -1,0 +1,50 @@
+# Maintainer: William Luc Ritchie <luc dot ritchie at gmail dot com>
+# Contributor: Borja Ruiz <borja [at] libcrack [dot] so>
+
+_pkgname='apkstudio'
+pkgname=$_pkgname-git
+pkgver='100.9e114ca'
+pkgrel=1
+pkgdesc='An IDE for decompiling/editing & then recompiling of android application binaries.'
+groups=('blackarch' 'blackarch-reversing' 'blackarch-mobile')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='http://www.vaibhavpandey.com/apkstudio/'
+license=('GPL2')
+depends=('qt5-base' 'android-tools' 'android-apktool')
+makedepends=('git' 'qt5-tools' 'unzip')
+source=('git+https://github.com/vaibhavpandeyvpz/apkstudio.git'
+        'APKTOOL_VERSION'
+        'apkstudio-setup.sh'
+        'change-vendor-zip-warning.patch')
+sha1sums=('SKIP'
+          '5b9db67dc13d84150d5495878eeb37f1b3c56357'
+          '45e7b5a444a75ea18d7c0f93d32d3e70b0a212be'
+          'b3edfcdc51f76b3e554bf76a324aab79d790137c')
+
+pkgver() {
+  cd "$srcdir/$_pkgname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/$_pkgname"
+
+  patch -p0 -i ../change-vendor-zip-warning.patch
+}
+
+build() {
+  cd "$srcdir/$_pkgname"
+
+  lrelease-qt5 res/lang/en.ts
+  qmake-qt5 -r apkstudio.pro CONFIG+=release
+  make
+}
+
+package() {
+  cd "$srcdir"
+
+  install -Dm755 "$_pkgname/$_pkgname" "$pkgdir/usr/bin/$_pkgname"
+  install -Dm744 'APKTOOL_VERSION' "$pkgdir/usr/share/$pkgname/APKTOOL_VERSION"
+  install -Dm755 'apkstudio-setup.sh' "$pkgdir/usr/bin/apkstudio-setup.sh"
+}
