@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='whatsmyname'
+pkgver=199.9b3d9c0
+pkgrel=1
+pkgdesc='Tool to perform user and username enumeration on various websites.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-recon')
+arch=('any')
+url='https://github.com/WebBreacher/WhatsMyName'
+license=('MIT')
+depends=('python2' 'python2-requests')
+makedepends=('git')
+source=('git+https://github.com/WebBreacher/WhatsMyName.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/WhatsMyName"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/WhatsMyName"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/whatsmyname"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/whatsmyname/" README.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/whatsmyname/LICENSE.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/whatsmyname"
+
+  cat > "$pkgdir/usr/bin/whatsmyname" << EOF
+#!/bin/sh
+cd /usr/share/whatsmyname
+exec python2 web_accounts_list_checker.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/whatsmyname"
+}
