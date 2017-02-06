@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='php-findsock-shell'
+pkgver=2.b8a984f
+pkgrel=1
+pkgdesc='A Findsock Shell implementation in PHP + C.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-backdoor')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/pentestmonkey/php-findsock-shell'
+license=('GPL2')
+depends=('php')
+makedepends=('git')
+source=('git+https://github.com/pentestmonkey/php-findsock-shell.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/php-findsock-shell"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/php-findsock-shell"
+
+  # lame code, lame tool ...
+  gcc -o findsock findsock.c
+}
+
+package() {
+  cd "$srcdir/php-findsock-shell"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/php-findsock-shell"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/php-findsock-shell/" README.md
+  install -Dm644 -t "$pkgdir/usr/share/licenses/php-findsock-shell/" LICENSE
+
+  rm README.md LICENSE COPYING*
+
+  cp -a * "$pkgdir/usr/share/php-findsock-shell"
+
+  cat > "$pkgdir/usr/bin/php-findsock-shell" << EOF
+#!/bin/sh
+cd /usr/share/php-findsock-shell
+exec php php-findsock-shell.php "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/php-findsock-shell"
+}

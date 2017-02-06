@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='xsscrapy'
+pkgver=138.f859faa
+pkgrel=1
+pkgdesc='XSS spider - 66/66 wavsep XSS detected.'
+groups=('blackarch' 'blackarch-webapp')
+arch=('any')
+url='https://github.com/DanMcInerney/xsscrapy'
+license=('custom:unknown')
+depends=('python2' 'python2-lxml' 'python2-requests' 'python2-pybloom')
+makedepends=('git')
+source=('git+https://github.com/DanMcInerney/xsscrapy.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/xsscrapy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/xsscrapy"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/xsscrapy"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/xsscrapy/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/xsscrapy"
+
+  cat > "$pkgdir/usr/bin/xsscrapy" << EOF
+#!/bin/sh
+cd /usr/share/xsscrapy
+exec python2 xsscrapy.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/xsscrapy"
+}
