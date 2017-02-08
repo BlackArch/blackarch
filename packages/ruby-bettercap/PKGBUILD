@@ -4,28 +4,43 @@
 # See COPYING for license details.
 pkgname='ruby-bettercap'
 _gemname='bettercap'
-pkgver='1.6.0'
+pkgver=935.88634fc
+_gemver=1.6.1b
 pkgrel=2
 pkgdesc="A complete, modular, portable and easily extensible MITM framework."
-arch=('any')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/evilsocket/bettercap'
 license=("GPL-3.0")
 depends=('libpcap' 'ruby' 'ruby-colorize' 'ruby-em-proxy' 'ruby-net-dns' 'ruby-network_interface' 'ruby-packetfu' 'ruby-pcaprub' 'ruby-rubydns')
-groups=('blackarch' 'blackarch-sniffer' 'blackarch-exploitation')
+makedepends=('git')
+groups=('blackarch' 'blackarch-sniffer' 'blackarch-exploitation'
+        'blackarch-networking')
 replaces=('bettercap')
 conflicts=('bettercap')
 provides=('bettercap')
 options=('!emptydirs')
-source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
-noextract=("$_gemname-$pkgver.gem")
-sha1sums=('ba254f5f4b6184909af46b041e285cc62443e96f' )
+source=('git+https://github.com/evilsocket/bettercap.git')
+sha1sums=('SKIP' )
 
+pkgver() {
+  cd "$srcdir/$_gemname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/$_gemname"
+
+  gem build $_gemname.gemspec
+}
 
 package() {
+  cd "$srcdir/$_gemname"
   local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
-  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
-  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
-  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.md" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$_gemver.gem
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$_gemver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$_gemver/LICENSE.md" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
 
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{LICENSE.md,README.md}
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_gemver"/{LICENSE.md,README.md}
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_gemver"/{.gitignore,.vimrun,README.md,Rakefile,bettercap.gemspec}
 }
