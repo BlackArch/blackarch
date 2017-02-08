@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='domain-stats'
+pkgver=3.6b05ee9
+pkgrel=1
+pkgdesc='A web API to deliver domain information from whois and alexa.'
+groups=('blackarch' 'blackarch-recon')
+arch=('any')
+url='https://github.com/MarkBaggett/domain_stats'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/MarkBaggett/domain_stats.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/domain_stats"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/domain_stats"
+
+  #sed -i 's|/env python|/env python2|' domain-stats.py
+}
+
+package() {
+  cd "$srcdir/domain_stats"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/domain-stats"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/domain-stats/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/domain-stats"
+
+  cat > "$pkgdir/usr/bin/domain-stats" << EOF
+#!/bin/sh
+cd /usr/share/domain-stats
+exec python2 domain_stats.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/domain-stats"
+}
