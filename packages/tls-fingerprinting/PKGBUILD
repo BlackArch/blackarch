@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='tls-fingerprinting'
+pkgver=240.24b1e12
+pkgrel=1
+pkgdesc='Tool and scripts to perform TLS Fingerprinting.'
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-sniffer')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/LeeBrotherston/tls-fingerprinting'
+license=('GPL3')
+depends=('libpcap' 'python2')
+makedepends=('git')
+source=('git+https://github.com/LeeBrotherston/tls-fingerprinting.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/tls-fingerprinting"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/tls-fingerprinting/fingerprintls"
+
+  make
+}
+
+package() {
+  cd "$srcdir/tls-fingerprinting"
+
+  install -Dm755 fingerprintls/fingerprintls \
+    "$pkgdir/usr/bin/fingerprintls"
+  install -Dm755 scripts/fingerprintout.py "$pkgdir/usr/bin/fingerprintout"
+  install -Dm755 scripts/parselog.py "$pkgdir/usr/bin/parselog"
+  install -Dm644 -t "$pkgdir/usr/share/tls-fingerprinting" fingerprints/*
+  install -Dm644 -t "$pkgdir/usr/share/doc/tls-fingerprinting/" README.md \
+    CHANGELOG
+  install -Dm644 LICENCE "$pkgdir/usr/share/licenses/tls-fingerprinting/LICENSE"
+}
