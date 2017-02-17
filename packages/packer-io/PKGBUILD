@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+# Original Maintainer on AUR: Danilo Kuehn <dk[at]nogo-software[dot]de>
+
+_pkgname=packer
+pkgname=packer-io
+pkgver=0.12.2
+pkgrel=2
+pkgdesc="Packer is a tool for creating identical machine images for multiple platforms from a single source configuration."
+url="http://www.packer.io"
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+license=('MPL2')
+depends=('glibc')
+if test "$CARCH" == i686; then
+source=(
+  "${_pkgname}-${pkgver}.zip::https://releases.hashicorp.com/packer/${pkgver}/packer_${pkgver}_linux_386.zip"
+  'https://raw.githubusercontent.com/mitchellh/packer/master/contrib/zsh-completion/_packer'
+)
+sha256sums=(
+  '458e63a74104e3e550181f5cf2a20f29d79e326c518bcb5723399d4e56ff3f20'
+  '070675905e14b839420282b280a15a7a72ed34c78ad403532ecd3ed5d9768459'
+)
+elif test "$CARCH" == x86_64; then
+source=(
+  "${_pkgname}-${pkgver}.zip::https://releases.hashicorp.com/packer/${pkgver}/packer_${pkgver}_linux_amd64.zip"
+  'https://raw.githubusercontent.com/mitchellh/packer/master/contrib/zsh-completion/_packer'
+)
+sha256sums=(
+  '035d0ea1fe785ab6b673bc2a79399125d4014f29151e106635fa818bb726bebf'
+  '070675905e14b839420282b280a15a7a72ed34c78ad403532ecd3ed5d9768459'
+)
+else
+source=(
+  "${_pkgname}-${pkgver}.zip::https://releases.hashicorp.com/packer/${pkgver}/packer_${pkgver}_linux_arm.zip"
+  'https://raw.githubusercontent.com/mitchellh/packer/master/contrib/zsh-completion/_packer'
+)
+sha256sums=(
+  '035d0ea1fe785ab6b673bc2a79399125d4014f29151e106635fa818bb726bebf'
+  '070675905e14b839420282b280a15a7a72ed34c78ad403532ecd3ed5d9768459'
+)
+fi
+
+build() {
+  sed 's/^#compdef packer/#compdef packer-io/' "${srcdir}/_packer" > "${srcdir}/_packer-io"
+}
+
+package() {
+  install -dm755 "${pkgdir}/usr/bin"
+  install -Dm755 "${srcdir}/${_pkgname}" "${pkgdir}/usr/bin/${_pkgname}-io"
+  install -Dm644 ${srcdir}/_packer-io ${pkgdir}/usr/share/zsh/site-functions/_packer-io
+}
