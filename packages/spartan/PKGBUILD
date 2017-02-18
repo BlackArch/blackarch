@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='spartan'
+pkgver=16.6fd5fa7
+pkgrel=1
+pkgdesc='Frontpage and Sharepoint fingerprinting and attack tool.'
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-fuzzer')
+arch=('any')
+url='https://github.com/sensepost/SPartan'
+license=('Creative4.0')
+depends=('python2' 'python2-beautifulsoup4' 'python2-six' 'python2-requests'
+         'python2-python-ntlm3' 'python2-requests_ntlm')
+makedepends=('git')
+source=('git+https://github.com/sensepost/SPartan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/SPartan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/SPartan"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/spartan"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/spartan/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/spartan"
+
+  cat > "$pkgdir/usr/bin/spartan" << EOF
+#!/bin/sh
+cd /usr/share/spartan
+exec python2 SPartan.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/spartan"
+}
