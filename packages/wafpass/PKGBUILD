@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='wafpass'
+pkgver=44.624ac65
+pkgrel=1
+pkgdesc="Analysing parameters with all payloads' bypass methods, aiming at benchmarking security solutions like WAF."
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer')
+arch=('any')
+url='https://github.com/wafpassproject/wafpass'
+license=('MIT')
+depends=('python3' 'python-requests')
+makedepends=('git')
+source=('git+https://github.com/wafpassproject/wafpass.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/wafpass"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/wafpass"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/wafpass"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/wafpass/" README.md CREDITS.txt
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/wafpass/LICENSE"
+
+  rm README.md LICENSE CREDITS.txt
+
+  cp -a * "$pkgdir/usr/share/wafpass/"
+
+  cat > "$pkgdir/usr/bin/wafpass" << EOF
+#!/bin/sh
+cd /usr/share/wafpass
+exec python3 wafpass.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/wafpass"
+}
