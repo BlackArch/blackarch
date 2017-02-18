@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='uppwn'
+pkgver=5.b7cdd93
+pkgrel=1
+pkgdesc="A script that automates detection of security flaws on websites' file upload systems'."
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer')
+arch=('any')
+url='https://github.com/ferrery1/UpPwn'
+license=('custom:unknown')
+depends=('python2' 'python2-selenium' 'nodejs' 'phantomjs')
+makedepends=('git')
+source=('git+https://github.com/ferrery1/UpPwn')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/UpPwn"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/UpPwn"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/uppwn"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/uppwn/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/uppwn/"
+
+  cat > "$pkgdir/usr/bin/uppwn" << EOF
+#!/bin/sh
+cd /usr/share/uppwn
+exec python2 UpPwn.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/uppwn"
+}
