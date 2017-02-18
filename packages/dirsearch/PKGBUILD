@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dirsearch'
+pkgver=187.515d8b4
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+pkgdesc='HTTP(S) directory/file brute forcer.'
+arch=('any')
+url='https://github.com/maurosoria/dirsearch'
+license=('GPL2')
+depends=('python' 'python-simplejson' 'python-beautifulsoup4'
+         'python2-pyopenssl')
+makedepends=('git')
+source=('git+https://github.com/maurosoria/dirsearch.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/dirsearch"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/dirsearch"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/dirsearch"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/dirsearch/README.md"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/dirsearch"
+
+  cat > "$pkgdir/usr/bin/dirsearch" << EOF
+#!/bin/sh
+cd /usr/share/dirsearch
+exec python dirsearch.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/dirsearch"
+}
