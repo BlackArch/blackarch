@@ -2,15 +2,15 @@
 # See COPYING for license details.
 
 pkgname='bettercap'
-pkgver=935.88634fc
-pkgrel=2
+pkgver=941.92d2b47
+pkgrel=1
 groups=('blackarch' 'blackarch-sniffer' 'blackarch-exploitation'
         'blackarch-networking')
 pkgdesc='A complete, modular, portable and easily extensible MITM framework.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/evilsocket/bettercap'
 license=('GPL3')
-depends=('ruby' )
+depends=('ruby' 'ruby-packetfu')
 makedepends=('git' 'libpcap')
 source=('git+https://github.com/evilsocket/bettercap.git')
 sha1sums=('SKIP')
@@ -19,6 +19,12 @@ pkgver() {
   cd "$srcdir/bettercap"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare(){
+  cd "$srcdir/bettercap"
+
+  git clone https://github.com/packetfu/packetfu.git
 }
 
 build() {
@@ -44,4 +50,16 @@ package() {
 
   install -Dm644 -t "$pkgdir/usr/share/doc/bettercap/" README.md
   install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/bettercap/LICENSE.md"
+
+  cp -a packetfu "$pkgdir/usr/share/bettercap/"
+
+  mv "$pkgdir/usr/bin/bettercap" "$pkgdir/usr/bin/bettercap-orig"
+
+  cat > "$pkgdir/usr/bin/bettercap" << EOF
+#!/bin/sh
+cd /usr/share/bettercap/packetfu
+exec bettercap-orig "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/bettercap"
 }
