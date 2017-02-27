@@ -1,10 +1,8 @@
-# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
-# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 pkgname='ruby-unf'
 _gemname='unf'
-pkgver=0.2.0.beta2
+pkgver='0.2.0.beta2'
 pkgrel=3
 pkgdesc="A wrapper library to bring Unicode Normalization Form support to Ruby/JRuby"
 arch=('any')
@@ -23,5 +21,11 @@ package() {
   rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
   install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.gitignore,.travis.yml,CHANGELOG.md,Gemfile,LICENSE,README.md,Rakefile,test,unf.gemspec}
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+
 }

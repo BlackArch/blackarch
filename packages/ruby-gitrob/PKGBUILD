@@ -1,11 +1,9 @@
-# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
-# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 pkgname='ruby-gitrob'
 _gemname='gitrob'
 pkgver='1.1.0'
-pkgrel=6
+pkgrel=2
 pkgdesc="Reconnaissance tool for GitHub organizations"
 arch=('any')
 url='https://github.com/michenriksen/gitrob'
@@ -27,5 +25,11 @@ package() {
   rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
   install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
 
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.gitignore,.rspec,.rubocop.yml,.travis.yml,CHANGELOG.md,CONTRIBUTING.md,Gemfile,Guardfile,LICENSE.txt,README.md,Rakefile,bin,db,gitrob.gemspec,public,signatures.json,views}
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib exe $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+
 }

@@ -1,11 +1,9 @@
-# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
-# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 pkgname='ruby-power_assert'
 _gemname='power_assert'
-pkgver='0.4.1'
-pkgrel=2
+pkgver='1.0.1'
+pkgrel=1
 pkgdesc="Power Assert for Ruby"
 arch=('any')
 url='https://github.com/k-tsj/power_assert'
@@ -14,7 +12,7 @@ depends=('ruby')
 options=('!emptydirs')
 source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
 noextract=("$_gemname-$pkgver.gem")
-sha1sums=('98bee4b02f58361fdb62ed6f77499d17133ca498' )
+sha1sums=('2e44699ce6ef724b79061bd2a13dc09b68880d86' )
 
 
 package() {
@@ -23,5 +21,11 @@ package() {
   rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
   install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/COPYING" "$pkgdir/usr/share/licenses/$pkgname/COPYING"
 
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.gitignore,.travis.yml,BSDL,COPYING,Gemfile,LEGAL,README.rdoc,Rakefile,benchmarks,power_assert.gemspec,test}
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+
 }
