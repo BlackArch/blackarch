@@ -4,8 +4,8 @@
 # See COPYING for license details.
 pkgname='ruby-rdoc'
 _gemname='rdoc'
-pkgver='5.0.0'
-pkgrel=3
+pkgver='5.1.0'
+pkgrel=1
 pkgdesc="RDoc produces HTML and command-line documentation for Ruby projects"
 arch=('any')
 url='https://rdoc.github.io/rdoc'
@@ -14,7 +14,7 @@ depends=('ruby')
 options=('!emptydirs')
 source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
 noextract=("$_gemname-$pkgver.gem")
-sha1sums=('e950a1158524c3b408cb5a411f9b7649b912514f' )
+sha1sums=('3ad6a195ebb899933a71018080e4868453660f1a' )
 
 
 package() {
@@ -25,5 +25,11 @@ package() {
   # non-HEAD version should not install any files in /usr/bin
   rm -r "$pkgdir"/usr/bin/
 
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.document,.gitignore,.travis.yml,CONTRIBUTING.rdoc,CVE-2013-0256.rdoc,ExampleMarkdown.md,ExampleRDoc.rdoc,Gemfile,History.rdoc,LEGAL.rdoc,LICENSE.rdoc,README.rdoc,RI.rdoc,Rakefile,TODO.rdoc,bin,rdoc.gemspec,exe}
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+
 }

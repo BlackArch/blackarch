@@ -4,9 +4,9 @@
 # See COPYING for license details.
 pkgname='ruby-thread_safe'
 _gemname='thread_safe'
-pkgver='0.3.5'
-pkgrel=3
-pkgdesc="A collection of data structures and utilities to make thread-safe programming in Ruby easier"
+pkgver='0.3.6'
+pkgrel=1
+pkgdesc="Thread-safe collections and utilities for Ruby"
 arch=('any')
 url='https://github.com/ruby-concurrency/thread_safe'
 license=("Apache-2.0")
@@ -14,7 +14,7 @@ depends=('ruby')
 options=('!emptydirs')
 source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
 noextract=("$_gemname-$pkgver.gem")
-sha1sums=('c8d37f72d2c0f7949c89f62a47ad2daebf1f5311' )
+sha1sums=('5a60162d065d0f479d61ba0a11734b44f5f7ef19' )
 
 
 package() {
@@ -23,5 +23,11 @@ package() {
   rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
   install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.travis.yml,.yardopts,Gemfile,LICENSE,README.md,Rakefile,examples,ext,tasks,test,thread_safe.gemspec,yard-template}
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+
 }

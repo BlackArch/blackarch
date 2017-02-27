@@ -5,12 +5,12 @@
 pkgname='ruby-nokogiri'
 _gemname='nokogiri'
 pkgver='1.7.0.1'
-pkgrel=2
+pkgrel=4
 pkgdesc="Nokogiri (鋸) is an HTML, XML, SAX, and Reader parser"
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='http://nokogiri.org'
 license=("MIT")
-depends=('ruby' 'ruby-mini_portile2' 'libxslt' 'libxml2')
+depends=('libxml2' 'libxslt' 'ruby' 'ruby-mini_portile2')
 options=('!emptydirs')
 source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
 noextract=("$_gemname-$pkgver.gem")
@@ -23,7 +23,14 @@ package() {
   rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
   install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
 
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.autotest,.cross_rubies,.editorconfig,.gemtest,.travis.yml,CHANGELOG.md,CONTRIBUTING.md,C_CODING_STYLE.rdoc,Gemfile,LICENSE.txt,Manifest.txt,README.md,ROADMAP.md,Rakefile,STANDARD_RESPONSES.md,Y_U_NO_GEMSPEC.md,appveyor.yml,build_all,dependencies.yml,ext,patches,ports,suppressions,tasks,test,test_all}
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib bin $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+
+  rm -rf "$pkgdir$_gemdir/extensions/$CARCH/$(ruby -rubygems -e puts Gem.extension_api_version)/$_gemname-$pkgver/"
   mkdir -p "$pkgdir$_gemdir/extensions/$CARCH/$(ruby -rubygems -e puts Gem.extension_api_version)/$_gemname-$pkgver/"
   touch "$pkgdir$_gemdir/extensions/$CARCH/$(ruby -rubygems -e puts Gem.extension_api_version)/$_gemname-$pkgver/gem.build_complete"
 }

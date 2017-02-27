@@ -4,8 +4,8 @@
 # See COPYING for license details.
 pkgname='ruby-domain_name'
 _gemname='domain_name'
-pkgver='0.5.20161129'
-pkgrel=3
+pkgver='0.5.20170223'
+pkgrel=1
 pkgdesc="Domain Name manipulation library for Ruby"
 arch=('any')
 url='https://github.com/knu/ruby-domain_name'
@@ -14,7 +14,7 @@ depends=('ruby' 'ruby-unf')
 options=('!emptydirs')
 source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
 noextract=("$_gemname-$pkgver.gem")
-sha1sums=('fee5b5ad600643758732a5091756fbbddf2a9768' )
+sha1sums=('c6d4dbde9fd6c52f7e7084025cb8c5a4dbab88ae' )
 
 
 package() {
@@ -23,5 +23,11 @@ package() {
   rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
   install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
 
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{.document,.gitignore,.travis.yml,CHANGELOG.md,Gemfile,LICENSE.txt,README.md,Rakefile,data,domain_name.gemspec,test,tool}
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+
 }

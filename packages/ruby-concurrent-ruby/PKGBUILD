@@ -4,8 +4,8 @@
 # See COPYING for license details.
 pkgname='ruby-concurrent-ruby'
 _gemname='concurrent-ruby'
-pkgver='1.0.4'
-pkgrel=3
+pkgver='1.0.5'
+pkgrel=1
 pkgdesc="Modern concurrency tools for Ruby. Inspired by Erlang, Clojure, Scala, Haskell, F#, C#, Java, and classic concurrency patterns."
 arch=('any')
 url='http://www.concurrent-ruby.com'
@@ -14,7 +14,7 @@ depends=('ruby')
 options=('!emptydirs')
 source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
 noextract=("$_gemname-$pkgver.gem")
-sha1sums=('8e3e20772f80cb4bdc02e75c4e9d9d434e9edf81' )
+sha1sums=('87de0558473d73a2f7fb208c9b462cd5a894a7c6' )
 
 
 package() {
@@ -23,5 +23,11 @@ package() {
   rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
   install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
 
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/{CHANGELOG.md,LICENSE.txt,README.md}
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+
 }
