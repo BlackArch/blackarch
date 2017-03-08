@@ -3,7 +3,7 @@
 
 pkgname='hercules-payload'
 pkgver=218.07416e7
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-binary' 'blackarch-windows' 'blackarch-backdoor')
 pkgdesc='A special payload generator that can bypass all antivirus software.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
@@ -11,13 +11,31 @@ url='https://github.com/EgeBalci/HERCULES'
 license=('MIT')
 depends=('go')
 makedepends=('git')
-source=('git+https://github.com/EgeBalci/HERCULES.git')
-sha1sums=('SKIP')
+source=('git+https://github.com/EgeBalci/HERCULES.git'
+        'hercules.patch')
+sha1sums=('SKIP'
+          '2c3204d7d567ca306022c2282dd4265b762cec0d')
 
 pkgver() {
   cd "$srcdir/HERCULES"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < hercules.patch
+}
+
+build() {
+  cd "$srcdir/HERCULES"
+
+  export GOPATH="$srcdir"
+
+  go get -d -t github.com/fatih/color
+
+  go run Setup.go
 }
 
 package() {
