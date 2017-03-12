@@ -1,0 +1,31 @@
+post_install() {
+  assert_user_and_group_exist
+
+  chown -R neo4j.neo4j /var/lib/neo4j
+  chown -R neo4j.neo4j /var/log/neo4j
+  chown -R neo4j.neo4j /etc/neo4j
+
+  /usr/bin/systemd-tmpfiles --create neo4j.conf
+}
+
+post_upgrade() {
+  assert_user_and_group_exist
+}
+
+post_remove() {
+  if getent passwd neo4j >/dev/null; then
+    userdel neo4j
+  fi
+  if getent group neo4j >/dev/null; then
+    groupdel neo4j
+  fi
+}
+
+assert_user_and_group_exist() {
+  if ! getent group neo4j >/dev/null; then
+    groupadd --system neo4j
+  fi
+  if ! getent passwd neo4j >/dev/null; then
+    useradd --system -g neo4j -d /var/lib/neo4j -s /bin/false neo4j
+  fi
+}
