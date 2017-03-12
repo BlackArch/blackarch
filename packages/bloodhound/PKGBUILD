@@ -1,0 +1,63 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+_npmname='BloodHound'
+pkgname="bloodhound"
+pkgver='347.103416a'
+pkgrel=3
+pkgdesc='Six Degrees of Domain Admin'
+arch=('aarch64' 'armv7h' 'armv7l' 'x86_64' 'i686')
+url='https://github.com/BloodHoundAD/BloodHound'
+license=('GPL3')
+depends=('nodejs' 'neo4j-community' 'alsa-lib' 'gtk2' 'libxss' 'gconf' 'nss' 'libxtst')
+makedepends=('git' 'nodejs-electron-packager' 'npm')
+optdepends=('python: for some scripts' 'powershell: for PowerShell ingestion')
+source=("git+https://github.com/BloodHoundAD/BloodHound.git"
+	"singlearch.patch")
+options=(!strip)
+sha256sums=('SKIP'
+            '7ab18e6aa1c896917bac45a5dbcd5ccb4e1cbc170d0b1bb1ecd70febc9785d91')
+if [[ ${CARCH} == "x86_64" ]]; then
+  _npmcmd='linuxbuild_64'
+  _arch='x64'
+elif [[ ${CARCH} == "i686" ]]; then
+  _npmcmd='linuxbuild_32'
+  _arch='ia32'
+else
+  _npmcmd='linuxbuild_arm'
+  _arch='armv7l'
+fi
+
+pkgver() {
+  cd "$srcdir/$_npmname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build()
+{
+  cd "$srcdir/$_npmname"
+  patch -Np1 -i ../singlearch.patch
+  npm install
+  npm run $_npmcmd
+}
+
+package() {
+  cd "$srcdir/$_npmname/BloodHound-linux-$_arch"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/BloodHound"
+
+  cp -ar * "$pkgdir/usr/share/BloodHound"
+  cd ..
+  cp -ar BloodHoundExampleDB.graphdb PowerShell "$pkgdir/usr/share/BloodHound"
+
+  cat > "$pkgdir/usr/bin/BloodHound" << EOF
+#!/bin/sh
+cd /usr/share/BloodHound/
+exec ./BloodHound "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/BloodHound"
+  chmod +x "$pkgdir/usr/share/BloodHound/BloodHound"
+}
+

@@ -1,0 +1,95 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+pkgname='neo4j-community'
+pkgver='3.1.1'
+pkgrel=1
+pkgdesc='A fully transactional graph database implemented in Java'
+arch=('any')
+url='http://neo4j.org/'
+license=('custom')
+depends=('java-runtime-headless>=8')
+conflicts=('neo4j-enterprise')
+backup=('etc/neo4j/neo4j-wrapper.conf'
+        'etc/neo4j/neo4j.conf')
+options=(!strip)
+install='neo4j.install'
+source=("http://dist.neo4j.org/neo4j-community-$pkgver-unix.tar.gz"
+        'bin.patch'
+        'conf.patch'
+        'neo4j.install'
+        'neo4j.service'
+        'neo4j-tmpfile.conf')
+sha256sums=('7d66389ad683f66664f11a79314ce4d434ab70ade9c02601ee74e59cd729e2cb'
+            'dc94f5d51ed73fdb4fbbc32b5d479dd22de40fb0fcca7e9a8cc5e864e3d8f7fc'
+            '71ef1d3c9d981cb27c95aa9f0d59e7adca0c6b7431a0e5a39540625a977fe18f'
+            '3c4f3daea1623a5bc4c56d87ff4d76ff4737722eb730e2f9b65a0980bf3633a3'
+            'cf3148bd65ddc06f5ca8cf2ad37013d2e1aa561c5759e4b295f361465e603928'
+            'e1311352e05b1e698599b91883141b938ceb418abd7e6bc11cc964854f0a21e1')
+
+prepare() {
+
+  cd "$srcdir/neo4j-community-$pkgver"
+  patch -Np1 -i ../bin.patch
+  patch -Np1 -i ../conf.patch
+}
+
+package() {
+
+  cd "$srcdir/neo4j-community-$pkgver"
+
+  # Config files
+  CONFIG_DIR=etc/neo4j
+  install -dm755 "$pkgdir/$CONFIG_DIR"
+  [[ $(ls -A conf/* 2>/dev/null) ]] && cp -r conf/* "$pkgdir/$CONFIG_DIR"
+
+  # Data, import and log files
+  DATA_DIR=var/lib/neo4j/data
+  install -dm755 "$pkgdir/$DATA_DIR"
+  [[ $(ls -A data/* 2>/dev/null) ]] && cp -r data/* "$pkgdir/$DATA_DIR"
+
+  IMPORT_DIR=var/lib/neo4j/import
+  install -dm755 "$pkgdir/$IMPORT_DIR"
+  [[ $(ls -A import/* 2>/dev/null) ]] && cp -r import/* "$pkgdir/$IMPORT_DIR"
+
+  LOG_DIR=var/log/neo4j
+  install -dm755 "$pkgdir/$LOG_DIR"
+  [[ $(ls -A logs/* 2>/dev/null) ]] && cp -r logs/* "$pkgdir/$LOG_DIR"
+
+  # Copy JARs in lib and plugins
+  LIB_DIR=usr/share/java/neo4j
+  install -dm755 "$pkgdir/$LIB_DIR"
+  [[ $(ls -A lib/* 2>/dev/null) ]] && cp -r lib/* "$pkgdir/$LIB_DIR"
+
+  PLUGINS_DIR=usr/share/java/neo4j/plugins
+  install -dm755 "$pkgdir/$PLUGINS_DIR"
+  [[ $(ls -A plugins/* 2>/dev/null) ]] && cp -r plugins/* "$pkgdir/$PLUGINS_DIR"
+
+  # Executable files
+  BIN_DIR=usr/share/neo4j/bin
+  install -dm755 "$pkgdir/$BIN_DIR"
+  [[ $(ls -A bin/* 2>/dev/null) ]] && cp -r bin/* "$pkgdir/$BIN_DIR"
+
+  SYSTEM_BIN_DIR=usr/bin
+  install -dm755 "$pkgdir/$SYSTEM_BIN_DIR"
+  for file in $(find "$pkgdir/$BIN_DIR" -maxdepth 1 -type f); do
+    b_file=$(basename $file)
+    ln -s "/$BIN_DIR/$b_file" "$pkgdir/$SYSTEM_BIN_DIR/$b_file";
+  done
+
+  # Documentation
+  DOC_DIR=usr/share/doc/neo4j
+  install -dm755 "$pkgdir/$DOC_DIR"
+  cp README.txt UPGRADE.txt "$pkgdir/$DOC_DIR"
+
+  # License files
+  LICENSES_DIR=usr/share/licenses/neo4j
+  install -dm755 "$pkgdir/$LICENSES_DIR"
+  cp LICENSE.txt LICENSES.txt NOTICE.txt "$pkgdir/$LICENSES_DIR"
+
+  # Service definition files
+  cd "$srcdir"
+  install -Dm644 neo4j.service "$pkgdir/usr/lib/systemd/system/neo4j.service"
+
+  # Runtime files
+  install -Dm644 neo4j-tmpfile.conf "$pkgdir/usr/lib/tmpfiles.d/neo4j.conf"
+}
