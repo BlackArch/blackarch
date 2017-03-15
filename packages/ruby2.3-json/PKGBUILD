@@ -1,0 +1,34 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ruby2.3-json'
+pkgver='2.0.3'
+pkgrel=1
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+pkgdesc='JSON implementation as a Ruby extension in C'
+url='http://rubygems.org/gems/json'
+license=('GPL')
+depends=('ruby2.3')
+optdepends=('jruby' 'java-environment')
+source=("http://rubygems.org/downloads/json-${pkgver}.gem")
+noextract=("json-${pkgver}.gem")
+sha1sums=('a9976f6fd4c15f780d277b35c2e2a7edcb50759a')
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  local _gemdir=$(ruby-2.3 -e 'puts Gem.default_dir')
+
+  if [[ $CARCH == arm* ]] ; then
+    gem-2.3 install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
+      -i "$pkgdir$_gemdir" json-$pkgver.gem
+  else
+    gem-2.3 install --no-user-install --ignore-dependencies -i "$pkgdir$_gemdir" \
+      json-$pkgver.gem
+  fi
+
+  # Removing files with references to $pkgdir
+  find "$pkgdir" -depth -type f -name "Makefile*" -exec rm {} \;
+}

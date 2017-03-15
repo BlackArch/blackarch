@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='harness'
+pkgver=19.ed2a6aa
+pkgrel=1
+pkgdesc='Interactive remote PowerShell Payload.'
+groups=('blackarch' 'blackarch-backdoor' 'blackarch-windows')
+arch=('any')
+url='https://github.com/Rich5/Harness'
+license=('MIT')
+depends=('python')
+makedepends=('git')
+source=('git+https://github.com/Rich5/Harness.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Harness"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Harness"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/harness"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/harness/" README.md changelog
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/harness/LICENSE"
+
+  rm README.md LICENSE changelog
+
+  cp -a * "$pkgdir/usr/share/harness/"
+
+  cat > "$pkgdir/usr/bin/harness" << EOF
+#!/bin/sh
+cd /usr/share/harness
+exec python3 harness.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/harness"
+}

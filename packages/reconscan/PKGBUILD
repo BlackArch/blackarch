@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='reconscan'
+pkgver=26.c668b8b
+pkgrel=1
+pkgdesc='Network reconnaissance and vulnerability assessment tools.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/RoliSoft/ReconScan'
+license=('GPL3')
+depends=('python3' 'python-lxml' 'python-colorama' 'python-python-libnmap')
+makedepends=('git')
+source=('git+https://github.com/RoliSoft/ReconScan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ReconScan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/ReconScan"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/reconscan"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/reconscan/" README.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/reconscan/LICENSE.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/reconscan/"
+
+  cat > "$pkgdir/usr/bin/reconscan-recon" << EOF
+#!/bin/sh
+cd /usr/share/reconscan
+exec python3 recon.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/reconscan-recon"
+
+  cat > "$pkgdir/usr/bin/reconscan-vulnscan" << EOF
+#!/bin/sh
+cd /usr/share/reconscan
+exec python3 vulnscan.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/reconscan-vulnscan"
+}

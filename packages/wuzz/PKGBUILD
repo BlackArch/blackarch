@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='wuzz'
+pkgver=155.231f1db
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-misc')
+pkgdesc='Interactive cli tool for HTTP inspection.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/asciimoo/wuzz'
+license=('GAGPL3')
+depends=('go')
+makedepends=('go' 'git')
+source=('git+https://github.com/asciimoo/wuzz.git')
+sha1sums=('SKIP')
+_url="github.com/asciimoo/wuzz"
+
+pkgver() {
+  cd "$srcdir/wuzz"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/$_url && rm -rf src/$_url && mv wuzz src/$_url && cd src/$_url
+
+  GOPATH="$srcdir" go get -d -t $_url
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/doc/wuzz"
+
+  GOPATH="$srcdir" go build -v github.com/asciimoo/wuzz
+
+  install -Dm755 "$srcdir/wuzz" "$pkgdir/usr/bin/wuzz"
+  install -Dm644 src/$_url/README.md "$pkgdir/usr/share/doc/wuzz/README.md"
+  install -Dm644 src/$_url/LICENSE "$pkgdir/usr/share/licenses/wuzz/LICENSE"
+
+  cp -a src/$_url/docs/* "$pkgdir/usr/share/doc/wuzz/"
+}

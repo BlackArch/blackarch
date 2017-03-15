@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='osrframework'
+pkgver=525.2196d45
+pkgrel=1
+pkgdesc='A project focused on providing API and tools to perform more accurate online researches.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-social')
+arch=('any')
+url='https://github.com/i3visio/osrframework'
+license=('GPL3')
+depends=('python2' 'python2-requests' 'python2-skype4py' 'python2-tweepy'
+         'python2-networkx' 'python2-mechanize' 'python2-python-emailahoy')
+makedepends=('git' 'python2-setuptools')
+source=('git+https://github.com/i3visio/osrframework.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/osrframework"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/osrframework"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/osrframework"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/osrframework/" README.md doc/*
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/osrframework/COPYING"
+
+  cd $pkgdir/usr/bin
+
+  for i in *
+  do
+    mv $i `echo $pkgdir/usr/bin/osr-$i | sed 's/.py//'`
+  done
+}

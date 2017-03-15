@@ -1,0 +1,61 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hercules-payload'
+pkgver=218.07416e7
+pkgrel=2
+groups=('blackarch' 'blackarch-binary' 'blackarch-windows' 'blackarch-backdoor')
+pkgdesc='A special payload generator that can bypass all antivirus software.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/EgeBalci/HERCULES'
+license=('MIT')
+depends=('go')
+makedepends=('git')
+source=('git+https://github.com/EgeBalci/HERCULES.git'
+        'hercules.patch')
+sha1sums=('SKIP'
+          '2c3204d7d567ca306022c2282dd4265b762cec0d')
+
+pkgver() {
+  cd "$srcdir/HERCULES"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < hercules.patch
+}
+
+build() {
+  cd "$srcdir/HERCULES"
+
+  export GOPATH="$srcdir"
+
+  go get -d -t github.com/fatih/color
+
+  go run Setup.go
+}
+
+package() {
+  cd "$srcdir/HERCULES"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/hercules-payload"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/hercules-payload/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/hercules-payload/LICENSE"
+
+  rm LICENSE README.md
+
+  cp -a * "$pkgdir/usr/share/hercules-payload"
+
+  cat > "$pkgdir/usr/bin/hercules-payload" << EOF
+#!/bin/sh
+cd /usr/share/hercules-payload/SOURCE
+exec ./HERCULES "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/hercules-payload"
+}

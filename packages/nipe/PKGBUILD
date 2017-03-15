@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='nipe'
+pkgver=135.0b62227
+pkgrel=1
+pkgdesc='A script to make Tor Network your default gateway.'
+groups=('blackarch' 'blackarch-defensive' 'blackarch-networking')
+arch=('any')
+url='https://github.com/GouveaHeitor/nipe'
+license=('MIT')
+depends=('perl' 'perl-switch')
+makedepends=('git')
+source=('git+https://github.com/GouveaHeitor/nipe.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/nipe"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/nipe"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/nipe"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/nipe/" README.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/nipe/LICENSE"
+
+  rm README.md LICENSE.md
+
+  cp -a * "$pkgdir/usr/share/nipe/"
+
+  cat > "$pkgdir/usr/bin/nipe" << EOF
+#!/bin/sh
+cd /usr/share/nipe
+exec perl nipe.pl "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/nipe"
+}

@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dradis-ce'
+pkgver=756.a336101
+pkgrel=1
+pkgdesc='An open source framework to enable effective information sharing.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-misc')
+url='http://dradisframework.org/'
+license=('GPL')
+depends=('ruby2.3' 'ruby2.3-bundler' 'git')
+makedepends=('git')
+arch=('any')
+source=("git+https://github.com/dradis/dradis-ce.git"
+        "dradis.patch")
+install='dradis.install'
+sha1sums=('SKIP'
+          'b17358c1bc90eb820abe3304ae88ecb5f038bd97')
+
+pkgver() {
+  cd "$srcdir/dradis-ce"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/dradis-ce"
+
+  patch -p1 -i ../dradis.patch
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/dradis-ce"
+  rm -rf "dradis-ce/.ruby-version"
+  cp -ar "dradis-ce" "$pkgdir/usr/share/dradis-ce/"
+
+
+  cat > "$pkgdir/usr/bin/dradis-ce" << EOF
+#!/bin/sh
+cd /usr/share/dradis-ce/dradis-ce
+exec bundle-2.3 exec rails server \${@}
+EOF
+
+  chmod +x "$pkgdir/usr/bin/dradis-ce"
+}
