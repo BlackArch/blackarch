@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pth-toolkit'
+pkgver=7.3641cdc
+pkgrel=1
+pkgdesc='Modified version of the passing-the-hash tool collection made to work straight out of the box.'
+groups=('blackarch' 'blackarch-sniffer' 'blackarch-networking')
+arch=('x86_64')
+url='https://github.com/byt3bl33d3r/pth-toolkit'
+license=('BSD')
+makedepends=('git')
+source=('git+https://github.com/byt3bl33d3r/pth-toolkit.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/pth-toolkit"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/pth-toolkit"
+
+  local tools="pth-net pth-rpcclient pth-smbclient pth-smbget pth-winexe"
+  tools="${tools} pth-wmic pth-wmis"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/pth-toolkit"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/pth-toolkit/" README.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/pth-toolkit/LICENSE.md"
+
+  rm README.md LICENSE.md
+
+  cp -a * "$pkgdir/usr/share/pth-toolkit/"
+
+  for i in ${tools}
+  do
+    cat > "$pkgdir/usr/bin/${i}" << EOF
+#!/bin/sh
+cd /usr/share/pth-toolkit
+exec ./${i} "\${@}"
+EOF
+    chmod a+x "$pkgdir/usr/bin/${i}"
+  done
+}

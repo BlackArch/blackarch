@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='maltrail'
+pkgver=1316.a0ed173
+pkgrel=1
+pkgdesc='Malicious traffic detection system.'
+groups=('blackarch' 'blackarch-defensive' 'blackarch-networking'
+        'blackarch-sniffer')
+arch=('any')
+url='https://github.com/stamparm/maltrail'
+license=('MIT')
+depends=('python2' 'python2-pcapy' 'python2-pysqlite')
+makedepends=('git')
+source=('git+https://github.com/stamparm/maltrail.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/maltrail"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/maltrail"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/maltrail"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/maltrail/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/maltrail/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/maltrail/"
+
+  cat > "$pkgdir/usr/bin/maltrail-sensor" << EOF
+#!/bin/sh
+cd /usr/share/maltrail
+exec python2 sensor.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/maltrail-sensor"
+
+  cat > "$pkgdir/usr/bin/maltrail-server" << EOF
+#!/bin/sh
+cd /usr/share/maltrail
+exec python2 server.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/maltrail-server"
+}

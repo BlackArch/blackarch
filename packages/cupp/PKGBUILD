@@ -2,31 +2,50 @@
 # See COPYING for license details.
 
 pkgname='cupp'
-pkgver='3.0'
-pkgrel=3
+pkgver=20.07f9b83
+pkgrel=1
 pkgdesc='Common User Password Profiler'
 url='http://www.remote-exploit.org/?page_id=418'
 groups=('blackarch' 'blackarch-cracker')
 license=('GPL3')
 depends=('python2')
+makedepends=('git')
 arch=('any')
-sha1sums=('477e8e8c060f0da2e2039dc3af1ba4b17a421cd1')
-source=("http://www.remote-exploit.org/content/cupp-$pkgver.tar.gz")
+sha1sums=('SKIP')
+source=('git+https://github.com/Mebus/cupp.git')
+
+pkgver() {
+  cd "$srcdir/cupp"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 package() {
   cd "$srcdir/cupp"
 
-  install -Dm755 "cupp.py" "$pkgdir/usr/share/cupp/cupp.py"
-  install -Dm644 "cupp.cfg" "$pkgdir/usr/share/cupp/cupp.cfg"
-  install -Dm644 "docs/README" "$pkgdir/usr/share/doc/cupp/README"
-  install -Dm644 "docs/LICENSE" "$pkgdir/usr/share/licenses/cupp/LICENSE"
-
   mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/cupp"
 
-  cat > "$pkgdir/usr/bin/cupp" <<EOF
-#!/bin/bash
+  install -Dm644 -t "$pkgdir/usr/share/doc/cupp/" README.md CHANGELOG.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/cupp/LICENSE"
+
+  rm *.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/cupp"
+
+  cat > "$pkgdir/usr/bin/cupp" << EOF
+#!/bin/sh
 cd /usr/share/cupp
-exec python2 ./cupp.py "\$@"
+exec python2 ./cupp.py "\${@}"
 EOF
+
   chmod +x "$pkgdir/usr/bin/cupp"
+
+  cat > "$pkgdir/usr/bin/cupp3" << EOF
+#!/bin/sh
+cd /usr/share/cupp
+exec python3 ./cupp3.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/cupp3"
 }

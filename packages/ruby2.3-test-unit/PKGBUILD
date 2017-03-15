@@ -1,0 +1,34 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ruby2.3-test-unit'
+_gemname='test-unit'
+pkgver='3.1.8'
+pkgrel=1
+pkgdesc='Unit testing framework for Ruby, based on xUnit principles.'
+arch=('any')
+url='http://test-unit.rubyforge.org/'
+license=('RUBY')
+depends=('ruby2.3')
+source=("http://rubygems.org/downloads/${_gemname}-${pkgver}.gem")
+sha1sums=('827c6d5308692abbab4a84e33f092eb2d0c86db1')
+noextract=("${_gemname}-$pkgver.gem")
+
+package() {
+  cd $srcdir
+
+  export HOME=/tmp
+  export RHC_RPMBUILD=1
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  local _gemdir="$(ruby-2.3 -rubygems -e'puts Gem.default_dir')"
+
+  if [[ $CARCH == arm* ]] ; then
+    gem-2.3 install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
+      -i "$pkgdir$_gemdir" test-unit-$pkgver.gem
+  else
+    gem-2.3 install --no-user-install --ignore-dependencies -i "$pkgdir$_gemdir" \
+      test-unit-$pkgver.gem
+  fi
+}

@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pret'
+pkgver=71.2f0ebd6
+pkgrel=1
+pkgdesc='Printer Exploitation Toolkit - The tool that made dumpster diving obsolete.'
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-fuzzer'
+        'blackarch-recon' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/RUB-NDS/PRET'
+license=('GPL2')
+depends=('python2' 'python2-colorama' 'python2-pysnmp')
+makedepends=('git')
+source=('git+https://github.com/RUB-NDS/PRET.git'
+        'helper.py.patch')
+sha1sums=('SKIP'
+          '6bdf804e3b429808e169b592fb4ada46368c979e')
+
+pkgver() {
+  cd "$srcdir/PRET"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < helper.py.patch
+}
+
+package() {
+  cd "$srcdir/PRET"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/pret"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/pret/" README.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/pret/LICENSE.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/pret"
+
+  cat > "$pkgdir/usr/bin/pret" << EOF
+#!/bin/sh
+cd /usr/share/pret
+exec python2 pret.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/pret"
+}

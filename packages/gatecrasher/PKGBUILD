@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='gatecrasher'
+pkgver=2.3ad5225
+pkgrel=1
+pkgdesc='Network auditing and analysis tool developed in Python.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/michaeltelford/gatecrasher'
+license=('BSD')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/michaeltelford/gatecrasher')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/gatecrasher"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/gatecrasher"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/gatecrasher"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/gatecrasher/" README.md
+  install -Dm644 LICENCE.txt "$pkgdir/usr/share/licenses/gatecrasher/LICENCE.txt"
+
+  rm README.md LICENCE.txt
+
+  cp -a * "$pkgdir/usr/share/gatecrasher/"
+
+  cat > "$pkgdir/usr/bin/gatecrasher" << EOF
+#!/bin/sh
+cd /usr/share/gatecrasher
+exec python2 gatecrasher.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/gatecrasher"
+}

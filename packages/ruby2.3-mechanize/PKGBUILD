@@ -1,0 +1,34 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ruby2.3-mechanize'
+_gemname='mechanize'
+pkgver='2.7.5'
+pkgrel=1
+pkgdesc='Automates interaction with websites, handling cookies, redirects and forms.'
+arch=('any')
+url='http://mechanize.rubyforge.org/'
+license=('GPL2')
+depends=('ruby2.3' 'ruby2.3-net-http-digest_auth' 'ruby2.3-net-http-persistent'
+        'ruby2.3-mime-types' 'ruby2.3-http-cookie' 'ruby2.3-nokogiri'
+        'ruby2.3-ntlm-http' 'ruby2.3-webrobots' 'ruby2.3-domain_name')
+makedepends=('ruby')
+source=("https://rubygems.org/downloads/${_gemname}-${pkgver}.gem")
+noextract=("${_gemname}-${pkgver}.gem")
+sha1sums=('318210b10ba357c8588c9f2cb85684c1e0dd1a98')
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  local _gemdir="$(ruby-2.3 -rubygems -e'puts Gem.default_dir')"
+
+  if [[ $CARCH == arm* ]] ; then
+    gem-2.3 install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
+      -i "$pkgdir$_gemdir" mechanize-$pkgver.gem
+  else
+    gem-2.3 install --ignore-dependencies --no-user-install -i "$pkgdir/$_gemdir" \
+      -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
+  fi
+}
