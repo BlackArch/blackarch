@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='chipsec'
+pkgver=292.470c59a
+pkgrel=1
+pkgdesc='Platform Security Assessment Framework.'
+groups=('blackarch' 'blackarch-hardware' 'blackarch-binary' 'blackarch-forensic'
+        'blackarch-scanner' 'blackarch-fuzzer')
+arch=('x86_64' 'armv6h' 'armv7h' 'armv8h')
+url='https://github.com/chipsec/chipsec'
+license=('GPL2')
+depends=('python2' 'python2-lxml')
+makedepends=('git' 'python2-setuptools' 'nasm' 'linux-headers' 'libelf')
+source=('git+https://github.com/chipsec/chipsec.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/chipsec"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/chipsec"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$srcdir/chipsec"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/chipsec/" README.md \
+    chipsec-manual.pdf
+  install -Dm644 -t "$pkgdir/usr/share/licenses/chipsec/" LICENSE COPYING
+}
