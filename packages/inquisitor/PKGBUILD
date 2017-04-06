@@ -1,0 +1,35 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='inquisitor'
+pkgver=28.af96f4d
+pkgrel=2
+pkgdesc='OSINT Gathering Tool for Companies and Organizations.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-social')
+arch=('any')
+url='https://github.com/penafieljlm/inquisitor'
+license=('custom:unknown')
+depends=('python2' 'python2-argparse' 'python2-netaddr' 'python2-ipwhois'
+         'python2-unidecode' 'python2-tld' 'python2-validate_email'
+         'python2-unqlite' 'python2-google-api-python-client' 'shodan')
+makedepends=('git')
+source=('git+https://github.com/penafieljlm/inquisitor.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/inquisitor"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/inquisitor"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/inquisitor/" README.md
+
+  # lame code and naming ...
+  sed -i "1 i\#!/usr/bin/python2" "$pkgdir/usr/bin/inq"
+  mv "$pkgdir/usr/bin/inq" "$pkgdir/usr/bin/inquisitor"
+}
