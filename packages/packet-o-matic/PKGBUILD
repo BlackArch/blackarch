@@ -2,34 +2,41 @@
 # See COPYING for license details.
 
 pkgname='packet-o-matic'
-pkgver='351'
-pkgrel=3
+pkgver=1318.b1a2b6d
+pkgrel=1
 pkgdesc='A real time packet processor. Reads the packet from an input module, match the packet using rules and connection tracking information and then send it to a target module.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='http://www.packet-o-matic.org/'
 license=('GPL')
 groups=('blackarch' 'blackarch-networking' 'blackarch-tunnel')
-depends=('libpcap' 'libxml2' 'libnet')
-makedepends=('subversion')
-source=('svn+https://svn.tuxicoman.be/svn/packet-o-matic/trunk')
+depends=('libpcap' 'libxml2' 'libnet' 'uthash' 'libmicrohttpd' 'lua51')
+makedepends=('git' 'xmlrpc-c' 'libtool' 'pkg-config')
+source=('git+https://github.com/gmsoft-tuxicoman/pom-ng.git')
 sha1sums=('SKIP')
 
+pkgver() {
+  cd "$srcdir/pom-ng"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
 build() {
-  cd "$srcdir/trunk"
+  cd "$srcdir/pom-ng"
 
-  touch config.h.in
+  #touch config.h.in
 
-  libtoolize --force --copy
-  aclocal
-  automake --add-missing
-  autoconf
+  #libtoolize --force --copy
+  #aclocal
+  #automake --add-missing
+  #autoconf
 
+  autoreconf -f -i
   ./configure --prefix=/usr
   make
 }
 
 package() {
-  cd "$srcdir/trunk"
+  cd "$srcdir/pom-ng"
 
   make DESTDIR="$pkgdir/" install
 }

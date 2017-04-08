@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='wpforce'
+pkgver=59.b7af9ef
+pkgrel=1
+pkgdesc='Wordpress Attack Suite.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-cracker'
+        'blackarch-exploitation')
+arch=('any')
+url='https://github.com/n00py/WPForce'
+license=('custom:unknown"')
+depends=('python2' 'python2-requests' 'python2-argparse')
+makedepends=('git')
+source=('git+https://github.com/n00py/WPForce.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/WPForce"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/WPForce"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/wpforce"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/wpforce/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/wpforce/"
+
+  cat > "$pkgdir/usr/bin/wpforce" << EOF
+#!/bin/sh
+cd /usr/share/wpforce
+exec python2 wpforce.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/wpforce"
+
+  cat > "$pkgdir/usr/bin/wpforce-yertle" << EOF
+#!/bin/sh
+cd /usr/share/wpforce
+exec python2 yertle.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/wpforce-yertle"
+}
