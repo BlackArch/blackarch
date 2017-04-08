@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='netkit-bsd-finger'
+pkgver='0.17'
+pkgrel=1
+pkgdesc='BSD-finger ported to Linux.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+groups=('blackarch' 'blackarch-recon')
+url='http://ftp.linux.org.uk/pub/linux/Networking/netkit'
+license=('BSD')
+depends=('glibc')
+source=("http://ftp.linux.org.uk/pub/linux/Networking/netkit/bsd-finger-${pkgver}.tar.gz"
+        'fix-manpage-typo.patch'
+        'finger.socket'
+        'finger@.service')
+sha1sums=('cc0ab33494c618cf6f75d3e91c744bd36628cfe5'
+          'fe1717c0b63ee8a89c7ced195fe0cbd909dc2c5f'
+          '7a486a6cecb80c9312bf80a503ca790741ab6974'
+          '96abf966461bd4bebac519919403da3684ac0996')
+
+prepare() {
+   cd "$srcdir/bsd-finger-$pkgver"
+
+   patch -p1 -i "$srcdir/fix-manpage-typo.patch"
+
+   sed -i 's@include <sys/time.h>@include <time.h>@' finger/lprint.c
+   sed -i 's@include <sys/time.h>@include <time.h>@' finger/sprint.c
+}
+
+build() {
+   cd "bsd-finger-$pkgver"
+
+   ./configure --prefix=/usr
+
+   make
+}
+
+package() {
+   cd "bsd-finger-$pkgver"
+
+   mkdir -p "${pkgdir}"/usr/{bin,share/man/{man1,man8}}
+
+   make INSTALLROOT="$pkgdir" SBINDIR=/usr/bin MANDIR=/usr/share/man install
+
+   install -Dm644 "$srcdir/finger.socket" \
+     "$pkgdir/usr/lib/systemd/system/finger.socket"
+   install -Dm644 "$srcdir/finger@.service" \
+     "$pkgdir/usr/lib/systemd/system/finger@.service"
+}

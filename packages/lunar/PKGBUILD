@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='lunar'
+pkgver=527.6415183
+pkgrel=1
+pkgdesc='A UNIX security auditing tool based on several security frameworks.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-defensive')
+arch=('any')
+url='https://github.com/lateralblast/lunar'
+license=('custom:unknown')
+depends=('bash' 'netkit-bsd-finger' 'bc')
+makedepends=('git')
+source=('git+https://github.com/lateralblast/lunar.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/lunar"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/lunar"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/lunar"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/lunar/" README.md changelog
+
+  rm README.md changelog
+
+  cp -a * "$pkgdir/usr/share/lunar/"
+
+  cat > "$pkgdir/usr/bin/lunar" << EOF
+#!/bin/sh
+cd /usr/share/lunar
+exec bash lunar.sh "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/lunar"
+}

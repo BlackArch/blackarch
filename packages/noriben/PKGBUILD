@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='noriben'
+pkgver=88.c4f3027
+pkgrel=1
+pkgdesc='Portable, Simple, Malware Analysis Sandbox.'
+groups=('blackarch' 'blackarch-malware')
+arch=('any')
+url='https://github.com/Rurik/Noriben'
+license=('custom:unknown')
+depends=('python' 'python-argparse' 'python-magic')
+makedepends=('git')
+source=('git+https://github.com/Rurik/Noriben.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Noriben"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/Noriben"
+
+  cp ProcmonConfiguration.pmc ProcmonConfiguration.PMC
+}
+
+package() {
+  cd "$srcdir/Noriben"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/noriben"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/noriben/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/noriben/"
+
+  cat > "$pkgdir/usr/bin/noriben" << EOF
+#!/bin/sh
+cd /usr/share/noriben
+exec python3 Noriben.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/noriben"
+
+  cat > "$pkgdir/usr/bin/noriben-sandbox" << EOF
+#!/bin/sh
+cd /usr/share/noriben
+exec python3 NoribenSandbox.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/noriben-sandbox"
+}
