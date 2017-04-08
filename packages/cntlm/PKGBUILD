@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cntlm'
+pkgver=4.b35d55c
+pkgrel=1
+pkgdesc='An NTLM, NTLM2SR, and NTLMv2 authenticating HTTP proxy.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+groups=('blackarch' 'blackarch-proxy')
+license=('GPL2')
+url='https://github.com/bseb/cntlm'
+source=('git+https://github.com/bseb/cntlm.git'
+        'cntlm.service')
+backup=('etc/cntlm.conf')
+makedepends=('git')
+sha1sums=('SKIP'
+          '595ad0a54860e59109ed9d1c521b1d0611a05261')
+
+pkgver() {
+  cd "$srcdir/cntlm"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+	cd "$srcdir/cntlm/cntlm-0.92.3"
+
+	./configure
+
+  make
+}
+
+package() {
+	cd "$srcdir/cntlm/cntlm-0.92.3"
+
+  make SYSCONFDIR="$pkgdir/etc" BINDIR="$pkgdir/usr/bin" \
+    MANDIR="$pkgdir/usr/share/man" install
+
+  install -Dm644 "$srcdir/cntlm.service" \
+    "$pkgdir/usr/lib/systemd/system/cntlm.service"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/cntlm" ../README.md
+  install -Dm644 ../LICENSE "$pkgdir/usr/share/licenses/cntlm/LICENSE"
+}
