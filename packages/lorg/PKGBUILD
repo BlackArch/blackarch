@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='lorg'
+pkgver=96.3960fa7
+pkgrel=1
+pkgdesc='Apache Logfile Security Analyzer.'
+groups=('blackarch' 'blackarch-defensive')
+arch=('any')
+url='https://github.com/jensvoid/lorg'
+license=('GPL2')
+depends=('php')
+makedepends=('git')
+source=('git+https://github.com/jensvoid/lorg.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/lorg"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/lorg"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/lorg"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/lorg/" README.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/lorg/LICENSE.md"
+
+  rm README.md LICENSE.md
+
+  cp -a * "$pkgdir/usr/share/lorg/"
+
+  cat > "$pkgdir/usr/bin/lorg" << EOF
+#!/bin/sh
+cd /usr/share/lorg
+exec php lorg "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/lorg"
+}
