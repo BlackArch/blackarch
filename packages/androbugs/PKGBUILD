@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='androbugs'
+pkgver=1.7fd3a2c
+pkgrel=1
+pkgdesc='An efficient Android vulnerability scanner that helps developers or hackers find potential security vulnerabilities in Android applications.'
+groups=('blackarch' 'blackarch-mobile')
+arch=('any')
+url='https://github.com/AndroBugs/AndroBugs_Framework'
+license=('GPL3')
+depends=('python2' 'python2-pyside' 'python2-elfesteem' 'python2-networkx'
+         'python2-pymongo' 'radare2')
+makedepends=('git')
+source=('git+https://github.com/AndroBugs/AndroBugs_Framework.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/AndroBugs_Framework"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/AndroBugs_Framework"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/androbugs"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/androbugs/" README.md NOTICE
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/androbugs/LICENSE.md"
+
+  rm README.md LICENSE.md NOTICE
+
+  cp -a * "$pkgdir/usr/share/androbugs/"
+
+  cat > "$pkgdir/usr/bin/androbugs" << EOF
+#!/bin/sh
+cd /usr/share/androbugs
+exec python2 androbugs.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/androbugs"
+}
