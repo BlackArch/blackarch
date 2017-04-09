@@ -1,9 +1,10 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
-pkgname='ruby-nokogiri'
+
+pkgname='ruby-nokogiri-1.6'
 _gemname='nokogiri'
-pkgver='1.7.1'
-pkgrel=2
+pkgver='1.6.8.1'
+pkgrel=1
 pkgdesc="Nokogiri (鋸) is an HTML, XML, SAX, and Reader parser"
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='http://nokogiri.org'
@@ -12,7 +13,7 @@ depends=('libxml2' 'libxslt' 'ruby' 'ruby-mini_portile2')
 options=('!emptydirs')
 source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
 noextract=("$_gemname-$pkgver.gem")
-sha1sums=('5731c2d494381be8440f6ace6e5fcb62e7850581' )
+sha1sums=('63111f6eda5a7cbe442e2b6ec6c492250da9fa39' )
 
 
 package() {
@@ -20,11 +21,13 @@ package() {
   gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
   rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
   install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
+  # non-HEAD version should not install any files in /usr/bin
+  rm -r "$pkgdir"/usr/bin/
 
   # Preserve library and other required directories. Remove junk that gem installs.
   local _copydir=`mktemp -d -t $_gemname.XXX`
   chmod 755 $_copydir
-  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib bin $_copydir)
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
   rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
   mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
 
