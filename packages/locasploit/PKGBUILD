@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='locasploit'
+pkgver=82.defcfcb
+pkgrel=1
+pkgdesc='Local enumeration and exploitation framework.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/lightfaith/locasploit'
+license=('GPL2')
+depends=('python3' 'binwalk' 'scapy')
+makedepends=('git')
+source=('git+https://github.com/lightfaith/locasploit.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/locasploit"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/locasploit"
+
+  for db in 'analysis' 'checksum' 'dict' 'module' 'vuln'
+  do
+    cp -a $db.db.empty $db.db
+  done
+}
+
+package() {
+  cd "$srcdir/locasploit"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/locasploit"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/locasploit/" README.md TODO
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/locasploit/LICENSE"
+
+  rm README.md LICENSE TODO
+
+  cp -a * "$pkgdir/usr/share/locasploit/"
+
+  cat > "$pkgdir/usr/bin/locasploit" << EOF
+#!/bin/sh
+cd /usr/share/locasploit
+exec ./locasploit.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/locasploit"
+}
