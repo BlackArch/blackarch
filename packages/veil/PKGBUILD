@@ -2,26 +2,28 @@
 # See COPYING for license details.
 
 pkgname='veil'
-pkgver=602.3c0dec3
-pkgrel=1
-epoch=2
+pkgver=67.7b22db7
+pkgrel=3
+epoch=3
 groups=('blackarch' 'blackarch-automation' 'blackarch-exploitation')
 pkgdesc='A tool designed to generate metasploit payloads that bypass common anti-virus solutions.'
-url='https://github.com/veil-evasion/Veil'
+url='https://github.com/Veil-Framework/Veil'
 arch=('x86_64' 'i686')
 license=('GPL2')
-depends=('sudo' 'capstone' 'wine' 'wine-mono' 'wine_gecko' 'git' 'python2'
-         'python2-crypto' 'python2-pefile' 'mingw-w64-binutils' 'mingw-w64-crt'
+depends=('sudo' 'wine' 'wine-mono' 'wine_gecko' 'git' 'python'
+         'python-crypto' 'python-pefile' 'mingw-w64-binutils' 'mingw-w64-crt'
          'mingw-w64-gcc' 'mingw-w64-headers' 'mingw-w64-winpthreads' 'mono'
-         'mono-tools' 'mono-addins' 'python2-pip' 'wget' 'unzip' 'ruby'
-         'python2-capstone' 'ca-certificates' 'metasploit'
-         'python2-python-symmetric-jsonrpc' 'pyinstaller')
+         'mono-tools' 'mono-addins' 'python-pip' 'wget' 'unzip' 'ruby'
+         'python-capstone' 'ca-certificates' 'metasploit'
+         'capstone' 'pyinstaller')
 makedepends=('git')
-source=('git+https://github.com/veil-evasion/Veil.git'
+source=('git+https://github.com/Veil-Framework/Veil.git'
+        'git+https://github.com/Veil-Framework/VeilDependencies.git'
         'setupsh_mod.patch')
 install='veil.install'
 sha1sums=('SKIP'
-          'ea531f1754451368251915993e5146fadffb050c')
+          'SKIP'
+          '66eb4e7a5e9e6012235cb6f070a9bcb2ce40fa61')
 options=('!strip')
 
 pkgver() {
@@ -32,12 +34,8 @@ pkgver() {
 
 prepare() {
   cd "$srcdir/Veil"
+  cp "$srcdir/VeilDependencies/"* "$srcdir/Veil/setup/"
 
-  grep -iRl 'python' "$srcdir/Veil" |
-    xargs sed -i -e 's|#!.*/usr/bin/python|#!/usr/bin/python2|' \
-                 -e 's|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
-
-  # sed -i 's|python update.py|python2 update.py|' "$srcdir/Veil/setup/setup.sh"
   patch -Np1 -i ../setupsh_mod.patch
 }
 
@@ -49,16 +47,16 @@ package() {
 
   install -Dm644 README.md "$pkgdir/usr/share/doc/veil/README.md"
   install -m644 CHANGELOG "$pkgdir/usr/share/doc/veil/CHANGELOG"
-  install -Dm644 COPYRIGHT "$pkgdir/usr/share/licenses/veil/COPYRIGHT"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/veil/COPYRIGHT"
 
-  rm CHANGELOG COPYRIGHT README.md
+  rm CHANGELOG LICENSE README.md
 
   cp -a * "$pkgdir/usr/share/veil"
 
   cat > "$pkgdir/usr/bin/veil" << EOF
 #!/bin/sh
 cd /usr/share/veil/
-exec python2 Veil-Evasion.py "\${@}"
+exec python Veil.py "\${@}"
 EOF
 
   chmod +x "$pkgdir/usr/bin/veil"
