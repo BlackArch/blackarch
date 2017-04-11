@@ -19,7 +19,7 @@ index 75e360e..bf6ac9e 100755
 \ No newline at end of file
 +    generateConfig(options)
 diff --git a/setup/setup.sh b/setup/setup.sh
-index 250d13a..d67d220 100755
+index 250d13a..bf877ee 100755
 --- a/setup/setup.sh
 +++ b/setup/setup.sh
 @@ -66,37 +66,37 @@ function ctrl_c() {
@@ -91,32 +91,20 @@ index 250d13a..d67d220 100755
    func_package_deps
  
    # Check if (Wine) Python is already installed
-@@ -113,19 +113,12 @@ func_check_env(){
-     func_ruby_deps
+@@ -120,13 +120,6 @@ func_check_env(){
+     func_go_deps
    fi
  
--  # Check if go is installed
--  if [ -f "/usr/src/go/bin/windows_386/go.exe" ]; then
--    echo -e "\n\n [*] ${YELLOW}Go is already installed... Skipping...${RESET}\n"
--  else
--    func_go_deps
--  fi
--
 -  # Check if autoit is installed
 -  if [ -f "${winedrive}/Program Files/AutoIt3/AutoIt3.exe" ]; then
 -    echo -e "\n\n [*] ${YELLOW}AutoIt is already installed... Skipping...${RESET}\n"
 -  else
 -    func_autoit_deps
 -  fi
-+  # # Check if go is installed
-+  # if [ -f "/usr/src/go/bin/windows_386/go.exe" ]; then
-+    # echo -e "\n\n [*] ${YELLOW}Go is already installed... Skipping...${RESET}\n"
-+  # else
-+    # func_go_deps
-+  # fi
- 
+-
    # Finally, update the config
    if [ -f "/etc/veil/settings.py" ] && [ -d "${outputfolder}" ]; then
+     echo -e "\n\n [*] ${YELLOW}Setttings already detected... Skipping...${RESET}\n"
 @@ -139,79 +132,6 @@ func_check_env(){
  func_package_deps(){
    echo -e "\n\n [*] ${YELLOW}Initializing package installation${RESET}\n"
@@ -304,7 +292,7 @@ index 250d13a..d67d220 100755
        tmp="$?"
        if [ "${tmp}" -ne "0" ]; then
          msg="Failed to install ${FILE}... Exit code: ${tmp}"
-@@ -371,83 +261,65 @@ func_python_deps(){
+@@ -371,29 +261,11 @@ func_python_deps(){
    popd >/dev/null
  
    # Install Python (OS) extra setup files (PyInstaller)
@@ -337,97 +325,19 @@ index 250d13a..d67d220 100755
  }
  
  # Install Go dependencies (Requires v1.2 or higher)
--func_go_deps(){
--  # Download Go from source, cd into it, build it, and prep it for making windows payloads
--  # help for this setup came from:
--  # http://www.limitlessfx.com/cross-compile-golang-app-for-windows-from-linux.html
--
--  echo -e " [*] ${YELLOW}Initializing Go dependencies installation...${RESET}\n"
--  pushd "/tmp/" >/dev/null
--
--  sudo mkdir -p /usr/src/go/
--
--  if [ ! -f "/usr/src/go/bin/windows_386/go.exe" ]; then
--    if [ "${arch}" == "x86_64" ]; then
--      echo -e "\n\n [*] ${YELLOW}Installing Go x86_64 (via TAR)${RESET}"
--      file="${rootdir}/setup/go1.7.5.linux-amd64.tar.gz"
--      shasum="$(openssl dgst -sha256 "${file}" | cut -d' ' -f2)"
--      if [ "${shasum}" == "2e4dd6c44f0693bef4e7b46cc701513d74c3cc44f2419bf519d7868b12931ac3" ]; then
--        sudo tar -C /usr/local -xvf "${file}"
--      else
--        if [ "${tmp}" -ne "0" ]; then
--          msg="Bad hash for go153x64.tar.gz!"
--          errors="${errors}\n${msg}"
--          echo -e " ${RED}[ERROR] ${msg}${RESET}\n"
--        fi
--      fi
--    elif [ "${arch}" == "x86" ] || [ "${arch}" == "i686" ]; then
--      echo -e "\n\n [*] ${YELLOW}Installing Go x86 (via TAR)${RESET}"
--      file="${rootdir}/setup/go1.7.5.linux-386.tar.gz"
--      shasum="$(openssl dgst -sha256 "${file}" | cut -d' ' -f2)"
--      if [ "${shasum}" == "432cb92ae656f6fe1fa96a981782ef5948438b6da6691423aae900918b1eb955" ]; then
--        sudo tar -C /usr/local -xvf "${file}"
--      else
--        if [ "${tmp}" -ne "0" ]; then
--          msg="Bad hash for go153x86.tar.gz!"
--          errors="${errors}\n${msg}"
--          echo -e " ${RED}[ERROR] ${msg}${RESET}\n"
--        fi
--      fi
--    fi
--    export GOROOT=/usr/local/go
+@@ -436,8 +308,9 @@ func_go_deps(){
+       fi
+     fi
+     export GOROOT=/usr/local/go
 -    sudo rm -f /usr/bin/go
 -    sudo ln -s /usr/local/go/bin/go /usr/bin/go
--  fi
-+# func_go_deps(){
-+  # # Download Go from source, cd into it, build it, and prep it for making windows payloads
-+  # # help for this setup came from:
-+  # # http://www.limitlessfx.com/cross-compile-golang-app-for-windows-from-linux.html
-+#
-+  # echo -e " [*] ${YELLOW}Initializing Go dependencies installation...${RESET}\n"
-+  # pushd "/tmp/" >/dev/null
-+#
-+  # sudo mkdir -p /usr/src/go/
-+#
-+  # if [ ! -f "/usr/src/go/bin/windows_386/go.exe" ]; then
-+    # if [ "${arch}" == "x86_64" ]; then
-+      # echo -e "\n\n [*] ${YELLOW}Installing Go x86_64 (via TAR)${RESET}"
-+      # file="${rootdir}/setup/go1.7.5.linux-amd64.tar.gz"
-+      # shasum="$(openssl dgst -sha256 "${file}" | cut -d' ' -f2)"
-+      # if [ "${shasum}" == "2e4dd6c44f0693bef4e7b46cc701513d74c3cc44f2419bf519d7868b12931ac3" ]; then
-+        # sudo tar -C /usr/local -xvf "${file}"
-+      # else
-+        # if [ "${tmp}" -ne "0" ]; then
-+          # msg="Bad hash for go153x64.tar.gz!"
-+          # errors="${errors}\n${msg}"
-+          # echo -e " ${RED}[ERROR] ${msg}${RESET}\n"
-+        # fi
-+      # fi
-+    # elif [ "${arch}" == "x86" ] || [ "${arch}" == "i686" ]; then
-+      # echo -e "\n\n [*] ${YELLOW}Installing Go x86 (via TAR)${RESET}"
-+      # file="${rootdir}/setup/go1.7.5.linux-386.tar.gz"
-+      # shasum="$(openssl dgst -sha256 "${file}" | cut -d' ' -f2)"
-+      # if [ "${shasum}" == "432cb92ae656f6fe1fa96a981782ef5948438b6da6691423aae900918b1eb955" ]; then
-+        # sudo tar -C /usr/local -xvf "${file}"
-+      # else
-+        # if [ "${tmp}" -ne "0" ]; then
-+          # msg="Bad hash for go153x86.tar.gz!"
-+          # errors="${errors}\n${msg}"
-+          # echo -e " ${RED}[ERROR] ${msg}${RESET}\n"
-+        # fi
-+      # fi
-+    # fi
-+    # export GOROOT=/usr/local/go
++    # wtf?
 +    # sudo rm -f /usr/bin/go
 +    # sudo ln -s /usr/local/go/bin/go /usr/bin/go
-+  # fi
+   fi
  
    # Done
--  popd >/dev/null
--}
-+  # popd >/dev/null
-+# }
- 
+@@ -447,7 +320,7 @@ func_go_deps(){
  func_autoit_deps(){
    echo -e "\n [*] ${YELLOW}Initializing AutoIT installation...${RESET}\n"
    [ "${silent}" == "true" ] && arg=" /S"
@@ -436,7 +346,7 @@ index 250d13a..d67d220 100755
  }
  
  # Install (Wine) Ruby dependencies
-@@ -460,10 +332,10 @@ func_ruby_deps(){
+@@ -460,10 +333,10 @@ func_ruby_deps(){
    echo -e "\n [*] ${YELLOW}Installing (Wine) Ruby & dependencies${RESET}"
    echo -e " [*] ${BOLD}Next -> Next -> Next -> Finished! ...Overwrite if prompt. Use default values.${RESET}"
    sleep 1s
@@ -449,7 +359,7 @@ index 250d13a..d67d220 100755
    tmp="$?"
    if [ "${tmp}" -ne "0" ]; then
      msg="Failed to install (Wine) Ruby.exe... Exit code: ${tmp}"
-@@ -480,12 +352,12 @@ func_ruby_deps(){
+@@ -480,12 +353,12 @@ func_ruby_deps(){
    prefix="Z:"
    gempath=${gempath////$replace}
    gempath=$prefix$gempath
@@ -465,7 +375,7 @@ index 250d13a..d67d220 100755
  
    popd >/dev/null
  }
-@@ -508,7 +380,7 @@ func_update_config(){
+@@ -508,7 +381,7 @@ func_update_config(){
      echo -e " [*] ${YELLOW}Detected current Veil-Framework settings file. Removing...${RESET}\n"
      sudo rm -f /etc/veil/settings.py
    fi
@@ -474,7 +384,7 @@ index 250d13a..d67d220 100755
  
    mkdir -p "${outputfolder}"
  
-@@ -537,44 +409,6 @@ if [ "${arch}" != "x86" ] && [ "${arch}" != "i686" ] && [ "${arch}" != "x86_64"
+@@ -537,44 +410,6 @@ if [ "${arch}" != "x86" ] && [ "${arch}" != "i686" ] && [ "${arch}" != "x86_64"
    exit 1
  fi
  
@@ -519,12 +429,3 @@ index 250d13a..d67d220 100755
  trap ctrl_c INT
  
  # Menu case statement
-@@ -591,7 +425,7 @@ case $1 in
-   func_package_deps
-   func_python_deps
-   func_ruby_deps
--  func_go_deps
-+  # func_go_deps
-   func_autoit_deps
-   func_update_config
-   ;;
