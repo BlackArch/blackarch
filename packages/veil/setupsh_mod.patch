@@ -1,6 +1,28 @@
---- Veil/setup/setup.sh	2017-01-06 14:09:50.914744800 +0100
-+++ Veil/setup/setup.sh.pristine	2017-01-06 14:13:05.944744800 +0100
-@@ -66,45 +66,39 @@
+diff --git a/config/update.py b/config/update.py
+index 75e360e..bf6ac9e 100755
+--- a/config/update.py
++++ b/config/update.py
+@@ -186,7 +186,7 @@ if __name__ == '__main__':
+         else:
+             options["OPERATING_SYSTEM"] = "Linux"
+             options["TERMINAL_CLEAR"] = "clear"
+-            msfpath = raw_input(" [>] Please enter the path of your metasploit installation: ")
++            msfpath = "/opt/metasploit"
+             options["METASPLOIT_PATH"] = msfpath
+             if os.path.isfile('/usr/bin/msfvenom'):
+                 options["MSFVENOM_PATH"] = "/usr/bin/"
+@@ -227,4 +227,4 @@ if __name__ == '__main__':
+         print " [!] ERROR: PLATFORM NOT CURRENTLY SUPPORTED"
+         sys.exit()
+ 
+-    generateConfig(options)
+\ No newline at end of file
++    generateConfig(options)
+diff --git a/setup/setup.sh b/setup/setup.sh
+index 250d13a..d67d220 100755
+--- a/setup/setup.sh
++++ b/setup/setup.sh
+@@ -66,37 +66,37 @@ function ctrl_c() {
  
  # Environment checks
  func_check_env(){
@@ -68,16 +90,8 @@
 +#
    func_package_deps
  
--  # Check capstone dependency (Required for Backdoor Factory)
--  if [ -f "/etc/ld.so.conf.d/capstone.conf" ]; then
--    echo -e "\n\n [*] ${YELLOW}Capstone is already installed... Skipping...${RESET}\n"
--  else
--    func_capstone_deps
--  fi
- 
    # Check if (Wine) Python is already installed
-   if [ -f "${winedrive}/Python27/python27.dll" ] && [ -f "${winedrive}/Python27/python.exe" ] && [ -f "${winedrive}/Python27/Lib/site-packages/win32/win32api.pyd" ]; then
-@@ -120,12 +114,12 @@
+@@ -113,19 +113,12 @@ func_check_env(){
      func_ruby_deps
    fi
  
@@ -86,6 +100,13 @@
 -    echo -e "\n\n [*] ${YELLOW}Go is already installed... Skipping...${RESET}\n"
 -  else
 -    func_go_deps
+-  fi
+-
+-  # Check if autoit is installed
+-  if [ -f "${winedrive}/Program Files/AutoIt3/AutoIt3.exe" ]; then
+-    echo -e "\n\n [*] ${YELLOW}AutoIt is already installed... Skipping...${RESET}\n"
+-  else
+-    func_autoit_deps
 -  fi
 +  # # Check if go is installed
 +  # if [ -f "/usr/src/go/bin/windows_386/go.exe" ]; then
@@ -96,7 +117,7 @@
  
    # Finally, update the config
    if [ -f "/etc/veil/settings.py" ] && [ -d "${outputfolder}" ]; then
-@@ -139,72 +133,6 @@
+@@ -139,79 +132,6 @@ func_check_env(){
  func_package_deps(){
    echo -e "\n\n [*] ${YELLOW}Initializing package installation${RESET}\n"
  
@@ -119,7 +140,7 @@
 -      if [ "${os}" != "ubuntu" ]; then
 -        sudo ${arg} apt-get -y -qq install wine wine64 wine32
 -      else # Special snowflakes... urghbuntu
--        sudo ${arg} apt-get -y -qq install wine-stable wine1.6 wine1.6-i386
+-        sudo ${arg} apt-get -y -qq install wine wine1.6 wine1.6-i386
 -      fi
 -      tmp="$?"
 -      if [ "${tmp}" -ne "0" ]; then
@@ -166,10 +187,17 @@
 -    fi
 -  fi
 -
+-  # Clone down the required install files
+-  git clone https://github.com/Veil-Framework/VeilDependencies.git
+-  cd VeilDependencies
+-  mv * ..
+-  cd ..
+-  rm -rf VeilDependencies
+-
    # Setup Wine prefices
    # Because Veil currently only supports Win32 binaries, we have to set the WINEARCH PREFIX
    # to use Win32. This is a potential issue for the future when Veil has windows 64-bit
-@@ -239,10 +167,10 @@
+@@ -246,10 +166,10 @@ func_package_deps(){
      if [ "${arch}" == "x86_64" ]; then
        echo -e " [*] ${YELLOW}Initializing Veil's Wine environment...${RESET}"
        if [ "${winebootexists}" == "true" ]; then
@@ -183,7 +211,7 @@
        fi
  
        # Sorta-kinda check for the existence of the wine drive
-@@ -259,8 +187,7 @@
+@@ -266,8 +186,7 @@ func_package_deps(){
        fi
      elif [ "${arch}" == "x86" ] || [ "${arch}" == "i686" ]; then
        echo -e " [*] ${YELLOW}Initializing Veil's Wine environment...${RESET}\n"
@@ -193,29 +221,25 @@
        if [ -d "${winedrive}" ]; then
          echo -e " [*] ${GREEN}Veil Wine environment successfully created!${RESET}\n"
        else
-@@ -274,44 +201,12 @@
+@@ -281,40 +200,12 @@ func_package_deps(){
        fi
      fi
    fi
 -
 -  # Start dependency install
 -  echo -e "\n\n [*] ${YELLOW}Installing dependencies${RESET}"
--  if [ "${os}" == "debian" ] || [ "${os}" == "kali" ] || [ "${os}" == "parrot" ]; then
+-  if [ "${os}" == "debian" ] || [ "${os}" == "kali" ] || [ "${os}" == "parrot" ] || [ "${os}" == "ubuntu" ]; then
 -    sudo ${arg} apt-get -y install mingw-w64 monodoc-browser monodevelop mono-mcs wine unzip ruby golang wget git \
--      python python-crypto python-pefile python-pip ca-certificates #ttf-mscorefonts-installer
--
--  elif [ "${os}" == "ubuntu" ]; then
--    sudo ${arg} apt-get -y install mingw-w64 monodoc-browser monodevelop mono-mcs wine-stable unzip ruby golang wget git \
--      python python-crypto python-pefile python-pip ca-certificates #ttf-mscorefonts-installer
+-      python python-crypto python-pefile python-pip ca-certificates python3-pip #ttf-mscorefonts-installer
 -
 -  elif [ "${os}" == "fedora" ] || [ "${os}" == "rhel" ] || [ "${os}" == "centos" ]; then
 -    sudo ${arg} dnf -y install mingw64-binutils mingw64-cpp mingw64-gcc mingw64-gcc-c++ mono-tools-monodoc monodoc \
 -      monodevelop mono-tools mono-core wine unzip ruby golang wget git python python-crypto python-pefile \
--      python-pip ca-certificates msttcore-fonts-installer
+-      python-pip ca-certificates msttcore-fonts-installer python3-pip
 -
 -  elif [ "${os}" ==  "arch" ]; then
 -    sudo pacman -Sy ${arg} --needed mingw-w64-binutils mingw-w64-crt mingw-w64-gcc mingw-w64-headers mingw-w64-winpthreads \
--      mono mono-tools mono-addins python2-pip wget unzip ruby python python2 python-crypto gcc-go ca-certificates base-devel
+-      mono mono-tools mono-addins python2-pip wget unzip ruby python python2 python-crypto gcc-go ca-certificates base-devel python3-pip
 +  # elif [ "${os}" ==  "arch" ]; then
 +    # sudo pacman -Sy ${arg} --needed mingw-w64-binutils mingw-w64-crt mingw-w64-gcc mingw-w64-headers mingw-w64-winpthreads \
 +      # mono mono-tools mono-addins python2-pip wget unzip ruby python python2 python-crypto gcc-go ca-certificates base-devel
@@ -242,199 +266,74 @@
 +  # fi
  }
  
- # Install Capstone dependencies (Needed for Backdoor Factory - https://github.com/secretsquirrel/the-backdoor-factory/blob/master/install.sh)
-@@ -353,66 +248,20 @@
  # Install Python dependencies
- func_python_deps(){
-   # Banner
--  echo -e "\n [*] ${YELLOW}Initializing Python dependencies installation...${RESET}\n"
--
--  # Python (OS)
--  echo -e "\n [*] ${YELLOW}Installing Python's SymmetricJSONRPC...${RESET}"
--  # Check If SymmetricJSONRPC is already installed - if not, install it.
--  pythonversion="$(python -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")"
--  pypkgdir=("/usr/local/lib/python${pythonversion}/dist-packages/symmetricjsonrpc/"
--  "/usr/local/lib/python${pythonversion}/site-packages/symmetricjsonrpc/"
--  "/usr/lib/python${pythonversion}/dist-packages/symmetricjsonrpc/"
--  "/usr/lib/python${pythonversion}/site-packages/symmetricjsonrpc/")
--
--  installed=false
--
--  # Python (OS) - SymmetricJSONRPC
--  for ((i = 0; i < ${#pypkgdir[@]}; i++)); do
--    if [ -d "${pypkgdir[$i]}" ]; then
--      echo -e " [*] ${YELLOW}SymmetricJSONRPC is already installed in: ${pypkgdir[$i]}... Skipping...${RESET}\n"
--      installed=true
--      break
--    fi
--  done
--
--  if [ "${installed}" == "false" ]; then
--    if [ "${os}" == "kali" ] || [ "${os}" == "parrot" ]; then
--      echo -e " [*] ${YELLOW}Installing SymmetricJSONRPC dependency (via Repository)${RESET}"
--      [[ "${silent}" == "true" ]] && arg=" DEBIAN_FRONTEND=noninteractive"
--      sudo ${arg} apt-get install -y python-symmetric-jsonrpc
--    else
--      echo -e " [*] ${YELLOW}Installing SymmetricJSONRPC dependency (via PIP)...${RESET}"
--      sudo pip2 install symmetricjsonrpc
--    fi
--  fi
--
--  tmp="$?"
--  if [ "${tmp}" -ne "0" ]; then
--    msg="Failed to install SymmetricJSONRPC... Exit code: ${tmp}"
--    errors="${errors}\n${msg}"
--    echo -e " ${RED}[ERROR] ${msg}${RESET}\n"
--  fi
--
--  # Python (OS) - install-addons.sh
--  # In-case its 'First time run' for Wine (More information - http://wiki.winehq.org/Mono)
--  #[[ "${silent}" == "true" ]] && bash "${rootdir}/setup/install-addons.sh"   #wget -qO - "http://winezeug.googlecode.com/svn/trunk/install-addons.sh"
--
--  # Banner
-   echo -e "\n [*] ${YELLOW}Initializing (Wine) Python dependencies installation...${RESET}\n"
- 
-   # Prepare (Wine) directories - required before Python
--  echo -e "\n [*] ${YELLOW}Preparing (Wine) Python directories...${RESET}\n"
--  sudo -u "${trueuser}" mkdir -p "${winedrive}/Python27/Lib/site-packages/" "${winedrive}/Python27/Scripts/"
--  sudo -u "${trueuser}" unzip -q -o -d "${winedrive}/Python27/Lib/" "${rootdir}/setup/python-distutils.zip"
--  sudo -u "${trueuser}" unzip -q -o -d "${winedrive}/Python27/" "${rootdir}/setup/python-tcl.zip"
--  sudo -u "${trueuser}" unzip -q -o -d "${winedrive}/Python27/" "${rootdir}/setup/python-Tools.zip"
-+  mkdir -p "${winedrive}/Python27/Lib/site-packages/" "${winedrive}/Python27/Scripts/"
-+  unzip -q -o -d "${winedrive}/Python27/Lib/" "${rootdir}/setup/python-distutils.zip"
-+  unzip -q -o -d "${winedrive}/Python27/" "${rootdir}/setup/python-tcl.zip"
-+  unzip -q -o -d "${winedrive}/Python27/" "${rootdir}/setup/python-Tools.zip"
- 
-   # Install (Wine) Python main setup file
+@@ -330,15 +221,14 @@ func_python_deps(){
    echo -e "\n [*] ${YELLOW}Installing (Wine) Python...${RESET}"
    echo -e "${BOLD} [*] Next -> Next -> Next -> Finished! ...Overwrite if prompt. Use default values.${RESET}"
    sleep 1s
--  [ "${silent}" == "true" ] && arg=" TARGETDIR=C:\Python27 ALLUSERS=1 /q /norestart"
--  sudo -u "${trueuser}" WINEPREFIX="${winedir}" wine msiexec /i "${rootdir}/setup/python-2.7.5.msi" ${arg}
-+  arg=" TARGETDIR=C:\Python27 ALLUSERS=1 /q /norestart"
-+  WINEPREFIX="${winedir}" wine msiexec /i "${rootdir}/setup/python-2.7.5.msi" ${arg}
+-  [ "${silent}" == "true" ] && arg=" TARGETDIR=C:\Python34 ALLUSERS=1 /q /norestart"
+-  sudo -u "${trueuser}" WINEPREFIX="${winedir}" wine msiexec /i "${rootdir}/setup/python-3.4.4.msi" ${arg}
++  arg=" TARGETDIR=C:\Python34 ALLUSERS=1 /q /norestart"
++  WINEPREFIX="${winedir}" wine msiexec /i "${rootdir}/setup/python-3.4.4.msi" ${arg}
    tmp="$?"
    if [ "${tmp}" -ne "0" ]; then
-     msg="Failed to install (Wine) Python 2.7.5... Exit code: ${tmp}"
-@@ -431,14 +280,14 @@
-   for FILE in pywin32-219.win32-py2.7.exe pycrypto-2.6.win32-py2.7.exe; do
+     msg="Failed to install (Wine) Python 3.4.4... Exit code: ${tmp}"
+     errors="${errors}\n${msg}"
+     echo -e " ${RED}[ERROR] ${msg}${RESET}\n"
+   fi
+-  pip3 install pycrypto
+ 
+   # Cool down
+   sleep 3s
+@@ -351,14 +241,14 @@ func_python_deps(){
+   for FILE in pywin32-220.win32-py3.4.exe pycrypto-2.6.1.win32-py3.4.exe; do
      echo -e "\n\n [*] ${YELLOW}Installing (Wine) Python's ${FILE}...${RESET}"
      if [ "${silent}" == "true" ]; then
 -      sudo -u "${trueuser}" unzip -q -o "${FILE}"
--      sudo -u "${trueuser}" cp -rf PLATLIB/* "${winedrive}/Python27/Lib/site-packages/"
--      [ -e "SCRIPTS" ] && sudo -u "${trueuser}" cp -rf SCRIPTS/* "${winedrive}/Python27/Scripts/"
+-      sudo -u "${trueuser}" cp -rf PLATLIB/* "${winedrive}/Python34/Lib/site-packages/"
+-      [ -e "SCRIPTS" ] && sudo -u "${trueuser}" cp -rf SCRIPTS/* "${winedrive}/Python34/Scripts/"
 +      unzip -q -o "${FILE}"
-+      cp -rf PLATLIB/* "${winedrive}/Python27/Lib/site-packages/"
-+      [ -e "SCRIPTS" ] && cp -rf SCRIPTS/* "${winedrive}/Python27/Scripts/"
++      cp -rf PLATLIB/* "${winedrive}/Python34/Lib/site-packages/"
++      [ -e "SCRIPTS" ] && cp -rf SCRIPTS/* "${winedrive}/Python34/Scripts/"
        rm -rf "PLATLIB/" "SCRIPTS/"
      else
        echo -e " [*] ${BOLD}Next -> Next -> Next -> Finished! ...Overwrite if prompt. Use default values.${RESET}"
        sleep 1s
 -      sudo -u "${trueuser}" WINEPREFIX="${winedir}" wine "${FILE}"
-+      WINEPREFIX="${winedir}" wine "${FILE}"
++       WINEPREFIX="${winedir}" wine "${FILE}"
        tmp="$?"
        if [ "${tmp}" -ne "0" ]; then
          msg="Failed to install ${FILE}... Exit code: ${tmp}"
-@@ -451,40 +300,40 @@
+@@ -371,83 +261,65 @@ func_python_deps(){
    popd >/dev/null
  
    # Install Python (OS) extra setup files (PyInstaller)
 -  echo -e "\n\n [*] ${YELLOW}Installing Python's PyInstaller${RESET}"
 -  [[ "${silent}" == "true" ]] && arg=" DEBIAN_FRONTEND=noninteractive"
--  if [ -f "/usr/share/pyinstaller/PKG-INFO" ]; then
--    pyinstversion="$(sed -n '3{p;q;}' /usr/share/pyinstaller/PKG-INFO | cut -d' ' -f2)"
--    if [ "$pyinstversion" == "3.2" ]; then
--      echo -e "\n\n [*] ${YELLOW}PyInstaller v3.2 is already installed... Skipping...${RESET}\n"
--    else
--      # Install PyInstaller now
--      file="${rootdir}/setup/PyInstaller-3.2.tar.gz"
--      shasum="$(openssl dgst -sha256 "${file}" | cut -d' ' -f2)"
--      if [ "${shasum}" == "7598d4c9f5712ba78beb46a857a493b1b93a584ca59944b8e7b6be00bb89cabc" ]; then
--        sudo rm -rf /opt/veil/PyInstaller-*
--        sudo mkdir -p /opt/veil
--        sudo tar -C /opt/veil -xzf "${file}"
--      else
--        msg="Bad hash for PyInstaller.tar.gz!"
--        errors="${errors}\n${msg}"
--        echo -e " ${RED}[ERROR] ${msg}${RESET}\n"
--      fi
--    fi
+-  if [ -f "/opt/veil/PyInstaller-3.2.1/pyinstaller.py" ]; then
+-    echo -e "\n\n [*] ${YELLOW}PyInstaller v3.2 is already installed... Skipping...${RESET}\n"
 -  else
 -    # Install PyInstaller now
--    file="${rootdir}/setup/PyInstaller-3.2.tar.gz"
+-    file="${rootdir}/setup/PyInstaller-3.2.1.tar"
 -    shasum="$(openssl dgst -sha256 "${file}" | cut -d' ' -f2)"
--    if [ "${shasum}" == "7598d4c9f5712ba78beb46a857a493b1b93a584ca59944b8e7b6be00bb89cabc" ]; then
+-    if [ "${shasum}" == "4727314ddf95bfe4aed28b3b98e0175d469a36aff5eb7e2af3c3d2fffd662d2d" ]; then
 -      sudo rm -rf /opt/veil/PyInstaller-*
 -      sudo mkdir -p /opt/veil
--      sudo tar -C /opt/veil -xzf "${file}"
+-      sudo tar -C /opt/veil -xvf "${file}"
 -    else
 -      msg="Bad hash for PyInstaller.tar.gz!"
 -      errors="${errors}\n${msg}"
 -      echo -e " ${RED}[ERROR] ${msg}${RESET}\n"
 -    fi
 -  fi
-+  # echo -e "\n\n [*] ${YELLOW}Installing Python's PyInstaller${RESET}"
-+  # [[ "${silent}" == "true" ]] && arg=" DEBIAN_FRONTEND=noninteractive"
-+  # if [ -f "/usr/share/pyinstaller/PKG-INFO" ]; then
-+    # pyinstversion="$(sed -n '3{p;q;}' /usr/share/pyinstaller/PKG-INFO | cut -d' ' -f2)"
-+    # if [ "$pyinstversion" == "3.2" ]; then
-+      # echo -e "\n\n [*] ${YELLOW}PyInstaller v3.2 is already installed... Skipping...${RESET}\n"
-+    # else
-+      # # Install PyInstaller now
-+      # file="${rootdir}/setup/PyInstaller-3.2.tar.gz"
-+      # shasum="$(openssl dgst -sha256 "${file}" | cut -d' ' -f2)"
-+      # if [ "${shasum}" == "7598d4c9f5712ba78beb46a857a493b1b93a584ca59944b8e7b6be00bb89cabc" ]; then
-+        # sudo rm -rf /opt/veil/PyInstaller-*
-+        # sudo mkdir -p /opt/veil
-+        # sudo tar -C /opt/veil -xzf "${file}"
-+      # else
-+        # msg="Bad hash for PyInstaller.tar.gz!"
-+        # errors="${errors}\n${msg}"
-+        # echo -e " ${RED}[ERROR] ${msg}${RESET}\n"
-+      # fi
-+    # fi
-+  # else
-+    # # Install PyInstaller now
-+    # file="${rootdir}/setup/PyInstaller-3.2.tar.gz"
-+    # shasum="$(openssl dgst -sha256 "${file}" | cut -d' ' -f2)"
-+    # if [ "${shasum}" == "7598d4c9f5712ba78beb46a857a493b1b93a584ca59944b8e7b6be00bb89cabc" ]; then
-+      # sudo rm -rf /opt/veil/PyInstaller-*
-+      # sudo mkdir -p /opt/veil
-+      # sudo tar -C /opt/veil -xzf "${file}"
-+    # else
-+      # msg="Bad hash for PyInstaller.tar.gz!"
-+      # errors="${errors}\n${msg}"
-+      # echo -e " ${RED}[ERROR] ${msg}${RESET}\n"
-+    # fi
-+  # fi
  
-   # # Install PEFile for PyInstaller
-   echo -e "\n\n [*] ${YELLOW}Installing Python's PEFile (For PyInstaller)${RESET}"
-@@ -496,7 +345,7 @@
-     sudo tar -C /opt/veil -xzf "${file}"
-     sudo chown -R "${trueuser}" /opt/veil/pefile-*
-     pushd /opt/veil/pefile-*/ >/dev/null
--    sudo -u "${trueuser}" WINEPREFIX="${winedir}" wine "${winedrive}/Python27/python.exe" "setup.py" install
-+    WINEPREFIX="${winedir}" wine "${winedrive}/Python27/python.exe" "setup.py" install
-     popd >/dev/null
-   else
-     msg="Bad hash for PEFile.tar.gz!"
-@@ -514,7 +363,7 @@
-     sudo tar -C /opt/veil -xzf "${file}"
-     sudo chown -R "${trueuser}" /opt/veil/future-*
-     pushd /opt/veil/future-*/ >/dev/null
--    sudo -u "${trueuser}" WINEPREFIX="${winedir}" wine "${winedrive}/Python27/python.exe" "setup.py" install
-+    WINEPREFIX="${winedir}" wine "${winedrive}/Python27/python.exe" "setup.py" install
-     popd >/dev/null
-   else
-     msg="Bad hash for future.tar.gz!"
-@@ -526,78 +375,78 @@
-   if [ ! -f "${winedrive}/Python27/Lib/site-packages/setuptools-0.6c11-py2.7.egg-info" ]; then
-     echo -e "\n\n [*] ${YELLOW}Installing Python's setup  tools${RESET}"
-     file="${rootdir}/setup/distribute_setup.py"
--    sudo -u "${trueuser}" WINEPREFIX="${winedir}" wine "${winedrive}/Python27/python.exe" "${file}"
-+    WINEPREFIX="${winedir}" wine "${winedrive}/Python27/python.exe" "${file}"
-   fi
+   # Use wine based pip to install dependencies
+-  sudo -u "${trueuser}" WINEPREFIX="${winedir}" wine "${winedir}/drive_c/Python34/python.exe" "-m" "pip" "install" "--upgrade" "pip"
+-  sudo -u "${trueuser}" WINEPREFIX="${winedir}" wine "${winedir}/drive_c/Python34/python.exe" "-m" "pip" "install" "future"
+-  sudo -u "${trueuser}" WINEPREFIX="${winedir}" wine "${winedir}/drive_c/Python34/python.exe" "-m" "pip" "install" "pefile"
++  WINEPREFIX="${winedir}" wine "${winedir}/drive_c/Python34/python.exe" "-m" "pip" "install" "--upgrade" "pip"
++  WINEPREFIX="${winedir}" wine "${winedir}/drive_c/Python34/python.exe" "-m" "pip" "install" "future"
++  WINEPREFIX="${winedir}" wine "${winedir}/drive_c/Python34/python.exe" "-m" "pip" "install" "pefile"
  }
  
  # Install Go dependencies (Requires v1.2 or higher)
@@ -448,34 +347,13 @@
 -
 -  sudo mkdir -p /usr/src/go/
 -
--  if [ "${os}" == "ubuntu" ] || [ "${os}" == "debian" ] || [ "${os}" == "kali" ] || [ "${os}" == "parrot" ]; then
--    goversion="$(apt-cache show golang-src | awk -F '[:-.]' '/Version/ {print $3$4}')"
--    if [[ ! "$(grep "#*deb-src" /etc/apt/sources.list)" ]] && [ "${goversion}" -gt "12" ]; then
--      # Download source via Repository
--      echo -e "\n\n [*] ${YELLOW}Installing Go (v${goversion} via Repository)${RESET}"
--      sudo apt-get source golang-go  #golang
--      tmp="$?"
--      if [ "${tmp}" -ne "0" ]; then
--        msg="Failed to download Go... Exit code: ${tmp}"
--        errors="${errors}\n${msg}"
--        echo -e " ${RED}[ERROR] ${msg}${RESET}\n"
--      fi
--
--      # Put Everything In One Place
--      sudo cp -rn /tmp/golang-*/* /usr/src/go/
--    fi
--    [[ "${silent}" == "true" ]] && arg=" DEBIAN_FRONTEND=noninteractive"
--    sudo ${arg} apt-get -y install gccgo-5
--    sudo update-alternatives --set go /usr/bin/go-5
--  fi
--
 -  if [ ! -f "/usr/src/go/bin/windows_386/go.exe" ]; then
 -    if [ "${arch}" == "x86_64" ]; then
 -      echo -e "\n\n [*] ${YELLOW}Installing Go x86_64 (via TAR)${RESET}"
--      file="${rootdir}/setup/go153x64.tar.gz"
+-      file="${rootdir}/setup/go1.7.5.linux-amd64.tar.gz"
 -      shasum="$(openssl dgst -sha256 "${file}" | cut -d' ' -f2)"
--      if [ "${shasum}" == "43afe0c5017e502630b1aea4d44b8a7f059bf60d7f29dfd58db454d4e4e0ae5" ]; then
--        sudo tar -C /usr/local -xzf "${file}"
+-      if [ "${shasum}" == "2e4dd6c44f0693bef4e7b46cc701513d74c3cc44f2419bf519d7868b12931ac3" ]; then
+-        sudo tar -C /usr/local -xvf "${file}"
 -      else
 -        if [ "${tmp}" -ne "0" ]; then
 -          msg="Bad hash for go153x64.tar.gz!"
@@ -485,10 +363,10 @@
 -      fi
 -    elif [ "${arch}" == "x86" ] || [ "${arch}" == "i686" ]; then
 -      echo -e "\n\n [*] ${YELLOW}Installing Go x86 (via TAR)${RESET}"
--      file="${rootdir}/setup/go153x86.tar.gz"
+-      file="${rootdir}/setup/go1.7.5.linux-386.tar.gz"
 -      shasum="$(openssl dgst -sha256 "${file}" | cut -d' ' -f2)"
--      if [ "${shasum}" == "c1ce206b7296db1b10ff7896044d9ca50e87efa5bc3477e8fd8c2fb149bfca8f" ]; then
--        sudo tar -C /usr/local -xzf "${file}"
+-      if [ "${shasum}" == "432cb92ae656f6fe1fa96a981782ef5948438b6da6691423aae900918b1eb955" ]; then
+-        sudo tar -C /usr/local -xvf "${file}"
 -      else
 -        if [ "${tmp}" -ne "0" ]; then
 -          msg="Bad hash for go153x86.tar.gz!"
@@ -501,48 +379,23 @@
 -    sudo rm -f /usr/bin/go
 -    sudo ln -s /usr/local/go/bin/go /usr/bin/go
 -  fi
--
--  # Done
--  popd >/dev/null
--}
 +# func_go_deps(){
 +  # # Download Go from source, cd into it, build it, and prep it for making windows payloads
 +  # # help for this setup came from:
 +  # # http://www.limitlessfx.com/cross-compile-golang-app-for-windows-from-linux.html
-+
++#
 +  # echo -e " [*] ${YELLOW}Initializing Go dependencies installation...${RESET}\n"
 +  # pushd "/tmp/" >/dev/null
-+
++#
 +  # sudo mkdir -p /usr/src/go/
-+
-+  # if [ "${os}" == "ubuntu" ] || [ "${os}" == "debian" ] || [ "${os}" == "kali" ] || [ "${os}" == "parrot" ]; then
-+    # goversion="$(apt-cache show golang-src | awk -F '[:-.]' '/Version/ {print $3$4}')"
-+    # if [[ ! "$(grep "#*deb-src" /etc/apt/sources.list)" ]] && [ "${goversion}" -gt "12" ]; then
-+      # # Download source via Repository
-+      # echo -e "\n\n [*] ${YELLOW}Installing Go (v${goversion} via Repository)${RESET}"
-+      # sudo apt-get source golang-go  #golang
-+      # tmp="$?"
-+      # if [ "${tmp}" -ne "0" ]; then
-+        # msg="Failed to download Go... Exit code: ${tmp}"
-+        # errors="${errors}\n${msg}"
-+        # echo -e " ${RED}[ERROR] ${msg}${RESET}\n"
-+      # fi
-+
-+      # # Put Everything In One Place
-+      # sudo cp -rn /tmp/golang-*/* /usr/src/go/
-+    # fi
-+    # [[ "${silent}" == "true" ]] && arg=" DEBIAN_FRONTEND=noninteractive"
-+    # sudo ${arg} apt-get -y install gccgo-5
-+    # sudo update-alternatives --set go /usr/bin/go-5
-+  # fi
-+
++#
 +  # if [ ! -f "/usr/src/go/bin/windows_386/go.exe" ]; then
 +    # if [ "${arch}" == "x86_64" ]; then
 +      # echo -e "\n\n [*] ${YELLOW}Installing Go x86_64 (via TAR)${RESET}"
-+      # file="${rootdir}/setup/go153x64.tar.gz"
++      # file="${rootdir}/setup/go1.7.5.linux-amd64.tar.gz"
 +      # shasum="$(openssl dgst -sha256 "${file}" | cut -d' ' -f2)"
-+      # if [ "${shasum}" == "43afe0c5017e502630b1aea4d44b8a7f059bf60d7f29dfd58db454d4e4e0ae5" ]; then
-+        # sudo tar -C /usr/local -xzf "${file}"
++      # if [ "${shasum}" == "2e4dd6c44f0693bef4e7b46cc701513d74c3cc44f2419bf519d7868b12931ac3" ]; then
++        # sudo tar -C /usr/local -xvf "${file}"
 +      # else
 +        # if [ "${tmp}" -ne "0" ]; then
 +          # msg="Bad hash for go153x64.tar.gz!"
@@ -552,10 +405,10 @@
 +      # fi
 +    # elif [ "${arch}" == "x86" ] || [ "${arch}" == "i686" ]; then
 +      # echo -e "\n\n [*] ${YELLOW}Installing Go x86 (via TAR)${RESET}"
-+      # file="${rootdir}/setup/go153x86.tar.gz"
++      # file="${rootdir}/setup/go1.7.5.linux-386.tar.gz"
 +      # shasum="$(openssl dgst -sha256 "${file}" | cut -d' ' -f2)"
-+      # if [ "${shasum}" == "c1ce206b7296db1b10ff7896044d9ca50e87efa5bc3477e8fd8c2fb149bfca8f" ]; then
-+        # sudo tar -C /usr/local -xzf "${file}"
++      # if [ "${shasum}" == "432cb92ae656f6fe1fa96a981782ef5948438b6da6691423aae900918b1eb955" ]; then
++        # sudo tar -C /usr/local -xvf "${file}"
 +      # else
 +        # if [ "${tmp}" -ne "0" ]; then
 +          # msg="Bad hash for go153x86.tar.gz!"
@@ -568,14 +421,22 @@
 +    # sudo rm -f /usr/bin/go
 +    # sudo ln -s /usr/local/go/bin/go /usr/bin/go
 +  # fi
-+
-+  # # Done
+ 
+   # Done
+-  popd >/dev/null
+-}
 +  # popd >/dev/null
 +# }
  
+ func_autoit_deps(){
+   echo -e "\n [*] ${YELLOW}Initializing AutoIT installation...${RESET}\n"
+   [ "${silent}" == "true" ] && arg=" /S"
+-  sudo -u "${trueuser}" WINEPREFIX="${winedir}" wine "${rootdir}/setup/autoit-v3-setup.exe" ${arg}
++   WINEPREFIX="${winedir}" wine "${rootdir}/setup/autoit-v3-setup.exe" ${arg}
+ }
+ 
  # Install (Wine) Ruby dependencies
- func_ruby_deps(){
-@@ -609,10 +458,10 @@
+@@ -460,10 +332,10 @@ func_ruby_deps(){
    echo -e "\n [*] ${YELLOW}Installing (Wine) Ruby & dependencies${RESET}"
    echo -e " [*] ${BOLD}Next -> Next -> Next -> Finished! ...Overwrite if prompt. Use default values.${RESET}"
    sleep 1s
@@ -588,17 +449,15 @@
    tmp="$?"
    if [ "${tmp}" -ne "0" ]; then
      msg="Failed to install (Wine) Ruby.exe... Exit code: ${tmp}"
-@@ -622,7 +471,7 @@
- 
-   # Install the OCRA Gem under Wine
-   echo -e "\n [*] ${YELLOW}Installing (Wine) Ruby OCRA gem...${RESET}"
--  sudo -u "${trueuser}" WINEPREFIX="${winedir}" wine "${winedrive}/Ruby187/bin/ruby.exe" "${winedrive}/Ruby187/bin/gem" install ocra-1.3.0.gem
-+  WINEPREFIX="${winedir}" wine "${winedrive}/Ruby187/bin/ruby.exe" "${winedrive}/Ruby187/bin/gem" install ocra-1.3.0.gem
-   tmp="$?"
-   if [ "${tmp}" -ne "0" ]; then
-     msg="Failed to install (Wine) Ruby OCRA Gem... Exit code: ${tmp}"
-@@ -632,7 +481,7 @@
- 
+@@ -480,12 +352,12 @@ func_ruby_deps(){
+   prefix="Z:"
+   gempath=${gempath////$replace}
+   gempath=$prefix$gempath
+-  echo "$gempath install --force --local ocra-1.3.6.gem" > ocrainstall.bat
+-  sudo -u "${trueuser}" WINEPREFIX="${winedir}" wine cmd /c ocrainstall.bat
++  echo "$gempath install --force --local ocra-1.3.6.gem" > "$winedrive/"ocrainstall.bat
++  WINEPREFIX="${winedir}" wine cmd /c "c:\ocrainstall.bat"
+   
    # Unzip the Ruby dependencies
    echo -e "\n [*] ${YELLOW}Extracting (Wine) Ruby dependencies...${RESET}\n"
 -  sudo -u "${trueuser}" unzip -q -o -d "${winedrive}/Ruby187/lib/ruby/gems/1.8/" "${rootdir}/setup/ruby_gems-1.8.zip"
@@ -606,7 +465,16 @@
  
    popd >/dev/null
  }
-@@ -684,44 +533,6 @@
+@@ -508,7 +380,7 @@ func_update_config(){
+     echo -e " [*] ${YELLOW}Detected current Veil-Framework settings file. Removing...${RESET}\n"
+     sudo rm -f /etc/veil/settings.py
+   fi
+-  sudo -u "${trueuser}" sudo python2 update.py
++  sudo python2 update.py
+ 
+   mkdir -p "${outputfolder}"
+ 
+@@ -537,44 +409,6 @@ if [ "${arch}" != "x86" ] && [ "${arch}" != "i686" ] && [ "${arch}" != "x86_64"
    exit 1
  fi
  
@@ -647,16 +515,16 @@
 -  fi
 -fi
 -
--
- # Trap ctrl-c
+-# Trap ctrl-c
  trap ctrl_c INT
  
-@@ -741,7 +552,7 @@
-   func_capstone_deps
+ # Menu case statement
+@@ -591,7 +425,7 @@ case $1 in
+   func_package_deps
    func_python_deps
    func_ruby_deps
 -  func_go_deps
 +  # func_go_deps
+   func_autoit_deps
    func_update_config
    ;;
- 
