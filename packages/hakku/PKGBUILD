@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hakku'
+pkgver=384.bbb434d
+pkgrel=1
+pkgdesc='Simple framework that has been made for penetration testing tools.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-webapp'
+        'blackarch-exploitation' 'blackarch-fingerprint')
+arch=('any')
+url='https://github.com/4shadoww/hakkuframework'
+license=('BSD')
+depends=('python' 'python-lxml' 'python-whois' 'python-requests' 'python-future'
+         'python-pyopenssl' 'python-netifaces' 'python-ipaddress' 'python-six'
+         'python-dnspython' 'python-argparse' 'python-idna' 'python-cryptography'
+         'scapy3k')
+makedepends=('git')
+source=('git+https://github.com/4shadoww/hakkuframework.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/hakkuframework"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/hakkuframework"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/hakku"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/hakku/" readme.md readme changelog
+  install -Dm644 license "$pkgdir/usr/share/licenses/hakku/license"
+
+  rm readme* license
+
+  cp -a * "$pkgdir/usr/share/hakku/"
+
+  cat > "$pkgdir/usr/bin/hakku" << EOF
+#!/bin/sh
+cd /usr/share/hakku
+exec python3 hakku "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/hakku"
+}
