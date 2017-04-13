@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='jpexs-decompiler'
+pkgver='10.0.0'
+pkgrel=1
+pkgdesc='JPEXS Free Flash Decompiler.'
+groups=('blackarch' 'blackarch-decompiler')
+arch=('any')
+url='https://github.com/jindrapetrik/jpexs-decompiler'
+license=('GPL3')
+depends=('java-environment')
+source=("https://github.com/jindrapetrik/jpexs-decompiler/releases/download/version10.0.0/ffdec_${pkgver}.zip")
+sha1sums=('c69e943d8e1beb1178efd7d317ad51cf239e931d')
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/jpexs-decompiler"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/jpexs-decompiler/" CHANGELOG.md
+  install -Dm644 license.txt \
+    "$pkgdir/usr/share/licenses/jpexs-decompiler/license.txt"
+
+  rm *.md license.txt ffdec_${pkgver}.zip
+
+  cp -a * "$pkgdir/usr/share/jpexs-decompiler/"
+
+  cat > "$pkgdir/usr/bin/jpexs-decompiler" << EOF
+#!/bin/sh
+cd /usr/share/jpexs-decompiler
+exec java -jar ffdec.jar "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/jpexs-decompiler"
+}
