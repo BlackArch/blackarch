@@ -3,7 +3,7 @@
 
 pkgname='dradis-ce'
 pkgver=820.0c8b345
-pkgrel=1
+pkgrel=4
 pkgdesc='An open source framework to enable effective information sharing.'
 groups=('blackarch' 'blackarch-recon' 'blackarch-misc')
 url='http://dradisframework.org/'
@@ -12,10 +12,12 @@ depends=('ruby2.3' 'ruby2.3-bundler' 'git')
 makedepends=('git')
 arch=('any')
 source=("git+https://github.com/dradis/dradis-ce.git"
-        "dradis.patch")
-install='dradis.install'
+        "${pkgname}.patch"
+        "${pkgname}.sysusers.conf")
+install="${pkgname}.install"
 sha1sums=('SKIP'
-          '4287000e0fa90d7f1c0e69b6eff8d6861c82522a')
+          '4287000e0fa90d7f1c0e69b6eff8d6861c82522a'
+          '3d0713818232fcadae14b912c81532b791047bb8')
 
 pkgver() {
   cd "$srcdir/dradis-ce"
@@ -26,16 +28,18 @@ pkgver() {
 prepare() {
   cd "$srcdir/dradis-ce"
 
-  patch -p1 -i ../dradis.patch
+  patch -p1 -i ../${pkgname}.patch
 }
 
 package() {
   cd "$srcdir"
 
-  mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/share"
-  rm -rf "dradis-ce/.ruby-version"
-  cp -ar "dradis-ce" "$pkgdir/usr/share/dradis-ce"
+  install -m755 -d "${pkgdir}/usr/lib/sysusers.d/" \
+                   "${pkgdir}/usr/bin" \
+                   "${pkgdir}/usr/share"
+
+  install -m644 "${pkgname}.sysusers.conf" "${pkgdir}/usr/lib/sysusers.d/${pkgname}.conf"
+  cp -ar "dradis-ce" "${pkgdir}/usr/share/dradis-ce"
 
 
   cat > "$pkgdir/usr/bin/dradis-ce" << EOF
