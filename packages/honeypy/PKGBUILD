@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='honeypy'
+pkgver=347.e68d84e
+pkgrel=1
+pkgdesc='A low interaction Honeypot.'
+arch=('any')
+url='https://github.com/foospidy/HoneyPy'
+license=('GPL')
+groups=('blackarch' 'blackarch-honeypot' 'blackarch-defensensive')
+depends=('python2' 'python2-dnslib' 'python2-requests' 'python2-twisted'
+         'python2-certifi' 'python2-urllib3')
+makedepends=('git')
+source=('git+https://github.com/foospidy/HoneyPy.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/HoneyPy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/HoneyPy"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/${pkgname}"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/honeypy" README.md VERSION
+  install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/honeypy"
+
+  rm README.md LICENSE VERSION
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/honeypy"
+
+  cat > "$pkgdir/usr/bin/honeypy" << EOF
+#!/usr/bin/env bash
+cd /usr/share/honeypy
+exec python2 Honey.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/honeypy"
+}
