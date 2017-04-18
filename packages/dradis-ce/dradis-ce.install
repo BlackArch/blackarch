@@ -4,21 +4,29 @@ post_install() {
   bundle-2.3 config --local build.nokogiri --use-system-libraries
   bundle-2.3 config --local path vendor/bundle
   ruby-2.3 bin/setup
-  mkdir templates
-  chmod -R a+w tmp log
-  chmod a+w db templates db/development.sqlite3
-
+  systemd-sysusers dradis-ce.conf
+  post_group "$@"
+  post_common "$@"
 }
 
 post_upgrade() {
   set -e
   cd /usr/share/dradis-ce
   ruby-2.3 bin/update
-  chmod -R a+w tmp log
-  chmod a+w db templates db/development.sqlite3
-
+  post_group "$@"
+  post_common "$@"
 }
 
 post_remove() {
   rm -r /usr/share/dradis-ce
+}
+
+post_group() {
+  chown -R :dradis-ce /usr/share/dradis-ce
+  chmod -R g+w /usr/share/dradis-ce
+}
+
+post_common() {
+  echo ">>"
+  echo ">>    To run dradis you need to be a member of the dradis-ce group"
 }
