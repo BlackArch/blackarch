@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='elidecode'
+pkgver=48.38fa5ba
+pkgrel=2
+groups=('blackarch' 'blackarch-reversing')
+arch=('any')
+pkgdesc='A tool to decode obfuscated shellcodes using the unicorn-engine for the emulation and the capstone-engine to print the asm code.'
+url='https://github.com/DeveloppSoft/EliDecode'
+license=('GPL3')
+depends=('python2' 'python2-unicorn' 'python2-argparse' 'capstone' 'unicorn'
+         'bash')
+makedepends=('git')
+source=('git+https://github.com/DeveloppSoft/EliDecode.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/EliDecode"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/EliDecode"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/elidecode"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/elidecode/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/elidecode/LICENSE"
+
+  rm LICENSE
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/elidecode"
+
+  cat > "$pkgdir/usr/bin/elidecode" << EOF
+#!/usr/bin/env bash
+cd /usr/share/elidecode
+exec python2 decoder.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/elidecode"
+}
