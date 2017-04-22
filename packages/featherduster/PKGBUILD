@@ -3,14 +3,14 @@
 
 pkgname='featherduster'
 pkgver=148.1d20594
-pkgrel=1
+pkgrel=2
 pkgdesc='An automated, modular cryptanalysis tool.'
 groups=('blackarch' 'blackarch-crypto')
 arch=('any')
 url='https://github.com/nccgroup/featherduster'
 license=('custom:unknown')
 depends=('python2' 'python2-gmpy' 'python2-crypto' 'python2-ishell'
-         'python2-requests' 'python2-singlefile')
+         'python2-requests' 'python2-singlefile' 'readline' 'ncurses')
 makedepends=('git' 'python2-setuptools')
 source=('git+https://github.com/nccgroup/featherduster.git')
 sha1sums=('SKIP')
@@ -33,20 +33,22 @@ package() {
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/featherduster"
 
-  python2 setup.py install --root="$pkgdir" --optimize=1
+  python2 setup.py install --root="$pkgdir" --optimize=1 --skip-build
 
   install -Dm644 -t "$pkgdir/usr/share/doc/featherduster" README.md INSTALL.md \
     CONTRIBUTING.md
 
   find "$pkgdir" -type f -iname '*.pyc' -exec rm {} + -or -iname '*.pyo' -exec rm {} \;
-#  cp -a cryptanalib examples featherduster.py feathermodules tests util \
-#    "$pkgdir/usr/share/featherduster/"
 
-#  cat > "$pkgdir/usr/bin/featherduster" << EOF
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/featherduster/"
+
+  cat > "$pkgdir/usr/bin/featherduster" << EOF
 #!/bin/sh
-#cd /usr/share/featherduster
-#exec python2 featherduster.py "\${@}"
-#EOF
+cd /usr/share/featherduster
+exec python2 featherduster/featherduster.py "\${@}"
+EOF
 
-#  chmod a+x "$pkgdir/usr/bin/featherduster"
+  chmod a+x "$pkgdir/usr/bin/featherduster"
 }
