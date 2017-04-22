@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sea'
+pkgver=103.9aca1c8
+pkgrel=1
+groups=('blackarch' 'blackarch-malware' 'blackarch-binary')
+pkgdesc='A tool to help to create exploits of binary programs.'
+arch=('any')
+url='https://github.com/neuromancer/SEA'
+license=('GPL3')
+depends=('python2' 'z3')
+makedepends=('git')
+source=("git+https://github.com/neuromancer/SEA.git")
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/SEA"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/SEA"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/sea"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/sea" README.md
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/sea/COPYING"
+
+  rm COPYING README.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/sea/"
+
+  cat > "$pkgdir/usr/bin/sea" << EOF
+#!/bin/sh
+cd /usr/share/sea
+exec python2 SEA.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/sea"
+}
