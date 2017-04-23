@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ip2clue'
+pkgver='0.0.94'
+pkgrel=1
+pkgdesc='A small memory/CPU footprint daemon to lookup country (and other info) based on IP (v4 and v6).'
+groups=('blackarch' 'blackarch-recon')
+url='http://kernel.embedromix.ro/us/'
+license=('GPL3')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+depends=('bash' 'conn')
+options=('!emptydirs')
+source=("http://kernel.embedromix.ro/us/ip2clue/ip2clue-${pkgver}.tar.gz"
+        'ip2clued.service')
+sha1sums=('38890f6a2cb5d09ffdf8193a1dcb00de2285adf5'
+          '52044841450fab79bfe5da5a096e94ed18e4df4a')
+
+build() {
+  cd "ip2clue-$pkgver"
+
+  ./configure --prefix=/usr
+
+  make
+}
+
+package() {
+  cd "ip2clue-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  mv "$pkgdir/usr/sbin/"* "$pkgdir/usr/bin"
+
+  rm -rf "$pkgdir/etc/rc.d"
+
+  install -Dm644 "$srcdir/ip2clued.service" \
+    "$pkgdir/usr/lib/systemd/system/ip2clued.service"
+  install -Dm644 -t "$pkgdir/usr/share/doc/ip2clue" Changelog README TODO
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/ip2clue/LICENSE"
+}
