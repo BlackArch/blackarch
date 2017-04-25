@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='fridump'
+pkgver=14.4e7d9a9
+pkgrel=1
+pkgdesc='A universal memory dumper using Frida.'
+groups=('blackarch' 'blackarch-forensic')
+arch=('any')
+url='https://github.com/Nightbringer21/fridump'
+license=('custom:unknown')
+depends=('python2' 'frida')
+makedepends=('git')
+source=('git+https://github.com/Nightbringer21/fridump.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/fridump"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/fridump"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/fridump"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/fridump/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/fridump/"
+
+  cat > "$pkgdir/usr/bin/fridump" << EOF
+#!/bin/sh
+cd /usr/share/fridump
+exec python2 fridump.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/fridump"
+}
