@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ssma'
+pkgver=55.6ad3fa4
+pkgrel=1
+groups=('blackarch' 'blackarch-malware')
+arch=('any')
+pkgdesc='Simple Static Malware Analyzer.'
+url='https://github.com/secrary/SSMA'
+license=('GPL3')
+depends=('python' 'python-pefile' 'python-magic' 'python-yara'
+         'python-gitpython' 'python-virustotal-api' 'ssdeep')
+makedepends=('git')
+source=('git+https://github.com/secrary/SSMA.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/SSMA"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/SSMA"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/ssma"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/ssma" README.md
+
+  rm README.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/ssma"
+
+  chmod 755 ${pkgdir}/usr/share/ssma/ssma.py
+
+  cat > "${pkgdir}/usr/bin/ssma" << EOF
+#!/usr/bin/env bash
+cd /usr/share/ssma
+exec python3 ssma.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/ssma"
+}
