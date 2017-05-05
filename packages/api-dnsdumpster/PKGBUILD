@@ -3,7 +3,7 @@
 
 pkgname='api-dnsdumpster'
 pkgver=36.5507097
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
 pkgdesc='Unofficial Python API for http://dnsdumpster.com/.'
 arch=('any')
@@ -20,11 +20,19 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd "$srcdir/API-dnsdumpster.com"
+
+  python2 setup.py build
+}
+
 package() {
   cd "$srcdir/API-dnsdumpster.com"
 
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/api-dnsdumpster"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
 
   install -Dm644 -t "$pkgdir/usr/share/api-dnsdumpster/" README.md
 
@@ -38,4 +46,6 @@ exec python2 /usr/share/api-dnsdumpster/API_example.py "\$@"
 EOF
 
   chmod a+x "$pkgdir/usr/bin/api-dnsdumpster"
+
+  find "$pkgdir" -type f -iname '*.pyc' -exec rm {} \;
 }
