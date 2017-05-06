@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hcxtools'
+pkgver=78.9e28500
+pkgrel=1
+pkgdesc='Small set of tools to capture and convert packets from wlan devices for the use with hashcat.'
+groups=('blackarch' 'blackarch-wireless')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/ZerBea/hcxtools'
+license=('MIT')
+depends=('libpcap' 'openssl' 'curl')
+makedepends=('git')
+source=('git+https://github.com/ZerBea/hcxtools.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/hcxtools"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/hcxtools"
+
+  sed -i 's|/usr/local|/usr|' Makefile*
+}
+
+build() {
+  cd "$srcdir/hcxtools"
+
+  make
+}
+
+package() {
+  cd "$srcdir/hcxtools"
+
+  install -Dm755 -t "$pkgdir/usr/bin" wlandump wlanscan wlancap2hcx \
+    wlanhcx2cap wlanhc2hcx wlanhcx2essid wlanhcx2ssid wlanhcx2john wlanhcxinfo \
+    wlanhcxmnc whoismac pwhash
+  install -Dm644 -t "$pkgdir/usr/share/doc/hcxtools/" README.md
+  install -Dm644 license.txt "$pkgdir/usr/share/licenses/hcxtools/license.txt"
+}
