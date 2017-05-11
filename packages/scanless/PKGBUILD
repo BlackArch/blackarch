@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='scanless'
+pkgver=21.031eed3
+pkgrel=1
+pkgdesc='Utility for using websites that can perform port scans on your behalf.'
+groups=('blackarch' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/vesche/scanless'
+license=('custom:unknown')
+depends=('python2' 'python2-argparse' 'python2-beautifulsoup4'
+         'python2-requests')
+makedepends=('git')
+source=('git+https://github.com/vesche/scanless.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/scanless"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/scanless"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/scanless"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/scanless/" README.md
+  install -Dm644 UNLICENSE "$pkgdir/usr/share/licenses/scanless/UNLICENSE"
+
+  rm README.md UNLICENSE
+
+  cp -a * "$pkgdir/usr/share/scanless/"
+
+  cat > "$pkgdir/usr/bin/scanless" << EOF
+#!/bin/sh
+cd /usr/share/scanless
+exec python2 scanless.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/scanless"
+}
