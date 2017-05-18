@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pulledpork'
+pkgver=311.a2c1b67
+pkgrel=1
+pkgdesc="Snort rule management"
+groups=('blackarch' 'blackarch-misc')
+arch=('any')
+url='https://github.com/shirkdog/pulledpork'
+license=('GPL2')
+depends=('perl' 'perl-lwp-protocol-https' 'perl-crypt-ssleay'
+         'perl-bytes-random-secure')
+makedepends=('git')
+source=('git+https://github.com/shirkdog/pulledpork.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/pulledpork"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/pulledpork"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/pulledpork/"
+  mkdir -p "$pkgdir/etc/pulledpork"
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/pulledpork/"
+  cp -a --no-preserve=ownership * "$pkgdir/etc/pulledpork"
+
+  cat > "$pkgdir/usr/bin/pulledpork" << EOF
+#!/bin/sh
+cd /usr/share/pulledpork
+exec perl pulledpork.pl "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/pulledpork"
+}
+
