@@ -3,7 +3,7 @@
 
 pkgname='scanless'
 pkgver=35.8c95935
-pkgrel=1
+pkgrel=2
 pkgdesc='Utility for using websites that can perform port scans on your behalf.'
 groups=('blackarch' 'blackarch-scanner')
 arch=('any')
@@ -21,24 +21,17 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd "$srcdir/scanless"
+
+  python2 setup.py build
+}
+
 package() {
   cd "$srcdir/scanless"
 
-  mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/share/scanless"
+  python2 setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
 
   install -Dm644 -t "$pkgdir/usr/share/doc/scanless/" README.md
   install -Dm644 UNLICENSE "$pkgdir/usr/share/licenses/scanless/UNLICENSE"
-
-  rm README.md UNLICENSE
-
-  cp -a * "$pkgdir/usr/share/scanless/"
-
-  cat > "$pkgdir/usr/bin/scanless" << EOF
-#!/bin/sh
-cd /usr/share/scanless
-exec python2 scanless.py "\${@}"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/scanless"
 }
