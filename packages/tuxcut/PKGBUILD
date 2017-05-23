@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname='tuxcut'
-pkgver=5.44e8db2
+pkgver=38.44e8db2
 pkgrel=1
 groups=('blackarch' 'blackarch-sniffer')
 pkgdesc='Netcut-like program for Linux written in PyQt.'
@@ -10,8 +10,15 @@ url='https://github.com/a-atalla/tuxcut.git'
 arch=('any')
 license=('GPL2')
 depends=('python2' 'python2-pyqt4' 'iproute2' 'dsniff' 'arp-scan' 'arptables')
+makedepends=('git')
 source=("git+https://github.com/a-atalla/tuxcut.git")
 sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/tuxcut"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 prepare() {
   cd "$srcdir"
@@ -21,8 +28,10 @@ prepare() {
     "$srcdir/tuxcut/tuxcut.py"
   sed -i 's/python/python2/' "$srcdir/tuxcut/tuxcut"
   sed -i 's/cmd = /cmd=/' "$srcdir/tuxcut/tuxcut"
-  sed -i 's;/opt/TuxCut/tuxcut.py;/opt/tuxcut/tuxcut.py;' "$srcdir/tuxcut/tuxcut"
-  sed -i "s;ui/MainWindow.ui;/opt/tuxcut/ui/MainWindow.ui;" "$srcdir/tuxcut/tuxcut_core.py"
+  sed -i 's;/opt/TuxCut/tuxcut.py;/opt/tuxcut/tuxcut.py;' \
+    "$srcdir/tuxcut/tuxcut"
+  sed -i "s;ui/MainWindow.ui;/opt/tuxcut/ui/MainWindow.ui;" \
+    "$srcdir/tuxcut/tuxcut_core.py"
 }
 
 package() {
@@ -33,5 +42,6 @@ package() {
   mkdir -p "$pkgdir/usr/share/doc/tuxcut"
 
   install -m755 "$srcdir/tuxcut/tuxcut" "$pkgdir/usr/bin/tuxcut"
+
   cp -a --no-preserve=ownership "$srcdir/tuxcut/" "$pkgdir/opt/"
 }
