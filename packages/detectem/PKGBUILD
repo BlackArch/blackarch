@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='detectem'
+pkgver=90.54f64c9
+pkgrel=1
+pkgdesc='Detect software and its version on websites.'
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-webapp'
+        'blackarch-recon')
+arch=('any')
+url='https://github.com/spectresearch/detectem'
+license=('MIT')
+depends=('python' 'python-requests' 'python-pytest' 'python-docker'
+         'python-click' 'python-yaml' 'python-zope-interface' 'python-dukpy')
+makedepends=('git')
+source=('git+https://github.com/spectresearch/detectem.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/detectem"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/detectem"
+
+  find . -type f -exec sed -i 's/==4.3.2//g;s/==2.12.4//g;s/==6.6//g' {} \;
+}
+
+build() {
+  cd "$srcdir/detectem"
+
+  python setup.py build
+}
+
+package() {
+  cd "$srcdir/detectem"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/detectem/" *.md *.rst docs/*
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/detectem/LICENSE"
+
+  mv "$pkgdir/usr/bin/det" "$pkgdir/usr/bin/detectem"
+}
