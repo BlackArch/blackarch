@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='loadlibrary'
+pkgver=15.ca6dce8
+pkgrel=2
+pkgdesc='Porting Windows Dynamic Link Libraries to Linux.'
+groups=('blackarch' 'blackarch-binary')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/taviso/loadlibrary'
+license=('GPL2')
+if [[ "$CARCH" == "x86_64" ]]; then
+  depends=('cabextract' 'readline' 'gcc-multilib')
+else
+  depends=('cabextract' 'readline')
+fi
+makedepends=('git')
+source=('git+https://github.com/taviso/loadlibrary.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/loadlibrary"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/loadlibrary"
+
+  make
+}
+
+package() {
+  cd "$srcdir/loadlibrary"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/loadlibrary"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/loadlibrary/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/loadlibrary/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/loadlibrary"
+
+  cat > "$pkgdir/usr/bin/mpclient" << EOF
+#!/bin/sh
+cd /usr/share/loadlibrary
+exec ./mpclient "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/mpclient"
+}
