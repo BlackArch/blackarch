@@ -3,7 +3,7 @@
 
 pkgname='whichcdn'
 pkgver=22.5fc6ddd
-pkgrel=1
+pkgrel=2
 pkgdesc='Tool tod etect if a given website is protected by a Content Delivery Network.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-recon')
 arch=('any')
@@ -20,19 +20,24 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-build() {
-  cd "$srcdir/whichCDN"
-
-  python2 setup.py build
-}
-
 package() {
   cd "$srcdir/whichCDN"
 
-  python2 setup.py install --root="$pkgdir" --prefix=/usr
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/whichcdn"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/whichcdn/" README.md DISCLAIMER.md
-  install -Dm644 LICENCE.txt "$pkgdir/usr/share/whichcdn/LICENSE.txt"
+  install -Dm644 -t "$pkgdir/usr/share/doc/whichcdn/" *.md
+  install -Dm644 LICENCE.txt "$pkgdir/usr/share/licenses/whichcdn/LICENSE.txt"
 
-  mv "$pkgdir/usr/bin/whichCDN" "$pkgdir/usr/bin/whichcdn"
+  rm *.md LICENCE.txt
+
+  cp -a * "$pkgdir/usr/share/whichcdn"
+
+  cat > "$pkgdir/usr/bin/whichcdn" << EOF
+#!/bin/sh
+cd /usr/share/whichcdn
+python2 whichCDN "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/whichcdn"
 }
