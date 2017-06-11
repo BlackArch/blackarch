@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+# Original Maintainer on AUR: zwindl
+
+pkgname='gdbgui'
+pkgver=226.389e569
+pkgrel=1
+pkgdesc='Browser-based gdb frontend using Flask and JavaScript to visually debug C, C++, Go, or Rust.'
+groups=('blackarch' 'blackarch-debugger' 'blackarch-binary')
+arch=('any')
+url='https://github.com/cs01/gdbgui'
+depends=('python' 'python-eventlet' 'python-flask' 'python-flask-socketio'
+         'python-pygdbmi' 'python-pypugjs' 'python-enum-compat' 'python-gevent'
+         'python-pygments')
+optdepends=('gdb: GNU Project Debugger')
+makedepends=('git' 'python-setuptools')
+license=('GPL3')
+install='gdbgui.install'
+source=('git+https://github.com/cs01/gdbgui.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/gdbgui"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/gdbgui"
+
+  sed -i 's|>=0.12||;s|>=0.7.3.3||;s|>=4.2.0||;s|>=2.8.3||;s|>=1.2.1||;s|>=0.20.1||;s|>=2.2.0||' setup.py
+}
+
+build() {
+  cd "$srcdir/gdbgui"
+
+  python setup.py build
+}
+
+package() {
+  cd "$srcdir/gdbgui"
+
+  python setup.py install --root="$pkgdir" --optimize=1 --skip-build
+
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/gdbgui/LICENSE"
+}

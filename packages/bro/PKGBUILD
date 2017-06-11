@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname='bro'
-pkgver='2.5'
+pkgver='2.5.1'
 pkgrel=1
 groups=('blackarch' 'blackarch-networking' 'blackarch-defensive'
         'blackarch-sniffer')
@@ -10,22 +10,25 @@ pkgdesc='A powerful network analysis framework that is much different from the t
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://www.bro.org/download/index.html'
 license=('custom:unknown')
-depends=('libpcap' 'openssl' 'bash' 'python' 'swig')
-makedepends=('cmake' 'flex' 'bison' 'swig' 'zlib' 'perl' 'python')
-source=("https://www.bro.org/downloads/bro-${pkgver}.tar.gz")
-sha1sums=('12c6dc0c38e7515dbac530ba0890a0bce6066fa3')
+depends=('libpcap' 'openssl' 'bash' 'python' 'swig' 'ruby' 'perl' 'crypto++')
+makedepends=('cmake' 'flex' 'bison' 'swig' 'zlib')
+source=("https://www.bro.org/downloads/beta/bro-${pkgver}-beta.tar.gz")
+sha1sums=('b1ce31948263f504ff9d97275bfab92643341034')
 
 build() {
-  cd "$srcdir/bro-$pkgver"
+  cd "$srcdir/bro-$pkgver-beta"
 
   # tmp solution. needs to be fixed for 'broccoli' and 'broctl'
-  ./configure --prefix=/usr --disable-broccoli --disable-broctl
+  ./configure --prefix=/usr --with-openssl=/usr/lib \
+    --disable-broccoli --disable-broctl
 
   make
 }
 
 package() {
-  cd "$srcdir/bro-$pkgver"
+  cd "$srcdir/bro-$pkgver-beta"
 
   make DESTDIR="$pkgdir" install
+
+  mv "$pkgdir/usr/bin/bro" "$pkgdir/usr/bin/bro-sniffer"
 }
