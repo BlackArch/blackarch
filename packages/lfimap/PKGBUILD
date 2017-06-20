@@ -2,29 +2,40 @@
 # See COPYING for license details.
 
 pkgname='lfimap'
-pkgver='1.4.8'
-pkgrel=2
+pkgver=6.0edee6d
+pkgrel=1
 groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer')
 pkgdesc='This script is used to take the highest beneficts of the local file include vulnerability in a webserver.'
 arch=('any')
-url='https://code.google.com/p/lfimap/'
+url='https://github.com/aepereyra/lfimap/'
 license=('unknown')
 depends=('python2')
-source=("https://lfimap.googlecode.com/files/lfimap-${pkgver}.tar.gz")
-sha1sums=('182b4ef76e2e531fe4557931ec44ab1653fa6439')
+makedepends=('git')
+source=('git+https://github.com/aepereyra/lfimap.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/lfimap"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 package() {
-  cd "$srcdir/lfimap-$pkgver"
+  cd "$srcdir/lfimap"
 
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/lfimap"
+
+  install -Dm644 README "$pkgdir/usr/share/doc/lfimap/README"
+
+  rm README
 
   cp -a * "$pkgdir/usr/share/lfimap"
 
   cat > "$pkgdir/usr/bin/lfimap" << EOF
 #!/bin/sh
 cd /usr/share/lfimap
-exec python2 lfimap.py "\$@"
+exec python2 lfimap.py "\${@}"
 EOF
 
   chmod +x "$pkgdir/usr/bin/lfimap"
