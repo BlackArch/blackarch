@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname='opendoor'
-pkgver=342.8181a70
+pkgver=367.1cd09df
 pkgrel=1
 pkgdesc='OWASP WEB Directory Scanner.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
@@ -24,20 +24,36 @@ pkgver() {
 build() {
   cd "$srcdir/OpenDoor"
 
-  python setup.py build
+  #python setup.py build
 }
 
 package() {
   cd "$srcdir/OpenDoor"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/opendoor"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/opendoor/" README.md CHANGELOG.md
+  #python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+
+  cp -a * "$pkgdir/usr/share/opendoor/"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/opendoor/" README.md README.rst \
+    CHANGELOG.md
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/opendoor/LICENSE"
+
+  rm README.* CHANGELOG.md LICENSE
 
   #mv "$pkgdir/usr/bin/opendoor.py" "$pkgdir/usr/bin/opendoor"
 
   #rm "$pkgdir/usr/lib/python3.6/site-packages/tests/__init__."{py,pyc,pyo}
 
-  rm -rf "${pkgdir}/usr/lib/python3.6/site-packages/tests/"
+  #rm -rf "${pkgdir}/usr/lib/python3.6/site-packages/tests/"
+
+  cat > "$pkgdir/usr/bin/opendoor" << EOF
+#!/bin/sh
+cd /usr/share/opendoor
+exec python3 opendoor.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/opendoor"
 }
