@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dnssearch'
+pkgver=18.65bd5da
+pkgrel=1
+groups=('blackarch' 'blackarch-recon')
+pkgdesc='A subdomain enumeration tool.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/evilsocket/dnssearch'
+license=('GPL3')
+depends=('go')
+makedepends=('go' 'git')
+source=('git+https://github.com/evilsocket/dnssearch.git')
+sha1sums=('SKIP')
+_url='github.com/evilsocket/dnssearch'
+
+pkgver() {
+  cd "$srcdir/dnssearch"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  GOPATH="$srcdir" go get $_url
+
+  cd "$srcdir/dnssearch"
+
+  GOPATH="$srcdir" go build -o dnssearch main.go
+}
+
+package() {
+  cd "$srcdir/dnssearch"
+
+  install -Dm755 "dnssearch" "$pkgdir/usr/bin/dnssearch"
+  install -Dm644 -t "$pkgdir/usr/share/dnssearch/" names.txt Dockerfile
+  install -Dm644 -t "$pkgdir/usr/share/doc/dnssearch/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/dnssearch/LICENSE"
+}
