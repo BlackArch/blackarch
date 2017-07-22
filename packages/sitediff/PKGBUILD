@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sitediff'
+pkgver=3.1383935
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fingerprint')
+pkgdesc='Fingerprint a web app using local files as the fingerprint sources.'
+arch=('any')
+url='https://github.com/digininja/sitediff'
+license=('custom:unknown')
+depends=('ruby')
+makedepends=('ruby' 'git')
+source=('git+https://github.com/digininja/sitediff.git')
+install='sitediff.install'
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sitediff"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/sitediff"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/sitediff"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/sitediff/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/sitediff"
+
+  cat > "$pkgdir/usr/bin/sitediff" << EOF
+#!/bin/sh
+cd /usr/share/sitediff
+exec ruby sitediff.rb "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/sitediff"
+}

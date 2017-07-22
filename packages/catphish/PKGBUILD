@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='catphish'
+pkgver=32.a391241
+pkgrel=1
+groups=('blackarch' 'blackarch-social')
+pkgdesc='For phishing and corporate espionage.'
+arch=('any')
+url='https://github.com/ring0lab/catphish'
+license=('custom:unknown')
+depends=('ruby')
+makedepends=('ruby' 'git')
+source=('git+https://github.com/ring0lab/catphish.git')
+install='catphish.install'
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/catphish"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/catphish"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/catphish"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/catphish/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/catphish"
+
+  cat > "$pkgdir/usr/bin/catphish" << EOF
+#!/bin/sh
+cd /usr/share/catphish
+exec ruby catphish.rb "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/catphish"
+}

@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ps1encode'
+pkgver=41.68d7778
+pkgrel=1
+pkgdesc='A tool to generate and encode a PowerShell based Metasploit payloads.'
+url='https://github.com/CroweCybersecurity/ps1encode'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation')
+license=('MIT')
+depends=('ruby' 'metasploit')
+optdepends=('mingw-w64-gcc')
+makedepends=('git')
+source=('git+https://github.com/CroweCybersecurity/ps1encode.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ps1encode"
+
+  echo "$(git rev-list --count HEAD)"."$(git rev-parse --short HEAD)"
+}
+
+package() {
+  cd "$srcdir/ps1encode"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/ps1encode"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/ps1encode/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/ps1encode/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/ps1encode/"
+
+  cat > "$pkgdir/usr/bin/ps1encode" << EOF
+#!/bin/sh
+exec ruby /usr/share/ps1encode/ps1encode.rb "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/ps1encode"
+}
