@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='lfisuite'
+pkgver=65.8571a50
+pkgrel=1
+pkgdesc='Totally Automatic LFI Exploiter (+ Reverse Shell) and Scanner.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp'
+        'blackarch-exploitation')
+arch=('any')
+url='https://github.com/D35m0nd142/LFISuite'
+license=('GPL3')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/D35m0nd142/LFISuite.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/LFISuite"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/LFISuite"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/lfisuite"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/lfisuite/" README.md
+  install -Dm644 COPYING.GPL "$pkgdir/usr/share/licenses/lfisuite/COPYING.GPL"
+
+  rm README.md COPYING.GPL
+
+  cp -a * "$pkgdir/usr/share/lfisuite/"
+
+  cat > "$pkgdir/usr/bin/lfisuite" << EOF
+#!/bin/sh
+cd /usr/share/lfisuite
+exec python2 lfisuite.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/lfisuite"
+}
