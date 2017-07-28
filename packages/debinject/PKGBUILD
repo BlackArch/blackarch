@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='debinject'
+pkgver=9.64855e0
+pkgrel=1
+pkgdesc='Inject malicious code into *.debs.'
+groups=('blackarch' 'blackarch-backdoor')
+arch=('any')
+url='https://github.com/UndeadSec/Debinject'
+license=('BSD3')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/UndeadSec/Debinject.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Debinject"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Debinject"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/debinject"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/debinject/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/debinject/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/debinject/"
+
+  cat > "$pkgdir/usr/bin/debinject" << EOF
+#!/bin/sh
+cd /usr/share/debinject
+exec python2 debinject.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/debinject"
+}
