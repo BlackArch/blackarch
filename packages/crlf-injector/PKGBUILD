@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='crlf-injector'
+pkgver=8.abaf494
+pkgrel=1
+pkgdesc='A python script for testing CRLF injecting issues.'
+groups=('blackarch' 'blackarch-fuzzer' 'blackarch-webapp')
+arch=('any')
+url='https://github.com/rudSarkar/crlf-injector'
+license=('custom:unknown')
+depends=('python2' 'python2-netaddr' 'python2-argparse')
+makedepends=('git')
+source=('git+https://github.com/rudSarkar/crlf-injector.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/crlf-injector"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/crlf-injector"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/crlf-injector"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/crlf-injector/" README.md
+  install -Dm644 LICENSE.md/LICENSE.md \
+    "$pkgdir/usr/share/licenses/crlf-injector/LICENSE"
+
+  rm -rf README.md LICENSE.md
+
+  cp -a * "$pkgdir/usr/share/crlf-injector/"
+
+  cat > "$pkgdir/usr/bin/crlf-injector" << EOF
+#!/bin/sh
+cd /usr/share/crlf-injector
+exec python2 crlf.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/crlf-injector"
+}
