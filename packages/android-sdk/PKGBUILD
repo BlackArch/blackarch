@@ -1,61 +1,65 @@
-# This file is part of BlackArch Linux ( http://blackarch.org ).
-# See COPYING for license details.
+# Maintainer: Zhang Hai <dreaming.in.code.zh@gmail.com>
+# Contributor: Alexander F Rødseth <xyproto@archlinux.org>
+# Contributor: Daniel Micay <danielmicay@gmail.com>
+# Contributor: Gordin <9ordin@gmail.com>
+
+# Finding dependencies:
+# ELF dependencies:
+# cd /lib/ && find /opt/android-sdk/tools/ -type f -executable \
+#   | LANG=C xargs readelf -d 2>/dev/null \
+#   | grep -oP '(?<=Shared library: \[).*(?=\])' | LANG=C xargs pacman -Qo \
+#   | cut -d' ' -f5 | sort | uniq
+# .so in JAR files:
+# find /opt/android-sdk/tools/ -type f -exec unzip -l {} 2>&1 \; \
+#   | grep -P '^Archive:|\.so$' \
+#   | awk 'BEGIN { archive = ""; } { if (NF == 2) { archive = $0; } else { \
+#     if (length(archive) > 0) { print archive; archive="" } print $0; } }'
+# Note that dependency on libxtst is from swt.
 
 pkgname='android-sdk'
-pkgver='r24.4.1'
+pkgver='26.0.2'
 pkgrel=1
 pkgdesc='Google Android SDK.'
 groups=('blackarch' 'blackarch-mobile')
-arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
-url='http://developer.android.com/sdk/index.html'
+arch=('x86_64' 'i686' 'armv6h' 'armv7h' 'aarch64')
+url='https://developer.android.com/studio/releases/sdk-tools.html'
 license=('custom')
-depends=('java-environment' 'alsa-lib' 'openal' 'libstdc++5' 'libxv' 'ncurses'
-         'sdl' 'swt' 'zlib')
-if [[ $CARCH = x86_64 ]]; then
-  depends=('java-environment' 'lib32-alsa-lib' 'lib32-openal' 'lib32-libstdc++5'
-           'lib32-libxv' 'lib32-ncurses' 'lib32-sdl' 'lib32-zlib' 'swt')
-fi
-install=android-sdk.install
-optdepends=('android-udev-rules: udev rules for Android devices'
-            'android-sdk-platform-tools: adb, aapt, aidl, dexdump and dx')
-source=("https://dl.google.com/android/android-sdk_${pkgver}-linux.tgz"
-        'android-sdk.png'
-        'android-sdk.desktop'
-        'android-sdk.sh'
-        'android-sdk.csh'
-        'android-sdk.conf'
+depends_i686=('java-environment' 'libxtst' 'fontconfig' 'freetype2' 'gcc-libs'
+              'libx11' 'libxext' 'libxrender' 'zlib')
+depends_x86_64=('java-environment' 'libxtst' 'fontconfig' 'freetype2'
+                'lib32-gcc-libs' 'lib32-glibc' 'libx11' 'libxext' 'libxrender'
+                'zlib')
+optdepends=('android-emulator: emulator has become standalone since 25.3.0'
+            'android-sdk-platform-tools: adb, aapt, aidl, dexdump and dx'
+            'android-udev: udev rules for Android devices')
+install="${pkgname}.install"
+source=('https://dl.google.com/android/repository/sdk-tools-linux-3952940.zip'
+        "${pkgname}.sh"
+        "${pkgname}.csh"
+        "${pkgname}.conf"
         'license.html')
-sha1sums=('725bb360f0f7d04eaccff5a2d57abdd49061326d'
-          'c249134310ae91dccce1ad839b3985211674ab71'
-          'e834f53e13d5926ec7be3fd775fa80aa6f328eb6'
-          '78f8574e651c9bf8b7515ecb30c7ef93edbc4a96'
-          '08c85aab7523e22b298891c7047bc0e7adbf3437'
+sha1sums=('a438247f7d752b8e90f9e432b16b187fcff40c85'
+          '30a6ed281d54f8b7be08663a18c367f79c0d8d47'
+          '1bd09bf137fd09171cb426daa5748f117cfb3c25'
           '145bdf3eb41a56574b289c1577a24bc47097ec83'
           'bfb91be7e0b602d765b7a1fcaf0ce1b7e1a93faa')
 
 package() {
-  cd "$pkgdir"
 
-  # Base Dirs
-  install -Dm755 "$srcdir/android-sdk.sh" etc/profile.d/android-sdk.sh
-  install -Dm755 "$srcdir/android-sdk.csh" etc/profile.d/android-sdk.csh
-  install -Dm644 "$srcdir/android-sdk.conf" etc/ld.so.conf.d/android-sdk.conf
-  mkdir -p opt
+  install -Dm755 "${pkgname}.sh" "${pkgdir}/etc/profile.d/${pkgname}.sh"
+  install -Dm755 "${pkgname}.csh" "${pkgdir}/etc/profile.d/${pkgname}.csh"
+  install -Dm644 "${pkgname}.conf" "${pkgdir}/etc/ld.so.conf.d/${pkgname}.conf"
+  install -Dm644 license.html "${pkgdir}/usr/share/licenses/${pkgname}/license.html"
+  install -d "${pkgdir}/opt/${pkgname}/platforms"
+  install -d "${pkgdir}/opt/${pkgname}/add-ons"
 
-  cp -a "$srcdir/android-sdk-linux" opt/android-sdk
-  install -Dm655 "$srcdir/android-sdk.png" usr/share/pixmaps/android-sdk.png
-  install -Dm655 "$srcdir/android-sdk.desktop" \
-    usr/share/applications/android-sdk.desktop
-  install -Dm644 "$srcdir/license.html" \
-    usr/share/licenses/android-sdk/license.html
+  cp -a tools "${pkgdir}/opt/${pkgname}"
 
   if [[ $CARCH = i686 ]]; then
-    rm -rf ${pkgdir}/opt/android-sdk/tools/lib/{monitor-,}x86_64 \
-      ${pkgdir}/opt/android-sdk/tools/lib/lib64* \
-      ${pkgdir}/opt/android-sdk/tools/emulator64-*
+    rm -rf "${pkgdir}"/opt/android-sdk/tools/lib/{monitor-,}x86_64
   fi
 
-  # Fix permissions
-  chmod -R ugo+rX "${pkgdir}/opt"
-  chmod g+rwX opt/android-sdk
+  # Fix broken permissions
+  chmod -R o=g "${pkgdir}/opt/${pkgname}"
+  find "${pkgdir}/opt/${pkgname}" -perm 744 -exec chmod 755 {} +
 }
