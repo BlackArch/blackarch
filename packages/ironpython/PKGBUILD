@@ -1,0 +1,40 @@
+# Maintainer: Michael Schubert <mschu.dev at gmail>
+
+pkgname='ironpython'
+pkgver=2.7.5.378.ga94945543
+pkgrel=1
+pkgdesc="Python implementation for the .NET framework"
+arch=("any")
+url="http://ironpython.net"
+license=("Apache")
+depends=('mono')
+makedepends=('git')
+options=('!strip' 'emptydirs' 'libtool')
+source=($pkgname::git://github.com/IronLanguages/main.git
+        site.patch)
+sha1sums=('SKIP'
+          '42a640088300da076edb0c73bcbe22592054623c')
+
+pkgver() {
+  cd "$srcdir/$pkgname"
+  git describe --always | sed 's|-|.|g;s|^ipy\.||'
+}
+
+build() {
+  cd "$srcdir/$pkgname"
+  sed -i "/NoWarn/s|444;||" Solutions/Common.proj
+  xbuild Solutions/IronPython.sln /p:Mono=true /p:Configuration="Release"
+}
+
+package() {
+  mkdir -p "$pkgdir/opt/ipy" "$pkgdir/usr/bin"
+  cp -r $srcdir/$pkgname/bin/Release/* "$pkgdir/opt/ipy"
+  for bin in ipy ipy64 ipyw ipyw64; do
+    echo -e "#!/bin/sh\nmono /opt/ipy/$bin.exe $*" > "$pkgdir/usr/bin/$bin"
+    chmod +x "$pkgdir/usr/bin/$bin"
+  done
+
+  cd "$pkgdir/opt/ipy/Lib"
+  patch -p0 < "$srcdir/site.patch"
+}
+
