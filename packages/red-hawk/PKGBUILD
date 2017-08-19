@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='red-hawk'
+pkgver=19.a3bb8cc
+pkgrel=1
+pkgdesc='All in one tool for Information Gathering, Vulnerability Scanning and Crawling.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner' 'blackarch-webapp')
+arch=('any')
+url='https://github.com/Tuhinshubhra/RED_HAWK'
+license=('MIT')
+depends=('php')
+makedepends=('git')
+source=('git+https://github.com/Tuhinshubhra/RED_HAWK')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/RED_HAWK"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/RED_HAWK"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/red-hawk"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/red-hawk/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/red-hawk/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/red-hawk/"
+
+  cat > "$pkgdir/usr/bin/red-hawk" << EOF
+#!/bin/sh
+cd /usr/share/red-hawk
+exec php rhawk.php "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/red-hawk"
+}
