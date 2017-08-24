@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sandsifter'
+pkgver=1.dff6324
+pkgrel=1
+pkgdesc='The x86 processor fuzzer.'
+groups=('blackarch' 'blackarch-fuzzer' 'blackarch-hardware')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/xoreaxeaxeax/sandsifter'
+license=('custom:unknown')
+depends=('python2' 'python2-argparse' 'capstone')
+makedepends=('git' 'make' 'sed')
+source=('git+https://github.com/xoreaxeaxeax/sandsifter.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "${srcdir}/sandsifter"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build () {
+  cd "${srcdir}/sandsifter"
+
+  sed -i "s/\/usr\/bin\/python/\/usr\/bin\/python2/" *.py
+  sed -i "s/INJECTOR = \".\/injector\"/INJECTOR = \"\/opt\/sandsifter\/injector\"/" sifter.py
+  sed -i 's|-pthread|-pthread -static|' Makefile
+  make
+}
+
+package() {
+  cd "${srcdir}/sandsifter"
+
+  mkdir -p "${pkgdir}/opt/sandsifter"
+  mkdir -p "${pkgdir}/usr/bin"
+  mkdir -p "${pkgdir}/usr/share/docs/sandsifter"
+
+  install -Dm644 README.md "${pkgdir}/usr/share/docs/sandsifter/"
+
+  cp -rft "${pkgdir}/opt/sandsifter/" \
+    disas/ gui/ injector mutator.py pyutil/ sifter.py summarize.py
+
+  ln -sf "/opt/sandsifter/sifter.py" "${pkgdir}/usr/bin/sifter"
+  ln -sf "/opt/sandsifter/summarize.py" "${pkgdir}/usr/bin/summarize"
+}
