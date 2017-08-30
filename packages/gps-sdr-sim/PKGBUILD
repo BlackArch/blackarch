@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='gps-sdr-sim'
+pkgver=129.398274a
+pkgrel=1
+pkgdesc='Software-Defined GPS Signal Simulator.'
+groups=('blackarch' 'blackarch-radio')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/osqzss/gps-sdr-sim'
+license=('MIT')
+depends=('python2' 'gnuradio' 'hackrf' 'bladerf' 'gnuradio-osmosdr')
+makedepends=('git')
+source=('git+https://github.com/osqzss/gps-sdr-sim.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/gps-sdr-sim"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/gps-sdr-sim"
+
+  make
+}
+
+package() {
+  cd "$srcdir/gps-sdr-sim"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/gps-sdr-sim"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/gps-sdr-sim/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/gps-sdr-sim/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/gps-sdr-sim"
+
+  cat >> "$pkgdir/usr/bin/gps-sdr-sim" << EOF
+#!/bin/sh
+exec /usr/share/gps-sdr-sim/gps-sdr-sim "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/gps-sdr-sim"
+
+  cat >> "$pkgdir/usr/bin/gps-sdr-sim-uhd" << EOF
+#!/bin/sh
+cd /usr/share/gps-sdr-sim
+exec python2 gps-sdr-sim-uhd.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/gps-sdr-sim-uhd"
+
+}

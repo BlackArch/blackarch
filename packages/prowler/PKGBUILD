@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='prowler'
+pkgver=225.90497a5
+pkgrel=1
+pkgdesc='Tool for AWS security assessment, auditing and hardening.'
+groups=('blackarch' 'blackarch-defensive' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/alfresco/prowler'
+license=('Apache2')
+depends=('bash' 'aws-cli')
+makedepends=('git')
+source=('git+https://github.com/alfresco/prowler.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/prowler"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/prowler"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/prowler"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/prowler/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/prowler/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/prowler/"
+
+  cat > "$pkgdir/usr/bin/prowler" << EOF
+#!/bin/sh
+cd /usr/share/prowler
+exec bash prowler "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/prowler"
+}

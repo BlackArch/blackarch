@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='stegdetect'
+pkgver=18.3163085
+pkgrel=3
+pkgdesc='An automated tool for detecting steganographic content in images.'
+groups=('blackarch' 'blackarch-stego' 'blackarch-defensive'
+        'blackarch-forensic')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/redNixon/stegdetect'
+license=('BSD')
+depends=('gdk-pixbuf2')
+makedepends=('git')
+source=('git+https://github.com/redNixon/stegdetect.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/stegdetect"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/stegdetect"
+
+  if [ ${CARCH} = "x86_64" ]
+  then
+    linux32 ./configure --prefix=/usr
+    linux32 make
+  else
+    ./configure --prefix=/usr
+    make
+  fi
+}
+
+package() {
+  cd "$srcdir/stegdetect"
+
+  mkdir -p "$pkgdir/usr/share/stegdetect"
+
+  install -Dm755 -t "$pkgdir/usr/bin" stegcompare stegdeimage stegdetect \
+    stegbreak
+  install -Dm644 -t "$pkgdir/usr/share/man/man1/" *.1
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/stegdetect/LICENSE"
+}
