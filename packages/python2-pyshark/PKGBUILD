@@ -1,21 +1,35 @@
-# This file is part of BlackArch Linux ( http://blackarch.org ).
-# See COPYING for license details.
+# Maintainer: Levente Polyak <anthraxx[at]archlinux[dot]org>
 
-pkgname='python2-pyshark'
-pkgver='0.3.7.5'
+pkgbase=pyshark
+pkgname=python2-pyshark
+pkgver=0.3.7.2
 pkgrel=1
-pkgdesc='Python wrapper for tshark, allowing python packet parsing using wireshark dissectors.'
+pkgdesc='Python wrapper for tshark, allowing python packet parsing using wireshark dissectors'
 url='https://github.com/KimiNewt/pyshark'
 arch=('any')
 license=('MIT')
-depends=('wireshark-cli' 'pypy' 'python2-lxml' 'python2-trollius'
-         'python2-logbook')
-makedepends=('python2-setuptools' 'python2-mock')
-source=("https://pypi.python.org/packages/d2/39/c2aa56da84c8d11eba96e6ee48d50ac2287a36f6962441750726a38c45ac/pyshark-${pkgver}.tar.gz")
-sha1sums=('39b7ee08bd7725b6ca5637b82bd0cb80a8fb4786')
+makedepends=('wireshark-cli'
+             'python2-setuptools' 'python2-mock' 'python2-pytest' 'pypy' 'python2-lxml' 'python2-trollius' 'python2-logbook')
+source=(${pkgbase}-${pkgver}.tar.gz::https://github.com/KimiNewt/pyshark/archive/v${pkgver}.tar.gz)
+sha512sums=('dbd97665fae7d3067582bf7616e025b0c5e5fa14cacdaca59c89b4e70feb3017f2d8c7d899a70c0c8707589e4735b9283914bb6ccbf432e9072c64d7e957bc15')
+
+check() {
+  cd ${pkgbase}-${pkgver}
+  if ! $(groups|grep '\bwireshark\b' >/dev/null); then
+    warning "Tests only work when the build user belongs to the 'wireshark' group!"
+    return
+  fi
+  py.test
+  py.test2
+}
+
 
 package() {
-  cd "$srcdir/pyshark-${pkgver}/src"
-
-  python2 setup.py install --root="$pkgdir" --optimize=1 --prefix=/usr
+  depends=('wireshark-cli' 'pypy' 'python2-lxml' 'python2-trollius' 'python2-logbook')
+  cd ${pkgbase}-${pkgver}/src
+  python2 setup.py install -O1 --root="${pkgdir}" --prefix=/usr
+  install -Dm 644 ../README.md "${pkgdir}/usr/share/doc/${pkgname}/README"
+  install -Dm 644 ../LICENSE.txt "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }
+
+# vim: ts=2 sw=2 et:
