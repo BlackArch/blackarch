@@ -4,34 +4,47 @@
 
 pkgname='ruby-hoper'
 _gemname='hoper'
-pkgver='0.1.0'
+pkgver=12.3951159
+_gemver='0.1.0'
 pkgrel=1
 pkgdesc="Trace the URL's of a link."
 arch=('any')
 url='http://garamburu.com'
 license=("MIT")
 depends=('ruby' 'ruby-curb')
+makedepends=('git')
 groups=('blackarch' 'blackarch-recon')
 replaces=('hoper')
 conflicts=('hoper')
 provides=('hoper')
 options=('!emptydirs')
-source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
-noextract=("$_gemname-$pkgver.gem")
-sha1sums=('a795b7b0d0dffa2fcc5b3336643edd0003ab7f9c' )
+source=('git+https://github.com/gabamnml/hoper.git')
+sha1sums=('SKIP')
 
+pkgver() {
+  cd "$srcdir/hoper"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/$_gemname"
+
+  gem build $_gemname.gemspec
+}
 
 package() {
+  cd "$srcdir/$_gemname"
   local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
-  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
-  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
-  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "${pkgdir}"/usr/bin $_gemname-$_gemver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$_gemver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$_gemver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
 
   # Preserve library and other required directories. Remove junk that gem installs.
   local _copydir=`mktemp -d -t $_gemname.XXX`
   chmod 755 $_copydir
-  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib exe $_copydir)
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
-  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$_gemver"/ && cp -r --parents lib exe $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_gemver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$_gemver"
 
 }
