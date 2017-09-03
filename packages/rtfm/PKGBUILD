@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='rtfm'
+pkgver=76.c281e6f
+pkgrel=1
+pkgdesc='A database of common, interesting or useful commands, in one handy referable form.'
+groups=('blackarch' 'blackarch-misc')
+arch=('any')
+url='https://github.com/leostat/rtfm'
+license=('custom:unknow')
+depends=('python2' 'python2-terminaltables')
+makedepends=('git')
+source=('git+https://github.com/leostat/rtfm.git')
+md5sums=('SKIP')
+
+pkgver() {
+  cd "${srcdir}/rtfm"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "${srcdir}/rtfm"
+
+  mkdir -p "${pkgdir}/usr/share/rtfm"
+  mkdir -p "${pkgdir}/usr/share/doc/rtfm"
+  mkdir -p "${pkgdir}/usr/bin"
+
+  install -Dm755 rtfm.py "${pkgdir}/usr/share/rtfm/"
+  install -Dm644 *.sql *.db "${pkgdir}/usr/share/rtfm/"
+  install -Dm644 README.md "${pkgdir}/usr/share/doc/rtfm"
+
+  cat >> "${pkgdir}/usr/bin/rtfm" << EOF
+#!/bin/sh
+
+cd /usr/share/rtfm && python2 rtfm.py "\${@}"
+
+EOF
+
+  chmod 755 "${pkgdir}/usr/bin/rtfm"
+
+}
