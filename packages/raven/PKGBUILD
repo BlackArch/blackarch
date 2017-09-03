@@ -5,7 +5,7 @@ pkgname='raven'
 pkgver=10.091b20c
 pkgrel=1
 pkgdesc='A Linkedin information gathering tool used to gather information.'
-groups=('blackarch' 'blackarch-')
+groups=('blackarch' 'blackarch-recon')
 arch=('any')
 url='https://github.com/0x09AL/raven'
 license=('GPL-3.0')
@@ -28,17 +28,21 @@ package() {
   mkdir -p "${pkgdir}/usr/bin"
   mkdir -p "${pkgdir}/opt/raven"
 
-  install -Dm644 LICENSE README.md "${pkgdir}/usr/share/doc/raven/"
-  cp -a modules/ "${pkgdir}/opt/raven/"
   install -Dm755 raven.py "${pkgdir}/opt/raven/"
+  install -Dm644 -t "${pkgdir}/usr/share/doc/raven/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/raven/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a modules/ "${pkgdir}/opt/raven/"
 
   cat >> "${pkgdir}/usr/bin/raven" << EOF
 #!/bin/sh
 
-cd /opt/raven && python2 raven.py "\${@}"
+cd /opt/raven
+exec python2 raven.py "\${@}"
 
 EOF
 
-  chmod 755 "${pkgdir}/usr/bin/raven"
-
+  chmod a+x "${pkgdir}/usr/bin/raven"
 }
