@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='d-tect'
+pkgver=13.9555c25
+pkgrel=1
+pkgdesc='Pentesting the Modern Web.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-webapp')
+arch=('any')
+url='https://github.com/shawarkhanethicalhacker/D-TECT'
+license=('GPL3')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/shawarkhanethicalhacker/D-TECT.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/D-TECT"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/D-TECT"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/d-tect"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/d-tect/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/d-tect/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/d-tect/"
+
+  cat > "$pkgdir/usr/bin/d-tect" << EOF
+#!/bin/sh
+cd /usr/share/d-tect
+exec python2 d-tect.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/d-tect"
+}
