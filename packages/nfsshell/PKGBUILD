@@ -8,8 +8,9 @@ groups=('blackarch' 'blackarch-automation' 'blackarch-networking')
 pkgdesc='Userland NFS command tool.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='http://www.paramecium.org/~leendert/'
-license=('custom')
+license=('any:custom')
 depends=('readline')
+makedepends=('make' 'gcc')
 source=("http://www.cs.vu.nl/pub/leendert/nfsshell.tar.gz"
         "gcc.patch"
         "LICENSE")
@@ -18,16 +19,25 @@ sha1sums=('3939bb683bb29cde3b47344251cce57a2eff1a5e'
           'e8fd7ba82fd4e0440c5b92bc3c3a78c99ec6a407')
 
 build() {
-  cd "$srcdir/nfs"
+  cd "${srcdir}/nfs"
 
-  patch -Np1 -i "$srcdir/gcc.patch"
+  patch -Np1 -i "${srcdir}/gcc.patch"
   make
 }
 
 package() {
-  cd "$srcdir/nfs"
+  cd "${srcdir}/nfs"
 
-  install -D -m755 nfs "$pkgdir/usr/bin/nfsshell"
-  mkdir -p "$pkgdir/usr/share/nfsshell"
-  cp -r *	"$pkgdir/usr/share/nfsshell/"
+  #install -D -m755 nfs "${pkgdir}/usr/bin/nfsshell"
+  mkdir -p "${pkgdir}/usr/bin"
+  mkdir -p "${pkgdir}/usr/share/nfsshell"
+  cp -r * "${pkgdir}/usr/share/nfsshell/"
+
+  cat > "${pkgdir}/usr/bin/nfsshell" << EOF
+#!/bin/sh
+
+exec /usr/share/nfsshell/nfs "\${@}"
+EOF
+
+  chmod a+x "${pkgdir}/usr/bin/nfsshell"
 }
