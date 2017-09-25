@@ -2,32 +2,47 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgname='ruby-nokogiri'
-_gemname='nokogiri'
-pkgver='1.8.1'
+pkgname='ruby-puma-2'
+_gemname='puma'
+pkgver='2.16.0'
 pkgrel=1
-pkgdesc="Nokogiri (鋸) is an HTML, XML, SAX, and Reader parser"
+pkgdesc="Puma is a simple, fast, threaded, and highly concurrent HTTP 1.1 server for Ruby/Rack applications"
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
-url='http://nokogiri.org'
-license=("MIT")
-depends=('libxml2' 'libxslt' 'ruby' 'ruby-mini_portile2')
+url='http://puma.io'
+license=("BSD-3-Clause")
+depends=('ruby')
 options=('!emptydirs')
-source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" 
+       'patch')
 noextract=("$_gemname-$pkgver.gem")
-sha1sums=('07ae5eeb780e90cdad7bd4ad110f28003a9e91b3' )
+sha1sums=('b25ed1528acd909fd42301d3f1f1548047cceda9' 
+          '2f4ffc9d6212e18352d3d8850a13f54eca34e5ee')
 
+prepare() {
+  gem unpack $_gemname-$pkgver.gem
+  gem spec $_gemname-$pkgver.gem --ruby > $_gemname.gemspec
+  cd $_gemname-$pkgver
+  patch -p1 < ../patch
+  gem build ../$_gemname.gemspec
+  mv $_gemname-$pkgver.gem ..
+  cd ..
+
+  true
+}
 
 package() {
   local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
   gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
   rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
-  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE-DEPENDENCIES.md" "$pkgdir/usr/share/licenses/$pkgname/LICENSE-DEPENDENCIES.md"
-  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.md" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/COPYING" "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  # non-HEAD version should not install any files in /usr/bin
+  rm -r "$pkgdir"/usr/bin/
 
   # Preserve library and other required directories. Remove junk that gem installs.
   local _copydir=`mktemp -d -t $_gemname.XXX`
   chmod 755 $_copydir
-  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib bin $_copydir)
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
   rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
   mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
 

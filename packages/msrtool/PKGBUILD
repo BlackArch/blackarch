@@ -1,0 +1,33 @@
+# Maintainer : Christian Hofmann <chof@pfho.net>
+
+pkgname=msrtool
+pkgver=r4.12f7ded
+pkgrel=1
+pkgdesc="CLI tool to use the MSR605 magstripe reader/writer"
+arch=(any)
+url="https://github.com/raphaelm/msrtool"
+license=('GPL')
+depends=(python2 python2-pyserial)
+makedepends=(git)
+source=($pkgname::git+https://github.com/raphaelm/msrtool.git)
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$pkgname"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+package() {
+  mkdir -p ${pkgdir}/usr/bin
+  mkdir -p ${pkgdir}/usr/share/msrtool
+  install -D -m755 ${pkgname}/msrtool.py ${pkgdir}/usr/share/msrtool/msrtool.py
+  install -D -m755 ${pkgname}/msr.py ${pkgdir}/usr/share/msrtool/msr.py
+
+  cat > "$pkgdir/usr/bin/msrtool" << EOF
+#!/bin/sh
+# cd /usr/share/msrtool
+exec python2 /usr/share/msrtool/msrtool.py "\${@}"
+EOF
+
+chmod a+x "$pkgdir/usr/bin/msrtool"
+}

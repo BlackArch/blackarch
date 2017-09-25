@@ -1,0 +1,36 @@
+# $Id$
+# Maintainer: Daniel Micay <danielmicay@gmail.com>
+pkgname=openvas-scanner
+pkgver=5.1.1
+pkgrel=1
+pkgdesc='The OpenVAS scanning Daemon'
+arch=('i686' 'x86_64')
+url='http://www.openvas.org/'
+license=('GPL')
+depends=('openvas-libraries' 'redis')
+makedepends=('cmake' 'doxygen')
+groups=(openvas)
+# These URLs need to be manually updated on every pkgver upgrade.
+# http://wald.intevation.org/frs/?group_id=29
+source=("http://wald.intevation.org/frs/download.php/2423/$pkgname-${pkgver}.tar.gz"
+        "http://wald.intevation.org/frs/download.php/2424/$pkgname-${pkgver}.tar.gz.sig"
+        "$pkgname.service")
+md5sums=('f7bc54acf81f144dc6e6ec1d5642ab8d'
+         'SKIP'
+         '9abf981e0f71754a92a94962a601f759')
+validpgpkeys=(
+              'C3B468D2288C68B9D526452248479FF648DB4530' # OpenVAS Transfer Integrity
+)
+
+build() {
+  cd $pkgname-$pkgver
+  cmake -DCMAKE_BUILD_TYPE=Release -DSBINDIR=/usr/bin \
+    -DCMAKE_INSTALL_PREFIX=/usr -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var .
+  make
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir/" install
+  install -Dm644 ../$pkgname.service "$pkgdir/usr/lib/systemd/system/${pkgname}.service"
+}

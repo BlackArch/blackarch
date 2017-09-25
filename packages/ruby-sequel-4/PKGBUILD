@@ -2,35 +2,33 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgname='ruby-gitrob'
-_gemname='gitrob'
-pkgver='1.1.2'
-pkgrel=2
-pkgdesc="Reconnaissance tool for GitHub organizations"
+pkgname='ruby-sequel-4'
+_gemname='sequel'
+pkgver='4.49.0'
+pkgrel=1
+pkgdesc="The Database Toolkit for Ruby"
 arch=('any')
-url='https://github.com/michenriksen/gitrob'
+url='http://sequel.jeremyevans.net'
 license=("MIT")
-depends=('ruby' 'ruby-colorize' 'ruby-github_api-0.13.0' 'ruby-hashie' 'ruby-highline' 'ruby-pg' 'ruby-ruby-progressbar' 'ruby-sequel-4' 'ruby-sinatra-1' 'ruby-sucker_punch' 'ruby-thin' 'ruby-thor' 'ruby-thread')
-groups=('blackarch' 'blackarch-scanner')
-replaces=('gitrob')
-conflicts=('gitrob')
-provides=('gitrob')
+depends=('ruby')
 options=('!emptydirs')
 source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
 noextract=("$_gemname-$pkgver.gem")
-sha1sums=('802180bdc5b9c4b2c3ee52be14ad57b4df710974' )
+sha1sums=('f52826f4333cfa2d2f5c195a71fc4a90f668b278' )
 
 
 package() {
   local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
   gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
   rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
-  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/MIT-LICENSE" "$pkgdir/usr/share/licenses/$pkgname/MIT-LICENSE"
+  # non-HEAD version should not install any files in /usr/bin
+  rm -r "$pkgdir"/usr/bin/
 
   # Preserve library and other required directories. Remove junk that gem installs.
   local _copydir=`mktemp -d -t $_gemname.XXX`
   chmod 755 $_copydir
-  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib exe $_copydir)
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
   rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
   mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
 
