@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='xfltreat'
+pkgver=32.be749dc
+pkgrel=1
+pkgdesc='Tunnelling framework.'
+groups=('blackarch' 'blackarch-tunnel' 'blackarch-networking')
+arch=('any')
+url='https://github.com/earthquake/xfltreat/'
+license=('custom:unknown')
+depends=('python2' 'python2-pyroute2')
+makedepends=('git')
+source=('git+https://github.com/earthquake/xfltreat/')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/xfltreat"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/xfltreat"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/xfltreat"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/xfltreat/" README.md
+  cp -r docs "$pkgdir/usr/share/doc//xfltreat/docs"
+
+  rm -rf README.md docs
+
+  cp -a * "$pkgdir/usr/share/xfltreat/"
+
+  cat > "$pkgdir/usr/bin/xfltreat" << EOF
+#!/bin/sh
+cd /usr/share/xfltreat
+exec python2 xfltreat.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/xfltreat"
+}
