@@ -1,0 +1,34 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname="grabing"
+_pkgname="graBing"
+pkgver="9.bb8b08b"
+pkgrel=1
+pkgdesc="Counts all the hostnames for an IP adress"
+arch=('any')
+url="https://github.com/black-brain/graBing"
+license=('GPL3')
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-scanner')
+source=('git+https://github.com/black-brain/graBing')
+depends=('python2')
+makedepends=('git')
+sha1sums=('SKIP')
+
+prepare() {
+	mv ${_pkgname} ${pkgname}
+	cd "$pkgname"
+	mv ${_pkgname}.py ${pkgname}.py
+	# Eliminating carriage return and specifying python version
+	sed -i -e "s|\r$||" -e "s|usr/bin/env python|/usr/bin/env python2|" ${pkgname}.py
+}
+
+pkgver() {
+  cd "$pkgname"
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+	cd "$pkgname"
+	install -Dm755 ${pkgname}.py ${pkgdir}/usr/bin/${pkgname}
+}
