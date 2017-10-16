@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname='mobsf'
-pkgver=366.d0bc287
+pkgver=470.a237aec
 pkgrel=1
 groups=('blackarch' 'blackarch-mobile')
 pkgdesc='An intelligent, all-in-one open source mobile application (Android/iOS) automated pen-testing framework capable of performing static, dynamic analysis and web API testing.'
@@ -10,7 +10,9 @@ arch=('any')
 url='https://github.com/ajinabraham/Mobile-Security-Framework-MobSF'
 license=('GPL3')
 depends=('python2' 'python2-django' 'python2-rsa' 'python2-tornado'
-         'python2-pyopenssl' 'python2-xhtml2pdf' 'python2-psutil'
+         'python2-pdfkit' 'python2-pyopenssl' 'python2-xhtml2pdf' 'python2-yara'
+         'python2-psutil' 'python2-pysqlite' 'python2-argparse' 'python2-lxml'
+         'python2-configparser' 'python2-pytz' 'python2-requests'
          'java-environment')
 makedepends=('git')
 source=('git+https://github.com/ajinabraham/Mobile-Security-Framework-MobSF.git')
@@ -20,6 +22,12 @@ pkgver() {
   cd "$srcdir/Mobile-Security-Framework-MobSF"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/Mobile-Security-Framework-MobSF"
+
+  python2 manage.py migrate
 }
 
 package() {
@@ -38,7 +46,7 @@ package() {
   cat > "$pkgdir/usr/bin/mobsf-mobsfy" << EOF
 #!/bin/sh
 cd /usr/share/mobsf
-exec python2 mobsfy.py "\$@"
+exec python2 mobsfy.py "\${@}"
 EOF
 
   chmod a+x "$pkgdir/usr/bin/mobsf-mobsfy"
@@ -46,7 +54,7 @@ EOF
   cat > "$pkgdir/usr/bin/mobsf-manage" << EOF
 #!/bin/sh
 cd /usr/share/mobsf
-exec python2 manage.py "\$@"
+exec python2 manage.py "\${@}"
 EOF
 
   chmod a+x "$pkgdir/usr/bin/mobsf-manage"

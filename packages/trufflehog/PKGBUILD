@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname='trufflehog'
-pkgver=54.a10b8d2
+pkgver=59.d04d3b7
 pkgrel=1
 pkgdesc='Searches through git repositories for high entropy strings, digging deep into commit history.'
 groups=('blackarch' 'blackarch-recon')
@@ -10,7 +10,7 @@ arch=('any')
 url='https://github.com/dxa4481/truffleHog'
 license=('GPL2')
 depends=('python' 'python-gitpython')
-makedepends=('git')
+makedepends=('git' 'python-setuptools')
 source=('git+https://github.com/dxa4481/truffleHog.git')
 sha1sums=('SKIP')
 
@@ -20,10 +20,17 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd "$srcdir/truffleHog"
+
+  python setup.py build
+}
+
 package() {
   cd "$srcdir/truffleHog"
 
-  install -Dm755 truffleHog.py "$pkgdir/usr/bin/trufflehog"
+  python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+
   install -Dm644 -t "$pkgdir/usr/share/doc/trufflehog/" README.md
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/trufflehog/LICENSE"
 }

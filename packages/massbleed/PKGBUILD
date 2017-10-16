@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='massbleed'
+pkgver=15.726458b
+pkgrel=1
+pkgdesc='SSL Vulnerability Scanner.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-automation'
+         'blackarch-scanner')
+url='https://github.com/1N3/Sn1per'
+license=('custom:unknown')
+arch=('any')
+depends=('unicornscan' 'nmap' 'python' 'sslscan' 'bash' 'testssl')
+makedepends=('git')
+source=('git+https://github.com/1N3/MassBleed')
+install='massbleed.install'
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/MassBleed"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+#prepare() {
+#  cd "$srcdir/massbleed"
+#
+#  sed -i '/apt-get install/d' install.sh
+#}
+
+package() {
+  cd "$srcdir/MassBleed"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/massbleed"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/massbleed/" README.md
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/massbleed"
+
+  cat > "$pkgdir/usr/bin/massbleed" << EOF
+#!/bin/sh
+cd /usr/share/massbleed
+exec bash ./massbleed "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/massbleed"
+}

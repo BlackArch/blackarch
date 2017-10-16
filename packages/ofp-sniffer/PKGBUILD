@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ofp-sniffer'
+pkgver=170.0b37551
+pkgrel=1
+pkgdesc='An OpenFlow sniffer to help network troubleshooting in production networks.'
+groups=('blackarch' 'blackarch-sniffer')
+arch=('any')
+url='https://github.com/amlight/ofp_sniffer'
+license=('Apach2')
+depends=('python' 'python-pcapy' 'python-termcolor' 'python-flask' 'python-pyof'
+         'python-dateutil' 'python-hexdump')
+makedepends=('git')
+source=('git+https://github.com/amlight/ofp_sniffer.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ofp_sniffer"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/ofp_sniffer"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/ofp-sniffer"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/ofp-sniffer/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/ofp-sniffer/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/ofp-sniffer/"
+
+  cat > "$pkgdir/usr/bin/ofp-sniffer" << EOF
+#!/bin/sh
+cd /usr/share/ofp-sniffer
+exec python ofp_sniffer.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/ofp-sniffer"
+}

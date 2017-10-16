@@ -1,3 +1,3 @@
 export ANDROID_HOME=/opt/android-sdk
-export ANDROID_SWT=/usr/share/java
-export PATH=$PATH:$ANDROID_HOME/tools
+#export ANDROID_SWT=/usr/share/java
+export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin

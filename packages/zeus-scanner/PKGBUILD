@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='zeus-scanner'
+pkgver=134.6571649
+pkgrel=1
+pkgdesc='Advanced dork searching utility.'
+groups=('blackarch' 'blackarch-recon')
+arch=('any')
+url='https://github.com/Ekultek/Zeus-Scanner'
+license=('GPL3')
+depends=('python2' 'python2-requests' 'python2-python-nmap' 'python2-selenium'
+         'python2-whichcraft' 'python2-pyvirtualdisplay')
+makedepends=('git')
+source=('git+https://github.com/Ekultek/Zeus-Scanner.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Zeus-Scanner"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Zeus-Scanner"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/zeus-scanner"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/zeus-scanner/" README.md
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/zeus-scanner/"
+
+  cat > "$pkgdir/usr/bin/zeus-scanner" << EOF
+#!/bin/sh
+cd /usr/share/zeus-scanner
+exec python2 zeus.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/zeus-scanner"
+}

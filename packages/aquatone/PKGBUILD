@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='aquatone'
+pkgver=63.8d3496b
+pkgrel=1
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
+pkgdesc='a set of tools for performing reconnaissance on domain names.'
+arch=('any')
+url='https://github.com/michenriksen/aquatone'
+license=('custom:unknown')
+depends=('ruby')
+makedepends=('ruby' 'git')
+options=('!strip')
+source=('git+https://github.com/michenriksen/aquatone.git')
+install='aquatone.install'
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/aquatone"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/aquatone"
+
+  local _gemdir="$(ruby -e'puts Gem.default_dir')"
+
+  gem install --no-user-install -n "$pkgdir/usr/bin" -i "$pkgdir/$_gemdir" \
+    aquatone
+
+  cd aquatone
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/aquatone/" README.md
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/LICENSE.txt"
+
+  rm README.md LICENSE.txt "$pkgdir/usr/bin/httparty"
+
+  cp -a * "$pkgdir/usr/share/aquatone"
+}

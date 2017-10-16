@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='evilginx'
+pkgver=33.d6f85e5
+pkgrel=1
+pkgdesc='Man-in-the-middle attack framework used for phishing credentials and session cookies of any web service.'
+groups=('blackarch' 'blackarch-social')
+arch=('any')
+url='https://github.com/kgretzky/evilginx'
+license=('MIT')
+depends=('python2' 'python2-argparse')
+makedepends=('git')
+source=('git+https://github.com/kgretzky/evilginx.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/evilginx"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/evilginx"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/evilginx"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/evilginx/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/evilginx/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/evilginx/"
+
+  cat > "$pkgdir/usr/bin/evilginx" << EOF
+#!/bin/sh
+cd /usr/share/evilginx
+exec python2 evilginx_parser.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/evilginx"
+}

@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname='rspet'
-pkgver=261.7b3fdfd
+pkgver=263.de4356e
 pkgrel=1
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-backdoor'
         'blackarch-dos')
@@ -10,41 +10,53 @@ pkgdesc='A Python based reverse shell equipped with functionalities that assist 
 arch=('any')
 url='https://github.com/panagiks/RSPET'
 license=('MIT')
-depends=('python2')
-makedepends=('git')
+depends=('python2' 'python2-flask' 'python2-flask-cors')
+makedepends=('git' 'python2-pip')
 source=('git+https://github.com/panagiks/RSPET.git')
 sha1sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/RSPET"
+  cd "${srcdir}/RSPET"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd "${srcdir}/RSPET"
+
+  sed -i "s|pip.main|#pip.main|g" setup.py
+
+  python2 setup.py
+}
+
 package() {
-  cd "$srcdir/RSPET"
+  _app_name="rspet"
 
-  mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/share/rspet"
+  cd "${srcdir}/RSPET"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/rspet/" README.md
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/rspet/LICENSE"
+  mkdir -p "${pkgdir}/usr/bin"
+  mkdir -p "${pkgdir}/usr/share/${_app_name}"
+
+  install -Dm644 -t "${pkgdir}/usr/share/doc/${_app_name}/" README.md
+  install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${_app_name}/LICENSE"
 
   rm *.md LICENSE
 
-  cp -a * "$pkgdir/usr/share/rspet"
+  cp -a * "${pkgdir}/usr/share/${_app_name}"
 
-  cat > "$pkgdir/usr/bin/rspet-client" << EOF
+  cat > "${pkgdir}/usr/bin/${_app_name}-client" << EOF
 #!/bin/sh
-exec python2 /usr/share/rspet/Client/RSPET_client.py "\$@"
+
+cd /usr/share/${_app_name}/Client/ && exec python2 ${_app_name}_client.py "\${@}"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/rspet-client"
+  chmod a+x "${pkgdir}/usr/bin/${_app_name}-client"
 
-  cat > "$pkgdir/usr/bin/rspet-server" << EOF
+  cat > "${pkgdir}/usr/bin/${_app_name}-server" << EOF
 #!/bin/sh
-exec python2 /usr/share/rspet/Server/RSPET_server.py "\$@"
+
+cd /usr/share/${_app_name}/Server/ && exec python2 ${_app_name}_server.py "\${@}"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/rspet-server"
+  chmod a+x "${pkgdir}/usr/bin/${_app_name}-server"
 }

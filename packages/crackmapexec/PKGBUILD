@@ -2,16 +2,18 @@
 # See COPYING for license details.
 
 pkgname='crackmapexec'
-pkgver=313.c6243de
+pkgver=384.dc0a7d8
 pkgrel=1
 groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation')
 pkgdesc='A swiss army knife for pentesting Windows/Active Directory environments.'
 arch=('any')
 url='https://github.com/byt3bl33d3r/CrackMapExec'
 license=('custom:unknown')
-depends=('python2' 'impacket' 'python2-gevent' 'python2-netaddr'
-         'python2-pyopenssl' 'python2-crypto' 'python2-pyasn1'
-         'python2-termcolor' 'python2-requests')
+depends=('python2' 'impacket' 'python2-gevent' 'python2-netaddr' 'python2-bs4'
+         'python2-pyopenssl' 'python2-crypto' 'python2-pyasn1' 'python2-msgpack'
+         'python2-termcolor' 'python2-requests' 'python2-beautifulsoup4'
+         'python2-pylnk' 'python2-paramiko' 'python2-pywerview' 'python2-pcapy'
+         'python2-splinter')
 makedepends=('git')
 source=('git+https://github.com/byt3bl33d3r/CrackMapExec.git')
 sha1sums=('SKIP')
@@ -22,24 +24,28 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd "$srcdir/CrackMapExec"
+
+  git submodule init && git submodule update --recursive
+}
+
+build() {
+  cd "$srcdir/CrackMapExec"
+
+  python2 setup.py build
+}
+
 package() {
   cd "$srcdir/CrackMapExec"
 
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/crackmapexec/"
 
+  python2 setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+
   install -Dm644 README.md "$pkgdir/usr/share/doc/crackmapexec/README.md"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/crackmapexec/LICENSE"
 
-  rm README.md LICENSE
-
-  cp -a * "$pkgdir/usr/share/crackmapexec"
-
-  cat > "$pkgdir/usr/bin/crackmapexec" << EOF
-#!/bin/sh
-cd /usr/share/crackmapexec
-exec python2 -c "import cme.crackmapexec; cme.crackmapexec.main()" "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/crackmapexec"
+  find "$pkgdir" -type f -name '*.py' -exec sed -i 's|python|python2|' {} \;
 }

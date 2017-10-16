@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='fuxploider'
+pkgver=64.a2434c1
+pkgrel=1
+pkgdesc='Tool that automates the process of detecting and exploiting file upload forms flaws.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/almandin/fuxploider'
+license=('GPL2')
+depends=('python' 'python-argparse' 'python-requests' 'python-coloredlogs'
+         'python-beautifulsoup4')
+makedepends=('git')
+source=('git+https://github.com/almandin/fuxploider.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/fuxploider"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/fuxploider"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/fuxploider"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/fuxploider/" README.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/fuxploider/LICENSE.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/fuxploider/"
+
+  cat > "$pkgdir/usr/bin/fuxploider" << EOF
+#!/bin/sh
+cd /usr/share/fuxploider
+exec python3 fuxploider.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/fuxploider"
+}

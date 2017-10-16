@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dns-parallel-prober'
+pkgver=49.38ef6de
+pkgrel=1
+pkgdesc='PoC for an adaptive parallelised DNS prober.'
+groups=('blackarch' 'blackarch-recon')
+arch=('any')
+url='https://github.com/lorenzog/dns-parallel-prober'
+license=('GPL3')
+depends=('python2' 'python2-argparse')
+makedepends=('git')
+source=('git+https://github.com/lorenzog/dns-parallel-prober')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/dns-parallel-prober"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/dns-parallel-prober"
+
+  sed -i 's|bin/env python|bin/env python2|' dns-queue.py
+}
+
+package() {
+  cd "$srcdir/dns-parallel-prober"
+
+  mkdir -p "$pkgdir/usr/share/dns-parallel-prober"
+
+  install -Dm755 dns-queue.py "$pkgdir/usr/bin/dns-parallel-prober"
+  install -Dm644 -t "$pkgdir/usr/share/doc/dns-parallel-prober/" README.md
+  install -Dm644 LICENSE \
+    "$pkgdir/usr/share/licenses/dns-parallel-prober/LICENSE"
+
+  rm README.md LICENSE
+}

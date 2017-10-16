@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sniffer'
+pkgver=4.688854e
+pkgrel=1
+pkgdesc='Packet Trace Parser for TCP, SMTP Emails, and HTTP Cookies.'
+groups=('blackarch' 'blackarch-networking')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/julioreynaga/sniffer'
+license=('custom:unknown')
+depends=('libpcap')
+makedepends=('git' 'clang')
+source=('git+https://github.com/julioreynaga/sniffer.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sniffer"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/sniffer"
+
+  make
+}
+
+package() {
+  cd "$srcdir/sniffer"
+
+  mkdir -p "$pkgdir/usr/share/sniffer"
+
+  install -Dm755 cookie_parser "$pkgdir/usr/bin/cookie-parser"
+  install -Dm755 email_parser "$pkgdir/usr/bin/email-parser"
+  install -Dm755 packet_parser "$pkgdir/usr/bin/packet-parser"
+  install -Dm755 tcp_parser "$pkgdir/usr/bin/tcp-parser"
+  install -Dm644 -t "$pkgdir/usr/share/doc/sniffer/" README.md
+
+  rm README.md
+
+  cp -a sample "$pkgdir/usr/share/sniffer/"
+}

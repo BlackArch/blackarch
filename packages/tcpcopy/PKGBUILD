@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='tcpcopy'
+pkgver=1228.14a99bc
+pkgrel=1
+pkgdesc='A TCP stream replay tool to support real testing of Internet server applications.'
+groups=('blackarch' 'blackarch-networking')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/session-replay-tools/tcpcopy'
+license=('BSD')
+depends=('libpcap')
+makedepends=('git')
+source=('git+https://github.com/session-replay-tools/tcpcopy.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/tcpcopy"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/tcpcopy"
+
+  ./configure --prefix=/usr/share/tcpcopy --sbin-path=/usr/share/tcpcopy/tcpcopy
+
+  make
+}
+
+package() {
+  cd "$srcdir/tcpcopy"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/tcpcopy"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/tcpcopy/" README.md AUTHORS NEWS \
+    ChangeLog README
+  install -Dm644 -t "$pkgdir/usr/share/licenses/tcpcopy/" LICENSE COPYING
+
+  cat > "$pkgdir/usr/bin/tcpcopy" << EOF
+#!/bin/sh
+cd /usr/share/tcpcopy/
+exec ./tcpcopy "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/tcpcopy"
+}

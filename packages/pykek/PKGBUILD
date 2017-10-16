@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pykek'
+pkgver=12.651b9ba
+pkgrel=1
+pkgdesc='Kerberos Exploitation Kit.'
+groups=('blackarch' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/bidord/pykek'
+license=('custom:unknown')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/bidord/pykek.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/pykek"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/pykek"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/pykek"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/pykek/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/pykek/"
+
+  cat > "$pkgdir/usr/bin/pykek" << EOF
+#!/bin/sh
+cd /usr/share/pykek
+exec python2 ms14-068.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/pykek"
+}

@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dagon'
+pkgver=239.08d2b8b
+pkgrel=1
+pkgdesc='Advanced Hash Manipulation.'
+groups=('blackarch' 'blackarch-crypto')
+arch=('any')
+url='https://github.com/Ekultek/Dagon'
+license=('custom:unknown')
+depends=('python2' 'python2-colorlog' 'python2-requests' 'python2-passlib'
+         'python2-pysha3' 'python2-bcrypt' 'python2-pydes')
+makedepends=('git')
+source=('git+https://github.com/Ekultek/Dagon.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Dagon"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Dagon"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/dagon"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/dagon/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/dagon/"
+
+  cat > "$pkgdir/usr/bin/dagon" << EOF
+#!/bin/sh
+cd /usr/share/dagon
+exec python2 dagon.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/dagon"
+}

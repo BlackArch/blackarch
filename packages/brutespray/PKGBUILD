@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='brutespray'
+pkgver=101.e3b75bb
+pkgrel=1
+pkgdesc='Brute-Forcing from Nmap output - Automatically attempts default creds on found services.'
+groups=('blackarch' 'blackarch-automation' 'blackarch-cracker')
+arch=('any')
+url='https://github.com/x90skysn3k/brutespray'
+license=('MIT')
+depends=('python2' 'python2-argparse' 'python2-lxml' 'python2-argcomplete'
+         'medusa')
+makedepends=('git')
+source=('git+https://github.com/x90skysn3k/brutespray.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/brutespray"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/brutespray"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/brutespray"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/brutespray/" README.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/brutespray/LICENSE.md"
+
+  rm README.md LICENSE.md
+
+  cp -a * "$pkgdir/usr/share/brutespray/"
+
+  cat > "$pkgdir/usr/bin/brutespray" << EOF
+#!/bin/sh
+cd /usr/share/brutespray
+exec python2 brutespray.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/brutespray"
+}

@@ -1,0 +1,33 @@
+--- src/scannerl/build.sh	2017-10-04 22:17:00.603333332 +0200
++++ build.sh	2017-10-04 22:19:21.529999998 +0200
+@@ -1,19 +1,11 @@
+-#!/bin/sh
+-if [ $(dpkg-query -W -f='${Status}' erlang 2> /dev/null | grep -c "ok installed") -eq 0 ]; then
+-  echo "Install erlang"
+-elif [ $(erl -eval 'erlang:display(list_to_integer(erlang:system_info(otp_release))), halt().'  -noshell) -lt 18 ]; then
+-  echo "Your erlang version is too old, you should update it"
+-elif [ $(dpkg-query -W -f='${Status}' erlang-src 2> /dev/null | grep -c "ok installed") -eq 0 ]; then
+-  echo "Install erlang-src"
+-elif hash rebar 2>/dev/null; then
+-  # Updating fpmodules list
+-  for i in `ls -1 ./src/fpmodules -I fp_module.erl`; do x="${i%.*erl}"; echo $x | sed 's/^fp_//g'; done | tr '\n' ',' | sed 's/^/\-define(FP_MODULES_LIST, [/' | sed 's/,$/])./' > ./src/includes/fpmodules.hrl
+-  # Updating outmodules list
+-  for i in `ls -1 ./src/outmodules -I out_behavior.erl`; do x="${i%.*erl}"; echo $x | sed 's/^out_//g'; done | tr '\n' ',' | sed 's/^/\-define(OUT_MODULES_LIST, [/' | sed 's/,$/])./' > ./src/includes/outmodules.hrl
+-  # update git hash
+-  echo "-define(GIT_SHORT_HASH, \"`git rev-parse --short HEAD`\")." > ./src/includes/githash.hrl
+-  # Compile
+-  rebar compile escriptize
+-else
+-  echo "Install rebar"
+-fi
++# Updating fpmodules list
++for i in `ls -1 ./src/fpmodules -I fp_module.erl`; do x="${i%.*erl}"; echo $x | sed 's/^fp_//g'; done | tr '\n' ',' | sed 's/^/\-define(FP_MODULES_LIST, [/' | sed 's/,$/])./' > ./src/includes/fpmodules.hrl
++
++# Updating outmodules list
++for i in `ls -1 ./src/outmodules -I out_behavior.erl`; do x="${i%.*erl}"; echo $x | sed 's/^out_//g'; done | tr '\n' ',' | sed 's/^/\-define(OUT_MODULES_LIST, [/' | sed 's/,$/])./' > ./src/includes/outmodules.hrl
++
++# update git hash
++echo "-define(GIT_SHORT_HASH, \"`git rev-parse --short HEAD`\")." > ./src/includes/githash.hrl
++
++# Compile
++rebar compile escriptize

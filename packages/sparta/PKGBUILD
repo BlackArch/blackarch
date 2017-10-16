@@ -2,23 +2,31 @@
 # See COPYING for license details.
 
 pkgname='sparta'
-pkgver=17.bdbf244
-pkgrel=3
+pkgver=21.b0a4514
+pkgrel=1
 groups=('blackarch' 'blackarch-scanner' 'blackarch-cracker'
         'blackarch-fingerprint' 'blackarch-networking')
 pkgdesc='Python GUI application which simplifies network infrastructure penetration testing by aiding the penetration tester in the scanning and enumeration phase.'
 arch=('any')
 url='http://sparta.secforce.com/'
 license=('GPL3')
-depends=('python2' 'python2-pyqt4' 'python2-lxml' 'impacket')
+depends=('python2' 'python2-pyqt4' 'python2-lxml' 'impacket' 'python2-elixir')
 makedepends=('git')
-source=('git+https://github.com/SECFORCE/sparta.git')
-sha1sums=('SKIP')
+source=('git+https://github.com/SECFORCE/sparta.git' 'dirty_fix.patch')
+sha1sums=('SKIP'
+          'ebc2c54e61873c1cf52a71d46b5d1b73259ddea6')
 
 pkgver() {
   cd "$srcdir/sparta"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+
+}
+
+prepare() {
+  cd "$srcdir/sparta"
+
+  patch -Np1 -i ../dirty_fix.patch
 }
 
 package() {
@@ -37,7 +45,7 @@ package() {
   cat > "$pkgdir/usr/bin/sparta" << EOF
 #!/bin/sh
 cd /usr/share/sparta
-exec python2 sparta.py "\$@"
+exec python2 sparta.py "\${@}"
 EOF
 
   chmod a+x "$pkgdir/usr/bin/sparta"

@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='fernflower'
+pkgver=357.d594bab
+pkgrel=1
+pkgdesc='An analytical decompiler for Java.'
+groups=('blackarch' 'blackarch-decompiler')
+arch=('any')
+url='https://github.com/fesh0r/fernflower'
+license=('Apache')
+depends=('java-runtime')
+makedepends=('git' 'apache-ant' 'jdk8-openjdk')
+source=("git+https://github.com/fesh0r/fernflower.git")
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/fernflower"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/fernflower"
+
+  ./gradlew
+  ./gradlew build
+  ./gradlew jar
+}
+
+package() {
+  cd "$srcdir/fernflower"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm644 build/libs/fernflower.jar \
+    "$pkgdir/usr/share/fernflower/fernflower.jar"
+  install -Dm644 -t "$pkgdir/usr/share/doc/fernflower/" README.md
+
+cat > "$pkgdir/usr/bin/fernflower" << EOF
+#!/bin/sh
+exec java -jar /usr/share/fernflower/fernflower.jar "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/fernflower"
+}

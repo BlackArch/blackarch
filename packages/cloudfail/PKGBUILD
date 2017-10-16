@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cloudfail'
+pkgver=49.60614d3
+pkgrel=1
+pkgdesc="Utilize misconfigured DNS and old database records to find hidden IP's behind the CloudFlare network."
+groups=('blackarch' 'blackarch-recon')
+arch=('any')
+url='https://github.com/m0rtem/CloudFail'
+license=('custom:unknown')
+depends=('python' 'python-requests' 'python-argparse' 'python-colorama'
+         'python-beautifulsoup4' 'python-pysocks' 'python-pyopenssl'
+         'python-win_inet_pton')
+makedepends=('git')
+source=('git+https://github.com/m0rtem/CloudFail.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/CloudFail"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/CloudFail"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/cloudfail"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/cloudfail/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/cloudfail/"
+
+  cat > "$pkgdir/usr/bin/cloudfail" << EOF
+#!/bin/sh
+cd /usr/share/cloudfail
+exec python3 cloudfail.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/cloudfail"
+}

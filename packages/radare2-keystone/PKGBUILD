@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='radare2-keystone'
+pkgver=386.4f9dfe8
+pkgrel=1
+pkgdesc='Keystone assembler plugins for radare2.'
+groups=('blackarch' 'blackarch-disassembler' 'blackarch-binary'
+        'blackarch-reversing')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/radare/radare2-extras/tree/master/unicorn'
+license=('GPL3')
+depends=('radare2' 'unicorn' 'keystone' 'yara')
+makedepends=('git' 'pkg-config')
+source=('git+https://github.com/radare/radare2-extras.git')
+install='radare2-keystone.install'
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/radare2-extras"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/radare2-extras"
+
+  sed -i 's|~/.config/radare2/plugins|/usr/share/radare2-extras/plugins/keystone|' \
+    keystone/Makefile
+}
+
+build() {
+  cd "$srcdir/radare2-extras"
+
+  ./configure --prefix=/usr
+
+  make all
+
+  cd keystone
+
+  ./configure --prefix=/usr
+
+  make
+}
+
+package() {
+  cd "$srcdir/radare2-extras"
+
+  cd keystone
+
+  install -Dm755 -t "$pkgdir/usr/share/radare2-extras/plugins/keystone" *.so
+
+  cd ..
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/radare2-extras/" README.md
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/radare2-extras/COPYING"
+}

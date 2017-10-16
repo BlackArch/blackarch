@@ -2,48 +2,29 @@
 # See COPYING for license details.
 
 pkgname='frida'
-pkgver=284.79d63f5
-pkgrel=3
-pkgdesc='An interactive disassembler based on LLVM and Qt.'
-groups=('blackarch' 'blackarch-disassembler')
+pkgver='9.0.4'
+pkgrel=1
+pkgdesc='Inject JavaScript to explore native apps on Windows, Mac, Linux, iOS and Android.'
+groups=('blackarch' 'blackarch-reversing' 'blackarch-backdoor')
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
-url='https://www.frida.xyz/'
-license=('GPL3')
-depends=('gmock' 'log4cxx' 'llvm35' 'guile' 'swig' 'boost' 'libedit' 'quazip')
-makedepends=('git' 'cmake' 'pkg-config')
-source=('git+https://git.siccegge.de/frida/frida.git'
-        'frida.patch')
-sha1sums=('SKIP'
-          '9114c243bdafe082e57cea294ab2dfceca9ba305')
-
-pkgver() {
-  cd "$srcdir/frida"
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
-prepare() {
-  cd "$srcdir/frida"
-
-  patch -p1 -i "$srcdir/frida.patch"
-}
+url='http://www.frida.re'
+depends=('python' 'python-colorama' 'python-pygments' 'python-prompt_toolkit')
+makedepends=('python-setuptools')
+license=('custom:unknown')
+source=("https://pypi.python.org/packages/7e/ef/eadc12e9d0fd26968ec8d31d740acad6a0d1a0841887f4f0799e56132f84/frida-${pkgver}.zip"
+        "https://raw.githubusercontent.com/frida/frida/master/COPYING")
+sha1sums=('363f04951de11473b4b76473dcb65bbdc82df7c2'
+          '446db87c3fe0de0b2898ba8e8b3e5a8e7f644fdc')
 
 build() {
-  cd "$srcdir/frida"
+  cd "$srcdir/frida-$pkgver"
 
-  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
-    -DQUAZIP_INCLUDE_DIR=/usr/include -DQUAZIP_LIBRARIES=/usr/lib/libquazip5.so
-
-  make
+  python setup.py build
 }
 
 package() {
-  cd "$srcdir/frida"
+  cd "$srcdir/frida-$pkgver"
 
-  make DESTDIR="$pkgdir" install
-
-  if [[ $CARCH == "x86_64" ]];
-  then
-    mv "$pkgdir/usr/lib64" "$pkgdir/usr/lib"
-  fi
+  python setup.py install --root="$pkgdir" --optimize=1
+  install -Dm644 "$srcdir/COPYING" "$pkgdir/usr/share/licenses/frida/COPYING"
 }

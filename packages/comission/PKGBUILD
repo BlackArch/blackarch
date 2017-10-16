@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='comission'
+pkgver=32.0ed0ba1
+pkgrel=1
+pkgdesc='WhiteBox CMS analysis.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/Intrinsec/comission'
+license=('MIT')
+depends=('python' 'python-requests' 'python-argparse' 'python-lxml'
+         'python-beautifulsoup4' 'python-openpyxl' 'python-checksumdir'
+         'python-xlsxwriter')
+makedepends=('git')
+source=('git+https://github.com/Intrinsec/comission.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/comission"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/comission"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/comission"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/comission/" README.md CONTRIBUTING.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/comission/LICENSE.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/comission/"
+
+  cat > "$pkgdir/usr/bin/comission" << EOF
+#!/bin/sh
+cd /usr/share/comission
+exec python comission.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/comission"
+}

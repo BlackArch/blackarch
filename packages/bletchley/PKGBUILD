@@ -3,26 +3,31 @@
 
 pkgname='bletchley'
 pkgver='0.0.1'
-pkgrel=7
+pkgrel=8
 groups=('blackarch' 'blackarch-crypto')
 pkgdesc='A collection of practical application cryptanalysis tools.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://code.google.com/p/bletchley/'
 license=('GPL')
 depends=('python3' 'python-requests')
-makedepends=('scons')
-source=("https://googledrive.com/host/0B6HCWPzk_jKoVHI5WV9EMURfbms/bletchley-src-${pkgver}.tar.gz")
-sha1sums=('021e3d2a277f8f00c6d4295800eb65192e8785f2')
+makedepends=('subversion' 'scons')
+source=('svn+https://code.blindspotsecurity.com/dav/bletchley/trunk/')
+#source=("https://googledrive.com/host/0B6HCWPzk_jKoVHI5WV9EMURfbms/bletchley-src-${pkgver}.tar.gz")
+sha1sums=('SKIP')
 
 build() {
-  cd "$srcdir/bletchley-src-$pkgver"
+  cd "$srcdir/trunk"
 
   scons
 }
 
 package() {
-  cd "$srcdir/bletchley-src-$pkgver"
+  cd "$srcdir/trunk"
 
+  tools="bletchley-analyze bletchley-clonecertchain bletchley-decode"
+  tools="${tools} bletchley-encode bletchley-http2py bletchley-nextrand"
+
+  mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/bletchley"
 
   PREFIX="$pkgdir" scons install
@@ -35,5 +40,16 @@ package() {
 
   cp -a * "$pkgdir/usr/share/bletchley/"
 
-  mv "$pkgdir/bin" "$pkgdir/usr/"
+  mv "$pkgdir/bin/"* "$pkgdir/usr/share/bletchley/lib/"
+  rmdir "$pkgdir/bin"
+
+  for t in ${tools}
+  do
+    cat > "$pkgdir/usr/bin/${t}" << EOF
+#!/bin/sh
+cd /usr/share/bletchley/lib
+exec python3 ${t} "\${@}"
+EOF
+    chmod a+x "$pkgdir/usr/bin/${t}"
+  done
 }
