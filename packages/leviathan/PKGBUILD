@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='leviathan'
+pkgver=32.7b48188
+pkgrel=1
+pkgdesc='A mass audit toolkit which has wide range service discovery, brute force, SQL injection detection and running custom exploit capabilities.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-cracker' 'blackarch-webapp'
+        'blackarch-fuzzer' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/leviathan-framework/leviathan'
+license=('GPL')
+depends=('python2' 'python2-requests' 'python2-paramiko' 'python2-argparse'
+         'python2-beautifulsoup4' 'python2-lxml'
+         'python2-google-api-python-client' 'shodan')
+makedepends=('git')
+source=('git+https://github.com/leviathan-framework/leviathan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/leviathan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/leviathan"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/leviathan"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/leviathan/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/leviathan/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/leviathan/"
+
+  cat > "$pkgdir/usr/bin/leviathan" << EOF
+#!/bin/sh
+cd /usr/share/leviathan
+exec python2 leviathan.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/leviathan"
+}
