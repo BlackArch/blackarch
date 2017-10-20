@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='loic'
+pkgver='2.9.9.99'
+pkgrel=1
+pkgdesc='An open source network stress tool for Windows.'
+groups=('blackarch' 'blackarch-networking' 'blackarch-windows')
+arch=('any')
+url='https://github.com/NewEraCracker/LOIC'
+depends=('mono')
+makedepends=('monodevelop')
+license=('GPL')
+source=("https://github.com/NewEraCracker/LOIC/archive/${pkgver}.tar.gz"
+	      'loic.desktop'
+        'loic.png')
+sha1sums=('4cf7e0fa0266c980c8029c0c016e03806fe6f1da'
+          'ba108e6a8dac466cf5b25c12143ea3f16ace37f0'
+          '4c94922914e9ee266ca96ea36bd93f41b65f62cc')
+build() {
+	cd "$srcdir/LOIC-$pkgver"
+
+	sed -i 's/3.5/4.0/g' $srcdir/LOIC-${pkgver}/src/IRC/IRC.csproj
+	sed -i 's/3.5/4.0/g' $srcdir/LOIC-${pkgver}/src/LOIC.csproj
+
+  cd src
+
+  mdtool build
+}
+
+package() {
+  cd "$srcdir/LOIC-$pkgver"
+
+	mkdir -p "${pkgdir}/usr/share/windows/loic"
+
+  install -Dm755 $srcdir/LOIC-${pkgver}/src/bin/Debug/* "$pkgdir/usr/share/windows/loic/"
+  install -Dm755 $srcdir/loic.desktop "$pkgdir/usr/share/applications/loic.desktop"
+  install -Dm644 $srcdir/loic.png "$pkgdir/usr/share/pixmaps/loic.png"
+}
