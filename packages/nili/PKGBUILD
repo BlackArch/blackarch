@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='nili'
+pkgver=36.97f75f4
+pkgrel=1
+pkgdesc='Tool for Network Scan, Man in the Middle, Protocol Reverse Engineering and Fuzzing.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-reversing'
+        'blackarch-fuzzer')
+arch=('any')
+url='https://github.com/niloofarkheirkhah/nili'
+license=('GPL3')
+depends=('python' 'python-argparse' 'scapy' 'netzob')
+makedepends=('git' 'python-setuptools')
+source=('git+https://github.com/niloofarkheirkhah/nili.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/nili"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/nili"
+
+  python setup.py build
+}
+
+package() {
+  cd "$srcdir/nili"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/nili"
+
+  python setup.py install --root="$pkgdir" --optimize=1
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/nili/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/nili/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/nili"
+
+  cat > "$pkgdir/usr/bin/nili" << EOF
+#!/bin/sh
+cd /usr/share/nili/nili
+exec python3 __main__.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/nili"
+}

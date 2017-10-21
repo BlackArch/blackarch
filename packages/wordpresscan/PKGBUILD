@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='wordpresscan'
+pkgver=58.f53723a
+pkgrel=1
+pkgdesc='WPScan rewritten in Python + some WPSeku ideas.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
+arch=('any')
+url='https://github.com/swisskyrepo/Wordpresscan'
+license=('custom:unknown')
+depends=('python2' 'python2-argparse' 'python2-requests' 'python2-lxml'
+         'python2-tornado')
+makedepends=('git')
+source=('git+https://github.com/swisskyrepo/Wordpresscan')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Wordpresscan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Wordpresscan"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/wordpresscan"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/wordpresscan/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/wordpresscan/"
+
+  cat > "$pkgdir/usr/bin/wordpresscan" << EOF
+#!/bin/sh
+cd /usr/share/wordpresscan
+exec python2 main.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/wordpresscan"
+}

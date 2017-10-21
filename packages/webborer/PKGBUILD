@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='webborer'
+pkgver=107.c7411b7
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+pkgdesc='A directory-enumeration tool written in Go.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/Matir/webborer'
+license=('Apache2')
+depends=('glibc' 'go')
+makedepends=('go' 'git')
+source=('git+https://github.com/Matir/webborer.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/webborer"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/$url && rm -rf src/$url && mv webborer src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t github.com/Matir/webborer
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v github.com/Matir/webborer
+
+  install -Dm755 "$srcdir/webborer" "$pkgdir/usr/bin/webborer"
+  install -Dm644 -t "$pkgdir/usr/share/doc/webborer/README.md" \
+    src/$url/*.md
+  install -Dm644 src/$url/LICENSE "$pkgdir/usr/share/licenses/webborer/LICENSE"
+}

@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='mrsip'
+pkgver=17.45fd85f
+pkgrel=1
+pkgdesc='SIP-Based Audit and Attack Tool.'
+groups=('blackarch' 'blackarch-voip')
+arch=('any')
+url='https://github.com/meliht/mr.sip'
+license=('GPL3')
+depends=('python2' 'scapy' 'toilet')
+makedepends=('git')
+source=('git+https://github.com/meliht/mr.sip.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/mr.sip"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/mr.sip"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/mrsip"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/mrsip/" README.md To-Do.md \
+    Documentation.pdf
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/mrsip/LICENSE"
+
+  rm *.md LICENSE Documentation.pdf
+
+  cp -a * "$pkgdir/usr/share/mrsip/"
+
+  cat > "$pkgdir/usr/bin/mrsip" << EOF
+#!/bin/sh
+cd /usr/share/mrsip
+exec python2 mr.sip.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/mrsip"
+}
