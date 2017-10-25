@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname='set'
-pkgver='7.7'
-pkgrel=1
+pkgver=r15625.d501722de
+pkgrel=2
 epoch=1
 groups=('blackarch' 'blackarch-social' 'blackarch-exploitation')
 pkgdesc='Social-engineer toolkit. Aimed at penetration testing around Social-Engineering.'
@@ -18,7 +18,7 @@ optdepends=('ettercap: DNS spoofing and ARP cache poisoning capabilities'
             'sendmail: email address spoofing'
             'python2-pefile: advanced AV evasion via hijacking a legit digital certificate'
             'apache: increase speed of web attack vectors'
-            'openssl: create self-signed SSL certificates'
+            'openssl-1.0: create self-signed SSL certificates'
             'xterm: default terminal for SET command center'
             'upx: executable packer for better AV evasion'
             'aircrack-ng: rouge access point capabilities'
@@ -26,14 +26,20 @@ optdepends=('ettercap: DNS spoofing and ARP cache poisoning capabilities'
             'python2-cryptography: Encrypted communications'
             'metasploit: metasploit exploit payloads')
 options=('!strip')
-source=("https://github.com/trustedsec/social-engineer-toolkit/archive/${pkgver}.tar.gz")
-sha1sums=('42e84e6b1a21746de6ec068bb8b5738046ea4fd6')
+source=("git+https://github.com/trustedsec/social-engineer-toolkit.git")
+sha1sums=('SKIP')
 backup=('usr/share/set/config/set_config')
 
-prepare() {
-  cd "$srcdir/social-engineer-toolkit-$pkgver"
+pkgver() {
+  cd "$srcdir/social-engineer-toolkit"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
 
-  # Fix shebands in all se*
+prepare() {
+  cd "$srcdir/social-engineer-toolkit"
+
+  # still needed with setuptools?
+  # Fix shebangs in all se*
   sed -i -e "s|#![ ]*/usr/bin/python$|#!/usr/bin/python2|" \
       -i -e "s|#![ ]*/usr/bin/env python$|#!/usr/bin/env python2|" \
       se*
@@ -64,12 +70,15 @@ prepare() {
 }
 
 package() {
-  cd "$srcdir/social-engineer-toolkit-$pkgver"
+  cd "$srcdir/social-engineer-toolkit"
 
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/set"
   mkdir -p "$pkgdir/usr/share/doc/set"
 
+  # and here I thought a setup.py meant this wasn't a bullshit-install.
+  # I was wrong
+  # python2 setup.py install --root="$pkgdir" --optimize=1
   cp --no-preserve=ownership -R * "$pkgdir/usr/share/set"
   cp --no-preserve=ownership -R readme/* "$pkgdir/usr/share/doc/set"
 
