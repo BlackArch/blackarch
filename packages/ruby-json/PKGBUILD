@@ -1,32 +1,37 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
 pkgname='ruby-json'
-pkgver='2.0.3'
+_gemname='json'
+pkgver='2.1.0'
 pkgrel=1
+pkgdesc="JSON Implementation for Ruby"
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
-pkgdesc='JSON implementation as a Ruby extension in C'
-url='http://rubygems.org/gems/json'
-license=('GPL')
+url='http://flori.github.com/json'
+license=("Ruby")
 depends=('ruby')
-makedepends=('rubygems')
-optdepends=('jruby' 'java-environment')
-source=("http://rubygems.org/downloads/json-${pkgver}.gem")
-noextract=("json-${pkgver}.gem")
-sha1sums=('a9976f6fd4c15f780d277b35c2e2a7edcb50759a')
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+noextract=("$_gemname-$pkgver.gem")
+sha1sums=('8b9e81a2a6ff57f97bec1f65940c61cc6b6d81be' )
+
 
 package() {
-  cd "$srcdir"
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
 
-  local _gemdir=$(ruby -e 'puts Gem.default_dir')
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
 
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
-      -i "$pkgdir$_gemdir" json-$pkgver.gem
-  else
-    gem install --no-user-install --ignore-dependencies -i "$pkgdir$_gemdir" \
-      json-$pkgver.gem
-  fi
+  rm -rf "$pkgdir$_gemdir/extensions/$CARCH/$(ruby -rubygems -e puts Gem.extension_api_version)/$_gemname-$pkgver/"
+  mkdir -p "$pkgdir$_gemdir/extensions/$CARCH/$(ruby -rubygems -e puts Gem.extension_api_version)/$_gemname-$pkgver/"
+  touch "$pkgdir$_gemdir/extensions/$CARCH/$(ruby -rubygems -e puts Gem.extension_api_version)/$_gemname-$pkgver/gem.build_complete"
 
   # Removing files with references to $pkgdir
   find "$pkgdir" -depth -type f -name "Makefile*" -exec rm {} \;

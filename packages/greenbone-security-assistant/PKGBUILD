@@ -1,0 +1,37 @@
+# $Id$
+# Maintainer: Daniel Micay <danielmicay@gmail.com>
+pkgname=greenbone-security-assistant
+pkgver=7.0.2
+pkgrel=1
+pkgdesc='Greenbone Security Assistant (gsa) - OpenVAS web frontend'
+url='http://www.openvas.org/'
+license=(GPL)
+arch=('i686' 'x86_64')
+depends=('libmicrohttpd' 'openvas-libraries' 'libxslt')
+makedepends=('cmake' 'doxygen' 'xmltoman')
+groups=(openvas)
+backup=(etc/openvas/gsad_log.conf)
+# These URLs need to be manually updated on every pkgver upgrade.
+# http://wald.intevation.org/frs/?group_id=29
+source=("http://wald.intevation.org/frs/download.php/2429/$pkgname-$pkgver.tar.gz"
+        "http://wald.intevation.org/frs/download.php/2430/$pkgname-$pkgver.tar.gz.sig")
+md5sums=('85f18bbbb5674c4bc62ac3b0cd52762d'
+         'SKIP')
+validpgpkeys=(
+              'C3B468D2288C68B9D526452248479FF648DB4530' # OpenVAS Transfer Integrity
+)
+conflicts=(gsa)
+provides=(gsa)
+replaces=(gsa)
+
+build() {
+  cd $pkgname-$pkgver
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+    -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var . -DSBINDIR=/usr/bin
+  make
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
+}

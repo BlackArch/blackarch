@@ -1,0 +1,35 @@
+# $Id$
+# Maintainer: Daniel Micay <danielmicay@gmail.com>
+pkgname=openvas-libraries
+pkgver=9.0.1
+pkgrel=1
+pkgdesc='The OpenVAS libraries'
+arch=('i686' 'x86_64')
+url="http://www.openvas.org/"
+license=('GPL')
+depends=('gnutls' 'libpcap' 'gpgme' 'libssh' 'glib2' 'libldap' 'hiredis')
+makedepends=('cmake' 'doxygen')
+groups=(openvas)
+# These URLs need to be manually updated on every pkgver upgrade.
+# http://wald.intevation.org/frs/?group_id=29
+source=("http://wald.intevation.org/frs/download.php/2420/$pkgname-${pkgver}.tar.gz"
+        "http://wald.intevation.org/frs/download.php/2421/$pkgname-${pkgver}.tar.gz.sig")
+sha256sums=('4ee3f8f8b082238ac3bc67437aab2069417c0c60342530acbec572e0708e5aeb'
+            'SKIP')
+validpgpkeys=(
+              'C3B468D2288C68B9D526452248479FF648DB4530' # OpenVAS Transfer Integrity
+)
+
+build() {
+  cd $pkgname-$pkgver
+  LDFLAGS+=" -Wl,--no-as-needed"
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+    -DLIBDIR=/usr/lib -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var .
+  make
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir/" install
+  rmdir "$pkgdir/var/run"
+}

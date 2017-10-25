@@ -1,0 +1,38 @@
+# Maintainer : Christian Hofmann <chof@pfho.net>
+
+pkgname=python2-xfltreat
+pkgver=r98.fe85fdd
+pkgrel=1
+pkgdesc="XFLTReaT tunnelling framework "
+arch=(any)
+url="https://github.com/earthquake/xfltreat/"
+license=('GPL')
+depends=(python2 python2-pyroute2)
+makedepends=(git)
+source=("$pkgname::git+https://github.com/earthquake/xfltreat.git#branch=next-version")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$pkgname"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+prepare() {
+  cd "$pkgname"
+  sed -i 's|/usr/bin/env python|/usr/bin/python2|' xfltreat.py
+  rm -f requirements.txt README.md
+}
+
+package() {
+  mkdir -p ${pkgdir}/usr/bin
+  mkdir -p ${pkgdir}/usr/share/xfltreat
+  cp -r $pkgname/* ${pkgdir}/usr/share/xfltreat/
+
+  cat > "$pkgdir/usr/bin/xfltreat" << EOF
+#!/bin/sh
+# cd /usr/share/xfltreat
+exec python2 /usr/share/xfltreat/xfltreat.py "\${@}"
+EOF
+
+chmod a+x "$pkgdir/usr/bin/xfltreat"
+}

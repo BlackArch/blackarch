@@ -1,28 +1,35 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
 pkgname='ruby-rdoc'
-pkgver='5.0.0'
-pkgrel=2
-pkgdesc='RDoc produces HTML and command-line documentation for Ruby projects.'
+_gemname='rdoc'
+pkgver='5.1.0'
+pkgrel=1
+pkgdesc="RDoc produces HTML and command-line documentation for Ruby projects"
 arch=('any')
-license=('RUBY')
-depends=('ruby' 'ruby-json>=1.4')
-url='http://docs.seattlerb.org/rdoc'
-source=("http://rubygems.org/downloads/rdoc-${pkgver}.gem")
-sha1sums=('e950a1158524c3b408cb5a411f9b7649b912514f')
-noextract=("rdoc-${pkgver}.gem")
+url='https://rdoc.github.io/rdoc'
+license=("Ruby")
+depends=('ruby')
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+noextract=("$_gemname-$pkgver.gem")
+sha1sums=('3ad6a195ebb899933a71018080e4868453660f1a' )
+
 
 package() {
-  cd "$srcdir"
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.rdoc" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.rdoc"
+  # non-HEAD version should not install any files in /usr/bin
+  rm -r "$pkgdir"/usr/bin/
 
-  local _gemdir=$(ruby -e 'puts Gem.default_dir')
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
 
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
-      -i "$pkgdir$_gemdir" rdoc-$pkgver.gem
-  else
-    gem install --no-user-install --ignore-dependencies -i "$pkgdir$_gemdir" \
-      rdoc-$pkgver.gem
-  fi
 }

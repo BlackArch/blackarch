@@ -1,0 +1,45 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ruby-ssrf-proxy'
+pkgver=224.2e4c4a7
+_gemname='ssrf_proxy'
+_gemver='0.0.4.pre'
+pkgrel=2
+pkgdesc="SSRF Proxy facilitates tunneling HTTP communications through servers vulnerable to SSRF."
+groups=('blackarch' 'blackarch-proxy' 'blackarch-tunnel')
+arch=('any')
+url='https://github.com/bcoles/ssrf_proxy'
+license=("MIT")
+depends=('ruby' 'ruby-base32' 'ruby-celluloid' 'ruby-celluloid-io' 'ruby-colorize' 'ruby-htmlentities' 'ruby-ipaddress' 'ruby-logger' 'ruby-socksify' 'ruby-webrick')
+makedepends=('git')
+source=('git+https://github.com/bcoles/ssrf_proxy.git')
+replaces=('ssrf-proxy')
+conflicts=('ssrf-proxy')
+provides=('ssrf-proxy')
+options=('!emptydirs')
+sha1sums=('SKIP' )
+
+pkgver() {
+  cd "$srcdir/$_gemname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/$_gemname"
+
+  gem build $_gemname.gemspec
+}
+
+package() {
+  cd "$srcdir/$_gemname"
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$_gemver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$_gemver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$_gemver/LICENSE.md" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
+  install -D -m644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_gemver"/{LICENSE.md,README.md}
+}

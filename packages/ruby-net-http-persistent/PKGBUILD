@@ -1,30 +1,32 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
 pkgname='ruby-net-http-persistent'
 _gemname='net-http-persistent'
-pkgver='2.9.4'
+pkgver='3.0.0'
 pkgrel=1
-epoch=1
-pkgdesc='Manages persistent connections using Net::HTTP plus a speed fix for Ruby 1.8.'
+pkgdesc="Manages persistent connections using Net::HTTP plus a speed fix for Ruby 1.8"
 arch=('any')
-license=('unknown')
-makedepends=('ruby')
 url='http://docs.seattlerb.org/net-http-persistent'
-source=("http://rubygems.org/downloads/net-http-persistent-${pkgver}.gem")
-sha1sums=('c5476a2800cf9d99e422b6f465e54ea84fabe6b6')
-noextract=("net-http-persistent-${pkgver}.gem")
+license=("MIT")
+depends=('ruby' 'ruby-connection_pool')
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+noextract=("$_gemname-$pkgver.gem")
+sha1sums=('239d6a0be13c68b171301b146d0c8e0390e28903' )
+
 
 package() {
-  cd "$srcdir"
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
 
-  local _gemdir=$(ruby -rubygems -e 'puts Gem.default_dir')
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
 
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
-      -n "$pkgdir/usr/bin" -i "$pkgdir$_gemdir" net-http-persistent-${pkgver}.gem
-  else
-    gem install --no-user-install --ignore-dependencies -i "$pkgdir$_gemdir" \
-      -n "$pkgdir/usr/bin" net-http-persistent-${pkgver}.gem
-  fi
 }

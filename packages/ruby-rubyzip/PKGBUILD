@@ -1,30 +1,32 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
 pkgname='ruby-rubyzip'
 _gemname='rubyzip'
-pkgver='1.2.0'
-pkgrel=2
-pkgdesc='A ruby module for reading and writing zip files.'
+pkgver='1.2.1'
+pkgrel=1
+pkgdesc="rubyzip is a ruby module for reading and writing zip files"
 arch=('any')
-url='http://rubyzip.sourceforge.net/'
-license=('BSD')
+url='http://github.com/rubyzip/rubyzip'
+license=("BSD 2-Clause")
 depends=('ruby')
-makedepends=('rubygems')
-source=("http://rubygems.org/downloads/${_gemname}-${pkgver}.gem")
-noextract=("${_gemname}-${pkgver}.gem")
-sha1sums=('e58af9324fb24725ff6305913d478422265f6e0d')
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+noextract=("$_gemname-$pkgver.gem")
+sha1sums=('6db27c04c4051fdd163a759d294a66e89438ccbe' )
+
 
 package() {
-  cd $srcdir
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
 
-  local _gemdir="$(ruby -rubygems -e'puts Gem.default_dir')"
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
 
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
-      -i "$pkgdir$_gemdir" rubyzip-$pkgver.gem
-  else
-    gem install --no-user-install --ignore-dependencies -i "$pkgdir$_gemdir" \
-      rubyzip-$pkgver.gem
-  fi
 }

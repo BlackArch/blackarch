@@ -1,30 +1,33 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
 pkgname='ruby-http-cookie'
 _gemname='http-cookie'
 pkgver='1.0.3'
-pkgrel=3
-pkgdesc='A Ruby library to handle HTTP Cookies based on RFC 6265.'
+pkgrel=1
+pkgdesc="A Ruby library to handle HTTP Cookies based on RFC 6265"
 arch=('any')
-license=('unknown')
-makedepends=('ruby')
-depends=('ruby-domain_name')
 url='https://github.com/sparklemotion/http-cookie'
-source=("http://rubygems.org/downloads/http-cookie-${pkgver}.gem")
-sha1sums=('34c03e5f450d33591f47d9934dd9315577a3da57')
-noextract=("http-cookie-${pkgver}.gem")
+license=("MIT")
+depends=('ruby' 'ruby-domain_name')
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+noextract=("$_gemname-$pkgver.gem")
+sha1sums=('34c03e5f450d33591f47d9934dd9315577a3da57' )
+
 
 package() {
-  cd "$srcdir"
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
 
-  local _gemdir=$(ruby -rubygems -e 'puts Gem.default_dir')
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
 
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
-      -i "$pkgdir$_gemdir" http-cookie-$pkgver.gem
-  else
-    gem install --no-user-install --ignore-dependencies -i "$pkgdir$_gemdir" \
-      -n "$pkgdir/usr/bin" http-cookie-${pkgver}.gem
-  fi
 }

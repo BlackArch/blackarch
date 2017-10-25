@@ -1,29 +1,33 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
 pkgname='ruby-mini_portile'
 _gemname='mini_portile'
-pkgver='0.7.0.rc4'
-pkgrel=2
-pkgdesc='Simplistic port-like solution for developers.'
+pkgver=0.7.0.rc4
+pkgrel=3
+pkgdesc="Simplistic port-like solution for developers"
 arch=('any')
-license=('')
-makedepends=('ruby')
-url='http://github.com/luislavena/mini_portile'
-source=("http://rubygems.org/downloads/mini_portile-${pkgver}.gem")
+url='http://github.com/flavorjones/mini_portile'
+license=("MIT")
+depends=('ruby')
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+noextract=("$_gemname-$pkgver.gem")
 sha1sums=('414fb079e2e5fbec29cd5b54d13aa8ff6375c02f')
-noextract=("mini_portile-${pkgver}.gem")
+
 
 package() {
-  cd "$srcdir"
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
 
-  local _gemdir=$(ruby -e 'puts Gem.default_dir')
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
 
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
-      -i "$pkgdir$_gemdir" mini_portile-$pkgver.gem
-  else
-    gem install --no-user-install --ignore-dependencies -i "$pkgdir$_gemdir" \
-      mini_portile-${pkgver}.gem
-  fi
 }

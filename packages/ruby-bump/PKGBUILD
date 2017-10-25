@@ -1,29 +1,32 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
 pkgname='ruby-bump'
 _gemname='bump'
-pkgver='0.5.3'
-pkgrel=3
-pkgdesc='Bump your gem version file.'
+pkgver='0.5.4'
+pkgrel=1
+pkgdesc="Bump your gem version file"
 arch=('any')
-license=('custom:unknown')
-makedepends=('ruby')
 url='https://github.com/gregorym/bump'
-source=("http://rubygems.org/downloads/bump-${pkgver}.gem")
-sha1sums=('ba0fcfdcdeb32e776c32f25c3ed63c361f0dd')
-noextract=("bump-${pkgver}.gem")
+license=("MIT")
+depends=('ruby')
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+noextract=("$_gemname-$pkgver.gem")
+sha1sums=('69c8bb7d496c312de9327139a3a04fdb79f61f2d' )
+
 
 package() {
-  cd "$srcdir"
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
 
-  local _gemdir=$(ruby -e 'puts Gem.default_dir')
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib bin $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
 
-  if [[ $CARCH == arm* ]] ; then
-    gem install --ignore-dependencies --no-user-install --no-rdoc --no-ri \
-      -i "$pkgdir$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
-  else
-    gem install --ignore-dependencies --no-user-install -i "$pkgdir$_gemdir" \
-      -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
-  fi
 }

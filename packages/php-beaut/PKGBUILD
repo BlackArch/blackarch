@@ -1,0 +1,52 @@
+# Maintainer:  Javier Torres <javitonino [at] gmail [dot] com>
+# Contributor: max-k <max-k AT post DOT com>
+
+pkgname=pear-PHP-Beautifier
+_pkgname=PHP_Beautifier
+pkgver=2.2.1
+pkgrel=5
+pkgdesc='Provides an easy way to perform HTTP requests.'
+arch=('any')
+url="http://pear.php.net/package/${_pkgname}"
+license=('BSD3')
+depends=('php>=5.2.0')
+makedepends=('git' 'composer')
+options=('!strip')
+# source=(git+https://github.com/rbnvrw/PHP_Beautifier.git)
+source=('git+https://github.com/dohzoh/PHP_Beautifier.git'
+	'setup_fix.patch')
+# https://github.com/dohzoh/PHP_Beautifier
+md5sums=('SKIP'
+         '40663554eb499bae49e8f908b1521333')
+
+prepare() {
+  cd $srcdir/$_pkgname
+  patch -Np1 -i ../setup_fix.patch
+}
+
+package() {
+  cd ${srcdir}/PHP_Beautifier
+  local _PEARDIR="${pkgdir}/usr/share/pear"
+  # local _PEAROPTS="-D php_dir=${_PEARDIR} -D doc_dir=${_PEARDIR}/doc"
+  # local _PEAROPTS="${_PEAROPTS} -D test_dir=${_PEARDIR}/test"
+  # local _PEAROPTS="${_PEAROPTS} -D data_dir=${_PEARDIR}/data"
+  composer install
+  # pear ${_PEAROPTS} install -R "${pkgdir}" package2.xml
+  # pear ${_PEAROPTS} install -O -n ${_pkgname}-${pkgver}.tgz
+  # rm -r ${_PEARDIR}/{.channels,.depdb*,.filemap,.lock,.registry/.chan*}
+  # rm -rf ${pkgdir}/tmp
+
+  mkdir -p $pkgdir/usr/bin
+  mkdir -p $pkgdir/usr/share/PHP_Beautifier
+  cp -r * $pkgdir/usr/share/PHP_Beautifier
+
+  cat > "$pkgdir/usr/bin/php_beautifier" << EOF
+#!/bin/sh
+cd /usr/share/PHP_Beautifier
+exec ./scripts/php_beautifier "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/php_beautifier"
+  chmod +x "$pkgdir/usr/share/PHP_Beautifier/scripts/php_beautifier"
+}
+

@@ -1,0 +1,33 @@
+diff --git a/ext/puma_http11/mini_ssl.c b/ext/puma_http11/mini_ssl.c
+index 8b56216..34c2043 100644
+--- a/ext/puma_http11/mini_ssl.c
++++ b/ext/puma_http11/mini_ssl.c
+@@ -81,6 +81,8 @@ DH *get_dh1024() {
+ 
+   DH *dh;
+   dh = DH_new();
++
++#if OPENSSL_VERSION_NUMBER < 0x10100005L || defined(LIBRESSL_VERSION_NUMBER)
+   dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
+   dh->g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
+ 
+@@ -89,6 +91,19 @@ DH *get_dh1024() {
+     return NULL;
+   }
+ 
++#else
++  BIGNUM *p, *g;
++  p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
++  g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
++
++  if (p == NULL || g == NULL || !DH_set0_pqg(dh, p, NULL, g)) {
++    DH_free(dh);
++    BN_free(p);
++    BN_free(g);
++    return NULL;
++  }
++#endif
++
+   return dh;
+ }
+ 

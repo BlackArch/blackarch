@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ruby-yawast'
+pkgver=429.578a67d
+_gemname='yawast'
+_gemver=0.6.0.beta1
+pkgrel=1
+pkgdesc="The YAWAST Antecedent Web Application Security Toolkit"
+arch=('any')
+url='https://github.com/adamcaudill/yawast'
+license=("MIT")
+depends=('ruby' 'ruby-colorize' 'ruby-commander' 'ruby-highline'
+	 'ruby-ipaddr_extensions' 'ruby-ipaddress' 'ruby-openssl-extensions'
+	 'ruby-public_suffix' 'ruby-ssllabs' 'ruby-sslshake')
+makedepends=('git')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
+replaces=('yawast')
+conflicts=('yawast')
+provides=('yawast')
+source=('git+https://github.com/adamcaudill/yawast.git')
+options=('!emptydirs')
+
+sha1sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/$_gemname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/$_gemname"
+
+  gem build $_gemname.gemspec
+}
+
+package() {
+  cd "$srcdir/$_gemname"
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$_gemver.gem
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$_gemver.gem"
+
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_gemver"/{.codeclimate.yml,.gitignore,.rubocop.yml,.ruby-version,.travis.yml,CHANGELOG.md,Gemfile,README.md,Rakefile,test,yawast.gemspec}
+}

@@ -1,29 +1,33 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
 pkgname='ruby-uri-query_params'
 _gemname='uri-query_params'
 pkgver='0.7.1'
-pkgrel=4
-pkgdesc='Allows access to the query component of the URI as a Hash..'
+pkgrel=1
+pkgdesc="Access the query parameters of a URI, just like $_GET in PHP."
 arch=('any')
-license=('MIT')
-makedepends=('ruby')
-url='https://rubygems.org/gems/uri-query_params'
-source=("https://rubygems.org/downloads/uri-query_params-${pkgver}.gem")
-sha1sums=('0408fd0f2492eeaf45c4c546439424ba0a5fc397')
-noextract=("uri-query_params-${pkgver}.gem")
+url='https://github.com/postmodern/uri-query_params'
+license=("MIT")
+depends=('ruby')
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+noextract=("$_gemname-$pkgver.gem")
+sha1sums=('0408fd0f2492eeaf45c4c546439424ba0a5fc397' )
+
 
 package() {
-  cd "$srcdir"
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
 
-  local _gemdir=$(ruby -rubygems -e 'puts Gem.default_dir')
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
 
-  if [[ $CARCH == arm* ]] ; then
-    gem install --no-user-install --ignore-dependencies --no-rdoc --no-ri \
-      -n "$pkgdir/usr/bin" -i "$pkgdir$_gemdir" uri-query_params-${pkgver}.gem
-  else
-    gem install --no-user-install --ignore-dependencies -i "$pkgdir$_gemdir" \
-      -n "$pkgdir/usr/bin" uri-query_params-${pkgver}.gem
-  fi
 }
