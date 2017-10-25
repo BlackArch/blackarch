@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname='bro'
-pkgver='2.5.1'
+pkgver='2.5.2'
 pkgrel=1
 groups=('blackarch' 'blackarch-networking' 'blackarch-defensive'
         'blackarch-sniffer')
@@ -10,25 +10,32 @@ pkgdesc='A powerful network analysis framework that is much different from the t
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://www.bro.org/download/index.html'
 license=('custom:unknown')
-depends=('libpcap' 'openssl' 'bash' 'python' 'swig' 'ruby' 'perl' 'crypto++')
+depends=('libpcap' 'openssl-1.0' 'bash' 'python' 'swig' 'ruby' 'perl' 'crypto++')
 makedepends=('cmake' 'flex' 'bison' 'swig' 'zlib')
-source=("https://www.bro.org/downloads/beta/bro-${pkgver}-beta.tar.gz")
-sha1sums=('b1ce31948263f504ff9d97275bfab92643341034')
+source=("https://www.bro.org/downloads/bro-${pkgver}.tar.gz")
+sha1sums=('9cefd1f765e89765ca1e9a0d7bf64c23dc27909f')
 
 build() {
-  cd "$srcdir/bro-$pkgver-beta"
+  mkdir -p "$srcdir/bro-${pkgver}/build"
 
-  # tmp solution. needs to be fixed for 'broccoli' and 'broctl'
-  ./configure --prefix=/usr --with-openssl=/usr/lib \
-    --disable-broccoli --disable-broctl
+  cd "$srcdir/bro-${pkgver}/build"
 
+  cmake .. -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/openssl-1.0/libcrypto.so \
+           -DOPENSSL_INCLUDE_DIR=/usr/include/openssl-1.0 \
+           -DOPENSSL_ROOT_DIR=/usr/lib/openssl-1.0 \
+           -DOPENSSL_SSL_LIBRARY=/usr/lib/openssl-1.0/libssl.so \
+           -DCMAKE_INSTALL_PREFIX=/usr
   make
 }
 
 package() {
-  cd "$srcdir/bro-$pkgver-beta"
+  cd "$srcdir/bro-${pkgver}/build"
 
   make DESTDIR="$pkgdir" install
 
-  mv "$pkgdir/usr/bin/bro" "$pkgdir/usr/bin/bro-sniffer"
+  cd "$srcdir/bro-$pkgver"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/bro" README NEWS VERSION
+  install -Dm644 man/bro.8 "$pkgdir/usr/share/man/man8/bro.8"
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/bro/COPYING"
 }

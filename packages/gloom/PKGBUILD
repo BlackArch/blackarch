@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='gloom'
+pkgver=93.cd6e927
+pkgrel=1
+pkgdesc='Linux Penetration Testing Framework.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation'
+        'blackarch-recon' 'blackarch-fuzzer' 'blackarch-social')
+arch=('any')
+url='https://github.com/joshDelta/Gloom-Framework'
+license=('GPL3')
+depends=('python2' 'python2-mechanize' 'python2-pythonwhois' 'python2-requests'
+         'python2-termcolor' 'python2-dateutil' 'python2-beautifulsoup4'
+         'python2-geoip' 'scapy' 'wifijammer' 'nmap' 'curl')
+makedepends=('git')
+source=('git+https://github.com/joshDelta/Gloom-Framework.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Gloom-Framework"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Gloom-Framework"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/gloom"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/gloom/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/gloom/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/gloom/"
+
+  cat > "$pkgdir/usr/bin/gloom" << EOF
+#!/bin/sh
+cd /usr/share/gloom
+exec python2 gloom.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/gloom"
+}

@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='trusttrees'
+pkgver=7.0665877
+pkgrel=1
+pkgdesc='A Tool for DNS Delegation Trust Graphing.'
+groups=('blackarch' 'blackarch-recon')
+arch=('any')
+url='https://github.com/mandatoryprogrammer/TrustTrees'
+license=('custom:unknown')
+depends=('python2' 'python2-dnspython' 'python2-pygraphviz' 'python2-idna'
+         'python2-requests' 'python2-requests-file' 'python2-six'
+         'python2-tldextract')
+makedepends=('git')
+source=('git+https://github.com/mandatoryprogrammer/TrustTrees.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "${srcdir}/TrustTrees"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  _app_name="trusttrees"
+
+  cd "${srcdir}/TrustTrees"
+
+  mkdir -p "${pkgdir}/usr/share/doc/${_app_name}"
+  mkdir -p "${pkgdir}/usr/share/${_app_name}"
+  mkdir -p "${pkgdir}/usr/bin"
+
+  install -Dm755 -t "${pkgdir}/usr/share/${_app_name}/" "${_app_name}.py"
+  install -Dm644 -t "${pkgdir}/usr/share/doc/${_app_name}/" README.md
+
+  cat > "${pkgdir}/usr/bin/${_app_name}" << EOF
+#!/bin/sh
+
+exec python2 /usr/share/${_app_name}/${_app_name}.py "\${@}"
+EOF
+
+  chmod a+x "${pkgdir}/usr/bin/${_app_name}"
+}

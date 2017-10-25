@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='dga-detection'
+pkgver=78.0a3186e
+pkgrel=1
+pkgdesc='DGA Domain Detection using Bigram Frequency Analysis.'
+groups=('blackarch' 'blackarch-recon')
+arch=('any')
+url='https://github.com/philarkwright/DGA-Detection'
+license=('BSD')
+depends=('python2' 'python2-argparse' 'python2-tldextract' 'scapy'
+         'python2-alexa-top-sites' 'python2-pushbullet.py'
+         'python2-websocket-client')
+makedepends=('git')
+source=('git+https://github.com/philarkwright/DGA-Detection')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/DGA-Detection"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/DGA-Detection"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/dga-detection"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/dga-detection/" README.md
+  install -Dm644 LICENCE "$pkgdir/usr/share/licenses/dga-detection/LICENCE"
+
+  rm README.md LICENCE
+
+  cp -a * "$pkgdir/usr/share/dga-detection/"
+
+  cat > "$pkgdir/usr/bin/dga-detection" << EOF
+#!/bin/sh
+cd /usr/share/dga-detection
+exec python2 dga_detection.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/dga-detection"
+}

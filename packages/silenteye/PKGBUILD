@@ -3,7 +3,7 @@
 
 pkgname='silenteye'
 pkgver=16.7f4124e
-pkgrel=2
+pkgrel=3
 pkgdesc='A cross-platform application design for an easy use of steganography.'
 groups=('blackarch' 'blackarch-stego')
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
@@ -20,10 +20,16 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd "$srcdir/silenteye"
+
+  touch README
+}
+
 build() {
   cd "$srcdir/silenteye"
 
-  cmake -DCMAKE_INSTALL_PREFIX=/usr .
+  ENABLE_PACK=1 cmake -DCMAKE_INSTALL_PREFIX=/usr .
 
   make
 }
@@ -34,18 +40,20 @@ package() {
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/silenteye"
 
+  make DESTDIR="$pkgdir" install
+
   install -Dm644 -t "$pkgdir/usr/share/doc/silenteye/" README.md
   install -Dm644 -t "$pkgdir/usr/share/licenses/silenteye/" LICENSE COPYING
 
   rm README.md LICENSE COPYING Makefile
 
-  cp -a * "$pkgdir/usr/share/silenteye"
+#  cp -a * "$pkgdir/usr/share/silenteye"
 
-  cat > "$pkgdir/usr/bin/silenteye" << EOF
+#  cat > "$pkgdir/usr/bin/silenteye" << EOF
 #!/bin/sh
-cd /usr/share/silenteye
-exec ./silenteye "\${@}"
-EOF
+#cd /usr/share/silenteye
+#exec ./silenteye "\${@}"
+#EOF
 
-  chmod a+x "$pkgdir/usr/bin/silenteye"
+#  chmod a+x "$pkgdir/usr/bin/silenteye"
 }

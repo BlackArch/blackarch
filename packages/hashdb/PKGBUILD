@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='hashdb'
+pkgver=1082.a41f702
+pkgrel=1
+pkgdesc='A block hash toolkit.'
+groups=('blackarch' 'blackarch-crypto' 'blackarch-forensic' 'blackarch-misc')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/NPS-DEEP/hashdb/'
+license=('GPL')
+depends=('tre' 'libxml2' 'python2' 'openssl' 'libewf' 'libtool')
+makedepends=('git')
+source=('git+https://github.com/NPS-DEEP/hashdb.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/hashdb"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd  "$srcdir/hashdb"
+
+  ./bootstrap.sh
+
+  sed -i s/SSL_library_init/OPENSSL_init_ssl/ configure.ac configure
+
+  ./configure --prefix=/usr --with-openssl
+
+  make
+}
+
+package() {
+  cd "$srcdir/hashdb"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/hashdb" README.md NEWS TESTS INSTALL
+}

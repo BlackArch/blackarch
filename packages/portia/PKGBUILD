@@ -1,0 +1,61 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='portia'
+pkgver=37.0cf304c
+pkgrel=1
+pkgdesc='Automate a number of techniques commonly performed on internal network penetration tests after a low privileged account has been compromised.'
+groups=('blackarch' 'blackarch-automation')
+arch=('any')
+url='https://github.com/SpiderLabs/portia'
+license=('Apache2')
+depends=('python2' 'python2-pyasn1' 'python2-pymysql' 'python2-argparse'
+         'python2-tabulate' 'python2-termcolor' 'python2-python-nmap'
+         'python2-netaddr' 'python2-dnspython' 'impacket' 'volatility'
+         'python2-xmltodict' 'python2-pysmb' 'ntdsxtract' 'pymssql')
+makedepends=('git')
+source=('git+https://github.com/SpiderLabs/portia.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/portia"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/portia"
+
+  git clone https://github.com/CoreSecurity/impacket
+  git clone https://github.com/libyal/libesedb.git && cd libesedb
+  ./synclibs.sh
+  ./autogen.sh
+
+  cd ../ && git submodule init && git submodule update --recursive
+}
+
+package() {
+  cd "$srcdir/portia"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/portia"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/portia/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/portia/LICENSE"
+
+  rm README.md LICENSE
+
+  mv impacket/* "$pkgdir/usr/share/portia"
+
+  rm -rf impacket
+
+  cp -a * "$pkgdir/usr/share/portia/"
+
+  cat > "$pkgdir/usr/bin/portia" << EOF
+#!/bin/sh
+cd /usr/share/portia
+exec python2 portia.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/portia"
+}

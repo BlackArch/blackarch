@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='scannerl'
+pkgver=15.e52c46b
+pkgrel=1
+pkgdesc='The modular distributed fingerprinting engine.'
+groups=('blackarch' 'blackarch-fingerprint')
+arch=('any')
+url='https://github.com/kudelskisecurity/scannerl'
+license=('GPL3')
+depends=('erlang-nox')
+makedepends=('git' 'rebar')
+source=('git+https://github.com/kudelskisecurity/scannerl.git' 'build.sh.patch')
+sha1sums=('SKIP'
+          '840d47d77c6d8c0980765b187d085ec47e363f9b')
+
+pkgver() {
+  cd "$srcdir/scannerl"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < build.sh.patch
+}
+
+build() {
+  cd "$srcdir/scannerl"
+
+  ./build.sh
+}
+
+package() {
+  cd "$srcdir/scannerl"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/scannerl"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/scannerl/" README.md AUTHORS \
+    DISCLAIMER.txt
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/scannerl/LICENSE"
+
+  rm README.md LICENSE AUTHORS DISCLAIMER.txt
+
+  cp -a * "$pkgdir/usr/share/scannerl"
+
+  cat > "$pkgdir/usr/bin/scannerl" << EOF
+#!/bin/sh
+exec /usr/share/scannerl/scannerl "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/scannerl"
+}
