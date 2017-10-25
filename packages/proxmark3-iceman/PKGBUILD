@@ -1,0 +1,79 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='proxmark-iceman'
+pkgver=3023.2954e1d0
+pkgrel=1
+groups=('blackarch' 'blackarch-radio' 'blackarch-recon' 'blackarch-scanner')
+pkgdesc='A powerful general purpose RFID tool, the size of a deck of cards, designed to snoop, listen and emulate everything from Low Frequency (125kHz) to High Frequency (13.56MHz) tags.'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/iceman1001/proxmark3'
+license=('GPL2')
+depends=('libusb' 'perl' 'qt4' 'termcap')
+options=('!strip')
+makedepends=('git' 'devkitarm' 'arm-none-eabi-gcc' 'arm-none-eabi-newlib')
+source=('git+https://github.com/iceman1001/proxmark3.git'
+	'iceman.patch')
+sha1sums=('SKIP'
+          '220801dd7e9d0ff10e25103ab7aee4ad5c70154f')
+
+pkgver() {
+  cd "$srcdir/proxmark3"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/proxmark3"
+  patch -Np1 -i ../iceman.patch
+}
+
+build() {
+  cd "$srcdir/proxmark3"
+
+  make clean
+  make -j1
+}
+
+package() {
+  cd "$srcdir/proxmark3"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/proxmark-iceman"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/proxmark-iceman/" README.md HACKING.txt \
+    COMPILING.txt CHANGELOG.md doc/*
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/proxmark-iceman/LICENSE.txt"
+
+  rm -rf *.txt *.md doc/
+
+  cp -a * "$pkgdir/usr/share/proxmark-iceman"
+
+  cat > "$pkgdir/usr/bin/proxmark-iceman" << EOF
+#!/bin/sh
+exec /usr/share/proxmark-iceman/client/proxmark3 "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/proxmark-iceman"
+
+  cat > "$pkgdir/usr/bin/proxmark-iceman-flasher" << EOF
+#!/bin/sh
+exec /usr/share/proxmark-iceman/client/flasher "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/proxmark-iceman-flasher"
+
+  cat > "$pkgdir/usr/bin/proxmark-iceman-fpga-compress" << EOF
+#!/bin/sh
+exec /usr/share/proxmark-iceman/client/fpga_compress "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/proxmark-iceman-fpga-compress"
+
+  cat > "$pkgdir/usr/bin/proxmark-iceman-unbind-proxmark" << EOF
+#!/bin/sh
+exec /usr/share/proxmark-iceman/client/unbind-proxmark "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/proxmark-iceman-unbind-proxmark"
+}
