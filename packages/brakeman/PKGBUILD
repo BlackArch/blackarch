@@ -1,0 +1,32 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ruby-brakeman'
+_gemname='brakeman'
+pkgver='4.0.1'
+pkgrel=1
+pkgdesc="Security vulnerability scanner for Ruby on Rails."
+arch=('any')
+url='http://brakemanscanner.org'
+license=("MIT")
+depends=('ruby')
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+noextract=("$_gemname-$pkgver.gem")
+sha1sums=('bb0c55e72969aae2ef8c7e52afcec0327103d6b5' )
+
+
+package() {
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib bin $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+
+}

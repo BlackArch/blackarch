@@ -1,0 +1,87 @@
+# $Id$
+# Maintainer: Sergej Pupykin <pupykin.s+arch@gmail.com>
+
+pkgname=hostapd-wpe
+_pkgname=hostapd
+pkgver=2.6
+pkgrel=3
+pkgdesc="IEEE 802.11 AP, IEEE 802.1X/WPA/WPA2/EAP/RADIUS Authenticator"
+arch=('i686' 'x86_64')
+url="http://w1.fi/hostapd/"
+license=('custom')
+depends=('openssl-1.0' 'libnl')
+install=hostapd-wpe.install
+options=(emptydirs)
+# validpgpkeys=('EC4AA0A991A5F2464582D52D2B6EF432EFC895FA')
+source=(https://w1.fi/releases/$_pkgname-$pkgver.tar.gz
+	config
+	hostapd-wpe.service
+	hostapd-2.3-noscan.patch
+        replace-gendh-by-dhparam.patch
+        kali-fixups.patch
+	'https://github.com/aircrack-ng/aircrack-ng/raw/master/patches/wpe/hostapd-wpe/hostapd-wpe.patch'
+	openvswitch.patch)
+sha256sums=('01526b90c1d23bec4b0f052039cc4456c2fd19347b4d830d1d58a0a6aea7117d'
+            '2d736aebe345137c60145517f1116d6b5366eb374e01c70d79788bb5de0a44be'
+            'c7961ceeccc58e6d161d31eaa4069b86e1520f1d2109e9760410179548d58d98'
+            'c15b4310f21b41254e4d4485bc04e36926572f213e7c4d3a17038fdff19529b5'
+            '72c19fe96456d07c13306d1d386b61195e6fd0205a58841a68d297fb5fd34d2a'
+            '9a0b9f7387c41d98301ac1fe9fe0175dc8a2865adb0607ea97cccd6ff170c3dd'
+            '3f99fbaa50b0580ec773827046544e159ccf8deda3a2186034d74be882419319'
+            'eeb07b5a3b971b3108ce8c5c947f4600d98ec9b338b8b88a96a7774cef269e49')
+
+prepare() {
+  cd $_pkgname-$pkgver
+  patch -p1 <"$srcdir"/hostapd-2.3-noscan.patch
+  patch -p1 <"$srcdir"/openvswitch.patch
+  patch -p1 <"$srcdir"/hostapd-wpe.patch
+  patch -p1 <"$srcdir"/kali-fixups.patch
+  patch -p1 <"$srcdir"/replace-gendh-by-dhparam.patch
+}
+
+build() {
+  cd $_pkgname-$pkgver/hostapd
+  # cp ../../config .config
+  # sed -i 's#/etc/hostapd#/etc/hostapd/hostapd#' hostapd.conf
+  # export CFLAGS="$CFLAGS $(pkg-config --cflags libnl-3.0 /usr/lib/openssl-1.0/pkgconfig/libssl.pc /usr/lib/openssl-1.0/pkgconfig/openssl.pc /usr/lib/openssl-1.0/pkgconfig/libcrypto.pc )"
+  export PKG_CONFIG_PATH=/usr/lib/openssl-1.0/pkgconfig
+  export CFLAGS="$CFLAGS $(pkg-config --cflags libnl-3.0 libssl )"
+  echo "cflags before: $CFLAGS"
+  export CFLAGS+=" -I/usr/include/openssl-1.0"
+  export CPPFLAGS+=" -I/usr/include/openssl-1.0"
+  export LDFLAGS+=" -L/usr/lib/openssl-1.0"
+  make
+}
+
+package() {
+  # Systemd unit
+  install -Dm644 hostapd-wpe.service "$pkgdir/usr/lib/systemd/system/hostapd-wpe.service"
+
+  cd $_pkgname-$pkgver
+
+  # License
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+
+  cd hostapd
+
+  # Binaries
+  install -d "$pkgdir/usr/bin"
+  install -t "$pkgdir/usr/bin" hostapd-wpe hostapd-wpe_cli
+
+  # Configuration
+  install -d "$pkgdir/etc/hostapd-wpe"
+  install -d "$pkgdir/etc/hostapd-wpe/certs"
+  install -d "$pkgdir/etc/hostapd-wpe/certs/demoCA"
+  install -d "$pkgdir/usr/share/doc/hostapd-wpe"
+  install -m644 -t "$pkgdir/usr/share/doc/hostapd-wpe" \
+    hostapd.{accept,conf,deny,eap_user,radius_clients,sim_db,vlan,wpa_psk} \
+    wired.conf hlr_auc_gw.milenage_db
+  install -m 644 hostapd-wpe.conf hostapd-wpe.eap_user "$pkgdir/etc/hostapd-wpe"
+  install -m 644 certs/demoCA/cacert.pem "$pkgdir/etc/hostapd-wpe/certs/demoCA"
+  install -m 755 certs/bootstrap "$pkgdir/etc/hostapd-wpe/certs"
+  install -m 644 certs/ca.cnf certs/client.cnf certs/Makefile certs/README certs/README.wpe certs/server.cnf certs/xpextensions "$pkgdir/etc/hostapd-wpe/certs"
+
+  # Man pages
+  install -Dm644 hostapd.8 "$pkgdir/usr/share/man/man8/hostapd-wpe.8"
+  install -Dm644 hostapd_cli.1 "$pkgdir/usr/share/man/man1/hostapd-wpe_cli.1"
+}

@@ -1,0 +1,33 @@
+# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='ruby-reek'
+_gemname='reek'
+pkgver='4.7.2'
+pkgrel=1
+pkgdesc="Code smell detector for Ruby"
+arch=('any')
+url='https://github.com/troessner/reek/wiki'
+license=("MIT")
+depends=('ruby' 'ruby-codeclimate-engine-rb' 'ruby-parser' 'ruby-rainbow')
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" )
+noextract=("$_gemname-$pkgver.gem")
+sha1sums=('39b616ee110f5deab5144094d66f5e46f2600ebb' )
+
+
+package() {
+  local _gemdir="$(ruby -rubygems -e 'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-document --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir"/usr/bin $_gemname-$pkgver.gem 
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/License.txt" "$pkgdir/usr/share/licenses/$pkgname/License.txt"
+
+  # Preserve library and other required directories. Remove junk that gem installs.
+  local _copydir=`mktemp -d -t $_gemname.XXX`
+  chmod 755 $_copydir
+  (cd "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"/ && cp -r --parents lib bin $_copydir)
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+  mv $_copydir "$pkgdir/$_gemdir/gems/$_gemname-$pkgver"
+
+}

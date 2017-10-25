@@ -1,0 +1,56 @@
+Description: Further changes for the Kali package
+ Use proper FHS compliant paths.
+ Use /var/run/hostapd-wep instead of /var/run/hostapd to not mess
+ up with normal hostapd.
+Author: Raphaël Hertzog <hertzog@debian.org>
+Origin: vendor
+Last-Update: 2016-04-26
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/hostapd/hostapd-wpe.conf
++++ b/hostapd/hostapd-wpe.conf
+@@ -5,11 +5,11 @@ interface=wlan0
+ 
+ # May have to change these depending on build location
+ eap_user_file=/etc/hostapd-wpe/hostapd-wpe.eap_user
+-ca_cert=/etc/hostapd-wpe/ca.pem
+-server_cert=/etc/hostapd-wpe/server.pem
+-private_key=/etc/hostapd-wpe/server.key
++ca_cert=/etc/hostapd-wpe/certs/ca.pem
++server_cert=/etc/hostapd-wpe/certs/server.pem
++private_key=/etc/hostapd-wpe/certs/server.key
+ private_key_passwd=whatever
+-dh_file=/etc/hostapd-wpe/dh
++dh_file=/etc/hostapd-wpe/certs/dh
+ 
+ # 802.11 Options
+ ssid=hostapd-wpe
+@@ -111,7 +111,7 @@ logger_stdout_level=2
+ # than one interface is used.
+ # /var/run/hostapd is the recommended directory for sockets and by default,
+ # hostapd_cli will use it when trying to connect with hostapd.
+-ctrl_interface=/var/run/hostapd
++ctrl_interface=/var/run/hostapd-wpe
+ 
+ # Access control for the control interface can be configured by setting the
+ # directory to allow only members of a group to use sockets. This way, it is
+--- a/hostapd/hostapd_cli.c
++++ b/hostapd/hostapd_cli.c
+@@ -28,7 +28,7 @@ static int hostapd_cli_quit = 0;
+ static int hostapd_cli_attached = 0;
+ 
+ #ifndef CONFIG_CTRL_IFACE_DIR
+-#define CONFIG_CTRL_IFACE_DIR "/var/run/hostapd"
++#define CONFIG_CTRL_IFACE_DIR "/var/run/hostapd-wpe"
+ #endif /* CONFIG_CTRL_IFACE_DIR */
+ static const char *ctrl_iface_dir = CONFIG_CTRL_IFACE_DIR;
+ static const char *client_socket_dir = NULL;
+@@ -60,7 +60,7 @@ static void usage(void)
+ 		"   -h           help (show this usage text)\n"
+ 		"   -v           shown version information\n"
+ 		"   -p<path>     path to find control sockets (default: "
+-		"/var/run/hostapd)\n"
++		"/var/run/hostapd-wpe)\n"
+ 		"   -s<dir_path> dir path to open client sockets (default: "
+ 		CONFIG_CTRL_IFACE_DIR ")\n"
+ 		"   -a<file>     run in daemon mode executing the action file "
