@@ -3,18 +3,13 @@
 
 pkgname='ld-shatner'
 pkgver=4.5c215c4
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-backdoor' 'blackarch-binary')
 pkgdesc='ld-linux code injector.'
-arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/sduverger/ld-shatner'
 license=('custom:unknown')
-if [[ $CARCH == "x86_64" ]]
-then
-  depends=('gcc-libs-multilib' 'gcc-multilib')
-else
-  depends=('glibc' 'gcc')
-fi
+depends=('gcc-libs' 'gcc')
 makedepends=('git')
 source=('git+https://github.com/sduverger/ld-shatner.git')
 sha1sums=('SKIP')
@@ -28,10 +23,7 @@ pkgver() {
 prepare() {
   cd "$srcdir/ld-shatner"
 
-  if [[ "${CARCH}" == "x86_64" ]]
-  then
-    sed -i 's|ld-shatner.c -o $@|ld-shatner.c -m32 -o $@|' Makefile
-  fi
+  sed -i 's|ld-shatner.c -o $@|ld-shatner.c -m32 -o $@|' Makefile
 }
 
 build() {
@@ -42,10 +34,7 @@ build() {
   gcc -fpie -c obj.c -o obj.o
   ld -pie obj.o -o obj.elf -e func
 
-  if [[ "${CARCH}" == "x86_64" ]]
-  then
-    opt="-m32"
-  fi
+  opt="-m32"
 
   gcc hooked.s ld-shatner.c ${opt} -o ld-shatner
 
