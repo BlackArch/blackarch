@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cr3dov3r'
+pkgver=16.d495180
+pkgrel=1
+pkgdesc='Search for public leaks for email addresses + check creds against 16 websites.'
+groups=('blackarch' 'blackarch-social' 'blackarch-recon')
+arch=('any')
+url='https://github.com/D4Vinci/Cr3dOv3r'
+license=('MIT')
+depends=('python2' 'python2-requests' 'python2-argparse'
+         'python2-mechanicalsoup')
+makedepends=('git')
+source=('git+https://github.com/D4Vinci/Cr3dOv3r')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Cr3dOv3r"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Cr3dOv3r"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/cr3dov3r"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/cr3dov3r/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/cr3dov3r/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/cr3dov3r/"
+
+  cat > "$pkgdir/usr/bin/cr3dov3r" << EOF
+#!/bin/sh
+cd /usr/share/cr3dov3r
+exec python2 Cr3d0v3r.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/cr3dov3r"
+}
