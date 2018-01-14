@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='githubcloner'
+pkgver=6.3069b88
+pkgrel=1
+pkgdesc='A script that clones Github repositories of users and organizations automatically.'
+groups=('blackarch' 'blackarch-misc' 'blackarch-automation')
+arch=('any')
+url='https://github.com/mazen160/GithubCloner'
+license=('MIT')
+depends=('python' 'python-argparse' 'python-requests')
+makedepends=('git')
+source=('git+https://github.com/mazen160/GithubCloner')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/GithubCloner"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/GithubCloner"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/githubcloner"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/githubcloner/" README.md
+  install -Dm644 LICENSE.txt \
+    "$pkgdir/usr/share/licenses/githubcloner/LICENSE.txt"
+
+  rm README.md LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/githubcloner/"
+
+  cat > "$pkgdir/usr/bin/githubcloner" << EOF
+#!/bin/sh
+cd /usr/share/githubcloner
+exec python githubcloner.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/githubcloner"
+}

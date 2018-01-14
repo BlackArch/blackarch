@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='bfac'
+pkgver=44.33be807
+pkgrel=1
+pkgdesc="An automated tool that checks for backup artifacts that may disclose the web-application's source code."
+groups=('blackarch' 'blackarch-recon' 'blackarch-webapp')
+arch=('any')
+url='https://github.com/mazen160/bfac'
+license=('GPL3')
+depends=('python' 'python-colorama' 'python-requests' 'python-argparse')
+makedepends=('git')
+source=('git+https://github.com/mazen160/bfac.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/bfac"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/bfac"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/bfac"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/bfac/" README.md CHANGELOG.txt \
+    CONTRIBUTORS.txt
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/bfac/LICENSE.txt"
+
+  rm README.md CHANGELOG.txt CONTRIBUTORS.txt LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/bfac/"
+
+  cat > "$pkgdir/usr/bin/bfac" << EOF
+#!/bin/sh
+exec python /usr/share/bfac/bfac "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/bfac"
+}
