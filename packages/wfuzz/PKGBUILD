@@ -3,7 +3,7 @@
 
 pkgname='wfuzz'
 pkgver=518.e13cea0
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-fuzzer' 'blackarch-webapp')
 pkgdesc='Utility to bruteforce web applications to find their not linked resources.'
 url='https://github.com/xmendez/wfuzz'
@@ -24,6 +24,8 @@ pkgver() {
 package() {
   cd "$srcdir/wfuzz"
 
+  tools="wfencode wfuzz wfpayload wxfuzz"
+
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/wfuzz"
 
@@ -34,19 +36,22 @@ package() {
 
   cp -a * "$pkgdir/usr/share/wfuzz"
 
-  cat > "$pkgdir/usr/bin/wfuzz" << EOF
+  for t in ${tools}
+  do
+    if [ "${t}" = "wfuzz" ]
+    then
+      cat > "$pkgdir/usr/bin/${t}" << EOF
 #!/bin/sh
 cd /usr/share/wfuzz
-exec python2 wfuzz-cli.py "\${@}"
+exec python2 src/${t}-cli.py "\${@}"
 EOF
-
-  chmod a+x $pkgdir/usr/bin/wfuzz
-
-  cat > "$pkgdir/usr/bin/wfencode-cli" << EOF
+    else
+      cat > "$pkgdir/usr/bin/${t}" << EOF
 #!/bin/sh
 cd /usr/share/wfuzz
-exec python2 wfencode-cli.py "\${@}"
+exec python2 src/${t}.py "\${@}"
 EOF
-
-  chmod a+x "$pkgdir/usr/bin/wfencode-cli"
+    fi
+    chmod a+x "$pkgdir/usr/bin/${t}"
+  done
 }
