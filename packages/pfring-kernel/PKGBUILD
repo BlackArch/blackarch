@@ -2,7 +2,7 @@
 # Contributors: Tony Lambiris <tony@criticalstack.com>,
 #              David Manouchehri
 
-pkgver=7.0.bbaa482
+pkgver=1513.bbaa482
 pkgrel=1
 _gitname=PF_RING
 pkgname="pfring-kernel"
@@ -21,25 +21,29 @@ optdepends=()
 sha512sums=('SKIP')
 arch=('x86_64')
 
-            
+pkgver() {
+  cd "$srcdir/PF_RING"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+   
 build() {
-	cd "${srcdir}/${_gitname}/kernel"
-	./configure --prefix=/usr
-	sed -i "s/INSTDIR\ \:=\ \$(DESTDIR)/INSTDIR := \$(DESTDIR)\/usr/g" Makefile
-	make
+  cd "${srcdir}/${_gitname}/kernel"
+  ./configure --prefix=/usr
+  sed -i "s/INSTDIR\ \:=\ \$(DESTDIR)/INSTDIR := \$(DESTDIR)\/usr/g" Makefile
+  make
 }
 
 package() {
-	cd "${srcdir}/${_gitname}/kernel"
-	mkdir -p "${pkgdir}/usr/include/linux"
-	make DESTDIR="${pkgdir}" install;
-        mkdir -p "${pkgdir}/usr/lib/systemd/system"
-        mkdir -p "${pkgdir}/usr/local/bin"
-        cp "${srcdir}/${_gitname}/package/usr/local/bin/clusterctl" "${pkgdir}/usr/local/bin"
-        cp "${srcdir}/${_gitname}/package/usr/local/bin/pf_ringctl" "${pkgdir}/usr/local/bin/"
-        cp "${srcdir}/${_gitname}/package/etc/systemd/system/pf_ring.service" "${pkgdir}/usr/lib/systemd/system/"
-        cp "${srcdir}/${_gitname}/package/etc/systemd/system/cluster.service" "${pkgdir}/usr/lib/systemd/system/" 
-#        cp "${srcdir}/${_gitname}/package/etc/systemd/system/cluster@.service" "${pgkdir}/usr/lib/systemd/system/"
-        ln -s "${pkgdir}/usr/lib/libpfring.so" "${pkgdir}/usr/lib/libpfring.so.1" ;
+  cd "${srcdir}/${_gitname}/kernel"
+  mkdir -p "${pkgdir}/usr/include/linux"
+  make DESTDIR="${pkgdir}" install;
+  mkdir -p "${pkgdir}/usr/lib/systemd/system"
+  mkdir -p "${pkgdir}/usr/local/bin"
+  cp "${srcdir}/${_gitname}/package/usr/local/bin/clusterctl" "${pkgdir}/usr/local/bin"
+  cp "${srcdir}/${_gitname}/package/usr/local/bin/pf_ringctl" "${pkgdir}/usr/local/bin/"
+  cp "${srcdir}/${_gitname}/package/etc/systemd/system/pf_ring.service" "${pkgdir}/usr/lib/systemd/system/"
+  cp "${srcdir}/${_gitname}/package/etc/systemd/system/cluster.service" "${pkgdir}/usr/lib/systemd/system/" 
+  #cp "${srcdir}/${_gitname}/package/etc/systemd/system/cluster@.service" "${pgkdir}/usr/lib/systemd/system/"
+  ln -s "${pkgdir}/usr/lib/libpfring.so" "${pkgdir}/usr/lib/libpfring.so.1" ;
 }
-# vim:set et sw=2 sts=2 tw=80:
