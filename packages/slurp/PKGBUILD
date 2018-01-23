@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='slurp'
+pkgver=55.e5db4c0
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='S3 bucket enumerator'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/bbb31/slurp'
+license=('AGPLv3')
+depends=('go')
+makedepends=('go' 'git')
+source=('git+https://github.com/bbb31/slurp.git')
+sha1sums=('SKIP')
+_url='github.com/bbb31/slurp'
+
+pkgver() {
+  cd "$srcdir/slurp"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/${_url} && rm -rf src/${_url} && mv slurp src/${_url} && \
+    cd src/${_url}
+
+  GOPATH="$srcdir" go get -d -t ${_url}
+}
+
+package() {
+  cd "$srcdir"
+  _name="slurp"
+
+  GOPATH="$srcdir" go build -v ${_url}
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/$_name"
+
+  install -Dm755 "$srcdir/$_name" "$pkgdir/usr/share/$_name/$_name"
+  install -Dm644 src/${_url}/README.md \
+    "$pkgdir/usr/share/doc/$_name/README.md"
+  install -Dm644 src/${_url}/permutations.json \
+    "$pkgdir/usr/share/$_name/permutations.json"
+  install -Dm644 src/${_url}/LICENSE \
+    "$pkgdir/usr/share/licenses/$_name/LICENSE"
+
+  cat > "$pkgdir/usr/bin/$_name" << EOF
+#!/bin/sh
+cd /usr/share/$_name
+exec ./$_name \${@}
+EOF
+
+  chmod 755 "$pkgdir/usr/bin/$_name"
+}

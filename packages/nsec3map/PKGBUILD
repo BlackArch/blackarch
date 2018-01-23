@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='nsec3map'
+pkgver='20.1263537'
+pkgrel=1
+pkgdesc='A tool to enumerate the resource records of a DNS zone using its DNSSEC NSEC or NSEC3 chain.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+arch=('any')
+url='https://github.com/anonion0/nsec3map'
+license=('GPL3')
+depends=('python2' 'python2-dnspython' 'python2-numpy' 'python2-scipy' 'openssl')
+makedepends=('python2-setuptools' 'git')
+source=('git+https://github.com/anonion0/nsec3map.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/nsec3map"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/nsec3map"
+
+  sed -i "s|/usr/local/share/man/man1/|/usr/share/man/man1|" setup.py
+}
+
+build() {
+  cd "$srcdir/nsec3map"
+
+  python2 setup.py build_ext
+}
+
+package() {
+  cd "$srcdir/nsec3map"
+
+  mkdir -p "$pkgdir/usr/share/bash-completion/completions"
+  install -Dm644 n3map.bash_completion "$pkgdir/usr/share/bash-completion/completions/"
+
+  python2 setup.py install --prefix="/usr" --root="$pkgdir" --optimize=1
+}
