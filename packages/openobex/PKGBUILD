@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='openobex'
+pkgver='1.7.2'
+pkgrel=4
+pkgdesc='Implementation of the OBject EXchange (OBEX) protocol.'
+url="http://dev.zuckschwerdt.org/openobex/"
+arch=('x86_64')
+license=('GPL' 'LGPL')
+depends=('libusbx' 'bluez-libs')
+makedepends=('cmake' 'libxslt' 'doxygen' 'java-environment')
+options=('staticlibs' '!makeflags')
+source=("http://downloads.sourceforge.net/openobex/openobex-${pkgver}-Source.tar.gz")
+sha1sums=('4a5098a62889134cbd2b54997e7ff3e959e601e6')
+
+prepare() {
+  sed -i 's|MODE="660", GROUP="plugdev"|TAG+="uaccess"|' openobex-${pkgver}-Source/udev/openobex.rules.in
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir build
+
+  cd build
+
+  cmake ../openobex-${pkgver}-Source \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_SKIP_RPATH=ON \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_INSTALL_LIBDIR=/usr/lib \
+    -DCMAKE_INSTALL_SBINDIR=/usr/bin \
+    -DCMAKE_INSTALL_UDEVRULESDIR=/usr/lib/udev/rules.d
+  make all openobex-apps
+}
+
+package() {
+  cd "$srcdir"
+
+  cd build
+
+  make DESTDIR="${pkgdir}" install
+  cp ../openobex-${pkgver}-Source/apps/lib/*.h  "${pkgdir}/usr/include/openobex/"
+  install -m644 apps/lib/libopenobex-apps-common.a "${pkgdir}/usr/lib/libopenobex-apps-common.a"
+}
