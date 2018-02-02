@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='autosploit'
+pkgver=29.c25865d
+pkgrel=1
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-automation')
+pkgdesc='Automate the exploitation of remote hosts.'
+arch=('any')
+url='https://github.com/NullArray/AutoSploit'
+license=('GPL3')
+depends=('python2' 'python2-blessings' 'shodan' 'metasploit' 'sudo')
+makedepends=('git')
+source=('git+https://github.com/NullArray/AutoSploit.git'
+        'service.patch')
+sha1sums=('SKIP'
+          '37d90aa516ede641274c68249a42dee24a423c80')
+
+pkgver() {
+  cd "$srcdir/AutoSploit"
+
+  echo "$(git rev-list --count HEAD)"."$(git rev-parse --short HEAD)"
+}
+
+prepare() {
+  cd "$srcdir/AutoSploit"
+
+  patch -p1 < $srcdir/service.patch
+}
+
+package() {
+  cd "$srcdir/AutoSploit"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/autosploit/Docker"
+
+  install -Dm755 "autosploit.py" "$pkgdir/usr/share/autosploit/autosploit"
+  install -Dm644 "modules.txt" "$pkgdir/usr/share/autosploit/modules.txt"
+  install -Dm644 -t "$pkgdir/usr/share/autosploit/Docker/" Docker/*
+  install -Dm644 -t "$pkgdir/usr/share/doc/autosploit" README.md
+
+  cat > "$pkgdir/usr/bin/autosploit" << EOF
+#!/usr/bin/env bash
+cd /usr/share/autosploit
+exec python2 autosploit "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/autosploit"
+
+}
