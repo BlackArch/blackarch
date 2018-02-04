@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=radare2-cutter
+pkgver=1.1
+pkgrel=1
+_name="cutter-${pkgver}"
+groups=('blackarch' 'blackarch-decompiler' 'blackarch-reversing'
+        'blackarch-disassembler' 'blackarch-debugger')
+pkgdesc='Qt and C++ GUI for radare2 reverse engineering framework.'
+url='https://github.com/radareorg/cutter'
+arch=('x86_64')
+license=('GPL3')
+depends=('radare2' 'capstone' 'qt5-base' 'qt5-svg' 'icu')
+makedepends=('cmake')
+source=("https://github.com/radareorg/cutter/archive/v${pkgver}.tar.gz")
+sha1sums=('7ecc1a1d3b6e48d9140dbc5a99f0117d54088490')
+
+prepare() {
+  # we don't need to build radare2
+  rm -rfv ${_name}/radare2
+}
+
+build() {
+  mkdir ${_name}/build
+  cd ${_name}/build
+
+  cmake \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_BUILD_TYPE=Release \
+  ../src
+
+  make
+}
+
+package() {
+  cd ${_name}
+
+  install -DTm 755 build/cutter "${pkgdir}/usr/bin/cutter"
+  install -DTm 644 src/cutter.desktop \
+    "${pkgdir}/usr/share/applications/cutter.desktop"
+  install -DTm 644 src/img/cutter.svg \
+    "${pkgdir}/usr/share/icons/hicolor/scalable/apps/cutter.svg"
+  install -dm 755 docs/ "${pkgdir}/usr/share/doc/${_name%%-${pkgver}}/"
+  cp -a docs/* "${pkgdir}/usr/share/doc/${_name%%-${pkgver}}/"
+}
