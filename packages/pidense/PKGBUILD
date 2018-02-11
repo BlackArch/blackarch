@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='pidense'
+pkgver=15.86377ca
+pkgrel=1
+pkgdesc='Monitor illegal wireless network activities. (Fake Access Points)'
+groups=('blackarch' 'blackarch-wireless' 'blackarch-defensive')
+arch=('any')
+url='https://github.com/WiPi-Hunter/PiDense'
+license=('GPL3')
+depends=('python2' 'python2-argparse' 'python2-termcolor' 'scapy')
+makedepends=('git')
+source=('git+https://github.com/WiPi-Hunter/PiDense.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/PiDense"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/PiDense"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/pidense"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/pidense/" README.md
+  install -Dm644 LICENCE "$pkgdir/usr/share/licenses/pidense/LICENSE"
+
+  rm README.md LICENCE
+
+  cp -a * "$pkgdir/usr/share/pidense/"
+
+  cat > "$pkgdir/usr/bin/pidense" << EOF
+#!/bin/sh
+cd /usr/share/pidense
+exec python2 pidense.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/pidense"
+}
