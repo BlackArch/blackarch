@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='id-entify'
+pkgver=10.7489597
+pkgrel=1
+pkgdesc='Search for information related to a domain: Emails - IP addresses - Domains - Information on WEB technology - Type of Firewall - NS and MX records.'
+groups=('blackarch' 'blackarch-recon')
+arch=('any')
+url='https://github.com/BillyV4/ID-entify'
+license=('custom:unknown')
+depends=('python2' 'python2-colorama' 'dnsrecon' 'dnsenum' 'bind-tools'
+         'whatweb' 'nmap' 'whois')
+makedepends=('git')
+source=('git+https://github.com/BillyV4/ID-entify')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/ID-entify"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/ID-entify"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/id-entify"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/id-entify/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/id-entify/"
+
+  cat > "$pkgdir/usr/bin/id-entify" << EOF
+#!/bin/sh
+cd /usr/share/id-entify
+exec python2 ID-entify.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/id-entify"
+}
