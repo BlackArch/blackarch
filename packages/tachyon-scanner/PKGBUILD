@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='tachyon-scanner'
+pkgver=265.d8cf0a6
+pkgrel=1
+pkgdesc='Fast Multi-Threaded Web Discovery Tool.'
+groups=('blackarch' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/delvelabs/tachyon'
+license=('custom:unknown')
+depends=('python' 'python-urllib3')
+makedepends=('git' 'python-setuptools' 'python-pip')
+source=('git+https://github.com/delvelabs/tachyon.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/tachyon"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/tachyon"
+
+  python setup.py build
+}
+
+package() {
+  cd "$srcdir/tachyon"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/tachyon/" README.md CHANGELOG docs/* \
+    THANKS
+
+  mv "$pkgdir/usr/bin/tachyon.py" "$pkgdir/usr/bin/tachyon-scanner"
+}
