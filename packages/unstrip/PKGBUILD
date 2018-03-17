@@ -1,0 +1,38 @@
+pkgname='unstrip'
+pkgver=13
+pkgrel=1
+groups=('blackarch' 'blackarch-disassembly')
+pkgdesc='ELF Unstrip Tool.'
+arch=('any')
+url='https://github.com/pzread/unstrip'
+license=('GPL3')
+depends=('python' 'sqlite3')
+makedepends=('git')
+source=('git+https://github.com/pzread/unstrip.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/unstrip"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/unstrip"
+
+  mkdir -p "$pkgdir/usr/unstrip"
+  mkdir -p "$pkgdir/usr/share/unstrip"
+
+  cp -a src/* "$pkgdir/usr/share/unstrip"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/unstrip/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/unstrip/LICENSE"
+
+  cat > "$pkgdir/usr/bin/unstrip" << EOF
+#!/bin/sh
+cd /usr/share/unstrip
+exec python unstrip.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/unstrip"
+}
