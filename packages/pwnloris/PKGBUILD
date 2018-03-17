@@ -1,0 +1,40 @@
+pkgname='pwnloris'
+pkgver=7
+pkgrel=1
+groups=('blackarch' 'blackarch-ddos')
+pkgdesc='An improved slowloris DOS tool which keeps attacking until the server starts getting exhausted.'
+arch=('any')
+url='https://github.com/houssniyh/pwnloris'
+license=('GPL3')
+depends=('python')
+makedepends=('git')
+source=('git+https://github.com/houssniyh/pwnloris.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/pwnloris"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/pwnloris"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/pwnloris"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+
+  cp -a * "$pkgdir/usr/share/pwnloris"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/pwnloris/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/pwnloris/LICENSE"
+
+  cat > "$pkgdir/usr/bin/pwnloris" << EOF
+#!/bin/sh
+cd /usr/share/pwnloris
+exec python pwnloris.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/pwnloris"
+}
