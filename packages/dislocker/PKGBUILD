@@ -1,39 +1,40 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
+# PKGBUILD retrieved from AUR. Credits to: mrxx <mrxx at cyberhome dot at>
+# changes: psf
 
-pkgname='dislocker'
-pkgver='0.6.1'
-pkgrel=2
-pkgdesc='A tool to exploit the hash length extension attack in various hashing algorithms. With FUSE capabilities built in.'
-arch=('armv6h' 'armv7h' 'aarch64' 'x86_64')
-groups=('blackarch' 'blackarch-cracker' 'blackarch-crypto')
-url='http://www.hsc.fr/ressources/outils/dislocker/'
+pkgname="dislocker"
+pkgver=0.7.1
+pkgrel=1
+pkgdesc="Read BitLocker encrypted volumes under Linux"
+arch=('x86_64')
+url='http://www.hsc.fr/ressources/outils/dislocker'
 license=('GPL2')
-depends=('fuse' 'mbedtls')
-makedepends=('cmake')
-source=("http://www.hsc.fr/ressources/outils/dislocker/download/dislocker-${pkgver}.tar.gz")
-sha1sums=('6e7ad789ec277eb4484742686cac1f69547abec5')
+depends=('fuse' 'mbedtls' 'ruby')
+makedepends=('make' 'cmake')
+conflicts=('dislocker-git')
+optdepends=('ntfs-3g: NTFS file system support')
+source=("https://github.com/Aorimn/dislocker/archive/v${pkgver}.tar.gz")
+sha1sums=('0c5c62f63ba587663eb0474f1bd6ca7e345fe977')
 
 build() {
-  cd "$srcdir/dislocker-$pkgver"
+  cd "${srcdir}/dislocker-${pkgver}"
 
-  cmake -DCMAKE_INSTALL_PREFIX=/usr .
+  # Fix v0.7 upstream path error
+  sed -i 's/DIS_MAN \${PROJECT_SOURCE_DIR}/DIS_MAN ../' src/CMakeLists.txt
+
+  cmake -DCMAKE_INSTALL_PREFIX=/usr \
+        -Dlibdir=/usr/lib \
+        -D WARN_FLAGS:STRING="-Wall -Wextra" \
+        .
   make
 }
 
 package() {
-  cd "$srcdir/dislocker-$pkgver"
+  cd "${srcdir}/dislocker-${pkgver}"
+  make DESTDIR="${pkgdir}/" install
 
-  mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/lib"
-
-  install -Dm644 -t "$pkgdir/usr/share/doc/dislocker/" *.md
-  install -Dm644 -t "$pkgdir/usr/share/man/man1" man/linux/*.1
-  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/dislocker/LICENSE"
-
-  make DESTDIR="$pkgdir" INSTALL_PATH="$pkgdir/usr" \
-    MAN_PATH="$pkgdir/usr/share/man/man1" install
-
-  mv "$pkgdir/usr/lib64/"* "$pkgdir/usr/lib/".
-  rmdir "$pkgdir/usr/lib64"
+  install -Dm644 README.md ${pkgdir}/usr/share/doc/dislocker/README
+  install -Dm644 CHANGELOG.md ${pkgdir}/usr/share/doc/dislocker/CHANGELOG
+  install -Dm644 LICENSE.txt ${pkgdir}/usr/share/licenses/dislocker/LICENSE
 }

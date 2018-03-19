@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='limeaide'
+pkgver=178.d332e10
+pkgrel=1
+pkgdesc='Remotely dump RAM of a Linux client and create a volatility profile for later analysis on your local host.'
+groups=('blackarch' 'blackarch-forensic')
+arch=('any')
+url='https://github.com/kd8bny/LiMEaide'
+license=('GPL3')
+depends=('python' 'python-paramiko' 'python-argparse' 'python-termcolor')
+makedepends=('git')
+source=('git+https://github.com/kd8bny/LiMEaide')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/LiMEaide"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/LiMEaide"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/limeaide/"{logs}
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/limeaide/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/limeaide/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/limeaide/"
+
+  cat > "$pkgdir/usr/bin/limeaide" << EOF
+#!/bin/sh
+cd /usr/share/limeaide
+exec python limeaide.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/limeaide"
+}
