@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='mooscan'
+pkgver=39.8f8fa77
+pkgrel=1
+pkgdesc='A scanner for Moodle LMS.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' )
+arch=('any')
+url='https://github.com/vortexau/mooscan'
+license=('custom:unknown')
+depends=('python' 'python-requests' 'python-argparse' 'python-pytest'
+         'python-gitpython' 'python-pyyaml' 'python-urllib3')
+makedepends=('git')
+source=('git+https://github.com/vortexau/mooscan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/mooscan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/mooscan"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/mooscan"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/mooscan/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/mooscan/"
+
+  cat > "$pkgdir/usr/bin/mooscan" << EOF
+#!/bin/sh
+cd /usr/share/mooscan
+exec python3 mooscan.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/mooscan"
+}
