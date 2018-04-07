@@ -4,6 +4,7 @@
 # Copyright (C) 2012 Alessio Sergi <al3hex at gmail dot com>
 # modified 2012 for tor-browser (Max Roder <maxroder at web dot de>)
 # modified 2014 by Yardena Cohen <yardenack at gmail dot com>
+# modified 2018 for Arch package by midgard <arch dot midgard "at symbol" janmaes "youknowwhat" com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,34 +29,34 @@ LANGUAGE="REPL_LANGUAGE"
 ARCH=$(getconf LONG_BIT)
 
 notify() {
-  local title="$1"
-  local message="$2"
+	local title="$1"
+	local message="$2"
 
-  if [ $(which zenity 2>/dev/null) ]; then
-    zenity --info --title "$title" --text "$message"
-  elif [ $(which notify-send 2>/dev/null) ]; then
-    notify-send "$title" "$message"
-  elif [ $(which kdialog 2>/dev/null) ]; then
-    kdialog --title "$title" --passivepopup "$message"
-  else
-    echo -e "$0: [$title] $message" >&2
-  fi
+	if which zenity 2>/dev/null; then
+		zenity --info --title "$title" --text "$message"
+	elif which notify-send 2>/dev/null; then
+		notify-send "$title" "$message"
+	elif which kdialog 2>/dev/null; then
+		kdialog --title "$title" --passivepopup "$message"
+	else
+		echo -e "$0: [$title] $message" >&2
+	fi
 }
 
 update() {
-	echo "$0: Extracting files to $INSTALL_DIRECTORY." >> $LOG_FILE
-	rm -rf $INSTALL_DIRECTORY/*
-	tar --strip-components=1 -xJf /opt/$NAME/tor-browser-linux${ARCH}-${VERSION}_${LANGUAGE}.tar.xz \
-		-C $INSTALL_DIRECTORY >> $LOG_FILE 2>&1 || notify "Error" \
+	echo "$0: Extracting files to $INSTALL_DIRECTORY." >> "$LOG_FILE"
+	rm -rf "$INSTALL_DIRECTORY"/*
+	tar --strip-components=1 -xJf "/opt/$NAME/tor-browser-linux${ARCH}-${VERSION}_${LANGUAGE}.tar.xz" \
+		-C "$INSTALL_DIRECTORY" >> "$LOG_FILE" 2>&1 || notify "Error" \
 		"The tor-browser archive could not be extracted to your home directory. \
 		\nCheck permissions of $INSTALL_DIRECTORY. \
 		\nThe error log can be found in $LOG_FILE."
 
-	[[ -f $INSTALL_DIRECTORY/Browser/start-tor-browser ]] && echo $VERSION > $VERSION_FILE
+	[[ -f "$INSTALL_DIRECTORY/Browser/start-tor-browser" ]] && echo "$VERSION" > "$VERSION_FILE"
 }
 
 usage() {
-  cat <<EOF
+	cat <<EOF
 Usage: ${0##*/} [option]
 
 Options:
@@ -67,7 +68,7 @@ Options:
 EOF
 }
 
-DIRECTORY=~/.$NAME
+DIRECTORY="$HOME/.$NAME"
 args=()
 for arg; do
 	case "$arg" in
@@ -78,31 +79,33 @@ for arg; do
 	esac
 done
 
-INSTALL_DIRECTORY=$DIRECTORY/INSTALL
-VERSION_FILE=$DIRECTORY/VERSION
-LOG_FILE=$DIRECTORY/LOG
+INSTALL_DIRECTORY="$DIRECTORY/INSTALL"
+VERSION_FILE="$DIRECTORY/VERSION"
+LOG_FILE="$DIRECTORY/LOG"
 
 # create directory, if it is missing (e.g. first run)
-[[ ! -d "$INSTALL_DIRECTORY" ]] && mkdir -p "$INSTALL_DIRECTORY"
+[[ ! -d $INSTALL_DIRECTORY ]] && mkdir -p "$INSTALL_DIRECTORY"
 cd "$DIRECTORY"
 
 # create version file if missing
-[[ ! -f $VERSION_FILE ]] && echo 0 > $VERSION_FILE
+[[ ! -f $VERSION_FILE ]] && echo 0 > "$VERSION_FILE"
 
 #get installed version
 while read line
 do
-	INSTALLED_VERSION=$line
-done < $VERSION_FILE
+	INSTALLED_VERSION="$line"
+done < "$VERSION_FILE"
 
 # start update if old or no tor-browser is installed
-if [[ "$INSTALLED_VERSION" == "$VERSION" ]] && [[ $update != 1 ]]; then
+if [[ $INSTALLED_VERSION == $VERSION && $update != 1 ]]; then
 	# clear log
-	> $LOG_FILE
+	> "$LOG_FILE"
 else
-	echo "$0: Your version in $DIRECTORY is outdated or you do not have installed $NAME yet." > $LOG_FILE
+	echo "$0: Your version in $DIRECTORY is outdated or you do not have installed $NAME yet." > "$LOG_FILE"
 	update
 fi
 
 # start tor-browser
-cd $INSTALL_DIRECTORY/Browser && ./start-tor-browser "${args[@]}"
+cd "$INSTALL_DIRECTORY/Browser" && ./start-tor-browser "${args[@]}"
+
+# vim: noet ts=2 sw=2 :
