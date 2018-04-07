@@ -1,0 +1,31 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='searchsploit'
+_gitname='exploit-database'
+pkgver='2018.04.03'
+pkgrel=0
+groups=('blackarch' 'blackarch-automation' 'blackarch-exploitation')
+pkgdesc='The official Exploit Database search tool.'
+url='https://github.com/offensive-security/exploit-database'
+arch=('any')
+license=('GPL-2.0')
+depends=('git' 'libxml2')
+source=("https://github.com/offensive-security/${_gitname}/archive/${pkgver//./-}.tar.gz")
+sha1sums=('b3eaeb7687ba98b69ade7f83d120dc7d257ca962')
+install='searchsploit.install'
+options=('!strip')
+
+package() {
+  cd ${srcdir}/${_gitname}-${pkgver//./-}
+  mkdir -p ${pkgdir}/opt ${pkgdir}/usr/bin
+
+  cp -fr ${srcdir}/${_gitname}-${pkgver//./-} ${pkgdir}/opt/searchsploit
+
+  sed -i 's|path_array+=(.*)|path_array+=("/opt/exploit-database")|g' \
+    ${pkgdir}/opt/searchsploit/.searchsploit_rc
+
+  ln -s /opt/searchsploit/searchsploit ${pkgdir}/usr/bin/searchsploit
+
+  chmod a+x ${pkgdir}/opt/searchsploit/searchsploit
+}
