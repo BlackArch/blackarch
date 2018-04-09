@@ -3,19 +3,38 @@
 
 pkgname='testssl'
 pkgver='2.9.5'
-pkgrel=2
+pkgrel=3
 epoch=1
 pkgdesc='Testing TLS/SSL encryption.'
 arch=('any')
 groups=('blackarch' 'blackarch-crypto' 'blackarch-scanner')
 url='https://github.com/drwetter/testssl.sh'
-license=('GPL')
+license=('GPL2')
 depends=('bash' 'coreutils' 'util-linux' 'openssl' 'bind-tools')
-source=("https://github.com/drwetter/testssl.sh/archive/v${pkgver}-2.tar.gz")
-sha1sums=('95eb4d17bbf43b678b007ed1c50ba2f8fcd1e8a9')
+source=("https://github.com/drwetter/testssl.sh/archive/v${pkgver}-4.tar.gz")
+sha1sums=('339a75e2272206ba7d69f5e020aa5d2155a4bec9')
 
 package() {
-  cd "$srcdir/testssl.sh-${pkgver}-2"
+  cd "$srcdir/testssl.sh-${pkgver}-4"
 
-  install -Dm755 testssl.sh "${pkgdir}/usr/bin/testssl"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/testssl"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/testssl" Readme.md CREDITS.md \
+    Dockerfile.md CHANGELOG.stable-releases.txt doc/testssl.1.html \
+    doc/testssl.1.md
+  install -Dm644 doc/testssl.1 "$pkgdir/usr/share/man/man1/testssl.1"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/testssl/LICENSE"
+
+  rm -rf doc/ *.md CHANGELOG.stable-releases.txt LICENSE
+
+  cp -a * "$pkgdir/usr/share/testssl"
+
+  cat > "$pkgdir/usr/bin/testssl" << EOF
+#!/bin/sh
+cd /usr/share/testssl
+exec bash testssl.sh "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/testssl"
 }
