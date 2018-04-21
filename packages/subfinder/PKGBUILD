@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='subfinder'
+pkgver=87.034ab95
+pkgrel=1
+groups=('blackarch' 'blackarch-recon')
+pkgdesc='Modular subdomain discovery tool that can discover massive amounts of valid subdomains for any target.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/Ice3man543/subfinder'
+license=('MIT')
+depends=('glibc' 'go')
+makedepends=('go' 'git')
+source=('git+https://github.com/Ice3man543/subfinder')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/subfinder"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/$url && rm -rf src/$url && mv subfinder src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t github.com/Ice3man543/subfinder
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v github.com/Ice3man543/subfinder
+
+  install -Dm755 "$srcdir/subfinder" "$pkgdir/usr/bin/subfinder"
+  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/subfinder/README.md"
+  install -Dm644 src/$url/LICENSE "$pkgdir/usr/share/licenses/subfinder/LICENSE"
+
+}
