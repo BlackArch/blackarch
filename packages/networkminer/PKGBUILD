@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+# Extracted from https://aur.archlinux.org/packages/networkminer/
+# Credits to: Chris Severance, Po-An,Yang(Antonio)
+# changes: psf
+
+pkgname='networkminer'
+pkgver='2.3'
+pkgrel='1'
+pkgdesc='A Network Forensic Analysis Tool for advanced Network Traffic Analysis, sniffer and packet analyzer'
+arch=('any')
+url='http://www.netresec.com/'
+license=('GPL2')
+depends=('mono' 'xterm')
+_srcname="NetworkMiner_${pkgver//\./-}"
+source=("${_srcname}.zip::https://www.netresec.com/?download=NetworkMiner")
+sha256sums=('6bdca02443beceb1d57750eb63c239f73a6f5c7dd70e9d0f76129e85b25eb77a')
+
+package() {
+  install -d "${pkgdir}/opt/"
+  mv "${srcdir}/${_srcname}" "${pkgdir}/opt/NetworkMiner"
+  chmod -R go+w "${pkgdir}/opt/NetworkMiner/AssembledFiles/" "${pkgdir}/opt/NetworkMiner/Captures/"
+
+  # launcher
+  install -Dm755 <(cat << EOF
+#!/bin/sh
+TERM=xterm mono /opt/NetworkMiner/NetworkMiner.exe
+EOF
+  ) "${pkgdir}/usr/bin/networkminer"
+
+  # desktop file
+  install -Dm644 <(cat << EOF
+[Desktop Entry]
+Name=Network Miner
+GenericName=Packet analyser
+Comment=NetworkMiner packet analyser
+Exec=/usr/bin/networkminer
+Terminal=false
+Type=Application
+Categories=Application;Utility;
+MimeType=application/x-executable
+EOF
+  ) "${pkgdir}/usr/share/applications/NetworkMiner.desktop"
+}
