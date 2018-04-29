@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='nemesis'
+pkgver=142.ec42578
+pkgrel=1
+pkgdesc=' A command-line network packet crafting and injection utility.'
+groups=('blackarch' 'blackarch-networking')
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/troglobit/nemesis'
+license=('BSD')
+depends=('libnet' 'libpcap')
+makedepends=('git')
+source=('git+https://github.com/troglobit/nemesis')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/nemesis"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir/nemesis"
+
+  ./autogen.sh
+  ./configure --prefix=/usr
+}
+
+build() {
+  cd "$srcdir/nemesis"
+
+  make
+}
+
+package() {
+  cd "$srcdir/nemesis"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/nemesis/" README.md CREDITS \
+    ChangeLog.md INSTALL
+  #install -Dm644 -t "$pkgdir/usr/share/man/man1/" man/*.1
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/nemesis/LICENSE"
+}
