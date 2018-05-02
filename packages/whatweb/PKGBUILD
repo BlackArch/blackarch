@@ -3,15 +3,16 @@
 
 pkgname='whatweb'
 pkgver=4254.f3948d4a
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-recon' 'blackarch-webapp')
 pkgdesc='Next generation web scanner that identifies what websites are running.'
 arch=('any')
 url='http://www.morningstarsecurity.com/research/whatweb'
 license=('GPL')
 depends=('ruby')
-makedepends=('git')
+makedepends=('git' 'ruby-bundler')
 source=('git+https://github.com/urbanadventurer/WhatWeb.git')
+install='whatweb.install'
 sha1sums=('SKIP')
 
 pkgver() {
@@ -23,10 +24,23 @@ pkgver() {
 package() {
   cd "$srcdir/WhatWeb"
 
-  mkdir -p "$pkgdir/usr/share/doc/whatweb"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/whatweb"
+
+  #make DESTDIR="$pkgdir" install
 
   install -Dm644 -t "$pkgdir/usr/share/doc/whatweb" CHANGELOG README INSTALL
+  install -Dm644 whatweb.1 "$pkgdir/usr/share/man/man1/whatweb.1"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/whatweb/LICENSE"
 
-  make DESTDIR="$pkgdir" install
+  rm CHANGELOG README INSTALL whatweb.1 LICENSE
+
+  cp -a * "$pkgdir/usr/share/whatweb"
+
+  cat > "$pkgdir/usr/bin/whatweb" << EOF
+cd /usr/share/whatweb
+exec ruby whatweb "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/whatweb"
 }
