@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='amass'
+pkgver=96.0277b53
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+pkgdesc='In-depth subdomain enumeration written in Go.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/caffix/amass'
+license=('Apache2')
+depends=('go')
+makedepends=('git')
+source=('git+https://github.com/caffix/amass.git')
+sha1sums=('SKIP')
+_url='github.com/caffix/amass'
+
+pkgver() {
+  cd "$srcdir/amass"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/$url && rm -rf src/$url && mv amass src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t $_url
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/share/amass"
+
+  GOPATH="$srcdir" go build -v $_url
+
+  install -Dm755 "$srcdir/amass" "$pkgdir/usr/bin/amass"
+  cp -a src/$_url/wordlists src/$_url/maltego/* src/$_url/examples \
+    src/$_url/snapcraft.yaml "$pkgdir/usr/share/amass/"
+  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/amass/README.md"
+  install -Dm644 src/$url/LICENSE "$pkgdir/usr/share/licenses/amass/LICENSE"
+}
