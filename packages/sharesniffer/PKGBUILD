@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sharesniffer'
+pkgver=21.7fcfc78
+pkgrel=1
+pkgdesc='Network share sniffer and auto-mounter for crawling remote file systems.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-automation')
+arch=('any')
+url='https://github.com/shirosaidev/sharesniffer'
+license=('Apache2')
+depends=('python' 'python-argparse' 'python-python-nmap')
+makedepends=('git')
+source=('git+https://github.com/shirosaidev/sharesniffer.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sharesniffer"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/sharesniffer"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/sharesniffer"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/sharesniffer/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/sharesniffer/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/sharesniffer/"
+
+  cat > "$pkgdir/usr/bin/sharesniffer" << EOF
+#!/bin/sh
+cd /usr/share/sharesniffer
+exec python3 sharesniffer.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/sharesniffer"
+}

@@ -3,7 +3,7 @@
 
 pkgname='xsser'
 pkgver='1.7'
-pkgrel=3
+pkgrel=5
 epoch=2
 groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer'
         'blackarch-exploitation')
@@ -15,11 +15,26 @@ depends=('orbited' 'python2' 'python2-beautifulsoup3' 'python2-pycurl' 'pygtk'
          'python2-twisted' 'pygtk')
 makedepends=('subversion' 'python2-setuptools')
 optdepends=('pygtkmoz')
-source=("https://xsser.03c8.net/xsser/xsser_${pkgver}-1.tar.gz")
-sha1sums=('4a21c9383caaba7fd6ccc9bda81829be164ad75a')
+source=("https://xsser.03c8.net/xsser/xsser_${pkgver}-2.tar.gz")
+sha1sums=('515f7b8bdd111dd85ef5424c4f524317c5e77ea1')
 
 package() {
-  cd "$srcdir/xsser_${pkgver}-1/xsser-public"
+  cd "$srcdir/xsser"
 
-  python2 setup.py install --prefix=/usr --root="$pkgdir"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/xsser"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/xsser" doc/*
+
+  rm -rf doc
+
+  cp -a * "$pkgdir/usr/share/xsser"
+
+  cat > "$pkgdir/usr/bin/xsser" << EOF
+#!/bin/sh
+cd /usr/share/xsser
+exec python2 xsser "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/xsser"
 }

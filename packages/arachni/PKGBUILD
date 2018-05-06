@@ -3,13 +3,13 @@
 
 pkgname='arachni'
 pkgver=1.5.1
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-webapp')
 pkgdesc='A feature-full, modular, high-performance Ruby framework aimed towards helping penetration testers and administrators evaluate the security of web applications.'
 arch=('any')
 license=('apache')
 makedepends=('git')
-depends=('ruby2.3' 'ruby2.3-bundler')
+depends=('ruby2.3' 'ruby2.3-bundler' 'curl' 'phantomjs' 'libxslt' 'libxml2')
 url='https://www.arachni-scanner.com'
 source=('git+git://github.com/Arachni/arachni.git')
 install='arachni.install'
@@ -19,6 +19,13 @@ pkgver() {
   cd "$srcdir/arachni"
 
   git describe --always | sed 's|-|.|g' | sed 's/^v//'
+}
+
+prepare() {
+  cd "$srcdir/arachni"
+
+  sed -i "s/\('puma',[ ]*\)'2.14.0'/\1'3.10.0'/g" arachni.gemspec
+  sed -i "s/\('msgpack',[ ]*\)'0.7.0'/\1'1.1.0'/g" arachni.gemspec
 }
 
 package() {
@@ -41,7 +48,7 @@ package() {
     cat > "$pkgdir/usr/bin/${prog//_/-}" << EOF
 #!/bin/sh
 cd /usr/share/arachni
-exec ruby-2.3 /usr/share/arachni/bin/$prog "\$@"
+exec ruby-2.3 /usr/share/arachni/bin/${prog} "\${@}"
 EOF
   done
 

@@ -2,28 +2,41 @@
 # See COPYING for license details.
 
 pkgname='fern-wifi-cracker'
-pkgver='222'
-pkgrel=3
+pkgver=256.d25e58e
+pkgrel=1
 groups=('blackarch' 'blackarch-cracker' 'blackarch-wireless')
 pkgdesc='WEP, WPA wifi cracker for wireless penetration testing'
 arch=('any')
 url='http://code.google.com/p/fern-wifi-cracker/'
 license=('GPL2')
 depends=('python2' 'python2-pyqt4' 'aircrack-ng' 'xterm' 'subversion' 'python2-scapy'
-         'macchanger' 'gksu')
-makedepends=('subversion')
+         'macchanger')
+makedepends=('git')
 _svnmod='fern-wifi-cracker'
-source=("svn+http://fern-wifi-cracker.googlecode.com/svn/Fern-Wifi-Cracker#revision=${pkgver}")
-sha1sums=('SKIP')
+source=('git+https://github.com/savio-code/fern-wifi-cracker'
+        'remove-update.patch'
+        'remove-pro-tip.patch')
+sha1sums=('SKIP'
+          '8a15f5492632ae34c2bef8c6d8acad4c6c78a889'
+          '6fa4c48a3a69e3f4c833d23a48419d8a7c9bf5e2')
+
+pkgver() {
+  cd "$srcdir/fern-wifi-cracker/"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 prepare() {
-  cd "$srcdir/Fern-Wifi-Cracker"
+  cd "$srcdir/fern-wifi-cracker/Fern-Wifi-Cracker"
 
   sed -i 's|python$|python2|g' execute.py
+
+  patch -p2 < ../../remove-update.patch
+#  patch -p2 < ../../remove-pro-tip.patch
 }
 
 package() {
-  cd "$srcdir/Fern-Wifi-Cracker"
+  cd "$srcdir/fern-wifi-cracker/Fern-Wifi-Cracker"
 
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/fern-wifi-cracker/Settings"
@@ -33,7 +46,7 @@ package() {
   cat > "$pkgdir/usr/bin/fern" << EOF
 #!/bin/sh
 cd /usr/share/fern-wifi-cracker
-exec python2 ./execute.py "\$@"
+exec python2 ./execute.py "\${@}"
 EOF
 
   chmod +x "$pkgdir/usr/bin/fern"

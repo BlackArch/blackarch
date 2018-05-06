@@ -1,0 +1,33 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='goddi'
+pkgver='1.1'
+pkgrel=1
+groups=('blackarch' 'blackarch-recon' 'blackarch-windows')
+pkgdesc='Dumps Active Directory domain information.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/NetSPI/goddi'
+license=('BSD')
+depends=('go')
+makedepends=('git')
+source=("https://github.com/NetSPI/goddi/releases/download/v${pkgver}/goddi-linux-amd64"
+        "https://github.com/NetSPI/goddi/releases/download/v${pkgver}/goddi-windows-amd64.exe")
+sha1sums=('cf0a6a612c321b6c2e69dc1c130d895e8f9d1952'
+          '300b063dd527ca4d30c087add1bc6214150583cb')
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  install -Dm755 -t "$pkgdir/usr/share/goddi" goddi-linux-amd64 \
+    goddi-windows-amd64.exe
+
+  cat > "$pkgdir/usr/bin/goddi" << EOF
+#!/bin/sh
+exec /usr/share/goddi/goddi-linux-amd64 "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/goddi"
+}

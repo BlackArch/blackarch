@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='amber'
+pkgver=219.c9d1ea5
+pkgrel=2
+groups=('blackarch' 'blackarch-binary' 'blackarch-packer' 'blackarch-windows')
+pkgdesc='Reflective PE packer.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/EgeBalci/Amber'
+license=('custom:unknown')
+depends=('go' 'nasm' 'mingw-w64-binutils' 'mingw-w64-crt' 'mingw-w64-gcc'
+         'mingw-w64-headers' 'mingw-w64-headers-bootstrap'
+         'mingw-w64-winpthreads' 'gcc-multilib')
+makedepends=('git')
+source=('git+https://github.com/EgeBalci/Amber.git')
+sha1sums=('SKIP')
+_url='github.com/EgeBalci/Amber'
+
+pkgver() {
+  cd "$srcdir/Amber"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/Amber"
+
+  GOPATH="$srcdir/Amber/lib" go build -ldflags "-s -w" handler.go
+  cd src
+  GOPATH="$srcdir/Amber/lib" go build -ldflags "-s -w" -o ../amber
+}
+
+package() {
+  cd "$srcdir/Amber"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/amber"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/amber/" README.md PAPER.pdf
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/amber/LICENSE"
+
+  rm README.md PAPER.pdf LICENSE
+
+  cp -a * "$pkgdir/usr/share/amber"
+
+  ln -s "/usr/share/amber/amber" "$pkgdir/usr/bin/amber"
+  ln -s "/usr/share/amber/handler" "$pkgdir/usr/bin/amber-handler"
+}

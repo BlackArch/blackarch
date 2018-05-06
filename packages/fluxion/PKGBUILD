@@ -1,58 +1,43 @@
-# Maintainer: Cyberfee <deltax.fluxion@gmail.com>
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
 
-_pkgname=fluxion
-pkgname=$_pkgname-git
-pkgver=r1183.63b821f
+pkgname='fluxion'
+pkgver=1331.f7a8db7
 pkgrel=1
-pkgdesc='Fluxion is a security auditing and social-engineering research tool'
+pkgdesc='A security auditing and social-engineering research tool.'
+arch=('any')
+groups=('blackarch' 'blackarch-social' 'blackarch-wireless')
 url='https://github.com/FluxionNetwork/fluxion'
 license=('GPL3')
-source=('git://github.com/FluxionNetwork/fluxion.git#branch=master')
-
-depends=(
-  'aircrack-ng' 'bash>=4.2' 'coreutils'
-  'awk' 'iw' 'unzip'
-  'curl' 'bc' 'xterm'
-)
-
+source=('git://github.com/FluxionNetwork/fluxion.git')
+depends=('aircrack-ng' 'bash>=4.2' 'coreutils' 'awk' 'iw' 'unzip' 'curl' 'bc'
+         'xterm')
 makedepends=('binutils' 'coreutils' 'git')
-conflicts=('fluxion-git')
-provides=('fluxion-git')
-sha256sums=('SKIP')
-arch=('any')
+sha1sums=('SKIP')
 
 prepare() {
-  if [ -d "$srcdir/$pkgname" ]; then
-    rm -rf "$srcdir/$pkgname"
-  fi
+  cd "$srcdir"
 
-  mkdir -p "$srcdir/$pkgname"
-  cd "$srcdir/$pkgname"
+  mkdir -p "$srcdir/fluxion"
 }
 
 pkgver() {
-  cd "$srcdir/$_pkgname"
+  cd "$srcdir/fluxion"
 
-  ( set -o pipefail
-    git describe --long 2>/dev/null | sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
-    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
-  )
-}
-
-prepare() {
-  cd "$srcdir/$_pkgname"
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd "$srcdir/$_pkgname"
+  cd "$srcdir/fluxion"
 
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/fluxion"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/fluxion/" README.md
+  install -Dm644 -t "$pkgdir/usr/share/doc/fluxion/" *.md
   install -Dm644 -t "$pkgdir/usr/local/man/man1/" docs/man/fluxion.1
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/fluxion"
 
-  rm -rf *.md .git* *.yml .project .editorconfig 
+  rm -rf *.md .git* *.yml .project .editorconfig
 
   cp -a --no-preserve=ownership * "$pkgdir/usr/share/fluxion"
 

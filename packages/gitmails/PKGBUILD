@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='gitmails'
+pkgver=70.ee11da1
+pkgrel=1
+pkgdesc='An information gathering tool to collect git commit emails in version control host services.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-social')
+arch=('any')
+url='https://github.com/giovanifss/gitmails'
+license=('MIT')
+depends=('python' 'python-argparse' 'python-requests' 'python-tabulate'
+         'python-pygit2')
+makedepends=('git')
+source=('git+https://github.com/giovanifss/gitmails')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/gitmails"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/gitmails"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/gitmails"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/gitmails/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/gitmails/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/gitmails/"
+
+  cat > "$pkgdir/usr/bin/gitmails" << EOF
+#!/bin/sh
+cd /usr/share/gitmails
+exec python3 gitmails.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/gitmails"
+}
