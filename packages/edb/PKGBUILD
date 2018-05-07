@@ -2,41 +2,48 @@
 # See COPYING for license details.
 
 pkgname='edb'
-pkgver='0.9.20'
+pkgver='1.0.0'
 pkgrel=1
 groups=('blackarch' 'blackarch-debugger' 'blackarch-reversing')
-pkgdesc="A QT4-based binary mode debugger with the goal of having usability on par with OllyDbg."
+pkgdesc='A QT4-based binary mode debugger with the goal of having usability on par with OllyDbg.'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='http://www.codef00.com/projects.php#Debugger'
 license=('GPL2')
-depends=('qt4>=4.5')
-makedepends=('boost>=1.35.0')
-install=edb.install
+depends=('qt5-xmlpatterns' 'capstone' 'graphviz' 'qt5-svg')
+makedepends=('boost>=1.35.0' 'cmake')
+install='edb.install'
 conflicts=('edb-debugger')
 provides=('edb-debugger')
-source=("http://www.codef00.com/projects/debugger-${pkgver}.tgz"
+source=("https://github.com/eteran/edb-debugger/releases/download/${pkgver}/edb-debugger-${pkgver}.tgz"
         'edb.desktop')
-sha1sums=('4a0c839caab185bf8834725f3ae6fab79b11b816'
+sha1sums=('68e71ca150b6847931b367f00954a1364fa55ec5'
           'abf69c190bd2e89b0e202e9c17ec05967a4508f5')
 
 build() {
-  cd "$srcdir/debugger"
+  cd "$srcdir/edb-debugger-$pkgver"
 
-  qmake-qt4 -makefile DEFAULT_PLUGIN_PATH="/usr/lib/edb/"
+  mkdir build
+
+  cd build
+
+  cmake -DCMAKE_INSTALL_PREFIX=/usr/ -DCMAKE_BUILD_TYPE="Release" ..
 
   make
 }
 
 package() {
-  cd "$srcdir/debugger"
+  cd "$srcdir/edb-debugger-$pkgver"
 
-  make INSTALL_ROOT="$pkgdir/usr" install
+  cd build
+
+  make INSTALL_ROOT="$pkgdir/usr" DESTDIR="$pkgdir" install
+
+  cd  ..
 
   # /usr/lib64 -> /usr/lib on x86_64
   [[ "$CARCH" = "x86_64" ]] && (mv $pkgdir/usr/lib64 $pkgdir/usr/lib)
 
-  install -Dm644 src/images/edb48-logo.png \
-    $pkgdir/usr/share/pixmaps/edb.png
+  install -Dm644 src/images/edb48-logo.png $pkgdir/usr/share/pixmaps/edb.png
   install -Dm644 src/images/edb48-logo.png \
     $pkgdir/usr/share/icons/hicolor/48x48/apps/edb.png
 
