@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname='tls-attacker'
-pkgver='1.2'
+pkgver='2.4'
 pkgrel=1
 pkgdesc='A Java-based framework for analyzing TLS libraries.'
 groups=('blackarch' 'blackarch-crypto')
@@ -11,22 +11,28 @@ url='https://github.com/RUB-NDS/TLS-Attacker'
 license=('Apache2')
 depends=('java-environment')
 makedepends=('git')
-source=("https://github.com/RUB-NDS/TLS-Attacker/releases/download/v${pkgver}/TLS-Attacker-${pkgver}.zip")
-sha1sums=('a9b2a628065f392d26f472c2dc00d5c09688f5a2')
+source=("https://github.com/RUB-NDS/TLS-Attacker/releases/download/${pkgver}/TLS-Attacker-${pkgver}.zip")
+sha1sums=('8c24a4ddc7303161e623f732aa02b549cf8c1645')
 
 package() {
-  cd "$srcdir/TLS-Attacker-$pkgver"
+  cd "$srcdir"
+
+  tools="Attacks TLS-Client TLS-Forensics TLS-Mitm TLS-Server TraceTool"
 
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/tls-attacker"
 
+  rm TLS-Attacker-${pkgver}.zip
+
   cp -a * "$pkgdir/usr/share/tls-attacker/"
 
-  cat > "$pkgdir/usr/bin/tls-attacker" << EOF
+  for t in ${tools}
+  do
+    cat > "$pkgdir/usr/bin/tls-attacker-${t}" << EOF
 #!/bin/sh
 cd /usr/share/tls-attacker
-exec java -jar TLS-Attacker-${pkgver}.jar "\${@}"
+exec java -jar ${t}.jar "\${@}"
 EOF
-
-  chmod a+x "$pkgdir/usr/bin/tls-attacker"
+    chmod a+x "$pkgdir/usr/bin/tls-attacker-${t}"
+  done
 }

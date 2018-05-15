@@ -9,15 +9,23 @@ groups=('blackarch' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/delvelabs/tachyon'
 license=('custom:unknown')
-depends=('python' 'python-urllib3')
+depends=('python' 'python-urllib3' 'python-easyinject' 'python-click'
+         'python-hammertime-http')
 makedepends=('git' 'python-setuptools' 'python-pip')
-source=('git+https://github.com/delvelabs/tachyon.git')
-sha1sums=('SKIP')
+source=('git+https://github.com/delvelabs/tachyon.git' 'setup.py.patch')
+sha1sums=('SKIP'
+          '70eadc9e5b3bc458b775674a22c2642f84fdb1c3')
 
 pkgver() {
   cd "$srcdir/tachyon"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < setup.py.patch
 }
 
 build() {
@@ -31,8 +39,7 @@ package() {
 
   python setup.py install --root="$pkgdir" --prefix=/usr
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/tachyon/" README.md CHANGELOG docs/* \
-    THANKS
+  install -Dm644 -t "$pkgdir/usr/share/doc/tachyon/" README.md CHANGELOG THANKS
 
-  mv "$pkgdir/usr/bin/tachyon.py" "$pkgdir/usr/bin/tachyon-scanner"
+  #mv "$pkgdir/usr/bin/tachyon.py" "$pkgdir/usr/bin/tachyon-scanner"
 }
