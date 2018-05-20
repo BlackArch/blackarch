@@ -3,7 +3,7 @@
 
 pkgname='beef'
 pkgver=3118.7da834be
-pkgrel=1
+pkgrel=2
 epoch=1
 groups=('blackarch' 'blackarch-exploitation')
 pkgdesc='The Browser Exploitation Framework that focuses on the web browser'
@@ -14,28 +14,26 @@ license=('Apache')
 makedepends=('git')
 depends=('ruby' 'ruby-bundler' 'sqlite' 'python2' 'libxslt')
 source=('git+http://github.com/beefproject/beef.git')
-#        'rake_dep.patch')
 sha1sums=('SKIP')
 
 pkgver() {
   cd "$srcdir/beef"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-  #git describe | sed 's/^v//;s/-/./g;s/_/./g;s/^beef.//'
 }
 
 package() {
   cd "$srcdir/beef"
 
   mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/beef"
 
-  # The .git/ overhead is tiny and this allows users to update with git.
-  git clone "$srcdir/beef" "$pkgdir/usr/share/beef"
+  install -Dm644 -t "$pkgdir/usr/share/doc/beef" README.md VERSION INSTALL.txt
+  install -Dm644 doc/COPYING "$pkgdir/usr/share/licenses/beef/COPYING"
 
-#  cd "$pkgdir/usr/share/beef"
-#  patch -Np1 -i "$srcdir/rake_dep.patch"
+  rm -rf doc README.md VERSION INSTALL.txt install
 
-  rm "$pkgdir/usr/share/beef/install"
+  cp -a * "$pkgdir/usr/share/beef"
 
   cat > "$pkgdir/usr/bin/beef" << EOF
 #!/bin/sh
