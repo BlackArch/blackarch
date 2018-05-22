@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='nextnet'
+pkgver=3.c8dc7a6
+pkgrel=1
+groups=('blackarch' 'blackarch-networking' 'blackarch-scanner')
+pkgdesc='Pivot point discovery tool'
+arch=('any')
+url='https://github.com/hdm/nextnet'
+license=('BSD')
+depends=('glibc')
+makedepends=('go' 'git')
+source=('git+https://github.com/hdm/nextnet.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/nextnet"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/$url && rm -rf src/$url && mv nextnet src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t https://github.com/hdm/nextnet
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v https://github.com/hdm/nextnet
+
+  install -Dm755 "$srcdir/nextnet" "$pkgdir/usr/bin/nextnet"
+}
