@@ -3,36 +3,22 @@
 
 pkgname='faraday'
 pkgver=3998.b52b50aa
-pkgrel=1
+pkgrel=2
 pkgdesc='A new concept (IPE) Integrated Penetration-Test Environment a multiuser Penetration test IDE. Designed for distribution, indexation and analyze of the generated data during the process of a security audit.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation'
         'blackarch-fuzzer' 'blackarch-fingerprint' 'blackarch-automation'
         'blackarch-misc')
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='http://www.faradaysec.com/'
-if [[ $CARCH = 'x86_64' ]]; then
-  depends=('couchdb' 'python2' 'gtk3' 'gobject-introspection'
-           'gobject-introspection-runtime' 'python2-gobject' 'vte3' 'zsh' 'curl'
-           'python2-couchdbkit' 'python2-mockito' 'python2-whoosh' 'python2-ipy'
-           'python2-restkit' 'python2-requests' 'python2-tornado'
-           'python2-flask' 'python2-colorama' 'java-environment' 'python2-pip'
-           'python2-dateutil' 'pyqt3' 'python2-pysvn' 'libpqxx'
-           'python2-psycopg2' 'shodan' 'ruby2.3' 'python2-lxml'
-           'python2-pysqlite' 'python2-sphinx' 'python2-twisted'
-           'python2-beautifulsoup4' 'python2-sqlalchemy')
-else
-  # same as above + 'lib32-glibc'
-  depends=('lib32-glibc'
-           'couchdb' 'python2' 'gtk3' 'gobject-introspection'
-           'gobject-introspection-runtime' 'python2-gobject' 'vte3' 'zsh' 'curl'
-           'python2-couchdbkit' 'python2-mockito' 'python2-whoosh' 'python2-ipy'
-           'python2-restkit' 'python2-requests' 'python2-tornado'
-           'python2-flask' 'python2-colorama' 'java-environment' 'python2-pip'
-           'python2-dateutil' 'pyqt3' 'python2-pysvn' 'libpqxx'
-           'python2-psycopg2' 'shodan' 'ruby2.3' 'python2-lxml'
-           'python2-pysqlite' 'python2-sphinx' 'python2-twisted'
-           'python2-beautifulsoup4' 'python2-sqlalchemy')
-fi
+depends=('couchdb' 'python2' 'gtk3' 'gobject-introspection' 'python2-argparse'
+         'gobject-introspection-runtime' 'python2-gobject' 'vte3' 'zsh' 'curl'
+         'python2-couchdbkit' 'python2-mockito' 'python2-whoosh' 'python2-ipy'
+         'python2-restkit' 'python2-requests' 'python2-tornado' 'python2-flask'
+         'python2-colorama' 'java-environment' 'python2-pip' 'python2-dateutil'
+         'pyqt3' 'python2-pysvn' 'libpqxx' 'python2-psycopg2' 'shodan' 'ruby'
+         'python2-lxml' 'python2-pysqlite' 'python2-sphinx' 'python2-twisted'
+         'python2-beautifulsoup4' 'python2-sqlalchemy'
+         'python2-w3af-api-client')
 makedepends=('git')
 options=('!strip')
 license=('GPL')
@@ -48,16 +34,23 @@ pkgver() {
 package() {
   cd "$srcdir/faraday"
 
+  tools="faraday faraday-server"
+
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/$pkgname"
 
+  install -Dm644 -t "$pkgdir/usr/share/doc/faraday" AUTHORS VERSION *.md
+  install -Dm644 -t "$pkgdir/usr/share/licenses/faraday" doc/*
+
   cp -a --no-preserve=ownership * "$pkgdir/usr/share/faraday"
 
-  cat > "$pkgdir/usr/bin/faraday" << EOF
+  for t in ${tools}
+  do
+    cat > "$pkgdir/usr/bin/${t}" << EOF
 #!/bin/sh
 cd /usr/share/faraday/
-exec python2 faraday.py "\${@}"
+exec python2 ${t}.py "\${@}"
 EOF
-
-  chmod +x "$pkgdir/usr/bin/faraday"
+    chmod +x "$pkgdir/usr/bin/faraday"
+  done
 }
