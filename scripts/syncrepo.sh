@@ -18,6 +18,9 @@ tmp="/srv/blackarch/tmp"
 # Lockfile path
 lock="/var/lock/syncrepo.lck"
 
+# Log file (small) - TODO
+log_file="/srv/blackarch/log"
+
 # If you want to limit the bandwidth used by rsync set this.
 # Use 0 to disable the limit.
 # The default unit is KiB (see man rsync /--bwlimit for more)
@@ -35,37 +38,65 @@ lastupdate_url='https://blackarch.org/blackarch/lastupdate'
 trap interrupted INT
 trap interrupted EXIT
 
-function interrupted() {
-    rm -rfv "${lock}"
+function logging() {
+    date="$(date '+%a %d %T')"
+    host="$(hostname)"
+    name="${0}"
+    msg="${1}"
+
+    printf "%s %s %s: %s\n" "${date}" "${host}" "${name}" "${msg}" \
+        >> ${log_file}
+
+    return 0
 }
 
-[ ! -d "${target}" ] && mkdir -p "${target}"
-[ ! -d "${tmp}" ] && mkdir -p "${tmp}"
+function interrupted() {
+    if ! rm -rf "${lock}"; then
+        logging "ERROR: removing lock file: ${lock}"
+        exit 1
+    fi
+
+    logging "INFO: lock file (${lock}) removed."
+}
+
+if [[ ! -d "${target}" ]]; then
+    mkdir -p "${target}"
+    logging "INFO: ${target} folder created."
+fi
+
+if [[ ! -d "${tmp}" ]]; then
+    mkdir -p "${tmp}"
+    logging "INFO: ${tmp} created."
+fi
 
 exec 9>"${lock}"
 flock -n 9 || exit
 
 rsync_cmd() {
-    local -a cmd=(rsync -rtlH --safe-links --delete-after ${VERBOSE} "--timeout=600" -p \
-        --delay-updates --no-motd "--temp-dir=${tmp}")
+    local -a cmd=(rsync -rtlH --safe-links --delete-after --timeout=600 -p --delay-updates \
+                  --no-motd --temp-dir="${tmp}")
 
     if stty &>/dev/null; then
         cmd+=(-h -v --progress)
+        logging "setting tty option: ${cmd[*]}"
     else
         cmd+=(--quiet)
+        logging "setting non-tty option: ${cmd[*]}"
     fi
 
     if ((bwlimit>0)); then
         cmd+=("--bwlimit=$bwlimit")
+        logging "setting bandwidth limit option: ${bwlimit}"
     fi
 
+    logging "syncing..."
     "${cmd[@]}" "$@"
 }
 
-
-# if we are called without a tty (cronjob) only run when there are changes
+# if we are called WITHOUT a tty (cronjob) only run when there are changes
+# this script will always run, the sync will happen, if called on tty
 if ! tty -s && [[ -f "$target/lastupdate" ]] && diff -b <(curl -Ls "$lastupdate_url") "$target/lastupdate" >/dev/null; then
-    rsync_cmd "$source_url/lastsync" "$target/lastsync"
+    logging "no changes, leaving..."
     exit 0
 fi
 
@@ -73,4 +104,3 @@ rsync_cmd \
     "${source_url}" \
     "${target}"
 
-#echo "Last sync was $(date -d @$(cat ${target}/lastsync))"
