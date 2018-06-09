@@ -54,7 +54,7 @@ lspci | grep -i net
 #
 iwconfig
 #
-iplink
+ip link
 
 #Strange or not, idk, not auto created a profile network during the installation (is possible that my machine have a fail related with hw due to the model is from 2011), inclusive having the nic connected before to start the installation, in this case we need to do that manually following this steps:
 
