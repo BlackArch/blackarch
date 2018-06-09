@@ -114,6 +114,8 @@ pacman -S yaourt
 #
 pacman -S octopi
 #
+pacman -S pamac
+#
 pacman -S xorg xorg-server
 #
 pacman -S deepin
