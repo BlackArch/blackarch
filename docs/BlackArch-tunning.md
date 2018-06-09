@@ -1,4 +1,7 @@
-This guide is oriented for tune BlackArch after you installed, don't forget create the secondary account during the installation with administrative rigths. 
+This guide is oriented for tune BlackArch after you installed, don't forget create the secondary account during the installation with administrative rigths.
+
+This pull request born from the issues related with network specifically getting up the interfaces; dhcp; wicd; d-bus & NetworkManager. The rest is value added...
+
 #
 1. The key is: Install from scratch 
 #
