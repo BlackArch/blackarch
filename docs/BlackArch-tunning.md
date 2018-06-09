@@ -43,7 +43,8 @@ systemctl start wicd.service
 #
 systemctl status wicd.service
 
-# Now let's identify if your netowrk is ready and the interface names with the below commands
+# 
+Now let's identify if your network is ready and the interface names with the below commands
 
 #
 lspci | grep -i net
