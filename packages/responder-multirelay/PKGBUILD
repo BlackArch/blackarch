@@ -1,0 +1,84 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='responder-multirelay'
+pkgver=308.242bc37
+pkgrel=1
+pkgdesc='A LLMNR and NBT-NS poisoner, with built-in HTTP/SMB/MSSQL/FTP/LDAP rogue authentication server supporting NTLMv1/NTLMv2/LMv2 (multirelay version),'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-spoof'
+        'blackarch-networking')
+arch=('any')
+depends=('python2')
+makedepends=('git')
+url='https://github.com/lgandx/Responder'
+license=('GPL3')
+source=('git+https://github.com/lgandx/Responder.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Responder"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Responder"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/responder-multirelay"
+  mkdir -p "$pkgdir/usr/share/doc/responder-multirelay"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/responder-mulitrelay" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/responder-multirelay"
+
+  cat > "$pkgdir/usr/bin/responder-mr" << EOF
+#!/bin/sh
+cd /usr/share/responder-multirelay
+exec python2 Responder.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/responder-mr"
+
+  cat > "$pkgdir/usr/bin/responder-multirelay" << EOF
+#!/bin/sh
+cd /usr/share/responder-multirelay/tools
+exec python2 MultiRelay.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/responder-multirelay"
+
+  cat > "$pkgdir/usr/bin/responder-mr-dhcp" << EOF
+#!/bin/sh
+cd /usr/share/responder-multirelay/tools
+exec python2 DHCP.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/responder-mr-dhcp"
+
+  cat > "$pkgdir/usr/bin/responder-mr-smbrelay" << EOF
+#!/bin/sh
+cd /usr/share/responder-multirelay/tools
+exec python2 SMBRelay.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/responder-mr-smbrelay"
+
+  cat > "$pkgdir/usr/bin/responder-mr-icmp-redirect" << EOF
+#!/bin/sh
+cd /usr/share/responder-multirelay/tools
+exec python2 Icmp-Redirect.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/responder-mr-icmp-redirect"
+
+  cat > "$pkgdir/usr/bin/responder-mr-runfinger" << EOF
+#!/bin/sh
+cd /usr/share/responder-multirelay/tools
+exec python2 RunFinger.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/responder-mr-runfinger"
+}

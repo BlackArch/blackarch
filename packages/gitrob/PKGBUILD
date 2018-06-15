@@ -2,26 +2,45 @@
 # See COPYING for license details.
 
 pkgname='gitrob'
-pkgver='1.1.2'
-pkgrel=4
+pkgver=5.d2f4901
+pkgrel=1
 groups=('blackarch' 'blackarch-scanner')
-pkgdesc='Scan Github For Sensitive Files.'
+pkgdesc='Reconnaissance tool for GitHub organizations.'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='http://michenriksen.com/blog/gitrob-putting-the-open-source-in-osint/'
 license=('custom:unknown')
-depends=('ruby')
-makedepends=('ruby' 'postgresql')
+depends=('go')
+makedepends=('git')
 options=('!strip')
-source=("https://rubygems.org/downloads/gitrob-${pkgver}.gem")
-sha1sums=('802180bdc5b9c4b2c3ee52be14ad57b4df710974')
+source=('git+https://github.com/michenriksen/gitrob.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/gitrob"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/$url && rm -rf src/$url && mv gitrob src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t $url
+}
 
 package() {
   cd "$srcdir"
 
   mkdir -p "$pkgdir/usr/bin"
 
-  local _gemdir="$(ruby -e'puts Gem.default_dir')"
+  GOPATH="$srcdir" go build -v $url
 
-  gem install --no-user-install -n "$pkgdir/usr/bin" -i "$pkgdir/$_gemdir" \
-    gitrob*.gem
+  install -Dm755 "$srcdir/gitrob-putting-the-open-source-in-osint" \
+  "$pkgdir/usr/bin/gitrob"
+  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/gitrob/README.md"
+  install -Dm644 src/$url/CHANGELOG.md \
+  "$pkgdir/usr/share/doc/gitrob/CHANGELOG.md"
+  install -Dm644 src/$url/LICENSE.txt \
+  "$pkgdir/usr/share/licenses/gitrob/LICENSE.txt"
 }
