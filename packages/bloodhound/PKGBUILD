@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 _npmname='BloodHound'
-pkgname="bloodhound"
-pkgver=506.1084b64
+pkgname='bloodhound'
+pkgver=507.4f3aa29
 pkgrel=1
 pkgdesc='Six Degrees of Domain Admin'
 groups=('blackarch' 'blackarch-recon' 'blackarch-windows')
@@ -14,21 +14,9 @@ depends=('nodejs' 'neo4j-community' 'alsa-lib' 'gtk2' 'libxss' 'gconf' 'nss'
          'libxtst')
 makedepends=('git' 'nodejs-electron-packager' 'npm')
 optdepends=('python: for some scripts' 'powershell: for PowerShell ingestion')
-source=("git+https://github.com/BloodHoundAD/BloodHound.git"
-        'singlearch.patch')
+source=("git+https://github.com/BloodHoundAD/BloodHound.git")
 options=(!strip)
-sha1sums=('SKIP'
-          'bccdf7e27c8ad4eab36075c43f0bd52fd6d6b524')
-if [[ ${CARCH} == "x86_64" ]]; then
-  _npmcmd='linuxbuild_64'
-  _arch='x64'
-elif [[ ${CARCH} == "i686" ]]; then
-  _npmcmd='linuxbuild_32'
-  _arch='ia32'
-else
-  _npmcmd='linuxbuild_arm'
-  _arch='armv7l'
-fi
+sha1sums=('SKIP')
 
 pkgver() {
   cd "$srcdir/$_npmname"
@@ -39,9 +27,8 @@ pkgver() {
 build() {
   cd "$srcdir/$_npmname"
 
-  patch -Np2 -i ../singlearch.patch
   npm install
-  npm run $_npmcmd
+  npm run linuxbuild
 }
 
 package() {
@@ -50,10 +37,12 @@ package() {
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/bloodhound"
 
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/bloodhound/LICENSE.md"
+  rm LICENSE.md
+  install -Dm644 -t "$pkgdir/usr/share/doc/bloodhound" *.md
+  rm *.md
+
   cp -ar * "$pkgdir/usr/share/bloodhound"
-  cd ..
-  cp -ar BloodHoundExampleDB.graphdb "$pkgdir/usr/share/bloodhound"
-  #cp -ar BloodHoundExampleDB.graphdb PowerShell "$pkgdir/usr/share/bloodhound"
 
   cat > "$pkgdir/usr/bin/bloodhound" << EOF
 #!/bin/sh
@@ -64,4 +53,3 @@ EOF
   chmod +x "$pkgdir/usr/bin/bloodhound"
   chmod +x "$pkgdir/usr/share/bloodhound/BloodHound"
 }
-
