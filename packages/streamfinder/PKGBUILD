@@ -2,30 +2,35 @@
 # See COPYING for license details.
 
 pkgname='streamfinder'
-pkgver=1.2
+pkgver='1.2'
 pkgrel=1
 pkgdesc='Searches for Alternate Data Streams (ADS).'
 groups=('blackarch' 'blackarch-windows')
 arch=('any')
 makedepends=('unrar' 'curl')
 url='https://www.gaijin.at/en/dlstreamfind.php'
+source=('https://www.gaijin.at/downlo4d/streamfinder.rar')
+DLAGENTS=("https::/usr/bin/curl -A 'Mozilla' -fLC - --retry 3 --retry-delay 3 -o %o %u")
+noextract=('streamfinder.rar')
+sha1sums=('874e0a30dfe14f2d1ee6a6c3255e49d9c53b40b7')
 
 pkgver() {
-  ver=$(curl -H 'User-Agent: Mozilla' https://www.gaijin.at/en/dlstreamfind.php | grep -P 'download_value' | grep -m1 -o -P '\d+\.\d+')
+  cd "$srcdir"
+
+  ver=$(curl -s -H 'User-Agent: Mozilla' https://www.gaijin.at/en/dlstreamfind.php |
+  grep -P 'download_value' | grep -m1 -o -P '\d+\.\d+')
 
   echo "${ver}"
 }
 
 package() {
-  targetDir="$pkgdir/usr/share/windows/streamfinder/"
+  cd "$srcdir"
 
-  mkdir -p "${targetDir}"
+  mkdir -p "$pkgdir/usr/share/windows/streamfinder/"
 
-  cd "${targetDir}"
+  unrar e streamfinder.rar
 
-  curl -L -H 'User-Agent: Mozilla' 'https://www.gaijin.at/getit.php?id=streamfind' -o './r.rar'
+  rm -rf *.rar
 
-  unrar e './r.rar'
-
-  rm -rf './r.rar'
+  cp -a * "$pkgdir/usr/share/windows/streamfinder"
 }

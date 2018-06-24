@@ -1,0 +1,35 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='regreport'
+pkgver=1.5.1
+pkgrel=1
+pkgdesc='Windows registry forensic analysis tool.'
+groups=('blackarch' 'blackarch-windows' 'blackarch-forensic')
+arch=('any')
+makedepends=('p7zip' 'curl')
+url='https://www.gaijin.at/dlregreport.php'
+source=('https://www.gaijin.at/downlo4d/regreport.7z')
+DLAGENTS=("https::/usr/bin/curl -A 'Mozilla' -fLC - --retry 3 --retry-delay 3 -o %o %u")
+sha1sums=('6e2caabd36cd404071ce3ea88ae3691d71b0ae84')
+
+pkgver() {
+  cd "$srcdir"
+
+  ver=$(curl -s -H 'User-Agent: Mozilla' https://www.gaijin.at/dlregreport.php |
+  grep -P 'download_value' | grep -m1 -o -P '\d+\.\d+\.\d+')
+
+  echo "${ver}"
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/share/windows/regreport/"
+
+  7z e -y regreport.7z
+
+  rm -rf regreport.7z
+
+  cp -a * "$pkgdir/usr/share/windows/regreport"
+}

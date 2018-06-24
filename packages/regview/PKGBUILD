@@ -1,0 +1,35 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='regview'
+pkgver=1.3
+pkgrel=1
+pkgdesc='Open raw Windows NT 5 Registry files (Windows 2000 or higher).'
+groups=('blackarch' 'blackarch-windows' 'blackarch-forensic')
+arch=('any')
+makedepends=('p7zip' 'curl')
+url='https://www.gaijin.at/en/dlregview.php'
+source=('https://www.gaijin.at/downlo4d/regview.7z')
+DLAGENTS=("https::/usr/bin/curl -A 'Mozilla' -fLC - --retry 3 --retry-delay 3 -o %o %u")
+sha1sums=('521b0c8c1b133c8c74f938f5945f38be7d60af3d')
+
+pkgver() {
+  cd "$srcdir"
+
+  ver=$(curl -s -H 'User-Agent: Mozilla' https://www.gaijin.at/en/dlregview.php |
+  grep -P 'download_value' | grep -m1 -o -P '\d+\.\d+')
+
+  echo "${ver}"
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/share/windows/regview/"
+
+  7z e -y regview.7z
+
+  rm -rf './regview.7z'
+
+  cp -a * "$pkgdir/usr/share/windows/regview"
+}
