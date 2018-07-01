@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sleuthql'
+pkgver=8.e623da0
+pkgrel=1
+pkgdesc='Python3 Burp History parsing tool to discover potential SQL injection points. To be used in tandem with SQLmap.'
+groups=('blackarch' 'blackarch-misc')
+arch=('any')
+url='https://github.com/RhinoSecurityLabs/SleuthQL'
+license=('BSD')
+depends=('python' 'python-lxml' 'python-beautifulsoup4')
+makedepends=('git')
+source=('git+https://github.com/RhinoSecurityLabs/SleuthQL.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/SleuthQL"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/SleuthQL"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/sleuthql"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/sleuthql/" README.md
+  install -Dm644 license.txt "$pkgdir/usr/share/licenses/sleuthql/license.txt"
+
+  rm README.md license.txt
+
+  cp -a * "$pkgdir/usr/share/sleuthql/"
+
+  cat > "$pkgdir/usr/bin/sleuthql" << EOF
+#!/bin/sh
+cd /usr/share/sleuthql
+exec python3 sleuthql.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/sleuthql"
+}
