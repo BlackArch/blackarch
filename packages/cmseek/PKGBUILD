@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='cmseek'
+pkgver=33.54d12b5
+pkgrel=1
+pkgdesc='CMS (Content Management Systems) Detection and Exploitation suite.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fingerprint'
+        'blackarch-exploitation')
+arch=('any')
+url='https://github.com/Tuhinshubhra/CMSeeK'
+license=('GPL3')
+depends=('python' 'python-requests')
+makedepends=('git')
+source=('git+https://github.com/Tuhinshubhra/CMSeeK.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/CMSeeK"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/CMSeeK"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/cmseek"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/cmseek/" README.md CHANGELOG
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/cmseek/LICENSE"
+
+  rm README.md CHANGELOG LICENSE
+
+  cp -a * "$pkgdir/usr/share/cmseek/"
+
+  cat > "$pkgdir/usr/bin/cmseek" << EOF
+#!/bin/sh
+cd /usr/share/cmseek
+exec python3 cmseek.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/cmseek"
+}
