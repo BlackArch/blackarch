@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='wascan'
+pkgver=7.6255850
+pkgrel=1
+pkgdesc='Web Application Scanner.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/m4ll0k/WAScan'
+license=('GPL3')
+depends=('python2' 'python2-requests' 'python2-beautifulsoup4')
+makedepends=('git')
+source=('git+https://github.com/m4ll0k/WAScan.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/WAScan"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/WAScan"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/wascan"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/wascan/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/wascan/"
+
+  cat > "$pkgdir/usr/bin/wascan" << EOF
+#!/bin/sh
+cd /usr/share/wascan
+exec python2 wascan.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/wascan"
+}
