@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='msfenum'
+pkgver=25.914cd9c
+pkgrel=1
+pkgdesc='A Metasploit auto auxiliary script.'
+groups=('blackarch' 'blackarch-automation' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/wez3/msfenum'
+license=('custom:unknown')
+depends=('python2' 'python2-argparse')
+makedepends=('git')
+source=('git+https://github.com/wez3/msfenum.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/msfenum"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/msfenum"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/msfenum"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/msfenum/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/msfenum/"
+
+  cat > "$pkgdir/usr/bin/msfenum" << EOF
+#!/bin/sh
+cd /usr/share/msfenum
+exec python2 msfenum.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/msfenum"
+}
