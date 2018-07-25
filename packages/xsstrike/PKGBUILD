@@ -3,14 +3,14 @@
 
 pkgname='xsstrike'
 pkgver=149.337711b
-pkgrel=1
+pkgrel=2
 pkgdesc='An advanced XSS detection and exploitation suite.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/UltimateHackers/XSStrike'
-license=('custom:unknown')
-depends=('python2' 'python2-mechanize' 'python2-prettytable'
-         'python2-fuzzywuzzy' 'python2-htmlparser')
+license=('MIT')
+depends=('python' 'python-prettytable' 'python-requests' 'python-fuzzywuzzy'
+         'python-levenshtein')
 makedepends=('git')
 source=('git+https://github.com/UltimateHackers/XSStrike.git')
 sha1sums=('SKIP')
@@ -24,6 +24,21 @@ pkgver() {
 package() {
   cd "$srcdir/XSStrike"
 
-  install -Dm755 xsstrike "$pkgdir/usr/bin/xsstrike"
-  install -Dm644 -t "$pkgdir/usr/share/doc/xsstrike/" README.md
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/xsstrike"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/xsstrike/" *.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/xsstrike/LICENSE"
+
+  rm *.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/xsstrike"
+
+  cat > "$pkgdir/usr/bin/xsstrike" << EOF
+#!/bin/sh
+cd /usr/share/xsstrike
+exec python3 xsstrike "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/xsstrike"
 }
