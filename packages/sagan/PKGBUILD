@@ -2,40 +2,41 @@
 # See COPYING for license details.
 
 pkgname='sagan'
-pkgver='1.1.0'
-pkgrel=2
+pkgver='1.2.0'
+pkgrel=1
 pkgdesc='A snort-like log analysis engine.'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 groups=('blackarch' 'blackarch-ids' 'blackarch-defensive')
 url='https://quadrantsec.com/sagan_log_analysis_engine/'
 license=('GPL')
 depends=('sagan-rules' 'pcre' 'libdnet' 'libesmtp' 'mysql-clients'
-         'postgresql-libs' 'liblognorm' 'geoip' 'json-c' 'libfastjson')
+         'postgresql-libs' 'liblognorm' 'geoip' 'json-c' 'libfastjson'
+         'libyaml')
 makedepends=('git')
 options=('!makeflags' '!emptydirs')
 conflicts=('sagan' 'sagan-svn')
 replaces=('sagan-svn')
-source=("https://github.com/beave/sagan/archive/sagan-${pkgver}.tar.gz")
-sha1sums=('a2ac6cc588ce8eecf18fd5f674d20938fb6ec405')
+source=("https://quadrantsec.com/download/sagan-${pkgver}.tar.gz")
+sha1sums=('dfad94995c270fe604ef8fb6a9e41ab13f91b782')
 
 build() {
-  cd "$srcdir/sagan-sagan-$pkgver"
+  cd "$srcdir/sagan-$pkgver"
 
   ./autogen.sh
 
   ./configure --enable-esmtp --enable-geoip --prefix=/usr --sysconfdir=/etc \
-    --sbindir=/usr/bin
+    --sbindir=/usr/bin --enable-system-strstr
 
   make
 
-  sed "s:^var RULE_PATH.*$:var RULE_PATH /usr/share/sagan-git/rules/:" \
-    etc/sagan.conf > etc/sagan.conf.new
+  sed "s:^var RULE_PATH.*$:var RULE_PATH /usr/share/sagan/rules/:" \
+    etc/sagan.yaml > etc/sagan.yaml.new
 
-  mv etc/sagan.conf.new etc/sagan.conf
+  mv etc/sagan.yaml.new etc/sagan.yaml
 }
 
 package() {
-  cd "$srcdir/sagan-sagan-$pkgver"
+  cd "$srcdir/sagan-$pkgver"
 
   make DESTDIR="$pkgdir" install
 }
