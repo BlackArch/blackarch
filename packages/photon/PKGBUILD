@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='photon'
+pkgver=135.2901836
+pkgrel=1
+pkgdesc='Incredibly fast crawler which extracts urls, emails, files, website accounts and much more.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-recon')
+arch=('any')
+url='https://github.com/s0md3v/Photon'
+license=('GPL3')
+depends=('python' 'python-requests' 'python-argparse')
+makedepends=('git')
+source=('git+https://github.com/s0md3v/Photon.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Photon"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/Photon"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/photon"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/photon/" *.md
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/photon/"
+
+  cat > "$pkgdir/usr/bin/photon" << EOF
+#!/bin/sh
+cd /usr/share/photon
+exec python photon.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/photon"
+}
