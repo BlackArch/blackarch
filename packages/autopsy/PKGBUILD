@@ -1,33 +1,38 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
 # Maintainer: Jaryl Chng <mrciku@gmail.com>
 # Contributor: Olivier Bilodeau <obilodeau@gosecure.ca>
-pkgname=autopsy
-pkgver=4.7.0
-pkgrel=2
+
+pkgname='autopsy'
+pkgver='4.7.0'
+pkgrel=1
 pkgdesc='The Autopsy Forensic Browser is a GUI for The Sleuth Kit.'
-arch=(x86_64)
+groups=('blackarch' 'blackarch-forensic')
+arch=('x86_64')
 url='http://www.sleuthkit.org/autopsy/'
-license=('MIT/Apache-2.0')
-provides=(autopsy)
-depends=(java-runtime testdisk sleuthkit sleuthkit-java java-openjfx)
-makedepends=()
-source=(https://github.com/sleuthkit/${pkgname}/releases/download/${pkgname}-${pkgver}/${pkgname}-${pkgver}.zip Autopsy.desktop)
-sha256sums=(de85415aef78236f6f135b6ab4376470e60c154f58b867d676bf5b11df40f766 5e887abf2f2c7df3a86816d02453d96a9fddc39fe742186b3356d8b00db92b01)
+license=('MIT' 'Apache-2.0')
+depends=('java-runtime' 'testdisk' 'sleuthkit' 'sleuthkit-java' 'java-openjfx')
+source=("https://github.com/sleuthkit/autopsy/releases/download/autopsy-${pkgver}/autopsy-${pkgver}.zip"
+        'Autopsy.desktop')
+sha1sums=('692c4fc3d21870f0c54f7d895f4f4dec8e5db843'
+          'f82c020f433def256afd5d35f41bc8675ba5e326')
 
 package() {
-  cd "${pkgname}-${pkgver}"
+  cd "autopsy-${pkgver}"
 
-  mkdir -p $pkgdir/opt/${pkgname}
-  cp -r * $pkgdir/opt/${pkgname}/
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/opt/autopsy"
+
+  cp -r * $pkgdir/opt/autopsy/
 
   # copy sleuthkit jar into autopsy
-  cp /usr/share/java/sleuthkit-4.6.1.jar $pkgdir/opt/${pkgname}/${pkgname}/modules/ext/sleuthkit-postgresql-4.6.1.jar
+  cp /usr/share/java/sleuthkit-4.6.1.jar $pkgdir/opt/autopsy/autopsy/modules/ext/sleuthkit-postgresql-4.6.1.jar
 
   # overwrite bin/autopsy with proper permissions
-  install -m755 bin/autopsy $pkgdir/opt/${pkgname}/bin/autopsy
+  install -m755 bin/autopsy $pkgdir/opt/autopsy/bin/autopsy
 
-  mkdir -p $pkgdir/usr/share/pixmaps
-  cp icon.ico $pkgdir/usr/share/pixmaps/autopsy.ico
+  install -Dm644 icon.ico $pkgdir/usr/share/pixmaps/autopsy.ico
+  install -Dm644 $srcdir/Autopsy.desktop "$pkgdir/usr/share/applications/Autopsy.desktop"
 
-  mkdir -p $pkgdir/usr/share/applications
-  install -Dm644 ../../Autopsy.desktop $pkgdir/usr/share/applications
+  ln -sf "/opt/autopsy/bin/autopsy" "$pkgdir/usr/bin/autopsy"
 }
