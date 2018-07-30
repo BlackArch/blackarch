@@ -1,52 +1,33 @@
-# This file is part of BlackArch Linux ( http://blackarch.org ).
-# See COPYING for license details.
-
-pkgname='autopsy'
-pkgver='2.24'
-pkgrel=10
-groups=('blackarch' 'blackarch-forensic')
-pkgdesc='A GUI for The Sleuth Kit.'
-arch=('any')
-url='http://www.sleuthkit.org/autopsy'
-license=("GPL2")
-depends=("perl" "sleuthkit")
-options=(!emptydirs)
-source=("http://downloads.sourceforge.net/autopsy/autopsy-${pkgver}.tar.gz"
-        "autopsy.pl")
-sha1sums=('084a6554a1494f5f34df4a5a3635c8d3dc3b8822'
-          '0a5c32785bc0f7866103966f65d00a904118705c')
-
-prepare() {
-  cd "$srcdir/autopsy-$pkgver"
-
-  cat > autopsy << EOF
-#!/usr/bin/perl -wT
-use lib '/usr/lib/autopsy/';
-use lib '/usr/lib/autopsy/lib/';
-EOF
-  cat base/autopsy.base >> autopsy
-
-  sed -i 's:conf.pl:/etc/autopsy.pl:' autopsy lib/Main.pm
-}
+# Maintainer: Jaryl Chng <mrciku@gmail.com>
+# Contributor: Olivier Bilodeau <obilodeau@gosecure.ca>
+pkgname=autopsy
+pkgver=4.7.0
+pkgrel=2
+pkgdesc='The Autopsy Forensic Browser is a GUI for The Sleuth Kit.'
+arch=(x86_64)
+url='http://www.sleuthkit.org/autopsy/'
+license=('MIT/Apache-2.0')
+provides=(autopsy)
+depends=(java-runtime testdisk sleuthkit sleuthkit-java java-openjfx)
+makedepends=()
+source=(https://github.com/sleuthkit/${pkgname}/releases/download/${pkgname}-${pkgver}/${pkgname}-${pkgver}.zip Autopsy.desktop)
+sha256sums=(de85415aef78236f6f135b6ab4376470e60c154f58b867d676bf5b11df40f766 5e887abf2f2c7df3a86816d02453d96a9fddc39fe742186b3356d8b00db92b01)
 
 package() {
-  cd "$srcdir/autopsy-$pkgver"
+  cd "${pkgname}-${pkgver}"
 
-  mkdir -p "$pkgdir/etc"
-  mkdir -p "$pkgdir/usr/lib/autopsy/help"
-  mkdir -p "$pkgdir/usr/lib/autopsy/lib"
-  mkdir -p "$pkgdir/usr/lib/autopsy/pict"
-  mkdir -p "$pkgdir/usr/share/man/man1"
-  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p $pkgdir/opt/${pkgname}
+  cp -r * $pkgdir/opt/${pkgname}/
 
-  install -m755 autopsy "$pkgdir/usr/lib/autopsy/"
+  # copy sleuthkit jar into autopsy
+  cp /usr/share/java/sleuthkit-4.6.1.jar $pkgdir/opt/${pkgname}/${pkgname}/modules/ext/sleuthkit-postgresql-4.6.1.jar
 
-  chmod +x "$pkgdir/usr/lib/autopsy/autopsy"
+  # overwrite bin/autopsy with proper permissions
+  install -m755 bin/autopsy $pkgdir/opt/${pkgname}/bin/autopsy
 
-  install -m644 "$srcdir/autopsy.pl" "$pkgdir/etc"
+  mkdir -p $pkgdir/usr/share/pixmaps
+  cp icon.ico $pkgdir/usr/share/pixmaps/autopsy.ico
 
-  cp --no-preserve=ownership -r help lib pict "$pkgdir/usr/lib/autopsy/"
-  cp --no-preserve=ownership -r man "$pkgdir/usr/share"
-
-  ln -s ../lib/autopsy/autopsy "$pkgdir/usr/bin/autopsy"
+  mkdir -p $pkgdir/usr/share/applications
+  install -Dm644 ../../Autopsy.desktop $pkgdir/usr/share/applications
 }
