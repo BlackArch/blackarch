@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='instashell'
+pkgver=53.d37c83e
+pkgrel=1
+pkgdesc='Multi-threaded Instagram Brute Forcer without password limit.'
+groups=('blackarch' 'blackarch-cracker')
+arch=('any')
+url='https://github.com/thelinuxchoice/instashell'
+license=('GPL3')
+depends=('curl' 'tor' 'openssl')
+makedepends=('git')
+source=('git+https://github.com/thelinuxchoice/instashell')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/instashell"
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/instashell"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/instashell"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/instashell/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/instashell/LICENSE"
+
+  rm README.md LICENSE install.sh
+
+  cp -a * "$pkgdir/usr/share/instashell/"
+
+  cat > "$pkgdir/usr/bin/instashell" << EOF
+#!/bin/sh
+cd /usr/share/instashell
+bash instashell.sh \$1
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/instashell"
+}
