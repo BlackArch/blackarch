@@ -1,0 +1,62 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='icmpsh'
+pkgver=12.82caf34
+pkgrel=1
+pkgdesc='Simple reverse ICMP shell.'
+groups=('blackarch' 'blackarch-backdoor' 'blackarch-networking')
+arch=('any')
+url='https://github.com/inquisb/icmpsh'
+license=('custom:unknown')
+depends=('python2' 'perl')
+makedepends=('git')
+source=('git+https://github.com/inquisb/icmpsh.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/icmpsh"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/icmpsh"
+
+  gcc -o icmpsh-m icmpsh-m.c
+}
+
+package() {
+  cd "$srcdir/icmpsh"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/icmpsh"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/icmpsh/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/icmpsh/"
+
+  cat > "$pkgdir/usr/bin/icmpsh-m" << EOF
+#!/bin/sh
+exec /usr/share/icmpsh/icmpsh-m "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/icmpsh-m"
+
+  cat > "$pkgdir/usr/bin/icmpsh-m-py" << EOF
+#!/bin/sh
+exec python2 /usr/share/icmpsh/icmpsh_m.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/icmpsh-m-py"
+
+  cat > "$pkgdir/usr/bin/icmpsh-m-pl" << EOF
+#!/bin/sh
+exec perl /usr/share/icmpsh/icmpsh-m.pl "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/icmpsh-m-pl"
+
+}
