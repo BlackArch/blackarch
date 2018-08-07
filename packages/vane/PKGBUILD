@@ -3,7 +3,7 @@
 
 pkgname='vane'
 pkgver=1898.872a1c2
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp' 'blackarch-fuzzer')
 pkgdesc='A vulnerability scanner which checks the security of WordPress installations using a black box approach.'
 arch=('any')
@@ -13,13 +13,21 @@ makedepends=('git')
 depends=('ruby' 'libxslt' 'ruby-bundler')
 install='vane.install'
 options=(!strip)
-source=('git+https://github.com/delvelabs/vane.git')
-sha1sums=('SKIP')
+source=('git+https://github.com/delvelabs/vane.git'
+        'gemfile.patch')
+sha1sums=('SKIP'
+          '22c8cd37c5dab92a90f6f8b4a45d0b908d9dbf2e')
 
 pkgver() {
   cd "$srcdir/vane"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$srcdir"
+
+  patch -p1 < gemfile.patch
 }
 
 package() {
@@ -32,7 +40,7 @@ package() {
 
   cat > "$pkgdir/usr/bin/vane" << EOF
 #!/bin/sh
-exec ruby /usr/share/vane/vane.rb "\$@"
+exec ruby /usr/share/vane/vane.rb "\${@}"
 EOF
 
   sed -i "s/ROOT_DIR, 'log.txt'/ENV['HOME'], 'vane.log'/" "$pkgdir/usr/share/vane/lib/common/common_helper.rb"
