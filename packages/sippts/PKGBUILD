@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='sippts'
+pkgver=29.08c8c1b
+pkgrel=1
+pkgdesc='Set of tools to audit SIP based VoIP Systems.'
+groups=('blackarch' 'blackarch-voip')
+arch=('any')
+url='https://github.com/Pepelux/sippts'
+license=('custom:unknown')
+depends=('perl' 'perl-dbi' 'perl-io-socket' 'perl-netaddr-ip' 'perl-net-pcap'
+         'perl-io-socket-timeout' 'perl-string-hexconvert'
+         'perl-perlio-via-timeout')
+makedepends=('git')
+source=('git+https://github.com/Pepelux/sippts.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/sippts"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/sippts"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/sippts"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/sippts/" README.txt
+
+  rm README.txt
+
+  cp -a * "$pkgdir/usr/share/sippts/"
+
+  for i in *.pl
+  do
+    if [ "${i}" = "sipcrack.pl" ]
+    then
+      cat > "$pkgdir/usr/bin/"`echo ${i} | sed 's/.pl//'`"-sippts" << EOF
+#!/bin/sh
+cd /usr/share/sippts
+exec perl ${i} "\${@}"
+EOF
+      chmod a+x "$pkgdir/usr/bin/"`echo ${i} | sed 's/.pl//'`"-sippts"
+    else
+      cat > "$pkgdir/usr/bin/"`echo ${i} | sed 's/.pl//'` << EOF
+#!/bin/sh
+cd /usr/share/sippts
+exec perl ${i} "\${@}"
+EOF
+      chmod a+x "$pkgdir/usr/bin/"`echo ${i} | sed 's/.pl//'`
+    fi
+  done
+}

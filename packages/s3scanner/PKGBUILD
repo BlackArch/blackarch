@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='s3scanner'
+pkgver=218.5c4131f
+pkgrel=1
+pkgdesc='Scan for open S3 buckets and dump.'
+groups=('blackarch' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/sa7mon/S3Scanner'
+license=('MIT')
+depends=('python' 'aws-cli' 'python-argparse' 'python-pytest-xdist'
+         'python-coloredlogs' 'python-boto3' 'python-requests' 'python-sh')
+makedepends=('git')
+source=('git+https://github.com/sa7mon/S3Scanner.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/S3Scanner"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/S3Scanner"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/s3scanner"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/s3scanner/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/s3scanner/"
+
+  cat > "$pkgdir/usr/bin/s3scanner" << EOF
+#!/bin/sh
+cd /usr/share/s3scanner
+exec python s3scanner.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/s3scanner"
+}
