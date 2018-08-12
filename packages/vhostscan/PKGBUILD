@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname='vhostscan'
-pkgver=302.7d290b9
-pkgrel=3
+pkgver=308.961ba83
+pkgrel=1
 pkgdesc='A virtual host scanner that can be used with pivot tools, detect catch-all scenarios, aliases and dynamic default pages.'
 groups=('blackarch' 'blackarch-scanner')
 arch=('any')
@@ -26,26 +26,28 @@ prepare() {
   cd "$srcdir/VHostScan"
 
   sed -i 's/==.*//g' requirements.txt
+  sed -i 's/num_installed/NUM_INSTALLED/' setup.py
+  #sed -i 's/numpy==1.12.0/numpy/g' setup.py
 }
 
 build() {
   cd "$srcdir/VHostScan"
 
-  python3 setup.py build
+  python setup.py build
 }
 
 package() {
   cd "$srcdir/VHostScan"
 
-  python3 setup.py install --root="$pkgdir" --prefix="/usr"
+  python setup.py install --root="$pkgdir" --prefix="/usr"
 
   install -Dm644 -t "$pkgdir/usr/share/doc/vhostscan/" *.md
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/vhostscan/LICENSE"
 
   mv "$pkgdir/usr/bin/VHostScan" "$pkgdir/usr/bin/vhostscan"
 
-  rm "$pkgdir/usr/lib/python3.6/site-packages/tests/__init__.py" \
-    "$pkgdir/usr/lib/python3.6/site-packages/tests/__pycache__/__init__.cpython-36.pyc"
+  rm -f "$pkgdir/usr/lib/python3.*/site-packages/tests/__init__.py" \
+    "$pkgdir/usr/lib/python3.*/site-packages/tests/__pycache__/__init__.cpython-3*.pyc"
 
   find "$pkgdir/" -type d -name '__pycache__' -exec rm -rf {} +
 }
