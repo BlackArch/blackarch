@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='massdns'
+pkgver=165.a951e81
+pkgrel=1
+groups=('blackarch' 'blackarch-networking')
+pkgdesc='A high-performance DNS stub resolver in C.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/blechschmidt/massdns'
+license=('GPL3')
+depends=('libpcap' 'ldns')
+makedepends=('git')
+source=('git+https://github.com/blechschmidt/massdns.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/massdns"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/massdns"
+
+  make PREFiX="$pkgdir/usr"
+}
+
+package() {
+  cd "$srcdir/massdns"
+
+  mkdir -p "$pkgdir/usr/share/massdns"
+
+  make DESTDIR="$pkgdir" PREFIX="$pkgdir" install
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/massdns/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/massdns/LICENSE"
+
+  cp -a scripts lists "$pkgdir/usr/share/massdns/"
+
+  mv "$pkgdir/bin" "$pkgdir/usr/bin"
+}
