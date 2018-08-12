@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='perl-perlio-via-timeout'
+pkgver='0.32'
+pkgrel='1'
+pkgdesc='A PerlIO layer that adds read & write timeout to a handle.'
+arch=('any')
+license=('PerlArtistic' 'GPL')
+options=('!emptydirs')
+depends=('perl')
+makedepends=('perl-module-build-tiny>=0.039')
+checkdepends=('perl-test-tcp')
+url='https://metacpan.org/release/PerlIO-via-Timeout'
+source=("http://search.cpan.org/CPAN/authors/id/D/DA/DAMS/PerlIO-via-Timeout-${pkgver}.tar.gz")
+sha1sums=('e55d65ae04fa4b2d826be820dc462da7335abd55')
+_distdir="PerlIO-via-Timeout-${pkgver}"
+
+build() {
+  cd "$srcdir"
+
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""                 \
+      PERL_AUTOINSTALL=--skipdeps                            \
+      PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'"     \
+      PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+      MODULEBUILDRC=/dev/null
+
+    cd "$srcdir/$_distdir"
+    /usr/bin/perl Makefile.PL
+    make
+  )
+}
+
+check() {
+  cd "$srcdir/$_distdir"
+
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""
+    make test
+  )
+}
+
+package() {
+  cd "$srcdir/$_distdir"
+
+  make install
+
+  find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}
