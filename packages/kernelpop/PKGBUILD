@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='kernelpop'
+pkgver=238.b3467d3
+pkgrel=1
+pkgdesc='Kernel privilege escalation enumeration and exploitation framework.'
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-automation')
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/spencerdodd/kernelpop'
+license=('custom:unknown')
+depends=('python')
+makedepends=('git')
+source=('git+https://github.com/spencerdodd/kernelpop')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/kernelpop"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/kernelpop"
+
+  pyinstaller kernelpop.py --onefile
+  cp dist/kernelpop .
+}
+
+package() {
+  cd "$srcdir/kernelpop"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/kernelpop"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/kernelpop/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/kernelpop/"
+
+  cat > "$pkgdir/usr/bin/kernelpop" << EOF
+#!/bin/sh
+exec /usr/share/kernelpop/kernelpop "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/kernelpop"
+}
