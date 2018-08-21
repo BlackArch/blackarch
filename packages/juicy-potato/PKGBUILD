@@ -1,0 +1,34 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='juicy-potato'
+pkgver=41.f887270
+pkgrel=1
+pkgdesc='A sugared version of RottenPotatoNG, with a bit of juice.'
+groups=('blackarch' 'blackarch-windows')
+arch=('any')
+url='https://github.com/ohpe/juicy-potato'
+license=('GPL3')
+makedepends=('git')
+source=('git+https://github.com/ohpe/juicy-potato.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/juicy-potato"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/juicy-potato"
+  jobId=$(curl https://ci.appveyor.com/api/projects/ohpe/juicy-potato | sed 's|.*jobId":"\([^"]*\)".*|\1|gi')
+  baseUrl="https://ci.appveyor.com/api/buildjobs/${jobId}/artifacts/"
+  curl -L -o './juicypotato.exe' "${baseUrl}JuicyPotato%2FRelease%2Fx64%2FJuicyPotato.exe"
+  mkdir -p "$pkgdir/usr/share/windows/juicy-potato"
+
+  cp -r ./CLSID "$pkgdir/usr/share/windows/juicy-potato/"
+  cp -r ./Test "$pkgdir/usr/share/windows/juicy-potato/"
+  install -Dm644 ./juicypotato.exe "$pkgdir/usr/share/windows/juicy-potato/"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/juicy-potato/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/juicy-potato/LICENSE"
+}
