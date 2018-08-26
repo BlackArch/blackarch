@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='certgraph'
+pkgver=120.ad4fc76
+pkgrel=1
+groups=('blackarch' 'blackarch-recon')
+pkgdesc='Crawl the graph of certificate Alternate Names.'
+arch=('any')
+url='https://github.com/lanrat/certgraph'
+license=('GPL3')
+depends=('glibc' 'go')
+makedepends=('go' 'git')
+source=('git+https://github.com/lanrat/certgraph.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/certgraph"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/$url && rm -rf src/$url && mv certgraph src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t github.com/lanrat/certgraph
+}
+
+package() {
+  cd "$srcdir"
+
+  mkdir -p "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v github.com/lanrat/certgraph
+
+  install -Dm755 "$srcdir/certgraph" "$pkgdir/usr/bin/certgraph"
+  install -Dm644 src/$url/docs/index.html "$pkgdir/usr/share/certgraph/index.html"
+  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/certgraph/README.md"
+  install -Dm644 src/$url/LICENSE "$pkgdir/usr/share/licenses/certgraph/LICENSE"
+}
