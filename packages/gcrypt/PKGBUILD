@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='gcrypt'
+pkgver=2.aa06dcb
+pkgrel=1
+pkgdesc='Simple file encryption tool written in C++.'
+groups=('blackarch' 'blackarch-crypto')
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/GasparVardanyan/GCrypt'
+license=('custom:unknown')
+depends=()
+makedepends=('git')
+source=('git+https://github.com/GasparVardanyan/GCrypt.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/GCrypt"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir/GCrypt"
+
+  g++ -o gcrypt main.cpp console.h gcrypt.h gcrypt.cpp -Wall -pedantic \
+  -fstack-protector-all -fPIE -fPIC -D_FORTIFY_SOURCE=2 \
+  -Wl,-z,now -Wl,-z-relro -O
+}
+
+package() {
+  cd "$srcdir/GCrypt"
+
+  install -Dm755 gcrypt "$pkgdir/usr/bin/gcrypt"
+  install -Dm644 -t "$pkgdir/usr/share/doc/gcrypt/" README.md
+}
