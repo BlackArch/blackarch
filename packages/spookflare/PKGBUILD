@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='spookflare'
+pkgver=17.6918464
+pkgrel=1
+pkgdesc='Loader, dropper generator with multiple features for bypassing client-side and network-side countermeasures.'
+groups=('blackarch' 'blackarch-automation' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/hlldz/SpookFlare'
+license=('Apache')
+depends=('python-terminaltables')
+makedepends=('git')
+source=('git+https://github.com/hlldz/SpookFlare.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/SpookFlare"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/SpookFlare"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/spookflare"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/spookflare/" README.md
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/spookflare/LICENSE"
+
+  rm -rf output LICENSE README.md requirements.txt
+
+  cp -a * "$pkgdir/usr/share/spookflare/"
+
+  cat > "$pkgdir/usr/bin/spookflare" << EOF
+#!/bin/sh
+cd /usr/share/spookflare
+exec python spookflare.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/spookflare"
+}
