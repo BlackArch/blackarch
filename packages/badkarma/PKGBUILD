@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='badkarma'
+pkgver=27.b5a1fb5
+pkgrel=1
+pkgdesc='Advanced network reconnaissance toolkit.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-networking' 'blackarch-recon')
+arch=('any')
+url='https://github.com/r3vn/badKarma'
+license=('GPL3')
+depends=('python' 'python-python-libnmap' 'python-sqlalchemy' 'phantomjs'
+         'ffmpeg')
+makedepends=('git')
+source=('git+https://github.com/r3vn/badKarma.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/badKarma"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$srcdir/badKarma"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/badkarma"
+
+  install -Dm644 -t "$pkgdir/usr/share/doc/badkarma/" readme.md
+  install -Dm644 license.md "$pkgdir/usr/share/licenses/badkarma/license.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/badkarma/"
+
+  cat > "$pkgdir/usr/bin/badkarma" << EOF
+#!/bin/sh
+cd /usr/share/badkarma
+exec python badkarma.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/badkarma"
+}
