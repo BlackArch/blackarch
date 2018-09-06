@@ -5,39 +5,33 @@ pkgname='firstorder'
 pkgver=8.107eb6a
 pkgrel=1
 pkgdesc='A traffic analyzer to evade Empire communication from Anomaly-Based IDS.'
-groups=('blackarch' 'blackarch-automation' 'blackarch-exploitation' 'blackarch-networking')
+groups=('blackarch' 'blackarch-sniffer' 'blackarch-automation'
+        'blackarch-exploitation')
 arch=('any')
 url='https://github.com/tearsecurity/firstorder'
 license=('custom:BSD')
-depends=('python2' 'python2-scapy' 'python2-requests')
+depends=('python2' 'python2-scapy' 'python2-requests' 'python2-scapy-http')
 makedepends=('git')
 source=('git+https://github.com/tearsecurity/firstorder.git')
 sha1sums=('SKIP')
 
 pkgver() {
   cd "$srcdir/firstorder"
-  
+
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
   cd "$srcdir/firstorder"
-  
+
   sed -i '1s/^/#!\/usr\/bin\/env python2\n/' firstorder.py
 }
 
 package() {
   cd "$srcdir/firstorder"
 
-  mkdir -p "$pkgdir/usr/bin"
-  mkdir -p "$pkgdir/usr/share/firstorder"
-
-  install -Dm644 -t "$pkgdir/usr/share/doc/firstorder/" README.md firstorder_slide.pdf
+  install -Dm755 firstorder.py "$pkgdir/usr/bin/firstorder"
+  install -Dm644 -t "$pkgdir/usr/share/doc/firstorder/" README.md \
+    firstorder_slide.pdf
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/firstorder/LICENSE"
-
-  cp -a firstorder.py "$pkgdir/usr/share/firstorder/"
-
-  chmod a+x "$pkgdir/usr/share/firstorder/firstorder.py"
-  
-  ln -s "/usr/share/firstorder/firstorder.py" "$pkgdir/usr/bin/firstorder"
 }
