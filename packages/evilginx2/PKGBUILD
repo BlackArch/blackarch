@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname='evilginx2'
+pkgver=27.31f582b
+pkgrel=1
+pkgdesc='Standalone man-in-the-middle attack framework used for phishing login credentials along with session cookies, allowing for the bypass of 2-factor authentication.'
+groups=('blackarch' 'blackarch-social')
+arch=('any')
+url='https://github.com/kgretzky/evilginx2'
+license=('MIT')
+depends=('go')
+makedepends=('git')
+source=('git+https://github.com/kgretzky/evilginx2.git')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/evilginx2"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$srcdir"
+
+  mkdir -p src/$url && rm -rf src/$url && mv evilginx2 src/$url && cd src/$url
+
+  GOPATH="$srcdir" go get -d -t $url
+}
+
+package() {
+  cd "$srcdir/"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/evilginx2"
+
+  GOPATH="$srcdir" go build -v $url
+
+  install -Dm755 "$srcdir/evilginx2" "$pkgdir/usr/bin/evilginx2"
+  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/evilginx2/README.md"
+  install -Dm644 src/$url/LICENSE "$pkgdir/usr/share/licenses/evilginx2/LICENSE"
+}
