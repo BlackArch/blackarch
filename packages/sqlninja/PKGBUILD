@@ -3,7 +3,7 @@
 
 pkgname='sqlninja'
 pkgver='0.2.999'
-pkgrel=6
+pkgrel=7
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-fuzzer'
         'blackarch-webapp')
 pkgdesc='A tool targeted to exploit SQL Injection vulnerabilities on a web application that uses Microsoft SQL Server as its back-end.'
@@ -15,24 +15,26 @@ depends=('perl' 'perl-netpacket' 'perl-net-pcap' 'perl-net-dns' 'perl-net-rawip'
 optdepends=('metasploit: to use the metasploit attack mode'
             'tigervnc: a VNC client, vncviewer, to use the VNC payload')
 conflicts=('sqlninja-svn')
-source=("http://downloads.sourceforge.net/sourceforge/sqlninja/sqlninja-${pkgver}-alpha1.tgz")
-sha1sums=('14d01050138c9fab77274e9823708e82742cdc29')
+source=("http://downloads.sourceforge.net/sourceforge/sqlninja/sqlninja-${pkgver}-alpha1.tgz"
+        'sqlninja.patch')
+sha1sums=('14d01050138c9fab77274e9823708e82742cdc29'
+          '6da51b63397825e1366cbc6da199f9e03ccf3f2b')
 
 prepare() {
-  cd "$srcdir/sqlninja-$pkgver-alpha1"
+  cd sqlninja-"${pkgver}"-alpha1
 
-  # TODO: Is this still relevant?
-  # Check if metasploit-svn or metasploit stable is installed (-svn takes precedence)
-  # Apply Archlinux metasploit home directory to sqlninja.conf.
   if [[ -d /usr/src/metasploit ]] ; then
-    sed -i 's|/home/user/trunk/|/usr/src/metasploit|g' sqlninja.conf
+    sed -i 's|/home/user/trunk/|/opt/metasploit|g' sqlninja.conf
   else
-    sed -i 's|/home/user/trunk/|/usr/share/metasploit|g' sqlninja.conf
+    sed -i 's|/home/user/trunk/|/opt/metasploit|g' sqlninja.conf
   fi
+
+  patch -p0 < $srcdir/sqlninja.patch
 }
 
+
 package() {
-  cd "$srcdir/sqlninja-$pkgver-alpha1"
+  cd sqlninja-"${pkgver}"-alpha1
 
   mkdir -p "$pkgdir/usr/bin"
   mkdir -p "$pkgdir/usr/share/sqlninja"
@@ -48,7 +50,7 @@ package() {
   cat > "$pkgdir/usr/bin/sqlninja" << EOF
 #!/bin/bash
 cd /usr/share/sqlninja
-exec ./sqlninja "\${@}"
+exec perl ./sqlninja "\${@}"
 EOF
 
   chmod +x "$pkgdir/usr/bin/sqlninja"
