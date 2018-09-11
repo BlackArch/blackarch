@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=gethsploit
+pkgver=3.144778b
+pkgrel=1
+pkgdesc='Finding Ethereum nodes which are vulnerable to RPC-attacks.'
+groups=('blackarch' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/KarmaHostage/gethspoit'
+license=('custom:unknown')
+depends=('python2' 'python2-yaml')
+makedepends=('git')
+source=('git+https://github.com/KarmaHostage/gethspoit.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd gethspoit
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd gethspoit
+
+  sed -i 's|Popen("geth|Popen("gethsploit|g' gethsploit.py
+}
+
+package() {
+  cd gethspoit
+
+  tools="gethsploit nodesploit"
+
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/usr/share/gethsploit"
+
+  install -Dm644 README.md "$pkgdir/usr/share/doc/gethsploit/README.md"
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/gethsploit"
+
+  for i in ${tools}
+  do
+    cat > "$pkgdir/usr/bin/${i}" << EOF
+#!/bin/sh
+cd /usr/share/gethsploit
+exec python2 ${i}.py "\$@"
+EOF
+    chmod a+x "$pkgdir/usr/bin/${i}"
+  done
+}
+
