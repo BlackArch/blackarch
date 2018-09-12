@@ -1,0 +1,27 @@
+post_install() {
+  if ! getent group rwhod &>/dev/null; then
+    groupadd -r rwhod &>/dev/null
+  fi
+
+  if ! getent passwd rwhod &>/dev/null; then
+    useradd -s /bin/false -d /var/spool/rwho -g rwhod -M -r rwhod &>/dev/null
+  fi
+
+  chown -R rwhod:rwhod /var/spool/rwho
+}
+
+post_upgrade() {
+  post_install $1
+}
+
+pre_remove() {
+  if getent passwd rwhod &>/dev/null; then
+    userdel rwhod &>/dev/null
+  fi
+
+  if getent group rwhod &>/dev/null; then
+    groupdel rwhod &>/dev/null
+  fi
+
+  rm -rf /var/spool/rwhod/* &>/dev/null || true
+}

@@ -1,0 +1,56 @@
+# Maintainer: Graham Edgecombe <gpe@grahamedgecombe.com>
+# Contributor: mortzu
+
+pkgname=netkit-rwho
+pkgver=0.17
+_debrev=13
+pkgrel=1
+groups=('blackarch' 'blackarch-misc')
+arch=('x86_64' 'arm' 'armv6h' 'armv7h' 'aarch64')
+license=('BSD')
+pkgdesc='Remote who client and server (with Debian patches).'
+depends=('glibc' 'sh')
+optdepends=('cron: to periodically delete old /var/spool/rwho files'
+            'systemd: to run the rwhod daemon')
+url='http://packages.qa.debian.org/n/netkit-rwho.html'
+install=rwhod.install
+backup=('etc/conf.d/rwhod')
+source=("http://ftp.debian.org/debian/pool/main/n/netkit-rwho/netkit-rwho_${pkgver}.orig.tar.gz"
+        "http://ftp.debian.org/debian/pool/main/n/netkit-rwho/netkit-rwho_${pkgver}-${_debrev}.debian.tar.gz"
+        'rwhod.conf'
+        'rwhod.service'
+        'rwhod.cron')
+sha512sums=('ea1444b613d95f53100cf8f8d374dd132611432380b9142182c4fb5595014605896656b9a272945534371265e226fe591c22c12a9bdde9c763794249660e7b58'
+            '1ed8a53b6d4fa1b026f904807a37624b4d480e4cd55daabd1ac8e6fd1687aae7e8569a2cbd5e1911dc45f149dd1b23636d67c16700b7db6946909805197ba9d1'
+            'f13096f096ff926bf2a8e1b4e71b3c7ff2837d145b0552e91657027d0e6baac8d7fd526377f0dc21e600a6ffa4422e602fdf4dbee615d4603ab028070b15b6fe'
+            'e4e3737b9dcd18d06f3b620663877f97f41859817141c00bd00909d029fbb6f9e5680407749e9fdb7d6cc5c30887ebe854d2bcf98544fa6a4324b6d3a3bca2ce'
+            '3190f00bc89668b35615779b63d1a709282db7e0fe986d0391130a2fb40c746346d34b0e8e0345b8343c5d61a2ffd8e2a5d6743d4240d3aa63c2215ccf880aec')
+
+build() {
+  cd "netkit-rwho-${pkgver}"
+
+  while read patch; do
+    patch -Np1 -i "../debian/patches/$patch"
+  done < ../debian/patches/series
+
+  ./configure --prefix=/usr --installroot="$pkgdir"
+  make
+}
+
+package() {
+  cd "netkit-rwho-${pkgver}"
+
+  mkdir -p "$pkgdir/usr/"{bin,sbin,share,man/man1,man/man8} "$pkgdir/var/spool/rwho"
+  make install
+
+  mv "$pkgdir/usr/man" "$pkgdir/usr/share/man"
+
+  mv "$pkgdir/usr/sbin/rwhod" "$pkgdir/usr/bin"
+  rmdir "$pkgdir/usr/sbin"
+
+  install -Dm644 "$srcdir/debian/copyright" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 "$srcdir/rwhod.conf" "$pkgdir/etc/conf.d/rwhod"
+  install -Dm644 "$srcdir/rwhod.service" "$pkgdir/usr/lib/systemd/system/rwhod.service"
+  install -D "$srcdir/rwhod.cron" "$pkgdir/etc/cron.monthly/rwhod"
+}
+
