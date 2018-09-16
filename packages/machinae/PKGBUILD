@@ -1,7 +1,7 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgname='machinae'
+pkgname=machinae
 pkgver=127.7d577ca
 pkgrel=1
 groups=('blackarch' 'blackarch-recon')
@@ -12,19 +12,30 @@ license=('MIT')
 depends=('python' 'python-dateutil' 'python-requests' 'python-yaml'
          'python-magic' 'python-stopit' 'python-feedparser' 'python-ipwhois'
          'python-pytz' 'python-beautifulsoup4' 'python-filemagic'
-         'python-tzlocal' 'python-relatime' 'python-html5lib')
+         'python-tzlocal' 'python-relatime' 'python-html5lib' 'python-defang'
+         'python-dnspython')
 makedepends=('git' 'python-setuptools')
 source=('git+https://github.com/HurricaneLabs/machinae.git')
-sha1sums=('SKIP')
+sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/machinae"
+  cd machinae
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd machinae
+
+  # psst, tmp fix...
+  sed -i 's/import machinae//g' setup.py
+  sed -i 's|VERSION = machinae.__version__|VERSION = "1.4.5"|' setup.py
+  sed -i 's|ipwhois<0.11|ipwhois|' setup.py
+  sed -i 's|dnspython3|dnspython|' setup.py
+}
+
 package() {
-  cd "$srcdir/machinae"
+  cd machinae
 
   python setup.py install --root="$pkgdir" --optimize=1
 
@@ -32,6 +43,5 @@ package() {
 
   install -Dm644 -t "$pkgdir/usr/share/doc/machinae/" README.md
   install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/machinae/LICENSE.txt"
-
-  rm README.* LICENSE.txt
 }
+
