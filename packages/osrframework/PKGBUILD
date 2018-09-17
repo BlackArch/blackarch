@@ -1,41 +1,47 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgname='osrframework'
+pkgname=osrframework
 pkgver=780.bae024d
 pkgrel=1
 pkgdesc='A project focused on providing API and tools to perform more accurate online researches.'
 groups=('blackarch' 'blackarch-recon' 'blackarch-social')
 arch=('any')
 url='https://github.com/i3visio/osrframework'
-license=('GPL3')
+license=('AGPL3')
 depends=('python2' 'python2-requests' 'python2-tweepy' 'python2-networkx'
          'python2-python-emailahoy' 'python2-beautifulsoup4' 'python2-pyexcel'
          'python2-decorator' 'python2-validate_email' 'python2-pydns'
-         'python2-tabulate' 'python2-oauthlib' 'python2-flask'
-         'python2-python-whois' 'python2-colorama' 'python2-configparser')
+         'python2-tabulate' 'python2-oauthlib' 'python2-flask' 'python2-yaml'
+         'python2-mechanize' 'python2-python-whois' 'python2-colorama'
+         'python2-configparser' 'python2-cfscrape')
 makedepends=('git' 'python2-setuptools' 'python2-pip')
-source=('git+https://github.com/i3visio/osrframework.git')
-sha1sums=('SKIP')
+source=('git+https://github.com/i3visio/osrframework.git' 'setup.py.patch')
+sha512sums=('SKIP'
+            '71db44f4d73ffe6ae2433fbed7dff21016a369b2f1940c2cec26e237091737d3cc071de5216ada53f03d58734da040cbf02a35d383179fdd9454ff75ee76942a')
 
 pkgver() {
-  cd "$srcdir/osrframework"
+  cd osrframework
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  patch -p1 < setup.py.patch
+}
+
 package() {
-  cd "$srcdir/osrframework"
+  cd osrframework
 
   #PIP_CONFIG_FILE=/dev/null pip2 install --isolated --root="$pkgdir" \
   #  --ignore-installed --no-deps ./
 
   python2 setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/osrframework/" README.md doc/*
+  install -Dm644 -t "$pkgdir/usr/share/doc/osrframework/" *.md doc/*
   install -Dm644 COPYING "$pkgdir/usr/share/licenses/osrframework/COPYING"
 
-  rm -rf README.md doc COPYING
+  rm -rf *.md doc COPYING
 
   cd "$pkgdir/usr/bin"
 
@@ -43,4 +49,7 @@ package() {
   do
     mv $i `echo $pkgdir/usr/bin/osr-$i | sed 's/.py//'`
   done
+
+  find "$pkgdir" -type f \( -iname '*.pyc' -or -iname '*.pyo' \) -exec rm {} \;
 }
+
