@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=ropgadget2
+_pkgname=ROPgadget
+pkgver=5.4
+pkgrel=1
+pkgdesc='Search gadgets in binaries to facilitate ROP exploitation for several file formats and architectures'
+groups=('blackarch' 'blackarch-exploitation')
+url='http://www.shell-storm.org/project/ROPgadget'
+arch=('any')
+license=('GPL2')
+depends=('python2-capstone')
+makedepends=('python2-setuptools')
+source=(${pkgname}-${pkgver}.tar.gz::https://github.com/JonathanSalwan/${_pkgname}/archive/v${pkgver}.tar.gz)
+sha512sums=('7b3777ccce10000e1cf1fadedd4010f05ae21d5794c45994d380eebecb8876c203899cc30716a677e3c31b575898d7fad763d66c502432f3a4dc4493ad4ae0da')
+
+prepare() {
+  cd "${_pkgname}-${pkgver}"
+
+  sed 's|python2|python|g' -i ropgadget/**/*.py ropgadget/*/*/*.py
+}
+
+build() {
+  cd "${_pkgname}-${pkgver}"
+
+  python2 setup.py build
+}
+
+check() {
+  cd "${_pkgname}-${pkgver}"
+
+  ./ROPgadget.py --binary ./test-suite-binaries/elf-Linux-x86 --string "main"||:
+}
+
+package() {
+  cd "${_pkgname}-${pkgver}"
+
+  python2 setup.py install -O1 --root="${pkgdir}" --prefix=/usr
+  install -Dm 644 README.md -t "${pkgdir}/usr/share/doc/${pkgname}"
+
+  mv "$pkgdir/usr/bin/ROPgadget" "$pkgdir/usr/bin/ROPgadget2"
+}
+
