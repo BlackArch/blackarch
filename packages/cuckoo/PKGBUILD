@@ -1,13 +1,14 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgname='cuckoo'
-pkgver='2.0.5.3'
+pkgname=cuckoo
+pkgver=2.0.6.2
 pkgrel=1
 pkgdesc='A malware analysis system.'
-url='http://cuckoosandbox.org/'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
-license=('custom')
+groups=('blackarch' 'blackarch-malware')
+url='http://cuckoosandbox.org/'
+license=('custom:unknown')
 install='cuckoo.install'
 backup=('opt/cuckoo/conf/auxiliary.conf'
         'opt/cuckoo/conf/cuckoo.conf'
@@ -18,7 +19,6 @@ backup=('opt/cuckoo/conf/auxiliary.conf'
         'opt/cuckoo/conf/reporting.conf'
         'opt/cuckoo/conf/virtualbox.conf'
         'opt/cuckoo/conf/vmware.conf')
-groups=('blackarch' 'blackarch-malware')
 depends=('python2' 'python2-sqlalchemy' 'python2-dpkt' 'python2-jinja'
          'python2-magic' 'python2-pydeep' 'libvirt' 'python2-bottle'
          'python2-pefile' 'python2-pymongo' 'tcpdump' 'yara' 'python2-yara'
@@ -28,41 +28,39 @@ depends=('python2' 'python2-sqlalchemy' 'python2-dpkt' 'python2-jinja'
          'python2-itsdangerous' 'python2-mako' 'python2-markupsafe'
          'python2-ndg-httpsclient' 'python2-pyasn1' 'python2-pycparser'
          'python2-pyopenssl' 'python2-dateutil' 'python2-requests' 'python2-six'
-         'python2-werkzeug' 'python2-tlslite-ng' 'python2-wakeonlan'
-         'python2-bson')
-source=("https://files.pythonhosted.org/packages/bb/a9/c8b6f47dc5aeb7aa0efdeb67fdac0091f3ebbc9dbe3a551fc19d56438556/Cuckoo-${pkgver}.tar.gz"
+         'python2-werkzeug' 'python2-tlslite-ng' 'python2-wakeonlan')
+source=("https://files.pythonhosted.org/packages/ae/cc/2ee841d414a7274455bb0d969567ba9a4cd72594e3ad34dbdee98f999c7b/Cuckoo-$pkgver.tar.gz"
         'https://raw.githubusercontent.com/BlackArch/tcpdump_net_raw/master/tcpdump_net_raw.c')
-sha1sums=('118939f0618ceb3b43b67386e7fdc47d02ad3ada'
-          'c2c2f7864658a9a34053bfbaa5f756ddb5447815')
+sha512sums=('59cde295d9333bff08108a9340ef2ad84b44db4a56b484bcf622d09831491ed9be8b14b3feec4fc821653b6270ffad9cad4f269ce31b460b2dbcc814cea32391'
+            'e53f97162d5fda4ca29c444209be04fe4c447b33c8ccb375a310217d8baf15043d2bf70e87607ca90de5f273066e2a94ad27cf863dfb8635d5714c9afd455133')
 
 prepare() {
-   cd "$srcdir/Cuckoo-$pkgver"
+   cd "Cuckoo-$pkgver"
 
    find "$srcdir" -type f -name '*.py' -exec \
      sed -i 's|#!/usr/bin/env python|#!/usr/bin/env python2|' {} \;
-   sed -i 's|^version_check =.*|version_check = off|' conf/cuckoo.conf
+   sed -i 's|^version_check =.*|version_check = off|' \
+     cuckoo/private/cwd/conf/cuckoo.conf
    sed -i 's|^tcpdump =.*|tcpdump = /opt/cuckoo/cuckoo_tcpdump|' \
-     conf/auxiliary.conf
+     cuckoo/private/cwd/conf/auxiliary.conf
    sed -i 's|^platform =.*|platform = linux|' \
-     conf/{kvm.conf,virtualbox.conf,vmware.conf,esx.conf}
+     cuckoo/private/cwd/conf/{kvm.conf,virtualbox.conf,vmware.conf,esx.conf}
 
 }
 
 build() {
-  cd "$srcdir"
-
   make tcpdump_net_raw
 }
 
 package() {
-  cd "$srcdir/Cuckoo-$pkgver"
+  cd "Cuckoo-$pkgver"
 
-  mkdir -p "$pkgdir/usr/bin/"
-  mkdir -p "$pkgdir/opt/cuckoo"
+  mkdir -p "$pkgdir/usr/bin"
+  mkdir -p "$pkgdir/opt/${pkgname}"
 
-  install -m754 "$srcdir/tcpdump_net_raw" "$pkgdir/opt/cuckoo/cuckoo_tcpdump"
+  install -m754 "$srcdir/tcpdump_net_raw" "$pkgdir/opt/${pkgname}/cuckoo_tcpdump"
 
-  cp --no-preserve=ownership -a * "$pkgdir/opt/cuckoo"
+  cp --no-preserve=ownership -a * "$pkgdir/opt/${pkgname}"
 
   chmod u+rwX,g+rwX,o+rX -R "$pkgdir/opt"
 
@@ -80,3 +78,4 @@ EOF
 
   chmod a+x "$pkgdir/usr/bin/cuckoo"
 }
+
