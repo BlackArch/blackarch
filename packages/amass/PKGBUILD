@@ -1,7 +1,7 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgname='amass'
+pkgname=amass
 pkgver=196.d159de0
 pkgrel=1
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
@@ -10,35 +10,37 @@ arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/caffix/amass'
 license=('Apache2')
 depends=('go')
-makedepends=('git')
+makedepends=('git' 'go-pie')
 source=('git+https://github.com/caffix/amass.git')
-sha1sums=('SKIP')
+sha512sums=('SKIP')
 _url='github.com/caffix/amass'
 
 pkgver() {
-  cd "$srcdir/amass"
+  cd amass
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$srcdir"
+  cd amass/amass
 
-  mkdir -p src/$url && rm -rf src/$url && mv amass src/$url && cd src/$url
-
-  GOPATH="$srcdir" go get -d -t $_url
+  GOPATH="$srcdir" go get -d $_url
 }
 
 package() {
-  cd "$srcdir"
+  cd amass/amass
 
-  mkdir -p "$pkgdir/usr/share/amass"
+  install -dm 755 "$pkgdir/usr/share/${pkgname}"
 
   GOPATH="$srcdir" go build -v $_url
 
-  install -Dm755 "$srcdir/amass" "$pkgdir/usr/bin/amass"
-  cp -a src/$_url/wordlists src/$_url/maltego/* src/$_url/examples \
-    src/$_url/snapcraft.yaml "$pkgdir/usr/share/amass/"
-  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/amass/README.md"
-  install -Dm644 src/$url/LICENSE "$pkgdir/usr/share/licenses/amass/LICENSE"
+  cd ..
+
+  install -Dm 755 amass/amass "$pkgdir/usr/bin/amass"
+  cp -a wordlists examples snapcraft.yaml "$pkgdir/usr/share/${pkgname}"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/${pkgname}/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/${pkgname}/LICENSE"
+
+  chmod 644 "$pkgdir/usr/share/${pkgname}/"{wordlists/*,examples/*}
 }
+
