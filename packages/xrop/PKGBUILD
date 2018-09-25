@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=xrop
+pkgver=82.b71cd7b
+pkgrel=1
+pkgdesc='Tool to generate ROP gadgets for ARM, AARCH64, x86, MIPS, PPC, RISCV, SH4 and SPARC.'
+groups=('blackarch' 'blackarch-exploitation')
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/acama/xrop'
+license=('custom:unknown')
+depends=('gcc-libs' 'glibc')
+makedepends=('git' 'binutils' 'libtool')
+source=('git+https://github.com/acama/xrop.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$pkgname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$pkgname"
+
+  git submodule update --init --recursive
+}
+
+
+build() {
+  cd "$pkgname"
+
+  unset CPPFLAGS
+  unset CFLAGS
+  unset LDFLAGS
+
+  make -j1
+}
+
+package() {
+  cd "$pkgname"
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 xrop "$pkgdir/usr/share/$pkgname/xrop"
+  cp -a lib "$pkgdir/usr/share/$pkgname/"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  cat > "$pkgdir/usr/bin/xrop" << EOF
+#!/bin/sh
+cd /usr/share/xrop
+exec ./xrop "\${@}"
+EOF
+
+  chmod 755 "$pkgdir/usr/bin/xrop"
+}
+
