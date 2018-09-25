@@ -1,40 +1,48 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgname='joomscan'
-pkgver='2012.03.10'
-pkgrel=10
+pkgname=joomscan
+pkgver=44.e3ccf9f
+pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-webapp')
-pkgdesc="Detects file inclusion, sql injection, command execution vulnerabilities of a target Joomla! web site."
+pkgdesc='Detects file inclusion, sql injection, command execution vulnerabilities of a target Joomla! web site.'
 arch=('any')
 depends=('perl-switch' 'perl-www-mechanize')
-license=('LGPL3')
+license=('GPL3')
 url='http://joomscan.sourceforge.net/'
-source=("http://downloads.sourceforge.net/project/joomscan/joomscan/${pkgver//./-}/joomscan-latest.zip")
-sha512sums=('a788c3b8f56bc928bb0926e008f8f3261a0132b76a886e7561815e5fa322cd17a66240a712f67a7742b02207be9e2bed5b5558160c81ad61e1367a8e7b2b62f7')
+source=('git+https://github.com/rezasp/joomscan')
+#source=("http://downloads.sourceforge.net/project/joomscan/joomscan/${pkgver//./-}/joomscan-latest.zip")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd joomscan
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 package() {
-  cd "$srcdir"
+  cd joomscan
 
-  # Base directories.
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/joomscan"
-  install -dm 755 "$pkgdir/usr/share/doc/joomscan"
 
-  install -m755 joomscan.pl "$pkgdir/usr/share/joomscan"
-  install -m755 joomscandb.txt "$pkgdir/usr/share/joomscan"
-  install -m755 joomscandb-info.txt "$pkgdir/usr/share/joomscan"
+  install -Dm755 joomscan.pl "$pkgdir/usr/share/$pkgname/joomscan.pl"
+  install -Dm644 -t "$pkgdir/usr/share/doc/$pkgname" README.md CHANGELOG.md
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
 
-  cp --no-preserve=ownership -R doc/* "$pkgdir/usr/share/doc/joomscan"
-  cp --no-preserve=ownership -R report "$pkgdir/usr/share/joomscan"
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname"
 
   # This is necessary to stop a warning from appearing.
-  ln -s /usr/share/doc/joomscan "$pkgdir/usr/share/joomscan/doc"
+  ln -s /usr/share/doc/joomscan "$pkgdir/usr/share/$pkgname/doc"
 
   cat > "$pkgdir/usr/bin/joomscan" <<EOF
 #!/bin/sh
 cd /usr/share/joomscan
-exec ./joomscan.pl "\$@"
+exec ./joomscan.pl "\${@}"
 EOF
-  chmod +x "$pkgdir/usr/bin/joomscan"
+
+  chmod 755 "$pkgdir/usr/bin/joomscan"
 }
+
