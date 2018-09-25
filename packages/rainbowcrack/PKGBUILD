@@ -1,60 +1,24 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgname='rainbowcrack'
-pkgver='1.6'
-pkgrel=2
+pkgname=rainbowcrack
+pkgver=1.7
+pkgrel=1
 groups=('blackarch' 'blackarch-cracker')
 pkgdesc='Password cracker based on the faster time-memory trade-off. With MySQL and Cisco PIX Algorithm patches.'
-arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+arch=('x86_64')
 url='http://project-rainbowcrack.com/'
-license=('custom')
-depends=('openssl')
-makedepends=('git')
-source=('git+http://github.com/BlackArchLinux/rainbowcrack'
-        'http://www.oxid.it/downloads/rc_patch_mysql_pix.zip')
-sha512sums=('SKIP'
-            '28df91434c7e035aa845c71b10e25fc2e537fad0976bb52164ff0950372481d38eb974d985884cc5b3b4c787387f64c1fcd018f5e44087ca97093513204cb0a2')
-
-build() {
-  cd "$srcdir/rainbowcrack/src"
-
-  # MySQL and Cisco PIX Algorithm patches
-  install -Dm644 ${srcdir}/*.{h,cpp} .
-
-  # missing headers
-  sed -i "11i#include <stdlib.h>\n#include <string.h>" Public.h
-  sed -i 's/md2.h/mdc2.h/g' Hash*.*
-
-  # DSO link fix for crypto
-  sed -i "s/-lssl/& -lcrypto/" makefile.linux
-
-  # MDC2 fix
-  sed -i 's/MD2/MDC2/g' Hash*.*
-
-  make -f makefile.linux
-}
+license=('custom:unknown')
+depends=('gcc-libs')
+source=("http://project-rainbowcrack.com/rainbowcrack-$pkgver-linux64.zip")
+sha512sums=('068fe9d31004e08c0fcbe5a11500bd6248eca2f204a8d99a7343824ebc1dd847a01eb459f28d77fdd84eae98b05169a69e10b8893b9b5dd027381965c19b7bdb')
 
 package() {
-  cd "$srcdir/rainbowcrack/src"
+  cd "rainbowcrack-$pkgver-linux64"
 
-  # bin
-  install -dm 755 "$pkgdir/usr/bin"
-  install -Dm755 r{t,c}* "$pkgdir/usr/bin"
-
-  # data
-  install -Dm644 "$srcdir/readme.txt" \
-    "$pkgdir/usr/share/rainbowcrack/patches.txt"
-  install -Dm644 charset.txt ../readme.txt \
-    "$pkgdir/usr/share/rainbowcrack"
-
-  # docs
-  install -dm 755 "$pkgdir/usr/share/doc/rainbowcrack"
-  install -Dm644 ../doc/* \
-    "$pkgdir/usr/share/doc/rainbowcrack"
-
-  # license
-  install -Dm644 ../disclaimer.txt \
-    "$pkgdir/usr/share/licenses/rainbowcrack/LICENCE"
+  install -Dm755 -t "$pkgdir/usr/bin" r{t,c}*
+  install -Dm755 alglib0.so "$pkgdir/usr/lib/alglib0.so"
+  install -Dm644 -t "$pkgdir/usr/share/$pkgname" charset.txt readme.txt
+  install -Dm644 readme.txt "$pkgdir/usr/share/doc/$pkgname/readme.txt"
 }
 
