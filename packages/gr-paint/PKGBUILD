@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=gr-paint
+pkgver=31.7f2cbf2
+pkgrel=1
+pkgdesc='An OFDM Spectrum Painter for GNU Radio.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+groups=('blackarch' 'blackarch-radio')
+url='https://github.com/drmpeg/gr-paint'
+license=('GPL3')
+depends=('gnuradio' 'gnuradio-companion' 'python2-pillow')
+makedepends=('cmake')
+source=("git+https://github.com/drmpeg/gr-paint.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$pkgname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+
+prepare() {
+  cd "$pkgname"
+
+  mkdir build && cd build
+  cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+}
+
+build() {
+  cd "$pkgname/build"
+
+  make
+
+  cd "$srcdir/$pkgname"
+
+  gcc -o tgatoluma tgatoluma.c
+}
+
+package() {
+  cd "$pkgname/build"
+
+  make DESTDIR="$pkgdir" install
+  install -Dm755 "$srcdir/$pkgname/tgatoluma" "$pkgdir/usr/bin/tgatoluma"
+}
+
