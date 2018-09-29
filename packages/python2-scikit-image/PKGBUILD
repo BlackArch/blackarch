@@ -1,0 +1,43 @@
+# Maintainer: Jaroslav Lichtblau <dragonlord@aur.archlinux.org>
+# Contributor: Andrzej Giniewicz <gginiu@gmail.com>
+
+pkgname=python2-scikit-image
+pkgver=0.14.0
+pkgrel=1
+pkgdesc='Image processing routines for SciPy.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://pypi.org/project/scikit-image/#files'
+license=('BSD')
+depends=('python2-scipy' 'python2-matplotlib' 'python2-networkx'
+         'python2-pillow' 'python2-pywavelets' 'python2-six'
+         'python2-cloudpickle')
+makedepends=('cython2')
+#optdepends=('python2-pyqt4: for imshow(x, fancy=True) and skivi'
+#            'freeimage: for reading various types of image file formats')
+options=('!emptydirs')
+source=("https://files.pythonhosted.org/packages/fc/20/d3e736493b16e9455ce8579722d644b313814c599d5824d34e448845f746/scikit-image-$pkgver.tar.gz")
+sha512sums=('224a6af745e1eb7d38c425afa411a9baac3e9504b639233fd10300a55006c3babdf40a3e7ee124e81b327c9f06d0baf35d3f2ccf8f69d3d2d6a54be0e40132f9')
+
+prepare() {
+  cd "scikit-image-$pkgver"
+
+  sed -e "s|#![ ]*/usr/bin/python$|#!/usr/bin/python2|" \
+    -e "s|#![ ]*/usr/bin/env python$|#!/usr/bin/env python2|" \
+    -e "s|#![ ]*/bin/env python$|#!/usr/bin/env python2|" \
+    -i $(find . -name '*.py')
+}
+
+build() {
+  cd "scikit-image-$pkgver"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "scikit-image-$pkgver"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  mv "$pkgdir/usr/bin/skivi" "$pkgdir/usr/bin/skivi2"
+}
+
