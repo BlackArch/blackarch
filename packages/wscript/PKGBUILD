@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=wscript
+pkgver=199.8d57d47
+pkgrel=1
+pkgdesc='Emulator/tracer of the Windows Script Host functionality'
+arch=('any')
+groups=('blackarch' 'blackarch-code-audit')
+url='https://github.com/mrpapercut/wscript'
+license=('MIT')
+depends=('xdg-utils')
+makedepends=('npm' 'git')
+source=('git+https://github.com/mrpapercut/wscript.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir"/wscript
+
+  # use, if no version string provided neither in sources nor in git describe:
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+
+}
+
+prepare() {
+  cd "$pkgname"
+  npm install
+  npm run build
+}
+
+package() {
+  cd "$srcdir"/wscript
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/wscript"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/wscript"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/wscript/LICENSE"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/wscript"
+  cat > "$pkgdir/usr/bin/wscript" << EOF
+#!/bin/sh
+if xdg-open /usr/share/wscript/dist/index.html ; then
+  continue
+else
+  echo "Open the following link in your browser: file:///usr/share/wscript/dist/index.html"
+fi
+EOF
+  chmod a+x "$pkgdir/usr/bin/wscript"
+}
+
