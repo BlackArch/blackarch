@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=lazydroid
+_pkgname=LazyDroid
+pkgver=25.0f559ec
+pkgrel=1
+pkgdesc='Tool written as a bash script to facilitate some aspects of an Android Assessment'
+arch=('any')
+groups=('blackarch' 'blackarch-binary' 'blackarch-automation' 'blackarch-mobile')
+url='https://github.com/nccgroup/LazyDroid'
+license=('Apache')
+depends=()
+makedepends=('wget')
+source=('git+https://github.com/nccgroup/LazyDroid.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/$_pkgname"
+
+  # use, if no version string provided neither in sources nor in git describe:
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+
+}
+
+prepare() {
+  cd "$_pkgname"
+  sh getfridalibs.sh
+}
+
+package() {
+  cd "$srcdir/$_pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/LazyDroid"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/LazyDroid"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/LazyDroid/LICENSE"
+  rm -r media
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/LazyDroid"
+  cat > "$pkgdir/usr/bin/LazyDroid" << EOF
+#!/bin/sh
+cd /usr/share/LazyDroid
+exec sh lazyDroid.sh
+EOF
+  chmod a+x "$pkgdir/usr/bin/LazyDroid"
+}
