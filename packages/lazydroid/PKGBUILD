@@ -16,31 +16,37 @@ source=('git+https://github.com/nccgroup/LazyDroid.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/$_pkgname"
+  cd "$_pkgname"
 
-  # use, if no version string provided neither in sources nor in git describe:
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 
 }
 
 prepare() {
   cd "$_pkgname"
+
   sh getfridalibs.sh
 }
 
 package() {
-  cd "$srcdir/$_pkgname"
+  cd "$_pkgname"
+
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/LazyDroid"
-  install -Dm 644 README.md "$pkgdir/usr/share/doc/LazyDroid"
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/LazyDroid/LICENSE"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
   rm -r media
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/LazyDroid"
-  cat > "$pkgdir/usr/bin/LazyDroid" << EOF
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/lazydroid" << EOF
 #!/bin/sh
-cd /usr/share/LazyDroid
+cd /usr/share/lazydroid
 exec sh lazyDroid.sh
 EOF
-  chmod a+x "$pkgdir/usr/bin/LazyDroid"
+
+  chmod a+x "$pkgdir/usr/bin/lazydroid"
 }
 
