@@ -3,7 +3,7 @@
 
 pkgname=apkid
 _pkgname=APKid
-pkgver=161.956d6dd
+pkgver=v1.2.1.r3.g956d6dd
 pkgrel=1
 pkgdesc='Android Application Identifier for Packers, Protectors, Obfuscators and Oddities.'
 groups=('blackarch' 'blackarch-mobile')
@@ -16,20 +16,27 @@ source=("git+https://github.com/rednaga/$_pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$_pkgname"
+  cd $_pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $_pkgname
+
+  python setup.py build
 }
 
 package() {
-  cd "$_pkgname"
+  cd $_pkgname
 
-  python setup.py build install --root="$pkgdir" --optimize=1
+  python setup.py install --root="$pkgdir" --optimize=1
 
   cp -a apkid/rules "$pkgdir/usr/lib/python3.7/site-packages/apkid/rules"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/apkid/" README.md README.rst \
+  install -Dm 644 -t "$pkgdir/usr/share/doc/apkid/" README.md README.rst \
     AUTHORS.txt
-  install -Dm644 -t "$pkgdir/usr/share/licenses/apkid" LICENSE.GPL \
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/apkid" LICENSE.GPL \
     LICENSE.COMMERCIAL
 }
+
