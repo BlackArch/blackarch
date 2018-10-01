@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=expose
+_pkgname=ExpoSE
+pkgver=732.e47eb2e
+pkgrel=1
+pkgdesc='A Dynamic Symbolic Execution (DSE) engine for JavaScript'
+arch=('any')
+groups=('blackarch' 'blackarch-automation' 'blackarch-binary' 'blackarch-reversing')
+url='https://github.com/ExpoSEJS/ExpoSE'
+license=('MITM')
+depends=('nodejs' 'npm' 'clang' 'gnuplot' 'make' 'python2' 'mitmproxy')
+makedepends=('git')
+source=("git+https://github.com/ExpoSEJS/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$_pkgname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+
+}
+
+prepare() {
+  cd "$_pkgname"
+
+  npm install
+}
+
+package() {
+  cd "$_pkgname"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/expose" << EOF
+#!/bin/sh
+cd /usr/share/expose
+exec npm start
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
