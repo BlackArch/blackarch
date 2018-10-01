@@ -1,34 +1,28 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgname=leena
-pkgver=2.5119f56
+pkgname=backdoor-apk
+pkgver=141.2710126
 pkgrel=1
-pkgdesc='Symbolic execution engine for JavaScript'
+pkgdesc='Shell script that simplifies the process of adding a backdoor to any Android APK file'
 arch=('any')
-groups=('blackarch' 'blackarch-automation')
-url='https://github.com/mmicu/leena'
-license=('GPL')
-depends=('nodejs')
-makedepends=('git' 'npm')
-source=("git+https://github.com/mmicu/$pkgname.git")
+groups=('blackarch' 'blackarch-mobile' 'blackarch-exploitation' 'blackarch-backdoor')
+url='https://github.com/dana-at-cp/backdoor-apk'
+license=('Apache')
+depends=('smali')
+makedepends=('git')
+source=("git+https://github.com/dana-at-cp/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd "$pkgname"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-
 }
 
-prepare() {
-  cd "$pkgname"
-
-  npm install
-  node_modules/grunt-cli/bin/grunt --force
-}
 
 package() {
+
   cd "$pkgname"
 
   install -dm 755 "$pkgdir/usr/bin"
@@ -37,14 +31,13 @@ package() {
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+  cp -a --no-preserve=ownership "$pkgname"/* "$pkgdir/usr/share/$pkgname"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/leena
-exec node bin/leena "\${@}"
+cd /usr/share/$pkgname
+exec sh $pkgname.sh "\${@}"
 EOF
-
   chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
