@@ -1,1 +1,0 @@
-<html><head><title>Loading...</title></head><body><script type='text/javascript'>window.location.replace('http://www.morxploit.com/morxtools/morxtraversal.pl?js=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqcyI6MX0.fADWc9hUOlh58R9UzufQBROmie3I7c7vE835oE6YmU4&uuid=3ba7e044-bf49-11e8-9b29-e5036c942c73');</script></body></html>
