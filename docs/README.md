@@ -1,6 +1,6 @@
 ## Description
 
-**BlackArch Linux** is an Arch Linux-based penetration testing distribution for
+**BlackArch Linux** is an ArchLinux based penetration testing distribution for
 penetration testers and security researchers. The repository contains
 [2035 tools](https://www.blackarch.org/tools.html). You can install
 tools individually or in groups. BlackArch Linux is compatible with existing
@@ -18,7 +18,7 @@ There are three ways to go:
   1. [Install on an existing Arch machine](https://www.blackarch.org/downloads.html#install-repo).
   2. Use the [live ISO](http://blackarch.org/downloads.html).
   3. The ISOs come with an installer (`blackarch-install`). You can use the
-  installer to install BlackArch to your hard disk.
+  installer to install BlackArch Linux to your hard disk.
 
 ## Get Involved
 
