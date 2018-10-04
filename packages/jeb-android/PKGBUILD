@@ -1,0 +1,31 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=jeb-android
+pkgver=3.0.beta.X
+pkgrel=1
+pkgdesc='Android decompiler.'
+arch=('any')
+groups=('blackarch' 'blackarch-reversing' 'blackarch-mobile')
+url='https://www.pnfsoftware.com/jeb/android'
+license=('custom:unknown')
+depends=('java-runtime-common')
+source=("https://www.pnfsoftware.com/dl?jebdemoandroid")
+sha512sums=('SKIP')
+
+pkgver() {
+  curl 'https://www.pnfsoftware.com/jeb/changelist' | grep 'JEB v' | head -n 1 | sed -e 's/.*JEB v\(.*\)<.*/\1/gi' -e 's/-/./gi'
+}
+
+package() {
+  install -dm 755 "$pkgdir/opt/$pkgname"
+  rm -rf 'dl?jebdemoandroid'
+  cp -a * "$pkgdir/opt/$pkgname"
+  mkdir -p "$pkgdir/usr/bin/"
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /opt/$pkgname
+exec ./jeb_linux.sh "\${@}"
+EOF
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
