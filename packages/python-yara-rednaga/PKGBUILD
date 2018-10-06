@@ -1,7 +1,7 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgname=yara-python
+pkgname=python-yara-rednaga
 _pkgname=yara-python-1
 pkgver=3.8.1.r1.g39c475a
 pkgrel=1
@@ -10,18 +10,19 @@ url='https://github.com/rednaga/yara-python-1'
 arch=('any')
 groups=('blackarch')
 license=('Apache')
-depends=('python')
-makedepends=('python-setuptools')
+makedepends=('python-setuptools' 'git' 'glibc' 'python' 'yara')
 provides=('python-yara')
 conflicts=(python-yara')
-source=("git+https://github.com/rednaga/$_pkgname")
-sha512sums=('SKIP')
+source=("git+https://github.com/rednaga/$_pkgname"
+        "git+https://plusvic@github.com/VirusTotal/yara.git")
+sha512sums=('SKIP'
+            'SKIP')
 
 prepare() {
   cd "$_pkgname"
 
   git submodule init
-  git config submodule.https://plusvic@github.com/VirusTotal/yara.git $srcdir/yara
+  git config submodule.yara.git $srcdir/yara
   git submodule update
 }
 
@@ -34,6 +35,7 @@ build() {
 package() {
   cd "$_pkgname"
 
-  python setup.py install --root="$pkgdir" --optimize=1
+  python setup.py install --root="$pkgdir" -O1 --skip-build
+  install -Dm 644 README.rst "${pkgdir}/usr/share/doc/${pkgname}/README"
 }
 
