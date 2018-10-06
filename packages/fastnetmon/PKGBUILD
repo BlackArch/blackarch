@@ -1,0 +1,35 @@
+# This file is part of BlackArch Linux ( https://blackarch.org ).
+# See COPYING for license details
+
+pkgname="fastnetmon"
+pkgver=2076.e2fec8e
+pkgrel=1
+pkgdesc="ddos detection and network monitor using pf_ring"
+arch=(x86_64)
+url="https://www.fastnetmon.com"
+license=('GPL')
+groups=('blackarch' 'blackarch-networking' 'blackarch-defensive')
+depends=('ndpi' 'log4cpp' 'libpfring' 'pfring-kernel' 'luajit' 'boost' 'boost-libs')
+makedepends=('pfring-kernel' 'libpfring' 'cmake' 'linux-headers')
+provides=('fastnetmon')
+source=("git+https://github.com/h0bbl3s/fastnetmon.git")
+md5sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/fastnetmon"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "${srcdir}/fastnetmon/src"
+  mkdir -p build
+  cd build
+  cmake ..
+}
+
+package() {
+  cd "${srcdir}/fastnetmon/src/build"
+  make DESTDIR="${pkgdir}" install .. 
+  msg 'Remember to edit your /etc/networks_list and /etc/fastnetmon.conf !!!!'
+}

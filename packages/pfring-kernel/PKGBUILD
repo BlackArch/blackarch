@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://blackarch.org ).
+# See COPYING for license details.
+
+pkgver=1533.fcc142d
+pkgrel=1
+_gitname=PF_RING
+pkgname="pfring-kernel"
+_gitbranch=dev
+_gitauthor=ntop
+pkgdesc="High-speed packet processing framework (dev branch) - kernel module"
+groups=('blackarch' 'blackarch-networking')
+url="https://github.com/${_gitauthor}/${_gitname}"
+license=('LGPL')
+source=("git://github.com/${_gitauthor}/${_gitname}#branch=${_gitbranch}")
+depends=('numactl' 'dkms')
+makedepends=('linux-headers' 'make' 'binutils' 'flex' 'bison' 'git' 'dkms')
+conflicts=()
+provides=("pfring-kernel")
+optdepends=()
+sha512sums=('SKIP')
+arch=('x86_64')
+
+pkgver() {
+  cd "$srcdir/PF_RING"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+   
+build() {
+  cd "${srcdir}/${_gitname}/kernel"
+  ./configure --prefix=/usr
+  sed -i "s/INSTDIR\ \:=\ \$(DESTDIR)/INSTDIR := \$(DESTDIR)\/usr/g" Makefile
+  make
+}
+
+package() {
+  cd "${srcdir}/${_gitname}/kernel"
+  mkdir -p "${pkgdir}/usr/include/linux"
+  make DESTDIR="${pkgdir}" install;
+  mkdir -p "${pkgdir}/usr/lib/systemd/system"
+  mkdir -p "${pkgdir}/usr/local/bin"
+  cp "${srcdir}/${_gitname}/package/usr/local/bin/clusterctl" "${pkgdir}/usr/local/bin"
+  cp "${srcdir}/${_gitname}/package/usr/local/bin/pf_ringctl" "${pkgdir}/usr/local/bin/"
+  cp "${srcdir}/${_gitname}/package/etc/systemd/system/pf_ring.service" "${pkgdir}/usr/lib/systemd/system/"
+  cp "${srcdir}/${_gitname}/package/etc/systemd/system/cluster.service" "${pkgdir}/usr/lib/systemd/system/" 
+  #cp "${srcdir}/${_gitname}/package/etc/systemd/system/cluster@.service" "${pgkdir}/usr/lib/systemd/system/"
+}

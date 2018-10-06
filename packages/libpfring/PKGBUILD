@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://blackarch.org ).
+# See COPYING for license details
+
+pkgname=libpfring
+_pkgname=PF_RING
+pkgver=1513.bbaa482
+pkgrel=1
+pkgdesc="library to interface with the PF_RING kernel module"
+groups=('blackarch' 'blackarch-networking')
+url="http://www.ntop.org"
+arch=('x86_64')
+license=('LGPL')
+depends=('numactl' 'pfring-kernel')
+makedepends=('linux-headers' 'make' 'binutils' 'flex' 'bison' 'git')
+conflicts=('libpfring')
+provides=('libpfring')
+source=("git+https://github.com/ntop/PF_RING.git")
+md5sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/PF_RING"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "${srcdir}/${_pkgname}/userland/"
+  sed -i '1s/build_examples_zc//g' Makefile
+  sed -i '1s/build_examples//g' Makefile
+  sed -i '69s/pcap//g' Makefile
+  sed -i '71s/.*//g' Makefile
+  ./configure --prefix=/usr --libdir=/usr/lib/libpfring --includedir=/usr/include/pfring
+  make
+  cd "${srcdir}/${_pkgname}/userland/snort"
+  make
+}
+
+package() {
+  cd "${srcdir}/${_pkgname}/userland/"
+  make DESTDIR="${pkgdir}" install
+  mkdir -p "${pkgdir}/usr/local/lib/daq"
+  mkdir -p "${pkgdir}/usr/lib/wireshark/extcap"
+  cp "${srcdir}/${_pkgname}/userland/wireshark/extcap/ntopdump" "${pkgdir}/usr/lib/wireshark/extcap"
+  cp "${srcdir}/${_pkgname}/userland/snort/pfring-daq-module/.libs/daq_pfring.so" "${pkgdir}/usr/local/lib/daq"
+  cp "${srcdir}/${_pkgname}/userland/snort/pfring-daq-module-zc/.libs/daq_pfring_zc.so" "${pkgdir}/usr/local/lib/daq"  
+  install -d  ${pkgdir}/usr/share/doc/${pkgname}
+  install -d  ${pkgdir}/usr/share/licenses/${pkgname}
+  install -Dm644 ${srcdir}/${_pkgname}/userland/lib/COPYING $pkgdir/usr/share/licenses/${pkgname}/LICENSE
+  install -Dm644 ${srcdir}/${_pkgname}/doc/PF_RING-UsersGuide.pages $pkgdir/usr/share/doc/${pkgname}/PF_RING-UsersGuide.pages
+  install -Dm644 ${srcdir}/${_pkgname}/doc/PF_RING-UsersGuide.pdf $pkgdir/usr/share/doc/${pkgname}/UsersGuide.pdf
+  install -Dm644 ${srcdir}/${_pkgname}/doc/PF_RING-UsersGuide_Russign.pdf $pkgdir/usr/share/doc/${pkgname}/UsersGuide_Russian.pdf 
+  install -Dm644 ${srcdir}/${_pkgname}/doc/README.DNA_to_ZC.md $pkgdir/usr/share/doc/${pkgname}/README.MIGRATE_DNA_to_ZC
+  install -Dm644 ${srcdir}/${_pkgname}/doc/README.ZC.md $pkgdir/usr/share/doc/${pkgname}/README.ZC
+  install -Dm644 ${srcdir}/${_pkgname}/doc/README.hugepages.md $pkgdir/usr/share/doc/${pkgname}/README.hugepages
+  ln -s "${pkgdir}/usr/lib/libpfring.so" "${pkgdir}/usr/lib/libpfring.so.1"
+}
