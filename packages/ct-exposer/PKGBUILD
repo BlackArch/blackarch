@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=ct-exposer
+pkgver=18.ad56b97
+pkgrel=1
+pkgdesc='An OSINT tool that discovers sub-domains by searching Certificate Transparency logs'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+url='https://github.com/chris408/ct-exposer'
+license=('GPL3')
+depends=('python' 'python-gevent' 'python-greenlet' 'python-requests' 'python-urllib3')
+makedepends=('git')
+source=("git+https://github.com/chris408/${pkgname}.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd ${pkgname}
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd ${pkgname}
+
+  #Add shebang line to the script to execute it directly for /usr/bin. A pull request was already made in the package repo.
+  sed -i '1i#!/usr/bin/env python\n' ${pkgname}.py
+}
+
+package() {
+  cd ${pkgname}
+
+  install -Dm 755 "${pkgname}.py" "$pkgdir/usr/bin/${pkgname}"
+  install -Dm 644 "LICENSE" "$pkgdir/usr/share/licenses/${pkgname}"
+  install -Dm 644 "README.md" "$pkgdir/usr/share/doc/${pkgname}"
+}
+
