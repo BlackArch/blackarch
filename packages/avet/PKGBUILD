@@ -1,0 +1,59 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=avet
+pkgver=133.2f1d882
+pkgrel=1
+pkgdesc='AntiVirus Evasion Tool'
+arch=('any')
+groups=('blackarch' 'blackarch-binary' 'blackarch-backdoor' 'blackarch-automation')
+url='https://github.com/govolution/avet'
+license=('GPL3')
+depends=('python' 'wine' 'wine-mono' 'wine_gecko')
+makedepends=('gcc')
+source=("git+https://github.com/govolution/$pkgname.git"
+        "setup.patch")
+install='avet.install'
+sha512sums=('SKIP'
+            'a459bbcd2ce7819a95435afdc1ae45811467990cf6ed4a8105f31e56cd160ec6dc3fe20396523d79dd9c9e42b83de7dec4047f338a155f360dca70df02428aaf')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+
+}
+
+prepare() {
+  cd $pkgname
+
+  patch setup.sh < "$srcdir/setup.patch"
+}
+
+build() {
+  cd $pkgname
+
+  gcc -o make_avet make_avet.c
+  gcc -o make_avetsvc make_avetsvc.c
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python avet_fabric.py "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
