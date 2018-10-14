@@ -10,24 +10,24 @@ groups=('blackarch' 'blackarch-automation' 'blackarch-misc')
 url='https://sourceforge.net/projects/ldapscripts'
 license=('GPL2')
 makedepends=('make')
-source=("https://sourceforge.net/projects/$pkgname/files/$pkgname/$pkgname-$pkgver/$pkgname-$pkgver.tgz"
-        "Makefile.patch")
-sha512sums=('d2ce0114d66ab7c37a6b1029e94403bf15ce2721c1fa8f139247a08eac3b1b11291225388f0158222bdc1e259d399afe8f3a60d89efe42353cf4a65f3ab4f2d4'
-            '6ad0d4388c925ba4f62ddf3209813c8ea4864cdf86ae831eeec3e96d680186d1d040fc30eceddf68e10afdb003e7a2220c53f709f44b4f9df9d0fe01980db0ab')
+source=("https://sourceforge.net/projects/$pkgname/files/$pkgname/$pkgname-$pkgver/$pkgname-$pkgver.tgz")
+sha512sums=('d2ce0114d66ab7c37a6b1029e94403bf15ce2721c1fa8f139247a08eac3b1b11291225388f0158222bdc1e259d399afe8f3a60d89efe42353cf4a65f3ab4f2d4')
 
 prepare() {
   cd "$pkgname-$pkgver"
 
-  #Fix wrong permisions in executable scripts
-  patch Makefile "$srcdir/Makefile.patch"
+  sed -i 's|install -m 750|install -m 755|' Makefile
 }
 
 package() {
   cd "$pkgname-$pkgver"
 
-  make DESTDIR="$pkgdir" install
+  make DESTDIR="$pkgdir" PREFIX="/usr" install
 
   install -Dm 644 README "$pkgdir/usr/share/doc/$pkgname/README"
   install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  mv "$pkgdir/usr/etc" "$pkgdir/etc"
+  mv "$pkgdir/usr/sbin" "$pkgdir/usr/bin"
 }
 
