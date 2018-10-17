@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=mitm-relay
+pkgver=14.31822b2
+pkgrel=1
+pkgdesc='Hackish way to intercept and modify non-HTTP protocols through Burp & others.'
+arch=('any')
+groups=('blackarch' 'blackarch-proxy' 'blackarch-sniffer')
+url='https://github.com/jrmdev/mitm_relay'
+license=('Apache')
+depends=('python2' 'python2-requests')
+makedepends=('git')
+source=('mitm-relay::git+https://github.com/jrmdev/mitm_relay.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$pkgname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$pkgname"
+
+  sed -i 's|/usr/bin/env python|/usr/bin/env python2|' mitm_relay.py
+  sed -i $'s/\r$//' mitm_relay.py
+}
+
+package() {
+  cd "$pkgname"
+
+  install -Dm 755 mitm_relay.py "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md sample_script.py
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
