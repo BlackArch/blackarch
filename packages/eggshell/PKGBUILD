@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=eggshell
+pkgver=157.eaeeea7
+pkgrel=1
+pkgdesc='iOS/macOS/Linux Remote Administration Tool.'
+groups=('blackarch' 'blackarch-automation' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/neoneggplant/EggShell'
+license=('GPL2')
+depends=('python2')
+makedepends=('git')
+source=('git+https://github.com/neoneggplant/EggShell.git')
+sha512sums=('SKIP')
+_dir_name_=EggShell
+
+pkgver() {
+  cd "$_dir_name_"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$_dir_name_"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 license.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf README.md license.md
+
+  cp -a --no-preserve=owner * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/eggshell
+exec python2 eggshell.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
