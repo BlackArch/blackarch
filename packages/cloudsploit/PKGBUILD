@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=cloudsploit
+_pkgname=scans
+pkgver=229.617070b
+pkgrel=1
+pkgdesc='AWS security scanning checks.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-automation')
+url='https://github.com/cloudsploit/scans'
+license=('GPL3')
+depends=('nodejs')
+makedepends=('npm')
+source=("git+https://github.com/$pkgname/scans.git"
+        'cloudsploit.install')
+install='cloudsploit.install'
+sha512sums=('SKIP'
+	    '066f9fc95acc62138b9d0505990d45eb499d59efb6b3f1fb68a0bf580f5d59cf88f957dba37f7e3ce1e364bc6d8d0ad4f2bdab9a28f964ae4f0746511e9a8623')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $_pkgname
+
+  npm install
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec node index.js
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
