@@ -3,7 +3,7 @@
 
 pkgname=arachni
 pkgver=1.5.1
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-webapp')
 pkgdesc='A feature-full, modular, high-performance Ruby framework aimed towards helping penetration testers and administrators evaluate the security of web applications.'
 arch=('any')
@@ -16,41 +16,42 @@ install='arachni.install'
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/arachni"
+  cd arachni
 
   git describe --always | sed 's|-|.|g' | sed 's/^v//'
 }
 
 prepare() {
-  cd "$srcdir/arachni"
+  cd arachni
 
   sed -i "s/\('puma',[ ]*\)'2.14.0'/\1'3.10.0'/g" arachni.gemspec
   sed -i "s/\('msgpack',[ ]*\)'0.7.0'/\1'1.1.0'/g" arachni.gemspec
 }
 
 package() {
-  cd "$srcdir/arachni"
+  cd arachni
 
   progs="arachni arachni_console arachni_multi arachni_reporter arachni_restore"
-  progs="${progs} arachni_rest_server arachni_rpc arachni_rpcd"
+  progs="$progs arachni_rest_server arachni_rpc arachni_rpcd"
   progs="$progs arachni_rpcd_monitor arachni_script"
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/arachni"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/arachni" *.md
-  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/arachni/LICENSE.md"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
 
-  cp --no-preserve=ownership -a * "$pkgdir/usr/share/arachni"
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/$pkgname"
 
-  for prog in ${progs}
+  for prog in $progs
   do
     cat > "$pkgdir/usr/bin/${prog//_/-}" << EOF
 #!/bin/sh
 cd /usr/share/arachni
-exec ruby-2.3 /usr/share/arachni/bin/${prog} "\${@}"
+exec ruby-2.3 /usr/share/arachni/bin/$prog "\${@}"
 EOF
   done
 
   chmod +x "$pkgdir"/usr/bin/*
 }
+
