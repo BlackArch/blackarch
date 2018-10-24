@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=zulucrypt
+_name=zuluCrypt
+pkgver=5.4.0
+pkgrel=1
+pkgdesc='Front end to cryptsetup and tcplay and it allows easy management of encrypted block devices.'
+groups=('blackarch' 'blackarch-crypto')
+arch=('x86_64')
+url='https://github.com/mhogomchungu/zuluCrypt'
+license=('GPL')
+depends=('cryptsetup' 'libpwquality' 'libsecret' 'libxkbcommon-x11' 'qt5-base')
+makedepends=('cmake')
+source=("https://github.com/mhogomchungu/zuluCrypt/releases/download/$pkgver/$_name-$pkgver.tar.xz")
+sha512sums=('1a8f5636e9ea32cfd642d5f18ee75ec3159090f0987cbc6d4b0078123a482f5e10466113cb8321e52250d2ecc298e677b4a57986c179f65c77b2a45e28292463')
+
+build() {
+  cd "$_name-$pkgver"
+
+  mkdir -p build
+  cd build
+
+  cmake -DCMAKE_INSTALL_PREFIX=/usr/ -DLIB_SUFFIX=lib -DNOGUI=false -DQT5=true -DHOMEMOUNTPREFIX=false -DCMAKE_BUILD_TYPE=release . ..
+  make
+}
+
+package() {
+  cd "$_name-$pkgver"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" changelog README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cd build
+  make DESTDIR="$pkgdir" install
+}
+
