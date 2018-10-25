@@ -5,20 +5,21 @@
 
 pkgname=dislocker
 pkgver=0.7.1
-pkgrel=1
+pkgrel=2
 pkgdesc="Read BitLocker encrypted volumes under Linux"
-arch=('x86_64')
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+groups=('blackarch' 'blackarch-crypto')
 url='http://www.hsc.fr/ressources/outils/dislocker'
 license=('GPL2')
 depends=('fuse' 'mbedtls' 'ruby')
 makedepends=('make' 'cmake')
 conflicts=('dislocker-git')
 optdepends=('ntfs-3g: NTFS file system support')
-source=("https://github.com/Aorimn/dislocker/archive/v${pkgver}.tar.gz")
+source=("https://github.com/Aorimn/dislocker/archive/v$pkgver.tar.gz")
 sha512sums=('8852ba3e363fdea992eebecfe1e4dad2b85404f57c57ce6b2937a9859d03cfa88d969926c9e11e6d22596c6d96805b7d1737893ae2c5a957448ab26708bce226')
 
 build() {
-  cd "${srcdir}/dislocker-${pkgver}"
+  cd "$pkgname-$pkgver"
 
   # Fix v0.7 upstream path error
   sed -i 's/DIS_MAN \${PROJECT_SOURCE_DIR}/DIS_MAN ../' src/CMakeLists.txt
@@ -31,10 +32,14 @@ build() {
 }
 
 package() {
-  cd "${srcdir}/dislocker-${pkgver}"
-  make DESTDIR="${pkgdir}/" install
+  cd "$pkgname-$pkgver"
 
-  install -Dm644 README.md ${pkgdir}/usr/share/doc/dislocker/README
-  install -Dm644 CHANGELOG.md ${pkgdir}/usr/share/doc/dislocker/CHANGELOG
-  install -Dm644 LICENSE.txt ${pkgdir}/usr/share/licenses/dislocker/LICENSE
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/dislocker/LICENSE"
+
+  # temp fix
+  ln -sf /usr/lib/libmbedcrypto.so.3 "$pkgdir/usr/lib/libmbedcrypto.so.1"
 }
+
