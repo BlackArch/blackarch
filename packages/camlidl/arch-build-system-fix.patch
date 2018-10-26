@@ -1,58 +1,20 @@
-diff -Nur camlidl-1.05.orig/config/Makefile.unix camlidl-1.05/config/Makefile.unix
---- camlidl-1.05.orig/config/Makefile.unix	2013-10-02 11:39:13.596586957 +0200
-+++ camlidl-1.05/config/Makefile.unix	2013-10-02 11:40:06.050112149 +0200
-@@ -19,7 +19,7 @@
- 
- # How to invoke the C preprocessor
- # Works on most Unix systems:
--CPP=/lib/cpp
-+CPP=$(shell which cpp)
- # Alternatives:
- # CPP=cpp
- # CPP=/usr/ccs/lib/cpp
-@@ -31,10 +31,12 @@
- #RANLIB=:
- 
- # Location of the Objective Caml library in your installation
--OCAMLLIB=/usr/local/lib/ocaml
-+OCAMLBASEDIR=$(shell ocamlc -where)
-+OCAMLLIB=$(DESTDIR)$(OCAMLBASEDIR)/camlidl
-+OCAMLINCDIR=$(DESTDIR)$(OCAMLBASEDIR)/caml
- 
- # Where to install the binaries
--BINDIR=/usr/local/bin
-+BINDIR=$(DESTDIR)/usr/bin
- 
- # The Objective Caml compilers (the defaults below should be OK)
- OCAMLC=ocamlc -g
-diff -Nur camlidl-1.05.orig/lib/Makefile camlidl-1.05/lib/Makefile
---- camlidl-1.05.orig/lib/Makefile	2013-10-02 11:39:13.596586957 +0200
-+++ camlidl-1.05/lib/Makefile	2013-10-02 11:40:33.639866581 +0200
-@@ -29,8 +29,14 @@
- 	$(OCAMLOPT) -a -o $(NATIVELIB) $(NATIVEOBJS)
- 
+diff --git a/lib/Makefile b/lib/Makefile
+index 7ce04da..c347d6f 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -29,8 +29,14 @@ $(NATIVELIB): $(NATIVEOBJS)
+  $(OCAMLOPT) -a -o $(NATIVELIB) $(NATIVEOBJS)
+
  install:
--	cp $(INTERFACES) $(BYTELIB) $(NATIVELIB) $(NATIVELIB:.cmxa=.$(LIBEXT)) $(OCAMLLIB)
--	cd $(OCAMLLIB); $(RANLIB) $(NATIVELIB:.cmxa=.$(LIBEXT))
-+	cp $(INTERFACES) $(BYTELIB) $(OCAMLLIB)
-+	if [ -x /usr/bin/ocamlopt ]; then \
-+		cp $(NATIVELIB) $(NATIVELIB:.cmxa=.$(LIBEXT)) $(OCAMLLIB); \
-+		cd $(OCAMLLIB); \
-+		$(RANLIB) $(NATIVELIB:.cmxa=.$(LIBEXT));  \
-+	else \
-+		true; \
-+	fi
- 
+- cp $(INTERFACES) $(BYTELIB) $(NATIVELIB) $(NATIVELIB:.cmxa=.$(LIBEXT)) $(OCAMLLIB)
+- cd $(OCAMLLIB); $(RANLIB) $(NATIVELIB:.cmxa=.$(LIBEXT))
++ cp $(INTERFACES) $(BYTELIB) $(OCAMLLIB)
++ if [ -x /usr/bin/ocamlopt ]; then \
++  cp $(NATIVELIB) $(NATIVELIB:.cmxa=.$(LIBEXT)) $(OCAMLLIB); \
++  cd $(OCAMLLIB); \
++  $(RANLIB) $(NATIVELIB:.cmxa=.$(LIBEXT));  \
++ else \
++  true; \
++ fi
+
  .SUFFIXES: .mli .ml .cmi .cmo .cmx
- 
-diff -Nur camlidl-1.05.orig/runtime/Makefile.unix camlidl-1.05/runtime/Makefile.unix
---- camlidl-1.05.orig/runtime/Makefile.unix	2013-10-02 11:39:13.596586957 +0200
-+++ camlidl-1.05/runtime/Makefile.unix	2013-10-02 11:39:21.178020877 +0200
-@@ -22,7 +22,7 @@
- 	$(RANLIB) $@
- 
- install:
--	cp camlidlruntime.h $(OCAMLLIB)/caml/camlidlruntime.h
-+	cp camlidlruntime.h $(OCAMLINCDIR)/camlidlruntime.h
- 	cp libcamlidl.a $(OCAMLLIB)/libcamlidl.a
- 	cd $(OCAMLLIB); $(RANLIB) libcamlidl.a

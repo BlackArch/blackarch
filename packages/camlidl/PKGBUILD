@@ -2,42 +2,45 @@
 # See COPYING for license details.
 
 pkgname=camlidl
-pkgver=1.05
+pkgver=1.06
+_pkgver=${pkgver/\./}
 pkgrel=1
 pkgdesc='A stub code generator and COM binding for Objective Caml (OCaml).'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='http://caml.inria.fr/pub/old_caml_site/camlidl/'
-license=('custom')
+license=('custom:unknown')
 depends=('ocaml')
-source=("http://caml.inria.fr/pub/old_caml_site/distrib/bazar-ocaml/camlidl-${pkgver}.tar.gz"
-        'arch-build-system-fix.patch' 'META.camlidl')
-sha512sums=('e8857aca818a06f8c861e5f55dddd7e8e3ab1efae51647534460b4f092166709d86c6de1215c792a0489d668d72064ccfb7635e9a6d3854cd5a62f74541a9d18'
-            '7336ee2a557abae92ca21a477867935c63b8b668c433b0d589b3ffef591620d120a8c98ee64b94d8287965a8ebf284c74111f81a6472959a8e748939a39c5ccf'
+source=("https://github.com/xavierleroy/$pkgname/archive/$pkgname$_pkgver.tar.gz"
+        'arch-build-system-fix.patch'
+        'META.camlidl')
+sha512sums=('3840dd205c76face525a441f1bd019cac4152dda3542303e79c24da1aa89e985eed16274ccaa652ed535d070842257c4305ad4c230a43234a50e9b25a8f60f2a'
+            'f33b2f2ada43a1d178c5bb8a389f7bf936931a11159b06fa38f9eb22b5d816ed4eff82210146cff669c3a5c5950b329b9f3efc0f79d69b0a9924dfb25e9ccbe2'
             'c62d52405d02d1fd59cd7f91494183f8677f52d76a49509e56375ff5ba2645e0cc71adbc2540e06da9dd2fe324a6c2f1990345a1f15d087e1f0b7ef216ca3f43')
 
 prepare() {
-  cd "$srcdir/camlidl-$pkgver"
+  cd "$pkgname-$pkgname$_pkgver"
 
-  patch -Np1 -i "$srcdir/arch-build-system-fix.patch"
+  #patch -Np1 -i "$srcdir/arch-build-system-fix.patch"
 
   cp config/Makefile.unix config/Makefile
 }
 
 build() {
-  cd "$srcdir/camlidl-$pkgver"
+  cd "$pkgname-$pkgname$_pkgver"
 
   make all
 }
 
 package() {
-  cd "$srcdir/camlidl-$pkgver"
+  cd "$pkgname-$pkgname$_pkgver"
 
-  local _ocamldir="$(ocamlc -where)"
+  local _bindir="$pkgdir/usr/bin"
+  local _ocamldir="$pkgdir/$(ocamlc -where)"
+  mkdir -p "$_bindir" "$_ocamldir"/{caml,stublibs,"$pkgname"}
 
-  install -dm 755 $pkgdir/usr/bin $pkgdir/$_ocamldir/{caml,camlidl}
+  make BINDIR="$_bindir" OCAMLLIB="$_ocamldir" install
 
-  make DESTDIR="$pkgdir" install
-
-  install -Dm644 $srcdir/META.camlidl "$pkgdir/$_ocamldir/camlidl/META"
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/camlidl/LICENSE"
+  install -Dm644 "$srcdir/META.camlidl" "$_ocamldir/$pkgname/META"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
+
