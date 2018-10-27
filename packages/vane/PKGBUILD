@@ -3,7 +3,7 @@
 
 pkgname=vane
 pkgver=1898.872a1c2
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp' 'blackarch-fuzzer')
 pkgdesc='A vulnerability scanner which checks the security of WordPress installations using a black box approach.'
 arch=('any')
@@ -19,33 +19,30 @@ sha512sums=('SKIP'
             '291b53c7e74b87c9ce78e257ce58e3b04147c601ea03196cd434052bc6ceeed3d474f005e12b78ee061269622bd8f5e66dd387f46a1064703bb54d16102750bd')
 
 pkgver() {
-  cd "$srcdir/vane"
+  cd "$pkgname"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd "$srcdir"
-
   patch -p1 < gemfile.patch
 }
 
 package() {
-  cd "$srcdir/vane"
+  cd "$pkgname"
 
-  install -dm 755 "$pkgdir/usr/share/vane"
   install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  cp -a * "$pkgdir/usr/share/vane"
+  cp -a * "$pkgdir/usr/share/$pkgname"
 
-  cat > "$pkgdir/usr/bin/vane" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 exec ruby /usr/share/vane/vane.rb "\${@}"
 EOF
 
-  sed -i "s/ROOT_DIR, 'log.txt'/ENV['HOME'], 'vane.log'/" "$pkgdir/usr/share/vane/lib/common/common_helper.rb"
+  sed -i "s/ROOT_DIR, 'log.txt'/ENV['HOME'], 'vane.log'/" "$pkgdir/usr/share/$pkgname/lib/common/common_helper.rb"
+  sed -i "s/ROOT_DIR, 'cache'/ENV['HOME'], '.vane-cache'/" "$pkgdir/usr/share/$pkgname/lib/common/common_helper.rb"
 
-  sed -i "s/ROOT_DIR, 'cache'/ENV['HOME'], '.vane-cache'/" "$pkgdir/usr/share/vane/lib/common/common_helper.rb"
-
-  chmod +x "$pkgdir/usr/bin/vane"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
