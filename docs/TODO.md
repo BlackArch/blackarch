@@ -103,7 +103,7 @@ Just check out the following:
   [ ] tools: update all tools [a-z] prior the new ISO/OVA release (2018.12.01)
       [noptrix, ]
 
-  [ ] blackarch-installer: testings, bugfixes and updates prior the new ISO/OVA
+  [.] blackarch-installer: testings, bugfixes and updates prior the new ISO/OVA
       release (2018.12.01)
       [noptrix, mrsmith0x00]
 
