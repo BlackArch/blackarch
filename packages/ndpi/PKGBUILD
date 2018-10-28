@@ -3,7 +3,7 @@
 
 pkgname=ndpi
 _name=nDPI
-pkgver=2.2
+pkgver=2.4
 pkgrel=1
 pkgdesc='Open and Extensible GPLv3 Deep Packet Inspection Library.'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
@@ -11,15 +11,24 @@ url='https://github.com/ntop/nDPI'
 depends=('libpcap')
 makedepends=('autogen' 'automake' 'autoconf' 'clang' 'gcc' 'libtool')
 license=('GPL3')
-source=("https://github.com/ntop/$_name/archive/$pkgver.zip")
-sha512sums=('fb6fc3acad8e781b8471d3dda47661e5997c76fc8e38877e6ef8720d6ba4f7e26d4a92965c0858d94c3b48a25f369e56b234da67898aa91e43f2ffae852f55f3')
+source=("https://github.com/ntop/$_name/archive/$pkgver.tar.gz"
+        'makefile.patch')
+sha512sums=('7c746c167ab3ebafbe8646f752c95e32d66237a0a86adeec9ded1ec7e20f62170a9b1c4e5d25594f6459f5c0f616c27c5b393151d936471590f16df3fa3fa884'
+            '1f733995e3597a2745836fc56d5c85047436a0bf50b99506cdb086f770fe0e0c1306d477207f20510660df51b3ac80a47734495a1c1917358a3b4e4bef725166')
+
+prepare() {
+  cd "$_name-$pkgver"
+
+  patch -Np1 -i ../makefile.patch
+}
 
 build() {
   cd "$_name-$pkgver"
 
   ./autogen.sh
 
-  ./configure --prefix=/usr
+  ./configure --prefix=/usr --with-pic --includedir=/usr/include \
+    --libdir=/usr/lib
 
   make
 }
