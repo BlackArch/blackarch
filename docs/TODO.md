@@ -1,8 +1,9 @@
 ## Description
 
-Here you will find the official TODO and ROADMAP list for BlackArch Linux. The list
-contains items (tasks or projects) with a status for the current and upcoming year.
-It also gives an overview of which BlackArch team member works on what.
+Here you will find the official TODO (ROADMAP) list for BlackArch Linux. The
+list contains items (tasks or projects) with a status for the current and
+upcoming year. It also gives an overview of which BlackArch team member works on
+what.
 
 
 ## Notes
@@ -39,92 +40,118 @@ Just check out the following:
 ```
 ===> 2019
 
-  [ ] youtube: create / add initial videos: blackarch-installation (2 parts:
-      online and from live-iso)
+  [ ] version-checker
+      create an update-checker-script for non-git tools so we can semi-automate
+      the tools updating part like we do for git-tools.
       [?]
 
-  [ ] blackarch-site: create better images for the slider on index.html. any
-      tweaks/improvements are welcome.
+  [ ] youtube
+      create / add initial videos: blackarch-installation (2 parts: online and
+      from live-iso)
       [?]
 
-  [ ] blackarch-shop: create t-shirts, stickers etc. for online shop :D
+  [ ] blackarch-site
+      create better images for the slider on index.html. any improvements are
+      welcome.
       [?]
 
-  [ ] blackarch-menus: tweak, update, bugfix the current one
+  [ ] blackarch-shop
+      create t-shirts, stickers etc. for online shop. :D
       [?]
 
-  [ ] blackarch-virtualization: tweak, update, bugfix the current setup for
-      docker and vagrant.
+  [ ] blackarch-menus
+      tweak, update, bugfix the current one
       [?]
 
-  [ ] wordlistctl: create a similar tool like sploitctl but for wordlists
-      containing: passwords, usernames, hostnames
+  [ ] blackarch-virtualization
+      tweak, update, bugfix the current setup for docker and vagrant.
+      [?]
 
-  [ ] sploitctl: extend parallelize it. takes too long.
+  [ ] wordlistctl
+      create a similar tool like sploitctl but for wordlists containing:
+      passwords, usernames, hostnames
+      [?]
+
+  [ ] sploitctl
+      extend, parallelize it. takes too long.
       [noptrix]
 
-  [ ] infrastructure: create a new build-system environment so everyone of us
-      can sign and release packages.
+  [ ] infrastructure
+      create a new build-system environment so everyone of us can sign and
+      release packages.
       [noptrix]
 
-  [ ] blackarch-config-*: update, tweak, improve and QA all blackarch-config-*
-      packages.
+  [ ] blackarch-config-*
+      update, tweak, improve and QA all blackarch-config-* packages.
       [?]
 
-  [ ] ISO: create and release a slim-ISO with top100 tools or something like
-      that. note: @PedroSFreitas already worked on this.
+  [ ] ISO
+      create and release a slim-ISO with xfce(?) mate(?) with top100 tools or
+      something like that. note: @PedroSFreitas already worked on this.
       [psf, ?]
 
-  [ ] tools: add new tools (long-term). ;-)
+  [ ] tools
+      add new tools (long-term). ;-)
       [all]
 
-  [ ] blackman: either update and fix current bugs or rewrite it from scratch.
-      maybe with python3?
+  [ ] blackman
+      either update and fix current bugs or rewrite it from scratch. python3?
       [?]
 
-  [ ] tools: general QAing (long-term)
+  [ ] tools
+      general QAing (long-term)
       [all]
 
-  [ ] pkgbuilds: fix pkgbuild style according to @FFY00 suggestions.
+  [ ] pkgbuilds
+      fix pkgbuild style according to @FFY00 suggestions.
       [noptrix, ?]
 
-  [ ] tools: QA of all tools: missing dependency checks. create a list of
+  [ ] tools
+      QA of all tools: missing dependency checks. create a list of
       dependency-broken tools in lists/broken-packages-deps
       [?]
 
-  [ ] tools: QA of all tools: runtime checks. create a list of runtime-broken
-      tools in lists/broken-packages-runtime
+  [ ] tools
+      QA of all tools: runtime checks. create a list of runtime-broken tools in
+      lists/broken-packages-runtime
       [?]
 
-  [ ] python-packages: add missing python dependencies to python-packages. use
-      setup.py and grep for imports.
+  [ ] python-packages
+      add missing python dependencies to python-packages. use setup.py and grep
+      for imports.
       [?]
 
-  [ ] linux-blackarch-hardened: custom hardened kernel patches
+  [ ] linux-blackarch-hardened
+      custom hardened kernel patches
       [noptrix, ?]
 
-  [ ] linux-blackarch: custom kernel / kernel patches / kernel modules to
-      support wifi injection, network tunings, and more.
+  [ ] linux-blackarch
+      custom kernel / kernel patches / kernel modules to support wifi injection,
+      network tunings, and more.
       [noptrix, ?]
 
-  [ ] wiki: replace the blackarch guide with a fresh new wiki. it is planned to
-      use github for .md files and reference them on the blackarch website
-      rather than having a complete wiki setup on blackarch site. this still
-      needs to be discussed!
+  [ ] wiki
+      replace the blackarch guide with a fresh new wiki. it is planned to use
+      github for .md files and reference them on the blackarch website rather
+      than having a complete wiki setup on blackarch site. this still needs to
+      be discussed!
       [all]
 
 ===> 2018
 
-  [ ] ISO/OVA: preparation and releases (2018.12.01)
+  [ ] ISO/OVA
+      preparation and releases (2018.12.01)
       [noptrix, ]
 
-  [ ] tools: update all tools [a-z] prior the new ISO/OVA release (2018.12.01)
+  [ ] tools
+      update all tools [a-z] prior the new ISO/OVA release (2018.12.01)
       [noptrix, ]
 
-  [.] blackarch-installer: testings, bugfixes and updates prior the new ISO/OVA
-      release (2018.12.01)
+  [.] blackarch-installer
+      testings, bugfixes and updates prior the new ISO/OVA release (2018.12.01)
       [noptrix, mrsmith0x00]
 
-  [.] tools: single updates and QAs of all tools (long-term process)
+  [.] tools
+      single updates and QAs of all tools (long-term process)
       [all]
 ```
