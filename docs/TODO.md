@@ -37,11 +37,11 @@ Just check out the following:
       [noptrix, ?]
 
   [ ] tools: QA of all tools: missing dependency checks. create a list of
-      runtime-broken tools in lists/broken-packages
+      dependency-broken tools in lists/broken-packages-deps
       [?]
 
   [ ] tools: QA of all tools: runtime checks. create a list of runtime-broken
-      tools in lists/broken-packages
+      tools in lists/broken-packages-runtime
       [?]
 
   [ ] python-packages: add missing python dependencies to python-packages. use
