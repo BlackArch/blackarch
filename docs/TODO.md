@@ -39,6 +39,13 @@ Just check out the following:
 ```
 ===> 2019
 
+  [ ] blackarch-menus: tweak, update, bugfix the current one
+      [?]
+
+  [ ] blackarch-virtualization: tweak, update, bugfix the current setup for
+      docker and vagrant.
+      [?]
+
   [ ] wordlistctl: create a similar tool like sploitctl but for wordlists
       containing: passwords, usernames, hostnames
 
