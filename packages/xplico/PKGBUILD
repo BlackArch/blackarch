@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=xplico
-pkgver=157.0867e77
-pkgrel=2
+pkgver=1.2.1
+pkgrel=1
+epoch=1
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 pkgdesc='Internet Traffic Decoder. Network Forensic Analysis Tool (NFAT).'
 groups=('blackarch' 'blackarch-forensic' 'blackarch-networking')
@@ -12,39 +13,36 @@ license=('GPL')
 depends=('tcpdump' 'libpcap' 'sqlite3' 'sox' 'lame' 'apache' 'php' 'net-tools'
          'php-sqlite' 'php-apache' 'php-pear' 'libnet' 'recode' 'json-c'
          'python-httplib2' 'python-psycopg2' 'libmariadbclient' 'ndpi' 'geoip'
-         'libpqxx')
+         'libpqxx' 'perl')
 optdepends=('geoip-database-extra: City database for geoip IP location lookups'
             'ghostpdl: reconstruct document printed with network printer'
 	          'videosnarf: decode VoIP based on RTP')
 makedepends=('git')
 install='xplico.install'
-source=('git+https://github.com/xplico/xplico.git')
-sha512sums=('SKIP')
-
-pkgver() {
-  cd "$srcdir/xplico"
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
+source=("https://github.com/xplico/xplico/archive/v$pkgver.tar.gz"
+        '1ed30f322b764cbb6d027775c275e4f0a5616a3f.patch')
+sha512sums=('aaecbf5e56e9d9b228df295b8e09c1dd335e289f1ec695b360f5b69c5d076b811b79fb646c8a51481ff73016f35789a595e23cfd9d7d5669b7bd6de0e1518fd4'
+            '24adbcb5f2749cbe60eb63ea632d429c68db6e4c27b5430ff08dd8a8b14c949ed2becb459d34a9c814faa7ec80ee961b2891d2cf61fb3d3d01818bce1ca13c4c')
 
 prepare() {
-  cd "$srcdir/xplico"
+  cd "$pkgname-$pkgver"
 
-  #chmod a+x third-party/GeoIP-1.6.5/configure third-party/GeoIP-1.6.5/configure
+  patch -Np1 -i ../1ed30f322b764cbb6d027775c275e4f0a5616a3f.patch
 }
 
 build() {
-  cd "$srcdir/xplico"
+  cd "$pkgname-$pkgver"
 
   make -j1
 }
 
 package() {
-  cd "$srcdir/xplico"
+  cd "$pkgname-$pkgver"
 
   make DESTDIR="$pkgdir" install
 
-  ln -sr /usr/share/GeoIP/GeoIPCity.dat $pkgdir/opt/xplico/GeoLiteCity.dat
+  ln -sr /usr/share/GeoIP/GeoIPCity.dat "$pkgdir/opt/xplico/GeoLiteCity.dat"
 
   chmod a+x "$pkgdir/opt/"{xplico,xplico/cfg}
 }
+
