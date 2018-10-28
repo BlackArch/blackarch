@@ -7,8 +7,8 @@ It also gives an overview of which BlackArch team member works on what.
 
 ## Notes
 
-- The TODO list is neither sorted nor prioritized. The priority can be
-guessed based on the status of the item. ;-)
+- The TODO list is neither sorted nor prioritized.
+- The priorities can be guessed based on the status of the item. ;-)
 
 
 ## Legend
