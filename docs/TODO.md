@@ -4,6 +4,12 @@ Here you will find the official TODO and ROADMAP list for BlackArch Linux. The l
 contains items (tasks or projects) with a status for the current and upcoming year.
 It also gives an overview of which BlackArch team member works on what.
 
+
+### Notes
+
+- The TODO list is neither sorted nor prioritized. The priority can be
+guessed on the status of the item. ;-)
+
 ## Legend
 
 [x] done
@@ -29,6 +35,8 @@ Just check out the following:
 
 ```
 ===> 2019
+
+  [ ]
 
   [ ] tools: general QAing (long-term)
       [all]
