@@ -41,7 +41,7 @@ Just check out the following:
 ===> 2019
 
   [ ] version-checker
-      create an update-checker-script for non-git tools so we can semi-automate
+      create an version-checker script for non-git tools so we can semi-automate
       the tools updating part like we do for git-tools.
       [?]
 
