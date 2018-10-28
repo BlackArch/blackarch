@@ -5,10 +5,11 @@ contains items (tasks or projects) with a status for the current and upcoming ye
 It also gives an overview of which BlackArch team member works on what.
 
 
-### Notes
+## Notes
 
 - The TODO list is neither sorted nor prioritized. The priority can be
 guessed on the status of the item. ;-)
+
 
 ## Legend
 
@@ -17,6 +18,7 @@ guessed on the status of the item. ;-)
 [.] in progress
 
 [ ] planned to do
+
 
 ## Get Involved
 
@@ -31,12 +33,26 @@ Just check out the following:
 
 **IRC:** [irc://irc.freenode.net/blackarch](irc://irc.freenode.net/blackarch)
 
+
 ## TODO
 
 ```
 ===> 2019
 
-  [ ]
+  [ ] blackarch-config-*: update, tweak, improve and QA all blackarch-config-*
+      packages.
+      [?]
+
+  [ ] ISO: create and release a slim-ISO with top100 tools or something like
+      that. note: @PedroSFreitas already worked on this.
+      [psf, ?]
+
+  [ ] tools: add new tools (long-term). ;-)
+      [all]
+
+  [ ] blackman: either update and fix current bugs or rewrite it from scratch.
+      maybe with python3?
+      [?]
 
   [ ] tools: general QAing (long-term)
       [all]
