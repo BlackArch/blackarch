@@ -39,6 +39,17 @@ Just check out the following:
 ```
 ===> 2019
 
+  [ ] youtube: create / add initial videos: blackarch-installation (2 prts:
+      online and from live-iso)
+      [?]
+
+  [ ] blackarch-site: create better images for the for slider on index.html.
+      any tweaks/improvements are welcome.
+      [?]
+
+  [ ] blackarch-shop: create t-shirts, stickers etc. for online shop
+      [?]
+
   [ ] blackarch-menus: tweak, update, bugfix the current one
       [?]
 
