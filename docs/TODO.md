@@ -39,6 +39,16 @@ Just check out the following:
 ```
 ===> 2019
 
+  [ ] wordlistctl: create a similar tool like sploitctl but for wordlists
+      containing: passwords, usernames, hostnames
+
+  [ ] sploitctl: extend parallelize it. takes too long.
+      [noptrix]
+
+  [ ] infrastructure: create a new build-system environment so everyone of us
+      can sign and release packages.
+      [noptrix]
+
   [ ] blackarch-config-*: update, tweak, improve and QA all blackarch-config-*
       packages.
       [?]
