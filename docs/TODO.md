@@ -8,7 +8,7 @@ It also gives an overview of which BlackArch team member works on what.
 ## Notes
 
 - The TODO list is neither sorted nor prioritized. The priority can be
-guessed on the status of the item. ;-)
+guessed based on the status of the item. ;-)
 
 
 ## Legend
@@ -39,15 +39,15 @@ Just check out the following:
 ```
 ===> 2019
 
-  [ ] youtube: create / add initial videos: blackarch-installation (2 prts:
+  [ ] youtube: create / add initial videos: blackarch-installation (2 parts:
       online and from live-iso)
       [?]
 
-  [ ] blackarch-site: create better images for the for slider on index.html.
-      any tweaks/improvements are welcome.
+  [ ] blackarch-site: create better images for the slider on index.html. any
+      tweaks/improvements are welcome.
       [?]
 
-  [ ] blackarch-shop: create t-shirts, stickers etc. for online shop
+  [ ] blackarch-shop: create t-shirts, stickers etc. for online shop :D
       [?]
 
   [ ] blackarch-menus: tweak, update, bugfix the current one
