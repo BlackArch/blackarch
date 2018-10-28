@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=pfring-kmod
+pkgver=v6.4.0.r1380.g8ceb774c
+pkgrel=1
+pkgdesc='Linux kernel module for packet capture at wirespeed.'
+url='https://github.com/ntop/PF_RING'
+arch=('x86_64' 'i686')
+license=('LGPL')
+depends=('numactl')
+makedepends=('binutils' 'bison' 'flex' 'git' 'linux-headers' 'make')
+source=('git+https://github.com/ntop/PF_RING.git')
+sha512sums=('SKIP')
+_dir_name_=PF_RING
+
+pkgver() {
+  cd "$_dir_name_"
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd "$_dir_name_/kernel"
+
+  ./configure --prefix=/usr
+  sed -i "s/INSTDIR\ \:=\ \$(DESTDIR)/INSTDIR := \$(DESTDIR)\/usr/g" Makefile
+
+  make
+}
+
+package() {
+  cd "$_dir_name_/kernel"
+
+  install -dm 755 "$pkgdir/usr/include/linux"
+
+  make DESTDIR="$pkgdir" install
+}
+
