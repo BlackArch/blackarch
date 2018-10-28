@@ -67,11 +67,6 @@ Just check out the following:
       tweak, update, bugfix the current setup for docker and vagrant.
       [?]
 
-  [ ] wordlistctl
-      create a similar tool like sploitctl but for wordlists containing:
-      passwords, usernames, hostnames
-      [?]
-
   [ ] sploitctl
       extend, parallelize it. takes too long.
       [noptrix]
@@ -137,6 +132,7 @@ Just check out the following:
       be discussed!
       [all]
 
+
 ===> 2018
 
   [ ] ISO/OVA
@@ -146,6 +142,11 @@ Just check out the following:
   [ ] tools
       update all tools [a-z] prior the new ISO/OVA release (2018.12.01)
       [noptrix, ]
+
+  [.] wordlistctl
+      create a similar tool like sploitctl but for wordlists containing:
+      passwords, usernames, hostnames
+      [sepehrdad]
 
   [.] blackarch-installer
       testings, bugfixes and updates prior the new ISO/OVA release (2018.12.01)
