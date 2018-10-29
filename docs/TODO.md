@@ -143,6 +143,10 @@ Just check out the following:
       update all tools [a-z] prior the new ISO/OVA release (2018.12.01)
       [noptrix, ]
 
+  [.] ba-dev how-to
+      create a little, quick'n'dirty how-to for blackarch developers
+      [noptrix]
+
   [.] wordlistctl
       create a similar tool like sploitctl but for wordlists containing:
       passwords, usernames, hostnames
