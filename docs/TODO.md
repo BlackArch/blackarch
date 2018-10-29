@@ -151,7 +151,7 @@ Just check out the following:
       [noptrix, ]
 
   [.] ba-dev how-to
-      create a little, quick'n'dirty how-to for blackarch developers
+      create an initial quick'n'dirty how-to for blackarch developers
       [noptrix]
 
   [.] wordlistctl
