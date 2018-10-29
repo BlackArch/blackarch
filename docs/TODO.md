@@ -10,6 +10,7 @@ what.
 
 - The TODO list is neither sorted nor prioritized.
 - The priorities can be guessed based on the status of the item. ;-)
+- Items can be removed. New items can be added.
 
 
 ## Legend
@@ -41,8 +42,9 @@ Just check out the following:
 ===> 2019
 
   [ ] tools
-      check for wrong/missing licenses files. update accordingly. in worst case,
-      ask owner of $tool for permissions.
+      check for wrong/missing licenses files. diff against the common license
+      files and install / don't install accordingly. in worst case, ask owner of
+      $tool for permissions.
       [?]
 
   [ ] version-checker
