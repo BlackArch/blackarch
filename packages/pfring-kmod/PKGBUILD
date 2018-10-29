@@ -2,7 +2,8 @@
 # See COPYING for license details.
 
 pkgname=pfring-kmod
-pkgver=v6.4.0.r1380.g8ceb774c
+_name=PF_RING
+pkgver=7.2.0
 pkgrel=1
 pkgdesc='Linux kernel module for packet capture at wirespeed.'
 url='https://github.com/ntop/PF_RING'
@@ -10,18 +11,19 @@ arch=('x86_64' 'i686')
 license=('LGPL')
 depends=('numactl')
 makedepends=('binutils' 'bison' 'flex' 'git' 'linux-headers' 'make')
-source=('git+https://github.com/ntop/PF_RING.git')
-sha512sums=('SKIP')
-_dir_name_=PF_RING
+source=("https://github.com/ntop/$_name/archive/$pkgver.tar.gz"
+        'pf_ring.c.patch')
+sha512sums=('96134e97b46e993ca5e01441c578d8e0da66d26cc6ca02477791fb5f38023d01625583233cd78131b058dbc7d3b74fc4b833659c5618830e2d235a1a078bf1b6'
+            '2fe2c96ab1c8c883796597515ddda64066b7fc36d8f50d5a71191faee1c9af8765c539ba2a59dfe79a74482ea23287075dd00c01d1b82cfe5a3aafa28f8a6c4a')
 
-pkgver() {
-  cd "$_dir_name_"
+prepare() {
+  cd "$_name-$pkgver/kernel"
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  patch < ../../pf_ring.c.patch
 }
 
 build() {
-  cd "$_dir_name_/kernel"
+  cd "$_name-$pkgver/kernel"
 
   ./configure --prefix=/usr
   sed -i "s/INSTDIR\ \:=\ \$(DESTDIR)/INSTDIR := \$(DESTDIR)\/usr/g" Makefile
@@ -30,7 +32,7 @@ build() {
 }
 
 package() {
-  cd "$_dir_name_/kernel"
+  cd "$_name-$pkgver/kernel"
 
   install -dm 755 "$pkgdir/usr/include/linux"
 
