@@ -139,6 +139,10 @@ Just check out the following:
       be discussed!
       [all]
 
+  [ ] howto-dev
+      update the howto for blackarch developers
+      [noptrix]
+
 
 ===> 2018
 
@@ -150,7 +154,7 @@ Just check out the following:
       update all tools [a-z] prior the new ISO/OVA release (2018.12.01)
       [noptrix, ]
 
-  [.] ba-dev how-to
+  [x] howto-dev
       create an initial quick'n'dirty how-to for blackarch developers
       [noptrix]
 
