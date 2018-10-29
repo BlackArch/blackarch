@@ -40,6 +40,11 @@ Just check out the following:
 ```
 ===> 2019
 
+  [ ] tools
+      check for wrong/missing licenses files. update accordingly. in worst case,
+      ask owner of $tool for permissions.
+      [?]
+
   [ ] version-checker
       create an version-checker script for non-git tools so we can semi-automate
       the tools updating part like we do for git-tools.
