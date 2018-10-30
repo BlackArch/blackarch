@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname=veil
-pkgver=154.1e87a3e
-pkgrel=3
+pkgver=245.609217f
+pkgrel=1
 epoch=3
 groups=('blackarch' 'blackarch-automation' 'blackarch-exploitation')
 pkgdesc='A tool designed to generate metasploit payloads that bypass common anti-virus solutions.'
@@ -18,45 +18,42 @@ depends=('sudo' 'wine' 'wine-mono' 'wine_gecko' 'git' 'python'
 makedepends=('git')
 source=('git+https://github.com/Veil-Framework/Veil.git'
         'git+https://github.com/Veil-Framework/VeilDependencies.git')
-#        'setupsh_mod.patch')
 install='veil.install'
 sha512sums=('SKIP'
             'SKIP')
 options=('!strip')
 
 pkgver() {
-  cd "$srcdir/Veil"
+  cd Veil
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd "$srcdir/Veil"
+  cd Veil
 
-  cp "$srcdir/VeilDependencies/"* "$srcdir/Veil/setup/"
-
-  #patch -Np1 -i ../setupsh_mod.patch
+  cp -a "$srcdir/VeilDependencies/" setup
 }
 
 package() {
-  cd "$srcdir/Veil"
+  cd Veil
 
-  install -dm 755 "$pkgdir/usr/bin/"
-  install -dm 755 "$pkgdir/usr/share/veil"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 README.md "$pkgdir/usr/share/doc/veil/README.md"
-  install -m644 CHANGELOG "$pkgdir/usr/share/doc/veil/CHANGELOG"
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/veil/COPYRIGHT"
+  install -Dm644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm CHANGELOG LICENSE README.md
 
-  cp -a * "$pkgdir/usr/share/veil"
+  cp -a * "$pkgdir/usr/share/$pkgname"
 
-  cat > "$pkgdir/usr/bin/veil" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/veil/
 exec python Veil.py "\${@}"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/veil"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
+
