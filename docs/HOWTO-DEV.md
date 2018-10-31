@@ -9,7 +9,7 @@ This document contains a simple lists of information rather than detailed
 descriptions. Longer text blocks should be avoided except for this description.
 Further details or any questions can be discussed in IRC or Discord.
 
-The categories are structured to have at least a little bit of overview.
+The categories are structured to have at least a little bit of an overview.
 
 
 ## On-Boarding for new Developers
