@@ -1,11 +1,11 @@
 ## Description
 
-A quick'n'dirty HOW-TO for BlackArch Linux developers. It contains only the most
+A quick 'n' dirty HOW-TO for BlackArch Linux developers. It contains the most
 important and relevant aspects of this project. Any other topics can and will be
-discussed on the fly. This HOW-TO also contains an on-boarding guide-line for
+discussed on the fly. This HOW-TO also contains an on-boarding guideline for
 new developers.
 
-This document contains simple lists of information rather than detailed
+This document contains a simple lists of information rather than detailed
 descriptions. Longer text blocks should be avoided except for this description.
 Further details or any questions can be discussed in IRC or Discord.
 
