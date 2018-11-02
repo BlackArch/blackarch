@@ -10,34 +10,35 @@ arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/Acey9/apacket'
 license=('custom:unknown')
 depends=('glibc' 'go' 'libpcap')
-makedepends=('go' 'git')
+makedepends=('go-pie' 'git')
 source=('git+https://github.com/Acey9/apacket.git')
 sha512sums=('SKIP')
+_url='github.com/Acey9/apacket'
 
 pkgver() {
-  cd "$srcdir/apacket"
+  cd "$pkgname"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$srcdir"
+  cd "$pkgname"
 
-  install -dm 755 src/$url && rm -rf src/$url && mv apacket src/$url && cd src/$url
+  install -dm 755 src/$_url && rm -rf src/$_url && mv apacket src/$_url &&
+    cd src/$_url
 
   GOPATH="$srcdir" go get -d -t github.com/Acey9/apacket
   GOPATH="$srcdir" go get -d -t github.com/Acey9/sapacket
 }
 
 package() {
-  cd "$srcdir"
-
   install -dm 755 "$pkgdir/usr/bin"
 
   GOPATH="$srcdir" go build -v github.com/Acey9/apacket
   GOPATH="$srcdir" go build -v github.com/Acey9/sapacket
 
-  install -Dm755 "$srcdir/apacket" "$pkgdir/usr/bin/apacket"
-  install -Dm755 "$srcdir/sapacket" "$pkgdir/usr/bin/sapacket"
-  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/apacket/README.md"
+  install -Dm 755 "$srcdir/apacket" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 "$srcdir/sapacket" "$pkgdir/usr/bin/sapacket"
+  install -Dm 644 src/$url/README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
 }
+
