@@ -150,9 +150,9 @@ Just check out the following:
       preparation and releases (2018.12.01)
       [noptrix, ]
 
-  [ ] tools
+  [.] tools
       update all tools [a-z] prior the new ISO/OVA release (2018.12.01)
-      [noptrix, ]
+      [noptrix]
 
   [x] howto-dev
       create an initial quick'n'dirty how-to for blackarch developers
@@ -163,7 +163,7 @@ Just check out the following:
       passwords, usernames, hostnames
       [sepehrdad]
 
-  [.] blackarch-installer
+  [x] blackarch-installer
       testings, bugfixes and updates prior the new ISO/OVA release (2018.12.01)
       [noptrix, mrsmith0x00]
 
