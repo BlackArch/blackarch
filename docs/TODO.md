@@ -41,16 +41,25 @@ Just check out the following:
 ```
 ===> 2019
 
-  [ ] tools
-      check for wrong/missing licenses files. diff against the common license
+  [.] tools:
+      1. [.] fix pkgbuild style according to @FFY00 suggestions.
+      [noptrix, mrsmith0x00, ?]
+
+      2. [ ] QA of all tools: runtime + dependency checks. create a list for both in lists/
+      [?]
+
+      3. [ ] check for wrong/missing licenses files. diff against the common license
       files and install / don't install accordingly. in worst case, ask owner of
       $tool for permissions.
       [?]
 
-  [ ] version-checker
-      create an version-checker script for non-git tools so we can semi-automate
+      4. [ ] general QAing + add new tools (long-term). ;-)
+      [all]
+
+  [.] version-checker
+      create an version-checker script (python3) for non-git tools so we can semi-automate
       the tools updating part like we do for git-tools.
-      [?]
+      [mrsmith0x00]
 
   [ ] youtube
       create / add initial videos: blackarch-installation (2 parts: online and
@@ -92,30 +101,8 @@ Just check out the following:
       something like that. note: @PedroSFreitas already worked on this.
       [psf, ?]
 
-  [ ] tools
-      add new tools (long-term). ;-)
-      [all]
-
   [ ] blackman
       either update and fix current bugs or rewrite it from scratch. python3?
-      [?]
-
-  [ ] tools
-      general QAing (long-term)
-      [all]
-
-  [ ] pkgbuilds
-      fix pkgbuild style according to @FFY00 suggestions.
-      [noptrix, ?]
-
-  [ ] tools
-      QA of all tools: missing dependency checks. create a list of
-      dependency-broken tools in lists/broken-packages-deps
-      [?]
-
-  [ ] tools
-      QA of all tools: runtime checks. create a list of runtime-broken tools in
-      lists/broken-packages-runtime
       [?]
 
   [ ] python-packages
