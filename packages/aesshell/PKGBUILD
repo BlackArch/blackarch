@@ -15,38 +15,35 @@ source=("https://dl.packetstormsecurity.net/UNIX/penetration/rootkits/aesshell-$
 sha512sums=('b4a71b3ffdde3a913990ec553c98c7a75b5ae57314d740b1771f1430733ecc9b798ff98ac3a2199845d33f41e2d07ead87b6fe30a91a6ba96ff9558bedc79755')
 
 package() {
-  cd "$srcdir/aesshell"
+  cd "$pkgname"
 
   local tools="bc listen prepare"
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/aesshell/windows"
 
-  install -Dm644 readme.txt "$pkgdir/usr/share/doc/aesshell/readme.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/windows/" bc.exe *.dll
+  install -Dm 644 readme.txt "$pkgdir/usr/share/doc/$pkgname/readme.txt"
 
-  rm readme.txt
+  rm readme.txt bc.exe *.dll
 
-  install -Dm644 -t "$pkgdir/usr/share/aesshell/windows/" bc.exe *.dll
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  rm bc.exe *.dll
-
-  cp -a * "$pkgdir/usr/share/aesshell/"
-
-  for i in ${tools}
+  for i in $tools
   do
-    if [ "${i}" = "prepare" ]
+    if [ "$i" = "prepare" ]
     then
-      cat > "$pkgdir/usr/bin/aesshell-${i}" << EOF
+      cat > "$pkgdir/usr/bin/$pkgname-$i" << EOF
 #!/bin/sh
 cd /usr/share/aesshell
-exec python2 ${i}.py
+exec python2 $i.py
 EOF
     else
-      cat > "$pkgdir/usr/bin/aesshell-${i}" << EOF
+      cat > "$pkgdir/usr/bin/$pkgname-$i" << EOF
 #!/bin/sh
-exec python2 /usr/share/aesshell/${i}.py "\$@"
+exec python2 /usr/share/aesshell/$i.py "\$@"
 EOF
     fi
-    chmod a+x "$pkgdir/usr/bin/aesshell-${i}"
+    chmod a+x "$pkgdir/usr/bin/$pkgname-$i"
   done
 }
+

@@ -15,41 +15,43 @@ source=('git+https://github.com/alexpark07/ARMSCGen.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/ARMSCGen"
+  cd ARMSCGen
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$srcdir/ARMSCGen"
+  cd ARMSCGen
 
   python2 setup.py build
 }
 
 package() {
-  cd "$srcdir/ARMSCGen"
+  cd ARMSCGen
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   python2 setup.py install --root="$pkgdir"
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/armscgen"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/armscgen" README.md \
+  install -Dm644 -t "$pkgdir/usr/share/doc/$pkgname" README.md \
     shellcodes_lists.md requirements.txt
-  cp -a docs/* "$pkgdir/usr/share/doc/armscgen/"
+  cp -a docs/* "$pkgdir/usr/share/doc/$pkgname/"
 
-  install -Dm644 -t "$pkgdir/usr/share/licenses/armscgen" LICENSE \
+  install -Dm644 -t "$pkgdir/usr/share/licenses/$pkgname" LICENSE \
     LICENSE-ARMSCGen.txt
 
   rm -rf docs shellcodes_lists.md requirements.txt README.md LICENSE \
     LICENSE-ARMSCGen.txt
 
-  cp -a * "$pkgdir/usr/share/armscgen/"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  cat > "$pkgdir/usr/bin/armscgen" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/armscgen
-exec python2 scgen.py "\${@}"
+exec python2 scgen.py "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/armscgen"
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
+
