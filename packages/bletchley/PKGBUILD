@@ -16,40 +16,41 @@ source=('svn+https://code.blindspotsecurity.com/dav/bletchley/trunk/')
 sha512sums=('SKIP')
 
 build() {
-  cd "$srcdir/trunk"
+  cd trunk
 
   scons
 }
 
 package() {
-  cd "$srcdir/trunk"
+  cd trunk
 
-  tools="bletchley-analyze bletchley-clonecertchain bletchley-decode"
-  tools="${tools} bletchley-encode bletchley-http2py bletchley-nextrand"
+  _tools="bletchley-analyze bletchley-clonecertchain bletchley-decode"
+  _tools="$_tools bletchley-encode bletchley-http2py bletchley-nextrand"
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/bletchley"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   PREFIX="$pkgdir" scons install
 
-  install -Dm644 INSTALL "$pkgdir/usr/share/doc/bletchley/INSTALL"
-  install -m644 doc/TODO "$pkgdir/usr/share/doc/bletchley/TODO"
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/bletchley/LICENSE"
+  install -Dm 644 INSTALL "$pkgdir/usr/share/doc/$pkgname/INSTALL"
+  install -m 644 doc/TODO "$pkgdir/usr/share/doc/$pkgname/TODO"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm -rf build doc src bin INSTALL LICENSE SConstruct
 
-  cp -a * "$pkgdir/usr/share/bletchley/"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  mv "$pkgdir/bin/"* "$pkgdir/usr/share/bletchley/lib/"
+  mv "$pkgdir/bin/"* "$pkgdir/usr/share/$pkgname/lib/"
   rmdir "$pkgdir/bin"
 
-  for t in ${tools}
+  for t in $_tools
   do
-    cat > "$pkgdir/usr/bin/${t}" << EOF
+    cat > "$pkgdir/usr/bin/$t" << EOF
 #!/bin/sh
 cd /usr/share/bletchley/lib
-exec python3 ${t} "\${@}"
+exec python3 $t "\$@"
 EOF
-    chmod a+x "$pkgdir/usr/bin/${t}"
+    chmod a+x "$pkgdir/usr/bin/$t"
   done
 }
+

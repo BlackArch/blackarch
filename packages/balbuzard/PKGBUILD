@@ -17,38 +17,39 @@ source=('hg+https://bitbucket.org/decalage/balbuzard')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/balbuzard"
+  cd $pkgname
 
   echo $(hg identify -n).$(hg identify -i) | cut -d ' ' -f 2- | tr -d ' '
 }
 
 package() {
-  cd "$srcdir/balbuzard"
+  cd $pkgname
+
+  _tools="balbuzard bbcrack bbharvest bbtrans"
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/balbuzard"
-  install -dm 755 "$pkgdir/usr/share/doc/balbuzard"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
 
   python2 setup.py install --root="$pkgdir" --optimize=1
 
   cp -a INSTALL.txt README.md balbuzard/README.html balbuzard/README.txt \
-    balbuzard/doc/* "$pkgdir/usr/share/doc/balbuzard"
+    balbuzard/doc/* "$pkgdir/usr/share/doc/$pkgname"
 
   rm -rf INSTALL.txt README.md balbuzard/README.html balbuzard/README.txt \
     balbuzard/doc
 
-  cp -a balbuzard/* "$pkgdir/usr/share/balbuzard"
+  cp -a balbuzard/* "$pkgdir/usr/share/$pkgname"
 
-  local tools="balbuzard bbcrack bbharvest bbtrans"
-
-  for tool in $tools
+  for tool in $_tools
   do
     cat > "$pkgdir/usr/bin/$tool" << EOF
 #!/bin/sh
 cd /usr/share/balbuzard
-exec python2 ${tool}.py "\$@"
+exec python2 $tool.py "\$@"
 EOF
 
     chmod +x "$pkgdir/usr/bin/$tool"
   done
 }
+

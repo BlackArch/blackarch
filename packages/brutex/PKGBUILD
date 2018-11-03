@@ -17,38 +17,37 @@ sha512sums=('SKIP'
             '38418011876b3271ab11a37d59302b8eb37b281f2591d968cb535c26ef935c181b62193c3643ee4c101755f135edfa05c8bfb20e9afb4bd96fed933c9bf68a0e')
 
 pkgver() {
-  cd "$srcdir/BruteX"
+  cd BruteX
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd "$srcdir"
-
   patch -p1 < brutex.patch
 }
 
 package() {
-  cd "$srcdir/BruteX"
+  cd BruteX
 
-  local tools="brutex brutex-masscan"
+  _tools="brutex brutex-masscan"
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/brutex"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 README.md "$pkgdir/usr/share/doc/brutex/README.md"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
 
   rm README.md loot/README.md
 
-  cp -a * "$pkgdir/usr/share/brutex/"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  for i in ${tools}
+  for i in $_tools
   do
-    cat > "$pkgdir/usr/bin/${i}" << EOF
+    cat > "$pkgdir/usr/bin/$i" << EOF
 #!/bin/sh
 cd /usr/share/brutex
-exec bash ${i} "\$@"
+exec bash $i "\$@"
 EOF
-    chmod a+x "$pkgdir/usr/bin/${i}"
+    chmod a+x "$pkgdir/usr/bin/$i"
   done
 }
+
