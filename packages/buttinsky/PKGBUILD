@@ -16,49 +16,49 @@ source=('git+https://github.com/buttinsky/buttinsky.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd buttinsky
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd buttinsky
+  cd $pkgname
 
-  local bins="buttinsky cli netzobparse spawner stack"
+  _bins="buttinsky cli netzobparse spawner stack"
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/buttinsky"
 
-  install -Dm644 COPYING "$pkgdir/usr/share/licenses/buttinsky/LICENSE"
-  install -Dm644 README.md "$pkgdir/usr/share/doc/buttinsky/README.md"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm COPYING README.md
 
-  for bin in $bins
+  for bin in $_bins
   do
-    install -m755 "${bin}.py" "$pkgdir/usr/share/buttinsky/${bin}.py"
+    install -m755 "$bin.py" "$pkgdir/usr/share/buttinsky/$bin.py"
   done
 
-  cp -a * "$pkgdir/usr/share/buttinsky"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  mv "$pkgdir/usr/share/buttinsky/conf/buttinsky.cfg.dist" \
-    "$pkgdir/usr/share/buttinsky/conf/buttinsky.cfg"
+  mv "$pkgdir/usr/share/$pkgname/conf/buttinsky.cfg.dist" \
+    "$pkgdir/usr/share/$pkgname/conf/buttinsky.cfg"
 
   chmod u+rwX,g+rwX,o+rX -R \
-    "$pkgdir/usr/share/buttinsky/"{behaviors,conf,docs,event_loops,logs,modules,protocols,settings}
+    "$pkgdir/usr/share/$pkgname/"{behaviors,conf,docs,event_loops,logs,modules,protocols,settings}
 
   # temporary an exception!
-  chmod 777 "$pkgdir/usr/share/buttinsky/logs"
-  chmod 777 "$pkgdir/usr/share/buttinsky/logs/buttinsky.log"
+  chmod 777 "$pkgdir/usr/share/$pkgname/logs"
+  chmod 777 "$pkgdir/usr/share/$pkgname/logs/buttinsky.log"
 
-  for bin in $bins
+  for bin in $_bins
   do
     cat > "$pkgdir/usr/bin/$bin" << EOF
 #!/bin/sh
-cd /usr/share/buttinsky
-exec python2 ${bin}.py "\${@}"
+cd /usr/share/$pkgname
+exec python2 $bin.py "\$@"
 EOF
-    chmod +x "$pkgdir/usr/bin/${bin}"
+    chmod +x "$pkgdir/usr/bin/$bin"
   done
 }
 
