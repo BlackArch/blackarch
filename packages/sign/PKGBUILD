@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=sign
+pkgver=10.2dc4018
+pkgrel=1
+pkgdesc='Automatically signs an apk with the Android test certificate.'
+arch=('any')
+groups=('blackarch' 'blackarch-mobile' 'blackarch-automation')
+url='https://github.com/appium/sign'
+license=('Apache2')
+depends=('java-runtime-common')
+makedepends=('maven' 'git')
+source=("git+https://github.com/appium/$pkgname.git")
+sha512sums=('SKIP')
+
+build() {
+  cd "$pkgname"
+
+	mvn package
+}
+
+package() {
+  cd $pkgname
+
+	install -dm 755 "$pkgdir/usr/bin"
+	install -dm 755 "$pkgdir/usr/share/licenses/$pkgname"
+	install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
+	install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 readme.md "$pkgdir/usr/share/doc/$pkgname/"
+  install -Dm 644 "license/LICENSE-2.0.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	install -Dm 755 "target/apks-0.0.1-SNAPSHOT.jar" "$pkgdir/usr/share/$pkgname/$pkgname.jar"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec java -jar $pkgname.jar "\${@}"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
