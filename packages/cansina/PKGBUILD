@@ -16,30 +16,31 @@ source=('git+https://github.com/deibit/cansina.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/cansina"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd "$srcdir/cansina"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/cansina"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 -t "$pkgdir/usr/share/cansina/" *.py
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" *.py
 
   for i in core plugins utils
   do
-    install -dm755 "${i}" "${pkgdir}/usr/share/cansina/$i"
-    cp -a --no-preserve=ownership "${i}"/* "$pkgdir/usr/share/cansina/$i"
+    install -dm 755 "$i" "$pkgdir/usr/share/cansina/$i"
+    cp -a --no-preserve=ownership "${i}"/* "$pkgdir/usr/share/$pkgname/$i"
   done
 
-  cat > "$pkgdir/usr/bin/cansina" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/cansina
+cd /usr/share/$pkgname
 exec python2 ./cansina.py "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/cansina"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
+

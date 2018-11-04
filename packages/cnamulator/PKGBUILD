@@ -13,29 +13,28 @@ depends=('glibc' 'go')
 makedepends=('go' 'git')
 source=('git+https://github.com/packetassailant/cnamulator.git')
 sha512sums=('SKIP')
+_url='github.com/packetassailant/cnamulator'
 
 pkgver() {
-  cd "$srcdir/cnamulator"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$srcdir"
+  install -dm 755 src/$_url && rm -rf src/$_url && mv cnamulator src/$_url &&
+    cd src/$_url
 
-  install -dm 755 src/$url && rm -rf src/$url && mv cnamulator src/$url && cd src/$url
-
-  GOPATH="$srcdir" go get -d -t github.com/packetassailant/cnamulator
+  GOPATH="$srcdir" go get -d -t $_url
 }
 
 package() {
-  cd "$srcdir"
-
   install -dm 755 "$pkgdir/usr/bin"
 
-  GOPATH="$srcdir" go build -v github.com/packetassailant/cnamulator
+  GOPATH="$srcdir" go build -v $_url
 
-  install -Dm755 "$srcdir/cnamulator" "$pkgdir/usr/bin/cnamulator"
-  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/cnamulator/README.md"
-  install -Dm644 src/$url/LICENSE "$pkgdir/usr/share/licenses/cnamulator/LICENSE"
+  install -Dm 755 "$srcdir/cnamulator" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 src/$url/README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 src/$url/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
+
