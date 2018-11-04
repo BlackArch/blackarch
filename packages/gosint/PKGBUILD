@@ -10,47 +10,41 @@ arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/Nhoya/gOSINT'
 license=('GPL3')
 depends=('go')
-makedepends=('git')
+makedepends=('git' 'go-pie')
 source=('git+https://github.com/Nhoya/gOSINT.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/gOSINT"
+  cd gOSINT
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-build() {
-  cd "$srcdir"
-}
-
 package() {
-  cd "$srcdir"
-
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/gosint"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  deps='github.com/deckarep/golang-set github.com/nhoya/goPwned'
-  deps="${deps} github.com/jessevdk/go-flags gopkg.in/src-d/go-git.v4"
-  deps="${deps} github.com/jaytaylor/html2text"
-  deps="${deps} gopkg.in/ns3777k/go-shodan.v2/shodan"
-  deps="${deps} github.com/deckarep/golang-set"
-  deps="${deps} github.com/jessevdk/go-flags"
-
+  _deps='github.com/deckarep/golang-set github.com/nhoya/goPwned'
+  _deps="$_deps github.com/jessevdk/go-flags gopkg.in/src-d/go-git.v4"
+  _deps="$_deps github.com/jaytaylor/html2text"
+  _deps="$_deps gopkg.in/ns3777k/go-shodan.v2/shodan"
+  _deps="$_deps github.com/deckarep/golang-set"
+  _deps="$_deps github.com/jessevdk/go-flags"
 
   export GOPATH="$srcdir"
 
-  for d in ${deps}
+  for d in $_deps
   do
-    go get -v -u ${d}
+    go get -v -u $d
   done
 
   cd gOSINT
   go build
 
-  #install -Dm644 config/gOSINT.conf "$HOME/.config/gOSINT.conf"
-  install -Dm644 config/config.json "$HOME/.config/gOSINT.conf"
-  install -Dm755 gOSINT "$pkgdir/usr/bin/gosint"
-  install -Dm644 -t "$pkgdir/usr/share/doc/gosint/" README.md
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/gosint/LICENSE"
+  #install -Dm 644 config/gOSINT.conf "$HOME/.config/gOSINT.conf"
+  install -Dm 644 config/config.json "$HOME/.config/gOSINT.conf"
+  install -Dm 755 gOSINT "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
+
