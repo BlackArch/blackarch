@@ -16,39 +16,40 @@ source=('git+https://github.com/nccgroup/featherduster.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/featherduster"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$srcdir/featherduster"
+  cd $pkgname
 
   python2 setup.py build
 }
 
 package() {
-  cd "$srcdir/featherduster"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/featherduster"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   python2 setup.py install --root="$pkgdir" --optimize=1 --skip-build
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/featherduster" README.md INSTALL.md \
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md INSTALL.md \
     CONTRIBUTING.md
 
   find "$pkgdir" -type f -iname '*.pyc' -exec rm {} + -or -iname '*.pyo' -exec rm {} \;
 
   rm *.md
 
-  cp -a * "$pkgdir/usr/share/featherduster/"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  cat > "$pkgdir/usr/bin/featherduster" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/featherduster
-exec python2 featherduster/featherduster.py "\${@}"
+cd /usr/share/$pkgname
+exec python2 $pkgname/featherduster.py "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/featherduster"
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
+

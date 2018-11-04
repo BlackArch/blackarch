@@ -19,13 +19,13 @@ source=('git+https://github.com/chinoogawa/fbht.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/fbht"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare(){
-  cd "$srcdir/fbht"
+  cd $pkgname
 
   grep -iRl 'python' "$srcdir/fbht" |
   xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;
@@ -33,28 +33,29 @@ prepare(){
 }
 
 package() {
-  cd "$srcdir/fbht"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/fbht"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 "README.md" "$pkgdir/usr/share/doc/fbht/README.md"
-  install -Dm644 License "$pkgdir/usr/share/licenses/fbht/License"
+  install -Dm 644 "README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 License "$pkgdir/usr/share/licenses/$pkgname/License"
 
-  cp -r dumps "$pkgdir/usr/share/fbht/dumps"
-  cp -r logs "$pkgdir/usr/share/fbht/logs"
+  cp -r dumps "$pkgdir/usr/share/$pkgname/dumps"
+  cp -r logs "$pkgdir/usr/share/$pkgname/logs"
 
-  chmod 666 "$pkgdir/usr/share/fbht/logs/error.log"
+  chmod 666 "$pkgdir/usr/share/$pkgname/logs/error.log"
 
-  install -m755 {MyParser,community,database,handlers,main,mainFunc,mainLib}.py \
-    "$pkgdir/usr/share/fbht/"
-  install -m644 fb_db.db "$pkgdir/usr/share/fbht/"
+  install -m 755 {MyParser,community,database,handlers,main,mainFunc,mainLib}.py \
+    "$pkgdir/usr/share/$pkgname/"
+  install -m 644 fb_db.db "$pkgdir/usr/share/$pkgname/"
 
-  cat > "$pkgdir/usr/bin/fbht" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/fbht
+cd /usr/share/$pkgname
 exec python2 main.py "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/fbht"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
+
