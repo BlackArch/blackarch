@@ -15,40 +15,41 @@ source=('git+https://github.com/averagesecurityguy/crack.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/crack"
+  cd crack
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd "$srcdir/crack"
+  cd crack
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/crackserver"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 README.md "$pkgdir/usr/share/licenses/crackserver/README.md"
+  install -Dm644 README.md "$pkgdir/usr/share/licenses/$pkgname/README.md"
 
   rm README.md
 
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/crackserver"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
 
-  local tools="crackserver crackclient"
+  _tools="crackserver crackclient"
 
-  for tool in ${tools}
+  for tool in $_tools
   do
-    cat > "$pkgdir/usr/bin/${tool}" << EOF
+    cat > "$pkgdir/usr/bin/$tool" << EOF
 #!/bin/sh
-cd /usr/share/crackserver
-exec python2 ${tool}.py "\$@"
+cd /usr/share/$pkgname
+exec python2 $tool.py "\$@"
 EOF
-    chmod +x "$pkgdir/usr/bin/${tool}"
+    chmod +x "$pkgdir/usr/bin/$tool"
   done
 
   cat > "$pkgdir/usr/bin/crack-standalone" << EOF
 #!/bin/sh
-cd /usr/share/crackserver
+cd /usr/share/$pkgname
 exec python2 crack.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/crack-standalone"
 }
+

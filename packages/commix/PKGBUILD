@@ -16,14 +16,12 @@ source=('git+https://github.com/stasinopoulos/commix.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/commix"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd "$srcdir"
-
   sed -i '20 i\from os.path import expanduser' commix/src/utils/settings.py
   sed -i \
     's|OUTPUT_DIR = ".output/"|OUTPUT_DIR = expanduser("~") + "/commix-output/"|' \
@@ -33,24 +31,25 @@ prepare() {
 }
 
 package() {
-  cd "$srcdir/commix"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/commix"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/commix/" README.md readme/AUTHOR \
+  install -Dm644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md readme/AUTHOR \
     readme/CHANGELOG.md
-  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/commix/LICENSE.txt"
+  install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
 
   rm -rf README.md readme/
 
-  cp -a * "$pkgdir/usr/share/commix"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  cat > "$pkgdir/usr/bin/commix" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/commix
-exec python2 commix.py "\${@}"
+cd /usr/share/$pkgname
+exec python2 commix.py "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/commix"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
+
