@@ -25,13 +25,13 @@ sha512sums=('SKIP'
 install='empire.install'
 
 pkgver() {
-  cd "$srcdir/Empire"
+  cd Empire
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd "$srcdir/Empire"
+  cd Empire
 
   grep -iRl 'python' . | xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
 
@@ -39,27 +39,28 @@ prepare() {
   # sed -i 's|../data/empire.pem|/usr/share/empire/data/empire.pem|' setup/cert.sh
 
   # temp dirty fix
-  cp -r $srcdir/pyOpenSSL-17.2.0/src/OpenSSL OpenSSL
+  cp -r "$srcdir/pyOpenSSL-17.2.0/src/OpenSSL" OpenSSL
 }
 
 package() {
-  cd "$srcdir/Empire"
+  cd Empire
 
   install -dm 755 "$pkgdir/usr/bin/"
-  install -dm 755 "$pkgdir/usr/share/empire"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/empire/" README.md changelog
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/empire/LICENSE"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md changelog
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm changelog LICENSE README.md
 
-  cp -a * "$pkgdir/usr/share/empire"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  cat > "$pkgdir/usr/bin/empire" << EOF
+  cat > "$pkgdir/usr/bin/$pkgnae" << EOF
 #!/bin/sh
-cd /usr/share/empire/
-exec python2 empire "\${@}"
+cd /usr/share/$pkgname
+exec python2 empire "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/empire"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
+
