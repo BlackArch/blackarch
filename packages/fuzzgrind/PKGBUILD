@@ -10,7 +10,7 @@ arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 depends=('glibc')
 license=('GPL')
 groups=('blackarch' 'blackarch-analysis')
-source=("http://esec-lab.sogeti.com/dotclear/public/fuzzgrind/fuzzgrind_${pkgver}.tar.gz"
+source=("http://esec-lab.sogeti.com/dotclear/public/fuzzgrind/fuzzgrind_$pkgver.tar.gz"
         'stp.tar.gz::https://github.com/stp/stp/tarball/master'
         'http://valgrind.org/downloads/valgrind-3.4.1.tar.bz2'
         'glibc-2.12.patch'
@@ -24,18 +24,18 @@ sha512sums=('bf45d5c854e68273faf9b2138b8c31d2d729c97a'
           '8fbdd3ae81d4a0cb9e3d415f2e492f7529c8a7d0')
 
 prepare() {
-  cd "$srcdir/fuzzgrind/"
+  cd "$pkgname"
 
-  tar --ignore-failed-read -jkxf "$srcdir"/valgrind-3.4.1.tar.bz2
+  tar --ignore-failed-read -jkxf "$srcdir/valgrind-3.4.1.tar.bz2"
 
   cd valgrind-3.4.1
 
-  patch -Np0 -i ${srcdir}/glibc-2.12.patch
-  patch -Np1 -i ${srcdir}/valgrind-3.5.0-stat_h.patch
+  patch -Np0 -i "$srcdir/glibc-2.12.patch"
+  patch -Np1 -i "$srcdir/valgrind-3.5.0-stat_h.patch"
 }
 
 build() {
-  cd "$srcdir/fuzzgrind/valgrind-3.4.1"
+  cd "$pkgname/valgrind-3.4.1"
 
   autoreconf
 
@@ -45,14 +45,15 @@ build() {
 }
 
 package() {
-  cd "$srcdir/fuzzgrind/valgrind-3.4.1"
+  cd "$pkgname/valgrind-3.4.1"
 
-  install -dm 755 $pkgdir/usr/share/fuzzgrind/valgrind
+  install -dm 755 "$pkgdir/usr/share/$pkgname/valgrind"
+
   make DESTDIR="$pkgdir" install
 
-  rm -rf $pkgdir/usr/share/fuzzgrind/valgrind/share/
-  rm -rf $pkgdir/usr/share/fuzzgrind/valgrind/lib/pkgconfig/
-  rm -rf $pkgdir/usr/share/fuzzgrind/valgrind/include/
+  rm -rf "$pkgdir/usr/share/fuzzgrind/valgrind/share/"
+  rm -rf "$pkgdir/usr/share/fuzzgrind/valgrind/lib/pkgconfig/"
+  rm -rf "$pkgdir/usr/share/fuzzgrind/valgrind/include/"
 
   cd "$srcdir/fuzzgrind/testcase"
   make
@@ -62,11 +63,12 @@ package() {
 
   cd "$srcdir/fuzzgrind/"
   sed -i "s:./valgrind-3.4.1/build/bin/valgrind:/usr/share/fuzzgrind/valgrind/bin/valgrind:" fuzz/valgrind.py
-  cp -r testcase fault_detection fuzz session $pkgdir/usr/share/fuzzgrind/
+  cp -r testcase fault_detection fuzz session "$pkgdir/usr/share/fuzzgrind/"
 
-  cd $pkgdir/usr/share/fuzzgrind
+  cd "$pkgdir/usr/share/fuzzgrind"
   install -dm 755 stp/
-  tar -C stp/ -xzf "$srcdir"/stp.tar.gz
+  tar -C stp/ -xzf "$srcdir/stp.tar.gz"
 
   chown root:root stp -R
 }
+
