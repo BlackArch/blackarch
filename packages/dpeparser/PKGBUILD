@@ -15,29 +15,26 @@ source=('http://www.toolswatch.org/dpe/dpeparser.py')
 sha512sums=('f941a536b7eb05f589dbbc1533d07dbb10a50776f197aca5b5158b263e216603e833ce315f73b1f3d0fe59ea10578dcd1059b998ca1db27c0bd4c8c4239b9f27')
 
 prepare() {
-  cd "$srcdir"
-
-  sed -i 's#MydpeDB ="dpe_db.xml"#MydpeDB = "/usr/share/dpeparser/dpe_db.xml"#' dpeparser.py
+  sed -i 's#MydpeDB ="dpe_db.xml"#MydpeDB = "/usr/share/dpeparser/dpe_db.xml"#'\
+    dpeparser.py
 }
 
 build() {
-  cd "$srcdir"
-
   python2 dpeparser.py -u
 }
 
 package() {
-  cd "$srcdir"
-
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/dpeparser"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -m755 dpeparser.py "$pkgdir/usr/share/dpeparser"
-  install -m644 dpe_db.xml "$pkgdir/usr/share/dpeparser"
+  install -m 755 dpeparser.py "$pkgdir/usr/share/$pkgname/"
+  install -m 644 dpe_db.xml "$pkgdir/usr/share/$pkgname/"
 
-  cat > "$pkgdir/usr/bin/dpeparser" <<EOF
-#!/bin/bash
-exec python2 /usr/share/dpeparser/dpeparser.py "\$@"
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec python2 /usr/share/$pkgname/dpeparser.py "\$@"
 EOF
-  chmod 755 "$pkgdir/usr/bin/dpeparser"
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
+

@@ -20,34 +20,33 @@ sha512sums=('SKIP'
             '104c3f6d2dcdc5cd02092ad16783dcd1907ff8fba95c87db609fe5c7307ca4fd97730b5117d6db78d9fd9273c4fd5c963b7d404d08cb8615f3a9fe3864f16c95')
 
 pkgver() {
-  cd "$srcdir/dradis-ce"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd "$srcdir/dradis-ce"
+  cd $pkgname
 
   patch -p1 -i ../dradis-ce.patch
 }
 
 package() {
-  cd "$srcdir"
-
   install -dm 755 "$pkgdir/usr/lib/sysusers.d/" \
-                   "$pkgdir/usr/bin" \
-                   "$pkgdir/usr/share"
+    "$pkgdir/usr/bin" \
+    "$pkgdir/usr/share"
 
-  install -m644 "dradis-ce.sysusers.conf"\
+  install -m 644 "dradis-ce.sysusers.conf"\
     "$pkgdir/usr/lib/sysusers.d/dradis-ce.conf"
 
-  cp -ar "dradis-ce" "$pkgdir/usr/share/dradis-ce"
+  cp -a "dradis-ce" "$pkgdir/usr/share/$pkgname/"
 
-  cat > "$pkgdir/usr/bin/dradis-ce" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/dradis-ce
-exec bundle-2.3 exec rails server \${@}
+cd /usr/share/$pkgname
+exec bundle-2.3 exec rails server "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/dradis-ce"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
+
