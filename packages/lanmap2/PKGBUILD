@@ -17,13 +17,13 @@ source=('git+http://github.com/rflynn/lanmap2.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/lanmap2"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd "$srcdir/lanmap2"
+  cd $pkgname
 
   sed -i 's/DbFile\[\] = .*/DbFile\[\] = "db\/db";/g' src/report.c
 
@@ -40,26 +40,26 @@ prepare() {
 }
 
 build() {
-  cd "$srcdir/lanmap2"
+  cd $pkgname
 
   make all
 }
 
 package () {
-  cd "$srcdir/lanmap2"
+  cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/share/lanmap2/tools"
-  install -dm 755 "$pkgdir/usr/share/doc/lanmap2"
   install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/tools"
+  install -dm 755 "$pkgdir/usr/share/doc/$pkgname/"
 
-  install -m755 "$srcdir/lanmap2/src/cap" "$pkgdir/usr/share/lanmap2"
-  install -m755 "$srcdir/lanmap2/tools/os-graph" \
-    "$pkgdir/usr/share/lanmap2/tools"
-  install -m755 "$srcdir/lanmap2/tools/oui2insert" \
-    "$pkgdir/usr/share/lanmap2/tools"
+  install -m 755 "$srcdir/lanmap2/src/cap" "$pkgdir/usr/share/$pkgname"
+  install -m 755 "$srcdir/lanmap2/tools/os-graph" \
+    "$pkgdir/usr/share/$pkgname/tools"
+  install -m 755 "$srcdir/lanmap2/tools/oui2insert" \
+    "$pkgdir/usr/share/$pkgname/tools"
 
-  cp -a graph web db img "$pkgdir/usr/share/lanmap2"
-  cp -a doc/* ref "$pkgdir/usr/share/doc/lanmap2"
+  cp -a graph web db img "$pkgdir/usr/share/$pkgname/"
+  cp -a doc/* ref "$pkgdir/usr/share/doc/$pkgname/"
 
   cat > "$pkgdir/usr/bin/lanmap2-cap" << EOF
 #!/bin/sh
@@ -69,7 +69,7 @@ if [ \$EUID != 0 ] ; then
   exit 1
 fi
 
-cd /usr/share/lanmap2
+cd /usr/share/$pkgname
 ./cap
 EOF
 
@@ -83,7 +83,7 @@ if [ \$EUID != 0 ] ; then
   exit 1
 fi
 
-cd /usr/share/lanmap2/graph
+cd /usr/share/$pkgname/graph
 
 # Fix PHP.
 tmp=\`mktemp /tmp/lanmap.XXXXXXXX\`
@@ -95,3 +95,4 @@ EOF
 
   chmod +x "$pkgdir/usr/bin/lanmap2-graph"
 }
+

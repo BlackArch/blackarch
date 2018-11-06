@@ -15,22 +15,28 @@ sha512sums=('b7662867c6449c603a65c37e63ce881260dee80989ccb5b71b1e55fa437fb18ac9b
             'SKIP')
 
 build() {
-  cd "$srcdir/libpcap-$pkgver"
+  cd "$pkgname-$pkgver"
+
   ./configure --prefix=/usr --enable-ipv6 --with-libnl
+
   sed -i 's/libpcap\.so/libpcap-1.4.so/g' Makefile
   sed -i 's/^shared: libpcap/shared: libpcap-1.4/' Makefile
+
   make
 }
 
 package() {
-  cd "$srcdir/libpcap-$pkgver"
+  cd "$pkgname-$pkgver"
 
   install -dm 755 "$pkgdir/usr/bin"
-  make "DESTDIR=$pkgdir" install
+
+  make DESTDIR="$pkgdir" install
 
   # backwards compatibility, programs often look for net/bpf.h
   install -dm 755 "$pkgdir/usr/include/net"
+
   cd "$pkgdir/usr/include/net"
+
   ln -s ../pcap-bpf.h bpf.h
 
   # install the license
@@ -41,3 +47,4 @@ package() {
   rm -rf "$pkgdir/usr/bin"
   rm -rf "$pkgdir/usr/include"
 }
+

@@ -15,28 +15,28 @@ source=('git+https://github.com/sduverger/ld-shatner.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/ld-shatner"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd "$srcdir/ld-shatner"
+  cd $pkgname
 
   sed -i 's|ld-shatner.c -o $@|ld-shatner.c -m32 -o $@|' Makefile
 }
 
 build() {
-  cd "$srcdir/ld-shatner"
+  cd $pkgname
 
-  local opt=""
+  _opt=""
 
   gcc -fpie -c obj.c -o obj.o
   ld -pie obj.o -o obj.elf -e func
 
-  opt="-m32"
+  _opt="-m32"
 
-  gcc hooked.s ld-shatner.c ${opt} -o ld-shatner
+  gcc hooked.s ld-shatner.c $_opt -o ld-shatner
 
   gcc interpatch.c -o interpatch
 
@@ -44,15 +44,16 @@ build() {
 }
 
 package() {
-  cd "$srcdir/ld-shatner"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/ld-shatner"
+  install -dm 755 "$pkgdir/usr/share/$pkgnmae"
 
-  cp -a interpatch ld-shatner obj.elf "$pkgdir/usr/share/ld-shatner/"
+  cp -a interpatch ld-shatner obj.elf "$pkgdir/usr/share/$pkgname/"
 
-  install -Dm644 README "$pkgdir/usr/share/doc/ld-shatner/README"
+  install -Dm 644 README "$pkgdir/usr/share/doc/$pkgname/README"
 
-  ln -s "/usr/share/ld-shatner/ld-shatner" "$pkgdir/usr/bin/ld-shatner"
+  ln -s "/usr/share/ld-shatner/ld-shatner" "$pkgdir/usr/bin/$pkgname"
   ln -s "/usr/share/ld-shatner/interpatch" "$pkgdir/usr/bin/interpatch"
 }
+
