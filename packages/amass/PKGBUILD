@@ -2,46 +2,46 @@
 # See COPYING for license details.
 
 pkgname=amass
-pkgver=208.fffcca4
+pkgver=2.8.0
 pkgrel=1
-epoch=1
+epoch=2
+pkgdesc="In-depth subdomain enumeration written in Go"
+arch=('x86_64')
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
-pkgdesc='In-depth subdomain enumeration written in Go.'
-arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
-url='https://github.com/caffix/amass'
-license=('Apache2')
-depends=('go')
-makedepends=('git' 'go-pie')
-source=('git+https://github.com/OWASP/Amass.git')
-sha512sums=('SKIP')
-_url='github.com/caffix/amass'
+url='https://github.com/OWASP/Amass'
+license=('Apache')
+makedepends=('go' 'git')
+source=("https://github.com/OWASP/Amass/archive/$pkgver.tar.gz")
+sha512sums=('c62abe61f21e3fd6506042e3774a960716de677be0f9f2e57c61c8c0075cb4bff8535948f1795dfedab5a4c0d6a229a20f8a17aca579bbf1471639e12ab58a3f')
 
-pkgver() {
-  cd Amass
+prepare() {
+  mkdir -p "gopath/src/github.com/OWASP"
+  ln -rTsf "Amass-$pkgver" "gopath/src/github.com/OWASP/Amass"
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  export GOPATH="$srcdir/gopath"
+  cd "$GOPATH/src/github.com/OWASP/Amass"
+  go get -d ./...
 }
 
 build() {
-  cd Amass/amass
+  export GOPATH="$srcdir/gopath"
+  cd "$GOPATH/src/github.com/OWASP/Amass"
 
-  GOPATH="$srcdir" go get -d $_url
+  go install -v ./...
 }
 
 package() {
-  cd Amass/amass
+  export GOPATH="$srcdir/gopath"
+  cd "$GOPATH/bin"
 
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+	install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  GOPATH="$srcdir" go build -v $_url
+  install -Dm 755 "$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 "$pkgname.netdomains" "$pkgdir/usr/bin/$pkgname.netdomains"
+  install -Dm 755 "$pkgname.viz" "$pkgdir/usr/bin/$pkgname.viz"
+  install -Dm 755 "$pkgname.db" "$pkgdir/usr/bin/$pkgname.db"
+	cp -a --no-preserve=ownership "$GOPATH/src/github.com/OWASP/Amass/"{wordlists/,examples/,snapcraft.yaml} "$pkgdir/usr/share/$pkgname"
 
-  cd ..
-
-  install -Dm 755 amass/amass "$pkgdir/usr/bin/amass"
-  cp -a wordlists examples snapcraft.yaml "$pkgdir/usr/share/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  chmod 644 "$pkgdir/usr/share/$pkgname/"{wordlists/*,examples/*}
+	chmod 644 "$pkgdir/usr/share/$pkgname/"{wordlists/*,examples/*}
 }
 
