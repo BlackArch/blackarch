@@ -2,31 +2,31 @@
 # See COPYING for license details.
 
 pkgname=searchsploit
-_gitname='exploit-database'
-pkgver=2018.09.08
+_gitname=exploitdb
+pkgver=2018.11.08
+_pkgver=$(echo $pkgver | sed 's/\./\-/g')
 pkgrel=1
 groups=('blackarch' 'blackarch-exploitation')
 pkgdesc='The official Exploit Database search tool.'
-url='https://github.com/offensive-security/exploit-database'
+url='https://github.com/offensive-security/exploitdb'
 arch=('any')
-license=('GPL-2.0')
+license=('GPL2')
 depends=('git' 'libxml2')
-source=("https://github.com/offensive-security/${_gitname}/archive/${pkgver//./-}.tar.gz")
-sha512sums=('d53910ca68937b5055a3f697992cb22ab0ef8bf791da25035519f326e040c3a59066f74b75e2d1c0e351e59fcb85002457a57ec4e02bc1fae63f00ace7ad3286')
-install='searchsploit.install'
 options=('!strip')
+source=("https://github.com/offensive-security/$_gitname/archive/$_pkgver.tar.gz")
+sha512sums=('5e354b4181ee49d221be35f2e0634de1d9c66017a34244d9e2a22fecc84a5a6a06cb6964edd536300cb50894e442a5615b62b12e7e1d4bdc7306193d51e27fe7')
+install='searchsploit.install'
 
 package() {
-  cd "${_gitname}-${pkgver//./-}"
+  install -dm 755 $pkgdir/opt $pkgdir/usr/bin
 
-  install -dm 755 ${pkgdir}/opt ${pkgdir}/usr/bin
+  cp -a --no-preserve=ownership $_gitname-$_pkgver $pkgdir/opt/searchsploit
 
-  cp -fr ${srcdir}/${_gitname}-${pkgver//./-} ${pkgdir}/opt/searchsploit
+  sed -i 's|path_array+=(.*)|path_array+=("/opt/searchsploit")|g' \
+    $pkgdir/opt/searchsploit/.searchsploit_rc
 
-  sed -i 's|path_array+=(.*)|path_array+=("/opt/exploit-database")|g' \
-    ${pkgdir}/opt/searchsploit/.searchsploit_rc
+  ln -s /opt/searchsploit/searchsploit $pkgdir/usr/bin/searchsploit
 
-  ln -s /opt/searchsploit/searchsploit ${pkgdir}/usr/bin/searchsploit
-
-  chmod a+x ${pkgdir}/opt/searchsploit/searchsploit
+  chmod a+x $pkgdir/opt/searchsploit/searchsploit
 }
+
