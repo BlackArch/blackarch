@@ -1,70 +1,83 @@
-# $Id: PKGBUILD 266875 2017-11-15 14:29:11Z foutrelis $
-# Maintainer: Sergej Pupykin <pupykin.s+arch@gmail.com>
-# Maintainer: rubenvb vanboxem <dottie> ruben <attie> gmail <dottie> com
-
-_targets="i686-w64-mingw32 x86_64-w64-mingw32"
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
 
 pkgname=mingw-w64-gcc
-pkgver=7.2.1+20171224
-_islver=0.18
-pkgrel=2
-pkgdesc="Cross GCC for the MinGW-w64 cross-compiler"
+pkgver=8.2.0
+_islver=0.19
+pkgrel=1
+pkgdesc='Cross GCC for the MinGW-w64 cross-compiler.'
 arch=('x86_64')
-url="http://gcc.gnu.org"
-license=('GPL' 'LGPL' 'FDL' 'custom')
+url='http://gcc.gnu.org/'
+license=('GPL' 'LGPL' 'FDL' 'custom:unknown')
+groups=('mingw-w64-toolchain' 'mingw-w64')
 depends=('zlib' 'libmpc' 'mingw-w64-crt' 'mingw-w64-binutils'
          'mingw-w64-winpthreads' 'mingw-w64-headers')
-makedepends=("gcc-ada")
-#checkdepends=('dejagnu') # Windows executables could run on Arch through bin_mft and Wine
-optdepends=()
+makedepends=('gcc-ada')
 provides=('mingw-w64-gcc-base')
-replaces=()
-backup=()
 options=('!strip' 'staticlibs' '!emptydirs' '!buildflags')
-source=(https://sources.archlinux.org/other/gcc/gcc-${pkgver/+/-}.tar.xz{,.sig}
-	"http://isl.gforge.inria.fr/isl-${_islver}.tar.bz2")
-validpgpkeys=(F3691687D867B81B51CE07D9BBE43771487328A9) # bpiotrowski@archlinux.org
-sha256sums=('394c416a35dc608e5c9ea5ca902c5b08b51fcbc6b3b39ece05b8eea67033b4a8'
+source=("https://ftp.gnu.org/gnu/gcc/gcc-$pkgver/gcc-$pkgver.tar.xz"{,.sig}
+        "http://isl.gforge.inria.fr/isl-$_islver.tar.bz2")
+sha512sums=('64898a165f67e136d802a92e7633bf1b06c85266027e52127ea025bf5fc2291b5e858288aac0bdba246e6cdf7c6ec88bc8e0e7f3f6f1985f4297710cafde56ed'
             'SKIP'
-            '6b8b0fd7f81d0a957beb3679c81bbb34ccc7568d5682844d8924424a0dadcb1b')
+            '08f4db964d9e02ec8aa9779378ed76e0ddf1d56f81f87664dbf787555ce496cdc87e836f8a51ae137f45e648c604870cce07ee45919eafb549e404afb8f27083')
+validpgpkeys=('F3691687D867B81B51CE07D9BBE43771487328A9'
+              '13975A70E63C361C73AE69EF6EEB81F8981C74C7'
+              '33C235A34C46AA3FFB293709A328C3A2C3C45C06')
+_targets='i686-w64-mingw32 x86_64-w64-mingw32'
 
 prepare() {
-  cd "$srcdir"/gcc
+  ln -sf gcc-${pkgver/+/-} gcc
+
+  cd gcc
+
   # link isl for in-tree builds
-  ln -sf ../isl-${_islver} isl
+  ln -sf "../isl-$_islver" isl
 }
 
 build() {
-  for _target in ${_targets}; do
-    install -dm 755 "$srcdir"/gcc-build-${_target} && cd "$srcdir"/gcc-build-${_target}
+  for t in $_targets
+  do
+    install -dm 755 "$srcdir/gcc-build-$t"
 
-    "$srcdir"/gcc/configure --prefix=/usr --libexecdir=/usr/lib \
-        --target=${_target} \
-        --enable-languages=c,lto,c++,objc,obj-c++,fortran,ada \
-        --enable-shared --enable-static \
-        --enable-threads=posix --enable-fully-dynamic-string --enable-libstdcxx-time=yes \
-        --with-system-zlib --enable-cloog-backend=isl \
-        --enable-lto --disable-dw2-exceptions --enable-libgomp \
-        --disable-multilib --enable-checking=release
+    cd "$srcdir/gcc-build-$t"
+
+    "$srcdir/gcc/"configure --prefix=/usr --libexecdir=/usr/lib \
+      --target=${t} --enable-languages=c,lto,c++,objc,obj-c++,fortran,ada \
+      --enable-shared --enable-static --enable-threads=posix \
+      --enable-fully-dynamic-string --enable-libstdcxx-time=yes \
+      --with-system-zlib --enable-cloog-backend=isl --enable-lto \
+      --disable-dw2-exceptions --enable-libgomp --disable-multilib \
+      --enable-checking=release
+
     make all
   done
 }
 
 package() {
-  for _target in ${_targets}; do
-    cd "$srcdir"/gcc-build-${_target}
+  for t in $_targets
+  do
+    cd "$srcdir/gcc-build-$t"
+
     make DESTDIR="$pkgdir" install
-    ${_target}-strip "$pkgdir"/usr/${_target}/lib/*.dll
-    strip "$pkgdir"/usr/bin/${_target}-*
-    strip "$pkgdir"/usr/lib/gcc/${_target}/${pkgver:0:5}/{cc1*,collect2,gnat1,f951,lto*}
-    ln -s ${_target}-gcc "$pkgdir"/usr/bin/${_target}-cc
+
+    $t-strip "$pkgdir/usr/$t/lib/*.dll"
+
+    strip "$pkgdir/usr/bin/$t-*"
+    strip "$pkgdir/usr/lib/gcc/$t/${pkgver:0:5}/"{cc1*,collect2,gnat1,f951,lto*}
+
+    ln -s "$t-gcc" "$pkgdir/usr/bin/$t-cc"
+
     # mv dlls
-    install -dm 755 "$pkgdir"/usr/${_target}/bin/
-    mv "$pkgdir"/usr/${_target}/lib/*.dll "$pkgdir"/usr/${_target}/bin/
+    install -dm 755 "$pkgdir/usr/$t/bin/"
+
+    mv "$pkgdir/usr/$t/lib/*.dll" "$pkgdir/usr/$t/bin/"
   done
-  strip "$pkgdir"/usr/bin/*
+
+  strip "$pkgdir/usr/bin/"*
+
   # remove unnecessary files
-  rm -r "$pkgdir"/usr/share
-  rm -f "$pkgdir"/usr/lib/libcc1.so*
-  rm -f "$pkgdir"/usr/lib/libcc1.a
+  rm -r "$pkgdir/usr/share"
+  rm -f "$pkgdir/usr/lib/libcc1.so"*
+  rm -f "$pkgdir/usr/lib/libcc1.a"
 }
+

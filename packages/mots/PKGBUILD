@@ -3,7 +3,7 @@
 
 pkgname=mots
 pkgver=5.34017ca
-pkgrel=3
+pkgrel=4
 groups=('blackarch' 'blackarch-sniffer' 'blackarch-networking' 'blackarch-spoof'
         'blackarch-defensive')
 pkgdesc='Man on the Side Attack - experimental packet injection and detection.'
@@ -16,32 +16,33 @@ source=('git+https://github.com/kevinkoo001/MotS.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/MotS"
+  cd MotS
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd "$srcdir/MotS"
+  cd MotS
 
-  local tools="quantumdetect quantuminject"
+  _tools='quantumdetect quantuminject'
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/mots"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/eapeak/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 
   rm README.md
 
-  cp -a * "$pkgdir/usr/share/mots"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  for i in ${tools}
+  for i in $_tools
   do
-    cat > "$pkgdir/usr/bin/${i}" << EOF
+    cat > "$pkgdir/usr/bin/$i" << EOF
 #!/bin/sh
 cd /usr/share/mots
-exec python2 ${i}.py "\$@"
+exec python2 $i.py "\$@"
 EOF
-    chmod a+x "$pkgdir/usr/bin/${i}"
+    chmod a+x "$pkgdir/usr/bin/$i"
   done
 }
+

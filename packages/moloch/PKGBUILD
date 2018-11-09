@@ -15,16 +15,13 @@ depends=('curl' 'file' 'util-linux' 'perl-json' 'perl-libwww' 'libpng' 'python2'
 makedepends=('glib2')
 _dataroot="/usr/share/moloch"
 _yaraver='2.1.0'
-source=("https://github.com/aol/moloch/archive/v${pkgver}.tar.gz"
-"https://github.com/plusvic/yara/archive/v${_yaraver}.tar.gz")
+source=("https://github.com/aol/moloch/archive/v$pkgver.tar.gz"
+"https://github.com/plusvic/yara/archive/v$_yaraver.tar.gz")
 sha512sums=('45b81a613e05a20d6abe622f769abfe9e8807a9678b4cf6e3291c4452a352782f1f8b0f6809771e889305c01032c172787bac0f324ddc214a482cb2effb28c0c'
             '082a603ea648e4d83d45d6e30937c60eb0bf2092fb1c6845103380be12f9b72a05e439403cd08cbccdc598ba1d5cd51d394db3d989d154e95a91317d6d4ff8e5')
 
 prepare() {
-  cd "$srcdir"
-
-  # Change the config location from /data/moloch/etc/ to /etc/moloch/
-  cd "moloch-$pkgver"
+  cd "$pkgname-$pkgver"
 
   sed -i 's|/data/moloch/etc/|/etc/moloch/|g' $(grep -rl '/data/moloch/etc/')
 
@@ -48,8 +45,6 @@ prepare() {
 }
 
 build() {
-  cd "$srcdir"
-
   # Build the static version of yara
   cd "yara-$_yaraver"
 
@@ -67,15 +62,15 @@ build() {
 }
 
 package() {
-  cd "$srcdir/moloch-$pkgver"
+  cd "$pkgname-$pkgver"
 
   make DESTDIR="$pkgdir" install
 
-  install -Dm644 README.rst "$pkgdir/usr/share/doc/moloch/README.rst"
+  install -Dm 644 README.rst "$pkgdir/usr/share/doc/$pkgname/README.rst"
 
   # Install the default config and move the elasticsearch example to the config
   # dir
-  install -Dm644 config.ini "$pkgdir/etc/$pkgname/config.ini"
+  install -Dm 644 config.ini "$pkgdir/etc/$pkgname/config.ini"
   cd "$pkgdir"
   mv ./$_dataroot/db/elasticsearch.yml.sample etc/$pkgname/
 
@@ -90,3 +85,4 @@ package() {
   #  -re 's|#!\s*(/usr)?(/local)?/bin/.*python.*$|#!/usr/bin/env python2|g' \
   #  $(egrep -rl '^\s*#!\s*(/usr)?(/local)?/bin/.*python')
 }
+
