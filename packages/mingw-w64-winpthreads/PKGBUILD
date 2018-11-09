@@ -1,41 +1,47 @@
-# $Id: PKGBUILD 266006 2017-11-09 13:20:35Z spupykin $
-# Maintainer: Sergej Pupykin <pupykin.s+arch@gmail.com>
-# Maintainer: rubenvb vanboxem <dottie> ruben <attie> gmail <dottie> com
-
-_targets="i686-w64-mingw32 x86_64-w64-mingw32"
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
 
 pkgname=mingw-w64-winpthreads
-pkgver=5.0.3
-_pkgver=${pkgver/rc/-rc}
-pkgrel=2
-pkgdesc='MinGW-w64 winpthreads library'
+pkgver=6.0.0
+pkgrel=1
+pkgdesc='MinGW-w64 winpthreads library.'
 arch=('any')
-url='http://mingw-w64.sourceforge.net'
-license=('custom')
-makedepends=('mingw-w64-gcc' 'mingw-w64-binutils' 'mingw-w64-crt')
+url='http://mingw-w64.sourceforge.net/'
+license=('custom:unknown')
+groups=('mingw-w64-toolchain' 'mingw-w64')
+makedepends=('mingw-w64-gcc-base' 'mingw-w64-binutils' 'mingw-w64-crt')
 provides=('mingw-w64-headers-bootstrap')
 conflicts=('mingw-w64-headers-bootstrap')
 replaces=('mingw-w64-headers-bootstrap')
 options=('!strip' '!buildflags' 'staticlibs' '!emptydirs')
-validpgpkeys=('CAF5641F74F7DFBA88AE205693BDB53CD4EBC740')
-source=(https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-release/mingw-w64-v${_pkgver}.tar.bz2{,.sig})
-sha256sums=('2a601db99ef579b9be69c775218ad956a24a09d7dabc9ff6c5bd60da9ccc9cb4'
+source=("https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-release/mingw-w64-v$pkgver.tar.bz2"{,.sig})
+sha512sums=('e3d3663e0cb33a16f90b1a33e81b5a30d26f7e34270b14e865c10068f2a2d32da9ef8cbbb0c3fed9c71429ae11c82152ff3b87d81558929b2a4993dc99cfc11e'
             'SKIP')
+validpgpkeys=('CAF5641F74F7DFBA88AE205693BDB53CD4EBC740')
+_targets="i686-w64-mingw32 x86_64-w64-mingw32"
 
 build() {
-  for _target in ${_targets}; do
-    msg "Building ${_target} winpthreads..."
-    install -dm 755 "$srcdir"/winpthreads-build-${_target} && cd "$srcdir"/winpthreads-build-${_target}
-    "$srcdir"/mingw-w64-v${_pkgver}/mingw-w64-libraries/winpthreads/configure --prefix=/usr/${_target} \
-        --host=${_target} --enable-static --enable-shared
+  for t in $_targets
+  do
+    install -dm 755 "$srcdir/winpthreads-build-$t"
+
+    cd "$srcdir/winpthreads-build-$t"
+
+    "$srcdir/mingw-w64-v$pkgver/mingw-w64-libraries/winpthreads/"configure \
+      --prefix=/usr/$t --host=$t --enable-static --enable-shared
+
     make
   done
 }
 
 package() {
-  for _target in ${_targets}; do
-    cd "$srcdir"/winpthreads-build-${_target}
+  for t in $_targets
+  do
+    cd "$srcdir/winpthreads-build-$t"
+
     make DESTDIR="$pkgdir" install
-    ${_target}-strip --strip-unneeded "$pkgdir"/usr/${_target}/bin/*.dll
+
+    $t-strip --strip-unneeded "$pkgdir"/usr/$t/bin/*.dll
   done
 }
+

@@ -22,14 +22,12 @@ source=('git+https://github.com/tomchop/malcom.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/malcom"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd "$srcdir"
-
   find "$srcdir" -type f -name '*.py' | xargs sed -i \
     's|#!/usr/bin/env python|#!/usr/bin/env python2|'
   find "$srcdir" -type f -name '*.py' | xargs sed -i \
@@ -37,23 +35,24 @@ prepare() {
 }
 
 package() {
-  cd "$srcdir/malcom"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/malcom"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/malcom"
-  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/malcom/LICENSE.md"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
 
-  cat > "$pkgdir/usr/bin/malcom" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/malcom
-if [[ ! -d "/usr/share/malcom/env-malcom" ]] ; then
+if [[ ! -d "/usr/share/$pkgname/env-malcom" ]] ; then
   virtualenv2 --system-site-packages env-malcom
 fi
 source env-malcom/bin/activate
 exec env-malcom/bin/python2 ./malcom.py "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/malcom"
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
+

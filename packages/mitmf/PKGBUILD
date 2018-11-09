@@ -23,44 +23,45 @@ sha512sums=('SKIP'
             'a380c2f2e812efff0ed1f303f91046c4e639e4bb8a8b0f93e17d8e8ac1b7ec1c20c124d2a203d66fc72aaa62f4753de8935e8b365d39a7e2bd90c2c2dfa39376')
 
 pkgver() {
-  cd "$srcdir/MITMf"
+  cd MITMf
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd "$srcdir/MITMf"
+  cd MITMf
 
   grep -iRl 'python' "$srcdir/MITMf" |
   xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
 }
 
 package() {
-  cd "$srcdir/MITMf"
+  cd MITMf
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/mitmf"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 $srcdir/mitmf.tmpfiles.conf \
+  install -Dm 644 "$srcdir/mitmf.tmpfiles.conf" \
     "$pkgdir/usr/lib/tmpfiles.d/mitm.conf"
-  install -Dm644 README.md "$pkgdir/usr/share/doc/mitmf/README.md"
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/mitmf/LICENSE"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm README.md LICENSE
 
-  cp -a * "$pkgdir/usr/share/mitmf"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
   find ./ -type d -exec chmod 755 {} \+
   find ./ -type f -exec chmod 644 {} \+
 
   # symlink current build of bdf to mitmf dir
-  cp -a /usr/share/backdoor-factory/* "$pkgdir/usr/share/mitmf/libs/bdfactory"
+  cp -a /usr/share/backdoor-factory/* "$pkgdir/usr/share/$pkgname/libs/bdfactory"
 
-  cat > "$pkgdir/usr/bin/mitmf" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/mitmf
+cd /usr/share/$pkgname
 exec python2 mitmf.py "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/mitmf"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
+

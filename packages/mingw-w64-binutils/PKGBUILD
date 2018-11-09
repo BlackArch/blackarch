@@ -1,49 +1,52 @@
-# $Id: PKGBUILD 266875 2017-11-15 14:29:11Z foutrelis $
-# Maintainer: Sergej Pupykin <pupykin.s+arch@gmail.com>
-# Maintainer: rubenvb vanboxem <dottie> ruben <attie> gmail <dottie> com
-
-_targets="i686-w64-mingw32 x86_64-w64-mingw32"
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
 
 pkgname=mingw-w64-binutils
-pkgver=2.29
-pkgrel=2
-pkgdesc="Cross binutils for the MinGW-w64 cross-compiler"
+pkgver=2.31.1
+pkgrel=1
+pkgdesc='Cross binutils for the MinGW-w64 cross-compiler.'
 arch=('x86_64')
-url="http://www.gnu.org/software/binutils"
+url='http://www.gnu.org/software/binutils'
 license=('GPL')
 depends=('zlib')
 options=('!libtool' '!emptydirs')
-validpgpkeys=('EAF1C276A747E9ED86210CBAC3126D3B4AE55E93')
-source=("https://ftp.gnu.org/gnu/binutils/binutils-${pkgver}.tar.gz"{,.sig})
-sha256sums=('172e8c89472cf52712fd23a9f14e9bca6182727fb45b0f8f482652a83d5a11b4'
+source=("https://ftp.gnu.org/gnu/binutils/binutils-$pkgver.tar.gz"{,.sig})
+sha512sums=('6e8867cacf58a6f79122ccee00afbb894c1709375580afc14b523dc7d123029bf2532f9f71e4c6c7072b2d708cc97a370c922d80fa17b3ee3ddeb49110cd749b'
             'SKIP')
+validpgpkeys=('3A24BC1E8FB409FA9F14371813FCEF89DD9E3C4F')
+_targets='i686-w64-mingw32 x86_64-w64-mingw32'
 
 prepare() {
-  cd "$srcdir"/binutils-${pkgver}
+  cd "binutils-$pkgver"
+
   #do not install libiberty
   sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in
+
   # hack! - libiberty configure tests for header files using "$CPP $CPPFLAGS"
   sed -i "/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/" libiberty/configure
 }
 
 build() {
-  for _target in $_targets; do
-    msg "Building ${_target} cross binutils"
-    install -dm 755 "$srcdir"/binutils-${_target} && cd "${srcdir}/binutils-${_target}"
-    "$srcdir"/binutils-${pkgver}/configure --prefix=/usr \
-        --target=${_target} \
-        --infodir=/usr/share/info/${_target} \
-        --enable-lto --enable-plugins \
-        --disable-multilib --disable-nls \
-        --disable-werror
+  for t in $_targets
+  do
+    install -dm 755 "binutils-$t"
+
+    cd "binutils-$t"
+
+    "$srcdir/binutils-$pkgver/"configure --prefix=/usr --target=$t \
+      --infodir=/usr/share/info/$t --enable-lto --enable-plugins \
+      --disable-multilib --disable-nls --disable-werror
+
      make
   done
 }
 
 package() {
-  for _target in ${_targets}; do
-    msg "Installing ${_target} cross binutils"
-    cd "$srcdir"/binutils-${_target}
+  for t in $_targets
+  do
+    cd "binutils-$t"
+
     make DESTDIR="$pkgdir" install
   done
 }
+
