@@ -2,39 +2,36 @@
 # See COPYING for license details.
 
 pkgname=backdoor-factory
-pkgver=200.14b87fa
+pkgver=3.4.2
 pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-backdoor' 'blackarch-binary')
 pkgdesc='Patch win32/64 binaries with shellcode.'
 url='https://github.com/secretsquirrel/the-backdoor-factory'
 arch=('any')
-license=('GPL3')
-depends=('python2' 'python2-pefile' 'python2-capstone')
-makedepends=('git')
-source=('git+https://github.com/secretsquirrel/the-backdoor-factory.git')
-sha512sums=('SKIP')
-
-pkgver() {
-  cd the-backdoor-factory
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
+license=('BSD3')
+depends=('python2' 'python2-capstone' 'python2-pefile')
+options=('!strip')
+source=("https://github.com/secretsquirrel/the-backdoor-factory/archive/$pkgver.tar.gz")
+sha512sums=('7ef4ddb0de671f4ef60b6c787ed2d22e901bad96fd738b232dcbe6df58c17baee60178027ec098d1e8f92a7ecb9cfe3ce2948b4a6b054106880204eddb0deda4')
+_dir_name_=the-backdoor-factory
 
 package() {
-  cd the-backdoor-factory
+  cd $_dir_name_-$pkgver
 
   install -dm 755 "$pkgdir/usr/bin/"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 644 -t README.md "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm README.md
+  rm COPYING LICENSE.txt README.md
 
-  cp -a * "$pkgdir/usr/share/$pkgname"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-exec python2 /usr/share/$pkgname/backdoor.py "\$@"
+exec python2 /usr/share/backdoor-factory/backdoor.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
