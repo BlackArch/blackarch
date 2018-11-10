@@ -14,8 +14,6 @@ source=("http://downloads.sourceforge.net/project/peachfuzz/Peach/3.1%20Nightly/
 sha512sums=('cbebed85ee67f87d94f2d6eeae27752021d5c7ca')
 
 prepare() {
-  cd "$srcdir/"
-
   sed -i "s|'win32', 'linux', 'darwin'|'linux'|" \
     "build/config/doc.py"
 
@@ -29,29 +27,28 @@ prepare() {
 }
 
 package() {
-  cd "$srcdir/"
-
   python2 ./waf configure
   python2 ./waf build --variant=release
-  python2 ./waf install --variant=release --destdir="$pkgdir/usr/share/peach"
+  python2 ./waf install --variant=release --destdir="$pkgdir/usr/share/$pkgname"
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/peach"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   if [ "$CARCH" == i686 ]; then
-    mv "$pkgdir/usr/share/peach/output/linux_x86_release/bin"/* \
-      "$pkgdir/usr/share/peach/"
+    mv "$pkgdir/usr/share/$pkgname/output/linux_x86_release/bin"/* \
+      "$pkgdir/usr/share/$pkgname/"
   else
-    mv "$pkgdir/usr/share/peach/output/linux_x86_64_release/bin"/* \
-      "$pkgdir/usr/share/peach/"
+    mv "$pkgdir/usr/share/$pkgname/output/linux_x86_64_release/bin"/* \
+      "$pkgdir/usr/share/$pkgname/"
   fi
 
-  rm -rf "$pkgdir/usr/share/peach/output"
+  rm -rf "$pkgdir/usr/share/$pkgname/output"
 
-cat > "$pkgdir/usr/bin/peach" << EOF
+cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-  exec mono /usr/share/peach/peach.exe "\$@"
+  exec mono /usr/share/$pkgname/peach.exe "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/peach"
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
+

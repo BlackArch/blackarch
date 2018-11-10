@@ -15,31 +15,30 @@ source=('git+https://github.com/lightos/Panoptic.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/Panoptic"
+  cd Panoptic
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd "$srcdir"
-
   grep -iRl 'python' "$srcdir/Panoptic" |
   xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
 }
 
 package() {
-  cd "$srcdir/Panoptic"
+  cd Panoptic
 
-  install -dm 755 "$pkgdir/usr/share/panoptic"
   install -dm 755 "$pkgdir/usr/bin/"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/panoptic"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
 
-cat > "$pkgdir/usr/bin/panoptic" << EOF
+cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/panoptic/
+cd /usr/share/$pkgname/
 exec python2 panoptic.py "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/panoptic"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
+
