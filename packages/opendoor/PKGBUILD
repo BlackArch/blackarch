@@ -3,7 +3,7 @@
 
 pkgname=opendoor
 pkgver=384.a728d2f
-pkgrel=2
+pkgrel=3
 pkgdesc='OWASP WEB Directory Scanner.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
 arch=('any')
@@ -16,44 +16,31 @@ source=('git+https://github.com/stanislav-web/OpenDoor.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/OpenDoor"
+  cd OpenDoor
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-build() {
-  cd "$srcdir/OpenDoor"
-
-  #python setup.py build
-}
-
 package() {
-  cd "$srcdir/OpenDoor"
+  cd OpenDoor
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/opendoor"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  #python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
-
-  cp -a * "$pkgdir/usr/share/opendoor/"
-
-  install -Dm644 -t "$pkgdir/usr/share/doc/opendoor/" README.md README.rst \
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md README.rst \
     CHANGELOG.md
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/opendoor/LICENSE"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm README.* CHANGELOG.md LICENSE
 
-  #mv "$pkgdir/usr/bin/opendoor.py" "$pkgdir/usr/bin/opendoor"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  #rm "$pkgdir/usr/lib/python3.6/site-packages/tests/__init__."{py,pyc,pyo}
-
-  #rm -rf "${pkgdir}/usr/lib/python3.6/site-packages/tests/"
-
-  cat > "$pkgdir/usr/bin/opendoor" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/opendoor
-exec python3 opendoor.py "\${@}"
+cd /usr/share/$pkgname
+exec python3 opendoor.py "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/opendoor"
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
+

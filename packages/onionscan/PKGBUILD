@@ -10,36 +10,33 @@ arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/s-rah/onionscan'
 license=('MIT')
 depends=('glibc' 'go' 'libexif')
-makedepends=('go' 'git')
+makedepends=('go-pie' 'git')
 source=('git+https://github.com/s-rah/onionscan.git')
 sha512sums=('SKIP')
-url='github.com/s-rah/onionscan'
+_url='github.com/s-rah/onionscan'
 
 pkgver() {
-  cd "$srcdir/onionscan"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$srcdir"
+  install -dm 755 src/$_url && rm -rf src/$_url && mv onionscan src/$_url &&
+    cd src/$_url
 
-  install -dm 755 src/${url} && rm -rf src/${url} && mv onionscan src/${url} && \
-    cd src/${url}
-
-  GOPATH="$srcdir" go get -d -t ${url}
+  GOPATH="$srcdir" go get -d -t $_url
 }
 
 package() {
-  cd "$srcdir"
-
   install -dm 755 "$pkgdir/usr/bin"
 
-  GOPATH="$srcdir" go build -v ${url}
+  GOPATH="$srcdir" go build -v $_url
 
-  install -Dm755 "$srcdir/onionscan" "$pkgdir/usr/bin/onionscan"
-  install -Dm644 src/${url}/README.md \
-    "$pkgdir/usr/share/doc/onionscan/README.md"
-  install -Dm644 src/${url}/LICENSE \
-    "$pkgdir/usr/share/licenses/onionscan/LICENSE"
+  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 "src/$_url/README.md" \
+    "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 "src/$_url/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
+
