@@ -31,26 +31,27 @@ sha512sums=('SKIP'
           '0f6f81c2ce46bfd3b3df88986d8ee3c184dd7a88')
 
 pkgver() {
-  cd "$srcdir/owtf"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd "$srcdir/owtf"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/owtf"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 "$srcdir"/LICENSE "$pkgdir/usr/share/licenses/owtf/LICENSE"
+  install -Dm 644 "$srcdir/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  cp -a --no-preserve=owner * "$pkgdir/usr/share/owtf"
+  cp -a --no-preserve=owner * "$pkgdir/usr/share/$pkgname"
 
   install -Dm755 "$srcdir/ssl-cipher-check.pl" \
-    "$pkgdir/usr/share/owtf/tools/restricted/ssl/ssl-cipher-check"
+    "$pkgdir/usr/share/$pkgname/tools/restricted/ssl/ssl-cipher-check"
 
   install -Dm755 "$srcdir/BIG-IP_cookie_decoder.py" \
-    "$pkgdir/usr/share/owtf/tools/restricted/decoding/cookies"
+    "$pkgdir/usr/share/$pkgname/tools/restricted/decoding/cookies"
 
   patch -Np1 -i "$srcdir/default.cfg.patch"
 
@@ -59,11 +60,12 @@ package() {
     -e "s|#![ ]*/bin/python$|#!/usr/bin/python2|" \
     $(find $pkgdir -name '*.py')
 
-  cat > "$pkgdir/usr/bin/owtf" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/owtf
+cd /usr/share/$pkgname
 exec python2 ./owtf.py "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/owtf"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
+
