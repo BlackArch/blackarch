@@ -16,28 +16,31 @@ source=("http://www.immunitysec.com/downloads/SPIKE${pkgver}.tgz")
 sha512sums=('733d788dfb0558bb1fa8e083e7dca095f188cbc65d7bb94349dd487a84a627937b2dea5fb32d16272deea8d464085b8c6efc374ffd6806710106358d873439e2')
 
 prepare() {
-  cd $srcdir/SPIKE/SPIKE/src
+  cd SPIKE/SPIKE/src
+
   sed -i 's|/usr/bin/python|/usr/bin/python2|g' SPIKE_Console.py
 }
 
 build() {
-  cd $srcdir/SPIKE/SPIKE/src
+  cd SPIKE/SPIKE/src
+
   aclocal
   automake --add-missing
   autoconf
+
   ./configure --prefix=/usr
+
   make
 }
 
 package() {
-  cd $srcdir/SPIKE/SPIKE/src
+  cd SPIKE/SPIKE/src
 
-  # Create directory structure.
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/lib"
-  install -dm 755 "$pkgdir/usr/include/spike"
-  install -dm 755 "$pkgdir/usr/share/spike"
-  install -dm 755 "$pkgdir/usr/share/doc/spike"
+  install -dm 755 "$pkgdir/usr/include/$pkgname"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
 
   # Install binaries.
   # The package doesn't provide a decent method of installation.
@@ -48,21 +51,18 @@ package() {
     post_spike quake quakeserver sendmsrpc ss_spike statd_spike sunrpcfuzz \
     webfuzz x11_spike
   do
-    install -m755 "$bin" "$pkgdir/usr/bin/spike-${bin/_/-}"
+    install -m 755 "$bin" "$pkgdir/usr/bin/$pkgname-${bin/_/-}"
   done
 
-  # Install libraries.
-  install -m755 *.so "$pkgdir/usr/lib/"
+  install -m 755 *.so "$pkgdir/usr/lib/"
 
   cd $srcdir/SPIKE/SPIKE
 
-  # Install includes.
-  install -m644 include/* "$pkgdir/usr/include/spike"
+  install -m 644 include/* "$pkgdir/usr/include/$pkgname"
+  install -m 644 *.txt documentation/* \
+          "$pkgdir/usr/share/doc/$pkgname"
 
-  # Install documentation.
-  install -m644 *.txt documentation/* \
-          $pkgdir/usr/share/doc/spike
-
-  # Install data.
-  cp --no-preserve=ownership -R dcedump data encrypted "$pkgdir/usr/share/spike"
+  cp --no-preserve=ownership -R dcedump data encrypted \
+    "$pkgdir/usr/share/$pkgname/"
 }
+

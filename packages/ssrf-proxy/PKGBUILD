@@ -16,38 +16,39 @@ install='ssrf-proxy.install'
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/ssrf_proxy"
+  cd ssrf_proxy
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$srcdir/ssrf_proxy"
+  cd ssrf_proxy
 
   gem build ssrf_proxy.gemspec
 }
 
 package() {
-  cd "$srcdir/ssrf_proxy"
+  cd ssrf_proxy
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/ssrf-proxy"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  local _gemdir="$(ruby -e'puts Gem.default_dir')"
+  _gemdir="$(ruby -e'puts Gem.default_dir')"
 
   gem install --ignore-dependencies --no-user-install -n "$pkgdir/usr/bin" \
     -i "$pkgdir/$_gemdir" ssrf_proxy*.gem
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/ssrf-proxy" README.md
-  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/ssrf-proxy/LICENSE.md"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
 
-  cp -a * "$pkgdir/usr/share/ssrf-proxy"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  cat > "$pkgdir/usr/bin/ssrf-proxy" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/ssrf-proxy
-exec ruby bin/ssrf-proxy "\${@}"
+cd /usr/share/$pkgname
+exec ruby bin/$pkgname "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/ssrf-proxy"
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
+

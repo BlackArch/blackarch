@@ -17,40 +17,41 @@ source=('git+https://github.com/Pepelux/sippts.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/sippts"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd "$srcdir/sippts"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/sippts"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/sippts/" README.txt
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.txt
 
   rm README.txt
 
-  cp -a * "$pkgdir/usr/share/sippts/"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
   for i in *.pl
   do
-    if [ "${i}" = "sipcrack.pl" ]
+    if [ "$i" = "sipcrack.pl" ]
     then
-      cat > "$pkgdir/usr/bin/"`echo ${i} | sed 's/.pl//'`"-sippts" << EOF
+      cat > "$pkgdir/usr/bin/"`echo $i | sed 's/.pl//'`"-sippts" << EOF
 #!/bin/sh
-cd /usr/share/sippts
-exec perl ${i} "\${@}"
+cd /usr/share/$pkgname
+exec perl $i "\$@"
 EOF
-      chmod a+x "$pkgdir/usr/bin/"`echo ${i} | sed 's/.pl//'`"-sippts"
+      chmod a+x "$pkgdir/usr/bin/"`echo $i | sed 's/.pl//'`"-sippts"
     else
-      cat > "$pkgdir/usr/bin/"`echo ${i} | sed 's/.pl//'` << EOF
+      cat > "$pkgdir/usr/bin/"`echo $i | sed 's/.pl//'` << EOF
 #!/bin/sh
-cd /usr/share/sippts
-exec perl ${i} "\${@}"
+cd /usr/share/$pkgname
+exec perl $i "\$@"
 EOF
-      chmod a+x "$pkgdir/usr/bin/"`echo ${i} | sed 's/.pl//'`
+      chmod a+x "$pkgdir/usr/bin/"`echo $i | sed 's/.pl//'`
     fi
   done
 }
+

@@ -10,32 +10,31 @@ arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/packetassailant/sipbrute'
 license=('MIT')
 depends=('glibc' 'go')
-makedepends=('go' 'git')
+makedepends=('go-pie' 'git')
 source=('git+https://github.com/packetassailant/sipbrute.git')
 sha512sums=('SKIP')
+_url='github.com/packetassailant/sipbrute'
 
 pkgver() {
-  cd "$srcdir/sipbrute"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$srcdir"
+  install -dm 755 src/$_url && rm -rf src/$_url && mv sipbrute src/$_url &&
+    cd src/$_url
 
-  install -dm 755 src/$url && rm -rf src/$url && mv sipbrute src/$url && cd src/$url
-
-  GOPATH="$srcdir" go get -d -t github.com/packetassailant/sipbrute
+  GOPATH="$srcdir" go get -d -t $_url
 }
 
 package() {
-  cd "$srcdir"
-
   install -dm 755 "$pkgdir/usr/bin"
 
-  GOPATH="$srcdir" go build -v github.com/packetassailant/sipbrute
+  GOPATH="$srcdir" go build -v $_url
 
-  install -Dm755 "$srcdir/sipbrute" "$pkgdir/usr/bin/sipbrute"
-  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/sipbrute/README.md"
-  install -Dm644 src/$url/LICENSE "$pkgdir/usr/share/licenses/sipbrute/LICENSE"
+  install -Dm 755 "$srcdir/sipbrute" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 src/$url/README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 src/$url/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
+

@@ -20,7 +20,7 @@ backup=('etc/conf.d/snort'
         'etc/snort/classification.config')
 options=('!makeflags' '!libtool')
 install='snort.install'
-source=("https://www.snort.org/downloads/snort/snort-${pkgver}.tar.gz"
+source=("https://www.snort.org/downloads/snort/snort-$pkgver.tar.gz"
         'http://rules.emergingthreats.net/open/snort-2.9.0/emerging.rules.tar.gz'
         'snort'
         'snort.conf.d'
@@ -34,14 +34,11 @@ sha512sums=('7d3b7690694556512a6a43463529626f4ace4f85259ac7f50c6aa095bc3d65eca22
             'bf7c45400c955277cc3e460f9b9022cb6f8d1d21e38abdcd538dd95db8f92f475279a9947a5d31cb0b5aa3782fdd080939d5c69a36aeab7fa0428d5745a4d151')
 
 prepare() {
-  cd "$srcdir/"
-
-  # temp fix for the fucking glibc upgrade by arch community...
   patch -p1 < configure.patch
 }
 
 build() {
-  cd "$srcdir/snort-$pkgver"
+  cd "$pkgname-$pkgver"
 
   ./configure --prefix=/usr --sysconfdir=/etc/snort \
     --with-libpcap-includes=/usr/include/pcap \
@@ -51,25 +48,24 @@ build() {
 }
 
 package() {
-  cd "$srcdir/snort-$pkgver"
+  cd "$pkgname-$pkgver"
 
   make DESTDIR="$pkgdir" install
 
-  # Base directories.
   install -dm 755 "$pkgdir/etc/rc.d"
-  install -dm 755 "$pkgdir/etc/snort/rules"
+  install -dm 755 "$pkgdir/etc/$pkgname/rules"
   install -dm 755 "$pkgdir/var/log/snort"
 
-  install -Dm644 etc/{*.conf*,*.map} "$pkgdir/etc/snort/"
-  install -Dm644 "$srcdir/snort.conf.d" "$pkgdir/etc/conf.d/snort"
-  install -Dm755 "$srcdir/snort" "$pkgdir/etc/rc.d/snort"
+  install -Dm 644 etc/{*.conf*,*.map} "$pkgdir/etc/$pkgname/"
+  install -Dm 644 "$srcdir/snort.conf.d" "$pkgdir/etc/conf.d/$pkgname"
+  install -Dm 755 "$srcdir/snort" "$pkgdir/etc/rc.d/$pkgname"
 
-  # Service file.
-  install -Dm644 ../snort.service "$pkgdir/usr/lib/systemd/system/snort.service"
+  install -Dm 644 ../snort.service "$pkgdir/usr/lib/systemd/system/snort.service"
 
-  sed -i 's#/usr/local/lib/#/usr/lib/#' "$pkgdir/etc/snort/snort.conf"
+  sed -i 's#/usr/local/lib/#/usr/lib/#' "$pkgdir/etc/$pkgname/snort.conf"
 
   # Emerging threats rules.
-  echo 'include $RULE_PATH/emerging.conf' >> "${pkgdir}/etc/snort/snort.conf"
-  cp "$srcdir/rules"/* "$pkgdir/etc/snort/rules"
+  echo 'include $RULE_PATH/emerging.conf' >> "$pkgdir/etc/$pkgname/snort.conf"
+  cp "$srcdir/rules"/* "$pkgdir/etc/$pkgname/rules"
 }
+
