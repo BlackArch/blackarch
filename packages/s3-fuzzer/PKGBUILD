@@ -10,38 +10,40 @@ arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/petermbenjamin/s3-fuzzer'
 license=('BSD')
 depends=('go')
-makedepends=('git')
+makedepends=('git' 'go-pie')
 source=('git+https://github.com/petermbenjamin/s3-fuzzer.git')
 sha512sums=('SKIP')
+_url='github.com/petermbenjamin/s3-fuzzer'
 
 pkgver() {
-  cd "$srcdir/s3-fuzzer"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd "$srcdir/s3-fuzzer"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/s3-fuzzer"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  export GOPATH="$pkgdir/usr/share/s3-fuzzer"
+  export GOPATH="$pkgdir/usr/share/$pkgname"
 
-  go get -u -v github.com/petermbenjamin/s3-fuzzer
+  go get -u -v $_url
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/s3-fuzzer/" README.md
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/s3-fuzzer/LICENSE"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm README.md LICENSE
 
-  cp -a * "$pkgdir/usr/share/s3-fuzzer/"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  cat > "$pkgdir/usr/bin/s3-fuzzer" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-export GOPATH=/usr/share/s3-fuzzer/
-exec /usr/share/s3-fuzzer/bin/s3-fuzzer "\${@}"
+export GOPATH=/usr/share/$pkgname/
+exec /usr/share/s3-fuzzer/bin/$pkgname "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/s3-fuzzer"
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
+

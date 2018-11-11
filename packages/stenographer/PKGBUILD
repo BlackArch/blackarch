@@ -15,32 +15,30 @@ makedepends=('go' 'git' 'mercurial')
 url='https://github.com/google/stenographer'
 source=('git+https://github.com/google/stenographer.git')
 sha512sums=('SKIP')
+_url='github.com/google/stenographer'
 
 pkgver() {
-  cd "$srcdir/stenographer"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$srcdir"
+  install -dm 755 src/$_url && rm -rf src/$_url && mv stenographer src/$_url &&
+    cd src/$_url
 
-  install -dm 755 src/$url && rm -rf src/$url && mv stenographer src/$url && \
-    cd src/$url
-
-  GOPATH="$srcdir" go get -d -t github.com/google/stenographer
+  GOPATH="$srcdir" go get -d -t $_url
 }
 
 package() {
-  cd "$srcdir"
-
   install -dm 755 "$pkgdir/usr/bin"
 
-  GOPATH="$srcdir" go build -v github.com/google/stenographer
+  GOPATH="$srcdir" go build -v $_url
 
-  install -Dm755 "$srcdir/stenographer" "$pkgdir/usr/bin/stenographer"
-  install -Dm644 src/$url/README.md \
-    "$pkgdir/usr/share/doc/stenographer/README.md"
-  install -Dm644 src/$url/LICENSE \
-    "$pkgdir/usr/share/licenses/stenographer/LICENSE"
+  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 "src/$url/README.md" \
+    "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 "src/$url/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
+

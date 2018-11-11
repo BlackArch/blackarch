@@ -10,31 +10,30 @@ arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/BishopFox/spfmap'
 license=('custom:unknown')
 depends=('glibc' 'go')
-makedepends=('go' 'git')
+makedepends=('go-pie' 'git')
 source=('git+https://github.com/BishopFox/spfmap')
 sha512sums=('SKIP')
+_url='github.com/BishopFox/spfmap'
 
 pkgver() {
-  cd "$srcdir/spfmap"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$srcdir"
+  install -dm 755 src/$_url && rm -rf src/$_url && mv spfmap src/$_url &&
+    cd src/$_url
 
-  install -dm 755 src/$url && rm -rf src/$url && mv spfmap src/$url && cd src/$url
-
-  GOPATH="$srcdir" go get -d -t $url
+  GOPATH="$srcdir" go get -d -t $_url
 }
 
 package() {
-  cd "$srcdir"
-
   install -dm 755 "$pkgdir/usr/bin"
 
-  GOPATH="$srcdir" go build -v $url
+  GOPATH="$srcdir" go build -v $_url
 
-  install -Dm755 "$srcdir/spfmap" "$pkgdir/usr/bin/spfmap"
-  install -Dm644 src/$url/README.md "$pkgdir/usr/share/doc/spfmap/README.md"
+  install -Dm755 "$srcdir/spfmap" "$pkgdir/usr/bin/$pkgname"
+  install -Dm644 "src/$url/README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
 }
+

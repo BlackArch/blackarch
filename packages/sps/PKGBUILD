@@ -14,7 +14,7 @@ source=("https://sites.google.com/site/simplepacketsender/sps-${pkgver}.tar.gz")
 sha512sums=('2e35bcc94137bb1cd6388c3e4ca7b560662726c55239fe511369941bc789327740f36cc307a0da4ddbe634d6a9e907024cf600db86f8b18f3d3d8cd24c2e1e9a')
 
 build() {
-  cd "$srcdir/sps-$pkgver"
+  cd "$pkgname-$pkgver"
 
   case $CARCH in
     "x86_64") cd "$srcdir/sps-$pkgver/src64" ;;
@@ -25,29 +25,30 @@ build() {
 }
 
 package() {
-  cd "$srcdir/sps-$pkgver"
+  cd "$pkgname-$pkgver"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/sps"
 
   case $CARCH in
     "x86_64") cd "$srcdir/sps-$pkgver/src64" ;;
     *) cd "$srcdir/sps-$pkgver/src32"
   esac
 
-  install -Dm744 "COPYING" "$pkgdir/usr/share/licenses/sps/COPYING"
+  install -Dm 744 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/sps"
+  cp -a *.ui *.txt *.csv sps "$pkgdir/usr/share/$pkgname/"
 
-  cp -a *.ui *.txt *.csv sps "$pkgdir/usr/share/sps"
-
-  cat > "$pkgdir/usr/bin/sps" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/sps/
+cd /usr/share/$pkgname
 exec ./sps "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/sps"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 
   chmod 644 "$pkgdir"/usr/share/sps/*.ui
   chmod 644 "$pkgdir"/usr/share/sps/*.txt
   chmod 644 "$pkgdir"/usr/share/sps/*.csv
 }
+

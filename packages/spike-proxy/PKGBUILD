@@ -4,36 +4,40 @@
 pkgname=spike-proxy
 pkgver=148
 pkgrel=9
-pkgdesc="A Proxy for detecting vulnerabilities in web applications"
+pkgdesc='A Proxy for detecting vulnerabilities in web applications.'
 arch=('any')
-url="http://www.immunitysec.com/resources-freesoftware.shtml"
+url='http://www.immunitysec.com/resources-freesoftware.shtml'
 license=('GPL')
 groups=('blackarch' 'blackarch-webapp')
-depends=("python2" "python2-pyopenssl" "bash")
-source=(http://www.immunitysec.com/downloads/SP148.tgz
-        fix-encoding.patch)
+depends=('python2' 'python2-pyopenssl' 'bash')
+source=("http://www.immunitysec.com/downloads/SP$pkgver.tgz"
+        'fix-encoding.patch')
 sha512sums=('dd420dbd0287f1f238da1af53289f46acf98be64fdac0f481f27d24b8e0109ee406c6edfd3fa2af2fa90e247c200bffa3de5dc550c6720ff13b39d88ef9dce5a'
             'c668f4b888dfe1617787d1bdd86c364bf05d54f9fc16fa1fe83389dbcf4ecf39b0b171d2cedc5ce0ddca14df3a8c97b7eaf65c53a2d4129f698e89d923776522')
 
 prepare(){
-  cd "$srcdir/spkproxy"
-  patch -Np1 -i $srcdir/fix-encoding.patch
+  cd spkproxy
+
+  patch -Np1 -i "$srcdir/fix-encoding.patch"
 }
 
 package() {
-  cd "$srcdir/spkproxy"
+  cd spkproxy
 
-  # Base directories
-  install -dm 755 $pkgdir/usr/share/spike-proxy
-  install -dm 755 $pkgdir/usr/share/doc/spike-proxy
-  install -dm 755 $pkgdir/usr/bin
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
 
-  mv *.txt $pkgdir/usr/share/doc/spike-proxy/
-  cp -a --no-preserve=ownership * $pkgdir/usr/share/spike-proxy/
-  cat > $pkgdir/usr/bin/spike-proxy << EOF
+  mv *.txt "$pkgdir/usr/share/doc/$pkgname/"
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/bash
-cd /usr/share/spike-proxy
+cd /usr/share/$pkgname
 exec python2 ./spkproxy.py "\$@"
 EOF
-  chmod 755 $pkgdir/usr/bin/spike-proxy
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
+
