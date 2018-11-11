@@ -19,12 +19,13 @@ sha512sums=('92770a8159cd9049ffc5bc3ce4777b701eb19d7b'
           '3ed3c86ff3f534e27750604c6e781a2bec79efc2')
 
 prepare() {
-  cd "$srcdir/$_pkgname-$_pkgver"
+  cd "$_pkgname-$_pkgver"
+
   patch -Np1 < "$srcdir/fix.patch"
 }
 
 build() {
-  cd "$srcdir/$_pkgname-$_pkgver"
+  cd "$_pkgname-$_pkgver"
 
 if [[ $CARCH == arm* ]] ; then
   ./configure \
@@ -46,22 +47,20 @@ fi
 }
 
 package() {
-  cd "$srcdir/$_pkgname-$_pkgver"
+  cd "$_pkgname-$_pkgver"
 
   make DESTDIR="$pkgdir" install
 
-  # Base directories.
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/lib"
 
-  # License.
-  install -Dm644 COPYING "$pkgdir/usr/share/licenses/ruby1.8/COPYING"
-
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
   # Bin.
-  for i in erb irb rdoc ri ruby testrb; do
+  for i in erb irb rdoc ri ruby testrb
+  do
     ln -s "/usr/share/ruby1.8/bin/$i" "$pkgdir/usr/bin/$i-1.8"
   done
 
-  # Lib.
   ln -s /usr/share/ruby1.8/lib/libruby.so.1.8 "$pkgdir/usr/lib/libruby.so.1.8"
 }
+
