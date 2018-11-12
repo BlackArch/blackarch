@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=cameradar
+pkgver=2.1.0
+pkgrel=1
+pkgdesc='Hacks its way into RTSP videosurveillance cameras.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-scan')
+url='https://github.com/Ullaakut/cameradar'
+license=('MIT')
+makedepends=('go' 'dep')
+source=("https://github.com/Ullaakut/cameradar/archive/v$pkgver.tar.gz")
+sha512sums=('8e2cb5acb5b6d26df6bda00e29e54f6243a7f701f9945d401a83d6685d33fe4ad2720650e235c4f32928d5e136494c97a78eac52d88769d181e8e9ad5ac0e854')
+
+prepare() {
+  mkdir -p "gopath/src/github.com/Ullaakut"
+  ln -rTsf "$pkgname-$pkgver" "gopath/src/github.com/Ullaakut/$pkgname"
+
+  export GOPATH="$srcdir/gopath"
+  cd "$GOPATH/src/github.com/Ullaakut/$pkgname"
+
+  dep ensure
+}
+
+build() {
+  export GOPATH="$srcdir/gopath"
+  cd "$GOPATH/src/github.com/Ullaakut/$pkgname/$pkgname"
+
+  go install
+}
+
+package() {
+  export GOPATH="$srcdir/gopath"
+  cd "$GOPATH/bin"
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 "$GOPATH/src/github.com/Ullaakut/$pkgname/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 "$GOPATH/src/github.com/Ullaakut/$pkgname/README.md" "$pkgdir/usr/share/docs/$pkgname/README"
+}
+
