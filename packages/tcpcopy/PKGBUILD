@@ -15,13 +15,13 @@ source=('git+https://github.com/session-replay-tools/tcpcopy.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/tcpcopy"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$srcdir/tcpcopy"
+  cd $pkgname
 
   ./configure --prefix=/usr/share/tcpcopy --sbin-path=/usr/share/tcpcopy/tcpcopy
 
@@ -29,22 +29,23 @@ build() {
 }
 
 package() {
-  cd "$srcdir/tcpcopy"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/tcpcopy"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   make DESTDIR="$pkgdir" install
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/tcpcopy/" README.md AUTHORS NEWS \
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md AUTHORS NEWS \
     ChangeLog README
-  install -Dm644 -t "$pkgdir/usr/share/licenses/tcpcopy/" LICENSE COPYING
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE COPYING
 
-  cat > "$pkgdir/usr/bin/tcpcopy" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/tcpcopy/
-exec ./tcpcopy "\${@}"
+cd /usr/share/$pkgname
+exec ./$pkgname "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/tcpcopy"
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
+

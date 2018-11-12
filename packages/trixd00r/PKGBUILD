@@ -8,24 +8,23 @@ groups=('blackarch' 'blackarch-backdoor')
 pkgdesc='An advanced and invisible userland backdoor based on TCP/IP for UNIX systems.'
 url='http://nullsecurity.net/tools/backdoor.html'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
-license=('custom')
+license=('custom:unknown')
 depends=('libpcap')
-source=("https://github.com/nullsecuritynet/tools/raw/master/backdoor/trixd00r/release/trixd00r-${pkgver}.tar.gz")
+source=("https://github.com/nullsecuritynet/tools/raw/master/backdoor/trixd00r/release/trixd00r-$pkgver.tar.gz")
 sha512sums=('48b178847daee2ff836f443be471c4b4574f967394a107eecaf558e0469b9f05e6bf8c03bfa459cca3c5b50cd154d34632b6e6ceb5eba46bd82b879d4edcd139')
 
 prepare() {
-  cd "$srcdir/trixd00r-$pkgver"
+  cd "$pkgname-$pkgver"
 
   sed -i 's/LDFLGAS_IRIX/LDFLAGS_IRIX/' Makefile
 }
 
 build() {
-  cd "$srcdir/trixd00r-$pkgver"
+  cd "$pkgname-$pkgver"
 
   # We can't build the solaris client.
   # The client should be built for Linux so the 'linux' system must be last in the list.
   for sys in freebsd netbsd openbsd macos aix hpux irix linux ; do
-    msg2 "building $sys client..."
     rm -rf $sys
     make MAKE=make $sys
     mkdir $sys
@@ -34,17 +33,15 @@ build() {
 }
 
 package() {
-  cd "$srcdir/trixd00r-$pkgver"
+  cd "$pkgname-$pkgver"
 
-  # Base directories.
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/trixd00r"
-  install -dm 755 "$pkgdir/usr/share/doc/trixd00r"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
 
-  # Bin.
-  install -m755 trixd00rd-* "$pkgdir/usr/share/trixd00r"
-  install -m755 trixd00r "$pkgdir/usr/bin"
+  install -m 755 trixd00rd-* "$pkgdir/usr/share/$pkgname/"
+  install -m 755 trixd00r "$pkgdir/usr/bin"
 
-  # Docs.
-  install -m644 docs/* "$pkgdir/usr/share/doc/trixd00r"
+  install -m 644 docs/* "$pkgdir/usr/share/doc/$pkgname"
 }
+
