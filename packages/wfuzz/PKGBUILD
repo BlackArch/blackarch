@@ -16,42 +16,43 @@ source=('git+https://github.com/xmendez/wfuzz.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$srcdir/wfuzz"
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd "$srcdir/wfuzz"
+  cd $pkgname
 
-  tools="wfencode wfuzz wfpayload wxfuzz"
+  _tools='wfencode wfuzz wfpayload wxfuzz'
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/wfuzz"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/wfuzz/" README.md
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/wfuzz/LICENSE"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm LICENSE README.md setup.py
 
-  cp -a * "$pkgdir/usr/share/wfuzz"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  for t in ${tools}
+  for t in $_tools
   do
-    if [ "${t}" = "wfuzz" ]
+    if [ "$t" = "wfuzz" ]
     then
-      cat > "$pkgdir/usr/bin/${t}" << EOF
+      cat > "$pkgdir/usr/bin/$t" << EOF
 #!/bin/sh
-cd /usr/share/wfuzz
-exec python2 src/${t}-cli.py "\${@}"
+cd /usr/share/$pkgname
+exec python2 src/$t-cli.py "\$@"
 EOF
     else
-      cat > "$pkgdir/usr/bin/${t}" << EOF
+      cat > "$pkgdir/usr/bin/$t" << EOF
 #!/bin/sh
-cd /usr/share/wfuzz
-exec python2 src/${t}.py "\${@}"
+cd /usr/share/$pkgname
+exec python2 src/$t.py "\$@"
 EOF
     fi
-    chmod a+x "$pkgdir/usr/bin/${t}"
+    chmod a+x "$pkgdir/usr/bin/$t"
   done
 }
+
