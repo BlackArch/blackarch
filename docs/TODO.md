@@ -133,11 +133,11 @@ Just check out the following:
 
 ===> 2018
 
-  [ ] ISO/OVA
+  [.] ISO/OVA
       preparation and releases (2018.12.01)
       [noptrix, ]
 
-  [.] tools
+  [x] tools
       update all tools [a-z] prior the new ISO/OVA release (2018.12.01)
       [noptrix]
 
