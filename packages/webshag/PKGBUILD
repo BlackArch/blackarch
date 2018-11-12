@@ -20,8 +20,6 @@ sha512sums=('10650325f13f7e1df0ac416ab1b91cb26801b676'
           '4e0f7b4a068b82fa23f32fcd87e5ffdb7dfbb6e9')
 
 prepare(){
-  cd "$srcdir"
-
   find . -type f -iname "*" |
   while read i ; do
     dos2unix $i
@@ -30,30 +28,29 @@ prepare(){
   grep -iRl python "$srcdir" |
   xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
 
-  cd "webshag/core"
+  cd $pkgname/core
 
   patch < "$srcdir/core_file.patch"
 }
 
 package() {
-  cd "$srcdir"
-
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/webshag"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  cp -La --no-preserve=ownership * "$pkgdir/usr/share/webshag"
+  cp -La --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/webshag_cli" << EOF
 #!/bin/sh
-exec /usr/share/webshag/webshag_cli.py "\$@"
+exec /usr/share/$pkgname/webshag_cli.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/webshag_cli"
 
 cat > "$pkgdir/usr/bin/webshag_gui" << EOF
 #!/bin/sh
-exec /usr/share/webshag/webshag_gui.py "\$@"
+exec /usr/share/$pkgname/webshag_gui.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/webshag_gui"
 }
+
