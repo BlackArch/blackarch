@@ -26,61 +26,61 @@ install='viper.install'
 sha512sums=('SKIP')
 
 pkgver() {
-  cd viper
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd viper
+  cd $pkgname
 
   git submodule init
   git submodule update
 }
 
 build() {
-  cd viper
+  cd $pkgname
 
   python -m compileall .
   python -O -m compileall .
 }
 
 package() {
-  cd viper
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/${pkgname}"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   python setup.py install --record installed_files.txt --root="$pkgdir"
 
-  install -Dm644 README.md "$pkgdir/usr/share/doc/${pkgname}/README.md"
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/${pkgname}/LICENSE"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm README.md LICENSE
 
-  cp -a data/* "$pkgdir/usr/share/${pkgname}/"
-  cp -a * "$pkgdir/usr/share/${pkgname}/"
+  cp -a data/* "$pkgdir/usr/share/$pkgname/"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/viper-cli" << EOF
 #!/bin/sh
-cd /usr/share/viper
-exec python viper-cli "\${@}"
+cd /usr/share/$pkgname
+exec python viper-cli "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/viper-cli"
 
   cat > "$pkgdir/usr/bin/viper-api" << EOF
 #!/bin/sh
-cd /usr/share/viper
-exec python viper-api "\${@}"
+cd /usr/share/$pkgname
+exec python viper-api "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/viper-api"
 
   cat > "$pkgdir/usr/bin/viper-web" << EOF
 #!/bin/sh
-cd /usr/share/viper
-exec python viper-web "\${@}"
+cd /usr/share/$pkgname
+exec python viper-web "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/viper-web"
