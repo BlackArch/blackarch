@@ -18,44 +18,43 @@ depends=('python2' 'python2-clamd' 'python2-pybloomfiltermmap' 'python2-esmre'
          'python2-xdot' 'libxml2' 'libxslt' 'libyaml' 'python2-yaml'
          'python2-vulndb' 'python2-pip' 'python2-stopit')
 options=('!strip')
-source=("https://github.com/andresriancho/w3af/archive/${pkgver}.tar.gz"
+source=("https://github.com/andresriancho/w3af/archive/$pkgver.tar.gz"
         'w3af.desktop')
 sha512sums=('fdcac8baf85e81dcad62b4568cc28b15cb75baeeb8df647ec2ade22b40c0cb4e2483224b8852dd9f891de66f7ac1367d56b3c15b50a3ebab779d4cced750f0f9'
             '8ce7a6e97bf1d4fd357a7a6ee72638bdb6be0c63dacd4c099a99f64dcb8b30180831074ec1699904233548d385c3b1c445402d9538d50e5be2ea87c84630a38e')
 
 prepare() {
-  cd "$srcdir/w3af-$pkgver"
+  cd "$pkgname-$pkgver"
 
-  # Enforce python2
   sed -i -e 's|#!\s*/usr/bin/python[^\d.]*$|#!/usr/bin/python2|' \
     -e 's|#!\s*/usr/bin/env python[^\d.]*$|#!/usr/bin/env python2|' \
     $(find . -name '*.py') w3af_{console,gui}
 
-  # Remove dependency checks.
   sed -i 's/dependency_check()/#&/' w3af_{console,gui}
 }
 
 package() {
-  cd "$srcdir/w3af-$pkgver"
+  cd "$pkgname-$pkgver"
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/w3af"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
   install -dm 755 "$pkgdir/usr/share/applications"
 
-  cp --no-preserve=ownership -a * "$pkgdir/usr/share/w3af"
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/$pkgname/"
 
   install -Dm644 "$srcdir/w3af.desktop" "$pkgdir/usr/share/applications"
 
-  cat > "$pkgdir/usr/bin/w3af" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-exec python2 /usr/share/w3af/w3af_console "\$@"
+exec python2 /usr/share/$pkgname/w3af_console "\$@"
 EOF
 
   cat > "$pkgdir/usr/bin/w3af-gui" << EOF
 #!/bin/sh
-exec python2 /usr/share/w3af/w3af_gui "\$@"
+exec python2 /usr/share/$pkgname/w3af_gui "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/share/w3af"/w3af_{console,gui} \
+  chmod +x "$pkgdir/usr/share/$pkgname"/w3af_{console,gui} \
     "$pkgdir/usr/bin"/{w3af,w3af-gui}
 }
+
