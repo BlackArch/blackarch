@@ -135,7 +135,7 @@ Just check out the following:
 
   [.] ISO/OVA
       preparation and releases (2018.12.01)
-      [noptrix, ]
+      [noptrix]
 
   [x] tools
       update all tools [a-z] prior the new ISO/OVA release (2018.12.01)
