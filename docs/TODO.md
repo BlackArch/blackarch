@@ -133,6 +133,10 @@ Just check out the following:
 
 ===> 2018
 
+  [.] armv6, armv7h, aarch64
+      update all tools. fix installation errors.
+      [noptrix]
+
   [.] ISO/OVA
       preparation and releases (2018.12.01)
       [noptrix]
