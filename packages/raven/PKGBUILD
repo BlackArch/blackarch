@@ -2,45 +2,32 @@
 # See COPYING for license details.
 
 pkgname=raven
-pkgver=32.47cfe3d
+pkgver=0.3
 pkgrel=1
-pkgdesc='A Linkedin information gathering tool used to gather information.'
-groups=('blackarch' 'blackarch-recon')
+epoch=1
+pkgdesc='A Linkedin information gathering tool that can be used by pentesters to gather information about an organization employees using Linkedin.'
+groups=('blackarch' 'blackarch-social' 'blackarch-recon')
 arch=('any')
 url='https://github.com/0x09AL/raven'
-license=('GPL-3.0')
-depends=('python2' 'geckodriver' 'python2-beautifulsoup4' 'python2-requests'
-         'python2-selenium' 'python2-tabulate' 'python2-pyvirtualdisplay')
+license=('GPL3')
+depends=('chromedriver' 'go')
 makedepends=('git')
-source=('git+https://github.com/0x09AL/raven.git')
-md5sums=('SKIP')
-
-pkgver() {
-  cd $pkgname
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
+source=("https://github.com/0x09AL/raven/releases/download/v$pkgver-Linux/Raven-Linux-x64.tar.xz")
+sha512sums=('24d3aaefc6c8cfa26cf1d20bdd77564c133838240ee8858804e83cc2c46ed0b85bc50c4d80337d28405b7484348585584422fa36bed43a60ad9c8a8a6db7a54d')
 
 package() {
-  cd $pkgname
-
   install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 755 raven.py "$pkgdir/opt/$pkgname/"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm6 44 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -m 755 $pkgname "$pkgdir/usr/share/$pkgname/$pkgname"
+  install -m 644 -t "$pkgdir/usr/share/$pkgname/" config.conf db_file.db
 
-  rm README.md LICENSE
-
-  cp -a modules/ "$pkgdir/opt/$pkgname/"
-
-  cat >> "$pkgdir/usr/bin/$pkgname" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /opt/$pkgname
-exec python2 raven.py "\$@"
-
+cd /usr/share/$pkgname
+exec ./$pkgname "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
