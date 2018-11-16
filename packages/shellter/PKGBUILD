@@ -1,0 +1,35 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=shellter
+pkgver=7.1
+pkgrel=1
+pkgdesc='A dynamic shellcode injection tool, and the first truly dynamic PE infector ever created.'
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-backdoor'
+        'blackarch-windows')
+arch=('any')
+url='https://www.shellterproject.com/download/'
+license=('custom:unknown')
+depends=('wine')
+source=("https://www.shellterproject.com/Downloads/Shellter/Latest/shellter.zip")
+sha512sums=('3f3e12ee234d3688fa4beb1a00f6ec1f217021cf3c785663afa62ead3b509f5fc034fd5d7d1d19001ec72370e4e82dfbc3a51a650db481dbe1afddbc488d9555')
+
+package() {
+  cd "$pkgname"
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 644 -t "$pkgdir/usr/share/windows/$pkgname/" shellter.exe \
+    Executable_SHA-256.txt
+  cp -a shellcode_samples "$pkgdir/usr/share/windows/$pkgname/shellcode_samples"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" docs/*
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" licenses/*
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec wine /usr/share/windows/$pkgname/$pkgname.exe "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
