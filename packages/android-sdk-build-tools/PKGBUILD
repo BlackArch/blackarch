@@ -1,3 +1,6 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
 # Maintainer: xgdgsc <xgdgsc @t gmail dot com>
 
 pkgname=android-sdk-build-tools
@@ -6,27 +9,28 @@ pkgver=r27.0.1
 pkgrel=1
 pkgdesc='Build-Tools for Google Android SDK (aapt, aidl, dexdump, dx, llvm-rs-cc)'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
-url="http://developer.android.com/sdk/index.html"
-license=('custom')
+url='http://developer.android.com/sdk/index.html'
+license=('custom:unknown')
 depends_i686=('gcc-libs' 'zlib')
 depends_x86_64=('lib32-gcc-libs' 'lib32-zlib')
 _sdk=android-sdk
-
-source=("https://dl-ssl.google.com/android/repository/build-tools_${pkgver}-linux.zip")
+source=("https://dl-ssl.google.com/android/repository/build-tools_$pkgver-linux.zip")
 sha512sums=('86b886ce39f9ddcdcf58d7a77e1d9abd582564560e4108194d240da9e4da4a3106b8d1ed86a3c885c1d33bb850cb887e326ba5601748f74a00972da39f6aa893')
-_android=android-8.0.0
+_android=android-8.1.0
 options=('!strip')
 
 package() {
+  cd $pkgdir
 
-  cd "$pkgdir"
-  install -Dm644 "${srcdir}/$_android/NOTICE.txt" usr/share/licenses/$pkgname/NOTICE.txt
-  # install -dm 755 opt etc/profile.d
-  # echo 'export PATH=$PATH:/opt/android-sdk/build-tools/'"$_ver/" > etc/profile.d/${pkgname}.sh
-  # echo 'setenv PATH ${PATH}:/opt/android-sdk/build-tools/'"$_ver/" > etc/profile.d/${pkgname}.csh
-  # chmod 755 etc/profile.d/${pkgname}.{csh,sh}
-  ver=$(cat "${srcdir}/$_android/source.properties" |grep ^Pkg.Revision=|sed 's/Pkg.Revision=\([0-9.]*\).*/\1/')
+  install -Dm 644 "$srcdir/$_android/NOTICE.txt" \
+    "usr/share/licenses/$pkgname/NOTICE.txt"
+
+  ver=$(cat "$srcdir/$_android/source.properties" |
+  grep ^Pkg.Revision=|sed 's/Pkg.Revision=\([0-9.]*\).*/\1/')
+
   install -dm 755 opt/$_sdk/build-tools/$ver
   cp -r "$srcdir/$_android/"* "$pkgdir/opt/$_sdk/build-tools/$ver"
+
   chmod +Xr -R "$pkgdir/opt/$_sdk/build-tools/$ver"
 }
+
