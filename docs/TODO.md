@@ -42,19 +42,20 @@ Just check out the following:
 ===> 2019
 
   [.] tools:
-      1. [.] fix pkgbuild style according to @FFY00 suggestions.
-      [noptrix, mrsmith0x00, ?]
+      1. [x] fix pkgbuild style according to @FFY00 suggestions.
+             [noptrix, mrsmith0x00]
 
-      2. [ ] QA of all tools: runtime + dependency checks. create a list for both in lists/
-      [?]
+      2. [ ] QA of all tools: runtime + dependency checks. create a list for
+             both failed packages in lists/
+             [?]
 
-      3. [ ] check for wrong/missing licenses files. diff against the common license
-      files and install / don't install accordingly. in worst case, ask owner of
-      $tool for permissions.
-      [?]
+      3. [ ] check for wrong/missing licenses files. diff against the common
+             license files and install / don't install accordingly. in worst
+             case, ask owner of $tool for permissions.
+             [?]
 
       4. [ ] general QAing + add new tools (long-term). ;-)
-      [all]
+             [all]
 
   [.] version-checker
       create an version-checker script (python3) for non-git tools so we can semi-automate
@@ -72,7 +73,7 @@ Just check out the following:
       [?]
 
   [ ] blackarch-shop
-      create t-shirts, stickers etc. for online shop. :D
+      create t-shirts, stickers etc. for online shop.
       [?]
 
   [ ] blackarch-menus
