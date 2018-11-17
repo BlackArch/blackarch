@@ -1,17 +1,10 @@
-# Maintainer: Yardena Cohen <yardenack at gmail dot com>
-# Contributor: Max Roder <maxroder@web.de>
-# Contributor: Sebastian Jug <seb AT stianj DOT ug>
-# Contributor: midgard <arch dot midgard "at symbol" janmaes "youknowwhat" com>
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
 
-# To port this PKGBUILD to another language of tor-browser you
-# have to change $pkgname, $_language, $pkgdesc and $url in PKGBUILD
-# AND (!) the first line in the .install file!
-
-pkgname='tor-browser-en'
-pkgver='8.0.3'
-_language='en-US'
+pkgname=tor-browser-en
+pkgver=8.0.3
 pkgrel=1
-pkgdesc='Tor Browser Bundle: anonymous browsing using Firefox and Tor'
+pkgdesc='Tor Browser Bundle: anonymous browsing using Firefox and Tor.'
 url='https://www.torproject.org/projects/torbrowser.html.en'
 arch=('x86_64')
 groups=('blackarch' 'blackarch-defensive')
@@ -25,54 +18,34 @@ optdepends=('zenity: simple dialog boxes'
             'gst-libav: H.264 video'
             'libpulse: PulseAudio audio driver'
             'libnotify: Gnome dialog boxes')
-install="${pkgname}.install"
+install="$pkgname.install"
 validpgpkeys=('EF6E286DDA85EA2A4BA7DE684E2C6E8793298290')
-source=("https://dist.torproject.org/torbrowser/${pkgver}/tor-browser-linux64-${pkgver}_${_language}.tar.xz"{,.asc}
-        "${pkgname}.desktop"
-        "${pkgname}.png"
-        "${pkgname}.sh")
-md5sums=('49a1aeb3f1a97438b1d5fa6b4399f93c'
-         'SKIP'
-         '69c75e328c117249b30a757f60b634bf'
-         '7cd059a3b8194745d7d458a628ccc43a'
-         '8fdd23d758c49ba83eba1b01d1934924')
-sha256sums=('ff116446e66af9663aa0cb9a01b05f906ff50aed00672fbfcc0b31e8358494a5'
-            'SKIP'
-            '5a3c8dc36f46b22a2bc45de6209d5efa14898e24d968cd08a7e0e767ea3259bd'
-            'bb6b0f27c33d21e0ef6df961e25418327c5e8b01c003bbe18c0a8dae3e16d77d'
-            'b51ca669753409c647ba2582b3eb866b409eca61c216f879ed3c1aded8463526')
+source=("https://dist.torproject.org/torbrowser/$pkgver/tor-browser-linux64-${pkgver}_en-US.tar.xz"{,.asc}
+        "$pkgname.desktop"
+        "$pkgname.png"
+        "$pkgname.sh")
 sha512sums=('df66e5c2fa48667a36c9ee796229d572847d5ae1871b857bc3c133ee45bec0e36eea1a639ab0b68d4d2a6e13f14dfc81b565b331bf646a1672a251339d07ce20'
             'SKIP'
             '1318a652f7b65e30cdb0c607faf4391035288bcfcaffc50f7713de8eeb7d9151c115269fad1225fccd71d4d38537a804f05fba03b3df516afbce8a79d8988d7c'
             '89d971f4f0db7d1b50e090040ddce0f7191d511f4c1cae9d2c3364fda40a43b7f506d0c015ddd1485304fadbc0bf7d5d61d1dbc12bf645a7e615f51c1d1261e0'
             '88c5d3035df46aa23cd98657e19b907a68ac233f92307556ea44b6a90bac2d04dfb5b23c7efaa3addd48a5def3daacf0c8731acb59b15a7390c4c3435427674a')
-noextract=("tor-browser-linux64-${pkgver}_${_language}.tar.xz")
+noextract=("tor-browser-linux64-${pkgver}_en-US.tar.xz")
 
 prepare() {
-   # We search and replace using sed with / as delimiter below so we can't allow slashes in these vars.
-   # Makepkg already enforces that there're no slashes in $pkgname, so we don't check that again here.
-   if [[ $pkgver = */* || $_language = */* || $pkgdesc = */* ]]; then
-      error '$pkgver, $_language and $pkgdesc for this package are not allowed to contain /' >&2
-      return 1
-   fi
+  sed -i "s/REPL_NAME/$pkgname/g" "$pkgname.sh"
+  sed -i "s/REPL_VERSION/$pkgver/g" "$pkgname.sh"
+  sed -i "s/REPL_LANGUAGE/en-US/g" "$pkgname.sh"
+  sed -i "s/REPL_NAME/$pkgname/g" "$pkgname.desktop"
+  sed -i "s/REPL_LANGUAGE/en-US/g" "$pkgname.desktop"
+  sed -i "s/REPL_COMMENT/$pkgdesc/g" "$pkgname.desktop"
 }
 
 package() {
-   cd "${srcdir}"
-
-   sed -i "s/REPL_NAME/${pkgname}/g"       "${pkgname}.sh"
-   sed -i "s/REPL_VERSION/${pkgver}/g"     "${pkgname}.sh"
-   sed -i "s/REPL_LANGUAGE/${_language}/g" "${pkgname}.sh"
-
-   sed -i "s/REPL_NAME/${pkgname}/g"       "${pkgname}.desktop"
-   sed -i "s/REPL_LANGUAGE/${_language}/g" "${pkgname}.desktop"
-   sed -i "s/REPL_COMMENT/${pkgdesc}/g"    "${pkgname}.desktop"
-
-   install -Dm 644 "${pkgname}.desktop"    "${pkgdir}/usr/share/applications/${pkgname}.desktop"
-   install -Dm 644 "${pkgname}.png"        "${pkgdir}/usr/share/pixmaps/${pkgname}.png"
-   install -Dm 755 "${pkgname}.sh"         "${pkgdir}/usr/bin/${pkgname}"
-
-   install -Dm 644 "tor-browser-linux64-${pkgver}_${_language}.tar.xz" "${pkgdir}/opt/${pkgname}/tor-browser-linux64-${pkgver}_${_language}.tar.xz"
+  install -Dm 644 "$pkgname.desktop" \
+    "$pkgdir/usr/share/applications/$pkgname.desktop"
+  install -Dm 644 "$pkgname.png" "$pkgdir/usr/share/pixmaps/$pkgname.png"
+  install -Dm 755 "$pkgname.sh" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 "tor-browser-linux64-${pkgver}_en-US.tar.xz" \
+    "$pkgdir/opt/$pkgname/tor-browser-linux64-${pkgver}_en-US.tar.xz"
 }
 
-# vim: set et ts=3 sw=3 :
