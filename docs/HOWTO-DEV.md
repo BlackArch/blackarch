@@ -52,14 +52,21 @@ are given and everything is setup. Anything else can be discussed on IRC.
   to discuss.
 
 - Any work is much appreciated. Even if it's a version bump on a package or a
-typo-fix.
+  typo-fix.
 
 - Try to automate anything you can and share the tools with us.
 
 
 ## Packages
 
-foo
+- Use our [PKGBUILD templates](https://github.com/BlackArch/blackarch-pkgbuilds)
+  for creating and releasing new packagaes in order to keep the same style and
+  consistency.
+
+- If you are unsure, copy an existing PKGBUILD from a package and use that as a
+  template or ask other developers.
+
+- If possible, use release (tagged) versions rather than master branch.
 
 
 ## ISO
