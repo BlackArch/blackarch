@@ -66,8 +66,6 @@ are given and everything is setup. Anything else can be discussed on IRC.
 - If you are unsure, copy an existing PKGBUILD from a package and use that as a
   template or ask other developers.
 
-- If possible, use release (tagged) versions rather than master branch.
-
 
 ## ISO
 
