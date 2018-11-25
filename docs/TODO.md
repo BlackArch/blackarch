@@ -45,9 +45,9 @@ Just check out the following:
       1. [x] fix pkgbuild style according to @FFY00 suggestions.
              [noptrix, mrsmith0x00]
 
-      2. [ ] QA of all tools: runtime + dependency checks. create a list for
-             both failed packages in lists/
-             [?]
+      2. [x] QA of all tools: runtime + dependency checks. create a list for
+             both failed packages in lists/ (fixed and released)
+             [noptrix]
 
       3. [ ] check for wrong/missing licenses files. diff against the common
              license files and install / don't install accordingly. in worst
