@@ -138,7 +138,7 @@ Just check out the following:
       update all tools. fix installation errors.
       [noptrix]
 
-  [.] ISO/OVA
+  [x] ISO/OVA
       preparation and releases (2018.12.01)
       [noptrix]
 
@@ -150,7 +150,7 @@ Just check out the following:
       create an initial quick'n'dirty how-to for blackarch developers
       [noptrix]
 
-  [.] wordlistctl
+  [x] wordlistctl
       create a similar tool like sploitctl but for wordlists containing:
       passwords, usernames, hostnames
       [sepehrdad]
