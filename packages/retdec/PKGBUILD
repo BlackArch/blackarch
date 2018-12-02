@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=retdec
+pkgver=v3.2.r57.g06abea0
+pkgrel=1
+pkgdesc='Retargetable machine-code decompiler based on LLVM.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-decompiler' 'blackarch-reversing')
+url='https://retdec.com/'
+license=('MIT')
+depends=('bc' 'graphviz' 'python' 'upx')
+makedepends=('autoconf' 'automake' 'bison' 'cmake' 'doxygen' 'flex' 'gcc' 'git'
+             'graphviz' 'libtool' 'm4' 'make' 'openssl' 'perl' 'python' 'upx'
+             'zlib' 'wget')
+source=('git+https://github.com/avast-tl/retdec.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$pkgname"
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd "$pkgname"
+
+  mkdir build
+  cd build
+
+  cmake .. -DCMAKE_INSTALL_PREFIX="$pkgdir/usr"
+
+  make
+}
+
+package() {
+  cd "$pkgname/build"
+
+  make install
+
+  cd ..
+
+  for tool in 'retdec-archive-decompiler' 'retdec-color-c' 'retdec-config' \
+              'retdec-decompiler' 'retdec-fileinfo' \
+              'retdec-signature-from-library-creator' 'retdec-unpacker' \
+              'retdec-utils'; do
+    ln -fs "/usr/bin/$tool.py" "$pkgdir/usr/bin/$tool"
+  done
+}
+
