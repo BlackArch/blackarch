@@ -1,0 +1,21 @@
+#!/usr/bin/sh
+# tor-router configuration in /etc/tor/torrc
+
+post_install() {
+  #Defining variables
+  torconfig="/etc/tor/torrc"
+  torconfigbackup="/etc/tor/torrc.backup"
+
+  if grep -iq "# Seting up TOR transparent proxy for tor-router" "$torconfig" ; then
+    echo -e "BlackArch ==> tor-router is already configured in $torconfig"
+  else
+    echo -e "BlackArch ==> Making a backup of your torrc file, if you have problems with the new configuration, delete $torconfig and move $torconfigbackup to $torconfig"
+    cp "$torconfig" "$torconfigbackup"
+    echo -e "BlackArch ==> Configuring the torrc file to use TOR as a transparent proxy..."
+    echo -e "\n# Seting up TOR transparent proxy for tor-router\nVirtualAddrNetwork 10.192.0.0/10\nAutomapHostsOnResolve 1\nTransPort 9040\nDNSPort 5353" >> "$torconfig"
+  fi
+}
+
+post_upgrade() {
+  post_install
+}
