@@ -2,17 +2,17 @@
 # See COPYING for license details.
 
 pkgname=blackbox-scanner
-pkgver=132.b91e817
-pkgrel=3
-epoch=3
+pkgver=1.7a25220
+pkgrel=4
+epoch=4
 pkgdesc='Dork scanner & bruteforcing & hash cracker with blackbox framework.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-cracker')
 arch=('any')
-url='https://github.com/jothatron/blackbox'
+url='https://github.com/sepehrdaddev/blackbox.git'
 license=('custom:unknown')
 depends=('python2' 'python2-requests' 'python2-pexpect' 'python2-passlib')
 makedepends=('git')
-source=('git+https://github.com/jothatron/blackbox.git')
+source=('git+https://github.com/sepehrdaddev/blackbox.git')
 sha512sums=('SKIP')
 
 pkgver() {
@@ -24,8 +24,20 @@ pkgver() {
 package() {
   cd blackbox
 
-  install -Dm 755 blackbox.py "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
-  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
-}
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+
+  rm README.md COPYING
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec /usr/share/$pkgname/blackbox.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
