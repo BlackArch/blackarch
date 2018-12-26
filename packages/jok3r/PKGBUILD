@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=jok3r
+pkgver=66.1f7e7b6
+pkgrel=1
+pkgdesc='Network and Web Pentest Framework.'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-networking')
+url='https://github.com/koutto/jok3r'
+license=('GPL3')
+depends=('python-argparse' 'python-blessed' 'python-beautifulsoup4' 'python-cmd2' 'python-colorama'
+	'python-colored' 'python-colorlog' 'python-enlighten' 'python-humanfriendly' 'python-prettytable'
+	'python-python-libnmap' 'python-regex' 'python-requests' 'python-six' 'python-sqlalchemy-utils'
+	'python-sqlalchemy' 'python-urllib3')
+makedepends=('git')
+source=("git+https://github.com/koutto/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$pkgname"
+  
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$pkgname"
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname/"
+  install -dm 755 "$pkgdir/usr/bin/"
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 README.rst "$pkgdir/usr/share/doc/$pkgname/README"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\${@}"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
