@@ -159,7 +159,7 @@ Just check out the following:
       testings, bugfixes and updates prior the new ISO/OVA release (2018.12.01)
       [noptrix, mrsmith0x00]
 
-  [.] tools
+  [x] tools
       single updates and QAs of all tools (long-term process)
       [all]
 ```
