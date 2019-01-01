@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import sys
+
 __version__ = '0.1'
 
 to_release = ''
@@ -106,8 +108,9 @@ if __name__ == '__main__':
     try:
         import distutils.version, json, os, packaging.version, requests
         from concurrent.futures import ThreadPoolExecutor
-    except ModuleNotFoundError:
-        print('Some modules can not be imported. Please, install they!')
+    except ModuleNotFoundError as e:
+        print('Failure importing module: ' + str(e))
+        sys.exit(1)
 
     main(python_packages_version_check, 'python')  # start version updating python packages
 
