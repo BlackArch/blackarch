@@ -1,0 +1,67 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=redasm
+pkgver=994.0169573
+pkgrel=1
+pkgdesc='Interactive, multiarchitecture disassembler written in C++ using Qt5 as UI Framework.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-reversing')
+url='https://github.com/REDasmOrg/REDasm'
+license=('GLP3')
+makedepends=('cmake' 'gcc' 'git' 'qt5-base')
+source=('git+https://github.com/REDasmOrg/REDasm.git')
+sha512sums=('SKIP')
+_dir_name_=REDasm
+
+pkgver() {
+  cd $_dir_name_
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $_dir_name_
+
+  git submodule update --init --recursive
+}
+
+build() {
+  cd $_dir_name_
+
+  mkdir -p build
+  cd build
+
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$pkgdir/usr" ..
+
+  make
+}
+
+package() {
+  cd $_dir_name_
+
+  install -dm 755 "$pkgdir/usr/bin/"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/"
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cd build
+
+  cp -a --no-preserve=ownership LibREDasm.so "$pkgdir/usr/share/$pkgname/"
+  cp -a --no-preserve=ownership REDasm "$pkgdir/usr/share/$pkgname/$pkgname"
+
+  git clone https://github.com/REDasmOrg/REDasm-Database.git database
+
+  rm -rf database/.git
+
+  cp -a --no-preserve=ownership database "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/redasm
+exec ./redasm "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
