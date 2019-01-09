@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python2-pygraphviz
+pkgver=1.5
+pkgrel=3
+pkgdesc='PyGraphviz is a Python interface to the Graphviz graph layout and visualization package.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+license=('LGPL')
+url='https://pypi.org/project/pygraphviz/#files'
+depends=('python2' 'graphviz')
+makedepends=('python2-setuptools')
+source=("https://files.pythonhosted.org/packages/7e/b1/d6d849ddaf6f11036f9980d433f383d4c13d1ebcfc3cd09bc845bda7e433/pygraphviz-$pkgver.zip")
+sha512sums=('6d3df6642a7e23ecb6b687761480b80a3ee5886508ef50b81697041425be7d09d623bf46990c5cea3ef36817a28d9e5c2905eb32267296f55524fdedb2199ea2')
+
+build() {
+  cd "pygraphviz-$pkgver"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "pygraphviz-$pkgver"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build --include-path /usr/include/graphviz \
+    --library-path /usr/lib/graphviz
+
+  # Patch to use python2
+  find "$pkgdir" -type f \( -name '*.py' -or -executable \) -exec \
+    sed -i -e 's|#![ ]*/usr/bin/python$|#!/usr/bin/python2|' \
+           -e 's|#![ ]*/usr/bin/env python$|#!/usr/bin/env python2|' \
+    {} \;
+
+  mv "$pkgdir/usr/share/doc/pygraphviz-$pkgver" "$pkgdir/usr/share/doc/$pkgname"
+}
+
