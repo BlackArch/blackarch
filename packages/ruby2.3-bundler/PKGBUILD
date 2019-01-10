@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+_rubyver=2.3
+_gemname=bundler
+pkgname="ruby${_rubyver}-${_gemname}"
+pkgver=1.17.1
+pkgrel=2
+pkgdesc="Manages an application's dependencies through its entire life, across many machines, systematically and repeatably."
+arch=('any')
+url='http://bundler.io/'
+license=('MIT')
+depends=('ruby2.3')
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem")
+noextract=("$_gemname-$pkgver.gem")
+sha512sums=('6adf044096b7716c8b0dae5f559506c65dcb8fd8a8a57428ac25331ca3a85b7cb399fb40b79aeccb0908d172686df9213b86f69286c3e383373ff5ee6f3b414d')
+
+package() {
+  cd "$srcdir"
+
+  _gemdir="$(ruby-${_rubyver} -e'puts Gem.default_dir')"
+
+  install -d "$pkgdir/usr/bin/"
+
+  HOME="/tmp" GEM_HOME="$_gemdir" GEM_PATH="$_gemdir" gem-${_rubyver} install \
+    --no-user-install --ignore-dependencies --no-ri --no-rdoc \
+    -i "$pkgdir/$_gemdir" "$_gemname-$pkgver.gem"
+
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+
+  install -Dm 644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.md" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
+
+  ln -s "$_gemdir/bin/bundle" "$pkgdir/usr/bin/bundle-${_rubyver}"
+}
+
