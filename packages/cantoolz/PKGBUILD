@@ -2,50 +2,40 @@
 # See COPYING for license details.
 
 pkgname=cantoolz
-pkgver=336.61fc163
+_pkgname=CANToolz
+pkgver=3.7.0
 pkgrel=1
-pkgdesc='Framework for black-box CAN network analysis https://asintsov.blogspot.de/.'
+epoch=1
+pkgdesc='Framework for black-box CAN network analysis.'
 groups=('blackarch' 'blackarch-automobile' 'blackarch-recon' 'blackarch-fuzzer'
         'blackarch-scanner')
 arch=('any')
-url='https://github.com/eik00d/CANToolz'
+url='https://github.com/CANToolz/CANToolz'
 license=('Apache2')
-depends=('python' 'python-pyserial' 'python-numpy' 'python-mido')
+depends=('python' 'python-pyserial' 'python-numpy' 'python-mido' 'python-bitstring')
 makedepends=('git' 'python-setuptools')
-source=('git+https://github.com/eik00d/CANToolz.git' 'setup.py.patch')
-sha512sums=('SKIP'
-            '9203c0fb106a9be588631686498a62ef1a8a42abdccf0438886270886f9059c27712792d222f139dfe9af69044ca355b779f9f81bee3a44ec08dcbd3a1c4d5a6')
-
-pkgver() {
-  cd CANToolz
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
-prepare() {
-  patch -p1 < setup.py.patch
-}
+source=("https://github.com/$_pkgname/$pkgname/archive/v$pkgver.tar.gz"
+sha512sums=('62972d105fc1c5ca538d63dfa70e3768abeb956b9d2bc50a99dfe420a0fe4c19926b8707221e3fbd1a46dbc24dc92d8021ef51209c5376a9a363b91aecd3cdb8')
 
 package() {
-  cd CANToolz
+  cd "$_pkgname-$pkgver"
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  python3 setup.py install --root="$pkgdir" --optimize=1
+  python setup.py install --root="$pkgdir" --optimize=1
 
   install -Dm 755 cantoolz.py "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md NOTICE.md \
     CONTRIBUTORS.md VERSION.md
   install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
 
-  rm *.md
-
-  cp -a * "$pkgdir/usr/share/$pkgname"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-python /usr/share/$pkgname/cantoolz.py "\$@"
+cd /usr/share/$pkgname
+exec python /usr/share/$pkgname/$pkgname.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
