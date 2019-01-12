@@ -2,49 +2,43 @@
 # See COPYING for license details.
 
 pkgname=logkeys
-pkgver=0.1.1a
-pkgrel=13
-pkgdesc='Simple keylogger supporting also USB keyboards.'
+pkgver=77.033e512
+pkgrel=1
+pkgdesc='A GNU/Linux keylogger that worked.'
 groups=('blackarch' 'blackarch-keylogger')
 license=('GPL3')
-arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+arch=('any')
 depends=('procps-ng' 'kbd')
 optdepends=('logkeys-keymaps: for additional keymaps')
-url="http://logkeys.googlecode.com/"
-install="logkeys.install"
-backup=('etc/conf.d/logkeysd')
-source=("http://logkeys.googlecode.com/files/logkeys-$pkgver.tar.gz"
-        'logkeys-stdout.patch' 'logkeysd.conf' 'logkeys.service')
-sha512sums=('aa5b9b2054dce41f3ef6a5ae95b13a5b0797575e'
-          '5762cf1b97bba6945eb35a18d8848b4a173abba6'
-          'a31f1289966a57f84780c039866c85f60863bf63'
-          '16db59f159ca195b9446fd245f1a86ef56566e28')
+makedepends=('git')
+url='https://github.com/kernc/logkeys'
+source=("git+https://github.com/kernc/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$pkgname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
 
 prepare() {
-  cd "$pkgname-$pkgver"
+  cd "$pkgname"
 
-  patch -p1 < "$srcdir/logkeys-stdout.patch"
+  ./autogen.sh
 }
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd "$pkgname/build"
 
-  ./configure --prefix=/usr
+  ../configure --prefix=/usr
 
   make
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd "$pkgname/build"
 
-  make prefix="$pkgdir/usr" install
-
-  install -Dm 644 "$srcdir/logkeysd.conf" "$pkgdir/etc/conf.d/logkeysd"
-  install -Dm 644 "$srcdir/logkeys.service" \
-    "$pkgdir/usr/lib/systemd/system/logkeys.service"
-
-  mv "$pkgdir/usr/etc"/* "$pkgdir/usr/bin"
-
-  rmdir "$pkgdir/usr/etc"
+  make DESTDIR="$pkgdir" install
 }
 
