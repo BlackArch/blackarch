@@ -91,7 +91,7 @@ Just check out the following:
   [.] sploitctl
       rewrite in python3 from scratch.
       [sepehrdad]
-  
+
   [.] wordlistctl
       enhance performance, add checksums and size.
       [sepehrdad]
