@@ -54,16 +54,16 @@ Just check out the following:
              case, ask owner of $tool for permissions.
              [?]
 
-      4. [ ] general QAing + add new tools (long-term). ;-)
+      4. [.] general (routine) QAing of packages (long-term). ;-)
              [all]
 
       5. [.] follow sources to get new interesting tools and package it for
-      	     BlackArch (long-term).
-      	     [Edu4rdSHL]
+             BlackArch (long-term).
+             [Edu4rdSHL]
 
   [.] version-checker
-      create an version-checker script (python3) for non-git tools so we can semi-automate
-      the tools updating part like we do for git-tools.
+      create an version-checker script (python3) for non-git tools so we can
+      semi-automate the tools updating part like we do for git-tools.
       [mrsmith0x00]
 
   [ ] youtube
