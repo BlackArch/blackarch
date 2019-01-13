@@ -88,9 +88,13 @@ Just check out the following:
       tweak, update, bugfix the current setup for docker and vagrant.
       [?]
 
-  [ ] sploitctl
-      extend, parallelize it. takes too long.
-      [noptrix]
+  [.] sploitctl
+      rewrite in python3 from scratch.
+      [sepehrdad]
+  
+  [.] wordlistctl
+      enhance performance, add checksums and size.
+      [sepehrdad]
 
   [ ] infrastructure
       create a new build-system environment so everyone of us can sign and
