@@ -57,6 +57,10 @@ Just check out the following:
       4. [ ] general QAing + add new tools (long-term). ;-)
              [all]
 
+      5. [.] follow sources to get new interesting tools and package it for
+      	     BlackArch (long-term).
+      	     [Edu4rdSHL]
+
   [.] version-checker
       create an version-checker script (python3) for non-git tools so we can semi-automate
       the tools updating part like we do for git-tools.
@@ -113,12 +117,12 @@ Just check out the following:
 
   [ ] linux-blackarch-hardened
       custom hardened kernel patches
-      [noptrix, ?]
+      [noptrix, Edu4rdSHL]
 
   [ ] linux-blackarch
       custom kernel / kernel patches / kernel modules to support wifi injection,
       network tunings, and more.
-      [noptrix, ?]
+      [noptrix, Edu4rdSHL]
 
   [ ] wiki
       replace the blackarch guide with a fresh new wiki. it is planned to use
