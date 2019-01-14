@@ -14,6 +14,11 @@ def get_current_version(name):
             if 'pkgver' in line:
                 return str(line[7:].strip())  # pkgver=...
 
+# check arch community
+def check_arch_community(name):
+    temp = requests.get('https://www.archlinux.org/packages/community/x86_64/'+name+'/')
+    if temp.ok:
+        print('We can remove: '+name)
 
 # update pkgbuild
 def update_pkgbuild(name, url, current_version, available_version):
@@ -111,6 +116,8 @@ if __name__ == '__main__':
     except ModuleNotFoundError as e:
         print('Failure importing module: ' + str(e))
         sys.exit(1)
+
+    main(arch_community_check, '') # start arch community check
 
     main(python_packages_version_check, 'python')  # start version updating python packages
 
