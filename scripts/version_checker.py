@@ -15,7 +15,7 @@ def get_current_version(name):
                 return str(line[7:].strip())  # pkgver=...
 
 # check arch community
-def check_arch_community(name):
+def arch_community_check(name):
     temp = requests.get('https://www.archlinux.org/packages/community/x86_64/'+name+'/')
     if temp.ok:
         print('We can remove: '+name)
