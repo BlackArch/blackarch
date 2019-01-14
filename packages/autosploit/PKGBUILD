@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname=autosploit
-pkgver=29.c25865d
-pkgrel=2
+pkgver=222.7fcb2dc
+pkgrel=1
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-automation')
 pkgdesc='Automate the exploitation of remote hosts.'
 arch=('any')
@@ -12,10 +12,8 @@ license=('GPL3')
 depends=('python2' 'python2-requests' 'python2-psutil' 'python2-blessings'
          'shodan' 'metasploit' 'sudo')
 makedepends=('git')
-source=('git+https://github.com/NullArray/AutoSploit.git'
-        'service.patch')
-sha512sums=('SKIP'
-            'd47a0907443be9f7dd4304016bdcd032df96045742200e2580f4ae1ee13504dbc5a119b123817a916242e64260515de1e7c9da6c4a36df272a727126f210ac79')
+source=('git+https://github.com/NullArray/AutoSploit.git')
+sha512sums=('SKIP')
 
 pkgver() {
   cd AutoSploit
@@ -26,7 +24,7 @@ pkgver() {
 prepare() {
   cd AutoSploit
 
-  patch -p1 < $srcdir/service.patch
+  sed -i 's/sudo service {} start/sudo systemctl start {}/g' autosploit/main.py
 }
 
 package() {
@@ -35,15 +33,17 @@ package() {
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname/Docker"
 
-  install -Dm 755 autosploit.py "$pkgdir/usr/share/$pkgname/autosploit"
-  install -Dm 644 modules.txt "$pkgdir/usr/share/$pkgname/modules.txt"
-  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/Docker/" Docker/*
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md CONTRIBUTING.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/autosploit/LICENSE"
+
+  rm *.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 $pkgname "\$@"
+exec python2 ./autosploit.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
