@@ -1,0 +1,75 @@
+# Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Contributor: Sven-Hendrik Haase <sh@lutzhaase.com>
+# Contributor: Thomas Dziedzic < gostrc at gmail >
+# Contributor: Mathias Stearn <mathias@10gen.com>
+# Contributor: Alec Thomas
+
+pkgname=mongodb
+pkgver=4.0.5
+pkgrel=2
+pkgdesc='A high-performance, open source, schema-free document-oriented database.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://www.mongodb.com/'
+license=('AGPL3')
+depends=('pcre' 'snappy' 'openssl' 'libsasl' 'yaml-cpp' 'lsb-release'
+         'wiredtiger' 'libstemmer' 'curl')
+makedepends=('scons' 'readline' 'ncurses' 'libpcap' 'python2-setuptools'
+             'python2-regex' 'python2-cheetah' 'python2-typing'
+             'python2-requests' 'python2-yaml')
+checkdepends=('python2-pymongo')
+optdepends=('libpcap: needed for mongosniff'
+            'mongodb-tools: mongoimport, mongodump, mongotop, etc')
+backup=('etc/mongodb.conf')
+source=("http://downloads.mongodb.org/src/mongodb-src-r${pkgver}.tar.gz"
+        'mongodb.sysusers' 'mongodb.tmpfiles' 'mongodb.conf' 'mongodb.service')
+sha512sums=('4a544ad40d75583b38a6a97a0a6e4fae7d0d7a740aa1f993adac6855c5f7fae43b4cf6966e58d16ec716e8b93c770a3dc3997c2785597b5e37dfc7aafa516976'
+            '889425b864c58a767aa5865c0ce9817361ad99fec78050fa600f14eaef5a56ce0bc41a03878233e99f4862596a94dafcfebebecd4d57443b742117b873ab813d'
+            'a931c401792f4e7928e4778d91626c1ecc3e97e5728549b170c050de487b2e5234747b0ee2d5acc3d63b798716758c17e30914dcaa9a92ac386db39f8a45a05c'
+            '05dead727d3ea5fe8af1a3c3888693f6b3e2b8cb7f197a5d793352e10d2c524e96c9a5c55ad2e88c1114643a9612ec0b26a2574b48a5260a9b51ec8941461f1c'
+            '177251404b2e818ae2b546fe8b13cb76e348c99e85c7bef22a04b0f07b600fd515a309ede50214f4198594388a6d2b31f46e945b9dae84aabb4dfa13b1123bb9')
+
+_scons_args=(
+  --use-system-pcre
+  --use-system-snappy
+  --use-system-yaml
+  --use-system-zlib
+  --use-system-wiredtiger
+  --use-system-stemmer
+  --use-sasl-client
+  --ssl
+  --disable-warnings-as-errors
+  # --use-system-asio     # https://jira.mongodb.org/browse/SERVER-21839
+  # --use-system-v8       # Doesn't compile
+  # --use-system-icu
+  # --use-system-tcmalloc # Disabled as upstream suggests in https://jira.mongodb.org/browse/SERVER-17447?focusedCommentId=841890&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-841890
+)
+
+prepare() {
+  cd "mongodb-src-r$pkgver"
+
+  # Broken tls13 support, removing to fix build
+  sed -i '/counts.tls13/d' src/mongo/util/net/ssl_manager_openssl.cpp
+}
+
+build() {
+  cd "mongodb-src-r${pkgver}"
+
+  export SCONSFLAGS="$MAKEFLAGS"
+
+  scons core tools "${_scons_args[@]}"
+}
+
+package() {
+  cd "mongodb-src-r${pkgver}"
+
+  scons install --prefix="$pkgdir/usr" --nostrip "${_scons_args[@]}"
+
+  install -Dm 644 "$srcdir/mongodb.conf" "$pkgdir/etc/mongodb.conf"
+  install -Dm 644 "$srcdir/mongodb.service" \
+    "$pkgdir/usr/lib/systemd/system/mongodb.service"
+  install -Dm 644 "$srcdir/mongodb.sysusers" \
+    "$pkgdir/usr/lib/sysusers.d/mongodb.conf"
+  install -Dm 644 "$srcdir/mongodb.tmpfiles" \
+    "$pkgdir/usr/lib/tmpfiles.d/mongodb.conf"
+}
+
