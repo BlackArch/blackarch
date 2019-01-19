@@ -2,44 +2,29 @@
 # See COPYING for license details.
 
 pkgname=drupwn
-pkgver=42.9acf030
+pkgver=1.0.1
 pkgrel=1
+epoch=1
 pkgdesc='Drupal enumeration & exploitation tool.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/immunIT/drupwn'
 license=('GPL3')
 depends=('python' 'python-argparse' 'python-requests' 'python-prompt_toolkit'
-         'python-veryprettytable')
-makedepends=('git')
-source=('git+https://github.com/immunIT/drupwn.git')
-sha512sums=('SKIP')
+         'python-veryprettytable' 'python-pysocks')
+source=("https://github.com/immunIT/drupwn/archive/$pkgver.tar.gz")
+sha512sums=('0e66c89b1ef4295a40bdb893abc0b465caf2f34aacedcb6904e0dacd9e1a1001c4c65cd04584ee5d12f1c8f352777ea37ccf00888c8acc514432170c0f8a1851')
 
-pkgver() {
-  cd $pkgname
+build() {
+  cd "$pkgname-$pkgver"
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  python setup.py build
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm *.md LICENSE
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python drupwn "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
 }
 
