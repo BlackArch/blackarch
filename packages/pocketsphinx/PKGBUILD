@@ -1,0 +1,55 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pocketsphinx
+pkgver=5prealpha
+pkgrel=1
+pkgdesc='Lightweight speech recognition engine, specifically tuned for handheld and mobile devices, though it works equally well on the desktop.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='http://cmusphinx.sourceforge.net'
+license=('BSD')
+depends=('sphinxbase' 'gst-plugins-base-libs')
+makedepends=('swig' 'python2' 'python')
+options=('!libtool')
+source=("http://downloads.sourceforge.net/cmusphinx/$pkgname-$pkgver.tar.gz")
+sha512sums=('8165ab6eb49220b0e21ca41067d91f382f9a5e09b35faf4d0c9e4b1fa75b95f4b6181fe1056dd0a85bebd23a5fb830079e443ddaaa44414da8978f8fc66a0288')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  autoreconf -ivf > /dev/null
+
+  cd ..
+
+  cp -R "$pkgname-$pkgver" "$pkgname-$pkgver-py2"
+  cp -R "$pkgname-$pkgver" "$pkgname-$pkgver-py3"
+}
+
+build() {
+  cd "$pkgname-$pkgver-py3"
+
+  export PYTHON=/usr/bin/python
+  ./configure --prefix=/usr
+  make
+
+	cd "../$pkgname-$pkgver-py2"
+
+  export PYTHON=/usr/bin/python2
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+	cd "$pkgname-$pkgver-py3"
+
+	make DESTDIR="$pkgdir" install
+
+  cd "../$pkgname-$pkgver-py2/swig"
+
+  make DESTDIR="$pkgdir" install
+
+	install -dm 755 "$pkgdir/usr/share/licenses/$pkgname"
+	install -Dm 644 "$srcdir/${pkgname}-${pkgver}/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
