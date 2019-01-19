@@ -2,23 +2,50 @@
 # See COPYING for license details.
 
 pkgname=thefatrat
-pkgver=v1.9.3.r200.gaf28832
-pkgrel=2
+pkgver=v1.9.3.r210.g3abb034
+pkgrel=1
 pkgdesc='TheFatRat a massive exploiting tool: easy tool to generate backdoor and easy tool to post exploitation attack.'
 arch=('x86_64')
 groups=('blackarch' 'blackarch-automation' 'blackarch-exploitation')
-url='https://github.com/mrsmith0x00/TheFatRat'
+url='https://github.com/Screetsec/TheFatRat'
 license=('GPL3')
 depends=('searchsploit' 'backdoor-factory' 'metasploit' 'xterm' 'bind-tools' 'gcc'
          'apache' 'gnome-terminal' 'upx' 'ruby-nokogiri' 'openssl' 'imagemagick'
          'ncurses' 'lib32-zlib' 'libstdc++5' 'lsb-release' 'python' 'python-names'
-         'jdk8-openjdk' 'jre8-openjdk' 'unzip' 'mingw-w64-gcc' 'sudo')
+         'jdk8-openjdk' 'jre8-openjdk' 'unzip' 'mingw-w64-gcc' 'sudo' 'dex2jar'
+         'android-apktool' 'android-sdk-build-tools')
 makedepends=('git')
-source=('git+https://github.com/mrsmith0x00/TheFatRat.git')
-install=thefatrat.install
+source=('git+https://github.com/Screetsec/TheFatRat.git')
 sha512sums=('SKIP')
 options=('!strip')
 _dir_name_=TheFatRat
+
+prepare() {
+  cd "$_dir_name_"
+
+  sed 's/\/etc\/init.d\/apache2\ start/systemctl\ start\ httpd/g' -i fatrat
+  sed 's/\/etc\/init.d\/apache2\ stop/systemctl\ stop\ httpd/g' -i fatrat
+  sed 's/\/etc\/init.d\/postgresql\ start/systemctl\ start\ postgresql/g' -i fatrat
+  sed 's/\/etc\/init.d\/postgresql\ stop/systemctl\ stop\ postgresql/g' -i fatrat
+  sed 's/\/var\/www\/html/\/srv\/http/g' -i fatrat
+  sed 's/\/var\/www/\/srv/g' -i fatrat
+
+  cat > "config/config.path" << EOF
+jarsigner
+unzip
+keytool
+/usr/share/$pkgname/tools/android-sdk/zipalign
+/usr/share/$pkgname/tools/proguard5.3.2/lib/proguard
+dx
+aapt
+apktool
+d2j-dex2jar
+msfconsole
+msfvenom
+backdoor-factory
+searchsploit
+EOF
+}
 
 pkgver() {
   cd "$_dir_name_"
@@ -29,14 +56,25 @@ pkgver() {
 package() {
   cd "$_dir_name_"
 
+  install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md \
     troubleshoot.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm -rf *.md LICENSE
+  rm -rf *.md LICENSE setup.sh
 
   cp -r --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  chmod +x "$pkgdir/usr/share/$pkgname/fatrat"
+  chmod +x "$pkgdir/usr/share/$pkgname/update"
+
+  cat > "$pkgdir/usr/bin/fatrat" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname && ./fatrat
+EOF
+
+  chmod +x "$pkgdir/usr/bin/fatrat"
 }
 
