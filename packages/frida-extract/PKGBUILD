@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=frida-extract
+pkgver=13.abb3f14
+pkgrel=1
+pkgdesc='Frida.re based RunPE (and MapViewOfSection) extraction tool.'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-reversing')
+url='https://github.com/OALabs/frida-extract'
+license=('custom:unknown')
+depends=('python2-frida' 'python2-argparse')
+makedepends=('git')
+source=("git+https://github.com/OALabs/$pkgname")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 FridaExtract.py "\$@"
+EOF
+
+chmod +x "$pkgdir/usr/bin/$pkgname"
+
+}
+
