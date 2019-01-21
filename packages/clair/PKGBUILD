@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=clair
+pkgver=2.0.7
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='Vulnerability Static Analysis for Containers.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+license=('APACHE')
+depends=('glibc' 'go')
+makedepends=('git')
+url='https://github.com/coreos/clair'
+source=("https://github.com/coreos/clair/archive/v$pkgver.tar.gz")
+sha1sums=('2cf9c1f6ddf6cf344fdc0712a7cd004909119d62')
+_url='github.com/coreos/clair'
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv clair "src/$_url" &&
+    cd "src/$_url"
+
+  GOPATH="$srcdir" go get -d -t $_url
+}
+
+package() {
+  GOPATH="$srcdir" go install -v "github.com/coreos/$pkgname/cmd/$pkgname"
+
+  install -Dm 755 "$srcdir/bin/clair" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 "src/$_url/README.md" \
+    "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 "src/$_url/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
