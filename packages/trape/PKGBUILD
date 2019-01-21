@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=trape
+pkgver=95.3a7f789
+pkgrel=1
+pkgdesc='People tracker on the Internet: OSINT analysis and research tool by Jose Pino.'
+groups=('blackarch' 'blackarch-recon')
+arch=('any')
+url='https://github.com/jofpin/trape'
+license=('CC BY 3')
+depends=('python2' 'python2-flask' 'python2-flask-login'
+         'python2-flask-socketio' 'python2-itsdangerous' 'python2-jinja'
+         'python2-markupsafe' 'python2-engineio' 'python2-socketio'
+         'python2-six' 'python2-werkzeug' 'python2-eventlet'
+         'python2-requests' 'python2-colorama')
+makedepends=('git')
+source=('git+https://github.com/jofpin/trape.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin/"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm -rf README.md requirements.txt version.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 $pkgname.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
