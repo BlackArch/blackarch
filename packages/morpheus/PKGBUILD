@@ -9,16 +9,13 @@ groups=('blackarch' 'blackarch-automation')
 arch=('any')
 url='https://github.com/r00t-3xp10it/morpheus'
 license=('custom:unknown')
-#TODO: add metasploit as dep once the fucking ruby issues are solved
 depends=('bash' 'xterm' 'zenity' 'ettercap' 'dsniff' 'apache' 'nmap' 'driftnet'
-         'sudo')
+         'sudo' 'metasploit')
 makedepends=('git')
 source=('git+https://github.com/r00t-3xp10it/morpheus.git'
-        'settings.patch'
-        'morpheus.sh.patch')
+        'settings.patch')
 sha512sums=('SKIP'
-            'd84af3a5e35fe1f97db3ac619d57ccbc863897050fa007b4629dca2343924c9df5541fbb14d07f5d20e067a291de979869ab7137ff142fe592564c7a56702fe3'
-            '4f6a00ca03d5e68b620afddb5fa95fed5eb41da645ae2c733dc0ebde91a91ea24acc5e45a98236312f3c5f5feaea37a7aa6ecf27adf4658ea320dfcaed900736')
+            '8c9eb573da48f245e1710de9c338a1c097cc934f7db8b8f2f1d758a11a6ce62c7d2809a21cc83aef3af3fa10714206bd1795f22045908769b19a54148ac79e5f')
 
 pkgver() {
   cd $pkgname
@@ -29,8 +26,11 @@ pkgver() {
 prepare() {
   cd $pkgname
 
-  patch -p1 < settings.patch
-  patch -p1 < morpheus.sh.patch
+  patch < ../../settings.patch
+  sed 's/echo/echo\ -e/g' -i morpheus.sh
+  sed 's/which\ apache2/which\ httpd/g' -i morpheus.sh
+  sed 's/\/etc\/init.d\/apache2\ start/systemctl\ start/g' -i morpheus.sh
+  sed 's/\/etc\/init.d\/apache2\ stop/systemctl\ stop/g' -i morpheus.sh
 }
 
 package() {
