@@ -11,10 +11,14 @@ arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 groups=('blackarch' 'blackarch-binary' 'blackarch-reversing'
         'blackarch-disassembler')
 license=('APACHE')
-depends=('qt5-base' 'zlib' 'python' 'libmpack')
-makedepends=('git' 'cmake')
-source=('git+https://github.com/codilime/veles.git')
-sha512sums=('SKIP')
+depends=('qt5-base' 'python' 'protobuf' 'zlib' 'python-pyopenssl' 'libmpack')
+makedepends=('git' 'cmake' 'qt5-base>=5.11.0' 'python' 'python-pbr' 'python-six'
+             'python-msgpack' 'python-setuptools' 'python-virtualenv' 'protobuf'
+             'zlib')
+source=('git+https://github.com/codilime/veles.git'
+        'fix_qt5_use_modules.patch')
+sha512sums=('SKIP'
+            '421d2e782a25b88b21d5b47453c4e46fa22855db2a4364e6be9656f264191d6a6afbd7b60e354c4eb400bc71afe2f596a40c448498654e8e0ee43e9352848378')
 
 pkgver() {
   cd $pkgname
@@ -22,18 +26,30 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  patch -Np1 -i ../fix_qt5_use_modules.patch
+}
+
 build() {
   cd $pkgname
 
-  cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .
+  mkdir -p build
+  cd build
+  cmake -Wno-dev .. -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_VERBOSE_MAKEFILE=ON \
+    -DCMAKE_INSTALL_PREFIX:PATH="$pkgdir/usr"
 
   make
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname/build"
 
   make DESTDIR="$pkgdir" install
+
+  cd python
+  python setup.py install --root="$pkgdir" --optimize=1
 
   install -Dm 644 LICENSE-2.0 "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
