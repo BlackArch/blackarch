@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=moloch
-pkgver=0.11.3
+pkgver=2790.26195501
 pkgrel=1
 pkgdesc='An open source large scale IPv4 full PCAP capturing, indexing and database system.'
 url='https://github.com/aol/moloch'
@@ -15,13 +15,19 @@ depends=('curl' 'file' 'util-linux' 'perl-json' 'perl-libwww' 'libpng' 'python2'
 makedepends=('glib2')
 _dataroot="/usr/share/moloch"
 _yaraver='2.1.0'
-source=("https://github.com/aol/moloch/archive/v$pkgver.tar.gz"
+source=('git+https://github.com/aol/moloch.git')
 "https://github.com/plusvic/yara/archive/v$_yaraver.tar.gz")
-sha512sums=('45b81a613e05a20d6abe622f769abfe9e8807a9678b4cf6e3291c4452a352782f1f8b0f6809771e889305c01032c172787bac0f324ddc214a482cb2effb28c0c'
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
             '082a603ea648e4d83d45d6e30937c60eb0bf2092fb1c6845103380be12f9b72a05e439403cd08cbccdc598ba1d5cd51d394db3d989d154e95a91317d6d4ff8e5')
 
 prepare() {
-  cd "$pkgname-$pkgver"
+  cd "$pkgname"
 
   sed -i 's|/data/moloch/etc/|/etc/moloch/|g' $(grep -rl '/data/moloch/etc/')
 
@@ -53,7 +59,7 @@ build() {
   make
 
   # Build moloch
-  cd "../moloch-$pkgver"
+  cd "../moloch"
 
   ./configure --prefix=$_dataroot --bindir=/usr/bin \
     --with-yara="$srcdir/yara-$_yaraver"
@@ -62,7 +68,7 @@ build() {
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd "$pkgname"
 
   make DESTDIR="$pkgdir" install
 
