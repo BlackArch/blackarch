@@ -123,7 +123,7 @@ if __name__ == '__main__':
 
     main(ruby_packages_version_check, 'ruby')  # start version updating ruby packages
 
-    with open('to-release', 'a') as file:
+    with open('../lists/to-release', 'a') as file:
         file.write(to_release)
 
     print('Done!')
