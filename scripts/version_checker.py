@@ -97,7 +97,7 @@ def ruby_packages_version_check(name):
 def main(function, needed):
     to_check = []
 
-    exclusion = ['python2-cement', 'python2-nmap', 'python2-pubsub', 'python2-pynfc', 'python2-slugify', 'ruby-unf']
+    exclusion = ['python-pyexiftool', 'python2-pyexiftool', 'python2-cement', 'python2-nmap', 'python2-pubsub', 'python2-pynfc', 'python2-slugify', 'ruby-unf']
 
     for root, dirs, files in os.walk('../packages/'):
         for dir in dirs:
