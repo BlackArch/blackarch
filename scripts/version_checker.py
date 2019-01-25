@@ -97,18 +97,24 @@ def ruby_packages_version_check(name):
 
 def hacking_tools_update(name):
     current_version = get_current_version(name)
+    try:
+        i = 0 # no cheat
+        with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
 
-    available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(int(current_version.split('.')[-1])+1) # so far only last number++
+            for line in file:
 
-    with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
-        for line in file:
-            if 'source=(' in line:
-                url = str(line[9:-3].strip()) # got url without 'source=("' and '")'
+                if 'source=(' in line and '$pkgver' in line and 'git+' not in line and 'python' not in line and 'ruby' not in line: # 'git+' for include tarball from github.com
+                    url = str(line[9:-3].strip()) # got url without 'source=("' and '")'
 
-    req = requests.get(url.replace('$pkgver', available_version)) # check for update
-
-    if req.ok: # got new version
-        update_pkgbuild(name, url, current_version, available_version)
+                    if 'python' not in name and 'ruby' not in name and current_version.replace('.','').isdigit():
+                        i+=1
+                        available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(int(current_version.split('.')[-1])+i) # so far only last number++
+                        req = requests.get(url.replace('$pkgver', available_version).replace('$pkgname', name))
+                        if req.ok and req.headers['Content-Type'] != 'text/html' and req.headers['Content-Type'] != 'text/html;charset=utf-8':
+                            #update_pkgbuild(name, url, current_version, available_version)
+                            print('Time to update: '+name+' to: '+available_version)
+    except Exception:
+        pass
 
 
 def main(function, needed):
@@ -138,13 +144,13 @@ if __name__ == '__main__':
         print('Failure importing module: ' + str(e))
         sys.exit(1)
 
-    main(arch_community_check, '') # start arch community check
+#    main(arch_community_check, '') # start arch community check
 
-    main(python_packages_version_check, 'python')  # start version updating python packages
+#    main(python_packages_version_check, 'python')  # start version updating python packages
 
-    main(ruby_packages_version_check, 'ruby')  # start version updating ruby packages
+#    main(ruby_packages_version_check, 'ruby')  # start version updating ruby packages
 
-    #hacking_tools_update('blackarch-installer') # only for test
+    main(hacking_tools_update, '')
 
     with open('../lists/to-release', 'a') as file:
         file.write(to_release)
