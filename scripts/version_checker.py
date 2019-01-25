@@ -9,7 +9,7 @@ to_release = ''
 
 # get current version
 def get_current_version(name):
-    with open('{name}/PKGBUILD'.format(name=name), 'r') as file:
+    with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
         for line in file:
             if 'pkgver' in line:
                 return str(line[7:].strip())  # pkgver=...
@@ -24,20 +24,20 @@ def arch_community_check(name):
 def update_pkgbuild(name, url, current_version, available_version):
     global to_release
 
-    os.system("sed 's/pkgrel=.*/pkgrel=1/' -i {name}/PKGBUILD".format(name=name))  # pkgrel=1
+    os.system("sed 's/pkgrel=.*/pkgrel=1/' -i ../packages/{name}/PKGBUILD".format(name=name))  # pkgrel=1
 
     sha512 = str(os.popen('wget -q -O- {url} | sha512sum -'.format(url=url)).read().strip(' -\n'))  # calculate sha512
 
     os.system(
-        "sed 's/{current_version}/{available_version}/' -i {name}/PKGBUILD".format(current_version=current_version,
+        "sed 's/{current_version}/{available_version}/' -i ../packages/{name}/PKGBUILD".format(current_version=current_version,
                                                                                    available_version=available_version,
                                                                                    name=name))  # change version
 
     url = url.replace('/', '\/').replace(available_version, '$pkgver')
 
-    os.system("sed 's/source=.*/source=("'"{url}"'")/' -i {name}/PKGBUILD".format(url=url, name=name))  # write new url
+    os.system("sed 's/source=.*/source=("'"{url}"'")/' -i ../packages/{name}/PKGBUILD".format(url=url, name=name))  # write new url
 
-    os.system("sed 's/sha512sums=.*/sha512sums=('\\''{sha512}'\\'')/' -i {name}/PKGBUILD".format(sha512=sha512,
+    os.system("sed 's/sha512sums=.*/sha512sums=('\\''{sha512}'\\'')/' -i ../packages/{name}/PKGBUILD".format(sha512=sha512,
                                                                                                  name=name))  # write new sha512
 
     to_release += (name + '\n')
@@ -99,7 +99,7 @@ def main(function, needed):
 
     exclusion = ['python2-cement', 'python2-nmap', 'python2-pubsub', 'python2-pynfc', 'python2-slugify', 'ruby-unf']
 
-    for root, dirs, files in os.walk('.'):
+    for root, dirs, files in os.walk('../packages/'):
         for dir in dirs:
             if needed in dir and dir not in exclusion:
                 to_check.append(dir)
@@ -123,7 +123,7 @@ if __name__ == '__main__':
 
     main(ruby_packages_version_check, 'ruby')  # start version updating ruby packages
 
-    with open('../lists/to-release', 'a') as file:
+    with open('to-release', 'a') as file:
         file.write(to_release)
 
     print('Done!')
