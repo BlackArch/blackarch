@@ -26,7 +26,9 @@ def update_pkgbuild(name, url, current_version, available_version):
 
     os.system("sed 's/pkgrel=.*/pkgrel=1/' -i ../packages/{name}/PKGBUILD".format(name=name))  # pkgrel=1
 
-    sha512 = str(os.popen('wget -q -O- {url} | sha512sum -'.format(url=url)).read().strip(' -\n'))  # calculate sha512
+    url = url.replace('$pkgver', available_version) # if it's possible
+
+    sha512 = str(os.popen('wget -c -q -O- {url} | sha512sum -'.format(url=url)).read().strip(' -\n'))  # calculate sha512
 
     os.system(
         "sed 's/{current_version}/{available_version}/' -i ../packages/{name}/PKGBUILD".format(current_version=current_version,
@@ -93,6 +95,21 @@ def ruby_packages_version_check(name):
             url = str(json.loads(req.text.encode()).get('gem_uri'))
             update_pkgbuild(name, url, current_version, available_version)
 
+def hacking_tools_update(name):
+    current_version = get_current_version(name)
+
+    available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(int(current_version.split('.')[-1])+1) # so far only last number++
+
+    with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
+        for line in file:
+            if 'source=(' in line:
+                url = str(line[9:-3].strip()) # got url without 'source=("' and '")'
+
+    req = requests.get(url.replace('$pkgver', available_version)) # check for update
+
+    if req.ok: # got new version
+        update_pkgbuild(name, url, current_version, available_version)
+
 
 def main(function, needed):
     to_check = []
@@ -111,7 +128,11 @@ def main(function, needed):
 
 if __name__ == '__main__':
     try:
-        import distutils.version, json, os, packaging.version, requests
+        import distutils.version
+        import json
+        import os
+        import packaging.version
+        import requests
         from concurrent.futures import ThreadPoolExecutor
     except ModuleNotFoundError as e:
         print('Failure importing module: ' + str(e))
@@ -122,6 +143,8 @@ if __name__ == '__main__':
     main(python_packages_version_check, 'python')  # start version updating python packages
 
     main(ruby_packages_version_check, 'ruby')  # start version updating ruby packages
+
+    #hacking_tools_update('blackarch-installer') # only for test
 
     with open('../lists/to-release', 'a') as file:
         file.write(to_release)
