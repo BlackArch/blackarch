@@ -14,11 +14,13 @@ def get_current_version(name):
             if 'pkgver' in line:
                 return str(line[7:].strip())  # pkgver=...
 
+
 # check arch community
 def arch_community_check(name):
-    temp = requests.get('https://www.archlinux.org/packages/community/x86_64/'+name+'/')
+    temp = requests.get('https://www.archlinux.org/packages/community/x86_64/' + name + '/')
     if temp.ok:
-        print('We can remove: '+name)
+        print('We can remove: ' + name)
+
 
 # update pkgbuild
 def update_pkgbuild(name, url, current_version, available_version):
@@ -26,21 +28,25 @@ def update_pkgbuild(name, url, current_version, available_version):
 
     os.system("sed 's/pkgrel=.*/pkgrel=1/' -i ../packages/{name}/PKGBUILD".format(name=name))  # pkgrel=1
 
-    url = url.replace('$pkgver', available_version) # if it's possible
+    url = url.replace('$pkgver', available_version)  # if it's possible
 
-    sha512 = str(os.popen('wget -c -q -O- "{url}" | sha512sum -'.format(url=url)).read().strip(' -\n'))  # calculate sha512
+    sha512 = str(
+        os.popen('wget -c -q -O- "{url}" | sha512sum -'.format(url=url)).read().strip(' -\n'))  # calculate sha512
 
     os.system(
-        "sed 's/{current_version}/{available_version}/' -i ../packages/{name}/PKGBUILD".format(current_version=current_version,
-                                                                                   available_version=available_version,
-                                                                                   name=name))  # change version
+        "sed 's/{current_version}/{available_version}/' -i ../packages/{name}/PKGBUILD".format(
+            current_version=current_version,
+            available_version=available_version,
+            name=name))  # change version
 
     url = url.replace('/', '\/').replace(available_version, '$pkgver')
 
-    os.system("sed 's/source=.*/source=("'"{url}"'")/' -i ../packages/{name}/PKGBUILD".format(url=url, name=name))  # write new url
+    os.system("sed 's/source=.*/source=("'"{url}"'")/' -i ../packages/{name}/PKGBUILD".format(url=url,
+                                                                                              name=name))  # write new url
 
-    os.system("sed 's/sha512sums=.*/sha512sums=('\\''{sha512}'\\'')/' -i ../packages/{name}/PKGBUILD".format(sha512=sha512,
-                                                                                                 name=name))  # write new sha512
+    os.system(
+        "sed 's/sha512sums=.*/sha512sums=('\\''{sha512}'\\'')/' -i ../packages/{name}/PKGBUILD".format(sha512=sha512,
+                                                                                                       name=name))  # write new sha512
 
     to_release += (name + '\n')
 
@@ -95,22 +101,25 @@ def ruby_packages_version_check(name):
             url = str(json.loads(req.text.encode()).get('gem_uri'))
             update_pkgbuild(name, url, current_version, available_version)
 
+
 def hacking_tools_update(name):
     current_version = get_current_version(name)
     try:
-        i = 0 # no cheat
+        i = 0  # no cheat
         with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
 
             for line in file:
 
-                if 'source=(' in line and '$pkgver' in line and 'git+' not in line and 'python' not in line and 'ruby' not in line: # 'git+' for include tarball from github.com
-                    url = str(line[9:-3].strip()) # got url without 'source=("' and '")'
+                if 'source=(' in line and '$pkgver' in line and 'git+' not in line and 'python' not in line and 'ruby' not in line:  # 'git+' for include tarball from github.com
+                    url = str(line[9:-3].strip())  # got url without 'source=("' and '")'
 
-                    if 'python' not in name and 'ruby' not in name and current_version.replace('.','').isdigit():
-                        i+=1
-                        available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(int(current_version.split('.')[-1])+i) # so far only last number++
+                    if 'python' not in name and 'ruby' not in name and current_version.replace('.', '').isdigit():
+                        i += 1
+                        available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(
+                            int(current_version.split('.')[-1]) + i)  # so far only last number++
                         req = requests.get(url.replace('$pkgver', available_version).replace('$pkgname', name))
-                        if req.ok and req.headers['Content-Type'] != 'text/html' and req.headers['Content-Type'] != 'text/html;charset=utf-8':
+                        if req.ok and req.headers['Content-Type'] != 'text/html' and req.headers[
+                            'Content-Type'] != 'text/html;charset=utf-8':
                             update_pkgbuild(name, url, current_version, available_version)
     except Exception:
         pass
@@ -119,7 +128,8 @@ def hacking_tools_update(name):
 def main(function, needed):
     to_check = []
 
-    exclusion = ['python-pyexiftool', 'python2-pyexiftool', 'python2-cement', 'python2-nmap', 'python2-pubsub', 'python2-pynfc', 'python2-slugify', 'ruby-unf']
+    exclusion = ['python-pyexiftool', 'python2-pyexiftool', 'python2-cement', 'python2-nmap', 'python2-pubsub',
+                 'python2-pynfc', 'python2-slugify', 'ruby-unf']
 
     for root, dirs, files in os.walk('../packages/'):
         for dir in dirs:
@@ -143,7 +153,7 @@ if __name__ == '__main__':
         print('Failure importing module: ' + str(e))
         sys.exit(1)
 
-    main(arch_community_check, '') # start arch community check
+    main(arch_community_check, '')  # start arch community check
 
     main(python_packages_version_check, 'python')  # start version updating python packages
 
@@ -155,4 +165,3 @@ if __name__ == '__main__':
         file.write(to_release)
 
     print('Done!')
-
