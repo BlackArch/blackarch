@@ -28,7 +28,7 @@ def update_pkgbuild(name, url, current_version, available_version):
 
     url = url.replace('$pkgver', available_version) # if it's possible
 
-    sha512 = str(os.popen('wget -c -q -O- {url} | sha512sum -'.format(url=url)).read().strip(' -\n'))  # calculate sha512
+    sha512 = str(os.popen('wget -c -q -O- "{url}" | sha512sum -'.format(url=url)).read().strip(' -\n'))  # calculate sha512
 
     os.system(
         "sed 's/{current_version}/{available_version}/' -i ../packages/{name}/PKGBUILD".format(current_version=current_version,
@@ -111,8 +111,7 @@ def hacking_tools_update(name):
                         available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(int(current_version.split('.')[-1])+i) # so far only last number++
                         req = requests.get(url.replace('$pkgver', available_version).replace('$pkgname', name))
                         if req.ok and req.headers['Content-Type'] != 'text/html' and req.headers['Content-Type'] != 'text/html;charset=utf-8':
-                            #update_pkgbuild(name, url, current_version, available_version)
-                            print('Time to update: '+name+' to: '+available_version)
+                            update_pkgbuild(name, url, current_version, available_version)
     except Exception:
         pass
 
@@ -144,11 +143,11 @@ if __name__ == '__main__':
         print('Failure importing module: ' + str(e))
         sys.exit(1)
 
-#    main(arch_community_check, '') # start arch community check
+    main(arch_community_check, '') # start arch community check
 
-#    main(python_packages_version_check, 'python')  # start version updating python packages
+    main(python_packages_version_check, 'python')  # start version updating python packages
 
-#    main(ruby_packages_version_check, 'ruby')  # start version updating ruby packages
+    main(ruby_packages_version_check, 'ruby')  # start version updating ruby packages
 
     main(hacking_tools_update, '')
 
