@@ -4,8 +4,9 @@ import sys
 
 __version__ = '0.1'
 
-to_release = ''
+__home__ = 'blackarch.org'
 
+to_release = ''
 
 # get current version
 def get_current_version(name):
@@ -26,30 +27,27 @@ def arch_community_check(name):
 def update_pkgbuild(name, url, current_version, available_version):
     global to_release
 
-    os.system("sed 's/pkgrel=.*/pkgrel=1/' -i ../packages/{name}/PKGBUILD".format(name=name))  # pkgrel=1
+    url = url.replace('$pkgname', name).replace('$pkgver', available_version) # to sha512 check
+    req = requests.get(url) # got file
+    sha512 = hashlib.sha512(req.content).hexdigest()  # calculate sha512
 
-    url = url.replace('$pkgver', available_version)  # if it's possible
+    url = url.replace(name, '$pkgname').replace(available_version, '$pkgver') # style fix
 
-    sha512 = str(
-        os.popen('wget -c -q -O- "{url}" | sha512sum -'.format(url=url)).read().strip(' -\n'))  # calculate sha512
+    with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
+        temp = file.read()
 
-    os.system(
-        "sed 's/{current_version}/{available_version}/' -i ../packages/{name}/PKGBUILD".format(
-            current_version=current_version,
-            available_version=available_version,
-            name=name))  # change version
+    temp = re.sub(current_version, available_version, temp) # version bump
 
-    url = url.replace('/', '\/').replace(available_version, '$pkgver')
+    temp = re.sub('pkgrel=.*', 'pkgrel=1', temp) # pkgrel=1
 
-    os.system("sed 's/source=.*/source=("'"{url}"'")/' -i ../packages/{name}/PKGBUILD".format(url=url,
-                                                                                              name=name))  # write new url
+    temp = re.sub('sha512sums=.*', ("sha512sums=('"+sha512+"')"), temp) # sha512 update
 
-    os.system(
-        "sed 's/sha512sums=.*/sha512sums=('\\''{sha512}'\\'')/' -i ../packages/{name}/PKGBUILD".format(sha512=sha512,
-                                                                                                       name=name))  # write new sha512
+    temp = re.sub('source=.*', ('source=("'+url+'")'), temp) # source update
+
+    with open('../packages/{name}/PKGBUILD'.format(name=name), 'w') as file:
+        file.write(temp)
 
     to_release += (name + '\n')
-
     print('Successfully updated {name} from {current_version} to {available_version}'.format(name=name,
                                                                                              current_version=current_version,
                                                                                              available_version=available_version))
@@ -154,22 +152,23 @@ if __name__ == '__main__':
     try:
         import distutils.version
         import json
+        import hashlib
         import os
         import packaging.version
+        import re
         import requests
         from concurrent.futures import ThreadPoolExecutor
     except ModuleNotFoundError as e:
         print('Failure importing module: ' + str(e))
         sys.exit(1)
 
-#    main(arch_community_check, '')  # start arch community check
+    main(arch_community_check, '')  # start arch community check
 
-#    main(python_packages_version_check, 'python')  # start version updating python packages
+    main(python_packages_version_check, 'python')  # start version updating python packages
 
-#    main(ruby_packages_version_check, 'ruby')  # start version updating ruby packages
+    main(ruby_packages_version_check, 'ruby')  # start version updating ruby packages
 
     main(hacking_tools_update, '')
-
     with open('../lists/to-release', 'a') as file:
         file.write(to_release)
 
