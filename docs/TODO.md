@@ -61,7 +61,7 @@ Just check out the following:
              BlackArch (long-term).
              [Edu4rdSHL]
 
-  [.] version-checker
+  [x] version-checker
       create an version-checker script (python3) for non-git tools so we can
       semi-automate the tools updating part like we do for git-tools.
       [mrsmith0x00]
