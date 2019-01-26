@@ -105,7 +105,7 @@ def ruby_packages_version_check(name):
 def hacking_tools_update(name):
     current_version = get_current_version(name)
     try:
-        i = 0  # no cheat
+        i = 0 # no cheat
         with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
 
             for line in file:
@@ -114,13 +114,22 @@ def hacking_tools_update(name):
                     url = str(line[9:-3].strip())  # got url without 'source=("' and '")'
 
                     if 'python' not in name and 'ruby' not in name and current_version.replace('.', '').isdigit():
-                        i += 1
-                        available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(
-                            int(current_version.split('.')[-1]) + i)  # so far only last number++
-                        req = requests.get(url.replace('$pkgver', available_version).replace('$pkgname', name))
-                        if req.ok and req.headers['Content-Type'] != 'text/html' and req.headers[
-                            'Content-Type'] != 'text/html;charset=utf-8':
-                            update_pkgbuild(name, url, current_version, available_version)
+                        req = requests.get(url.replace('$pkgver', current_version).replace('$pkgname', name))
+                        while req.ok and req.headers['Content-Type'] != 'text/html' and req.headers['Content-Type'] != 'text/html;charset=utf-8':
+                            i+=1
+                            if current_version.count('.') == 0:
+                                available_version = ''.join(current_version.split[:-1]) + str(int(current_version[-1]) + i)
+                            else:
+                                available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(int(current_version.split('.')[-1]) + i)  # so far only last number++
+                            req = requests.get(url.replace('$pkgver', available_version).replace('$pkgname', name))
+                        i-=1
+                        if current_version.count('.') == 0:
+                            available_version = ''.join(current_version.split[:-1]) + str(int(current_version[-1]) + i)
+                        else:
+                            available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(int(current_version.split('.')[-1]) + i)  # so far only last number++
+                        if i > 0:
+                            print('Time to update: '+name+' to: '+available_version)
+                            #update_pkgbuild(name, url, current_version, available_version)
     except Exception:
         pass
 
@@ -153,11 +162,11 @@ if __name__ == '__main__':
         print('Failure importing module: ' + str(e))
         sys.exit(1)
 
-    main(arch_community_check, '')  # start arch community check
+#    main(arch_community_check, '')  # start arch community check
 
-    main(python_packages_version_check, 'python')  # start version updating python packages
+#    main(python_packages_version_check, 'python')  # start version updating python packages
 
-    main(ruby_packages_version_check, 'ruby')  # start version updating ruby packages
+#    main(ruby_packages_version_check, 'ruby')  # start version updating ruby packages
 
     main(hacking_tools_update, '')
 
