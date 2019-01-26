@@ -109,35 +109,33 @@ def hacking_tools_update(name):
     try:
         i = 0  # no cheat
         with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
-
             for line in file:
-
                 if 'source=(' in line and '$pkgver' in line and 'git+' not in line and 'python' not in line and 'ruby' not in line:  # 'git+' for include tarball from github.com
                     url = str(line[9:-3].strip())  # got url without 'source=("' and '")'
 
-                    if 'python' not in name and 'ruby' not in name and current_version.replace('.', '').isdigit():
-                        req = requests.get(url.replace('$pkgver', current_version).replace('$pkgname', name))
-                        while req.ok and req.headers['Content-Type'] != 'text/html' and req.headers[
-                            'Content-Type'] != 'text/html;charset=utf-8':
-                            i += 1
-                            if current_version.count('.') == 0:
-                                available_version = ''.join(current_version.split[:-1]) + str(
-                                    int(current_version[-1]) + i)
-                            else:
-                                available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(
-                                    int(current_version.split('.')[-1]) + i)  # so far only last number++
-                            req = requests.get(url.replace('$pkgver', available_version).replace('$pkgname', name))
-                        i -= 1
-                        if current_version.count('.') == 0:
-                            available_version = ''.join(current_version.split[:-1]) + str(int(current_version[-1]) + i)
-                        else:
-                            available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(
-                                int(current_version.split('.')[-1]) + i)  # so far only last number++
-                        if i > 0:
-                            print('Time to update: ' + name + ' to: ' + available_version)
-                            to_update += (name + ' ' + available_version + '\n')
-    except Exception:
-        pass
+        if 'python' not in name and 'ruby' not in name and current_version.replace('.', '').isdigit():
+            req = requests.get(url.replace('$pkgver', current_version).replace('$pkgname', name))
+            print(req.status_code)
+            while req.ok and req.headers['Content-Type'] != 'text/html' and req.headers[
+                'Content-Type'] != 'text/html;charset=utf-8':
+                i += 1
+                if current_version.count('.') == 0:
+                    available_version = ''.join(current_version.split[:-1]) + str(int(current_version[-1]) + i)
+                else:
+                    available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(
+                        int(current_version.split('.')[-1]) + i)  # so far only last number++
+                req = requests.get(url.replace('$pkgver', available_version).replace('$pkgname', name))
+            i -= 1
+            if current_version.count('.') == 0:
+                available_version = ''.join(current_version.split[:-1]) + str(int(current_version[-1]) + i)
+            else:
+                available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(
+                    int(current_version.split('.')[-1]) + i)  # so far only last number++
+            if i > 0:
+                print('Time to update: ' + name + ' to: ' + available_version)
+                to_update += (name + ' ' + available_version + '\n')
+    except Exception as e:
+        print(str(e))
 
 
 def main(function, needed):
@@ -179,7 +177,7 @@ if __name__ == '__main__':
     main(hacking_tools_update, '')
 
     with open('../lists/to-release', 'a') as file:
-        file.write(to_release)
+        file.write(to_release)  #
 
     with open('../lists/to-update', 'a') as file:
         file.write(to_update)
