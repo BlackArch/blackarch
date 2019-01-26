@@ -8,6 +8,7 @@ __home__ = 'blackarch.org'
 
 to_release = ''
 
+
 # get current version
 def get_current_version(name):
     with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
@@ -27,22 +28,22 @@ def arch_community_check(name):
 def update_pkgbuild(name, url, current_version, available_version):
     global to_release
 
-    url = url.replace('$pkgname', name).replace('$pkgver', available_version) # to sha512 check
-    req = requests.get(url) # got file
+    url = url.replace('$pkgname', name).replace('$pkgver', available_version)  # to sha512 check
+    req = requests.get(url)  # got file
     sha512 = hashlib.sha512(req.content).hexdigest()  # calculate sha512
 
-    url = url.replace(name, '$pkgname').replace(available_version, '$pkgver') # style fix
+    url = url.replace(name, '$pkgname').replace(available_version, '$pkgver')  # style fix
 
     with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
         temp = file.read()
 
-    temp = re.sub(current_version, available_version, temp) # version bump
+    temp = re.sub(current_version, available_version, temp)  # version bump
 
-    temp = re.sub('pkgrel=.*', 'pkgrel=1', temp) # pkgrel=1
+    temp = re.sub('pkgrel=.*', 'pkgrel=1', temp)  # pkgrel=1
 
-    temp = re.sub('sha512sums=.*', ("sha512sums=('"+sha512+"')"), temp) # sha512 update
+    temp = re.sub('sha512sums=.*', ("sha512sums=('" + sha512 + "')"), temp)  # sha512 update
 
-    temp = re.sub('source=.*', ('source=("'+url+'")'), temp) # source update
+    temp = re.sub('source=.*', ('source=("' + url + '")'), temp)  # source update
 
     with open('../packages/{name}/PKGBUILD'.format(name=name), 'w') as file:
         file.write(temp)
@@ -100,10 +101,11 @@ def ruby_packages_version_check(name):
             update_pkgbuild(name, url, current_version, available_version)
 
 
+# update tools
 def hacking_tools_update(name):
     current_version = get_current_version(name)
     try:
-        i = 0 # no cheat
+        i = 0  # no cheat
         with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
 
             for line in file:
@@ -113,21 +115,25 @@ def hacking_tools_update(name):
 
                     if 'python' not in name and 'ruby' not in name and current_version.replace('.', '').isdigit():
                         req = requests.get(url.replace('$pkgver', current_version).replace('$pkgname', name))
-                        while req.ok and req.headers['Content-Type'] != 'text/html' and req.headers['Content-Type'] != 'text/html;charset=utf-8':
-                            i+=1
+                        while req.ok and req.headers['Content-Type'] != 'text/html' and req.headers[
+                            'Content-Type'] != 'text/html;charset=utf-8':
+                            i += 1
                             if current_version.count('.') == 0:
-                                available_version = ''.join(current_version.split[:-1]) + str(int(current_version[-1]) + i)
+                                available_version = ''.join(current_version.split[:-1]) + str(
+                                    int(current_version[-1]) + i)
                             else:
-                                available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(int(current_version.split('.')[-1]) + i)  # so far only last number++
+                                available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(
+                                    int(current_version.split('.')[-1]) + i)  # so far only last number++
                             req = requests.get(url.replace('$pkgver', available_version).replace('$pkgname', name))
-                        i-=1
+                        i -= 1
                         if current_version.count('.') == 0:
                             available_version = ''.join(current_version.split[:-1]) + str(int(current_version[-1]) + i)
                         else:
-                            available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(int(current_version.split('.')[-1]) + i)  # so far only last number++
+                            available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(
+                                int(current_version.split('.')[-1]) + i)  # so far only last number++
                         if i > 0:
-                            print('Time to update: '+name+' to: '+available_version)
-                            #update_pkgbuild(name, url, current_version, available_version)
+                            print('Time to update: ' + name + ' to: ' + available_version)
+                            # update_pkgbuild(name, url, current_version, available_version)
     except Exception:
         pass
 
@@ -169,6 +175,7 @@ if __name__ == '__main__':
     main(ruby_packages_version_check, 'ruby')  # start version updating ruby packages
 
     main(hacking_tools_update, '')
+
     with open('../lists/to-release', 'a') as file:
         file.write(to_release)
 
