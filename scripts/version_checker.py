@@ -7,6 +7,7 @@ __version__ = '0.1'
 __home__ = 'blackarch.org'
 
 to_release = ''
+to_update = ''
 
 
 # get current version
@@ -103,6 +104,7 @@ def ruby_packages_version_check(name):
 
 # update tools
 def hacking_tools_update(name):
+    global to_update
     current_version = get_current_version(name)
     try:
         i = 0  # no cheat
@@ -133,7 +135,7 @@ def hacking_tools_update(name):
                                 int(current_version.split('.')[-1]) + i)  # so far only last number++
                         if i > 0:
                             print('Time to update: ' + name + ' to: ' + available_version)
-                            # update_pkgbuild(name, url, current_version, available_version)
+                            to_update += (name + ' ' + available_version + '\n')
     except Exception:
         pass
 
@@ -178,5 +180,8 @@ if __name__ == '__main__':
 
     with open('../lists/to-release', 'a') as file:
         file.write(to_release)
+
+    with open('../lists/to-update', 'a') as file:
+        file.write(to_update)
 
     print('Done!')
