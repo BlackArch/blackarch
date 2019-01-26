@@ -121,12 +121,12 @@ Just check out the following:
 
   [ ] linux-blackarch-hardened
       custom hardened kernel patches
-      [noptrix, Edu4rdSHL]
+      [noptrix, Edu4rdSHL, mrsmith0x00]
 
   [ ] linux-blackarch
       custom kernel / kernel patches / kernel modules to support wifi injection,
       network tunings, and more.
-      [noptrix, Edu4rdSHL]
+      [noptrix, Edu4rdSHL, mrsmith0x00]
 
   [ ] wiki
       replace the blackarch guide with a fresh new wiki. it is planned to use
