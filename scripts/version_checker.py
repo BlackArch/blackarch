@@ -148,7 +148,7 @@ def main(function, needed):
 
     ruby_exclusions = ['ruby-unf']
 
-    tools_exclusions = ['mobiusft']
+    tools_exclusions = ['mobiusft', 'blackhash', 'netdiscover']
 
     ruby_exclusions.extend(python_exclusions)
 
