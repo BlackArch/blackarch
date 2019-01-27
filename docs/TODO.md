@@ -71,10 +71,10 @@ Just check out the following:
       from live-iso)
       [?]
 
-  [ ] blackarch-site
-      create better images for the slider on index.html. any improvements are
-      welcome.
-      [?]
+  [.] blackarch-site
+      new site based on jekyl. create better images for the slider on
+      index.html. any improvements...
+      [miblon, noptrix]
 
   [ ] blackarch-shop
       create t-shirts, stickers etc. for online shop.
