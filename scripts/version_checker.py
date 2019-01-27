@@ -7,6 +7,7 @@ __version__ = '0.1'
 __home__ = 'blackarch.org'
 
 to_release = ''
+
 to_update = ''
 
 
@@ -107,15 +108,16 @@ def hacking_tools_update(name):
     global to_update
     current_version = get_current_version(name)
     try:
+        url = '' # no cheat
         i = 0  # no cheat
-        with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
-            for line in file:
-                if 'source=(' in line and '$pkgver' in line and 'git+' not in line and 'python' not in line and 'ruby' not in line:  # 'git+' for include tarball from github.com
-                    url = str(line[9:-3].strip())  # got url without 'source=("' and '")'
-
-        if 'python' not in name and 'ruby' not in name and current_version.replace('.', '').isdigit():
+        if current_version.replace('.', '').isdigit():
+            with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
+                for line in file:
+                    if 'source=(' in line and '$pkgver' in line and 'git+' not in line and 'python' not in line and 'ruby' not in line:  # 'git+' for include tarball from github.com
+                        url = str(line[9:-3].strip())  # got url without 'source=("' and '")'
+                        break
+        if len(url) > 0:
             req = requests.get(url.replace('$pkgver', current_version).replace('$pkgname', name))
-            print(req.status_code)
             while req.ok and req.headers['Content-Type'] != 'text/html' and req.headers[
                 'Content-Type'] != 'text/html;charset=utf-8':
                 i += 1
@@ -134,15 +136,15 @@ def hacking_tools_update(name):
             if i > 0:
                 print('Time to update: ' + name + ' to: ' + available_version)
                 to_update += (name + ' ' + available_version + '\n')
-    except Exception as e:
-        print(str(e))
+    except Exception:
+        pass
 
 
 def main(function, needed):
     to_check = []
 
     exclusion = ['python-pyexiftool', 'python2-pyexiftool', 'python2-cement', 'python2-nmap', 'python2-pubsub',
-                 'python2-pynfc', 'python2-slugify', 'ruby-unf']
+                 'python2-pynfc', 'python2-slugify', 'ruby-unf', 'mobiusft']
 
     for root, dirs, files in os.walk('../packages/'):
         for dir in dirs:
