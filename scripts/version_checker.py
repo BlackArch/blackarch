@@ -177,7 +177,7 @@ if __name__ == '__main__':
     main(hacking_tools_update, '')
 
     with open('../lists/to-release', 'a') as file:
-        file.write(to_release)  #
+        file.write(to_release)
 
     with open('../lists/to-update', 'a') as file:
         file.write(to_update)
