@@ -108,7 +108,7 @@ def hacking_tools_update(name):
     global to_update
     current_version = get_current_version(name)
     try:
-        url = '' # no cheat
+        url = ''  # no cheat
         i = 0  # no cheat
         if current_version.replace('.', '').isdigit():
             with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
@@ -143,12 +143,20 @@ def hacking_tools_update(name):
 def main(function, needed):
     to_check = []
 
-    exclusion = ['python-pyexiftool', 'python2-pyexiftool', 'python2-cement', 'python2-nmap', 'python2-pubsub',
-                 'python2-pynfc', 'python2-slugify', 'ruby-unf', 'mobiusft']
+    python_exclusions = ['python-pyexiftool', 'python2-pyexiftool', 'python2-cement', 'python2-nmap', 'python2-pubsub',
+                         'python2-pynfc', 'python2-slugify']
+
+    ruby_exclusions = ['ruby-unf']
+
+    tools_exclusions = ['mobiusft']
+
+    ruby_exclusions.extend(python_exclusions)
+
+    tools_exclusions.extend(ruby_exclusions)
 
     for root, dirs, files in os.walk('../packages/'):
         for dir in dirs:
-            if needed in dir and dir not in exclusion:
+            if needed in dir and dir not in tools_exclusions:
                 to_check.append(dir)
 
     with ThreadPoolExecutor(16) as executor:  # i think 16 is enough
