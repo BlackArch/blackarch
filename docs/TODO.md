@@ -59,7 +59,7 @@ Just check out the following:
 
       5. [.] follow sources to get new interesting tools and package it for
              BlackArch (long-term).
-             [Edu4rdSHL]
+             [Edu4rdSHL, mrsmith0x00]
 
   [x] version-checker
       create an version-checker script (python3) for non-git tools so we can
