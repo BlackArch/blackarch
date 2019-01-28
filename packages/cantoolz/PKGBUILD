@@ -3,7 +3,7 @@
 
 pkgname=cantoolz
 _pkgname=CANToolz
-pkgver=3.7.0
+pkgver=424.bc4c2bf
 pkgrel=1
 epoch=1
 pkgdesc='Framework for black-box CAN network analysis.'
@@ -15,18 +15,23 @@ license=('Apache2')
 depends=('python' 'python-pyserial' 'python-numpy' 'python-mido'
          'python-bitstring')
 makedepends=('git' 'python-setuptools')
-source=("https://github.com/$_pkgname/$pkgname/archive/v$pkgver.tar.gz"
-sha512sums=('62972d105fc1c5ca538d63dfa70e3768abeb956b9d2bc50a99dfe420a0fe4c19926b8707221e3fbd1a46dbc24dc92d8021ef51209c5376a9a363b91aecd3cdb8')
+source=("git+https://github.com/$_pkgname/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 package() {
-  cd "$_pkgname-$pkgver"
+  cd $_pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   python setup.py install --root="$pkgdir" --optimize=1
 
-  install -Dm 755 cantoolz.py "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md NOTICE.md \
     CONTRIBUTORS.md VERSION.md
   install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
@@ -36,9 +41,13 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python /usr/share/$pkgname/$pkgname.py "\$@"
+exec python /usr/share/$pkgname/bin/$pkgname "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
+
+  rm "$pkgdir/usr/lib/python3.7/site-packages/tests/__init__.py" \
+    "$pkgdir/usr/lib/python3.7/site-packages/tests/__pycache__/__init__.cpython-37.opt-1.pyc" \
+    "$pkgdir/usr/lib/python3.7/site-packages/tests/__pycache__/__init__.cpython-37.pyc"
 }
 
