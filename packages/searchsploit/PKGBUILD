@@ -3,24 +3,32 @@
 
 pkgname=searchsploit
 _gitname=exploitdb
-pkgver=2019.01.18
+pkgver=1748.5a69ff88a
 _pkgver=$(echo $pkgver | sed 's/\./\-/g')
 pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-exploitation')
 pkgdesc='The official Exploit Database search tool.'
 url='https://github.com/offensive-security/exploitdb'
 arch=('any')
 license=('GPL2')
 depends=('git' 'libxml2')
+makedepends=('git')
 options=('!strip')
-source=("https://github.com/offensive-security/$_gitname/archive/$_pkgver.tar.gz")
-sha512sums=('31b03158371ffd26b3efdff989c76a4eb1894d452eb2c0caacb3de33f533f77cd0b17c12398c464471da184d57accd2cdb941cdba4b26b2597d342d3fe1d6669')
+source=("git+https://github.com/offensive-security/$_gitname.git")
+sha512sums=('SKIP')
 install='searchsploit.install'
+
+pkgver() {
+  cd $_gitname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 package() {
   install -dm 755 "$pkgdir/opt" "$pkgdir/usr/bin"
 
-  cp -a --no-preserve=ownership $_gitname-$_pkgver "$pkgdir/opt/$pkgname/"
+  cp -a --no-preserve=ownership $_gitname "$pkgdir/opt/$pkgname/"
 
   sed -i 's|path_array+=(.*)|path_array+=("/opt/searchsploit")|g' \
     "$pkgdir/opt/searchsploit/.searchsploit_rc"
