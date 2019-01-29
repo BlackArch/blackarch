@@ -30,11 +30,17 @@ def arch_community_check(name):
 def update_pkgbuild(name, url, current_version, available_version):
     global to_release
 
-    url = url.replace('$pkgname', name).replace('$pkgver', available_version)  # to sha512 check
+    old_url = url  # backup
+
+    url = url.replace('$pkgname', name).replace('$pkgver', available_version)
+    url = url.replace('${pkgname}', name).replace('${pkgver}', available_version)
+
+    url = re.sub('.*::', '', url)  # fix for foo::<url>.bar
+
     req = requests.get(url)  # got file
     sha512 = hashlib.sha512(req.content).hexdigest()  # calculate sha512
 
-    url = url.replace(name, '$pkgname').replace(available_version, '$pkgver')  # style fix
+    url = old_url  # restore
 
     with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
         temp = file.read()
@@ -112,12 +118,15 @@ def hacking_tools_update(name):
         if current_version.replace('.', '').isdigit():
             with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
                 for line in file:
-                    if 'source=(' in line and '$pkgver' in line and 'git+' not in line and 'python' not in line and 'ruby' not in line:  # 'git+' for include tarball from github.com
+                    if 'source=(' in line and (
+                            '$pkgver' in line or '${pkgver}' in line) and 'git+' not in line and 'python' not in line and 'ruby' not in line:  # 'git+' for include tarball from github.com
                         url = str(line[9:-3].strip())  # got url without 'source=("' and '")'
                         break
         if len(url) > 0:
             i = 0  # no cheat
-            req = requests.get(url.replace('$pkgver', current_version).replace('$pkgname', name))
+            req = requests.get(url.replace('$pkgver', current_version).replace('$pkgname', name).replace('${pkgver}',
+                                                                                                         current_version).replace(
+                '${pkgname}', name))
             while req.ok and req.headers['Content-Type'] != 'text/html' and req.headers[
                 'Content-Type'] != 'text/html;charset=utf-8':
                 i += 1
@@ -143,8 +152,8 @@ def hacking_tools_update(name):
 def main(function, needed):
     to_check = []
 
-    python_exclusions = ['python-pyexiftool', 'python2-pyexiftool', 'python2-cement', 'python2-nmap', 'python2-pubsub',
-                         'python2-pynfc', 'python2-slugify']
+    python_exclusions = ['python-pyexiftool', 'python2-pyexiftool', 'python2-cement', 'python2-nmap', 'python2-pynfc',
+                         'python2-slugify']
 
     ruby_exclusions = ['ruby-unf']
 
