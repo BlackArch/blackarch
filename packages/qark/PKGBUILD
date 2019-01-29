@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=qark
-pkgver=299.1d55668
+pkgver=300.2f7eb7e
 pkgrel=1
 groups=('blackarch' 'blackarch-mobile' 'blackarch-fuzzer' 'blackarch-scanner'
         'blackarch-exploitation')
@@ -10,10 +10,14 @@ pkgdesc='Tool to look for several security related Android application vulnerabi
 arch=('any')
 url='https://github.com/linkedin/qark'
 license=('custom:unknown')
-depends=('python2' 'java-environment' 'python2-pubsub' 'python2-lxml'
-         'python2-pywebview' 'python2-tblib' 'python2-simplejson'
-         'python2-html5lib' 'python2-coloredlogs' 'python2-beautifulsoup4')
-makedepends=('git')
+depends=('python2' 'python2-asn1crypto' 'python2-certifi'
+         'python2-cffi' 'python2-chardet' 'python2-click'
+         'python2-cryptography' 'python2-enum34' 'python2-idna'
+         'python2-ipaddress' 'python2-javalang' 'python2-jinja'
+         'python2-markupsafe' 'python2-pluginbase' 'python2-pycparser'
+         'python2-pyopenssl' 'python2-requests' 'python2-six'
+         'python2-urllib3')
+makedepends=('git' 'python2')
 source=('git+https://github.com/linkedin/qark.git')
 sha512sums=('SKIP')
 
@@ -23,23 +27,16 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python2 setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  cp -a * "$pkgdir/usr/share/$pkgname"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname/$pkgname
-exec python2 qarkMain.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
 }
 
