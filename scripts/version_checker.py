@@ -109,7 +109,6 @@ def hacking_tools_update(name):
     current_version = get_current_version(name)
     try:
         url = ''  # no cheat
-        i = 0  # no cheat
         if current_version.replace('.', '').isdigit():
             with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
                 for line in file:
@@ -117,6 +116,7 @@ def hacking_tools_update(name):
                         url = str(line[9:-3].strip())  # got url without 'source=("' and '")'
                         break
         if len(url) > 0:
+            i = 0  # no cheat
             req = requests.get(url.replace('$pkgver', current_version).replace('$pkgname', name))
             while req.ok and req.headers['Content-Type'] != 'text/html' and req.headers[
                 'Content-Type'] != 'text/html;charset=utf-8':
@@ -150,13 +150,16 @@ def main(function, needed):
 
     tools_exclusions = ['mobiusft', 'blackhash', 'netdiscover']
 
-    ruby_exclusions.extend(python_exclusions)
-
-    tools_exclusions.extend(ruby_exclusions)
+    if needed == 'python':
+        exclusions = python_exclusions
+    elif needed == 'ruby':
+        exclusions = ruby_exclusions
+    else:
+        exclusions = tools_exclusions
 
     for root, dirs, files in os.walk('../packages/'):
         for dir in dirs:
-            if needed in dir and dir not in tools_exclusions:
+            if needed in dir and dir not in exclusions:
                 to_check.append(dir)
 
     with ThreadPoolExecutor(16) as executor:  # i think 16 is enough
