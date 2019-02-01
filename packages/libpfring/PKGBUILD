@@ -2,22 +2,28 @@
 # See COPYING for license details.
 
 pkgname=libpfring
-_name=PF_RING
-pkgver=7.2.0
+pkgver=7.4.0.r43.g53813312
 pkgrel=1
-epoch=1
+epoch=2
 pkgdesc='Library to interface with the PF_RING kernel module.'
 url='https://github.com/ntop/PF_RING'
 arch=('x86_64' 'i686')
 license=('LGPL')
-depends=('numactl' 'pfring-kmod')
+depends=('numactl' 'pfring-dkms')
 makedepends=('binutils' 'bison' 'flex' 'git' 'linux-headers' 'make')
 options=('staticlibs')
-source=("https://github.com/ntop/$_name/archive/$pkgver.tar.gz")
-sha512sums=('96134e97b46e993ca5e01441c578d8e0da66d26cc6ca02477791fb5f38023d01625583233cd78131b058dbc7d3b74fc4b833659c5618830e2d235a1a078bf1b6')
+source=('git+https://github.com/ntop/PF_RING.git')
+sha512sums=('SKIP')
+_dir_name_=PF_RING
+
+pkgver() {
+  cd $_dir_name_
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
 
 build() {
-  cd "$_name-$pkgver/userland/lib"
+  cd "$_dir_name_/userland/lib"
 
   ./configure --disable-bpf --prefix=/usr --libdir=/usr/lib/libpfring \
     --includedir=/usr/include/pfring
@@ -26,7 +32,7 @@ build() {
 }
 
 package() {
-  cd "$_name-$pkgver"
+  cd $_dir_name_
 
   install -dm 755 "$pkgdir/etc/ld.so.conf.d/"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" doc/README.md \
