@@ -112,7 +112,7 @@ Just check out the following:
 
   [ ] blackman
       either update and fix current bugs or rewrite it from scratch. python3?
-      [?]
+      [ikstream]
 
   [ ] python-packages
       add missing python dependencies to python-packages. use setup.py and grep
