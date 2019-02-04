@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=h8mail
+pkgver=25.dbc8953
+pkgrel=1
+pkgdesc='Email OSINT and password breach hunting.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon' 'blackarch-social')
+url='https://github.com/khast3x/h8mail'
+license=('custom:unknown')
+depends=('python' 'python-requests' 'python-cli-ui' 'python-cfscrape' 'nodejs')
+source=("git+https://github.com/khast3x/$pkgname")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$pkgname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$pkgname"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 755 README.md "$pkgdir/usr/share/doc/$pkgname/README"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
