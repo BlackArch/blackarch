@@ -57,7 +57,7 @@ are given and everything is setup. Anything else can be discussed on IRC.
 - Try to automate anything you can and share the tools with us.
 
 
-## Packages
+## Packaging style
 
 - Use our [PKGBUILD templates](https://github.com/BlackArch/blackarch-pkgbuilds)
   for creating and releasing new packagaes in order to keep the same style and
@@ -65,7 +65,27 @@ are given and everything is setup. Anything else can be discussed on IRC.
 
 - If you are unsure, copy an existing PKGBUILD from a package and use that as a
   template or ask other developers.
+  
+  
+## Creating packages
 
+The following information was written with the goal of creating hight-quality PKGBUILDs and ensure that ever package uploaded to the BlackArch Linux repository is really working.
+
+**Prerequisites:**
+
+- Set up a clean chroot environment according to https://wiki.archlinux.org/index.php/DeveloperWiki:Building_in_a_clean_chroot#Setting_up_a_chroot
+
+- A BackArch Linux system with all tools installed (`# pacman -Syu --overwrite='*' --needed blackarch`).
+
+**Steps:**
+
+- Create the PKGBUILD and build it in the clean chroot environment to ensure that buildtime dependeces aren't missing.
+
+- If the package was built, install and execute it in the clean chroot environment to ensure that runtime dependences aren't missing.
+
+- Install the package in the full existing BlackArch Linux installation to ensure that there aren't conflicting files.
+
+- Check the syntax to ensure that the code is the most efficient possible and upload the PKGBUILD.
 
 ## ISO
 
