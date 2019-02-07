@@ -1,0 +1,33 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=stig-viewer
+pkgver=2.8
+pkgrel=1
+pkgdesc='STIG Viewer.'
+groups=('blackarch' 'blackarch-scanner')
+arch=('any')
+license=('custom')
+depends=('java-environment')
+url='https://www.stig-viewer.com'
+source=("U_STIGViewer.zip::https://iasecontent.disa.mil/stigs/zip/U_STIGViewer_${pkgver//./-}.zip")
+sha512sums=('b0d6a967524292d39c33610801829b5a3177a125c314a41460aebc96f98a7adfb7dc053c7c299013a2d1b164332723d81f3c1176e19a6bc8de6f2d5729aeba2c')
+
+pkgver() {
+  ver=$(curl -s 'https://iase.disa.mil/stigs/Lists/stigs-masterlist/stigviewer.aspx'|
+  grep -P 'STIG Viewer Version ' |
+  sed -r 's/.*STIG Viewer Version ([0-9\.]+).*/\1/')
+  echo "$ver"
+}
+
+package() {
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 STIGViewer-*.jar "$pkgdir/usr/share/${pkgname}/${pkgname}.jar"
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec \$JAVA_HOME/bin/java -jar /usr/share/${pkgname}/${pkgname}.jar "\$@"
+EOF
+
+chmod +x "$pkgdir/usr/bin/${pkgname}"
+}
+
