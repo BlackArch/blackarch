@@ -2,15 +2,15 @@
 # See COPYING for license details.
 
 pkgname=grr
-pkgver=20.9546b16
+pkgver=47.607d609
 pkgrel=1
 pkgdesc='High-throughput fuzzer and emulator of DECREE binaries.'
 groups=('blackarch' 'blackarch-fuzzer')
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/trailofbits/grr'
 license=('Apache2')
-depends=('gflags')
-makedepends=('git' 'clang')
+depends=('gflags' 'radamsa' 'xed-intel')
+makedepends=('git' 'clang' 'cmake' 'llvm')
 source=('git+https://github.com/trailofbits/grr.git')
 sha512sums=('SKIP')
 
@@ -20,16 +20,13 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  cd $pkgname
-
-  sed -i 's|clang-3.8|clang|' Makefile
-  sed -i 's|clang++-3.8|clang++|' Makefile
-}
-
 build() {
   cd $pkgname
 
+  mkdir -p build
+  cd build
+  cmake build -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+    -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=/usr ..
   make all
 }
 
