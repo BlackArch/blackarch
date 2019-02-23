@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pin
+pkgver=3.7.r97619
+_pkgver=3.7-97619-g0d0c92f4f
+pkgrel=1
+pkgdesc='A dynamic binary instrumentation tool.'
+groups=('blackarch' 'blackarch-automation' 'blackarch-binary'
+        'blackarch-reversing')
+arch=('x86_64')
+url="https://software.intel.com/en-us/articles/pin-a-binary-instrumentation-tool-downloads"
+license=('custom')
+depends=('gcc' 'lib32-gcc-libs')
+makedepends=('gcc' 'lib32-gcc-libs' 'make')
+options=('!strip' 'staticlibs')
+source=("http://software.intel.com/sites/landingpage/pintool/downloads/$pkgname-$_pkgver-gcc-linux.tar.gz")
+sha512sums=('88514b5e1aad798364430ecb7cfec28e0f8e9fdf480912b743b8cde8cbbc5d8c6994999bbd48963874bc7a32729819597e64e27c57ce31baa73e3f54b4c87c5b')
+
+build() {
+  cd "$pkgname-$_pkgver-gcc-linux/source/tools/ManualExamples"
+
+  TARGET=intel64 make
+
+  TARGET=ia32 make
+}
+
+package() {
+  cd "$pkgname-$_pkgver-gcc-linux"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  ln -fs "/usr/share/$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
+}
+
