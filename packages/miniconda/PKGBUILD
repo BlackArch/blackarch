@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details
+
+pkgname=miniconda
+pkgver=4.5.12
+pkgrel=1
+pkgdesc='Mini version of Anaconda Python distribution.'
+arch=('x86_64')
+url='https://conda.io/miniconda'
+license=("custom")
+source=("https://repo.continuum.io/miniconda/Miniconda3-$pkgver-Linux-x86_64.sh"
+        "$pkgname.install")
+options=(!strip libtool staticlibs)
+sha512sums=('252e01c537513aa2beb0428ab482fd03bc72e17d1a25e257509fb1ec58a4f3368a5873dedb25d26d665cdd39e74a924cc8ee1c997b92d9343477ddc4da96bcfc'
+            '6f638e63b20f87e9f63b422573a0ca62d669a4e1657b9e793c7a69d35e229c6602ae1c06bbc4f132bf3b45721c9e5f487fb186f6db53c7d0ee1ea8ef2eb606aa')
+install="$pkgname.install"
+
+prepare() {
+       sed \
+        -e '/wc -c "\$THIS_PATH" | grep/s/!//' \
+        -e "/export FORCE/s|$|;sed \"/^def update_prefix/a\\\    new_prefix='/opt/$pkgname'\" -i pkgs/.install.py|" \
+        -i Miniconda3-$pkgver-Linux-x86_64.sh
+}
+
+package() {
+  prefix="$pkgdir/opt/$pkgname"
+  LD_PRELOAD="/usr/lib/libfakeroot/libfakeroot.so"
+
+  bash "Miniconda3-$pkgver-Linux-x86_64.sh" -b -p $prefix -f
+  [ "$BREAK_EARLY" = 1 ] && exit 1
+  cd "$prefix"
+
+  echo "Fix permissions."
+  chmod a+r -R pkgs
+
+  echo "Stripping \$pkgdir"
+  sed "s|$pkgdir||g" -i $(grep "$pkgdir" . -rIl)
+
+  install -D -m644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
