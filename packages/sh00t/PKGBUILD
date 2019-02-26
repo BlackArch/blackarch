@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sh00t
+pkgver=149.6106946
+pkgrel=1
+pkgdesc='A Testing Environment for Manual Security Testers.'
+arch=('any')
+url='https://github.com/pavanw3b/sh00t'
+license=('MIT')
+depends=('python' 'python-django-rest-framework' 'python-pytz' 'python-django-tables2')
+makedepends=('git')
+source=("git+https://github.com/pavanw3b/$pkgname.git"
+        "sh00t.install")
+sha512sums=('SKIP'
+            '607d0b32b24fbb938725aba4968316f9b87ce993cd6258d85c8449b98fb204045a8acfc87965567f98e49aa7586f91424bae0f83a48893faf79390b6f7e75073')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin/"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/"
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python manage.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
