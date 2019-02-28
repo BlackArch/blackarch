@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=swftools
+pkgver=0.9.2
+pkgrel=6
+pkgdesc='A collection of SWF manipulation and creation utilities.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='http://www.swftools.org/'
+license=('GPL')
+depends=('giflib' 'freeglut' 'lame' 't1lib' 'libjpeg' 'fontconfig')
+makedepends=('bison' 'flex' 'zlib' 'patch')
+changelog="$pkgname.changelog"
+source=("http://www.swftools.org/$pkgname-$pkgver.tar.gz"
+        "$pkgname-$pkgver.patch"
+        'giflib-5.1.patch')
+sha512sums=('91bbd48914f9a8a1cdf85532b371721b01982c5f88648b908fbe99fbf4e17e9893ce575e4fd699927e9bc1c79d846f6bcd4f1d868578fb17403467cc1e28259b'
+            '660d2f046bb8030640c55ee736ad40937b00e1a43715e82bffbb36eb9dfe3824995ce0b637904afce5692e74ffef4d015718468ee124d4e18b5298944420a22b'
+            'cd309d2e423fbf21da56e3a72bc339954f22e6dad892cc132fcc6874b0ae3196d20c47aad8b17de3573fa5c84a279bddc0163ec1e2881d745a3961afedb3e809')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -Np0 -i ../giflib-5.1.patch
+
+  sed -i 's#PrintGifError()#fprintf(stderr, "%s\\n", GifErrorString())#g' \
+    src/gif2swf.c
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  ./configure --prefix=/usr
+  make
+
+  patch -Np0 -i "$srcdir/$pkgname-$pkgver.patch"
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make prefix="$pkgdir/usr" install
+
+  cd "$pkgdir/usr/share/$pkgname/swfs"
+
+  rm -f default_loader.swf default_viewer.swf
+  ln -s tessel_loader.swf default_loader.swf
+  ln -s simple_viewer.swf default_viewer.swf
+}
+
