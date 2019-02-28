@@ -1,0 +1,63 @@
+# $Id: PKGBUILD 266875 2017-11-15 14:29:11Z foutrelis $
+# Maintainer: Massimiliano Torromeo <massimiliano.torromeo@gmail.com>
+# Contributor: David Stelter <david.stelter@gmail.com>
+# Contributor: Francisco Lopes <chico.lopes@gmail.com>
+
+pkgname='pfff'
+pkgver=0.29
+pkgrel=10
+pkgdesc='Tools and APIs for code analysis, visualization and transformation'
+groups=('blackarch' 'blackarch-code-audit')
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/facebook/pfff'
+license=('LGPL2.1')
+depends=('zlib')
+optdepends=('gtk2: required by codegraph and codemap')
+makedepends=('ocaml' 'ocaml-findlib' 'camlp4')
+options=(!makeflags staticlibs !strip) # parallel build fails, need *.a files
+source=("$pkgver.tar.gz::https://github.com/facebook/pfff/archive/v$pkgver.tar.gz"
+"lang_js-analyze-module_js.ml-Fix-invalid-documentati.patch"
+"lang_js-analyze-utils_js.mli.patch"
+"0001-Replace-use-of-uint32-by-standard-complient-way.patch"
+"0001-external-ocamlzip-zip.ml-remove-duplicate-exception.patch"
+"0001-lang_php-matcher-Makefile-remove-warn-error.patch"
+"unused-module.patch")
+sha512sums=('d31c68f1ebb1770297eb26441d21d83728c0fbdb9c7bb3be27625db45fae72d1'
+            '28b220807087b9378e0fcab1187163cdeb8d3da80f53f00ec9af434467ace57f'
+            'bb10f6b25afe0cd0df5084d9e3624f43cbf7489b148c67d99479d11cf90999b7'
+            '1110287c8f402d57628c17e68b7881af0da895ffe4860933586070ab7a779d60'
+            'e41743e0d29a4be5c2481fb969d43c4ca64633fcb9657716fdb3fd0635333d18'
+            'a2170d5c4ef76395837a00eec2500d6ec4654fc26df5997f7d30e88176dfa854'
+            'b52f393ac31a2b2a9567cd3af428aa68ed9ae16ea995b41c46245d46c38d4982')
+
+prepare() {
+	cd "$pkgname-$pkgver"
+
+	patch -Np1 -i ../0001-Replace-use-of-uint32-by-standard-complient-way.patch
+	patch -Np1 -i ../0001-external-ocamlzip-zip.ml-remove-duplicate-exception.patch
+	patch -Np1 -i ../0001-lang_php-matcher-Makefile-remove-warn-error.patch
+	patch -Np1 -i ../lang_js-analyze-utils_js.mli.patch
+	patch -Np1 -i ../lang_js-analyze-module_js.ml-Fix-invalid-documentati.patch
+	patch -Np1 -i ../unused-module.patch
+
+  sed 's|/usr/local/|/usr/|g' -i external/ocamlzip/Makefile
+}
+
+build() {
+	cd "$pkgname-$pkgver"
+
+	./configure --prefix=/usr
+
+  WARNING_FLAGS="-w +A-4-29-6-45-41-44-48" make clean depend all opt
+}
+
+package() {
+	cd "$pkgname-$pkgver"
+
+	install -dm 755 "$pkgdir/usr/lib/ocaml"
+
+  make DESTDIR="$pkgdir" install
+	make OCAMLFIND_LDCONF="$pkgdir/tmp/ld.conf" \
+    OCAMLFIND_DESTDIR="$pkgdir/usr/lib/ocaml" install-findlib
+}
+
