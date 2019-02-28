@@ -1,0 +1,123 @@
+#!/bin/sh
+
+BASE=${BASH_SOURCE[0]%/*}
+X86LOG="/tmp/to-update"
+ARMLOG="/tmp/to-update-arm"
+
+rm -f $X86LOG $ARMLOG
+
+CORE='iputils traceroute argon2'
+COMMUNITY='afl afpfs-ng aircrack-ng arduino arp-scan atftp batctl bettercap
+binwalk bsdiff bully cadaver capstone checksec chntpw corkscrew cowpatty
+cppcheck create_ap darkstat dcfldd distorm dnstracer dscanner dsniff elfkickers
+etherape ettercap evilginx extundelete fcrackzip findmyhash flawfinder foremost
+freeradius gnuradio gqrx greenbone-security-assistant hackrf hashcat
+hashcat-utils hashdeep hcxtools hexyl hping httping httptunnel httrack hydra
+iodine ipmitool jad jadx jhead john lorcon lynis macchanger masscan mdk3 medusa
+metasploit mfoc miredo mitmproxy multimon-ng nbtscan ncrack netactview
+netsniff-ng ngrep nikto openvas-cli openvas-manager openvas-scanner ophcrack
+p0f packer packeth pathod pdfcrack peda pixiewps proxychains-ng proxytunnel
+ptunnel pwndbg pyrit python2-capstone python2-jsbeautifier python2-yara
+python-capstone python-jsbeautifier radamsa radare2 radare2-cutter reaver rfdump
+rkhunter ropgadget ropper routersploit scanmem scapy scrapy shellcheck siege
+sleuthkit slowhttptest smali splint sqlmap ssdeep sshtunnel sshuttle sslh
+sslscan steghide stunnel subbrute swaks sysdig tcpflow tcpreplay tcptrace
+testssl.sh thc-ipv6 tinc tinyproxy tor torsocks udp2raw-tunnel unhide upx urh
+valabind veracrypt volatility vulscan wavemon wifite wireshark-cli wireshark-gtk
+wpscan yara zaproxy zmap zssh zzuf'
+EXTRA='bind-tools ddrescue exiv2 fping gdb geoip kismet libpst lldb mtr nmap
+perl-image-exiftool socat strace tcpdump testdisk truecrypt valgrind'
+
+rm $LOG 2>/dev/null
+
+echo "[+] syncing packages"
+yay -Syy > /dev/null 2>&1
+
+echo "[+] comparing packages: core"
+for pkg in $CORE
+do
+  official="$(yay -Ss $pkg 2> /dev/null | grep "^core/$pkg " | cut -d ' ' -f 2)"
+  blackarch="$(yay -Ss $pkg 2> /dev/null | grep "^blackarch/$pkg " |
+    cut -d ' ' -f 2)"
+  if [ "$official" != "$blackarch" ]
+  then
+    echo "    > update available: $pkg"
+    echo $pkg >> $X86LOG
+  fi
+done
+
+echo "[+] comparing packages: community"
+for pkg in $COMMUNITY
+do
+  official="$(yay -Ss $pkg 2> /dev/null | grep "^community/$pkg " |
+    cut -d ' ' -f 2)"
+  blackarch="$(yay -Ss $pkg 2> /dev/null | grep "^blackarch/$pkg " |
+    cut -d ' ' -f 2)"
+  if [ "$official" != "$blackarch" ]
+  then
+    echo "    > update available: $pkg"
+    echo $pkg >> $X86LOG
+  fi
+done
+
+echo "[+] comparing packages: extra"
+for pkg in $EXTRA
+do
+  official="$(yay -Ss $pkg 2> /dev/null | grep "^extra/$pkg " | cut -d ' ' -f 2)"
+  blackarch="$(yay -Ss $pkg 2> /dev/null| grep "^blackarch/$pkg " |
+    cut -d ' ' -f 2)"
+  if [ "$official" != "$blackarch" ]
+  then
+    echo "    > update available: $pkg"
+    echo $pkg >> $X86LOG
+  fi
+done
+
+# x86_64
+if [ -f $X86LOG ]
+then
+  pkgs=$(cat $X86LOG)
+fi
+if [ -n "$pkgs" ]
+then
+  echo "[+] updating packages: x86_64"
+  for pkg in $pkgs
+  do
+    echo "    > $pkg"
+  done
+  echo
+  ${BASE}/baofficial $pkgs && ${BASE}/baclean
+
+  # arm
+  echo "[+] checking for arm packages"
+  for apkg in $(cat $X86LOG)
+  do
+    arch="$(yay -Si $pkg | grep 'Architecture ' | head -1 | cut -d ':' -f 2 |
+      sed 's/^ //')"
+    if [ "$arch" = "x86_64" ]
+    then
+      echo $apkg >> $ARMLOG
+    fi
+  done
+  if [ -f $ARMLOG ]
+  then
+    apkgs=$(cat $ARMLOG)
+  else
+    echo "[+] done"
+    exit
+  fi
+  if [ -n "$apkgs" ]
+  then
+    echo "[+] updating packages: arm"
+    for apkg in $apkgs
+    do
+      echo "    > $apkg"
+    done
+    echo
+    ${BASE}/baofficial-arm $pkgs && ${BASE}/baclean
+  fi
+fi
+
+echo "[+] done"
+
+# EOF
