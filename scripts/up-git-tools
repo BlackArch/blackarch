@@ -1,0 +1,47 @@
+#!/bin/sh
+
+BASE=${BASH_SOURCE[0]%/*}
+LOG='/tmp/tools-updated'
+
+rm -f $LOG
+
+cd "${BASE}/../packages"
+
+ex='htrosbif ld-shatner levye liffy loot neglected netcommander osinterator
+owasp-bywaf peda passcracking python2-ctags sb0x sqlmap subbrute l0l sysdig
+treasure valabind mysql2sqlite cheetah-suite sea brutexss shitflood
+smplshllctrlr bof-detector sees revipd d-tect junkie blackbox-scanner ftpmap
+weeman search1337 riwifshell routerhunter visql gloom crozono grabing maryam
+flamerobin smbexec pykek slurp cybercrowl findmyiphone icloudbrutter cjexploiter
+smod smap darkspiritz sniffer'
+
+pkgs=$(grep -r "^source=(.*['\"]git" * | cut -d '/' -f 1 | tr -s '\n' ' ' |
+  sort -u)
+
+for e in $ex
+do
+  pkgs=$(echo $pkgs | sed "s/\<$e\>//")
+done
+
+for pkg in $pkgs
+do
+  echo "    > $pkg "
+  cd $pkg
+  makepkg -od > /dev/null 2>&1
+  cd ..
+done
+
+git add . 2> /dev/null
+git commit -m 'git packages: version bumps' . 2> /dev/null
+git push 2> /dev/null
+
+lastcommit=$(git rev-parse --verify HEAD)
+files=$(git diff-tree --no-commit-id --name-only -r ${lastcommit} |
+  sed -E 's/packages\/|\/PKGBUILD//g')
+
+echo
+echo "last commit hash:"
+echo $lastcommit
+echo
+echo "tools updated:"
+echo $files | tr -s ' ' '\n' | tee -a $LOG
