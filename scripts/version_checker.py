@@ -152,8 +152,10 @@ def hacking_tools_update(name):
 def main(function, needed):
     to_check = []
 
-    python_exclusions = ['python-pyexiftool', 'python2-pyexiftool', 'python2-cement', 'python2-nmap', 'python2-pynfc',
-                         'python2-slugify']
+    python_exclusions = [
+        'python-pyexiftool', 'python2-pyexiftool', 'python2-cement',
+        'python2-nmap', 'python2-pynfc', 'python-cement', 'python2-slugify',
+    ]
 
     ruby_exclusions = ['ruby-unf']
 
