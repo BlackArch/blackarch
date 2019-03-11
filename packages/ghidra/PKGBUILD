@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ghidra
+pkgver=9.0
+pkgrel=1
+pkgdesc="A software reverse engineering (SRE) suite of tools developed by NSA's Research Directorate in support of the Cybersecurity mission."
+arch=('any')
+groups=('blackarch' 'blackarch-debugger' 'blackarch-reversing' 'blackarch-disassembler')
+url='URL pointing to download section of package'
+license=('Apache')
+depends=('java-environment>=11' 'bash')
+optdepends=('python2: python plugins development.'
+            'pam: for GhidraServer support')
+source=("https://www.ghidra-sre.org/${pkgname}_${pkgver}_PUBLIC_20190228.zip")
+sha512sums=('711d639da04cc7dd5b47985962cce448e5d5ea2e796e33edcc4285d119998ebab1b9403c697fa5266d8c3e834b55f79edef004a0b1741250bf584b77c92c7529')
+
+prepare() {
+  cd "${pkgname}_${pkgver}"
+
+  # Fix RCE vulnerabilitie, see https://github.com/NationalSecurityAgency/ghidra/issues/6
+  sed -i 's/address=\*/address=127.0.0.1/g' support/launch.sh
+}
+
+package() {
+  cd "${pkgname}_${pkgver}"
+
+  install -dm 755 "$pkgdir/usr/bin/"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/"
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  ln -sf "/usr/share/$pkgname/ghidraRun" "$pkgdir/usr/bin/$pkgname"
+  ln -sf "/usr/share/$pkgname/support/ghidraDebug" "$pkgdir/usr/bin/$pkgname-debug"
+}
+
