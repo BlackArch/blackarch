@@ -1,7 +1,7 @@
 #!/bin/sh
 
 BASE=${BASH_SOURCE[0]%/*}
-X86LOG='/tmp/to-update'
+X86LOG='/tmp/to-release'
 ARMLOG="${BASE}/../lists/to-release-arm"
 
 CORE='iputils traceroute argon2'
@@ -113,9 +113,14 @@ then
       echo "    > $apkg"
     done
     echo
+    # default: off, as we need to wait until arm arch linux synced the mirrors
+    # otherwise we would push the same versions over and over again
     #${BASE}/baofficial-arm $pkgs && ${BASE}/baclean
   fi
 fi
+
+ssh blackarch.org -l root 'date +%s > /var/www/blackarch/lastupdate'
+ssh blackarch.org -l root 'cd /var/www && ./fixperms.sh'
 
 echo "[+] done"
 
