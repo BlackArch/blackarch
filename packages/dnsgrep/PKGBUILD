@@ -1,0 +1,64 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=dnsgrep
+pkgver=5.c982dc7
+pkgrel=1
+pkgdesc='A utility for quickly searching presorted DNS names.'
+groups=('blackarch' 'blackarch-recon')
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/erbbysam/DNSGrep'
+license=('MIT')
+depends=('go-pie')
+makedepends=('git' 'go-pie')
+source=('git+https://github.com/erbbysam/DNSGrep.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd DNSGrep
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd DNSGrep
+
+  GOPATH="$srcdir" go get -d -t github.com/jessevdk/go-flags
+  GOPATH="$srcdir" go get -d -t github.com/gorilla/mux
+  GOPATH="$srcdir" go get -d -t github.com/golang/example/stringutil
+}
+
+package() {
+  cd DNSGrep
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/src/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/src/$pkgname"
+
+  mv "$srcdir/src/github.com"* "$pkgdir/usr/share/$pkgname/src/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/src
+export GOPATH="/usr/share/$pkgname/."
+exec go run dnsgrep/dnsgrep.go "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname-server" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/src
+export GOPATH="/usr/share/$pkgname/."
+exec go run dnsgrep/experimentalServer/experimentalServer.go "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-server"
+}
+
