@@ -125,8 +125,10 @@ def hacking_tools_update(name):
             req = requests.get(url.replace('$pkgver', current_version).replace('$pkgname', name).replace('${pkgver}',
                                                                                                          current_version).replace(
                 '${pkgname}', name))
-            while req.ok and req.headers['Content-Type'] != 'text/html' and req.headers[
-                'Content-Type'] != 'text/html;charset=utf-8':
+            while req.ok and req.headers['Content-Type'].replace(' ', '').lower() != 'text/html' and req.headers[
+                'Content-Type'].replace(' ', '').lower() != 'text/plain' and req.headers[
+                'Content-Type'].repalce(' ', '').lower() != 'text/html;charset=utf-8' and req.headers[
+                'Content-Type'].replace(' ', '').lower() != 'text/plain;charset=utf-8':
                 i += 1
                 if current_version.count('.') == 0:
                     available_version = ''.join(current_version.split[:-1]) + str(int(current_version[-1]) + i)
@@ -141,7 +143,7 @@ def hacking_tools_update(name):
                 available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(
                     int(current_version.split('.')[-1]) + i)  # so far only last number++
             if i > 0:
-                print('Time to update: ' + name + ' to: ' + available_version)
+                print('Time to update: ' + name + ' to: ' + available_version + ' ' + req.headers['Content-Type'])
     except Exception:
         pass
 
@@ -170,7 +172,7 @@ def main(function, needed):
             if needed in dir and dir not in exclusions:
                 to_check.append(dir)
 
-    with ThreadPoolExecutor(16) as executor:  # i think 16 is enough
+    with ThreadPoolExecutor(32) as executor:  # i think 32 is enough
         for _ in executor.map(function, to_check):
             pass
 
