@@ -8,6 +8,7 @@ __home__ = 'blackarch.org'
 
 to_release = ''
 
+
 # get current version
 def get_current_version(name):
     with open('../packages/{name}/PKGBUILD'.format(name=name), 'r') as file:
@@ -79,15 +80,15 @@ def python_packages_version_check(name):
             if available_version != current_version:
                 url = str(data.get('releases')[available_version][-1]['url'])
 
-                if url[-3:] != 'whl' and url[-3:] != 'egg':
+                if url[-3:] == 'zip' or url[-6:] == 'tar.gz':
                     update_pkgbuild(name, url, current_version, available_version)
                 else:
                     print(
                         'Please, do manual update {name} to {version}, because i cant find any *.tar.gz or *.zip archives'.format(
                             name=name, version=available_version))
 
-        except Exception:
-            print('Please, do manual update {name}, because some error occured'.format(name=name))
+        except Exception as e:
+            print('Please, do manual update {name}, because this error occured: {e}'.format(name=name, e=e))
 
 
 # update ruby packages version
@@ -133,7 +134,7 @@ def hacking_tools_update(name):
                     available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(
                         int(current_version.split('.')[-1]) + i)  # so far only last number++
                 req = requests.get(url.replace('$pkgver', available_version).replace('$pkgname', name))
-            i -= 1
+            i -= 1  # end
             if current_version.count('.') == 0:
                 available_version = ''.join(current_version.split[:-1]) + str(int(current_version[-1]) + i)
             else:
