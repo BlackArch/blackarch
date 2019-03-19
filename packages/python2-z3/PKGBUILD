@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python2-z3
+pkgver=4.8.4
+pkgrel=2
+pkgdesc='High-performance theorem prover.'
+url='https://github.com/Z3Prover/z3'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+license=('MIT')
+depends=('python2' 'libz3')
+makedepends=('cmake' 'python2' 'python2-setuptools' 'gcc-libs' 'gmp')
+source=("https://github.com/Z3Prover/z3/archive/z3-$pkgver.tar.gz")
+sha512sums=('4660ba6ab33a6345b2e8396c332d4afcfc73eda66ceb2595a39f152df4d62a9ea0f349b0f9212389ba84ecba6bdae6ad9b62b376ba44dc4d9c74f80d7a818bf4')
+
+prepare() {
+  cd "z3-z3-$pkgver"
+
+  mkdir -p build
+}
+
+build() {
+  cd "z3-z3-$pkgver/build"
+
+  cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_PYTHON_BINDINGS=1 \
+    -DPYTHON_EXECUTABLE=/usr/bin/python2 -DUSE_LIB_GMP=1
+  make
+}
+
+package() {
+  cd "z3-z3-$pkgver/build"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 ../LICENSE.txt -t "$pkgdir/usr/share/licenses/$pkgname/"
+
+  cd $pkgdir
+
+  rm -r usr/include usr/bin usr/lib/cmake usr/lib/lib*
+
+  python2 -m compileall .
+  python2 -O -m compileall .
+}
+
