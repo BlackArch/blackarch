@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=canalyzat0r
+pkgver=11.ff4132a
+pkgrel=1
+pkgdesc='Security analysis toolkit for proprietary car protocols.'
+groups=('blackarch' 'blackarch-automobile')
+arch=('any')
+url='https://github.com/schutzwerk/CANalyzat0r'
+license=('GPL3')
+depends=('can-utils' 'ffmpeg' 'iproute2' 'python' 'python-pyside' 
+         'python-pyvit' 'python-sphinx_rtd_theme')
+makedepends=('git')
+source=('canalyzat0r::git+https://github.com/schutzwerk/CANalyzat0r.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed 's|../sounds|sounds|g' -i src/Strings.py
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a --no-preserve=ownership src/* sounds/ "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+
+set -o pipefail
+
+export LC_ALL=C.UTF-8
+export LANG=C.UTF-8
+export QT_X11_NO_MITSHM=1
+
+cd /usr/share/$pkgname
+exec python3 CANalyzat0r.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
