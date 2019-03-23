@@ -13,15 +13,14 @@ depends=('searchsploit' 'backdoor-factory' 'metasploit' 'xterm' 'bind-tools' 'gc
          'apache' 'gnome-terminal' 'upx' 'ruby-nokogiri' 'openssl' 'imagemagick'
          'ncurses' 'lib32-zlib' 'libstdc++5' 'lsb-release' 'python' 'python-names'
          'jdk8-openjdk' 'jre8-openjdk' 'unzip' 'mingw-w64-gcc' 'sudo' 'dex2jar'
-         'android-apktool' 'android-sdk-build-tools' 'mono')
+         'android-apktool' 'android-sdk-build-tools' 'mono' 'python2')
 makedepends=('git')
-source=('git+https://github.com/Screetsec/TheFatRat.git')
+source=('thefatrat::git+https://github.com/Screetsec/TheFatRat.git')
 sha512sums=('SKIP')
 options=('!strip')
-_dir_name_=TheFatRat
 
 prepare() {
-  cd "$_dir_name_"
+  cd $pkgname
 
   sed 's|python|python2|g' -i fatrat
   sed 's|which apache2|which httpd|g' -i fatrat
@@ -54,13 +53,13 @@ EOF
 }
 
 pkgver() {
-  cd "$_dir_name_"
+  cd $pkgname
 
   git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
 package() {
-  cd "$_dir_name_"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
@@ -76,11 +75,12 @@ package() {
   chmod +x "$pkgdir/usr/share/$pkgname/fatrat"
   chmod +x "$pkgdir/usr/share/$pkgname/update"
 
-  cat > "$pkgdir/usr/bin/fatrat" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname && ./fatrat
+cd /usr/share/$pkgname
+exec ./fatrat
 EOF
 
-  chmod +x "$pkgdir/usr/bin/fatrat"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
