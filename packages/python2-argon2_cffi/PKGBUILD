@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+_pkgname=argon2_cffi
+pkgname=python2-argon2_cffi
+pkgver=19.1.0
+pkgrel=3
+pkgdesc='CFFI-based Argon2 Bindings for Python.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/hynek/argon2_cffi'
+license=('MIT')
+depends=('argon2' 'python2-cffi' 'python2-six')
+makedepends=('git' 'python2-setuptools')
+_commit=0ccdbe2af4c7139f0abbb6a03bcb9f7605b16dca  # tags/19.1.0^0
+source=("git+https://github.com/hynek/argon2_cffi#commit=$_commit"
+        "git+https://github.com/p-h-c/phc-winner-argon2")
+sha512sums=('SKIP'
+            'SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  git describe --tags | sed 's/-/+/g'
+}
+
+prepare() {
+  cd $_pkgname
+
+  git submodule init
+  git config --local submodule.extras/libargon2.url "$srcdir/phc-winner-argon2"
+  git submodule update
+}
+
+build() {
+  cd $_pkgname
+
+  python2 setup.py build
+}
+
+package() {
+  cd $_pkgname
+
+  python2 setup.py install --root="$pkgdir" --optimize=1 --skip-build
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
