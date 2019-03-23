@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python2-autobahn
+pkgver=19.3.2
+pkgrel=2
+pkgdesc='Real-time framework for Web, Mobile & Internet of Things.'
+arch=('any')
+url='https://crossbar.io/autobahn/'
+license=('MIT')
+depends=('python2-twisted' 'python2-six' 'python2-txaio' 'python2-wsaccel')
+makedepends=('python2-setuptools' 'python2-argon2_cffi' 'python2-msgpack'
+             'python2-passlib' 'python2-pynacl')
+optdepends=(
+  'python2-msgpack: MsgPack serializer support'
+  'python2-argon2_cffi: WAMP-SCRAM authentication support'
+  'python2-passlib: WAMP-SCRAM authentication support'
+  'python2-pynacl: WAMP-cryptosign support'
+)
+source=("https://pypi.io/packages/source/a/autobahn/autobahn-$pkgver.tar.gz"
+        'skip-test-missing-serializers.patch')
+sha512sums=('bae28fc6075a2a2acea5407bdb6c85472f21048d1eeed96a7d6f16e261a12ab24b5c142aa271b15e7399799dd4f31a2174e577d660ed3e536491896747dd6c22'
+            '53f1845d1504be3c3d3e2183647f5758b5041e50954c22f4c4e25f4e330a35fbc901814870d29f4df74c277343fc873c8f81ae46f2daa9173695fd94ccd11c09')
+
+prepare() {
+  cd "autobahn-$pkgver"
+
+  patch -Np1 -i ../skip-test-missing-serializers.patch
+}
+
+build() {
+  cd "autobahn-$pkgver"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "autobahn-$pkgver"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1 --skip-build
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
