@@ -1,10 +1,10 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-libevtx-python
-pkgname=('python2-libevtx-python' 'python-libevtx-python')
+pkgbase=libevtx
+pkgname=('libevtx' 'python2-libevtx-python' 'python-libevtx-python')
 pkgver=20181227
-pkgrel=3
+pkgrel=4
 pkgdesc='Library and tools to access the Windows XML Event Log (EVTX) format.'
 url='https://github.com/libyal/libevtx'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
@@ -13,8 +13,25 @@ makedepends=('python2-setuptools' 'python-setuptools')
 source=("https://files.pythonhosted.org/packages/e8/cb/a6ece27ebed45e73523c87ab212789908693b050b8ccd3f8a1d2c0e70cda/libevtx-python-$pkgver.tar.gz")
 sha512sums=('6a9e010f2a5df9c93029a0c27c716e1b5cd4e504dab7d8f234f74ffae93a4ab1a30bb08b5ce3bc80fca0a543ffdc939924b97f2292ba5d74247ea68f910e560e')
 
+build() {
+  cd "libevtx-$pkgver"
+
+  ./configure --prefix=/usr
+  make
+}
+
+package_libevtx() {
+  depends=('libbfio')
+
+  cd "libevtx-$pkgver"
+
+  make install DESTDIR=$pkgdir
+  mkdir -p $pkgdir/usr/share/doc/libevtx
+  cp AUTHORS COPYING NEWS README $pkgdir/usr/share/doc/libevtx
+}
+
 package_python2-libevtx-python() {
-  depends=('python2')
+  depends=('libevtx' 'python2')
 
   cd "libevtx-$pkgver"
 
@@ -22,10 +39,9 @@ package_python2-libevtx-python() {
 }
 
 package_python-libevtx-python() {
-  depends=('python')
+  depends=('libevtx' 'python')
 
   cd "libevtx-$pkgver"
 
   python setup.py install --root="$pkgdir" --optimize=1
 }
-
