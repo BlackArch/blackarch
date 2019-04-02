@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-dwarf
+pkgver=265.f0f811d
+pkgrel=1
+pkgdesc='Full featured multi arch/os debugger built on top of PyQt5 and frida.'
+groups=('blackarch' 'blackarch-binary' 'blackarch-debugger'
+  'blackarch-disassembler' 'blackarch-exploitation' 'blackarch-mobile'
+  'blackarch-reversing')
+arch=('any')
+url='https://github.com/iGio90/Dwarf'
+license=('GPL3')
+depends=('frida' 'python' 'python-capstone' 'python-event-bus' 'python-frida' 
+  'python-hexdump' 'python-pyperclip' 'python-pyqt5' 'python-qdarkstyle'
+  'python-requests' 'python-unicorn' )
+optdepends=('python-keystone-engine')
+makedepends=('git')
+source=('git+https://github.com/iGio90/Dwarf.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd 'Dwarf'
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd 'Dwarf'
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+  cat > "$pkgdir/usr/bin/dwarf" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python dwarf.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/dwarf"
+}
+
