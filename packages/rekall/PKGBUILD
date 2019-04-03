@@ -1,31 +1,33 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgname=python-rekall
-pkgver=1.7.1
+pkgname=rekall
+pkgver=1396.041d6964
 pkgrel=1
 groups=('blackarch' 'blackarch-forensic')
 pkgdesc='Memory Forensic Framework.'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/google/rekall'
 makedepends=('git' 'python-setuptools' 'python-pip')
-depends=('python' 'python-psutil' 'python-virtualenv' 'python-wheel' 'python-yaml'
-         'python-yara')
+depends=('python' 'python-psutil' 'python-virtualenv' 'python-wheel'
+         'python-yaml' 'python-yara')
 license=('GPL2')
 source=('git+https://github.com/google/rekall.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd 'rekall'
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd 'rekall'
+  cd $pkgname
 
-  virtualenv "${pkgdir}/usr/share/rekall/virtualenv/"
-  source "${pkgdir}/usr/share/rekall/virtualenv/bin/activate"
+  install -dm 755  "$pkgdir/usr/bin"
+
+  virtualenv "$pkgdir/usr/share/rekall/virtualenv/"
+  source "$pkgdir/usr/share/rekall/virtualenv/bin/activate"
 
   PIP_CONFIG_FILE=/dev/null pip install 'future==0.16.0' # run requirement for rekall-efilter
   PIP_CONFIG_FILE=/dev/null pip install "./rekall-lib"
@@ -33,14 +35,13 @@ package() {
   PIP_CONFIG_FILE=/dev/null pip install "./rekall-agent"
   PIP_CONFIG_FILE=/dev/null pip install "./"
 
-  mkdir "${pkgdir}/usr/bin/"
   for fname in rekal rekall rekal.py; do
-  cat > "${pkgdir}/usr/bin/${fname}" << EOF
+    cat > "$pkgdir/usr/bin/$fname" << EOF
 #!/usr/bin/env bash
 source /usr/share/rekall/virtualenv/bin/activate
-python /usr/share/rekall/virtualenv/bin/${fname} "\$@"
+python /usr/share/rekall/virtualenv/bin/$fname "\$@"
 EOF
-  chmod 755 "${pkgdir}/usr/bin/${fname}"
+    chmod 755 "$pkgdir/usr/bin/$fname"
   done
 }
 
