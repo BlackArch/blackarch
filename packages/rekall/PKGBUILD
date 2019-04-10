@@ -1,28 +1,65 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgname=rekall
+pkgbase=rekall
+pkgname=('rekall' 'python-rekall' 'python2-rekall')
 pkgver=1396.041d6964
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-forensic')
 pkgdesc='Memory Forensic Framework.'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/google/rekall'
-makedepends=('git' 'python-setuptools' 'python-pip')
-depends=('python' 'python-psutil' 'python-virtualenv' 'python-wheel'
-         'python-yaml' 'python-yara')
+makedepends=('git' 'python-setuptools' 'python2-setuptools' 'python-pip'
+             'python2-pip' 'python-virtualenv' 'python2-virtualenv')
 license=('GPL2')
 source=('git+https://github.com/google/rekall.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd $pkgname
+  cd $pkgbase
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-package() {
-  cd $pkgname
+package_rekall() {
+  a=1337
+}
+
+package_python2-rekall() {
+  depends=('python2' 'python2-psutil' 'python2-virtualenv' 'python2-wheel'
+           'python2-yaml' 'python2-yara')
+  cd $pkgbase
+
+  install -dm 755  "$pkgdir/usr/bin"
+
+  virtualenv2 "$pkgdir/usr/share/rekall2/virtualenv/"
+  source "$pkgdir/usr/share/rekall2/virtualenv/bin/activate"
+
+  PIP_CONFIG_FILE=/dev/null pip2 install 'future==0.16.0' # run requirement for rekall-efilter
+  PIP_CONFIG_FILE=/dev/null pip2 install "./rekall-lib"
+  PIP_CONFIG_FILE=/dev/null pip2 install "./rekall-core"
+  PIP_CONFIG_FILE=/dev/null pip2 install "./rekall-agent"
+  PIP_CONFIG_FILE=/dev/null pip2 install "./"
+
+  grep -rl '/build/rekall/pkg/python2-rekall' \
+    "$pkgdir/usr/share/rekall2/virtualenv/bin" |
+    xargs sed -i 's|/build/rekall/pkg/python2-rekall||g'
+  rm -rf "$pkgdir/usr/share/rekall2/virtualenv/lib/python*/__pycache__"
+
+  for fname in rekal rekall rekal.py; do
+    cat > "$pkgdir/usr/bin/${fname}2" << EOF
+#!/usr/bin/env bash
+source /usr/share/rekall2/virtualenv/bin/activate
+python /usr/share/rekall2/virtualenv/bin/$fname "\$@"
+EOF
+    chmod 755 "$pkgdir/usr/bin/${fname}2"
+  done
+}
+
+package_python-rekall() {
+  depends=('python' 'python-psutil' 'python-virtualenv' 'python-wheel'
+           'python-yaml' 'python-yara')
+  cd $pkgbase
 
   install -dm 755  "$pkgdir/usr/bin"
 
@@ -35,10 +72,10 @@ package() {
   PIP_CONFIG_FILE=/dev/null pip install "./rekall-agent"
   PIP_CONFIG_FILE=/dev/null pip install "./"
 
-  grep -rl '/build/rekall/pkg/rekall' \
+  grep -rl '/build/rekall/pkg/python-rekall' \
     "$pkgdir/usr/share/rekall/virtualenv/bin" |
-    xargs sed -i 's|/build/rekall/pkg/rekall||g'
-  rm -rf "$pkgdir/usr/share/rekall/virtualenv/lib/python3.7/__pycache__"
+    xargs sed -i 's|/build/rekall/pkg/python-rekall||g'
+  rm -rf "$pkgdir/usr/share/rekall/virtualenv/lib/python*/__pycache__"
 
   for fname in rekal rekall rekal.py; do
     cat > "$pkgdir/usr/bin/$fname" << EOF
