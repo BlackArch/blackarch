@@ -1,25 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-pypykatz
+pkgbase=python-pypykatz
+pkgname=('python2-pypykatz' 'python-pypykatz')
 pkgver=0.0.6
-pkgrel=2
+pkgrel=3
 pkgdesc='Python implementation of Mimikatz.'
 url='https://github.com/skelsec/pypykatz'
 arch=('any')
 license=('MIT')
-depends=('python' 'python-minidump' 'python-minikerberos')
-makedepends=('python-setuptools')
+makedepends=('python2-setuptools' 'python-setuptools')
 source=("https://files.pythonhosted.org/packages/4a/be/ab56bfe0ee3250edf11013f94796c378206b359df62101c65ce8bc576a8b/pypykatz-0.0.6.tar.gz")
 sha512sums=('c7970afab817afb4b23946882cd89925e5f01e93641d606a84db6226c343251c3fed344505db2f98f656b87014a545b925db2fd7c9d453f2c67f7e654d90940e')
 
+prepare() {
+  cp -a "pypykatz-$pkgver" "pypykatz-$pkgver-py2"
+}
+
 build() {
-  cd "pypykatz-$pkgver"
+  cd "pypykatz-$pkgver-py2"
+
+  python2 setup.py build
+
+  cd "$srcdir/pypykatz-$pkgver"
 
   python setup.py build
 }
 
-package() {
+package_python2-pypykatz() {
+  depends=('python2' 'python2-minidump' 'python2-minikerberos')
+
+  cd "pypykatz-$pkgver-py2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/pypykatz" "$pkgdir/usr/bin/pypykatz2"
+}
+
+package_python-pypykatz() {
+  depends=('python' 'python-minidump' 'python-minikerberos')
+
   cd "pypykatz-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
