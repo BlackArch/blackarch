@@ -1,16 +1,16 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-minikerberos
+pkgbase=python-minikerberos
+pkgname=('python2-minikerberos' 'python-minikerberos')
 pkgver=17.e7e8d0a
-pkgrel=1
+pkgrel=2
 pkgdesc='Kerberos manipulation library in pure Python.'
 groups=('blackarch' 'blackarch-windows')
 arch=('any')
 url='https://github.com/skelsec/minikerberos'
 license=('MIT')
-depends=('python' 'python-asn1crypto')
-makedepends=('git' 'python-setuptools')
+makedepends=('git' 'python2-setuptools' 'python-setuptools')
 source=('git+https://github.com/skelsec/minikerberos.git')
 sha512sums=('SKIP')
 
@@ -20,15 +20,40 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cp -a minikerberos minikerberos-py2
+}
+
 build() {
-  cd "minikerberos"
+  cd "minikerberos-py2"
+
+  python2 setup.py build
+
+  cd "$srcdir/minikerberos"
 
   python setup.py build
 }
 
-package() {
+package_python2-minikerberos() {
+  depends=('python2' 'python2-asn1crypto')
+  _tools='ccache2kirbi ccacheedit kerberoscomm kirbi2ccache'
+
   cd "minikerberos"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 --skip-build
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  for t in $_tools ; do
+    mv "$pkgdir/usr/bin/$t" "$pkgdir/usr/bin/${t}2"
+  done
+}
+
+package_python-minikerberos() {
+  depends=('python' 'python-asn1crypto')
+
+  cd "minikerberos"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
 }
 
