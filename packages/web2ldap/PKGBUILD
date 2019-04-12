@@ -3,27 +3,35 @@
 
 pkgname=web2ldap
 pkgver=1.4.10
-pkgrel=1
+pkgrel=2
 pkgdesc='Full-featured LDAP client running as web application.'
+groups=('blackarch' 'blackarch-misc')
 arch=('any')
-url='https://web2ldap.de'
+url='https://web2ldap.de/'
 license=('Apache2')
 depends=('python2')
 makedepends=('python2' 'python2-pip' 'python2-virtualenv')
-source=("https://www.web2ldap.de/download/${pkgname}-${pkgver}.tar.gz")
+source=("https://www.web2ldap.de/download/$pkgname-$pkgver.tar.gz")
 sha512sums=('e51b4353e8ccd6b421ee5b0c0efd230891005fec024105cf8186073ebf1ab50380e7c622086dc889a297344866fa8ab04f98ce1f67fe889c32d7bb2e9c0fa0e7')
 
 pkgver() {
-  curl 'https://web2ldap.de/web2ldap.html' 2>/dev/null \
-  | grep -P 'web2ldap (\d+\.)+' | sed -r 's/.* ([0-9.]+)<.*/\1/gi'
+  curl 'https://web2ldap.de/web2ldap.html' 2>/dev/null |
+    grep -P 'web2ldap (\d+\.)+' | sed -r 's/.* ([0-9.]+)<.*/\1/gi'
 }
 
 package() {
   install -dm 755 "$pkgdir/usr/bin"
-  virtualenv2 -p python2.7 --no-site-packages $pkgdir/usr/share/web2ldap/virtualenv
-  $pkgdir/usr/share/web2ldap/virtualenv/bin/pip2 install --find-links 'https://www.web2ldap.de/download.html' web2ldap
-  grep -rl '/build/web2ldap/pkg/web2ldap' "$pkgdir/usr/share/web2ldap/virtualenv/bin" \
-  | xargs sed -i 's|/build/web2ldap/pkg/web2ldap||g'
+
+  virtualenv2 -p python2.7 --no-site-packages \
+    "$pkgdir/usr/share/web2ldap/virtualenv"
+
+  "$pkgdir/usr/share/web2ldap/virtualenv/bin/pip2" install --find-links \
+    'https://www.web2ldap.de/download.html' web2ldap
+
+  grep -rl '/build/web2ldap/pkg/web2ldap' \
+    "$pkgdir/usr/share/web2ldap/virtualenv/bin" |
+    xargs sed -i 's|/build/web2ldap/pkg/web2ldap||g'
+
   ln -s /usr/share/web2ldap/virtualenv/bin/web2ldap "$pkgdir/usr/bin/$pkgname"
 }
 
