@@ -1,16 +1,16 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-minidump
+pkgbase=python-minidump
+pkgname=('python2-minidump' 'python-minidump')
 pkgver=19.749e6da
-pkgrel=1
+pkgrel=2
 pkgdesc='Python library to parse and read Microsoft minidump file format.'
 groups=('blackarch' 'blackarch-windows')
 arch=('any')
 url='https://github.com/skelsec/minidump'
 license=('MIT')
-depends=('python')
-makedepends=('git' 'python-setuptools')
+makedepends=('git' 'python-setuptools' 'python2-setuptools')
 source=('git+https://github.com/skelsec/minidump.git')
 sha512sums=('SKIP')
 
@@ -20,16 +20,37 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cp -a minidump minidump-py2
+}
+
 build() {
-  cd "minidump"
+  cd "minidump-py2"
+
+  python2 setup.py build
+
+  cd "$srcdir/minidump"
 
   python setup.py build
 }
 
-package() {
+package_python2-minidump() {
+  depends=('python2')
+
+  cd "minidump"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/minidump" "$pkgdir/usr/bin/minidump"
+}
+
+package_python-minidump() {
+  depends=('python')
+
   cd "minidump"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-  --skip-build
+    --skip-build
 }
 
