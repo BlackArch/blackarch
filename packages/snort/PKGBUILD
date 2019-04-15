@@ -24,25 +24,20 @@ source=("https://www.snort.org/downloads/snort/snort-$pkgver.tar.gz"
         'http://rules.emergingthreats.net/open/snort-2.9.0/emerging.rules.tar.gz'
         'snort'
         'snort.conf.d'
-        'snort.service'
-        'configure.patch')
+        'snort.service')
 sha512sums=('3bc90d3753b01f779e587d8f6a514a18ea446732b0a41809df028b60eacc93fca2c158030c0743a9662958220a98757629eb1d11e7d4d709bf3b76b807b935bd'
             '3257aa92b90a30a9a070f9980c4f1197db4675a43ce8fef3d451c0d85b22c1f871ef17de60d4747f02d6d3d4c82d0e1b1a0ef5857f8a9e334c1f964917165ebc'
             '96d3a27752c60cec9b188cdc358f3a38c0f6f0a179e16f3778abaf6385cc82169cdf0b41ea9bf39cfa64455e6ca5e484c2d952c72ced0901512b4750343ec5d9'
             '08341de9f302622b40917914e5e67c0f79c1800c463be7675bb019a3c033c3302a1be522ffd7a5b4759211f962ce4557557ea2653c4c89843dbd33b95a2e2e35'
-            '8cd77b2046e5efd069aa4e236caa701391b2e3a91eac2e4ba21a60157c6f7b618d6552b831d5a4f7a2ba77612cf203ba7da1b672dade19c3396594e29aa7706f'
-            '405a329cdff15f1bc03502d8c06ba9ecd5f5402c903dc2d86fe88d93f40fc527bfcc9ec24bc5ae0b90b4f06c9d6dd210bba45d1a78c834918b1c3bb59ae404be')
-
-prepare() {
-  patch -p1 < configure.patch
-}
+            '8cd77b2046e5efd069aa4e236caa701391b2e3a91eac2e4ba21a60157c6f7b618d6552b831d5a4f7a2ba77612cf203ba7da1b672dade19c3396594e29aa7706f')
 
 build() {
   cd "$pkgname-$pkgver"
 
-  ./configure --prefix=/usr --sysconfdir=/etc/snort \
-    --with-libpcap-includes=/usr/include/pcap \
-    --with-daq-includes=/usr/include --with-daq-libraries=/usr/lib --enable-zlib
+  CPPFLAGS="$CPPFLAGS -I/usr/include/tirpc/" ./configure --prefix=/usr \
+    --sysconfdir=/etc/$pkgname --with-libpcap-includes=/usr/include/pcap \
+    --with-daq-includes=/usr/include --with-daq-libraries=/usr/lib/daq \
+    --disable-static-daq --enable-zlib --enable-sourcefire --enable-large-pcap
 
   make
 }
