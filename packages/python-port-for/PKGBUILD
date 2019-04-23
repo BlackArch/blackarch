@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+_pkgname=port-for
+pkgbase=python-$_pkgname
+pkgname=(python-$_pkgname python2-$_pkgname)
+pkgver=0.4
+pkgrel=1
+pkgdesc='Utility that helps with local TCP ports managment. It can find an unused TCP localhost port and remember the association.'
+arch=('any')
+url='https://github.com/kmike/port-for'
+license=('MIT')
+makedepends=('python-setuptools' 'python2-setuptools')
+checkdepends=('python-tox' 'python2-tox')
+source=("https://github.com/kmike/$_pkgname/archive/$pkgver.tar.gz")
+sha512sums=('eea58a0061ad82f0ac516d7d5c16f2a931d11d6eb239be2c3414407f7d49108f42e675c91df47137217b2c9bbb11c9894e9d1066205b8e8df6190a49c3d4d546')
+
+build() {
+  cd $_pkgname-$pkgver
+  python setup.py build
+  python2 setup.py build
+}
+
+check() {
+  cd $_pkgname-$pkgver
+  tox -e py2
+  tox -e py3
+}
+
+package_python-port-for() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --skip-build --root="$pkgdir" --optimize=1
+}
+
+package_python2-port-for() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver"
+
+  python2 setup.py install --skip-build --root="$pkgdir" --optimize=1
+
+  mv "$pkgdir/usr/bin/port-for" "$pkgdir/usr/bin/port-for2"
+}
+
