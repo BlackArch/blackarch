@@ -2,30 +2,32 @@
 # See COPYING for license details.
 
 pkgname=dnsrecon
-pkgver=0.8.13
-pkgrel=3
+pkgver=0.9.0
+pkgrel=1
 epoch=2
 groups=('blackarch' 'blackarch-recon')
-pkgdesc="Python script for enumeration of hosts, subdomains and emails from a given domain using google."
-url="https://github.com/darkoperator/dnsrecon"
+pkgdesc='Python script for enumeration of hosts, subdomains and emails from a given domain using google.'
+url='https://github.com/darkoperator/dnsrecon'
 license=('custom')
 arch=('any')
-depends=('python2' 'git' 'python2-netaddr' 'python2-dnspython')
+depends=('python' 'python-netaddr' 'python-dnspython')
 makedepends=('git')
-source=("git+https://github.com/darkoperator/dnsrecon")
+source=('git+https://github.com/darkoperator/dnsrecon')
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  # We have to get the version number from the README file. It's better than nothing.
-  grep -m1 'Version ' README.md | sed 's/.* //'
+  grep -m1 __version "$pkgname.py" | cut -d '=' -f 2 | sed "s/'//g" | tr -d ' '
 }
 
 package() {
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 
   rm README.md
 
@@ -34,7 +36,7 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 dnsrecon.py "\$@"
+exec python3 dnsrecon.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"

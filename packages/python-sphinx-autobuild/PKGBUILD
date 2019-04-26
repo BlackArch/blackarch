@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+_pkgname=sphinx-autobuild
+pkgbase=python-$_pkgname
+pkgname=(python-$_pkgname python2-$_pkgname)
+pkgver=0.7.1
+pkgrel=1
+pkgdesc='Watch a Sphinx directory and rebuild the documentation when a change is detected. Also includes a livereload enabled web server.'
+arch=('any')
+url='https://github.com/GaretJax/sphinx-autobuild'
+license=('MIT')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://github.com/GaretJax/$_pkgname/archive/v$pkgver.tar.gz"
+  "dependency-updates.patch::https://github.com/GaretJax/sphinx-autobuild/commit/08c4198a971d40abd6293bb54b3336f081b2bb6e.patch")
+sha512sums=('586a44b77bb04c908e70e14d80336c4d3641f10e0a38db8cbf64e03c229818b18de4ec26b0894e0f45099d75443b1996b32afec0fc00631b5b671a26bc29e1f5'
+            '6db8a26bd0a3a6de772b4396dd509fbf43ed279a9a668a0132144198c0e5d43812d895ea0eda4c1ecc2b2aaaf6dc1a44683cc93c02ca0a623928234c794fb3d4')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  patch -p1 < ../dependency-updates.patch
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py build
+  python2 setup.py build
+}
+
+package_python-sphinx-autobuild() {
+  depends=('python-sphinx' 'python-watchdog' 'python-argh' 'python-pathtools'
+           'python-yaml' 'python-tornado' 'python-port-for' 'python-livereload')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --skip-build --root="$pkgdir" --optimize=1
+}
+
+package_python2-sphinx-autobuild() {
+  depends=('python2-sphinx' 'python2-watchdog' 'python2-argh'
+           'python2-pathtools' 'python2-yaml' 'python2-tornado'
+           'python2-port-for' 'python2-livereload')
+
+  cd "$_pkgname-$pkgver"
+
+  python2 setup.py install --skip-build --root="$pkgdir" --optimize=1
+
+  mv "$pkgdir/usr/bin/sphinx-autobuild" "$pkgdir/usr/bin/sphinx-autobuild2"
+}
+
