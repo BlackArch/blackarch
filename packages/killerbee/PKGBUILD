@@ -2,37 +2,37 @@
 # See COPYING for license details.
 
 pkgname=killerbee
-pkgrel=3
-pkgver=99
+pkgver=282.cdee757
+pkgrel=1
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-wireless')
 pkgdesc='Framework and tools for exploiting ZigBee and IEEE 802.15.4 networks.'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
-url='https://code.google.com/p/killerbee/'
+url='https://github.com/riverloopsec/killerbee'
 license=('BSD')
 depends=('python2' 'python2-pycryptodome' 'python2-pyusb' 'pygtk' 'python2-cairo'
-         'python2-pyserial')
-makedepends=('subversion')
+         'python2-pyserial' 'python2-scapy' 'python2-rangeparser')
+makedepends=('git' 'python2-setuptools')
 conflicts=('killerbee-svn')
 provides=('killerbee-svn')
 options=(!emptydirs)
-source=('svn+http://killerbee.googlecode.com/svn/trunk/')
+source=('git+https://github.com/riverloopsec/killerbee.git')
 sha512sums=('SKIP')
 
 pkgver() {
-  cd trunk
+  cd $pkgname
 
-  svnversion | tr -d [A-z]
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  cd "trunk/$pkgname"
+build() {
+  cd $pkgname
 
-  sed -i 's|#!/usr/bin/env python|#!/usr/bin/env python2|' tools/*
+  python2 setup.py build
 }
 
 package() {
-  cd "trunk/$pkgname"
+  cd $pkgname
 
-  python2 setup.py install --root="$pkgdir" --optimize=1
+  python2 setup.py install --root="$pkgdir" --optimize=1 --skip-build
 }
 
