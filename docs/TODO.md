@@ -15,6 +15,8 @@ what.
 
 ## Legend
 
+[-] canceled
+
 [x] done
 
 [.] in progress
@@ -71,7 +73,7 @@ Just check out the following:
       from live-iso)
       [?]
 
-  [.] blackarch-site
+  [-] blackarch-site
       new site based on jekyl. create better images for the slider on
       index.html. any improvements...
       [miblon, noptrix]
@@ -92,7 +94,7 @@ Just check out the following:
       rewrite in python3 from scratch.
       [sepehrdad]
 
-  [.] wordlistctl
+  [x] wordlistctl
       enhance performance, add checksums and size.
       [sepehrdad]
 
@@ -112,7 +114,7 @@ Just check out the following:
 
   [ ] blackman
       either update and fix current bugs or rewrite it from scratch. python3?
-      [ikstream]
+      [?]
 
   [ ] python-packages
       add missing python dependencies to python-packages. use setup.py and grep
