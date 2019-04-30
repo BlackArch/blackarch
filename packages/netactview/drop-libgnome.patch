@@ -1,0 +1,135 @@
+diff -Naur netactview-0.6.4.orig/configure.ac netactview-0.6.4/configure.ac
+--- netactview-0.6.4.orig/configure.ac	2015-03-12 11:34:12.000000000 +0100
++++ netactview-0.6.4/configure.ac	2017-01-21 03:23:18.306420114 +0100
+@@ -25,7 +25,7 @@
+ AM_GLIB_GNU_GETTEXT
+ 
+ 
+-PKG_CHECK_MODULES(NETACTVIEW, [gtk+-2.0 >= 2.8 libglade-2.0 gnome-vfs-2.0 >= 2.4 glib-2.0 >= 2.8 libgnome-2.0 gconf-2.0 libgtop-2.0 >= 2.12])
++PKG_CHECK_MODULES(NETACTVIEW, [gtk+-2.0 >= 2.8 libglade-2.0 gthread-2.0 glib-2.0 >= 2.8 gconf-2.0 libgtop-2.0 >= 2.12])
+ AC_SUBST(NETACTVIEW_CFLAGS)
+ AC_SUBST(NETACTVIEW_LIBS)
+ 
+diff -Naur netactview-0.6.4.orig/src/main.c netactview-0.6.4/src/main.c
+--- netactview-0.6.4.orig/src/main.c	2015-03-18 14:04:51.000000000 +0100
++++ netactview-0.6.4/src/main.c	2017-01-21 03:08:09.510451928 +0100
+@@ -27,9 +27,6 @@
+ #include <gtk/gtk.h>
+ #include <glade/glade.h>
+ #include <glib.h>
+-#include <libgnome/libgnome.h>
+-#include <libgnomevfs/gnome-vfs.h>
+-#include <libgnomevfs/gnome-vfs-utils.h>
+ #include <glib/gi18n.h>
+ 
+ #include "mainwindow.h"
+@@ -42,7 +39,7 @@
+ static void on_aboutdialog_url_activated (GtkAboutDialog *about, const gchar *url, 
+ 										 gpointer data)
+ {
+-	gnome_vfs_url_show(url);
++	gtk_show_uri(NULL, url, GDK_CURRENT_TIME, NULL);
+ }
+ 
+ static void on_aboutdialog_email_activated (GtkAboutDialog *about, const gchar *url, 
+@@ -50,7 +47,7 @@
+ {
+ 	GString *s = g_string_new("mailto:");
+ 	g_string_append(s, url);
+-	gnome_vfs_url_show(s->str);
++	gtk_show_uri(NULL, s->str, GDK_CURRENT_TIME, NULL);
+ 	g_string_free(s, TRUE);
+ }
+ 
+@@ -59,7 +56,6 @@
+ main (int argc, char *argv[])
+ {
+ 	GtkWidget *window;
+-	GnomeProgram *program;
+ 	GOptionContext *option_context;
+ 	
+ 	g_type_init();
+@@ -75,12 +71,6 @@
+ 	option_context = g_option_context_new(_(" - view network connections"));
+ 	
+ 	gtk_init(&argc, &argv);
+-	program = gnome_program_init(PACKAGE, VERSION, LIBGNOME_MODULE, argc, argv, 
+-								 GNOME_PARAM_GOPTION_CONTEXT, option_context,
+-								 GNOME_PROGRAM_STANDARD_PROPERTIES,
+-								 GNOME_PARAM_NONE);
+-	
+-	gnome_vfs_init();
+ 	
+ 	gtk_about_dialog_set_url_hook(&on_aboutdialog_url_activated, NULL, NULL);
+ 	gtk_about_dialog_set_email_hook(&on_aboutdialog_email_activated, NULL, NULL);
+@@ -103,8 +93,6 @@
+ 		g_printerr("Error loading %s \nThe application might not be correctly installed.\n", 
+ 				   GLADEFILE);
+ 	}
+-	
+-	g_object_unref (program);
+ 
+ 	return 0;
+ }
+diff -Naur netactview-0.6.4.orig/src/mainwindow.c netactview-0.6.4/src/mainwindow.c
+--- netactview-0.6.4.orig/src/mainwindow.c	2015-03-25 08:49:56.000000000 +0100
++++ netactview-0.6.4/src/mainwindow.c	2017-01-21 03:40:26.925588908 +0100
+@@ -36,9 +36,6 @@
+ 
+ #include "config.h"
+ 
+-#include <libgnome/libgnome.h>
+-#include <libgnomevfs/gnome-vfs.h>
+-#include <libgnomevfs/gnome-vfs-utils.h>
+ #include <gtk/gtk.h>
+ #include <glade/glade.h>
+ #include <gdk/gdkkeysyms.h>
+@@ -1858,17 +1855,19 @@
+ static void on_menuWiki_activate (GtkMenuItem *menuitem, gpointer user_data)
+ {
+ 	const char *wikiURL = "http://netactview.sourceforge.net/wiki/";
+-	GnomeVFSResult res = gnome_vfs_url_show(wikiURL);
+-	if (res != GNOME_VFS_OK)
++	GError *error = NULL;
++	gtk_show_uri(NULL, wikiURL, GDK_CURRENT_TIME, &error);
++	if (error != NULL)
+ 	{
+ 		GtkWidget *dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
+ 		                        GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
+ 		                        _("Can't open wiki URL: \"%s\".\n"
+-		                          "Please check that gnome vfs and mime configurations work "
++		                          "Please check that gvfs and mime configurations work "
+ 		                          "correctly with the default web browser."), 
+ 		                        wikiURL);
+ 		gtk_dialog_run(GTK_DIALOG (dialog));
+ 		gtk_widget_destroy(dialog);
++		g_error_free(error);
+ 	}
+ }
+ 
+@@ -1907,13 +1906,13 @@
+ {
+ #ifdef HAVE_GKSU
+ 	GtkWidget *window = glade_xml_get_widget(GladeXml, "window");
+-	char *execute_params[] = { GKSU_PATH, EXECUTABLE_PATH };
++	char *execute_params[] = { GKSU_PATH, EXECUTABLE_PATH, NULL };
+ 	int child_pid;
++	GError *error = NULL;
+ 	save_preferences();
+ 	
+-	child_pid = gnome_execute_async(NULL, sizeof(execute_params)/sizeof(char*), 
+-									execute_params);
+-	if (child_pid < 0) /*error*/
++	g_spawn_async (NULL, execute_params, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &error);
++	if (error != NULL) /*error*/
+ 	{
+ 		GtkWidget *dialog;
+ 		dialog = gtk_message_dialog_new (NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
+@@ -1922,6 +1921,7 @@
+ 										 );
+ 		gtk_dialog_run (GTK_DIALOG (dialog));
+ 		gtk_widget_destroy (dialog);
++		g_error_free (error);
+ 		
+ 	}else /*close current instance*/
+ 	{

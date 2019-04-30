@@ -1,0 +1,64 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Contributor: Muflone http://www.muflone.com/contacts/english/
+# Contributor: lp76 <l.peduto@gmail.com>
+
+pkgname=netactview
+pkgver=0.6.4
+pkgrel=6
+pkgdesc='A graphical network connections viewer similar in functionality to netstat.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='http://netactview.sourceforge.net/index.html'
+license=('GPL')
+depends=('libglade' 'libgtop')
+makedepends=('intltool' 'polkit')
+optdepends=('polkit: restart the application as root')
+source=("https://downloads.sourceforge.net/netactview/$pkgname-$pkgver.tar.bz2"
+        'drop-libgnome.patch'
+        'drop-gconf.patch'
+        'netactview_polkit'
+        'org.archlinux.pkexec.netactview.policy')
+sha512sums=('604297e429ef7037477f1d17df65c245df636033917ba626db78833eadab062219b0dc1cd8cee7a7960a78002f423cecb221bdf33c4145d1bb90aced8fda1118'
+            'fe851c11dfb05b38fd350edc4cda86bc5c58541c73edc2b54e1e3adec1a5805e72667e4db216274412b44887f5233c9a57edd8f93e85039da7734af290c2a227'
+            '35ac3bca98a088369c5f8fb24552b305b60176f2401239454b4613bf0b458ce27842ce33b25e17f937c6b504ec0ed5b68a61334e9f9769d1055296b836b01813'
+            'd6a7dfdcce876f0bdc9cb0d7a2cde81353ecc56cb10277b844afcfc7de9bf8420f1b32a3a91843ed08bdc49925749eb35448c62b44781d306cbba9f4dfea9de2'
+            '392fbc70c2b2a19034a2d82aacf4d04cd080e748320e58bb4e511f99cfb10ef7bcd7345a083115fa354a3f2f606df1a0d9f0b956fcfb092f0e31f86bb9222808')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  # Remove libgnome dependency
+  patch -Np1 -i ../drop-libgnome.patch
+
+  # Remove gconf dependency
+  patch -Np1 -i ../drop-gconf.patch
+
+  # Use pkexec instead of gksu
+  sed -i 's/\[gksu\]/\[pkexec\]/' configure.ac
+  sed -i 's|GKSU_PATH, EXECUTABLE_PATH|"/usr/bin/netactview_polkit"|
+          s/install gksu/install polkit/' src/mainwindow.c
+
+  autoreconf -fi
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  ./configure --prefix=/usr --mandir=/usr/share/man
+
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 "$srcdir/org.archlinux.pkexec.netactview.policy" \
+    "$pkgdir/usr/share/polkit-1/actions/org.archlinux.pkexec.netactview.policy"
+
+  install -Dm 755 "$srcdir/netactview_polkit" \
+    "$pkgdir/usr/bin/netactview_polkit"
+}
+

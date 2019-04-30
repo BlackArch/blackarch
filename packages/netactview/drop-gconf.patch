@@ -1,0 +1,76 @@
+diff -Naur netactview-0.6.4.orig/configure.ac netactview-0.6.4/configure.ac
+--- netactview-0.6.4.orig/configure.ac	2018-09-12 15:12:32.807073000 +0200
++++ netactview-0.6.4/configure.ac	2018-09-12 15:14:11.836589749 +0200
+@@ -25,7 +25,7 @@
+ AM_GLIB_GNU_GETTEXT
+ 
+ 
+-PKG_CHECK_MODULES(NETACTVIEW, [gtk+-2.0 >= 2.8 libglade-2.0 gthread-2.0 glib-2.0 >= 2.8 gconf-2.0 libgtop-2.0 >= 2.12])
++PKG_CHECK_MODULES(NETACTVIEW, [gtk+-2.0 >= 2.8 libglade-2.0 gthread-2.0 glib-2.0 >= 2.8 libgtop-2.0 >= 2.12])
+ AC_SUBST(NETACTVIEW_CFLAGS)
+ AC_SUBST(NETACTVIEW_LIBS)
+ 
+diff -Naur netactview-0.6.4.orig/src/mainwindow.c netactview-0.6.4/src/mainwindow.c
+--- netactview-0.6.4.orig/src/mainwindow.c	2018-09-12 15:12:32.827074000 +0200
++++ netactview-0.6.4/src/mainwindow.c	2018-09-12 15:16:06.949901211 +0200
+@@ -40,7 +40,6 @@
+ #include <glade/glade.h>
+ #include <gdk/gdkkeysyms.h>
+ #include <glib/gi18n.h>
+-#include <gconf/gconf-client.h>
+ 
+ 
+ /*Column data types as used by compare functions*/
+@@ -172,7 +171,6 @@
+ 	
+ 	int columns_initial_view_order[MVC_VIEW_COLUMNSNUMBER]; /* [position] = index. */ 
+ 	
+-	char *default_fixed_font;
+ 	gboolean first_refresh, manual_refresh;
+ 
+ 	int window_width, window_height, initial_window_width, initial_window_height;
+@@ -2430,19 +2428,6 @@
+ 	return FALSE;
+ }
+ 
+-static void gconf_load ()
+-{
+-	GConfClient *conf = gconf_client_get_default();
+-	
+-	Mwd.default_fixed_font = gconf_client_get_string (conf, 
+-								"/desktop/gnome/interface/monospace_font_name", NULL);
+-	if (Mwd.default_fixed_font == NULL)
+-		Mwd.default_fixed_font = g_strdup("Monospace 10");
+-	
+-	g_object_unref(conf);
+-	
+-}
+-
+ 
+ static void connect_signals (GtkWidget *window)
+ {
+@@ -2586,7 +2571,7 @@
+ 	label = GTK_LABEL(gtk_label_new(text));
+ 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+ 	
+-	font_desc = pango_font_description_from_string(Mwd.default_fixed_font);
++	font_desc = pango_font_description_from_string("Monospace 10");
+ 	if (font_desc != NULL)
+ 	{
+ 		gtk_widget_modify_font(GTK_WIDGET(label), font_desc);
+@@ -2634,7 +2619,6 @@
+ 	Mwd.connections = g_array_sized_new(FALSE, TRUE, sizeof(NetConnection*), 16);
+ 	
+ 	load_preferences();
+-	gconf_load();
+ 
+ 	init_controls();
+ 	setup_status_bar();
+@@ -2684,7 +2668,6 @@
+ 
+ 	FreeFilterData();
+ 	g_string_free(Mwd.filter, TRUE);
+-	g_free(Mwd.default_fixed_font);
+ }
+ 
+ 
