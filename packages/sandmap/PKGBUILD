@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sandmap
+pkgver=571.f59be2e
+pkgrel=1
+pkgdesc='Nmap on steroids! Simple CLI with the ability to run pure Nmap engine, 31 modules with 459 scan profiles.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-automation')
+arch=('any')
+url='https://github.com/trimstray/sandmap'
+license=('GPL3')
+depends=('nmap' 'tor' 'proxychains-ng' 'xterm')
+makedepends=('git')
+source=('git+https://github.com/trimstray/sandmap.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" \
+    CODE_OF_CONDUCT.md CONTRIBUTING.md README.md
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  install -Dm 644 "static/man8/$pkgname.8" \
+    "$pkgdir/usr/share/man/man8/$pkgname.8"
+
+  rm -rf static *.md setup.sh
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  ln -fs "/usr/share/$pkgname/bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
+}
+
