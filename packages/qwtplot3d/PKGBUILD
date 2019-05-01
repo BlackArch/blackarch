@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Maintainer: Ronald van Haren <ronald@archlinux.org>
+# Contributor: damir <damir@archlinux.org>
+
+pkgname=qwtplot3d
+pkgver=0.2.7
+pkgrel=11
+pkgdesc='Qt/OpenGL-based C++ programming library containing 3d-widgets.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+license=('custom:zlib')
+url='http://qwtplot3d.sourceforge.net/'
+depends=('qt4')
+makedepends=('mesa' 'glu')
+source=("https://downloads.sourceforge.net/sourceforge/qwtplot3d/qwtplot3d-$pkgver.tgz"
+        'qwtplot3d-gcc44.patch'
+        'qwtplot3d-qt-4.8.0.patch')
+sha512sums=('88e6d270695931775f3c1c0e718118e31118dbfe9f5f582834de09ab515fdf9e8a0f90d424f276653fdf1cf0b39e2060282385701a4ab48843420fe55a1dcf0c'
+            '4f10bfabc68ec313aa8f3f624632c59bfad18f701bc802cd222607ac551b2ad6736dca14e3b63bd238c9c2b68128cb0b66eb1801dc6efebc800e71b0d03cbd31'
+            '7cb30ea968e491b0bdfd6a27ce6a47dfbf9888048a4368b14947988e29f4041814d9f452960851d959177a5ced58fda74f4cfdac1f178bb6b44fb9ccc98d53c7')
+
+prepare() {
+  cd $pkgname
+
+  patch -p1 -i "$srcdir/qwtplot3d-gcc44.patch"
+  patch -p1 -i "$srcdir/qwtplot3d-qt-4.8.0.patch"
+}
+
+build() {
+  cd $pkgname
+
+  qmake-qt4 qwtplot3d.pro
+
+  make
+}
+
+package() {
+  cd $pkgname
+
+  install -d "$pkgdir"/usr/{include/qwtplot3d,lib}
+
+  for n in include/* ; do
+    cp -d $n "$pkgdir/usr/include/qwtplot3d"
+  done
+
+  for n in lib/libqwtplot3d.so* ; do
+    cp -d $n "$pkgdir/usr/lib"
+  done
+
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
