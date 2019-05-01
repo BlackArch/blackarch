@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Contributor: Evgeniy Alekseev <arcanis at archlinux dot org>
+# Contributor: Eugen Zagorodniy <https://github.com/ezag>
+# Contributor: Ronald van Haren <ronald at archlinux dot org>
+# Contributor: Nick Østergaard <oe.nick at gmail dot com>
+
+pkgname=qwt5
+pkgver=5.2.3
+pkgrel=6
+pkgdesc='Qt Widgets for Technical Applications (version 5.X).'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='http://qwt.sourceforge.net/'
+depends=('qt4')
+license=('custom:unknown')
+source=("https://downloads.sourceforge.net/sourceforge/qwt/qwt-$pkgver.tar.bz2"
+        'qwtconfig-archlinux.pri')
+sha512sums=('60545712790699b145a54baba4c40802d9a58bf5f68f997faed5027db6773a801097be8675e00b2af1de568e36e2e498db0a0310ac4877fd9f2b52871409dd49'
+            'a019108fb6af33a465c419a3af21f82673112e5edc12624a390439a97c95edcf18f8ea08b4a5b1340b50be5d5315e41b6188105768d4689602f29d88274749a4')
+
+prepare() {
+  install -Dm 644 "qwtconfig-archlinux.pri" "qwt-${pkgver}/qwtconfig.pri"
+}
+
+build() {
+  cd "qwt-$pkgver"
+
+  qmake-qt4 qwt.pro
+
+  make
+}
+
+package() {
+  cd "qwt-$pkgver"
+
+  make INSTALL_ROOT="$pkgdir" QTDIR=/usr install
+
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -r "${pkgdir}/usr/share/html" "$pkgdir/usr/share/man"
+}
+
