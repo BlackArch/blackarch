@@ -1,0 +1,54 @@
+diff -u -r qt-everywhere-opensource-src-4.8.7/src/network/ssl/qsslsocket_openssl.cpp qt-everywhere-opensource-src-4.8.7-nossl3/src/network/ssl/qsslsocket_openssl.cpp
+--- qt-everywhere-opensource-src-4.8.7/src/network/ssl/qsslsocket_openssl.cpp	2015-05-07 16:14:44.000000000 +0200
++++ qt-everywhere-opensource-src-4.8.7-nossl3/src/network/ssl/qsslsocket_openssl.cpp	2016-03-04 11:29:17.119300898 +0100
+@@ -267,7 +267,11 @@
+ #endif
+         break;
+     case QSsl::SslV3:
++#ifndef OPENSSL_NO_SSL3
+         ctx = q_SSL_CTX_new(client ? q_SSLv3_client_method() : q_SSLv3_server_method());
++#else
++        ctx = 0; // SSL 3 not supported by the system, but chosen deliberately -> error
++#endif
+         break;
+     case QSsl::SecureProtocols: // SslV2 will be disabled below
+     case QSsl::TlsV1SslV3: // SslV2 will be disabled below
+diff -u -r qt-everywhere-opensource-src-4.8.7/src/network/ssl/qsslsocket_openssl_symbols.cpp qt-everywhere-opensource-src-4.8.7-nossl3/src/network/ssl/qsslsocket_openssl_symbols.cpp
+--- qt-everywhere-opensource-src-4.8.7/src/network/ssl/qsslsocket_openssl_symbols.cpp	2015-05-07 16:14:44.000000000 +0200
++++ qt-everywhere-opensource-src-4.8.7-nossl3/src/network/ssl/qsslsocket_openssl_symbols.cpp	2016-03-04 11:28:52.806050135 +0100
+@@ -228,13 +228,17 @@
+ #ifndef OPENSSL_NO_SSL2
+ DEFINEFUNC(const SSL_METHOD *, SSLv2_client_method, DUMMYARG, DUMMYARG, return 0, return)
+ #endif
++#ifndef OPENSSL_NO_SSL3
+ DEFINEFUNC(const SSL_METHOD *, SSLv3_client_method, DUMMYARG, DUMMYARG, return 0, return)
++#endif
+ DEFINEFUNC(const SSL_METHOD *, SSLv23_client_method, DUMMYARG, DUMMYARG, return 0, return)
+ DEFINEFUNC(const SSL_METHOD *, TLSv1_client_method, DUMMYARG, DUMMYARG, return 0, return)
+ #ifndef OPENSSL_NO_SSL2
+ DEFINEFUNC(const SSL_METHOD *, SSLv2_server_method, DUMMYARG, DUMMYARG, return 0, return)
+ #endif
++#ifndef OPENSSL_NO_SSL3
+ DEFINEFUNC(const SSL_METHOD *, SSLv3_server_method, DUMMYARG, DUMMYARG, return 0, return)
++#endif
+ DEFINEFUNC(const SSL_METHOD *, SSLv23_server_method, DUMMYARG, DUMMYARG, return 0, return)
+ DEFINEFUNC(const SSL_METHOD *, TLSv1_server_method, DUMMYARG, DUMMYARG, return 0, return)
+ #else
+@@ -822,13 +826,17 @@
+ #ifndef OPENSSL_NO_SSL2
+     RESOLVEFUNC(SSLv2_client_method)
+ #endif
++#ifndef OPENSSL_NO_SSL3
+     RESOLVEFUNC(SSLv3_client_method)
++#endif
+     RESOLVEFUNC(SSLv23_client_method)
+     RESOLVEFUNC(TLSv1_client_method)
+ #ifndef OPENSSL_NO_SSL2
+     RESOLVEFUNC(SSLv2_server_method)
+ #endif
++#ifndef OPENSSL_NO_SSL3
+     RESOLVEFUNC(SSLv3_server_method)
++#endif
+     RESOLVEFUNC(SSLv23_server_method)
+     RESOLVEFUNC(TLSv1_server_method)
+     RESOLVEFUNC(X509_NAME_entry_count)
