@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=qrljacker
+pkgver=1
+pkgrel=1
+pkgdesc='QRLJacker is a highly customizable exploitation framework to demonstrate "QRLJacking Attack Vector".'
+groups=('blackarch' 'blackarch-social')
+arch=('any')
+url='https://github.com/OWASP/QRLJacking/tree/master/QRLJacker'
+license=('GPL')
+depends=('python' 'python-terminaltables' 'python-selenium' 'python-pillow'
+         'python-jinja' 'python-user-agent')
+makedepends=('git')
+provides=('qrljacker')
+source=("$pkgname::git+https://github.com/OWASP/QRLJacking.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname/$pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname" QrlJacker.py
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" ../LICENSE
+
+  rm README.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python3 QrlJacker.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
