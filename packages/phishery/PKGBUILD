@@ -13,7 +13,6 @@ depends=('glibc')
 makedepends=('git' 'go-pie')
 source=('git+https://github.com/ryhanson/phishery.git')
 sha512sums=('SKIP')
-_url='github.com/ryhanson/phishery'
 
 pkgver() {
   cd $pkgname
@@ -22,31 +21,31 @@ pkgver() {
 }
 
 build() {
-  install -dm 755 src/$_url && rm -rf src/$_url && mv phishery src/$_url &&
-    cd src/$url
+  mkdir -p "src/$url" && rm -rf "src/$url" && mv $pkgname "src/$url" &&
+    cd "src/$url"
 
-  GOPATH="$srcdir" go get -d -t $_url
+  GOPATH="$srcdir" go get -d -t $url
 }
 
 package() {
-  cd "$srcdir"
-
   install -dm 755 "$pkgdir/usr/bin"
 
-  GOPATH="$srcdir" go build -v $_url
+  GOPATH="$srcdir" go build -v $url
 
   install -Dm 755 "$srcdir/phishery" "$pkgdir/usr/share/$pkgname/$pkgname"
-  install -Dm 644 "src/$url/README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
-  install -Dm 644 "src/$url/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/README.md" \
+    "src/$url/README.md"
+  install -Dm 644 "src/$url/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm "src/$url/README.md" "src/$url/LICENSE"
 
-  cp -a src/$_url/* "$pkgdir/usr/share/$pkgname"
+  cp -a "src/$url/"* "$pkgdir/usr/share/$pkgname"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec ./phishery "\$@"
+exec ./$pkgname "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
