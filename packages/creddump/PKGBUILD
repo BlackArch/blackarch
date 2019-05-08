@@ -3,27 +3,44 @@
 
 pkgname=creddump
 pkgver=0.3
-pkgrel=7
+pkgrel=8
 groups=('blackarch' 'blackarch-cracker' 'blackarch-windows')
 pkgdesc='A python tool to extract various credentials and secrets from Windows registry hives.'
-url='https://code.google.com/p/creddump/'
+url='https://github.com/noraj/creddump'
 arch=('any')
 license=('GPL2')
-depends=('python2')
-source=("https://creddump.googlecode.com/files/creddump-$pkgver.tar.bz2")
-sha512sums=('df3b62c05a181f154da54997d3a32197a085711b')
-
-prepare() {
-  cd "$pkgname-$pkgver"
-
-  sed -i 's/env python/env python2/' *.py
-}
+depends=('python2' 'python2-pycryptodome')
+source=("https://github.com/noraj/creddump/archive/v$pkgver.tar.gz")
+sha512sums=('4dfb5c7177f2db098a90eafff5928071b490d476f6b1c237ca60678fede35296f9d9e840eb4fee1fb7874bc9764f0bd4269cccce51a68ea79a61ade5cab5b441')
 
 package() {
   cd "$pkgname-$pkgver"
 
+  install -dm 755 "$pkgdir/usr/bin"
+
   install -Dm 755 -t "$pkgdir/usr/share/windows/$pkgname" cachedump.py \
     lsadump.py pwdump.py
-  install -Dm 644 README  "$pkgdir/usr/share/doc/$pkgname/README"
+  install -Dm 644 README "$pkgdir/usr/share/doc/$pkgname/README"
+  cp -ar framework "$pkgdir/usr/share/windows/$pkgname"
+
+  cat > "$pkgdir/usr/bin/cachedump" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname/
+exec python2 cachedump.py "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/lsadump" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname/
+exec python2 lsadump.py "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/pwdump" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname/
+exec python2 pwdump.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/cachedump" "$pkgdir/usr/bin/lsadump" "$pkgdir/usr/bin/pwdump"
 }
 
