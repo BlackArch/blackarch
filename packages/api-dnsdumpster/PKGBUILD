@@ -11,30 +11,31 @@ url='https://github.com/PaulSec/API-dnsdumpster.com'
 license=('custom:unknown')
 depends=('python2-beautifulsoup4')
 makedepends=('git')
-source=('git+https://github.com/PaulSec/API-dnsdumpster.com.git')
+source=("$pkgname::git+https://github.com/PaulSec/API-dnsdumpster.com.git")
 sha512sums=('SKIP')
 
 pkgver() {
-  cd API-dnsdumpster.com
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd API-dnsdumpster.com
+  cd $pkgname
 
   python2 setup.py build
 }
 
 package() {
-  cd API-dnsdumpster.com
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  python2 setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+  python2 setup.py install --root="$pkgdir" --prefix=/usr --optimize=1 \
+    --skip-build
 
-  install -Dm644 -t "$pkgdir/usr/share/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" README.md
 
   rm README.md
 
@@ -42,7 +43,7 @@ package() {
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-exec python2 /usr/share/api-dnsdumpster/API_example.py "\$@"
+exec python2 /usr/share/$pkgname/API_example.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
