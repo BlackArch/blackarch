@@ -11,17 +11,11 @@ url='https://github.com/nccgroup/FrisbeeLite'
 license=('GPL3')
 depends=('python2' 'libusb' 'python2-pyusb' 'wxgtk')
 makedepends=('git')
-source=('git+https://github.com/nccgroup/FrisbeeLite.git')
+source=("$pkgname::git+https://github.com/nccgroup/FrisbeeLite.git")
 sha512sums=('SKIP')
 
-pkgver() {
-  cd FrisbeeLite
-
-  ls FrisbeeLite_v*.py | cut -d 'v' -f 2 |  sed 's/\.py//'
-}
-
 prepare() {
-  cd FrisbeeLite
+  cd $pkgname
 
   mv "FrisbeeLite_v$pkgver.py" frisbeelite.py
 
@@ -31,21 +25,21 @@ prepare() {
 }
 
 package() {
-  cd FrisbeeLite
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin/"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  cp -a frisbeelite.py images dependencies "$pkgdir/usr/share/$pkgname"
+  cp -a "$pkgname.py" images dependencies "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 Fuzzing_USB_devices_with_FrisbeeLite.pdf \
+  install -Dm 644 Fuzzing_USB_devices_with_FrisbeeLite.pdf \
     "$pkgdir/usr/share/doc/$pkgname/Fuzzing_USB_devices_with_FrisbeeLite.pdf"
-  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 frisbeelite.py
+exec python2 $pkgname.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
