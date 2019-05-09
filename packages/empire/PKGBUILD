@@ -18,25 +18,25 @@ depends=('python2-urllib3' 'python2-setuptools' 'python2-iptools'
          'python2-lxml' 'python2-xlrd' 'python2-xlutils' 'python2-xlwt'
          'java-environment')
 makedepends=('git')
-source=('git+https://github.com/EmpireProject/Empire.git'
+source=("$pkgname::git+https://github.com/EmpireProject/Empire.git"
         'https://files.pythonhosted.org/packages/40/d0/8efd61531f338a89b4efa48fcf1972d870d2b67a7aea9dcf70783c8464dc/pyOpenSSL-19.0.0.tar.gz')
 sha512sums=('SKIP'
             'a7e12bf5be725ccebd1223d567a9b9e8bd35f79cbf3a0409108fa6f00e10ab137dd6876369e9dede02b2abc7d700786cc905532ca5c31b6e246f6df8b24e2818')
 install='empire.install'
-_dir_name_=Empire
 
 pkgver() {
-  cd $_dir_name_
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd $_dir_name_
+  cd $pkgname
 
   grep -iRl 'python' . | xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
 
-  sed -i 's|python ./setup_database.py|python2 ./setup_database.py|g' setup/reset.sh
+  sed -i 's|python ./setup_database.py|python2 ./setup_database.py|g' \
+    setup/reset.sh
 
   # temp dirty fix
   cp -r "$srcdir/pyOpenSSL-19.0.0/src/OpenSSL" OpenSSL
@@ -58,7 +58,7 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 empire "\$@"
+exec python2 $pkgname "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
