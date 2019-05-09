@@ -21,29 +21,26 @@ package() {
   install -dm 755 "$pkgdir/usr/share/$pkgname/"
   install -dm 755 "$pkgdir/usr/share/doc/$pkgname/"
 
-  install -Dm 644 CHANGELOG.txt "$pkgdir/usr/share/doc/$pkgname/"
-  install -Dm 644 README.txt "$pkgdir/usr/share/doc/$pkgname/"
-  install -Dm 644 TODO "$pkgdir/usr/share/doc/$pkgname/"
-
-  install -Dm 644 brutefile.txt "$pkgdir/usr/share/$pkgname/"
-  install -Dm 644 community.txt "$pkgdir/usr/share/$pkgname/"
-  install -Dm 644 torch.conf "$pkgdir/usr/share/$pkgname/"
-  install -Dm 644 fingerprint.db "$pkgdir/usr/share/$pkgname/"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" CHANGELOG.txt TODO \
+    README.txt
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" community.txt torch.conf \
+    fingerprint.db brutefile.txt
 
   for f in brutefile.txt community.txt fingerprint.db password.txt \
-           tfingerprint.db torch.conf users.txt; do
-    install -Dm 644 $f "$pkgdir/usr/share/$pkgname/"
+    tfingerprint.db torch.conf users.txt; do
+      install -Dm 644 $f "$pkgdir/usr/share/$pkgname/"
   done
 
-  install -Dm 755 cisco-torch.pl "$pkgdir/usr/share/$pkgname/"
+  install -Dm 755 "$pkgname.pl" "$pkgdir/usr/share/$pkgname/"
+
   cp -r include "$pkgdir/usr/share/$pkgname/"
-  cp -r tftproot $pkgdir/usr/share/$pkgname/
+  cp -r tftproot "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/
-export PERL5LIB="/usr/share/cisco-torch"
-exec perl cisco-torch.pl "\${@}"
+export PERL5LIB="/usr/share/$pkgname"
+exec perl $pkgname.pl "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
