@@ -17,33 +17,33 @@ depends=('python2-configobj' 'python2-pillow' 'python2-user-agents'
          'python2-beautifulsoup4' 'python2-magic' 'python2-dnslib'
          'python2-netaddr' 'python2-flask' 'python2-ipy' 'python2-pyopenssl')
 makedepends=('git')
-source=('git+https://github.com/byt3bl33d3r/MITMf.git'
+source=("$pkgname::git+https://github.com/byt3bl33d3r/MITMf.git"
         'mitmf.tmpfiles.conf')
 sha512sums=('SKIP'
             'a380c2f2e812efff0ed1f303f91046c4e639e4bb8a8b0f93e17d8e8ac1b7ec1c20c124d2a203d66fc72aaa62f4753de8935e8b365d39a7e2bd90c2c2dfa39376')
 
 pkgver() {
-  cd MITMf
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd MITMf
+  cd $pkgname
 
   grep -iRl 'python' "$srcdir/MITMf" |
   xargs sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
 }
 
 package() {
-  cd MITMf
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 "$srcdir/mitmf.tmpfiles.conf" \
     "$pkgdir/usr/lib/tmpfiles.d/mitm.conf"
-  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm README.md LICENSE
@@ -59,7 +59,7 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 mitmf.py "\$@"
+exec python2 $pkgname.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
