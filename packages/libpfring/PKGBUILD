@@ -12,18 +12,17 @@ license=('LGPL')
 depends=('numactl' 'pfring-dkms')
 makedepends=('binutils' 'bison' 'flex' 'git' 'linux-headers' 'make')
 options=('staticlibs')
-source=('git+https://github.com/ntop/PF_RING.git')
+source=("$pkgname::git+https://github.com/ntop/PF_RING.git")
 sha512sums=('SKIP')
-_dir_name_=PF_RING
 
 pkgver() {
-  cd $_dir_name_
+  cd $pkgname
 
   git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
 build() {
-  cd "$_dir_name_/userland/lib"
+  cd "$pkgname/userland/lib"
 
   ./configure --disable-bpf --prefix=/usr --libdir=/usr/lib/libpfring \
     --includedir=/usr/include/pfring
@@ -32,14 +31,14 @@ build() {
 }
 
 package() {
-  cd $_dir_name_
+  cd $pkgname
 
   install -dm 755 "$pkgdir/etc/ld.so.conf.d/"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" doc/README.md \
     doc/hugepages.rst
-  install -Dm 644 "LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  echo '/usr/lib/libpfring' > "$pkgdir/etc/ld.so.conf.d/$pkgname.conf"
+  echo "/usr/lib/$pkgname" > "$pkgdir/etc/ld.so.conf.d/$pkgname.conf"
 
   cd "userland/lib"
 
