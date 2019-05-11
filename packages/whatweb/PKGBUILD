@@ -3,26 +3,26 @@
 
 pkgname=whatweb
 pkgver=4263.1420e9fa
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-recon' 'blackarch-webapp')
 pkgdesc='Next generation web scanner that identifies what websites are running.'
 arch=('any')
 url='http://www.morningstarsecurity.com/research/whatweb'
 license=('GPL')
-depends=('ruby2.3')
-makedepends=('git' 'ruby2.3-bundler')
-source=('git+https://github.com/urbanadventurer/WhatWeb.git')
-install='whatweb.install'
+depends=('ruby')
+makedepends=('git' 'ruby-bundler')
+source=("$pkgname::git+https://github.com/urbanadventurer/WhatWeb.git")
+install="$pkgname.install"
 sha512sums=('SKIP')
 
 pkgver() {
-  cd WhatWeb
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd WhatWeb
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
@@ -30,17 +30,17 @@ package() {
   #make DESTDIR="$pkgdir" install
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" CHANGELOG README INSTALL
-  install -Dm 644 whatweb.1 "$pkgdir/usr/share/man/man1/whatweb.1"
+  install -Dm 644 "$pkgname.1" "$pkgdir/usr/share/man/man1/$pkgname.1"
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm CHANGELOG README INSTALL whatweb.1 LICENSE
+  rm CHANGELOG README INSTALL "$pkgname.1" LICENSE
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec ruby-2.3 whatweb "\$@"
+exec ruby $pkgname "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
