@@ -1,48 +1,77 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=oletools
-pkgver=1050.aae7b4c
-pkgrel=1
+pkgbase=oletools
+pkgname=('python2-oletools' 'python-oletools')
+pkgver=0.54.1
+pkgrel=3
+epoch=1
 groups=('blackarch' 'blackarch-binary' 'blackarch-forensic')
 pkgdesc='Tools to analyze Microsoft OLE2 files.'
 arch=('any')
-url='http://www.decalage.info/python/oletools'
+url='https://pypi.org/project/oletools/'
 license=('GPL2')
-depends=('python2' 'tk')
-makedepends=('git')
-source=('git+https://github.com/decalage2/oletools.git')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/41/7b/2630a92a0ad7e72ac4eeb095e3154eb1b4c1673c23401a2acd669556c7dd/oletools-$pkgver.zip")
 sha512sums=('SKIP')
 
-pkgver() {
-  cd $pkgname
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
 prepare() {
-  cd $pkgname
-
-  sed -i 's/env python/env python2/' oletools/*.py
+  cp -a "oletools-$pkgver" "oletools-$pkgver-2"
 }
 
-package() {
-  cd $pkgname
+build() {
+  cd "oletools-$pkgver-2"
 
-  install -dm 755 "$pkgdir/usr/bin"
+  python2 setup.py build
 
-  python2 setup.py install --root="$pkgdir" --prefix=/usr
+  cd "$srcdir/oletools-$pkgver"
 
-  cd "$pkgdir/usr/lib/python2.7/site-packages/$pkgname"
+  python setup.py build
+}
 
-  rm __init__.py
+package_oletools() {
+  oletools=1337
+}
 
-  for f in *.py ; do
-    cat > "$pkgdir/usr/bin/${f%.py}" <<EOF
-#!/bin/sh
-exec python2 /usr/lib/python2.7/site-packages/$pkgname/$f "\$@"
-EOF
-    chmod +x "$pkgdir/usr/bin/${f%.py}"
+package_python2-oletools() {
+  depends=('python2' 'python2-colorclass' 'python2-pyparsing' 'python2-olefile'
+           'python2-easygui')
+
+  cd "oletools-$pkgver"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 oletools/LICENSE.txt \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp oletools/doc/* "$pkgdir/usr/share/doc/$pkgname"
+
+  # fixing shebang line
+  cd "$pkgdir/usr/lib/python2.7/site-packages/oletools/"
+  for file in *.py; do
+    if [ "${file}" != "__init__.py" ]; then
+      sed -i '1s/python/python2/' "${file}"
+    fi
   done
+
+  for t in "$pkgdir/usr/bin/"* ; do
+    mv $t "${t}2"
+  done
+}
+
+package_python-oletools() {
+  depends=('python' 'python-colorclass' 'python-pyparsing' 'python-olefile'
+           'python-easygui')
+
+  cd "oletools-$pkgver"
+
+  python setup.py install --root="$pkgdir" --optimize=1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 oletools/LICENSE.txt \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp oletools/doc/* "$pkgdir/usr/share/doc/$pkgname"
 }
 
