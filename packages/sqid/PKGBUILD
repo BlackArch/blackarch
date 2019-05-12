@@ -3,34 +3,36 @@
 
 pkgname=sqid
 pkgver=0.3
-pkgrel=6
+pkgrel=7
 pkgdesc='A SQL injection digger.'
 arch=('any')
 url='http://sqid.rubyforge.org/'
 license=('GPL')
 depends=('ruby')
 groups=('blackarch' 'blackarch-webapp')
-source=("http://dl.packetstormsecurity.net/UNIX/scanners/sqid-$pkgver.tar.gz")
+source=("http://dl.packetstormsecurity.net/UNIX/scanners/$pkgname-$pkgver.tar.gz")
 sha512sums=('2aa3e9be50da915bf04c22858fef5bc012a3c15552eaed494e786f8dad91143d963b1e38e3ed83fdc0c14e0a4e08209b85389e9098788fee0d86f77bb763e68b')
 
 prepare() {
   cd "$pkgname-$pkgver"
 
-  sed -i -e 's|sqid.db|/usr/share/sqid/sqid.db|g' "sqid.rb"
+  sed -i -e 's|sqid.db|/usr/share/sqid/sqid.db|g' "$pkgname.rb"
 }
 
 package() {
   cd "$pkgname-$pkgver"
 
-  install -dm 755 "$pkgdir/usr/share/sqid"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 755 sqid.rb "$pkgdir/usr/share/$pkgname/sqid.rb"
-  install -m 644 readme sqid.db "$pkgdir/usr/share/$pkgname/"
+  install -Dm 755 "$pkgname.rb" "$pkgdir/usr/share/$pkgname/$pkgname.rb"
+  install -m 644 "$pkgname.db" "$pkgdir/usr/share/$pkgname/"
+  install -Dm 644 -t "$pkgname/usr/share/doc/$pkgname/" readme
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec ruby sqid.rb "\$@"
+exec ruby $pkgname.rb "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
