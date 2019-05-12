@@ -10,8 +10,9 @@ pkgdesc='Tool to perform static analysis on (portable executable) malware.'
 arch=('any')
 url='https://github.com/guelfoweb/peframe'
 license=('custom:unknown')
-depends=('python2' 'python2-simplejson')
-makedepends=('git' 'python2-setuptools')
+depends=('python' 'python-pefile' 'python-python-magic' 'python-oletools'
+         'python-yara' 'python-m2crypto' 'python-virustotal-api' 'python-magic')
+makedepends=('git' 'python-setuptools')
 source=('git+https://github.com/guelfoweb/peframe.git')
 sha512sums=('SKIP')
 
@@ -27,9 +28,18 @@ package() {
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/README.md" README.rst \
-    CHANGELOG.rst
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/README.md" README.rst
 
-  python2 setup.py install --root="$pkgdir"
+  rm README.rst
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python3 $pkgname-cli.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
