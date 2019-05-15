@@ -2,30 +2,37 @@
 # See COPYING for license details.
 
 pkgname=evilgrade
-pkgver=2.0.0
-pkgrel=7
+pkgver=2.0.9
+pkgrel=1
 groups=('blackarch' 'blackarch-misc')
-pkgdesc="Modular framework that takes advantage of poor upgrade implementations by injecting fake updates"
+pkgdesc='Modular framework that takes advantage of poor upgrade implementations by injecting fake updates.'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='http://www.infobyte.com.ar/developments.html'
 license=('GPL')
-depends=('perl' 'perl-data-dump' 'perl-io-socket-ssl' 'perl-digest-sha1')
-source=("http://www.infobyte.com.ar/down/isr-$pkgname-$pkgver.tar.gz"
-        "evilgrade")
-sha512sums=('53ee318e4254caf182e9cbd09fcceadfb0036d8d184685a0275b3967e96899d0de6821d072818466630339de29cc88c38c178fa7ee1133d2354aa3dda6b5ebd3'
-            'f2ec4ba6fe5692a90b1ce53f4ede65ffb7dbd4b41ed660cd1a08b0e39ab978b33707c4fc349c156d128f07ebc24c29ff3e7eb83782a8be98fb2061d7dcd07272')
+depends=('perl' 'perl-data-dump' 'perl-io-socket-ssl' 'perl-digest-sha1'
+         'perl-rpc-xml')
+source=("https://github.com/infobyte/$pkgname/archive/v$pkgver.tar.gz")
+sha512sums=('edccba7cf84443c327c072b71c8386f1b9cd73b66b0ceebef354627c95e0c60e72b8ead0d067be296ce54958cdd8cad3c9f735d2c317847c52cda4b36c9df3af')
 
 package() {
-  cd isr-evilgrade
+  cd "$pkgname-$pkgver"
 
+  install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
-  install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
 
-  cp --no-preserve=ownership -r agent evilgrade include isrcore modules \
-     "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 docs/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  rm docs/LICENSE
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md docs/*
+  rm -rf docs
 
-  install -Dm 755 "$srcdir/evilgrade" "$pkgdir/usr/bin/$pkgname"
-  install -m 644 docs/{AUTHOR,CHANGES,CONTRIBUTORS,FILES,README} \
-    "$pkgdir/usr/share/doc/$pkgname/"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec perl -I . $pkgname "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
