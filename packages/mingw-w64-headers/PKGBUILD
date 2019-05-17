@@ -14,26 +14,27 @@ source=("https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-re
 sha256sums=('805e11101e26d7897fce7d49cbb140d7bac15f3e085a91e0001e80b2adaf48f0'
             'SKIP')
 validpgpkeys=('CAF5641F74F7DFBA88AE205693BDB53CD4EBC740')
-_target='x86_64-w64-mingw32'
+_targets='i686-w64-mingw32 x86_64-w64-mingw32'
 
 build() {
-  mkdir -p "headers-$_target"
+  for t in $_targets ; do
+    mkdir -p "$srcdir/headers-$t" && cd "$srcdir/headers-$t"
 
-  cd "headers-$_target"
-
-  "$srcdir/mingw-w64-v$_pkgver/mingw-w64-headers/"configure \
-    --prefix=/usr/$_target --enable-sdk=all --enable-secure-api \
-    --host=$_target
+    "$srcdir/mingw-w64-v$_pkgver/mingw-w64-headers/"configure \
+      --prefix=/usr/$t --enable-sdk=all --enable-secure-api --host=$t
+  done
 }
 
 package() {
-  cd "headers-$_target"
+  for t in $_targets ; do
+    cd "$srcdir/headers-$t"
 
-  make DESTDIR="$pkgdir" install
+    make DESTDIR="$pkgdir" install
 
-  rm "$pkgdir/usr/$_target/include/pthread_signal.h"
-  rm "$pkgdir/usr/$_target/include/pthread_time.h"
-  rm "$pkgdir/usr/$_target/include/pthread_unistd.h"
+    rm "$pkgdir/usr/$t/include/pthread_signal.h" \
+      "$pkgdir/usr/$t/include/pthread_time.h" \
+      "$pkgdir/usr/$t/include/pthread_unistd.h"
+  done
 
   install -Dm 644 \
     "$srcdir/mingw-w64-v$_pkgver/COPYING.MinGW-w64/COPYING.MinGW-w64.txt" \
