@@ -15,7 +15,7 @@ source=("https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-re
 sha256sums=('805e11101e26d7897fce7d49cbb140d7bac15f3e085a91e0001e80b2adaf48f0'
             'SKIP')
 validpgpkeys=('CAF5641F74F7DFBA88AE205693BDB53CD4EBC740')
-_target='x86_64-w64-mingw32'
+_targets='i686-w64-mingw32 x86_64-w64-mingw32'
 
 prepare() {
   cd "mingw-w64-v$_pkgver/mingw-w64-crt"
@@ -25,22 +25,23 @@ prepare() {
 }
 
 build() {
-  _crt_configure_args="--disable-lib32 --enable-lib64"
-
-  mkdir -p "$srcdir/crt-$_target"
-
-  cd "crt-$_target"
-
-  "$srcdir/mingw-w64-v$_pkgver/mingw-w64-crt/"configure \
-    --prefix="/usr/$_target" --host=$_target \
-    --enable-wildcard $_crt_configure_args
-
-  make
+  for t in $_targets ; do
+    if [ "$t" == 'i686-w64-mingw32' ]; then
+      _crt_configure_args='--disable-lib64 --enable-lib32'
+    else
+      _crt_configure_args="--disable-lib32 --enable-lib64"
+    fi
+    mkdir -p "$srcdir/crt-$t" && cd "crt-$_target"
+    "$srcdir/mingw-w64-v$_pkgver/mingw-w64-crt/"configure \
+      --prefix="/usr/$t" --host=$t --enable-wildcard $_crt_configure_args
+    make
+  done
 }
 
 package() {
-  cd "$srcdir/crt-$_target"
-
-  make DESTDIR="$pkgdir" install
+  for t in $_targets ; do
+    cd "$srcdir/crt-$t"
+    make DESTDIR="$pkgdir" install
+  done
 }
 
