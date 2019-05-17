@@ -3,7 +3,7 @@
 
 pkgname=mingw-w64-gcc
 pkgver=9.1.0
-_islver=0.19
+_islver=0.21
 pkgrel=1
 pkgdesc='Cross GCC for the MinGW-w64 cross-compiler.'
 arch=('x86_64')
@@ -22,7 +22,7 @@ sha512sums=('b6134df027e734cee5395afd739fcfa4ea319a6017d662e54e89df927dea19d3fff
 validpgpkeys=('F3691687D867B81B51CE07D9BBE43771487328A9'
               '13975A70E63C361C73AE69EF6EEB81F8981C74C7'
               '33C235A34C46AA3FFB293709A328C3A2C3C45C06')
-_targets='i686-w64-mingw32 x86_64-w64-mingw32'
+_target='x86_64-w64-mingw32'
 
 prepare() {
   ln -sf gcc-${pkgver/+/-} gcc
@@ -34,47 +34,35 @@ prepare() {
 }
 
 build() {
-  for t in $_targets ; do
-    install -dm 755 "$srcdir/gcc-build-$t"
+  mkdir -p "$srcdir/gcc-build-$_target"
 
-    cd "$srcdir/gcc-build-$t"
+  cd "$srcdir/gcc-build-$_target"
 
-    "$srcdir/gcc/"configure --prefix=/usr --libexecdir=/usr/lib \
-      --target=${t} --enable-languages=c,lto,c++,objc,obj-c++,fortran,ada \
+  "$srcdir/gcc/"configure --prefix=/usr --libexecdir=/usr/lib \
+      --target=$_target --enable-languages=c,lto,c++,objc,obj-c++,fortran,ada \
       --enable-shared --enable-static --enable-threads=posix \
       --enable-fully-dynamic-string --enable-libstdcxx-time=yes \
       --with-system-zlib --enable-cloog-backend=isl --enable-lto \
       --disable-dw2-exceptions --enable-libgomp --disable-multilib \
       --enable-checking=release
 
-    make all
-  done
+  make
 }
 
 package() {
-  for t in $_targets ; do
-    cd "$srcdir/gcc-build-$t"
+  cd "$srcdir/gcc-build-$_target"
 
-    make DESTDIR="$pkgdir" install
+  make DESTDIR="$pkgdir" install
 
-    $t-strip "$pkgdir/usr/$t/lib/*.dll"
+  "$_target-strip" "$pkgdir/usr/$t/lib/*.dll"
 
-    strip "$pkgdir/usr/bin/$t-*"
-    strip "$pkgdir/usr/lib/gcc/$t/${pkgver:0:5}/"{cc1*,collect2,gnat1,f951,lto*}
-
-    ln -s "$t-gcc" "$pkgdir/usr/bin/$t-cc"
-
-    # mv dlls
-    install -dm 755 "$pkgdir/usr/$t/bin/"
-
-    mv "$pkgdir/usr/$t/lib/*.dll" "$pkgdir/usr/$t/bin/"
-  done
-
+  strip "$pkgdir/usr/bin/$_target-*"
+  strip "$pkgdir/usr/lib/gcc/$_target/${pkgver:0:5}/"{cc1*,collect2,gnat1,f951,lto*}
+  ln -s "$_target-gcc" "$pkgdir/usr/bin/$_target-cc"
+  mkdir -p "$pkgdir/usr/$_target/bin/"
+  mv "$pkgdir/usr/$_target/lib/*.dll" "$pkgdir/usr/$_target/bin/"
   strip "$pkgdir/usr/bin/"*
-
-  # remove unnecessary files
-  rm -r "$pkgdir/usr/share"
-  rm -f "$pkgdir/usr/lib/libcc1.so"*
-  rm -f "$pkgdir/usr/lib/libcc1.a"
+  rm -r "$pkgdir/usr/share" "$pkgdir/usr/lib/libcc1.so" \
+    "$pkgdir/usr/lib/libcc1.a"
 }
 
