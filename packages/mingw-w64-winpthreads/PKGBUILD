@@ -17,28 +17,24 @@ source=("https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-re
 sha512sums=('e3d3663e0cb33a16f90b1a33e81b5a30d26f7e34270b14e865c10068f2a2d32da9ef8cbbb0c3fed9c71429ae11c82152ff3b87d81558929b2a4993dc99cfc11e'
             'SKIP')
 validpgpkeys=('CAF5641F74F7DFBA88AE205693BDB53CD4EBC740')
-_targets="i686-w64-mingw32 x86_64-w64-mingw32"
+_target='x86_64-w64-mingw32'
 
 build() {
-  for t in $_targets ; do
-    install -dm 755 "$srcdir/winpthreads-build-$t"
+  mkdir -p "winpthreads-build-$_target"
 
-    cd "$srcdir/winpthreads-build-$t"
+  cd "winpthreads-build-$_target"
 
-    "$srcdir/mingw-w64-v$pkgver/mingw-w64-libraries/winpthreads/"configure \
-      --prefix=/usr/$t --host=$t --enable-static --enable-shared
+  "$srcdir/mingw-w64-v$pkgver/mingw-w64-libraries/winpthreads/"configure \
+    --prefix=/usr/$_target --host=$_target --enable-static --enable-shared
 
-    make
-  done
+  make
 }
 
 package() {
-  for t in $_targets ; do
-    cd "$srcdir/winpthreads-build-$t"
+  cd "winpthreads-build-$_target"
 
-    make DESTDIR="$pkgdir" install
+  make DESTDIR="$pkgdir" install
 
-    $t-strip --strip-unneeded "$pkgdir"/usr/$t/bin/*.dll
-  done
+  "$_target-strip" --strip-unneeded "$pkgdir/usr/$_target/bin/*.dll"
 }
 
