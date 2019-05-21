@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=vuls
-pkgver=886.98fee7b
+pkgver=887.e750bd5
 pkgrel=1
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='Vulnerability scanner for Linux/FreeBSD, agentless, written in Go.'
@@ -10,10 +10,9 @@ arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/future-architect/vuls'
 license=('GPL3')
 depends=('glibc' 'go' 'sqlite')
-makedepends=('go' 'git')
+makedepends=('git' 'dep')
 source=('git+https://github.com/future-architect/vuls.git')
 sha512sums=('SKIP')
-_url='github.com/future-architect/vuls'
 
 pkgver() {
   cd $pkgname
@@ -21,20 +20,30 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-build() {
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pgname "src/$_url" &&
-    cd "src/$_url"
+prepare() {
+  mkdir -p "go/src/github.com/future-architect"
+  export GOROOT=/usr/lib/go
+  export GOPATH="$srcdir/go"
+  export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
-  GOPATH="$srcdir" go get -d -t $_url
-  GOPATH="$srcdir" go build -v $_url
+  ln -rTsf $pkgname "go/src/github.com/future-architect/$pkgname"
+}
+
+build() {
+  cd "$GOPATH/src/github.com/future-architect/$pkgname"
+
+  go get -u golang.org/x/lint/golint
+  make dep
+  make install
 }
 
 package() {
+  export GOPATH="$srcdir/go"
   install -dm 755 "$pkgdir/usr/bin"
 
-  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" src/$url/*.md
-  install -Dm 644 "src/$url/LICENSE" \
+  install -Dm 755 "$GOPATH/bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "go/src/github.com/future-architect/$pkgname/"*.md
+  install -Dm 644 "go/src/github.com/future-architect/$pkgname/LICENSE" \
     "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
