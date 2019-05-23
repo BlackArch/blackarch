@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=chameleon
+pkgver=14.01025b8
+pkgrel=1
+pkgdesc='A tool for evading Proxy categorisation '
+arch=('any')
+groups=('blackarch' 'blackarch-fingerprint')
+url='https://github.com/mdsecactivebreach/Chameleon'
+license=('custom:unknown')
+depends=('python2' 'python2-requests' 'python2-argparse' 'python2-beautifulsoup4')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/mdsecactivebreach/Chameleon.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname" *.py banner.txt
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+
+  cp -a --no-preserve=ownership modules/ "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
