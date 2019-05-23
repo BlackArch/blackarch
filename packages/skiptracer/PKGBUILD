@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=skiptracer
+pkgver=108.edadbef
+pkgrel=1
+pkgdesc='OSINT python2 webscraping framework. Skipping the needs of API keys.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon' 'blackarch-social')
+url='https://github.com/xillwillx/skiptracer'
+license=('GPL')
+depends=('python2-python-docx' 'python2-urllib3' 'python2-beautifulsoup4' 'python2-lxml' 'python2-requests' 'python-ipdb' 'python2-click' 
+'python2-cfscrape' 'python2-numpy' 'python2-simplejson' 'python2-tqdm')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/xillwillx/skiptracer.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname" *.py
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" Changelog README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" LICENSE
+
+  cp -a --no-preserve=ownership storage/ plugins/ "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
