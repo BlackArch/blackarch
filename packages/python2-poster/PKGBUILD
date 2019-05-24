@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python2-poster
+pkgver=0.8.1
+pkgrel=5
+pkgdesc='A set of classes and functions to faciliate making HTTP POST (or PUT) requests using the standard multipart/form-data encoding in Python with urllib2.'
+arch=('any')
+url='http://atlee.ca/software/poster/'
+license=('MIT')
+depends=('python2')
+makedepends=('python2-setuptools')
+source=("http://atlee.ca/software/poster/dist/$pkgver/poster-$pkgver.tar.gz"
+        'LICENSE')
+sha512sums=('2e2b74ec1685c3558dbe571c23e318cbafb74a9e487397c38adc3f8f9eb2864cf4dda70418cd08294c3498e03e0e9f516b6ee6e0ed03b05fe8e7ad7636631e9f'
+            '1e9853e6b43ad99964be76e2ff0e95131144946fdae5b0745ea5e4f333cc56de9b72bc040880ef64dc2e2655e7d522a4e37f2a26edf1ebc9459e8fbbff17e517')
+
+prepare() {
+  cd "poster-$pkgver"
+
+  find . -type f \( -name '*.py' -or -executable \) -exec \
+    sed -i -e "s|#![ ]*/usr/bin/python$|#!/usr/bin/python2|" \
+      -e "s|#![ ]*/usr/bin/env python$|#!/usr/bin/env python2|" \{\} +
+}
+
+build() {
+  cd "poster-$pkgver"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "poster-$pkgver"
+
+  python2 setup.py install -O1 --root="$pkgdir"
+
+  mv "$pkgdir/usr/lib/python2.7/site-packages/tests" \
+    "$pkgdir/usr/lib/python2.7/site-packages/poster/"
+
+  install -Dm 644 ../LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
