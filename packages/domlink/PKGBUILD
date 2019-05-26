@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=domlink
+pkgver=37.1cabd5d
+pkgrel=1
+pkgdesc='A tool to link a domain with registered organisation names and emails, to other domains.'
+groups=('blackarch' 'blackarch-misc')
+arch=('any')
+url='https://github.com/vysecurity/DomLink'
+license=('MIT')
+depends=('python2' 'python2-argparse' 'python2-requests')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/vysecurity/DomLink.git"
+        'domLink.py.patch')
+sha512sums=('SKIP'
+            '7786dc3bea37472275a7eef6d25a48eb50268369aadb3b708d67782a858d8fcf6d42579500730b9633e1df3ddacdbd902821a317e629f26bb423fd39e6361cba')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  patch -p1 < domLink.py.patch
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 domLink.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
