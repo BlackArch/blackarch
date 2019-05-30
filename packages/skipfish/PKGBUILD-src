@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=skipfish
+pkgver=2.10b
+pkgrel=8
+groups=('blackarch' 'blackarch-fuzzer' 'blackarch-scanner' 'blackarch-webapp')
+pkgdesc='A fully automated, active web application security reconnaissance tool.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+license=('Apache')
+url='http://code.google.com/p/skipfish/'
+depends=('openssl' 'libidn' 'libidn11')
+makedepends=('git')
+source=('git+https://github.com/spinkham/skipfish.git'
+        "skipfish.patch")
+sha512sums=('SKIP'
+            '54cb7bbd6904776a12e5153e942aab62e4e1777a3fc78f8ad4f61c32e33593d4d5ea643bc3898e3284a9aed9aba04cc572367fc0bf4f2b5482588137815550d7')
+
+prepare() {
+  cd $pkgname
+
+  patch -Np0 -i "../$pkgname.patch"
+}
+
+build() {
+  cd $pkgname
+
+  make
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname/dictionaries"
+  install -Dm 644 dictionaries/* "$pkgdir/usr/share/$pkgname/dictionaries"
+
+  install -dm 755 assets "$pkgdir/usr/share/$pkgname/assets"
+  install -Dm 644 assets/* "$pkgdir/usr/share/$pkgname/assets/"
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname/signatures"
+  install -Dm 644 signatures/* "$pkgdir/usr/share/$pkgname/signatures/"
+
+  install -Dm 755 $pkgname tools/* "$pkgdir/usr/bin/"
+  install -Dm 644 doc/skipfish.1 "$pkgdir/usr/share/man/man1/skipfish.1"
+}
+
