@@ -1,0 +1,66 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=krbrelayx
+pkgver=8.724865e
+pkgrel=1
+pkgdesc='Kerberos unconstrained delegation abuse toolkit'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-spoof' 'blackarch-networking')
+url='https://github.com/dirkjanm/krbrelayx'
+license=('MIT')
+depends=('impacket' 'ldapdomaindump' 'python2' 'python2-argparse')
+makedepends=('git')
+source=("git+https://github.com/dirkjanm/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin/"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname" *.py
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" LICENSE
+
+  cp -a --no-preserve=ownership lib/ "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+
+  cat > "$pkgdir/usr/bin/krbrelayx-addspn" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 addspn.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/krbrelayx-addspn"
+
+  cat > "$pkgdir/usr/bin/krbrelayx-dnstool" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 dnstool.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/krbrelayx-dnstool"
+
+  cat > "$pkgdir/usr/bin/krbrelayx-printerbug" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 printerbug.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/krbrelayx-printerbug"
+}
+

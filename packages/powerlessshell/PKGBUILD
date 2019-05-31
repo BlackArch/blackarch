@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=powerlessshell
+pkgver=99.548b737
+pkgrel=1
+pkgdesc='Run PowerShell command without invoking powershell.exe'
+arch=('any')
+groups=('blackarch' 'blackarch-windows')
+url='https://github.com/Mr-Un1k0d3r/PowerLessShell'
+license=('GPL')
+depends=('python2')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/Mr-Un1k0d3r/PowerLessShell.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname" PowerLessShell.py
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/license/$pkgname/LICENSE"
+
+  rm README.md LICENSE.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 PowerLessShell.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
