@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=abuse-ssl-bypass-waf
+pkgver=5.3ffd16a
+pkgrel=1
+pkgdesc='Bypassing WAF by abusing SSL/TLS Ciphers'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer')
+url='https://github.com/LandGrey/abuse-ssl-bypass-waf'
+license=('custom:unknown')
+depends=('python' 'python-argparse' 'curl' 'sslscan')
+makedepends=('git')
+source=("git+https://github.com/LandGrey/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+
+  cd $pkgname
+
+  sed -ri 'r|curl_path = "curl"|curl_path = "/usr/bin/curl"|' config.py
+  sed -ri "r|'sslscan'|'/usr/bin/sslscan'|" config.py
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname" *.py
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
