@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=zgrab2
+pkgver=461.f2ba12c
+pkgrel=1
+pkgdesc='Go Application Layer Scanner.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-recon')
+url='https://github.com/zmap/zgrab2'
+license=('APACHE' 'ISC' 'custom:unknown')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=('git+https://github.com/zmap/zgrab2.git')
+sha512sums=('SKIP')
+_url='github.com/zmap/zgrab2'
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
+    cd "src/$_url"
+
+  GOPATH="$srcdir" go get -d -v "$_url/cmd/zgrab2"
+}
+
+package() {
+  cd "$srcdir/src/$_url"
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" make
+
+  cd "$srcdir"
+
+  install -Dm 755 "src/$_url/cmd/$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "src/$_url/README.md"
+  install -Dm 644 "src/$_url/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
