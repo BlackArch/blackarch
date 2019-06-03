@@ -3,22 +3,25 @@
 
 pkgname=belati
 pkgver=72.49577a1
-pkgrel=1
+pkgrel=2
 pkgdesc='The Traditional Swiss Army Knife for OSINT.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-webapp')
 arch=('any')
 url='https://github.com/aancw/Belati'
 license=('GPL2')
 depends=('python2' 'python2-requests' 'python2-dnspython' 'python2-argparse'
-         'python2-texttable' 'python2-python-geoip'
+         'python2-texttable' 'python2-python-geoip' 'python2-cmd2'
          'python2-python-geoip-geolite2' 'python2-colorama' 'python2-dnsknife'
          'python2-termcolor' 'python2-validators' 'python2-tqdm'
          'python2-tldextract' 'python2-fake-useragent' 'python2-python-wappalyzer'
          'python2-futures' 'python2-future' 'python2-beautifulsoup4'
-         'python2-python-whois' 'python2-django')
+         'python2-python-whois' 'python2-django' 'python2-tabulate'
+         'api-dnsdumpster')
 makedepends=('git')
-source=("$pkgname::git+https://github.com/aancw/Belati.git")
-sha512sums=('SKIP')
+source=("$pkgname::git+https://github.com/aancw/Belati.git"
+        'requirements.txt.patch')
+sha512sums=('SKIP'
+            '78b26cf328ae3ca58875bd55cd75a50e355012be38bd56c0506671e43eef4ffc3f33b5b39e953ce536611d00a285c6eb48a7e752fdb822ffaad970b8d6383b0a')
 
 pkgver() {
   cd $pkgname
@@ -27,19 +30,21 @@ pkgver() {
 }
 
 prepare() {
-  cd $pkgn ame
+  cd $pkgname
+
+  patch -p0 < "$srcdir/requirements.txt.patch"
 
   git submodule update --init --recursive --remote
 }
 
 package() {
-  cd Belati
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm README.md LICENSE
 
