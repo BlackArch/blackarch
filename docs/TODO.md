@@ -63,6 +63,16 @@ Just check out the following:
              BlackArch (long-term).
              [Edu4rdSHL, mrsmith0x00]
 
+  [ ] python-lib packages
+      merge python2 with python3, e.g. create combo package for python2+python
+      see: python-pyexifinfo as example
+      [noptrix,?]
+
+  [ ] all git/svn/hg packages
+      scrape release version numbers if available in sources or 'git describe'.
+      see PKGBUILD-generic-git template
+      [noptrix,?]
+
   [x] version-checker
       create an version-checker script (python3) for non-git tools so we can
       semi-automate the tools updating part like we do for git-tools.
@@ -71,7 +81,7 @@ Just check out the following:
   [ ] youtube
       create / add initial videos: blackarch-installation (2 parts: online and
       from live-iso)
-      [?]
+      [noptrix,?]
 
   [-] blackarch-site
       new site based on jekyl. create better images for the slider on
