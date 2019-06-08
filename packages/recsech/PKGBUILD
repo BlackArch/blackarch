@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=recsech
+pkgver=108.69082b2
+pkgrel=1
+pkgdesc='Tool for doing Footprinting and Reconnaissance on the target web.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner' 'blackarch-webapp'
+        'blackarch-fingerprinting')
+arch=('any')
+url='https://github.com/radenvodka/Recsech'
+license=('GPL3')
+depends=('php')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/radenvodka/Recsech.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md \
+    Contribution.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm *.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec php Recsech.php "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
