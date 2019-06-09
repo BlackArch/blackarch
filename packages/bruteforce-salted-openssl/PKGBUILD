@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=bruteforce-salted-openssl
+pkgver=53.8a2802e
+pkgrel=1
+pkgdesc="Try to find the password of a file that was encrypted with the 'openssl' command."
+groups=('blackarch' 'blackarch-cracker' 'blackarch-crypto')
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/glv2/bruteforce-salted-openssl'
+license=('GPL3')
+depends=('openssl')
+makedepends=('git')
+source=('git+https://github.com/glv2/bruteforce-salted-openssl.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  ./autogen.sh
+
+  ./configure --prefix=/usr
+
+  make
+}
+
+package() {
+  cd $pkgname
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md NEWS AUTHORS \
+    README INSTALL ChangeLog
+  install -Dm 644 "doc/$pkgname.1" "$pkgdir/usr/share/man/man1/$pkgname.1"
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}
+
