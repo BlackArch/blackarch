@@ -3,17 +3,15 @@
 
 pkgname=aquatone
 pkgver=120.854a5d5
-pkgrel=1
-groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
-pkgdesc='A set of tools for performing reconnaissance on domain names.'
-arch=('any')
+pkgrel=2
+pkgdesc='A Tool for Domain Flyovers.'
+groups=('blackarch' 'blackarch-recon')
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/michenriksen/aquatone'
-license=('custom:unknown')
-depends=('ruby')
-makedepends=('ruby' 'git' 'ruby-rdoc')
-options=('!strip')
+license=('MIT')
+depends=('chromium')
+makedepends=('git' 'go-pie')
 source=('git+https://github.com/michenriksen/aquatone.git')
-install=aquatone.install
 sha512sums=('SKIP')
 
 pkgver() {
@@ -22,23 +20,36 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  mkdir -p "gopath/src/github.com/michenriksen"
+
+  ln -rTsf $pkgname "gopath/src/github.com/michenriksen/$pkgname"
+
+  export GOPATH="$srcdir/gopath"
+
+  cd "$GOPATH/src/github.com/michenriksen/$pkgname"
+
+  go get -d ./...
+}
+
+build() {
+  export GOPATH="$srcdir/gopath"
+
+  cd "$GOPATH/src/github.com/michenriksen/$pkgname"
+
+  go install -v ./...
+}
+
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  export GOPATH="$srcdir/gopath"
 
-  touch "$pkgdir/usr/bin/httparty"
-  _gemdir="$(ruby -e'puts Gem.default_dir')"
+  cd "$GOPATH/bin"
 
-  gem install --ignore-dependencies --no-user-install -n "$pkgdir"/usr/bin \
-    -i "$pkgdir/$_gemdir" aquatone
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
 
-  cd aquatone
+  cd "$srcdir/$pkgname"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
-
-  rm README.md LICENSE.txt "$pkgdir/usr/bin/httparty"
-
-  cp -a * "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
