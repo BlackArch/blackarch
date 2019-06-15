@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gspoof
+pkgver=3.2
+pkgrel=1
+pkgdesc='A simple GTK/command line TCP/IP packet generator.'
+groups=('blackarch' 'blackarch-networking')
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='http://gspoof.sourceforge.net/'
+license=('MIT')
+depends=('gtk2' 'glib2' 'libnet')
+makedepends=('make' 'autoconf' 'automake')
+source=("http://gspoof.sourceforge.net/src/$pkgname-$pkgver.tar.gz"
+        'configure.ac.patch'
+        'gfuncts.c.patch')
+sha512sums=('be90aeeb9ac93b5c4a190564ecfedd05ee077afed67696b773cb79949043975807dabed8f49597dcd3b08b9b0ee53c598caa9dced6f97bd9d6170f8e82b8f0f9'
+            '3a305e32a747a8940748d432886082dff5c16dc49d798b0288015512ed077653fe26a5e6bbc1c39ba6edad26356de0cda28630466a23ee08a2dbbcd42d61e83d'
+            'e5627bd56cbdf87a4cbae5ad10dac6203ec2c00f5ec05cf779886ced031dadb23953ee24bf0fe2114aba7fc62a967bcd6c9b849ab6de9c3ae16b39a50ccc9b38')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -p0 < ../configure.ac.patch
+  patch -p0 < ../gfuncts.c.patch
+
+  aclocal
+  autoconf -i
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  ./configure --prefix=/usr
+
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" AUTHORS CHANGELOG README\
+    TODO VERSION
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
