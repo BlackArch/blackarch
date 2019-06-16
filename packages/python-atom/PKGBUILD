@@ -1,26 +1,51 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-atom
+pkgbase=python-atom
+pkgname=('python2-atom' 'python-atom')
+_pkgname=atom
 pkgver=0.4.3
-pkgrel=1
+pkgrel=2
 pkgdesc='Memory efficient Python objects.'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://pypi.org/project/atom/#files'
 license=('BSD')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/a6/0a/f80337e79c761a25e4b34748ca7a78af2930851a2c7e1661ba3fe765d462/atom-0.4.3.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/a6/0a/f80337e79c761a25e4b34748ca7a78af2930851a2c7e1661ba3fe765d462/$_pkgname-$pkgver.tar.gz")
 sha512sums=('19f1048eea85782492b155aa149201f33628026f3ddcd6f1f71d7ef9cc8bd01a1a0750c38a344b6f420652493d6229984d054843f40f3ce29fd726684955e6b0')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "atom-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "atom-$pkgver"
+package_python2-atom() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  rm -rf \
+    "$pkgdir/usr/lib/python2.7/site-packages/tests" \
+    "$pkgdir/usr/lib/python2.7/site-packages/atom/__init__.py" \
+    "$pkgdir/usr/lib/python2.7/site-packages/atom/__init__.pyc"
+}
+
+package_python-atom() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
