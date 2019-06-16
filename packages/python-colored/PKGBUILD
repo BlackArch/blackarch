@@ -1,27 +1,47 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-colored
+pkgbase=python-colored
+pkgname=('python2-colored' 'python-colored')
+_pkgname=colored
 pkgver=1.3.93
-pkgrel=1
+pkgrel=2
 pkgdesc='Simple library for color and formatting to terminal.'
 arch=('any')
 url='https://pypi.org/project/colored/#files'
-depends=('python')
-makedepends=('python-setuptools')
+makedepends=('python2-setuptools' 'python-setuptools')
 license=('MIT')
 options=(!emptydirs)
-source=("https://files.pythonhosted.org/packages/58/07/636616667b47d3115b0288311511c5fb446d0e499036b7db858704c89066/colored-$pkgver.tar.gz")
+source=("https://files.pythonhosted.org/packages/58/07/636616667b47d3115b0288311511c5fb446d0e499036b7db858704c89066/$_pkgname-$pkgver.tar.gz")
 sha512sums=('ff4fcecc316a54f6657b5fc349271088243e64f15bc75a9b19fa28d6e84bf77da7e96f913a52f248bcbb483fe105e037ae4ffefc4f890520baf9f19c55581de9')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "colored-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "colored-$pkgver"
+package_python2-colored() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-colored() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
