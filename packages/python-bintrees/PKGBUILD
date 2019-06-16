@@ -1,26 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-bintrees
+pkgbase=python-bintrees
+pkgname=('python2-bintrees' 'python-bintrees')
+_pkgname=bintrees
 pkgver=2.0.7
-pkgrel=2
+pkgrel=3
 pkgdesc='Package provides Binary-, RedBlack- and AVL-Trees in Python and Cython.'
 arch=('any')
 url='https://pypi.org/project/bintrees/#files'
 license=('MIT')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://pypi.python.org/packages/14/d7/eedfbbcfd3d60bdf1c7f266830889a6d96ea574037426c2e0dd037cc9a3f/bintrees-$pkgver.zip")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://pypi.python.org/packages/14/d7/eedfbbcfd3d60bdf1c7f266830889a6d96ea574037426c2e0dd037cc9a3f/$_pkgname-$pkgver.zip")
 sha512sums=('73eca2dd76e45158048781952b45ae0925eec52347aa481594c57acfbb4c83a58b764921d690c458b3cfbc276566b70d32461c66f4e07f735b310fa64a9e1488')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "bintrees-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "bintrees-$pkgver"
+package_python2-bintrees() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-bintrees() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
