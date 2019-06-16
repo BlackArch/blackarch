@@ -1,26 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-async
+pkgbase=python-async
+pkgname=('python2-async' 'python-async')
+_pkgname=async
 pkgver=0.6.2
-pkgrel=2
+pkgrel=3
 pkgdesc='Async aims to make writing asyncronous processing easier.'
 arch=('any')
 url='https://pypi.org/project/async/#files'
 license=('BSD')
-depends=('python')
-makedepends=('python-setuptools')
-source=("http://pypi.python.org/packages/source/a/async/async-$pkgver.tar.gz")
-sha512sums=('c71c489faa5f1fe13cd8094f41ad2c0ccee898ca')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/47/de/9d8e0907842c56d4cbd64d7543e65f78373d1fe8e9dc33a4324aaea734e9/$_pkgname-$pkgver.tar.gz")
+sha512sums=('6d3376e2d40e07a402cdcc17d0b1789883d5aa5fa24931ed0bfd98bf32454fd126b3591e3c0dc3acea37c0bfe0d27cc65df42a44c92f0bd13e4bbb7a477ff69c')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
 
 build() {
-  cd "async-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "async-$pkgver"
+package_python2-async() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-async() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
