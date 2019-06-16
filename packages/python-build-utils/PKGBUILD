@@ -1,0 +1,55 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-build-utils
+pkgname=('python2-build-utils' 'python-build-utils')
+_pkgname=build_utils
+pkgver=0.3.2
+pkgrel=3
+pkgdesc='Some tools to help build python2 and python3 libraries.'
+arch=('any')
+url='https://pypi.org/project/build-utils/#files'
+license=('MIT')
+makedepends=('python2-setuptools' 'python2-colorama' 'python-setuptools'
+             'python-colorama' 'wget')
+source=("https://files.pythonhosted.org/packages/76/56/66d9173565d1472b3aef2aff4e8e5a838e58a54e50b379fd0667f78221b1/$_pkgname-$pkgver.tar.gz")
+sha512sums=('aa3fe3633011725b5a980e6a70bd9389cde9b7c97f0a977cac1477e172813858db750285a4171b3b9cc560a201eb543352cb2cc5ee55a830f36a895cb4bf4256')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+
+  cd "$_pkgname-$pkgver-2"
+
+  wget -q https://raw.githubusercontent.com/walchko/build_utils/master/readme.md
+
+  cp readme.md "$srcdir/$_pkgname-$pkgver/"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-build-utils() {
+  depends=('python2' 'python2-colorama')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-build-utils() {
+  depends=('python' 'python-colorama')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
