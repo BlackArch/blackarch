@@ -63,7 +63,7 @@ Just check out the following:
              BlackArch (long-term).
              [Edu4rdSHL, mrsmith0x00]
 
-  [ ] python-lib packages
+  [.] python-lib packages
       merge python2 with python3, e.g. create combo package for python2+python
       see: python-pyexifinfo as example
       [noptrix,?]
