@@ -1,27 +1,47 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-bitstring
+pkgbase=python-bitstring
+pkgname=('python2-bitstring' 'python-bitstring')
+_pkgname=bitstring
 pkgver=3.1.5
-pkgrel=1
+pkgrel=2
 pkgdesc='Simple construction, analysis and modification of binary data.'
 arch=('any')
 url='https://pypi.org/project/bitstring/#files'
 license=('MIT')
-depends=('python')
-makedepends=('python-setuptools' 'unzip')
+makedepends=('python2-setuptools' 'python-setuptools' 'unzip')
 options=(!emptydirs)
-source=("https://files.pythonhosted.org/packages/f3/e5/dfe4c49c93d174a5fd807ed307d3a3f38c6b3e140972945f81a5f5578ca7/bitstring-$pkgver.zip")
+source=("https://files.pythonhosted.org/packages/f3/e5/dfe4c49c93d174a5fd807ed307d3a3f38c6b3e140972945f81a5f5578ca7/$_pkgname-$pkgver.zip")
 sha512sums=('a147c5da1b230299435b7903d991f9a5daf1144cf441bdedbceffd94ea1bcf3c7e27fca94aa624ab0b8b3abba5278e56720b85d7f33b9ebf3099e9ee4ffdb3f3')
 
-build() {
-  cd "bitstring-$pkgver"
-
-  pyhton setup.py build
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
 }
 
-package() {
-  cd "bitstring-$pkgver"
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-bitstring() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-bitstring() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
