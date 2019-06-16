@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-awake
+pkgname=('python2-awake' 'python-awake')
+_pkgname=awake
+pkgver=1.0
+pkgrel=4
+pkgdesc='Command and library to wake on lan a remote host.'
+arch=('any')
+url='https://pypi.org/project/awake/#files'
+license=('custom:unknown')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/c9/48/337d1740355bca4c7876ca6a677e0c01f33455a86caaebef4ee472eb216a/$_pkgname-$pkgver.tar.gz")
+sha512sums=('3b9a69d39c48ef139b6ea125f6f6de36fc861430b6ccd6341bdc82369947745f879e2776fbfda6e3dfae3c0384ecab3fc35f724a4abe760b21ec91ef27562f4d')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-awake() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/awake" "$pkgdir/usr/bin/awake2"
+}
+
+package_python-awake() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
