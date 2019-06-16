@@ -1,27 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-biplist
+pkgbase=python-biplist
+pkgname=('python2-biplist' 'python-biplist')
+_pkgname=biplist
 pkgver=1.0.3
-pkgrel=1
+pkgrel=2
 pkgdesc='A binary plist parser/generator for Python.'
 arch=('any')
-url='https://bitbucket.org/wooster/biplist'
+url='https://pypi.org/project/biplist/'
 license=('BSD')
-depends=('python')
-makedepends=('python-setuptools')
+makedepends=('python2-setuptools' 'python-setuptools')
 options=(!emptydirs)
-source=("https://bitbucket.org/wooster/biplist/downloads/biplist-$pkgver.tar.gz")
+source=("https://files.pythonhosted.org/packages/3e/56/2db170a498c9c6545cda16e93c2f2ef9302da44802787b45a8a520d01bdb/$_pkgname-$pkgver.tar.gz")
 sha512sums=('186927481229988c713d9bb703115493001b129ed4e540e9a028e99b4f10e1576291c75f98d39b28e04092c14a9c96e4843c1445d9a318ced322323c7c1134b5')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "biplist-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "biplist-$pkgver"
+package_python2-biplist() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1 --skip-build
+}
+
+package_python-biplist() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --root="$pkgdir" --optimize=1 --skip-build
 }
