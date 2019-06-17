@@ -1,26 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-fake-useragent
+pkgbase=python-fake-useragent
+pkgname=('python2-fake-useragent' 'python-fake-useragent')
+_pkgname=fake-useragent
 pkgver=0.1.11
-pkgrel=1
+pkgrel=2
 pkgdesc='Up to date simple useragent faker with real world database.'
 arch=('any')
 url='https://pypi.org/project/fake-useragent/#files'
 license=('Apache')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/d1/79/af647635d6968e2deb57a208d309f6069d31cb138066d7e821e575112a80/fake-useragent-$pkgver.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/d1/79/af647635d6968e2deb57a208d309f6069d31cb138066d7e821e575112a80/$_pkgname-$pkgver.tar.gz")
 sha512sums=('38dd46a1186a92b87d8886876dd0163640d39a852c00d7264947f940a59331168d595c4ee9fce357a2fed07425a557d80ad6c5a693ec0087ea2b69e327927ed1')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "fake-useragent-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "fake-useragent-$pkgver"
+package_python2-fake-useragent() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-fake-useragent() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
