@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-exscript
+pkgname=('python2-exscript' 'python-exscript')
+pkgver=1789.8a90356
+pkgrel=1
+pkgdesc='A Python module making Telnet and SSH easy.'
+arch=('any')
+url='https://github.com/knipknap/exscript'
+license=('GPL2')
+makedepends=('git' 'python2-setuptools' 'python-setuptools')
+source=("$pkgbase::git+https://github.com/knipknap/exscript.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgbase
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cp -a $pkgbase "$pkgbase-2"
+}
+
+build() {
+  cd "$pkgbase-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$pkgbase"
+
+  python setup.py build
+}
+
+package_python2-exscript() {
+  depends=('python2' 'python2-pycryptodome' 'python2-paramiko'
+           'python2-configparser' 'python2-future')
+
+  cd "$pkgbase-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/exscript" "$pkgdir/usr/bin/exscript2"
+  mv "$pkgdir/usr/bin/otp" "$pkgdir/usr/bin/otp2"
+}
+
+package_python-exscript() {
+  depends=('python' 'python-pycryptodome' 'python-paramiko' 'python-future')
+
+  cd $pkgbase
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
