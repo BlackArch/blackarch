@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-cookiecutter
+pkgname=('python2-cookiecutter' 'python-cookiecutter')
+_pkgname=cookiecutter
+pkgver=1.6.0
+pkgrel=3
+pkgdesc='A command-line utility that creates projects from cookiecutters (project templates).'
+arch=('any')
+url='https://github.com/audreyr/cookiecutter'
+license=('BSD')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://pypi.python.org/packages/b5/97/581470d950361dd15b4009218420409ecc42ff1a5523544b945ac310b029/$_pkgname-$pkgver.tar.gz")
+sha512sums=('347b0f45fd0bcaaa1a8d7f04bf010d8cf526e816d9a772653dc81fbda3871cff02113ed4781f8897877724321a7d612c9ba26462f148a3ace93ec1acf15e0efe')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+
+  cd "$_pkgname-$pkgver-2"
+
+  grep -iRl 'python' * | xargs \
+    sed -i 's|#!.*/usr/bin/python|#!/usr/bin/python2|;s|#!.*/usr/bin/env python$|#!/usr/bin/env python2|'
+}
+
+package_python2-cookiecutter() {
+  depends=('python2-future' 'python2-jinja' 'python2-yaml' 'python2-binaryornot'
+           'python2-click' 'python2-poyo' 'python2-requests'
+           'python2-jinja-time' 'python2-whichcraft')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
+}
+
+package_python-cookiecutter() {
+  depends=('python-future' 'python-jinja' 'python-yaml' 'python-binaryornot'
+           'python-click' 'python-poyo' 'python-requests' 'python-jinja-time'
+           'python-whichcraft')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
