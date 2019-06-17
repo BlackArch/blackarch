@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-colorizer
+pkgname=('python2-colorizer' 'python-colorizer')
+_pkgname=colorizer
+pkgver=0.1.7
+pkgrel=5
+pkgdesc="Console colorizer, which acts like grep but paint each match in it's own color."
+arch=('any')
+url='http://github.com/svetlyak40wt/colorizer/'
+license=('custom:BSD')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/a6/a4/c885c12fb4ac7c860413888c81a11a58f6020a753d802a1f34a4f18cd20d/$_pkgname-$pkgver.tar.gz")
+sha512sums=('fdbed0e5ce986e83197ceb7c09e2a9fd73b87e9e3de1f57b5595e7751dac62bd434380ae003d1f29faf5a3043a2f97a47a566d9ce88963d136c7986e288a7220')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py  build
+}
+
+package_python2-colorizer() {
+  depends=('python2' 'python2-termcolor')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/colorize" "$pkgdir/usr/bin/colorize2"
+}
+
+package_python-colorizer() {
+  depends=('python' 'python-termcolor')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
