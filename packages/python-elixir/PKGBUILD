@@ -1,0 +1,60 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-elixir
+pkgname=('python2-elixir' 'python-elixir')
+_pkgname=Elixir
+pkgver=0.7.1
+pkgrel=11
+pkgdesc='A declarative layer on top of SQLAlchemy. It is a fairly thin wrapper, which provides the ability to define model objects following the Active Record design pattern.'
+url='https://pypi.org/project/Elixir/#files'
+license=('MIT')
+arch=('any')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/3d/8d/0009e2a623849894131f258529fe3a818c5734f7a9892f8721d99bd5cc31/$_pkgname-$pkgver.tar.gz")
+sha512sums=('4a0fa88bebcc54527d1cbb0275435a4894e620609d0ce8569c67cde63a64630b568db59a71fce43c0819664d85e0b74244f41283f14457dfc3dcea4649e8b85d')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+
+  cd "$_pkgname-$pkgver-2"
+
+  sed -i -e 's/ScopedSession, //' \
+    -e '19a\from sqlalchemy.orm.scoping import ScopedSession' \
+    elixir/entity.py
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  sed -i -e 's/ScopedSession, //' \
+    -e '19a\from sqlalchemy.orm.scoping import ScopedSession' \
+    elixir/entity.py
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-elixir() {
+  depends=('python2' 'python2-sqlalchemy')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-elixir() {
+  depends=('python' 'python-sqlalchemy')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
