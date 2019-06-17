@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-couchdbkit
+pkgname=('python2-couchdbkit' 'python-couchdbkit')
+_pkgname=couchdbkit
+pkgver=0.6.5
+pkgrel=4
+pkgdesc='A framework to allow python applications to use CouchDB.'
+arch=('any')
+url='http://couchdbkit.org/'
+license=('custom:unknown')
+optdepends=('couchdb: for setting up a local couchdb server'
+            "django: for couchdbkit's django extension")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://github.com/benoitc/$_pkgname/archive/$pkgver.zip")
+sha512sums=('ce7263f415e382d01a48d4d68eebe7ee88088dbe17cfc04c5049816fd5162b0fd185baa760ad997584f574648d0b4ded1a17088f64b70252f47dd1def95619d1')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-couchdbkit() {
+  depends=('python2' 'python2-anyjson' 'python2-restkit')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-couchdbkit() {
+  depends=('python' 'python-anyjson' 'python-restkit')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
