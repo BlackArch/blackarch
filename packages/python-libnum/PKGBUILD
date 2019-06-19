@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-libnum
+pkgname=('python2-libnum' 'python-libnum')
+_pkgname=libnum
+pkgver=47.750dddf
+pkgrel=3
+pkgdesc='Working with numbers (primes, modular, etc.).'
+arch=('any')
+url='https://github.com/hellman/libnum'
+license=('MIT')
+makedepends=('git' 'python2-setuptools' 'python-setuptools')
+source=("git+https://github.com/hellman/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cp -af $_pkgname "$_pkgname-2"
+}
+
+build() {
+  cd "$_pkgname-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname"
+
+  python setup.py build
+}
+
+package_python2-libnum() {
+  depends=('python2')
+
+  cd "$_pkgname-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-libnum() {
+  depends=('python')
+
+  cd $_pkgname
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
