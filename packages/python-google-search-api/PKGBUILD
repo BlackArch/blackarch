@@ -1,33 +1,52 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-google-search-api
+pkgbase=python-google-search-api
+pkgname=('python2-google-search-api' 'python-google-search-api')
+_pkgname=Google-Search-API
 pkgver=1.1.14
-pkgrel=1
+pkgrel=2
 pkgdesc='Search in google.'
 url='https://pypi.org/project/Google-Search-API/#files'
 arch=('any')
 license=('MIT')
-depends=('python' 'python-beautifulsoup4' 'python-requests' 'python-unidecode'
-         'python-selenium' 'python-vcrpy')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/76/c7/9189eccb5ac8b410fc21a940bbb4697f1b291cb07186dd45d6fc7d83c682/Google-Search-API-1.1.14.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/76/c7/9189eccb5ac8b410fc21a940bbb4697f1b291cb07186dd45d6fc7d83c682/$_pkgname-$pkgver.tar.gz"
         'setup.py.patch')
-sha512sums=('1be83e693d695f98bbf108ece4f242ffcaf7c3aa64248d804f7c7b9cf3f10b5ef51d88c2fcf0dfbdbdbe48468cd3270071d4e3bf8bc32182dccafb83bc2ae513')
-            'ee6fc8de68ce3a3a2c3403875e12e14c4d4a54f99531aef926d1b2f41759b7f0251191819550cc5289bc387850e7a2f1a1e2524b2b528c010fffee9023bdf46f')
+sha512sums=('1be83e693d695f98bbf108ece4f242ffcaf7c3aa64248d804f7c7b9cf3f10b5ef51d88c2fcf0dfbdbdbe48468cd3270071d4e3bf8bc32182dccafb83bc2ae513'
+            '9eb086c78ab718236771e2e86dc556ef9ad52f4f88aec9d3e7ec723c510b6586897f16504157f052cd3ed57da634631abfb13005266252a16e07543c3c595a20')
 
 prepare() {
   patch -p1 < setup.py.patch
+
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
 }
 
 build() {
-  cd "Google-Search-API-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "Google-Search-API-$pkgver"
+package_python2-google-search-api() {
+  depends=('python2' 'python2-beautifulsoup4' 'python2-requests'
+           'python2-unidecode' 'python2-selenium' 'python2-vcrpy')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-google-search-api() {
+  depends=('python' 'python-beautifulsoup4' 'python-requests' 'python-unidecode'
+           'python-selenium' 'python-vcrpy')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
