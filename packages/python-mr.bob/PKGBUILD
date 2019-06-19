@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-mr.bob
+pkgname=('python2-mr.bob' 'python-mr.bob')
+_pkgname=mr.bob
+pkgver=0.1.2
+pkgrel=4
+pkgdesc='Bob renders directory structure templates.'
+arch=('any')
+url='https://pypi.python.org/pypi/mr.bob/'
+license=('BSD')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://pypi.python.org/packages/23/fe/25d78b8e9c84ac177fc3edae0186b842d0a788f19710c250b08a23fdb528/$_pkgname-$pkgver.tar.gz")
+sha512sums=('77e6ff1dab07605c2afe8e24e8723b766e31927fc1f14cc8794302f48f640cb681184b486251667eb61ccf5ac6b87dd7c2be25223f9b7eb7afc1b9355e54ec19')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-mr.bob() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/mrbob" "$pkgdir/usr/bin/mrbob2"
+}
+
+package_python-mr.bob() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
