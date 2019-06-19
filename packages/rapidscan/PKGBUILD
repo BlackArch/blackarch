@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=rapidscan
+pkgver=155.2b3799b
+pkgrel=1
+pkgdesc='The Multi-Tool Web Vulnerability Scanner.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-recon'
+        'blackarch-fingerprint' 'blackarch-fuzzer' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/skavngr/rapidscan'
+license=('GPL2')
+depends=('python2' 'nmap' 'wafw00f' 'bind-tools' 'uniscan' 'theharvester'
+         'dnsrecon' 'fierce' 'dnswalk' 'whois' 'sslyze' 'lbd' 'dirb' 'xsser'
+         'golismero' 'nikto' 'dnsmap' 'whatweb' 'wget' 'dmitry' 'wapiti'
+         'davtest' 'dnsenum')
+makedepends=('git')
+source=("git+https://github.com/skavngr/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md notes.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE notes.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec python2 /usr/share/$pkgname/$pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
