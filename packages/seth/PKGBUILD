@@ -1,0 +1,61 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=seth
+pkgver=89.42fa326
+pkgrel=1
+pkgdesc='Perform a MitM attack and extract clear text credentials from RDP connections.'
+groups=('blackarch' 'blackarch-networking' 'blackarch-sniffer')
+arch=('any')
+url='https://github.com/SySS-Research/Seth'
+license=('MIT')
+depends=('python' 'python-argparse' 'dsniff' 'tcpdump' 'openssl')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/SySS-Research/Seth.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md doc/paper/*
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" doc/img/*
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf README.md LICENSE doc
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ./$pkgname.sh "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname.py" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname.py"
+
+  cat > "$pkgdir/usr/bin/$pkgname-clone-cert" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ./clone-cert.sh "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-clone-cert"
+}
+
