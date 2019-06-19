@@ -1,27 +1,47 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-ipcalc
+pkgbase=python-ipcalc
+pkgname=('python2-ipcalc' 'python-ipcalc')
+_pkgname=ipcalc
 pkgver=1.99.0
-pkgrel=3
+pkgrel=4
 epoch=1
 pkgdesc='IP subnet calculator for Python.'
 arch=('any')
 url='https://pypi.org/project/ipcalc/#files'
 license=('custom:unknown')
-depends=('python')
-makedepends=('python-setuptools')
-source=("http://pypi.python.org/packages/source/i/ipcalc/ipcalc-$pkgver.tar.gz")
-sha512sums=('a9841397166cce456f02e0226c0b97cbbdaf300a')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/8f/14/bb4034c87b4b2a47b381a52051138c3aeb87515a498185e275d40585deeb/$_pkgname-$pkgver.tar.gz")
+sha512sums=('14317b10775e7169633419ff46caf8da693efb0b46e3baced31adf1e7ed389cba9f8c265cc515b20062bf992bcf8e931fffe12d6656dad11585444d6e445b224')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
 
 build() {
-  cd "ipcalc-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "ipcalc-$pkgver"
+package_python2-ipcalc() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-ipcalc() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
