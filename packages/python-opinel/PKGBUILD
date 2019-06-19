@@ -1,26 +1,48 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-opinel
+pkgbase=python-opinel
+pkgname=('python2-opinel' 'python-opinel')
+_pkgname=opinel
 pkgver=3.3.4
-pkgrel=3
+pkgrel=5
 pkgdesc='Code shared between Scout2 and AWS-recipes.'
 arch=('any')
 url='https://pypi.org/project/opinel/#files'
 license=('GPL2')
-depends=('python' 'python-iampoliciesgonewild')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/96/97/4d926ac70d9232214ca96703c572c0b6fdbf1f0d7bbdc32bb7bc40d79c16/opinel-$pkgver.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/96/97/4d926ac70d9232214ca96703c572c0b6fdbf1f0d7bbdc32bb7bc40d79c16/$_pkgname-$pkgver.tar.gz")
 sha512sums=('9fb9b4513b58a480cafc98f221e76e1c62b616912c1a067d04d682a7bd06b21f70bd08251b542bb4f54cc51e2e3823be14d362c9c95e3ec63568d682f847a137')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "opinel-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "opinel-$pkgver"
+package_python2-opinel() {
+  depends=('python2' 'python2-iampoliciesgonewild' 'python2-boto3'
+           'python2-requests' 'python2-netaddr' 'python2-yaml')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-opinel() {
+  depends=('python' 'python-iampoliciesgonewild' 'python-boto3'
+           'python-requests' 'python-netaddr' 'python-yaml')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
