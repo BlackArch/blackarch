@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python2-libkeepass
+pkgname=('python2-libkeepass' 'python-libkeepass')
+_pkgname=libkeepass
+pkgver=0.3.0
+pkgrel=3
+pkgdesc='A library to access KeePass 1.x/KeePassX (v3) and KeePass 2.x (v4) files.'
+arch=('any')
+url='https://pypi.org/project/libkeepass/'
+license=('GPL')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/51/79/0dfd06576839ccdc1be0b62cd0cddfda173862eb3ce7660287d649e1b3e1/$_pkgname-$pkgver.tar.gz")
+sha512sums=('7049d627f4962b9eea3414592e85204b4b7d5bddf55424fc62cb5cde8facd273051c3c7c6464d3d64b7dabf21b10f82ec33f25095c79ea08df8f0d07f5994d75')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-libkeepass() {
+  depends=('python2' 'python2-lxml' 'python2-pycryptodome' 'python2-colorama')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-libkeepass() {
+  depends=('python' 'python-lxml' 'python-pycryptodome' 'python-colorama')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
