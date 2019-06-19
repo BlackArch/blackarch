@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-keyboard
+pkgname=('python2-keyboard' 'python-keyboard')
+_pkgname=keyboard
+pkgver=0.13.3
+pkgrel=2
+pkgdesc='Hook and simulate keyboard events on Windows and Linux.'
+url='https://pypi.org/project/keyboard/#files'
+arch=('any')
+license=('MIT')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/ea/bf/f00decd3a10c55039d9036c9d698a6a59798f736db7b046af20e7e6fd02d/$_pkgname-$pkgver.zip")
+sha512sums=('a29445a89f9f8446ea05ef3102859ce7032c3966a9582e4ba3f9adaaee1db1cf87da10c5e0fbbe51ec6b70d3d5e77c4f694171e130454a985fa722ca2f6b1740')
+
+prepare() {
+  echo '0.13.3' > "$_pkgname-$pkgver/CHANGES.md"
+
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-keyboard() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-keyboard() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
