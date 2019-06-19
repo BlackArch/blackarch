@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-httpreplay
+pkgname=('python2-httpreplay' 'python-httpreplay')
+_pkgname=HTTPReplay
+pkgver=0.2.6
+pkgrel=2
+pkgdesc='Properly interpret, decrypt, and replay pcap files.'
+arch=('any')
+url='https://pypi.org/project/HTTPReplay/#files'
+makedepends=('python2-setuptools' 'python-setuptools')
+license=('GPL3')
+source=("https://files.pythonhosted.org/packages/48/3f/d139f812b14a6571b93f735aabad1f51d32d297f28981e90ca38d221370d/$_pkgname-$pkgver.tar.gz")
+sha512sums=('258c31834e4f03e04bc1360b867944414f9eebd01732aee64e67305e12d44ddcb6949d6f89dc70ceb5dc88ca1eee030d6e5509b1e0c4069c235beabc72554a07')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-httpreplay() {
+  depends=('python2' 'python2-dpkt' 'python2-tlslite-ng' 'python2-click')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/httpreplay" "$pkgdir/usr/bin/httpreplay2"
+  mv "$pkgdir/usr/bin/pcap2mitm" "$pkgdir/usr/bin/pcap2mitm2"
+}
+
+package_python-httpreplay() {
+  depends=('python' 'python-dpkt' 'python-tlslite-ng' 'python-click')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
