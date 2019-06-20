@@ -1,26 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-pydeep
+pkgbase=python-pydeep
+pkgname=('python2-pydeep' 'python-pydeep')
+_pkgname=pydeep
 pkgver=0.4
-pkgrel=1
+pkgrel=2
 pkgdesc='This is the Python interface to ssdeep.'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://pypi.org/project/pydeep/#files'
 license=('custom:PSF')
-depends=('python' 'ssdeep')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/60/7b/7fa895d023dc11385625311f81f1e2da6a9f3b10bcf6c0bca6113710e558/pydeep-0.4.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/60/7b/7fa895d023dc11385625311f81f1e2da6a9f3b10bcf6c0bca6113710e558/$_pkgname-$pkgver.tar.gz")
 sha512sums=('f924eb61dfba173704b7d8345bf14a8a01a78229b2733309861869f69cd1807325512ada440c7d7ff247fe2ceeca3ac3df2203cb55a5671b658734cb550146f1')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "pydeep-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "pydeep-$pkgver"
+package_python2-pydeep() {
+  depends=('python2' 'ssdeep')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-pydeep() {
+  depends=('python' 'ssdeep')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
