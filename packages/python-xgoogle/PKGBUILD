@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-xgoogle
+pkgname=('python2-xgoogle' 'python-xgoogle')
+_pkgname=xgoogle
+pkgver=20.3db20fb
+pkgrel=4
+pkgdesc='Python library to Google services (google search, google sets, google translate, sponsored links).'
+arch=('any')
+url='https://github.com/pkrumins/xgoogle'
+license=('MIT')
+makedepends=('git' 'python2-setuptools' 'python-setuptools')
+source=('git+https://github.com/pkrumins/xgoogle.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cp -a $_pkgname "$_pkgname-2"
+}
+
+build() {
+  cd "$_pkgname-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname"
+
+  python setup.py build
+}
+
+package_python2-xgoogle() {
+  depends=('python2')
+
+  cd "$_pkgname-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-xgoogle() {
+  depends=('python')
+
+  cd $_pkgname
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
