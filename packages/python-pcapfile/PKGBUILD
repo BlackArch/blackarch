@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-pcapfile
+pkgname=('python2-pcapfile' 'python-pcapfile')
+_pkgname=pypcapfile
+pkgver=0.12.0
+pkgrel=4
+pkgdesc='Pure Python package for reading and parsing libpcap savefiles.'
+arch=('any')
+url='https://pypi.python.org/pypi/pypcapfile/'
+license=('ISC')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://pypi.python.org/packages/5c/a8/70677db49ecd688c7207e525664864d709f4aa2f76c29964cc93825f34b8/$_pkgname-$pkgver.tar.gz")
+sha512sums=('6c2c238f2732b4d5bc5f2b4c7b9e66359d964b94ead437c790256f9bef4e27ed10abaa3e4f17cd1bec22ce0d56cab6e2a63b784a49087943911f1dccd63c1127')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python-pcapfile() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/pcapfile_info" "$pkgdir/usr/bin/pcapfile_info2"
+  mv "$pkgdir/usr/share/doc/pcapfile" "$pkgdir/usr/share/doc/python2-pcapfile"
+}
+
+package_python2-pcapfile() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
