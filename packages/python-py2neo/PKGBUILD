@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-py2neo
+pkgname=('python2-py2neo' 'python-py2neo')
+_pkgname=py2neo
+pkgver=4.3.0
+pkgrel=2
+pkgdesc='Python client library and toolkit for Neo4j.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://pypi.python.org/pypi/py2neo/'
+license=('Apache')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/af/41/c2d52a226b560618fe3df213a15e3f1ea3da09b8520a439756b619f3157d/$_pkgname-$pkgver.tar.gz")
+sha512sums=('7e23e20be04dcccfc5b1d9fd3bfacb81f0bc48536b123ca6b5b3e293054ee0542cce57ef5666476933cbd97c8bebbe765cf0d9fce2ea9cdeb1028912af1ac2c5')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-py2neo() {
+  depends=('python2' 'python2-certifi' 'python2-click' 'python2-colorama'
+           'python2-pygments' 'python2-pytz' 'python2-urllib3' 'python2-neobolt'
+           'python2-neotime' 'python2-prompt_toolkit')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
+}
+
+package_python-py2neo() {
+  depends=('python' 'python-certifi' 'python-click' 'python-colorama'
+           'python-pygments' 'python-pytz' 'python-urllib3' 'python-neobolt'
+           'python-neotime' 'python-prompt_toolkit')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
