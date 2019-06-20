@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-pep8
+pkgname=('python2-pep8' 'python-pep8')
+_pkgname=pep8
+pkgver=1.7.1
+pkgrel=2
+pkgdesc='Python style guide checker.'
+arch=('any')
+url='https://pypi.org/project/pep8/#files'
+license=('MIT')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/01/a0/64ba19519db49e4094d82599412a9660dee8c26a7addbbb1bf17927ceefe/$_pkgname-$pkgver.tar.gz")
+sha512sums=('d20d6a6f91bc865580e3d39c50e26f9c6be81fd8e80a1b9a029d7ea9c906748e46080b841dc5507004089e5ee0d0cb3f70a74bb35131c58113ff5571153af4da')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-pep8() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}-2"
+}
+
+package_python-pep8() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
