@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-yaraprocessor
+pkgname=('python2-yaraprocessor' 'python-yaraprocessor')
+_pkgname=yaraprocessor
+pkgver=1.1.0
+pkgrel=4
+pkgdesc='Scan data streams with Yara using various algorithms.'
+arch=('any')
+url='https://pypi.python.org/pypi/yaraprocessor/'
+license=('MIT')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://pypi.python.org/packages/a0/30/8905acd268cdc4d288fd4f660766199f239faf13aa83dc874fe6941d10e6/$_pkgname-$pkgver.tar.gz")
+sha512sums=('7f87c773944888c373478a0037ac4e608c9d25e32f49d292793c4f7d8a750c855d9e72bf46d9891c16881875053b6aa6ee26847ec7febcff0e6b844b780acc40')
+
+prepare() {
+  # he forgot the license file :s
+  touch "$_pkgname-$pkgver/"LICENSE
+
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-yaraprocessor() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-yaraprocessor() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
