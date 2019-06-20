@@ -1,26 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-pydotplus
+pkgbase=python-pydotplus
+pkgname=('python2-pydotplus' 'python-pydotplus')
+_pkgname=pydotplus
 pkgver=2.0.2
-pkgrel=1
+pkgrel=4
 pkgdesc='Provides a Python Interface to Graphviz’s Dot language.'
 arch=('any')
 url='https://pypi.org/project/pydotplus/#files'
 license=('MIT')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/60/bf/62567830b700d9f6930e9ab6831d6ba256f7b0b730acb37278b0ccdffacf/pydotplus-$pkgver.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/60/bf/62567830b700d9f6930e9ab6831d6ba256f7b0b730acb37278b0ccdffacf/$_pkgname-$pkgver.tar.gz")
 sha512sums=('6f06a1f284401123a4514f9e9a4974dee8dc8d01e6b7c40a797fb70eed22b99fe774272f8b106b5632a33f524b356349fe1ff9633101ff61ef2fc3fe69d641ac')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "pydotplus-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "pydotplus-$pkgver"
+package_python2-pydotplus() {
+  depends=('python2' 'python2-pyparsing')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-pydotplus() {
+  depends=('python' 'python-pyparsing')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
