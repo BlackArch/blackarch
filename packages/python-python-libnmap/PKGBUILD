@@ -1,26 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-python-libnmap
+pkgbase=python-python-libnmap
+pkgname=('python2-python-libnmap' 'python-python-libnmap')
+_pkgname=python-libnmap
 pkgver=0.7.0
-pkgrel=2
+pkgrel=4
 pkgdesc='Python NMAP library enabling you to start async nmap tasks, parse and compare/diff scan results.'
 arch=('any')
 url='https://pypi.org/project/python-libnmap/#files'
 license=('custom:unknown')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://pypi.python.org/packages/72/46/3d2a9431a52110992337dd171c09e75d0c186361068743e013a1c28be80e/python-libnmap-$pkgver.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/72/46/3d2a9431a52110992337dd171c09e75d0c186361068743e013a1c28be80e/$_pkgname-$pkgver.tar.gz")
 sha512sums=('ae1a835b640f949f8dd2baae60e6b5bc29b77bf1fec9f3616ab56512283d948d5808d043fca4caaa40fdc299edc0f2943ae57522938cf8eab4c84dcac575c7a5')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "python-libnmap-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "python-libnmap-$pkgver"
+package_python2-python-libnmap() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-python-libnmap() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
