@@ -1,26 +1,52 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-python-evtx
+pkgbase=python-python-evtx
+pkgname=('python2-python-evtx' 'python-python-evtx')
+_pkgname=python-evtx
 pkgver=0.6.1
-pkgrel=2
+pkgrel=3
 pkgdesc='Pure Python parser for recent Windows event log files (.evtx).'
 arch=('any')
 url='https://pypi.org/project/python-evtx/#files'
-license=('Apache2')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/cf/28/0e8dba284117c960e59ee41ae7e0fa3e2e6898b216951c36cee43fb660f8/python-evtx-$pkgver.zip")
+license=('APACHE')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/cf/28/0e8dba284117c960e59ee41ae7e0fa3e2e6898b216951c36cee43fb660f8/$_pkgname-$pkgver.zip")
 sha512sums=('5ee3a844edaebe55fd37392cffa5978f015744a31188e3d1d35d5ebc9afbec7554075e466c179f0b755f99abbd28825b842a5a0096cc6bed8ce581e53945157d')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "python-evtx-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "python-evtx-$pkgver"
+package_python2-python-evtx() {
+  depends=('python2' 'python2-six' 'python2-hexdump' 'python2-pytest'
+           'python2-cov')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  for i in "$pkgdir/usr/bin/"* ; do
+    mv $i "${i}2"
+  done
+}
+
+package_python-python-evtx() {
+  depends=('python' 'python-six' 'python-hexdump' 'python-pytest'
+           'python-pytest-cov')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
