@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-pyv8
+pkgname=('python2-pyv8' 'python-pyv8')
+_pkgname=pyv8
+pkgver=598.b5b0407
+pkgrel=3
+pkgdesc='Python Wrapper for Google V8 Engine.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/buffer/pyv8'
+license=('Apache')
+makedepends=('python2-setuptools')
+source=("git+https://github.com/buffer/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cp -a $_pkgname "$_pkgname-2"
+}
+
+build() {
+  cd "$_pkgname-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname"
+
+  python setup.py build
+}
+
+package_python2-pyv8() {
+  depends=('python2' 'python2-lxml' 'python2-pydot')
+
+  cd "$_pkgname-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-pyv8() {
+  depends=('python' 'python-lxml' 'python-pydot')
+
+  cd $_pkgname
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
