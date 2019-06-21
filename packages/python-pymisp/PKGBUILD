@@ -1,26 +1,47 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-pymisp
+pkgbase=python-pymisp
+pkgname=('python2-pymisp' 'python-pymisp')
+_pkgname=pymisp
 pkgver=2.4.106
-pkgrel=1
+pkgrel=2
 pkgdesc='Python API for MISP.'
 arch=('any')
 url='https://pypi.org/project/pymisp/#files'
 license=('BSD')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/6e/f1/ed7a04db49d5e39f1753b19d8e0841b5f468a10e0b358758119f5fd0c790/pymisp-2.4.106.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/6e/f1/ed7a04db49d5e39f1753b19d8e0841b5f468a10e0b358758119f5fd0c790/$_pkgname-$pkgver.tar.gz")
 sha512sums=('5661b09be550f12dbcb16ebce17afe74d06bc20cd6b4ac59f88bf04a1c73c42e01a481db9634fc42415b81da927b09f2efab30e80c84f1315918d94e89d4b9b9')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "pymisp-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "pymisp-$pkgver"
+package_python2-pymisp() {
+  depends=('python2' 'python2-six' 'python2-dateutil' 'python2-enum34'
+           'python2-functools32' 'python2-jsonschema')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-pymisp() {
+  depends=('python' 'python-six' 'python-dateutil' 'python-jsonschema')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
