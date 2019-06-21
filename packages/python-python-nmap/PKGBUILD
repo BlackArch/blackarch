@@ -1,26 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-python-nmap
+pkgbase=python-python-nmap
+pkgname=('python2-python-nmap' 'python-python-nmap')
+_pkgname=python-nmap
 pkgver=0.6.1
-pkgrel=3
+pkgrel=5
 pkgdesc='This is a python class to use nmap and access scan results from python3.'
 arch=('any')
-url='https://pypi.python.org/pypi/python-nmap/'
+url='https://pypi.org/project/python-nmap/#files'
 license=('GPL3')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://pypi.python.org/packages/dc/f2/9e1a2953d4d824e183ac033e3d223055e40e695fa6db2cb3e94a864eaa84/python-nmap-$pkgver.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/dc/f2/9e1a2953d4d824e183ac033e3d223055e40e695fa6db2cb3e94a864eaa84/$_pkgname-$pkgver.tar.gz")
 sha512sums=('8de9ba6d0a4cecce09e82765b8a9ac77fb4368298d5a5f9ce07b7737a90def795f1ad00885fc73ec720bea2a592230e86aaca8cacd884c9299f64ad934bcee18')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "python-nmap-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "python-nmap-$pkgver"
+package_python2-python-nmap() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-python-nmap() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
