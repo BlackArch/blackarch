@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-pyroute2
+pkgname=('python2-pyroute2' 'python-pyroute2')
+_pkgname=pyroute2
+pkgver=0.5.6
+pkgrel=2
+pkgdesc='Python Netlink library.'
+arch=('any')
+url='https://pypi.org/project/pyroute2/#files'
+license=('GPL2' 'APACHE')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/f6/80/16a604075345f0c253537d55e5c5282a37c61a1fc8ee0fcc42d1fd2a0739/$_pkgname-$pkgver.tar.gz")
+sha512sums=('68df5ebd715136ab68b26c96ceacea0a4b837754719c133457898af17660593f9a29703a6c119748f668fb8997400546c11ed30e90ddbb468bb9f99a910d2c21')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-pyroute2() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/pyroute2-cli" "$pkgdir/usr/bin/pyroute2-cli2"
+  mv "$pkgdir/usr/bin/ss2" "$pkgdir/usr/bin/ss2-2"
+}
+
+package_python-pyroute2() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
