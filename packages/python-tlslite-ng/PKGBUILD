@@ -1,32 +1,52 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-tlslite-ng
+pkgbase=python-tlslite-ng
+pkgname=('python2-tlslite-ng' 'python-tlslite-ng')
+_pkgname=tlslite-ng
 pkgver=0.7.5
-pkgrel=2
-epoch=1
+pkgrel=4
 pkgdesc='Pure python implementation of SSL and TLS.'
 arch=('any')
 url='https://pypi.org/project/tlslite-ng/#files'
-depends=('python')
-makedepends=('python-setuptools')
-license=('Apache')
-source=("https://files.pythonhosted.org/packages/53/3e/2299471198f82fd3c5ba3078609d5100d39037270b13a1ae56b35a7b19a1/tlslite-ng-$pkgver.tar.gz")
+license=('APACHE')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/53/3e/2299471198f82fd3c5ba3078609d5100d39037270b13a1ae56b35a7b19a1/$_pkgname-$pkgver.tar.gz")
 sha512sums=('5244ce15f07e0d892c54c42f4a116ebd303b919903da3bcc8c6f9f253fecbb129c9ba9a713dbf1b243e8a49596a46227c5e2a693b3cc34301fdf75aee5d8319b')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "tlslite-ng-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "tlslite-ng-$pkgver"
+package_python2-tlslite-ng() {
+  depends=('python2' 'python2-ecdsa')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  for i in "$pkgdir/usr/bin/"* ; do
+    mv $i "${i}2"
+  done
+}
+
+package_python-tlslite-ng() {
+  depends=('python' 'python-ecdsa')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
-
-  mv "$pkgdir/usr/bin/tls.py" "$pkgdir/usr/bin/tls.py-ng"
-  mv "$pkgdir/usr/bin/tlsdb.py" "$pkgdir/usr/bin/tlsdb.py-ng"
 }
 
