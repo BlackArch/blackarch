@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-steganography
+pkgname=('python2-steganography' 'python-steganography')
+_pkgname=steganography
+pkgver=0.1.1
+pkgrel=3
+pkgdesc='Digital image steganography of encrypted text.'
+arch=('any')
+url='https://pypi.org/project/steganography/#files'
+license=('MIT')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/b3/b3/eea65e2e628434ab9cb691f5b13c447d3de832a0c9f273db40cc2df0413b/$_pkgname-$pkgver.tar.gz")
+sha512sums=('63286a9be33256f1ffb42fdc370d895b34202de5d600549214ef1ddbefd8f61bd0a991d45a08c7b6570bd8b2bf50f38467d5c16b9bbd7296361217b5f2dc999d')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-steganography() {
+  depends=('python2' 'python2-pillow')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
+}
+
+package_python-steganography() {
+  depends=('python' 'python-pillow')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
