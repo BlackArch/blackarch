@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-pytesseract
+pkgname=('python2-pytesseract' 'python-pytesseract')
+_pkgname=pytesseract
+pkgver=0.2.7
+pkgrel=2
+pkgdesc="Python-tesseract is a python wrapper for Google's Tesseract-OCR."
+arch=('any')
+url='https://pypi.org/project/pytesseract/#files'
+license=('GPL3')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/1d/40/3f72d13d0f347bf688ff189b6d6bb369125c0bed9ed4b15e7f20c65123a8/$_pkgname-$pkgver.tar.gz")
+sha512sums=('a2e115d77d1a5da8b0688a286f2cf463644f7d9de577303903521c65b7427a83571f2686bf87b4b7fb0705ac97864883726f44a256213a10d2576f019a60d08d')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-pytesseract() {
+  depends=('python2' 'python2-pillow')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
+}
+
+package_python-pytesseract() {
+  depends=('python' 'python-pillow')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
