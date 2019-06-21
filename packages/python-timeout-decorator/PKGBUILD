@@ -1,26 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-timeout-decorator
+pkgbase=python-timeout-decorator
+pkgname=('python2-timeout-decorator' 'python-timeout-decorator')
+_pkgname=timeout-decorator
 pkgver=0.4.1
-pkgrel=1
+pkgrel=2
 pkgdesc='Timeout decorator.'
-url='https://pypi.org/project/timeout-decorator/#files'
 arch=('any')
+url='https://pypi.org/project/timeout-decorator/#files'
 license=('MIT')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/07/1c/0d9adcb848f1690f3253dcb1c1557b6cf229a93e724977cb83f266cbd0ae/timeout-decorator-$pkgver.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/07/1c/0d9adcb848f1690f3253dcb1c1557b6cf229a93e724977cb83f266cbd0ae/$_pkgname-$pkgver.tar.gz")
 sha512sums=('8d70e0df1720f37f85ffbe71fdc467fc9e4dc704cd434f03d99bcce4cd6b41f45d337b3a0aaeb0526e99778ee3ae46637a76bf4f51e02fbb13e133598c2b791b')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "timeout-decorator-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "timeout-decorator-$pkgver"
+package_python2-timeout-decorator() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-timeout-decorator() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
