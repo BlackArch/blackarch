@@ -1,26 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-pyof
+pkgbase=python-pyof
+pkgname=('python2-pyof' 'python-pyof')
+_pkgname=pyof
 pkgver=0.1.0
-pkgrel=2
+pkgrel=3
 pkgdesc='Openfoam PostProcessing Python Tools.'
 arch=('any')
 url='https://pypi.org/project/pyof/#files'
 license=('GPL2')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://pypi.python.org/packages/aa/5d/644a43dcee22c45c6767cde31f6c20b1d27b78eb2716a49e06ad43a5b1ff/pyof-$pkgver.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/aa/5d/644a43dcee22c45c6767cde31f6c20b1d27b78eb2716a49e06ad43a5b1ff/$_pkgname-$pkgver.tar.gz")
 sha512sums=('c13c22e9d281b85faf8e0ff689152c525fa853588dca4fbdd45ff6c1b03fe390cfad78ee0fd4ba010aca545c4e14bf9366d079015260a7897fb01f4a23808074')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "pyof-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "pyof-$pkgver"
+package_python2-pyof() {
+  depends=('python2' 'python2-numpy' 'python2-scipy' 'python2-matplotlib')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-pyof() {
+  depends=('python' 'python-numpy' 'python-scipy' 'python2-matplotlib')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
