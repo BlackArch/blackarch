@@ -1,26 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-wget
+pkgbase=python-wget
+pkgname=('python2-wget' 'python-wget')
+_pkgname=wget
 pkgver=3.2
-pkgrel=1
+pkgrel=4
 pkgdesc='Pure python download utility.'
 url='https://pypi.org/project/wget/#files'
-depends=('python')
-makedepends=('python-setuptools')
 license=('GPL3')
 arch=('any')
-source=("https://pypi.python.org/packages/source/w/wget/wget-$pkgver.zip")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/47/6a/62e288da7bcda82b935ff0c6cfe542970f04e29c756b0e147251b2fb251f/$_pkgname-$pkgver.zip")
 sha512sums=('173b444acdaba2d0e22e80557608f3d96f5b7fd62ca3e05e0f37c359d95e03875c9a5448db6e0fc4e3751ef11a746ef03aa1781d6d671372fc497e2af5887a2d')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "wget-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "wget-$pkgver"
+package_python2-wget() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-wget() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
