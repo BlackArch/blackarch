@@ -1,26 +1,49 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-spark-parser
+pkgbase=python-spark-parser
+pkgname=('python2-spark-parser' 'python-spark-parser')
+_pkgname=spark_parser
 pkgver=1.8.7
-pkgrel=1
+pkgrel=2
 pkgdesc='An Earley-Algorithm Context-free grammar Parser Toolkit.'
-url='https://pypi.org/project/spark_parser/#files'
 arch=('any')
+url='https://pypi.org/project/spark-parser/#files'
 license=('MIT')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/a3/74/3e78d604b488add8606f14d8716589bd3e4597bb886352394a15a0679733/spark_parser-$pkgver.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/a3/74/3e78d604b488add8606f14d8716589bd3e4597bb886352394a15a0679733/$_pkgname-$pkgver.tar.gz")
 sha512sums=('512017edaf3ed85ef6d12df84a87b4bcfbecd1a4b546d38ec447b04fc7434b3237441f23f721d59dfa52d8988520db0f6863603710d536093778ef7892a31a2a')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "spark_parser-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "spark_parser-$pkgver"
+package_python2-spark-parser() {
+  depends=('python2' 'python2-click')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/spark-parser-coverage" \
+    "$pkgdir/usr/bin/spark-parser-coverage2"
+}
+
+package_python-spark-parser() {
+  depends=('python' 'python-click')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
