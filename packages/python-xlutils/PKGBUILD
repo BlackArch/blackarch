@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-xlutils
+pkgname=('python2-xlutils' 'python-xlutils')
+_pkgname=xlutils
+pkgver=2.0.0
+pkgrel=3
+pkgdesc='Utilities for working with Excel files that require both xlrd and xlwt.'
+arch=('any')
+url='https://pypi.org/project/xlutils/#files'
+license=('custom:unknown')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/93/fe/af6d73e4bc7b0ce359d34bebb2e8d4d129763acfecd66a3a7efc587e54c9/$_pkgname-$pkgver.tar.gz")
+sha512sums=('7b6c39912a2b23d718b1aaac2f21770f1e5b156fdc7416f11d4a7e6b52195ffffb982aecb52b5571599eb4928c7e09bbfb20fdf2554f0c49c286b243e2fb3ea9')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-xlutils() {
+  depends=('python2' 'python2-xlrd' 'python2-xlwt')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/margins" "$pkgdir/usr/bin/margins2"
+}
+
+package_python-xlutils() {
+  depends=('python' 'python-xlrd' 'python-xlwt')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
