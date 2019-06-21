@@ -1,26 +1,50 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-rpyc
-pkgver=4.1.0 
-pkgrel=1
-pkgdesc='Transparent library for symmetrical remote procedure calls, clustering, and distributed-computing.'
+pkgbase=python-rpyc
+pkgname=('python2-rpyc' 'python-rpyc')
+_pkgname=rpyc
+pkgver=4.1.0
+pkgrel=2
+pkgdesc='Remote Python Call (RPyC), a transparent and symmetric RPC library.'
 arch=('any')
 url='https://pypi.org/project/rpyc/#files'
 license=('MIT')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/99/d3/3d6ab7c551b4be55ad38e0599a49d96b3e186db3293a956811df59f172e6/rpyc-4.1.0.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/99/d3/3d6ab7c551b4be55ad38e0599a49d96b3e186db3293a956811df59f172e6/$_pkgname-$pkgver.tar.gz")
 sha512sums=('c7249368a84f9fc44fb9ec32c8a95f13a9cd4028c25f378a0e96f299df3e76c753abacb5870f9eb50a553cc16521f597c31462fe9a76f7a0c333f5da5f0a8caf')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "rpyc-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "rpyc-$pkgver"
+package_python2-rpyc() {
+  depends=('python2' 'python2-plumbum')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  for i in "$pkgdir/usr/bin/"* ; do
+    mv $i "${i}2"
+  done
+}
+
+package_python-rpyc() {
+  depends=('python' 'python-plumbum')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
