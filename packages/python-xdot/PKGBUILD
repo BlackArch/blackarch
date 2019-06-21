@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-xdot
+pkgname=('python2-xdot' 'python-xdot')
+_pkgname=xdot
+pkgver=1.1
+pkgrel=2
+pkgdesc='Interactive viewer for Graphviz dot files.'
+arch=('any')
+url='https://pypi.org/project/xdot/#files'
+license=('LGPL')
+makedepends=('python2-setuptools' 'python-setuptools')
+conflicts=('xdot')
+provides=('xdot')
+source=("https://files.pythonhosted.org/packages/0f/1b/7ae17e0931ff011bba1c86000674666176021756d07ed29ce0b263b3fddf/$_pkgname-$pkgver.tar.gz")
+sha512sums=('ad7cbe147063e181754766294234698870602ee9323a46575c62fd28599e20feacf8e7244b9fec7d4e3654e72c156b64291692b23a3d2fe90a8f62b951075fe6')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-xdot() {
+  depends=('python2' 'graphviz' 'pygtk')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  find "$pkgdir/usr/lib/python2.7/site-packages/" -type f -exec chmod 644 {} \;
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
+}
+
+package_python-xdot() {
+  depends=('python' 'graphviz' 'pygtk')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  find "$pkgdir/usr/lib/python3.7/site-packages/" -type f -exec chmod 644 {} \;
+}
+
