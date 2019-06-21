@@ -1,26 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-virustotal-api
+pkgbase=python-virustotal-api
+pkgname=('python2-virustotal-api' 'python-virustotal-api')
+_pkgname=virustotal-api
 pkgver=1.1.10
-pkgrel=2
+pkgrel=3
 pkgdesc='Virus Total Public/Private/Intel API.'
 arch=('any')
 url='https://pypi.org/project/virustotal-api/#files'
 license=('MIT')
-depends=('python' 'python-future' 'python-requests')
-makedepends=('python' 'python-setuptools' 'python-future')
-source=("https://files.pythonhosted.org/packages/81/9b/fce118f4d39b4b91ac7b2681310624a20134c5a89f49b762281b333d1560/virustotal-api-$pkgver.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/81/9b/fce118f4d39b4b91ac7b2681310624a20134c5a89f49b762281b333d1560/$_pkgname-$pkgver.tar.gz")
 sha512sums=('724b1defc46677795d80b49c9cfead8a9cf9d6dff27ca076ada60cb3f2be2718ffec975f0cf4cd088098c22dcfcd03356deb78a13189744f3c618fd5687e4f19')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "virustotal-api-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "virustotal-api-$pkgver"
+package_python2-virustotal-api() {
+  depends=('python2' 'python2-requests')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-virustotal-api() {
+  depends=('python' 'python-requests')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
