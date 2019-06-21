@@ -1,26 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-whois
+pkgbase=python-whois
+pkgname=('python2-whois' 'python-whois')
+_pkgname=whois
 pkgver=0.8
-pkgrel=1
+pkgrel=2
 pkgdesc='Python module/library for retrieving WHOIS information of domains.'
 url='https://pypi.org/project/whois/#files'
 arch=('any')
 license=('MIT')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/5a/b0/c08d2d3dcd35f10ddf51b072c471872a1f426025045eb361feeac5c7e5a6/whois-0.8.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/5a/b0/c08d2d3dcd35f10ddf51b072c471872a1f426025045eb361feeac5c7e5a6/$_pkgname-$pkgver.tar.gz")
 sha512sums=('8859ccd6741ddeed12f2e66fdf7b80eef027fb635651ad49562f984f59c39ef71a19782696f3ef2b9eb51c5c938d8e213d78c8d4387e4d7b2f2de4589167d7b7')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
 build() {
-  cd "whois-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "whois-$pkgver"
+package_python2-whois() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-whois() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
