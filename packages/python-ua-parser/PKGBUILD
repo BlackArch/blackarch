@@ -1,0 +1,58 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-ua-parser
+pkgname=('python2-ua-parser' 'python-ua-parser')
+_pkgname=ua-parser
+pkgver=0.8.0
+pkgrel=3
+pkgdesc="Python port of Browserscope's user agent parser."
+url='https://pypi.org/project/ua-parser/#files'
+license=('APACHE')
+arch=('any')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/b0/02/94ea43fc432fb112fbb62a89855317c41c210fb5239a2ed9b94ecb63024f/$_pkgname-$pkgver.tar.gz")
+sha512sums=('3c9fb70a6cbae13aedc9e3bb0ed2442d9d4f1f6bb211c1a71a45c8f2afe38c90d824dbd827a6d9cf4badb298d3e7d5992d2139fdd4b0349abd1fe400bb9b183f')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-ua-parser() {
+  depends=('python2' 'python2-yaml')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  find "$pkgdir" -type f -name '*.py' | xargs sed -i \
+    's|#!/usr/bin/python2.5|#!/usr/bin/python2|'
+  find "$pkgdir" -type f -name '*.py' | xargs sed -i \
+    's|#!/usr/bin/env python|#!/usr/bin/env python2|'
+}
+
+package_python-ua-parser() {
+  depends=('python' 'python-yaml')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  find "$pkgdir" -type f -name '*.py' | xargs sed -i \
+    's|#!/usr/bin/python2.5|#!/usr/bin/python|'
+  find "$pkgdir" -type f -name '*.py' | xargs sed -i \
+    's|#!/usr/bin/env python|#!/usr/bin/env python|'
+}
+
