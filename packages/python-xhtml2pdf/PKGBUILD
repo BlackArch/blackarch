@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-xhtml2pdf
+pkgname=('python2-xhtml2pdf' 'python-xhtml2pdf')
+_pkgname=xhtml2pdf
+pkgver=0.2.3
+pkgrel=4
+pkgdesc='PDF generator using HTML and CSS.'
+arch=('any')
+url='https://pypi.org/project/xhtml2pdf/#files'
+license=('APACHE')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/d1/94/a9b4e0ecb472f4d2bcb277524b586d9c8ee6c50745614f1b340c69bf2a3e/$_pkgname-$pkgver.tar.gz")
+sha512sums=('89ba43000e140cac00a929a06de82bfec233c9f51ef9671f33d55b6aa48659062577d5c0b5408eb4a44c9dbee80cc8d082c9587332d645cd86054031de4b4657')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-xhtml2pdf() {
+  depends=('python2' 'python2-html5lib' 'python2-pillow' 'python2-six'
+           'python2-pypdf2' 'python2-reportlab')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  for i in "$pkgdir/usr/bin/"* ; do
+    mv $i "${i}2"
+  done
+}
+
+package_python-xhtml2pdf() {
+  depends=('python' 'python-html5lib' 'python-pillow' 'python-six'
+           'python-pypdf2' 'python-reportlab')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
