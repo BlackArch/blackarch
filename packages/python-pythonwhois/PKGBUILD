@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-pythonwhois
+pkgname=('python2-pythonwhois' 'python-pythonwhois')
+_pkgname=pythonwhois
+pkgver=2.4.3
+pkgrel=4
+pkgdesc='Module for retrieving and parsing the WHOIS data for a domain. Supports most domains.'
+arch=('any')
+url='https://pypi.org/project/pythonwhois/#files'
+license=('custom:unknown')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/ca/a7/774fd4928014c2752c33bc0c4ea760c8136e651e4c8dc9825648c646ba72/$_pkgname-$pkgver.tar.gz")
+sha512sums=('a5b66e61cb7caec7e6b59ea98c9b46c4f1089bae620dd27295edd4aafaee73f0c5af54b1e7d661e5fa4ba5b37256c2e760fa5e6171c003095f554b463ae0319f')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-pythonwhois() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/pwhois" "$pkgdir/usr/bin/pwhois2"
+}
+
+package_python-pythonwhois() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
