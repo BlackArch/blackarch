@@ -63,10 +63,15 @@ Just check out the following:
              BlackArch (long-term).
              [Edu4rdSHL, mrsmith0x00]
 
-  [.] python-lib packages
+  [ ] python-lib packages
+      add check() routine if possible to perform tests and install LICENSE
+      files.
+      [?]
+
+  [x] python-lib packages
       merge python2 with python3, e.g. create combo package for python2+python
       see: python-pyexifinfo as example
-      [noptrix,?]
+      [noptrix]
 
   [ ] all git/svn/hg packages
       scrape release version numbers if available in sources or 'git describe'.
