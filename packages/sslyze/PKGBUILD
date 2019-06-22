@@ -2,43 +2,35 @@
 # See COPYING for license details.
 
 pkgname=sslyze
-pkgver=1.1.5
-pkgrel=3
+pkgver=2.1.3
+pkgrel=1
 groups=('blackarch' 'blackarch-crypto' 'blackarch-scanner')
 pkgdesc='Python tool for analyzing the configuration of SSL servers and for identifying misconfigurations.'
-arch=('any')
-url='https://github.com/nabla-c0d3/sslyze/'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/nabla-c0d3/sslyze'
 license=('GPL2')
-depends=('python2' 'python2-nassl' 'python2-lxml' 'python2-typing'
-         'python2-cryptography' 'python2-tls-parser' 'python2-enum34'
-         'python2-typing')
-makedepends=('python2-setuptools')
-source=("https://github.com/nabla-c0d3/$pkgname/archive/$pkgver.tar.gz")
-sha512sums=('66c2e8eeeded3e301e86a64bc39489d799722db7f998a231c25bc9653289de1af0332fd5ce48c747976465608daec20d86f07bef43cd069138c7305caeac776a')
+depends=('python' 'python-tls-parser' 'python-cryptography' 'python-nassl')
+makedepends=('python-setuptools')
+source=("https://github.com/nabla-c0d3/sslyze/archive/${pkgver}.zip"
+        'setup.py.patch')
+sha512sums=('f39581dea954974088942621abb79c072001d390a82e3785086009d1894fef678616b8186c6dd6e344ce83238796c08047d8899a32377fb3016c0fdd5f8fdf74'
+            '58fb167d0b822426ca84238e26f1a362ceb4366fdf13621670808e473db1ffd34b6342b42eb82ff9f7aa9e4388a83fa3c2318db183e397186b03db2a0fa2a6d9')
 
 prepare() {
-  cd "$pkgname-$pkgver"
-
-  # vollhorst ......
-  sed -i 's/==.*//g' requirements.txt
-
-  sed -iE 's/==1.9//g;s/==1.1.0//g' setup.py
+  patch -p1 < setup.py.patch
 }
 
 build() {
   cd "$pkgname-$pkgver"
 
-  python2 setup.py build
+  python setup.py build
 }
 
 package() {
   cd "$pkgname-$pkgver"
 
-  python2 setup.py install --root="$pkgdir" --optimize=1
+  python setup.py install --root="$pkgdir" --optimize=1 --skip-build
 
-  #mv "$pkgdir/usr/bin/sslyze_cli.py" "$pkgdir/usr/bin/sslyze"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
