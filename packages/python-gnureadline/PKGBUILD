@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-gnureadline
+pkgname=('python2-gnureadline' 'python-gnureadline')
+_pkgname=gnureadline
+pkgver=6.3.8
+pkgrel=1
+pkgdesc='The standard Python readline extension statically linked against the GNU readline library.'
+arch=('any')
+url='https://pypi.org/project/gnureadline/#files'
+license=('GPL3')
+makedepends=('fakeroot' 'gcc' 'make' 'patch' 'python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/50/64/86085c823cd78f9df9d8e33dce0baa71618016f8860460b82cf6610e1eb3/$_pkgname-$pkgver.tar.gz")
+sha512sums=('d9cba94a1e7044376ae017a8e5ea595fa6678418c6c9fee7072a99f3e5a5ccc3aa9bf1e670547add5ed989edc58503312cf90b4edfb26b9a71a09e2e2b0da97b')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-gnureadline() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
+package_python-gnureadline() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
