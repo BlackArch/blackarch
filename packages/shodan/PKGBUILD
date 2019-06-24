@@ -2,9 +2,9 @@
 # See COPYING for license details.
 
 pkgbase=shodan
-pkgname=('shodan' 'python-shodan' 'python2-shodan')
+pkgname=('python2-shodan' 'python-shodan')
 pkgver=1.13.0
-pkgrel=1
+pkgrel=2
 pkgdesc='Python library and command-line utility for Shodan (https://developer.shodan.io).'
 groups=('blackarch' 'blackarch-recon' 'blackarch-scanner'
         'blackarch-automation')
@@ -12,25 +12,34 @@ arch=('any')
 url='https://pypi.org/project/shodan/#files'
 makedepends=('python-setuptools' 'python2-setuptools')
 license=('MIT')
-source=("https://files.pythonhosted.org/packages/12/a6/d56c10c6e12bb0438c2f9f100989b262a7a9845a722770e245361f4d837e/$pkgname-$pkgver.tar.gz")
+source=("https://files.pythonhosted.org/packages/12/a6/d56c10c6e12bb0438c2f9f100989b262a7a9845a722770e245361f4d837e/$pkgbase-$pkgver.tar.gz")
 sha512sums=('ca44d743a71d3978da2311ade5e4f2e4ef450b73a15daa4d36642eb0d86ab1f97d03694afc4e9a8c04ed48260037a6599e00a16a3c84d19221f750500bbe4073')
 
 prepare() {
-  cp -a "$pkgbase-$pkgver" "$pkgbase-$pkgver"2
+  cp -a "$pkgbase-$pkgver" "$pkgbase-$pkgver-2"
 }
 
 build_python-shodan() {
-  cd "$pkgbase-$pkgver"
+  cd "$pkgbase-$pkgver-2"
 
-  python setup.py build
+  python2 setup.py build
 
-  cd "${pkgbase}2-$pkgver"
+  cd "$srcdir/$pkgbase-$pkgver"
 
   python2 setup.py build
 }
 
-package_shodan() {
-  a=1337
+package_python2-shodan() {
+  depends=('python2' 'python2-requests' 'python2-simplejson' 'python2-click'
+           'python2-click-plugins' 'python2-xlsxwriter' 'python2-colorama')
+
+  cd "$pkgbase-$pkgver-2"
+
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  mv "$pkgdir/usr/bin/shodan" "$pkgdir/usr/bin/shodan2"
 }
 
 package_python-shodan() {
@@ -42,18 +51,5 @@ package_python-shodan() {
   python setup.py install --root="$pkgdir" --optimize=1
 
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-}
-
-package_python2-shodan() {
-  depends=('python2' 'python2-requests' 'python2-simplejson' 'python2-click'
-           'python2-click-plugins' 'python2-xlsxwriter' 'python2-colorama')
-
-  cd "$pkgbase-$pkgver"2
-
-  python2 setup.py install --root="$pkgdir" --optimize=1
-
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  mv "$pkgdir/usr/bin/shodan" "$pkgdir/usr/bin/shodan2"
 }
 
