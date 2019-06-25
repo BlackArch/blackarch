@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=frida-ios-dump
+pkgver=40.160a6e7
+pkgrel=1
+pkgdesc='Pull decrypted ipa from jailbreak device.'
+groups=('blackarch' 'blackarch-mobile''blackarch-reversing' 'blackarch-binary')
+arch=('any')
+url='https://github.com/AloneMonkey/frida-ios-dump'
+license=('custom:unknown')
+depends=('python2' 'python2-paramiko' 'python2-tqdm' 'python2-argparse'
+         'python2-six' 'python2-pyasn1' 'python2-prompt_toolkit'
+         'python2-enum34' 'python2-colorama' 'python2-frida-tools'
+         'python2-idna' 'python2-ipaddress' 'python2-scp' 'python2-wcwidth'
+         'python2-pycparser' 'python2-pygments' 'python2-pynacl' 'python2-cffi'
+         'python2-bcrypt')
+makedepends=('git')
+source=('git+https://github.com/AloneMonkey/frida-ios-dump')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i 's|bin/python|bin/python2|g' dump.py
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 dump.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
