@@ -2,20 +2,20 @@
 # See COPYING for license details.
 
 pkgname=wifiphisher
-pkgver=728.1b79d78
+pkgver=730.aab4efe
 pkgrel=1
 epoch=1
 groups=('blackarch' 'blackarch-wireless' 'blackarch-social')
 pkgdesc='Fast automated phishing attacks against WPA networks.'
 arch=('any')
-url='https://github.com/sophron/wifiphisher'
+url='https://github.com/wifiphisher/wifiphisher'
 license=('MIT')
 depends=('python2' 'python2-httplib2' 'python2-scapy' 'aircrack-ng'
          'python2-pyopenssl' 'python2-pyric' 'python2-blessings'
          'python2-pbkdf2' 'python2-tornado' 'hostapd' 'dnsmasq'
          'python2-dbus' 'python2-argparse' 'python2-roguehostapd')
 makedepends=('git' 'python2-setuptools')
-source=('git+https://github.com/sophron/wifiphisher.git')
+source=("$pkgname::git+https://github.com/$pkgname/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
@@ -28,7 +28,6 @@ prepare() {
   cd $pkgname
 
   sed -i 's|tornado==4.5.3|tornado|' setup.py
-  sed -i 's|"PyRIC", "tornado", "blessings>=1.6", "dbus-python"|"PyRIC", "tornado", "blessings"|' setup.py
 }
 
 build() {
@@ -40,15 +39,16 @@ build() {
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  python2 setup.py install --root="$pkgdir"
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
   install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   # moron
-  sed -i '1 i\# -*- coding: utf-8 -*-' "$pkgdir/usr/lib/python2.7/site-packages/$pkgname/common/phishingpage.py"
+  sed -i '1 i\# -*- coding: utf-8 -*-' \
+    "$pkgdir/usr/lib/python2.7/site-packages/$pkgname/common/phishingpage.py"
 }
 
