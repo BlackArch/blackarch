@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=rshack
+pkgver=64.cf197e3
+pkgrel=1
+pkgdesc='Python tool which allows to carry out some attacks on RSA, and offer a few tools to manipulate RSA keys.'
+groups=('blackarch' 'blackarch-crypto')
+arch=('any')
+url='https://github.com/zweisamkeit/RSHack'
+license=('MIT')
+depends=('python' 'python-argparse' 'python-gmpy2' 'python-rsa'
+         'python-cryptography' 'python-pycryptodome')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/zweisamkeit/RSHack.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" readme.md
+
+  rm readme.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
