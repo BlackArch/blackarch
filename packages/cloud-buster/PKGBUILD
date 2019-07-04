@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=cloud-buster
+pkgver=194.b55e4a1
+pkgrel=1
+pkgdesc='A tool that checks Cloudflare enabled sites for origin IP leaks.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/SageHack/cloud-buster'
+license=('GPL')
+depends=('python' 'python-beautifulsoup4' 'python-dnspython' 'python-requests'
+         'openssl')
+makedepends=('git')
+source=("git+https://github.com/SageHack/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a --no-preserve=ownership bust/ crimeflare/ lists/ \
+    "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python bust "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
