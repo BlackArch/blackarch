@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=kamerka
+pkgver=VERSION
+pkgrel=1
+pkgdesc='Build interactive map of cameras from Shodan.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/woj-ciech/kamerka'
+license=('custom:unknown')
+depends=('python' 'python-geopy' 'python-colorama' 'python-shodan'
+         'python-folium' 'python-twitter' 'python-instagramapi'
+         'python-flickrapi' 'python-branca' 'google-streetview')
+makedepends=('git')
+source=('git+https://github.com/woj-ciech/kamerka.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" *.py *.yml
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

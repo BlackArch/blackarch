@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=imageio
+pkgname=('python2-imageio' 'python-imageio')
+_pkgname=imageio
+pkgver=2.5.0
+pkgrel=1
+pkgdesc='Python library for reading and writing image data.'
+arch=('any')
+url='https://pypi.org/project/imageio/#files'
+license=('BSD')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/69/4a/0387d708394d5e25d95b1abe427c301614152d1bebea18d9b06fa7199704/$_pkgname-$pkgver.tar.gz")
+sha512sums=('382de0ad03966c8e8a8452eccde13d7471f29a271690b66046b5477467f54d2d2eb5196b0ae90f8484375042f3509468000b62f613ae666938e1257c53f6347c')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver" "$_pkgname-$pkgver-2"
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-imageio() {
+  depends=('python2-numpy' 'python2-pillow' 'python2-enum34' 'python2-futures'
+           'python2-pathlib')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+	--skip-build
+
+  mv "$pkgdir/usr/bin/${_pkgname}_download_bin" "$pkgdir/usr/bin/${_pkgname}_download_bin2"
+  mv "$pkgdir/usr/bin/${_pkgname}_remove_bin" "$pkgdir/usr/bin/${_pkgname}_remove_bin2"
+}
+
+package_python-imageio() {
+  depends=('python' 'python-numpy' 'python-pillow')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+	--skip-build
+}
+
