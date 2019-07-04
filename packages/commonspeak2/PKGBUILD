@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=commonspeak2
+pkgver=VERSION
+pkgrel=1
+pkgdesc='Leverages publicly available datasets from Google BigQuery to generate wordlists.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-automation' 'blackarch-recon')
+url='https://github.com/assetnote/commonspeak2'
+license=('Apache')
+makedepends=('git' 'go-pie' 'glide')
+source=('git+https://github.com/assetnote/commonspeak2.git')
+sha512sums=('SKIP')
+_url='github.com/assetnote/commonspeak2'
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
+    cd "src/$_url"
+
+  GOPATH="$srcdir" glide up
+  GOPATH="$srcdir" glide install
+}
+
+package() {
+  install -dm 755 "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v $_url
+
+  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "src/$_url/README.md"
+  install -Dm 644 "src/$_url/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
