@@ -3,15 +3,14 @@
 
 pkgbase=ivre
 pkgname=('ivre' 'ivre-web' 'ivre-docs' 'python-ivre' 'python2-ivre')
-pkgver=0.9.13
+pkgver=0.9.13.dev21
 pkgrel=1
-epoch=1
 groups=('blackarch' 'blackarch-recon' 'blackarch-networking')
-pkgdesc='Network recon framework'
+pkgdesc='Network recon framework based on Nmap, Masscan, Zeek (Bro), Argus, Netflow,...'
 arch=('any')
 url='https://ivre.rocks/'
 license=('GPL3')
-makedepends=('git' 'python-setuptools' 'python2-setuptools')
+makedepends=('git')
 source=('git+https://github.com/cea-sec/ivre.git')
 sha512sums=('SKIP')
 
@@ -22,16 +21,18 @@ pkgver() {
 }
 
 prepare() {
-  cp -a ${pkgbase}{,-py2}
+  cp -a $pkgbase{,-py2}
 }
 
 build() {
   (
     cd "$srcdir/$pkgbase"
+
     python setup.py build
   )
   (
     cd "$srcdir/$pkgbase-py2"
+
     python2 setup.py build
   )
 }
@@ -39,10 +40,11 @@ build() {
 package_ivre() {
   depends=('python-ivre')
   optdepends=('ivre-docs: Documentation'
+              'ivre-web: Web server'
               'nmap: Network scan'
               'masscan: Network scan'
               'zmap: Network scan'
-              'bro: Network traffic analysis'
+              'zeek: Network traffic analysis'
               'argus: Network traffic analysis'
               'nfdump: Netflow analysis'
               'imagemagick: Screenshots via Nmap scripts'
@@ -51,14 +53,14 @@ package_ivre() {
 
   cd "$srcdir/$pkgbase"
 
-  python setup.py install --root="${pkgdir}" --prefix=/usr --optimize=1
+  python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
 
-  rm -r "${pkgdir}/usr/lib" \
-    "${pkgdir}/usr/share/doc" \
-    "${pkgdir}/usr/share/ivre/dokuwiki" \
-    "${pkgdir}/usr/share/ivre/web"
+  rm -r "$pkgdir/usr/lib" \
+     "$pkgdir/usr/share/doc" \
+     "$pkgdir/usr/share/ivre/dokuwiki" \
+     "$pkgdir/usr/share/ivre/web"
 
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" doc/LICENSE*
+  install -Dm0644 -t "$pkgdir/usr/share/licenses/$pkgname/" doc/license*
 }
 
 package_ivre-docs() {
@@ -66,11 +68,13 @@ package_ivre-docs() {
 
   cd "$srcdir/$pkgbase"
 
-  python setup.py install --root="${pkgdir}" --prefix=/usr --optimize=1
+  python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
 
-  rm -r "${pkgdir}/usr/bin" "${pkgdir}/usr/lib" \
-    "${pkgdir}/usr/share/ivre" \
-    "${pkgdir}/etc/bash_completion.d"
+  cp README.md "$pkgdir/usr/share/doc/ivre/"
+  mv "$pkgdir/usr/share/ivre/web/static/doc" "$pkgdir/usr/share/doc/ivre/html"
+  rm -r "$pkgdir/usr/bin" "$pkgdir/usr/lib" \
+     "$pkgdir/usr/share/ivre" \
+     "$pkgdir/etc/bash_completion.d"
 }
 
 package_ivre-web() {
@@ -83,20 +87,20 @@ package_ivre-web() {
 
   cd "$srcdir/$pkgbase"
 
-  python setup.py install --root="${pkgdir}" --prefix=/usr --optimize=1
+  python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
 
-  rm -r "${pkgdir}/usr/bin" "${pkgdir}/usr/lib" \
-    "${pkgdir}/usr/share/doc" \
-    "${pkgdir}/usr/share/ivre/bro" \
-    "${pkgdir}/usr/share/ivre/data" \
-    "${pkgdir}/usr/share/ivre/docker" \
-    "${pkgdir}/usr/share/ivre/geoip" \
-    "${pkgdir}/usr/share/ivre/honeyd" \
-    "${pkgdir}/usr/share/ivre/nmap_scripts" \
-    "${pkgdir}/etc/bash_completion.d"
+  rm -r "$pkgdir/usr/bin" "$pkgdir/usr/lib" \
+     "$pkgdir/usr/share/doc" \
+     "$pkgdir/usr/share/ivre/bro" \
+     "$pkgdir/usr/share/ivre/data" \
+     "$pkgdir/usr/share/ivre/docker" \
+     "$pkgdir/usr/share/ivre/geoip" \
+     "$pkgdir/usr/share/ivre/honeyd" \
+     "$pkgdir/usr/share/ivre/nmap_scripts" \
+     "$pkgdir/etc/bash_completion.d"
 
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" doc/LICENSE*
-  install -Dm 644 "pkg/apache/ivre.conf" "$pkgdir/etc/httpd/conf/extra/ivre.conf"
+  install -Dm0644 -t "$pkgdir/usr/share/licenses/$pkgname/" doc/license*
+  install -Dm0644 "pkg/apache/ivre.conf" "$pkgdir/etc/httpd/conf/extra/ivre.conf"
 }
 
 package_python-ivre() {
@@ -117,13 +121,13 @@ package_python-ivre() {
 
   cd "$srcdir/$pkgbase"
 
-  python setup.py install --root="${pkgdir}" --prefix=/usr --optimize=1
+  python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
 
-  rm -r "${pkgdir}/usr/bin" \
-    "${pkgdir}/usr/share" \
-    "${pkgdir}/etc/bash_completion.d"
+  rm -r "$pkgdir/usr/bin" \
+     "$pkgdir/usr/share" \
+     "$pkgdir/etc/bash_completion.d"
 
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" doc/LICENSE*
+  install -Dm0644 -t "$pkgdir/usr/share/licenses/$pkgname/" doc/license*
 }
 
 package_python2-ivre() {
@@ -144,12 +148,12 @@ package_python2-ivre() {
 
   cd "$srcdir/$pkgbase-py2"
 
-  python2 setup.py install --root="${pkgdir}" --prefix=/usr --optimize=1
+  python2 setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
 
-  rm -r "${pkgdir}/usr/bin" \
-    "${pkgdir}/usr/share" \
-    "${pkgdir}/etc/bash_completion.d"
+  rm -r "$pkgdir/usr/bin" \
+     "$pkgdir/usr/share" \
+     "$pkgdir/etc/bash_completion.d"
 
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" doc/LICENSE*
+  install -Dm0644 -t "$pkgdir/usr/share/licenses/$pkgname/" doc/license*
 }
 
