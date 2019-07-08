@@ -1,0 +1,29 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=omi
+pkgver=1.6.0
+pkgrel=1
+pkgdesc='Open Management Infrastructure.'
+arch=('i686' 'x86_64')
+url='https://github.com/Microsoft/omi'
+license=('MIT')
+depends=('openssl' 'pam')
+source=("https://github.com/microsoft/omi/releases/download/v${pkgver}/omi-${pkgver}-0.ssl_110.ulinux.x64.deb")
+sha512sums=('ea34c898b386fcc210c58e48b6621abe84ca4eb63aae95724074a03e76cd635d514e7e080d9b69e64ec78beee268ef839c88366d92c9afb8eff82e43cf36774e')
+
+pkgver() {
+  ver=$(curl -s -D- 'https://github.com/microsoft/omi/releases/latest' |
+  sed -n 's#Location:.*/tag/##p' | sed 's/v//' | tr -d '\n\r')
+
+  echo $ver
+}
+
+package() {
+  tar xvzf data.tar.gz -C "${pkgdir}"
+  mkdir -p ${pkgdir}/usr/bin/
+  for b in "${pkgdir}"/opt/omi/bin/*; do
+    ln -s /opt/omi/bin/$(basename $b) "${pkgdir}"/usr/bin/$(basename $b)
+  done
+}
+
