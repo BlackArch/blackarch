@@ -2,40 +2,35 @@
 # See COPYING for license details.
 
 pkgname=dirble
-pkgver=186.c1b7237
+pkgver=1.4.2
 pkgrel=1
+epoch=1
 pkgdesc='Fast directory scanning and scraping tool.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/nccgroup/dirble'
-license=('MIT')
-makedepends=('git' 'cargo' 'rust')
-source=('git+https://github.com/nccgroup/dirble.git')
+license=('GPL3')
+makedepends=('cargo')
+depends=('curl')
+source=("$pkgname::https://github.com/nccgroup/dirble/archive/v$pkgver.tar.gz")
 sha512sums=('SKIP')
 
-pkgver() {
-  cd $pkgname
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
 
 build() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
-  make
+  cargo build --release
 }
 
 package() {
-  cd $pkgname
-
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  cd "$pkgname-$pkgver"
 
   install -Dm 755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm -rf src target *.md LICENSE Cargo.lock Cargo.toml Makefile
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 dirble_wordlist.txt "$pkgdir/usr/share/$pkgname/dirble_wordlist.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/extensions/" extensions/*
 }
 
