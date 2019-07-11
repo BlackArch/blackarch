@@ -1,41 +1,42 @@
-
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
 pkgname=phonesploit
-pkgver=1.2
+pkgver=51.0193f9e
 pkgrel=1
 pkgdesc='Adb exploiting tools.'
-arch=('x86_64')
+arch=('any')
 groups=('blackarch' 'blackarch-mobile')
 url='https://github.com/metachar/PhoneSploit'
 license=('custom:unknown')
-depends=('python2' 'android-tools' 'python2-colorama')
+depends=('python2' 'python2-colorama' 'android-tools')
 makedepends=('git')
 source=("git+https://github.com/metachar/$pkgname.git")
 sha512sums=('SKIP')
 
-prepare() {
+pkgver() {
   cd $pkgname
-  rm adb.rar
-  rm -r install
-  mv main_linux.py $pkgname.py
-  find .  -not -name "$pkgname.py" -delete
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-    cd $pkgname
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/docs/$pkgname/" README.md
+
+  rm README.md
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname
-exec python2 $pkgname.py "\$@"
+exec python2 /usr/share/$pkgname/main_linux.py "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
