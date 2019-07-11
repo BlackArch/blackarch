@@ -2,28 +2,41 @@
 # See COPYING for license details.
 
 pkgname=omi
-pkgver=1.6.0
-pkgrel=1
+pkgver=1.6.2.0.r37.g4ad2292
+pkgrel=2
 pkgdesc='Open Management Infrastructure.'
-arch=('i686' 'x86_64')
+arch=('x86_64')
 url='https://github.com/Microsoft/omi'
 license=('MIT')
-depends=('openssl' 'pam')
-source=("https://github.com/microsoft/omi/releases/download/v${pkgver}/omi-${pkgver}-0.ssl_110.ulinux.x64.deb")
-sha512sums=('ea34c898b386fcc210c58e48b6621abe84ca4eb63aae95724074a03e76cd635d514e7e080d9b69e64ec78beee268ef839c88366d92c9afb8eff82e43cf36774e')
+depends=('bind-tools' 'inetutils' 'krb5' 'lsb-release' 'openssl' 'pam-krb5' 'pam')
+makedepends=('git')
+source=('git+https://github.com/Microsoft/Build-omi.git'
+  'git://github.com/microsoft/omi'
+  'git://github.com/microsoft/pal'
+)
+sha512sums=('SKIP' 'SKIP' 'SKIP')
 
 pkgver() {
-  ver=$(curl -s -D- 'https://github.com/microsoft/omi/releases/latest' |
-  sed -n 's#Location:.*/tag/##p' | sed 's/v//' | tr -d '\n\r')
+  cd 'Build-omi'
+  git describe --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
 
-  echo $ver
+prepare() {
+  cd 'Build-omi'
+  git submodule init
+  git config submodule.omi.url $srcdir/omi
+  git config submodule.pal.url $srcdir/pal
+  git submodule update
 }
 
 package() {
-  tar xvzf data.tar.gz -C "${pkgdir}"
-  mkdir -p ${pkgdir}/usr/bin/
-  for b in "${pkgdir}"/opt/omi/bin/*; do
-    ln -s /opt/omi/bin/$(basename $b) "${pkgdir}"/usr/bin/$(basename $b)
+  cd 'Build-omi/omi/Unix/'
+  ./configure --prefix='/opt/omi'
+  make
+  make DESTDIR="$pkgdir" INSTALL_ROOT="$pkgdir" install
+  mkdir -p $pkgdir/usr/bin/
+  for b in "$pkgdir"/opt/omi/bin/*; do
+    ln -s /opt/omi/bin/$(basename $b) "$pkgdir"/usr/bin/$(basename $b)
   done
 }
 
