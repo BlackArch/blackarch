@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-antlerinator
+pkgname=('python2-antlerinator' 'python-antlerinator')
+_pkgname=antlerinator
+pkgver=4.7.2
+pkgrel=1
+pkgdesc='Python utility package to help keeping components of ANTLR v4 in sync.'
+arch=('any')
+url='https://pypi.org/project/antlerinator/#files'
+license=('BSD')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/58/13/ef0550f09eb1abb9dc00b5007efe117a74b318ca0d10c9aab47fc33a7612/$_pkgname-$pkgver.tar.gz")
+sha512sums=('e482ec5fadd62de25ef3ceb989941fd3a0032348458db6fad95f9240ad99e824f9f939aef24dbc7d71fcd30b805a1ef999a6a888ab81383402c3c5ee993d9116')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-antlerinator() {
+  depends=('python2' 'python2-typing')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/$pkgname-install" "$pkgdir/usr/bin/$pkgname-install2"
+}
+
+package_python-antlerinator() {
+  depends=('python' 'python-typing')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
