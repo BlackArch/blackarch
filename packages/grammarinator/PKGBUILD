@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=grammarinator
+pkgver=88.e0e3204
+pkgrel=1
+pkgdesc='A random test generator / fuzzer that creates test cases according to an input ANTLR v4 grammar.'
+groups=('blackarch' 'blackarch-fuzzer' 'blackarch-misc')
+arch=('any')
+url='https://github.com/renatahodovan/grammarinator'
+license=('MIT')
+depends=('python' 'autopep8' 'python-antlerinator'
+         'python-antlr4-python3-runtime')
+makedepends=('git')
+source=("git+https://github.com/renatahodovan/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i 's|antlerinator==4.7.1-1|antlerinator|g' setup.py
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst RELNOTES.rst
+  install -Dm 644 LICENSE.rst "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
