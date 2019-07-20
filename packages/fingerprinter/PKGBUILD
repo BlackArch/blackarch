@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=fingerprinter
+pkgver=414.34dfd45
+pkgrel=1
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-webapp')
+pkgdesc='CMS/LMS/Library etc Versions Fingerprinter.'
+arch=('any')
+url='https://github.com/erwanlr/Fingerprinter'
+license=('custom:unknown')
+depends=('ruby' 'ruby-pkg-config' 'libxslt')
+makedepends=('git' 'ruby-bundler')
+source=("$pkgname::git+https://github.com/erwanlr/Fingerprinter.git")
+install="$pkgname.install"
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+
+  rm README.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ruby "$pkgname.rb" "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
