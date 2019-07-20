@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=httprobe
+pkgver=14.0b9bce2
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='Take a list of domains and probe for working HTTP and HTTPS servers'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/tomnomnom/httprobe'
+license=('custom:unknown')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/tomnomnom/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  mkdir -p "src/$url" && rm -rf "src/$url" && mv $pkgname "src/$url" &&
+    cd "src/$url"
+
+  GOPATH="$srcdir" go get -d -t $url
+}
+
+package() {
+  install -dm 755 "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v $url
+
+  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/README.md" \
+    "src/$url/README.md"
+}
+
