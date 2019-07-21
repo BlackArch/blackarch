@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=badministration
+pkgver=10.e70911d
+pkgrel=1
+pkgdesc='A tool which interfaces with management or administration applications from an offensive standpoint.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner'
+        'blackarch-recon' 'blackarch-fingerprint')
+arch=('any')
+url='https://github.com/ThunderGunExpress/BADministration'
+license=('custom:unknonwn')
+depends=('python2' 'python2-prettytable' 'python2-pyfiglet' 'python2-click'
+         'python2-requests' 'python2-termcolor' 'python2-orionsdk')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/ThunderGunExpress/BADministration.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 BADministration.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
