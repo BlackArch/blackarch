@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=torcrawl
+pkgver=54.9771cd6
+pkgrel=1
+pkgdesc='Crawl and extract (regular or onion) webpages through TOR network.'
+arch=('any')
+groups=('blackarch' 'blackarch-automation' 'blackarch-misc')
+url='https://github.com/MikeMeliz/TorCrawl.py'
+license=('GPL')
+depends=('python2' 'python2-argparse' 'python2-beautifulsoup4' 'python2-requests'
+         'python2-socks' 'python2-urllib3' 'tor')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/MikeMeliz/TorCrawl.py.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  # use, if no version string provided neither in sources nor in git describe:
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" LICENSE
+
+  rm requirements.txt README.md LICENSE
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

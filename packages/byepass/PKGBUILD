@@ -1,0 +1,71 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=byepass
+pkgver=197.b48b64a
+pkgrel=2
+pkgdesc='Automates password cracking tasks using optimized dictionaries and mangling rules.'
+arch=('any')
+groups=('blackarch' 'blackarch-cracker' 'blackarch-automation')
+url='https://github.com/webpwnized/byepass'
+license=('custom:unknown')
+depends=('john' 'python' 'python-argparse' 'unzip')
+makedepends=('git')
+source=("git+https://github.com/webpwnized/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  cd passwords/
+  ./unpackage-passwords.sh
+  cd ..
+
+  sed -ri '1 i\\#\!\/usr\/bin\/python' $pkgname.py passtime.py
+
+  gawk -i inplace -v johnpath="$(which john)" \
+    '{ gsub(/^JTR_EXECUTABLE_FILE_PATH.*/, "JTR_EXECUTABLE_FILE_PATH = \""\
+johnpath "\"") ; print }' config.py
+  gawk -i inplace '{ gsub(/^JTR_POT_FILE_PATH.*/, "JTR_POT_FILE_PATH = \""\
+ENVIRON["HOME"] "/.john/john.pot\"") ; print }' config.py
+
+  gawk -i inplace '{ gsub(/^# End of john/, "# Byepass rules\n.include \
+\"/usr/share/byepass/rules/byepass.conf\"\n.include \
+\"/usr/share/byepass/rules/OneRuleToRuleThemAll.rule\"\n.include \
+\"/usr/share/byepass/rules/Best126.rule\"\n\n" $0) ; print }' config.py
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md *.txt
+
+  rm -r *.md *.txt scripts/
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python3 $pkgname.py "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/passtime" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python3 passtime.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+  chmod +x "$pkgdir/usr/bin/passtime"
+}
+
