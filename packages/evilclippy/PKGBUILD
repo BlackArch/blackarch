@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=evilclippy
+pkgver=43.af5b5c7
+pkgrel=1
+pkgdesc='A cross-platform assistant for creating malicious MS Office documents.'
+arch=('any')
+groups=('blackarch' 'blackarch-automation' 'blackarch-exploitation')
+url='https://github.com/outflanknl/EvilClippy'
+license=('custom:unknown')
+depends=('mono')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/outflanknl/EvilClippy.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  mcs /reference:OpenMcdf.dll,System.IO.Compression.FileSystem.dll \
+   /out:EvilClippy.exe *.cs
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname" EvilClippy.exe
+
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname" OpenMcdf.dll
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+mono EvilClippy.exe "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
