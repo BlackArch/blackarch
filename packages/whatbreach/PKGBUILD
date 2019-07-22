@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=whatbreach
+pkgver=32.8a82d96
+pkgrel=1
+pkgdesc='OSINT tool to find breached emails and databases.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon' 'blackarch-social')
+url='https://github.com/ekultek/whatbreach'
+license=('custom:unknown')
+depends=('python' 'python-arrow' 'python-argparse' 'python-beautifulsoup4'
+         'python-requests')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/Ekultek/WhatBreach.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+  sed -ri 's/print e/print(e)/g' hookers/emailrep_io_hook.py
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+
+  rm README.md requirements.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
