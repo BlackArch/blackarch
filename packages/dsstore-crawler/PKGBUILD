@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=dsstore-crawler
+pkgver=VERSION
+pkgrel=1
+pkgdesc='A parser + crawler for .DS_Store files exposed publically.'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp')
+url='https://github.com/anantshri/DS_Store_crawler_parser'
+license=('Apache')
+depends=('python' 'python-argparse' 'python-ds-store' 'python-mac-alias')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/anantshri/DS_Store_crawler_parser.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" *.py
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" LICENSE
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+python dsstore_crawler.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
