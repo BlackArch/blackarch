@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=intensio-obfuscator
+pkgver=165.fadb922
+pkgrel=1
+pkgdesc='Obfuscate a python code 2 and 3.'
+arch=('any')
+groups=('blackarch' 'blackarch-automation')
+url='https://github.com/Hnfull/Intensio-Obfuscator'
+license=('MIT')
+depends=('python' 'python-tqdm' 'python-colorama')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/Hnfull/Intensio-Obfuscator.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  cp -a --no-preserve=ownership docs/ "$pkgdir/usr/share/doc/$pkgname/"
+  cp -a --no-preserve=ownership intensio/* "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python3 intensio_obfuscator.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
