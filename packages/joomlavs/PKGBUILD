@@ -3,22 +3,28 @@
 
 pkgname=joomlavs
 pkgver=254.eea7500
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
 pkgdesc='A black box, Ruby powered, Joomla vulnerability scanner.'
 arch=('any')
 url='https://github.com/rastating/joomlavs'
 license=('GPL3')
-depends=('ruby2.3' 'ruby2.3-bundler')
+depends=('ruby' 'ruby-bundler' 'libxslt')
 makedepends=('git')
-source=('git+https://github.com/rastating/joomlavs.git')
+source=('git+https://github.com/rastating/joomlavs.git'
+        'gemfile.patch')
 install="$pkgname.install"
-sha512sums=('SKIP')
+sha512sums=('SKIP'
+            'c5a47c38ca04a1bafa83f412db6cef594bee8b0ee3033632aaf9de6114d8d7f0fae42a81da477bc41b81f43fb3ff420cce6793800fad9d278119dfa19b50a0c6')
 
 pkgver() {
   cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare(){
+  patch -p1 < gemfile.patch
 }
 
 package() {
@@ -37,7 +43,7 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec ruby-2.3 $pkgname.rb "\$@"
+bundle exec ./$pkgname.rb "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
