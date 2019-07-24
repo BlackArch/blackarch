@@ -3,15 +3,16 @@
 
 pkgname=hoper
 pkgver=12.3951159
-pkgrel=1
+pkgrel=2
 pkgdesc="Trace URL's jumps across the rel links to obtain the last URL."
 groups=('blackarch' 'blackarch-recon')
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://github.com/gabamnml/hoper'
 license=('MIT')
-depends=('ruby2.3')
+depends=('ruby' 'ruby-bundler' 'libxslt')
 makedepends=('git')
 source=('git+https://github.com/gabamnml/hoper.git')
+install="$pkgname.install"
 sha512sums=('SKIP')
 
 pkgver() {
@@ -20,17 +21,34 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  sed -i 's|#!/usr/bin/env ruby -wU|#!/usr/bin/env ruby|g' "exe/$pkgname"
+
+  sed -i 's|"bundler", "~> 1.12"|"bundler"|g' "$pkgname.gemspec"
+  sed -i 's|"rake", "~> 1.10.0"|"bundler"|g' "$pkgname.gemspec"
+}
+
 package() {
   cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-	_gemdir="$(ruby-2.3 -e'puts Gem.default_dir')"
-
-	gem-2.3 install --no-user-install -n "$pkgdir/usr/bin" -i "$pkgdir/$_gemdir" \
-    hoper
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
   install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm *.md LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bundle exec ./exe/$pkgname "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
