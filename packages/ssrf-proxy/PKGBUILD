@@ -3,17 +3,19 @@
 
 pkgname=ssrf-proxy
 pkgver=293.e79da7a
-pkgrel=8
+pkgrel=9
 pkgdesc='Facilitates tunneling HTTP communications through servers vulnerable to Server-Side Request Forgery.'
 groups=('blackarch' 'blackarch-proxy' 'blackarch-tunnel')
 arch=('any')
 url='https://github.com/bcoles/ssrf_proxy'
 license=('MIT')
-depends=('ruby2.3' 'ruby2.3-bundler')
+depends=('ruby' 'ruby-bundler' 'libxslt')
 makedepends=('git' 'ruby-rdoc')
-source=("$pkgname::git+https://github.com/bcoles/ssrf_proxy.git")
+source=("$pkgname::git+https://github.com/bcoles/ssrf_proxy.git"
+        'ssrf_proxy.gemspec.patch')
 install="$pkgname.install"
-sha512sums=('SKIP')
+sha512sums=('SKIP'
+            '201628bf889fc680ef5271b808ebdc27539815d0ff206b538c585ad8eaa3a60427debf130ed35268a107daf872c147132035fea0e29f54528bc86bd5a0a11178')
 
 pkgver() {
   cd $pkgname
@@ -22,15 +24,7 @@ pkgver() {
 }
 
 prepare() {
-  cd $pkgname
-
-  #sed -i "s|require 'ssrf-proxy'|require 'ssrf_proxy'|" bin/ssrf-proxy
-}
-
-build() {
-  cd $pkgname
-
-  gem-2.3 build ssrf_proxy.gemspec
+  patch -p1 < ssrf_proxy.gemspec.patch
 }
 
 package() {
@@ -38,11 +32,6 @@ package() {
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  _gemdir="$(ruby-2.3 -e'puts Gem.default_dir')"
-
-  gem-2.3 install --ignore-dependencies --no-user-install -n "$pkgdir/usr/bin" \
-    -i "$pkgdir/$_gemdir" ssrf_proxy*.gem
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
   install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
@@ -52,9 +41,11 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec ruby-2.3 bin/$pkgname "\$@"
+exec bundle exec ./bin/$pkgname "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
+
+  touch "$pkgdir/usr/share/$pkgname/Gemfile.lock"
 }
 
