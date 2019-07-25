@@ -2,21 +2,19 @@
 # See COPYING for license details.
 
 pkgname=dradis-ce
-pkgver=857.692d172
+pkgver=2120.4af716ac
 pkgrel=1
 pkgdesc='An open source framework to enable effective information sharing.'
 groups=('blackarch' 'blackarch-recon' 'blackarch-misc')
 url='http://dradisframework.org/'
 license=('GPL')
-depends=('ruby2.3' 'ruby2.3-bundler' 'git')
+depends=('ruby' 'ruby-bundler' 'git' 'libxslt' 'mariadb-libs')
 makedepends=('git')
 arch=('any')
-source=("git+https://github.com/dradis/dradis-ce.git"
-        "dradis-ce.patch"
-        "dradis-ce.sysusers.conf")
-install="dradis-ce.install"
+source=("git+https://github.com/dradis/$pkgname.git"
+        "$pkgname.sysusers.conf")
+install="$pkgname.install"
 sha512sums=('SKIP'
-            'f8d219a42ffd6f4166d50204830fa6e14fce461f78372659b9ef6d6548d8ddef2b939a5147bc1f5783192386645d0cd932ba70ab4a2620bcdae0405906a4619f'
             '104c3f6d2dcdc5cd02092ad16783dcd1907ff8fba95c87db609fe5c7307ca4fd97730b5117d6db78d9fd9273c4fd5c963b7d404d08cb8615f3a9fe3864f16c95')
 
 pkgver() {
@@ -28,7 +26,7 @@ pkgver() {
 prepare() {
   cd $pkgname
 
-  patch -p1 -i ../dradis-ce.patch
+  #patch -p1 -i ../dradis-ce.patch
 }
 
 package() {
@@ -39,14 +37,19 @@ package() {
   install -m 644 "dradis-ce.sysusers.conf"\
     "$pkgdir/usr/lib/sysusers.d/dradis-ce.conf"
 
-  cp -a "dradis-ce" "$pkgdir/usr/share/$pkgname/"
+  cp -a $pkgname "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec bundle-2.3 exec rails server "\$@"
+exec bundle exec rails server "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
+
+  cp "$pkgdir/usr/share/$pkgname/config/database.yml.template" \
+    "$pkgdir/usr/share/$pkgname/config/database.yml"
+  cp "$pkgdir/usr/share/$pkgname/config/secrets.yml.template" \
+    "$pkgdir/usr/share/$pkgname/config/secrets.yml"
 }
 
