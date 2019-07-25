@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-stix2-patterns
+pkgname=('python2-stix2-patterns' 'python-stix2-patterns')
+_pkgname=cti-pattern-validator
+pkgver=1.1.0
+pkgrel=1
+pkgdesc='Validate STIX 2 Patterns.'
+url='https://github.com/oasis-open/cti-pattern-validator'
+license=('BSD3')
+arch=('any')
+makedepends=('git' 'python2-setuptools' 'python-setuptools')
+source=("https://github.com/oasis-open/cti-pattern-validator/archive/v${pkgver}.tar.gz")
+sha512sums=('32c3b90402cdf42bc2f0da9523b59fc134cba23dead56ce573b705b12a6c4bc42f42e947792f8ce415f6a8a346747489c4763587627a873b84438fdc9ab9b83c')
+
+pkgver() {
+  git ls-remote --sort=v:refname -t --refs "$url" 'v*' \
+  | sed -e 's/.*v//' -e '$!d'
+}
+
+# prepare() {
+#   cp -a "$_pkgname-$pkgver"{,-2}
+# }
+
+build() {
+  # cd "$_pkgname-$pkgver-2"
+  # python2 setup.py build
+  cd "$srcdir/$_pkgname-$pkgver"
+  python setup.py build
+}
+
+package_python2-stix2-patterns() {
+  # TODO: Missing 'community/python2-antlr4'
+  :
+}
+
+package_python-stix2-patterns() {
+  depends=('python' 'python-antlr4' 'python-six' 'python-typing')
+  cd "$_pkgname-$pkgver"
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
