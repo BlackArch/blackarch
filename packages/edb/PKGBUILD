@@ -2,25 +2,37 @@
 # See COPYING for license details.
 
 pkgname=edb
-pkgver=1.0.0
+pkgver=2911.f5e0bce1
 pkgrel=1
 groups=('blackarch' 'blackarch-debugger' 'blackarch-reversing')
-pkgdesc='A QT4-based binary mode debugger with the goal of having usability on par with OllyDbg.'
+pkgdesc='A cross platform AArch32/x86/x86-64 debugger.'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
-url='http://www.codef00.com/projects.php#Debugger'
+url='https://github.com/eteran/edb-debugger/'
 license=('GPL2')
 depends=('qt5-xmlpatterns' 'capstone' 'graphviz' 'qt5-svg')
-makedepends=('boost>=1.35.0' 'cmake')
+makedepends=('boost>=1.35.0' 'cmake' 'git')
 install='edb.install'
 conflicts=('edb-debugger')
 provides=('edb-debugger')
-source=("https://github.com/eteran/edb-debugger/releases/download/$pkgver/edb-debugger-$pkgver.tgz"
+source=("$pkgname::git+https://github.com/eteran/edb-debugger.git"
         'edb.desktop')
-sha512sums=('d15a3d167b90b70227f273c416eae56f7ad174daae608081364284021c7da7aecb6cb42f9c5bcd85f9df70f07cba213d8345ef9d62e8d13c79e7edede38a04a9'
+sha512sums=('SKIP'
             '17c435c51faae2d47e1dcebadb366df33cdc19bb696e552efdb0e9cf97f44a7ee4e0cae4eb3409839b5cbb030e136987186b54b2592387b64eea8bbb7777396a')
 
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  git submodule update --init --recursive
+}
+
 build() {
-  cd "$pkgname-debugger-$pkgver"
+  cd $pkgname
 
   mkdir -p build
 
@@ -32,7 +44,7 @@ build() {
 }
 
 package() {
-  cd "$pkgname-debugger-$pkgver"
+  cd $pkgname
 
   cd build
 
