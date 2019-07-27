@@ -3,7 +3,7 @@
 
 pkgname=dshell
 pkgver=142.695c891
-pkgrel=2
+pkgrel=1
 pkgdesc='A network forensic analysis framework.'
 groups=('blackarch' 'blackarch-forensic' 'blackarch-networking')
 arch=('any')
@@ -43,19 +43,18 @@ package() {
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  cp -a --no-preserve=ownership "$srcdir/.dshellrc" * \
-    "$pkgdir/usr/share/$pkgname/"
-
   rm .dshellrc dshell dshell-decode LICENSE.txt \
     Makefile README.md install-ubuntu.py bin/decode
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cp --no-preserve=ownership "${srcdir}/.dshellrc" "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
 exec /bin/bash --rcfile "/usr/share/$pkgname/.${pkgname}rc"
 EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
 
   cat > "$pkgdir/usr/bin/$pkgname-decode" << EOF
 #!/bin/sh
@@ -64,6 +63,7 @@ source "/usr/share/$pkgname/.${pkgname}rc"
 exec python2 bin/decode.py "\$@"
 EOF
 
+  chmod +x "$pkgdir/usr/bin/$pkgname"
   chmod +x "$pkgdir/usr/bin/$pkgname-decode"
 }
 
