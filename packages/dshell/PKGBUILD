@@ -1,0 +1,68 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=dshell
+pkgver=142.695c891
+pkgrel=1
+pkgdesc='A network forensic analysis framework.'
+groups=('blackarch' 'blackarch-forensic' 'blackarch-networking')
+arch=('any')
+url='https://github.com/USArmyResearchLab/Dshell'
+license=('custom:unknown')
+depends=('elasticsearch' 'geoip' 'python2' 'python2-dpkt'
+         'python2-elasticsearch' 'python2-geoip' 'python2-ipy' 'python2-pypcap')
+makedepends=('git' 'python2' 'python2-dpkt' 'python2-elasticsearch' 'python2-ipy')
+source=("$pkgname::git+https://github.com/USArmyResearchLab/Dshell.git"
+        '.dshellrc')
+sha512sums=('SKIP'
+            '1b47bc0572a662a13c83f85457c502884426fedc178ce71c5cd529a43796fa47b82fe4d472e312e63e1f865c4c8345d4ee7ed59476e5bff8ddb7c4a93a7d6bb1')
+
+prepare() {
+  cd $pkgname
+
+  sed 's|python|python2|g' -i Makefile
+  sed 's|/usr/bin/python|/usr/bin/python2|g' \
+    -i bin/*.py decoders/*/*.py lib/*.py
+  sed 's|#!/usr/bin/env python|#!/usr/bin/env python2|g' \
+    -i bin/*.py decoders/*/*.py lib/*.py
+  sed 's|pydoc|pydoc2|g' -i doc/generate-doc.sh
+}
+
+build() {
+  cd $pkgname
+
+  make
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm dshell dshell-decode LICENSE.txt Makefile \
+    README.md install-ubuntu.py bin/decode
+
+  cp -a --no-preserve=ownership "${srcdir}/.dshellrc" * \
+    "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec /bin/bash --rcfile "/usr/share/$pkgname/.${pkgname}rc"
+EOF
+
+  cat > "$pkgdir/usr/bin/$pkgname-decode" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+source "/usr/share/$pkgname/.${pkgname}rc"
+exec python2 bin/decode.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+  chmod +x "$pkgdir/usr/bin/$pkgname-decode"
+}
+
