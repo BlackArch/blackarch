@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=usbrip
+pkgver=192.ba5e503
+pkgrel=1
+pkgdesc='USB device artifacts tracker.'
+groups=('blackarch' 'blackarch-forensic')
+arch=('any')
+url='https://github.com/snovvcrash/usbrip'
+license=('GPL3')
+depends=('python' 'python-termcolor' 'python-terminaltables' 'python-wheel')
+makedepends=('git' 'python-pip' 'python-setuptools')
+source=("$pkgname::git+https://github.com/snovvcrash/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed '150d' -i setup.py
+}
+
+build() {
+  cd "$pkgname"
+
+  python setup.py build
+}
+
+package() {
+  cd "$pkgname"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
