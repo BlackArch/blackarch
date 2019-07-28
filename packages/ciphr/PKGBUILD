@@ -3,16 +3,17 @@
 
 pkgname=ciphr
 pkgver=127.5da7137
-_gemver='0.0.1'
-pkgrel=1
+_gemver='0.0.6'
+pkgrel=2
 pkgdesc='A CLI tool for encoding, decoding, encryption, decryption, and hashing streams of data.'
 groups=('blackarch' 'blackarch-crypto')
 url='https://github.com/frohoff/ciphr'
 arch=('any')
 license=('MIT')
-depends=('ruby' 'ruby-parslet' 'ruby-base32' 'ruby-slop')
+depends=('ruby')
 makedepends=('git' 'ruby-bundler')
 source=('git+https://github.com/frohoff/ciphr.git')
+install="$pkgname.install"
 sha256sums=('SKIP')
 
 pkgver() {
@@ -21,23 +22,31 @@ pkgver() {
   echo $(git rev-list --count master).$(git rev-parse --short master)
 }
 
-build() {
+prepare() {
   cd $pkgname
 
-  bundle install --path=bundle
-  bundle exec rake build
+  sed -i 's|"bundler", "~> 1.3"|"bundler"|g' "$pkgname.gemspec"
 }
 
 package() {
   cd $pkgname
 
-  local _gemdir="$(ruby -e'puts Gem.default_dir')"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/"
 
-  gem install --ignore-dependencies --no-user-install -i "$pkgdir/$_gemdir" \
-    -n "$pkgdir/usr/bin" pkg/ciphr-${_gemver}.gem
-
-  rm "$pkgdir/$_gemdir/cache/ciphr-${_gemver}.gem"
-
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md TODO
   install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bundle exec ./bin/$pkgname "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
