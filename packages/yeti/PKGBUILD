@@ -1,0 +1,67 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=yeti
+pkgver=2052.385b7885
+pkgrel=1
+pkgdesc='A platform meant to organize observables, indicators of compromise, TTPs, and knowledge on threats in a single, unified repository.'
+groups=('blackarch' 'blackarch-defensive' 'blackarch-recon')
+arch=('any')
+url='https://github.com/yeti-platform/yeti'
+license=('APACHE')
+depends=('python2' 'python2-chardet' 'python2-click' 'python2-click-plugins'
+         'python2-colorama' 'python2-cssselect' 'python2-dnspython'
+         'python2-docutils' 'python2-flask' 'python2-flask-classy' 'python2-pytz'
+         'python2-flask-login' 'python2-flask-mongoengine' 'python2-pyopenssl'
+         'python2-flask-negotiation' 'python2-flask-wtf' 'python2-future'
+         'python2-geoip2' 'python2-python-whois' 'python2-html2text'
+         'python2-idna' 'python2-imagesize' 'python2-ipaddr' 'python2-iptools'
+         'python2-ipwhois' 'python2-itsdangerous' 'python2-jinja'
+         'python2-kombu' 'python2-libmagic' 'python2-lxml' 'python2-maclookup'
+         'python2-markupsafe' 'python2-maxminddb' 'python2-mongoengine'
+         'python2-packaging' 'python2-pdfkit' 'python2-psutil' 'python2-celery'
+         'python2-pdfminer' 'python2-pygments' 'python2-pymongo'
+         'python2-pyparsing' 'python2-pysocks' 'python2-dateutil'
+         'python2-shodan' 'python2-magic' 'python2-readability-lxml'
+         'python2-redis' 'python2-requests-file' 'python2-simplejson'
+         'python2-six' 'python2-sphinx' 'python2-snowballstemmer'
+         'python2-urllib3' 'python2-werkzeug' 'python2-sphinxcontrib-httpdomain'
+         'python2-sphinxcontrib-websupport' 'python2-sphinx-rtd-theme'
+         'python2-tldextract' 'python2-typing' 'python2-urlnorm' 'python2-vine'
+         'python2-wtforms' 'python2-xlsxwriter' 'python2-yara' 'mongodb' 'redis'
+         'libxslt' 'libxml2' 'wkhtmltopdf')
+makedepends=('git' 'yarn')
+source=("git+https://github.com/yeti-platform/$pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  yarn install --non-interactive
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm *.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
