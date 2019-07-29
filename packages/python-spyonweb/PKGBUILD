@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-spyonweb
+pkgname=('python2-spyonweb' 'python-spyonweb')
+_pkgname=spyonweb
+pkgver=10.a8a255a
+pkgrel=1
+pkgdesc='Python library to request crt.sh certificate information.'
+arch=('any')
+url='https://pypi.org/project/spyonweb/#files'
+license=('APACHE')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("git+https://github.com/Te-k/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cp -a "$_pkgname"{,-2}
+}
+
+build() {
+  cd "$_pkgname-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname"
+
+  python setup.py build
+}
+
+package_python2-spyonweb() {
+  depends=('python2' 'python2-configparser' 'python2-requests')
+
+  cd "$_pkgname-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
+}
+
+package_python-spyonweb() {
+  depends=('python' 'python-requests')
+
+  cd $_pkgname
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
