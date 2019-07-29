@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-pygreynoisev1
+pkgname=('python2-pygreynoisev1' 'python-pygreynoisev1')
+_pkgname=pygreynoisev1
+pkgver=0.1
+pkgrel=1
+pkgdesc='Python wrapper around the GreyNoise APO.'
+arch=('any')
+url='https://pypi.org/project/pygreynoisev1/#files'
+license=('MIT')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/69/5f/f0810604d1ea8145df9ff2a038e1d7dfa4a48d35ecf8af9b1f669686f067/$_pkgname-$pkgver.tar.gz")
+sha512sums=('5ddcd409387669d6ce5bc2c5feb1540194d70905dee7b0289cfdfd19e8e6cb3dbd5fecd6ed0c195fc2421e01b749b2264b218607cd9ed20cc47952dd70eeeb9b')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-pygreynoisev1() {
+  depends=('python2' 'python2-requests')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/greynoisev1" "$pkgdir/usr/bin/greynoisev1-2"
+}
+
+package_python-pygreynoisev1() {
+  depends=('python' 'python-requests')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
