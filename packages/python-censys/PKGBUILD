@@ -2,32 +2,49 @@
 # See COPYING for license details.
 
 pkgbase=python-censys
-pkgname=('python-censys' 'python2-censys')
+pkgname=('python2-censys' 'python-censys')
+_pkgname=censys
 pkgver=0.0.8
-pkgrel=3
+pkgrel=4
 pkgdesc='Python library for interacting with Censys Search Engine (censys.io).'
 arch=('any')
 url='https://pypi.org/project/censys/#files'
-license=('Apache2')
+license=('Apache')
 makedepends=('python2-setuptools' 'python-setuptools')
-source=("https://files.pythonhosted.org/packages/88/4b/3ca07679928c26bb5503b53c37e2f6eef2521289956e2c1bf74b64008afa/censys-$pkgver.tar.gz")
+source=("https://files.pythonhosted.org/packages/88/4b/3ca07679928c26bb5503b53c37e2f6eef2521289956e2c1bf74b64008afa/$_pkgname-$pkgver.tar.gz")
 sha512sums=('8cada1a6a1e631b6f7624db586a3d08a000bf2f66310a2fd9b39ff58969ef56822350c94b3f917e7260521d9104b9079e8889c58372e99657ef67a7420e0ce50')
 
-package_python-censys() {
-  depends=('python' 'python-requests' 'python-netaddr')
-  cd "censys-$pkgver"
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
 }
 
 package_python2-censys() {
   depends=('python2' 'python2-requests' 'python2-netaddr')
-  cd "censys-$pkgver"
+
+  cd "$_pkgname-$pkgver-2"
 
   python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
 
-  mv "$pkgdir/usr/bin/censys" "$pkgdir/usr/bin/censys2"
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
+}
+
+package_python-censys() {
+  depends=('python' 'python-requests' 'python-netaddr')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
 }
 
