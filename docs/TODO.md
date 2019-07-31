@@ -83,7 +83,7 @@ Just check out the following:
       semi-automate the tools updating part like we do for git-tools.
       [mrsmith0x00]
 
-  [ ] youtube
+  [.] youtube
       create / add initial videos: blackarch-installation (2 parts: online and
       from live-iso)
       [noptrix,?]
