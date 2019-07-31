@@ -3,26 +3,43 @@
 
 pkgname=dawnscanner
 pkgver=1.6.9
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
 pkgdesc='A static analysis security scanner for ruby written web applications.'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='https://rubygems.org/gems/dawnscanner'
 license=('MIT')
-depends=('ruby')
-makedepends=('ruby' 'ruby-rdoc')
+depends=('ruby' 'ruby-bundler' 'libxslt')
+makedepends=('tar')
 options=('!strip')
 source=("https://rubygems.org/downloads/$pkgname-$pkgver.gem")
 sha512sums=('2bb908145237d51c662872f64558a542badb9e4c795d119c99c2859a859b27e36daf84c2721c4013111cadb733b4594be9c1691e2693751a6801602b07b1fbee')
+install="$pkgname.install"
+
+prepare() {
+  mkdir -p $pkgname
+  tar xfz data.tar.gz -C $pkgname
+}
 
 package() {
+  cd $pkgname
+
   install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  local _gemdir="$(ruby -e'puts Gem.default_dir')"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  gem install --ignore-dependencies --no-user-install -n "$pkgdir"/usr/bin \
-    -i "$pkgdir/$_gemdir" "$pkgname-$pkgver.gem"
+  rm -rf *.md LICENSE.txt
 
-  rm -f "$pkgdir"/usr/bin/{cvss,haml,ruby_parse,ruby_parse_extract_error,tilt}
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bundle exec ./bin/dawn "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
