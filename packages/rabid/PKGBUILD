@@ -1,0 +1,32 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=rabid
+_gemname=rabid
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='A CLI tool and library allowing to simply decode all kind of BigIP cookies.'
+arch=('any')
+url='https://orange-cyberdefense.github.io/rabid/'
+license=('MIT')
+depends=('ruby' 'ruby-paint' 'ruby-docopt')
+makedepends=('rubygems')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem")
+noextract=("$_gemname-$pkgver.gem")
+sha512sums=('f3aafe6620540d5a3b7ba5263761abd929067702b6354263783787c3893177f004a1a8efdc586d63f149ff6ce9a5ce600f8f2527860908c5ede54119cb8930a0')
+
+package() {
+  local _gemdir="$(ruby -r rubygems -e'puts Gem.default_dir')"
+
+  if [[ $CARCH == arm* ]] ; then
+    gem install --ignore-dependencies --no-user-install --no-rdoc --no-ri \
+      -i "$pkgdir$_gemdir" "$_gemname-$pkgver.gem"
+  else
+    gem install --ignore-dependencies --no-user-install -i "$pkgdir$_gemdir" \
+      "$_gemname-$pkgver.gem"
+  fi
+
+  rm -rf "$pkgdir/$_gemdir/cache"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
