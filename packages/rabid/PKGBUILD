@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=rabid
+pkgver=v0.0.1.r1.g029f777
+pkgrel=1
+epoch=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-misc')
+pkgdesc='A CLI tool and library allowing to simply decode all kind of BigIP cookies.'
+arch=('any')
+url='https://github.com/Orange-Cyberdefense/rabid'
+license=('MIT')
+depends=('ruby' 'ruby-bundler' 'libxslt')
+makedepends=('git')
+source=("git+https://github.com/Orange-Cyberdefense/$pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a docs/* "$pkgdir/usr/share/doc/$pkgname/"
+
+  rm -rf *.md LICENSE.txt docs
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bundle exec ./bin/$pkgname "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname-console" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bundle exec ./bin/${pkgname}_console "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname-console"
+}
+
