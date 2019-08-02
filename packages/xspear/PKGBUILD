@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=xspear
+pkgver=76.cd1eb0c
+pkgrel=1
+epoch=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer')
+pkgdesc='Powerfull XSS Scanning and Parameter analysis tool&gem.'
+arch=('any')
+url='https://github.com/hahwul/XSpear'
+license=('MIT')
+depends=('ruby' 'ruby-bundler' 'libxslt')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/hahwul/XSpear.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf *.md LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bundle exec ./exe/XSpear "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
