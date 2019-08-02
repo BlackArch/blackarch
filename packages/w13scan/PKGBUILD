@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=w13scan
+pkgver=160.9328510
+pkgrel=1
+pkgdesc='Passive Security Scanner.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
+arch=('any')
+url='https://github.com/boy-hack/w13scan'
+license=('GPL2')
+depends=('python' 'python-asn1crypto' 'python-certifi' 'python-cffi'
+         'python-chardet' 'python-colorama' 'python-cryptography'
+         'python-idna' 'python-pycparser' 'python-pyopenssl' 'python-requests'
+         'python-six' 'python-tld' 'python-urllib3')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/boy-hack/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i 's|pyOpenSSL==18.0.0|pyOpenSSL|g' requirements.txt
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE
+}
+
