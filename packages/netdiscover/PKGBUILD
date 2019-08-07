@@ -2,33 +2,42 @@
 # See COPYING for license details.
 
 pkgname=netdiscover
-pkgver=0.3
-pkgrel=7
+pkgver=149.3664e55
+pkgrel=1
 groups=('blackarch' 'blackarch-recon' 'blackarch-wireless')
 pkgdesc='An active/passive address reconnaissance tool, mainly developed for those wireless networks without dhcp server, when you are wardriving. It can be also used on hub/switched networks.'
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url='http://nixgeneration.com/~jaime/netdiscover/'
 license=('GPL')
 depends=('libnet' 'libpcap')
-makedepends=('gcc' 'make')
+makedepends=('git' 'gcc' 'make' 'dos2unix')
 provides=('netdiscover')
 conflicts=('netdiscover')
-source=("http://nixgeneration.com/~jaime/netdiscover/releases/netdiscover-$pkgver-beta6.tar.gz"
+source=("git+https://github.com/netdiscover-scanner/$pkgname.git"
         'misc.diff'
         'oui.diff')
-sha512sums=('54b998874d1cda082c9989d2aeee0a94c58c5795968e6e34e64dba9a5654ef8048d97cfa720d8cbb15c644f3e5b9db6b457620deec7104b8737e544b98a069f9'
+sha512sums=('SKIP'
             '3b00414c351b05a87301098cdef66bd119f9a156e04fffc3ce7a1a426e0a4e60a8c8a31bab552a9762646a76d094828e3da8f7cb3ab23585f937d623b28c4d82'
             'c2fb66559a89e2bcc574ae7753f349c885b10871473d6fe9640b4ae286ffe84a0f7e688c2357c68803452ca9c5fafe1df6651c67051519ff2044f655c05e467f')
 
-prepare() {
-  cd "$pkgname-$pkgver-beta6"
+pkgver() {
+  cd $pkgname
 
-  patch -p0 -i "$srcdir/oui.diff"
-  patch -p0 -i "$srcdir/misc.diff"
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  #patch -p0 -i "$srcdir/oui.diff"
+  #patch -p0 -i "$srcdir/misc.diff"
+
+  ./update-oui-database.sh
+  ./autogen.sh
 }
 
 build() {
-  cd "$pkgname-$pkgver-beta6"
+  cd $pkgname
 
   ./configure --prefix=/usr --sysconfdir=/etc --sbindir=/usr/bin
 
@@ -36,17 +45,13 @@ build() {
 }
 
 package() {
-  cd "$pkgname-$pkgver-beta6"
-
-  install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
+  cd $pkgname
 
   make DESTDIR="$pkgdir" install
 
-  install -Dm644 "$pkgdir/usr/doc/$pkgname/COPYING" \
-    "$pkgdir/usr/share/licenses/$pkgname"
-
-  mv "$pkgdir/usr/doc/$pkgname/" "$pkgdir/usr/share/doc/$pkgname"
-
-  rm -rf "$pkgdir/usr/doc"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README* INSTALL AUTHORS \
+    ChangeLog doc/netdiscover.txt
+  install -Dm 644 doc/netdiscover.8 "$pkgdir/usr/share/man/man8/$pkgname.8"
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
 }
 
