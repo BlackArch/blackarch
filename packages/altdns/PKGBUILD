@@ -2,17 +2,17 @@
 # See COPYING for license details.
 
 pkgname=altdns
-pkgver=60.0a33c79
+pkgver=65.ca46bd1
 pkgrel=1
 pkgdesc='Generates permutations, alterations and mutations of subdomains and then resolves them.'
 groups=('blackarch' 'blackarch-recon')
 arch=('any')
 url='https://github.com/infosec-au/altdns'
-license=('Apache2')
+license=('Apache')
 depends=('python2' 'python2-dnspython' 'python2-tldextract' 'python2-termcolor'
          'python2-argparse')
-makedepends=('git')
-source=('git+https://github.com/infosec-au/altdns.git')
+makedepends=('git' 'python2-setuptools')
+source=("git+https://github.com/infosec-au/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
@@ -21,19 +21,18 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
+build() {
   cd $pkgname
 
-  sed -i 's|bin/env python|bin/env python2|' altdns.py
+  python2 setup.py build
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
-  install -Dm 755 altdns.py "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
