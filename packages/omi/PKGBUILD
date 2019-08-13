@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=omi
-pkgver=v1.6.2.1.r5.gbecb381
+pkgver=1.6.2.0.r68.gf8ec7ca
 pkgrel=1
+epoch=1
 pkgdesc='Open Management Infrastructure.'
 arch=('x86_64')
 url='https://github.com/Microsoft/omi'
@@ -11,30 +12,42 @@ license=('MIT')
 depends=('bind-tools' 'inetutils' 'krb5' 'lsb-release' 'openssl' 'pam-krb5' 'pam')
 makedepends=('git')
 source=('git+https://github.com/Microsoft/Build-omi.git'
-  'git://github.com/microsoft/omi'
-  'git://github.com/microsoft/pal'
+        'git://github.com/microsoft/omi'
+        'git://github.com/microsoft/pal'
 )
 sha512sums=('SKIP' 'SKIP' 'SKIP')
 
 pkgver() {
-  cd 'Build-omi'
+  cd Build-omi
+
   git describe --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
 prepare() {
-  cd 'Build-omi'
+  cd Build-omi
+
   git submodule init
-  git config submodule.omi.url $srcdir/omi
-  git config submodule.pal.url $srcdir/pal
+  git config submodule.omi.url "$srcdir/omi"
+  git config submodule.pal.url "$srcdir/pal"
   git submodule update
 }
 
-package() {
-  cd 'Build-omi/omi/Unix/'
+build() {
+  cd Build-omi/omi/Unix
+
   ./configure --prefix='/opt/omi'
+
   make
+
+}
+
+package() {
+  cd Build-omi/omi/Unix/
+
+  install -dm 755 "$pkgdir/usr/bin"
+
   make DESTDIR="$pkgdir" INSTALL_ROOT="$pkgdir" install
-  mkdir -p $pkgdir/usr/bin/
+
   for b in "$pkgdir"/opt/omi/bin/*; do
     ln -s /opt/omi/bin/$(basename $b) "$pkgdir"/usr/bin/$(basename $b)
   done
