@@ -2,36 +2,30 @@
 # See COPYING for license details.
 
 pkgname=owtf
-pkgver=1017.0bbeea1
-pkgrel=2
+pkgver=2098.fc7cabcc
+pkgrel=1
 groups=('blackarch' 'blackarch-webapp' 'blackarch-automation'
         'blackarch-scanner' 'blackarch-fuzzer')
 pkgdesc='The Offensive (Web) Testing Framework.'
 url='https://www.owasp.org/index.php/OWASP_OWTF'
 license=('custom')
 arch=('any')
-depends=('python2-jinja' 'python2-markdown' 'python2-pyvirtualdisplay'
-         'python2-tornado' 'python2-pycurl' 'python2-rdflib' 'python2-selenium'
-         'python2-pexpect' 'python2-lxml' 'java-environment' 'python2-ptp'
-	       'python2-pyopenssl' 'python2-beautifulsoup4'
-         'python2-python-owasp-zap-v2' 'python2-sqlalchemy' 'python2-six'
-         'python2-psycopg2')
+depends=('python' 'python-virtualenv' 'postgresql')
 optdepends=('tor' 'proxychains-ng' 'skipfish' 'metagoofil' 'set' 'wpscan'
             'theharvester' 'metasploit' 'whatweb' 'cms-explorer' 'whapiti'
             'arachini' 'dnsrecon' 'dirbuster' 'w3af' 'lbd' 'nikto' 'tlssled'
             'httprint' 'hydra' 'wafw00f' 'websecurify' 'hoppy')
 makedepends=('git')
 options=('!strip')
-source=('git+https://github.com/owtf/owtf.git'
+source=("git+https://github.com/$pkgname/$pkgname.git"
         'LICENSE'
-        'default.cfg.patch'
         'ssl-cipher-check.pl'
         'BIG-IP_cookie_decoder.py')
 sha512sums=('SKIP'
-          'a7c48222c6d3327a14f6fa8139f12148e4e90a1b'
-          'b55667d00d2b35b327a4667af6d5181ab8430870'
-          '094b0f91c4445a494770b814238026fcdb5c26fc'
-          '0f6f81c2ce46bfd3b3df88986d8ee3c184dd7a88')
+            '9a46df3e73cb5bfd87b266d591010497368e9d1e2980c3f7c0fbbe7832a37db62fba3f6b72015b9e577f0080073536f5b6a1dfa05316bcc9c4697f34a9f5dc7c'
+            'db582f5008530581f02a2073496dfc79a2140fab7b5d477f27bef20d8d72d4b8c88ee9ce3cdaec73530b994fa17234aa7ca18de90ba61fbc59aa85bed485bd15'
+            '138e97b092c3b7daaceb434a1478673dd9e558bf89d080ca8886b89ced212e1ec3d9af3148e7d9b32833be1b5ae764f268dfe5efc32e17dc704fac7024499d0d')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
@@ -45,30 +39,23 @@ package() {
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 644 "$srcdir/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  cp -a --no-preserve=owner * "$pkgdir/usr/share/$pkgname"
+  rm *.md
 
-  install -Dm755 "$srcdir/ssl-cipher-check.pl" \
-    "$pkgdir/usr/share/$pkgname/tools/restricted/ssl/ssl-cipher-check"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  install -Dm755 "$srcdir/BIG-IP_cookie_decoder.py" \
-    "$pkgdir/usr/share/$pkgname/tools/restricted/decoding/cookies"
-
-  patch -Np1 -i "$srcdir/default.cfg.patch"
-
-  sed -i -e "s|#![ ]*/usr/bin/python$|#!/usr/bin/python2|" \
-    -e "s|#![ ]*/usr/bin/env python$|#!/usr/bin/env python2|" \
-    -e "s|#![ ]*/bin/python$|#!/usr/bin/python2|" \
-    $(find $pkgdir -name '*.py')
+  cp "$pkgdir/usr/share/$pkgname/bin/$pkgname" \
+    "$pkgdir/usr/share/$pkgname/_${pkgname}"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 ./owtf.py "\$@"
+source venv/bin/activate
+exec python _${pkgname} "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
