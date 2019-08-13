@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-hrt
+pkgname=('python2-hrt' 'python-hrt')
+_pkgname=hrt
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Translates raw HTTP requests to Python,Ruby,Php and Bash scripts.'
+arch=('any')
+url='https://pypi.org/project/hrt/#files'
+license=('BSD')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/44/54/4fb9f092f28f1cafe7472a78494adf7c1ed2b59586ca51427b4510346243/$_pkgname-$pkgver.tar.gz")
+sha512sums=('1957d6663993b0bca0d2b44d9e43d5329728dd1fefd7470aca390f14027a0931a2b32afb42eb91f3a444bd69d495a756361cc0762069ca34b9e68705ba2f0755')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-hrt() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
+}
+
+package_python-hrt() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+}
+
