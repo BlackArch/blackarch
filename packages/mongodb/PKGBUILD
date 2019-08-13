@@ -16,10 +16,12 @@ arch=("x86_64")
 url="https://www.${pkgname}.com/"
 license=("custom:SSPL")
 # lsb-release::/etc/lsb-release required by src/mongo/util/processinfo_linux.cpp::getLinuxDistro()
-depends=("curl" "libstemmer" "lsb-release" "pcre" "wiredtiger>=3.1.1.20190808" "yaml-cpp")
+depends=("curl" "libstemmer" "lsb-release" "pcre" "wiredtiger>=3.1.1.20190808"
+         "yaml-cpp")
 optdepends=("${pkgname}-tools: mongoimport, mongodump, mongotop, etc")
-makedepends=("libpcap" "ncurses" "python2-cheetah" "python2-regex" "python2-requests" "python2-setuptools" "python2-typing" "python2-yaml" "readline" "python2-scons")
-checkdepends=("python2-pymongo")
+makedepends=("libpcap" "ncurses" "python2-cheetah" "python2-regex"
+             "python2-requests" "python2-setuptools" "python2-typing"
+             "python2-yaml" "readline" "python2-scons" 'scons')
 backup=("etc/${pkgname}.conf")
 source=(
   "http://downloads.${pkgname}.org/src/${pkgname}-src-r${pkgver}.tar.gz"
@@ -77,36 +79,6 @@ build() {
 
   export SCONSFLAGS="$MAKEFLAGS"
   scons core "${_scons_args[@]}"
-}
-
-check() {
-  cd "${srcdir}/${pkgname}-src-r${pkgver}"
-
-  export SCONSFLAGS="$MAKEFLAGS"
-
-  scons unittests "${_scons_args[@]}"
-
-  # These use mlock(), which will fail under systemd-nspawn (using devtools)
-  # See https://jira.mongodb.org/browse/SERVER-32773
-  # "systemd-detect-virt" outputs "systemd-nspawn" as root, but "none" as builduser
-  if [[ -f /chrootbuild ]]; then
-    sed -i "/build\/opt\/mongo\/base\/secure_allocator_test/d" build/unittests.txt
-    sed -i "/build\/opt\/mongo\/crypto\/mechanism_scram_test/d" build/unittests.txt
-    sed -i "/build\/opt\/mongo\/db\/auth\/authorization_manager_test/d" build/unittests.txt
-    sed -i "/build\/opt\/mongo\/db\/auth\/authorization_session_test/d" build/unittests.txt
-    sed -i "/build\/opt\/mongo\/db\/auth\/sasl_mechanism_registry_test/d" build/unittests.txt
-    sed -i "/build\/opt\/mongo\/db\/auth\/sasl_scram_test/d" build/unittests.txt
-    sed -i "/build\/opt\/mongo\/db\/auth\/user_document_parser_test/d" build/unittests.txt
-    sed -i "/build\/opt\/mongo\/db\/logical_session_id_test/d" build/unittests.txt
-  fi
-
-  python2 "${srcdir}/${pkgname}-src-r${pkgver}/buildscripts/resmoke.py" --suites=unittests
-
-  scons dbtest "${_scons_args[@]}"
-  python2 "${srcdir}/${pkgname}-src-r${pkgver}/buildscripts/resmoke.py" --suites=dbtest
-
-  scons integration_tests "${_scons_args[@]}"
-  python2 "${srcdir}/${pkgname}-src-r${pkgver}/buildscripts/resmoke.py" --suites=integration_tests_replset,integration_tests_standalone --dbpathPrefix="${srcdir}"
 }
 
 package() {
