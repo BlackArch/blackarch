@@ -1,34 +1,34 @@
-# Maintainer: Deine Mama <deinemama@blackarch.org>
-# Contrubutor: Felix Yan <felixonmars@archlinux.org>
+# Maintainer: James P. Harvey <jamespharvey20 at gmail dot com>
+# Maintainer: Christoph Bayer <chrbayer@criby.de>
+# Contributor: Felix Yan <felixonmars@archlinux.org>
 # Contributor: Sven-Hendrik Haase <sh@lutzhaase.com>
 # Contributor: Thomas Dziedzic < gostrc at gmail >
 # Contributor: Mathias Stearn <mathias@10gen.com>
 # Contributor: Alec Thomas
+# Contributor: Fredy García <frealgagu at gmail dot com>
 
 pkgname=mongodb
+# #.<odd number>.# releases are unstable development/testing
 pkgver=4.0.12
 pkgrel=1
-pkgdesc='A high-performance, open source, schema-free document-oriented database.'
-arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
-url='https://www.mongodb.com/'
-license=('AGPL3')
-depends=('pcre' 'snappy' 'openssl' 'libsasl' 'yaml-cpp' 'lsb-release'
-         'wiredtiger' 'libstemmer' 'curl')
-makedepends=('scons' 'readline' 'ncurses' 'libpcap' 'python2-setuptools'
-             'python2-regex' 'python2-cheetah' 'python2-typing'
-             'python2-requests' 'python2-yaml')
-checkdepends=('python2-pymongo')
-optdepends=('libpcap: needed for mongosniff'
-            'mongodb-tools: mongoimport, mongodump, mongotop, etc')
-backup=('etc/mongodb.conf')
-#source=("http://downloads.mongodb.org/src/mongodb-src-r$pkgver.tar.gz"
-source=("https://github.com/mongodb/mongo/archive/r$pkgver.tar.gz"
-        'mongodb.sysusers' 'mongodb.tmpfiles' 'mongodb.conf' 'mongodb.service')
-sha512sums=('2503b0e99677f9b2c5c804cc7980ded28487578798b33fddba3b69d1ad05913fb003f731d92c273852dd8367f0e020345b43c10b917fd6c965b73ec336ef592a'
-            '889425b864c58a767aa5865c0ce9817361ad99fec78050fa600f14eaef5a56ce0bc41a03878233e99f4862596a94dafcfebebecd4d57443b742117b873ab813d'
-            'a931c401792f4e7928e4778d91626c1ecc3e97e5728549b170c050de487b2e5234747b0ee2d5acc3d63b798716758c17e30914dcaa9a92ac386db39f8a45a05c'
-            '05dead727d3ea5fe8af1a3c3888693f6b3e2b8cb7f197a5d793352e10d2c524e96c9a5c55ad2e88c1114643a9612ec0b26a2574b48a5260a9b51ec8941461f1c'
-            '177251404b2e818ae2b546fe8b13cb76e348c99e85c7bef22a04b0f07b600fd515a309ede50214f4198594388a6d2b31f46e945b9dae84aabb4dfa13b1123bb9')
+pkgdesc="A high-performance, open source, schema-free document-oriented database"
+arch=("x86_64")
+url="https://www.${pkgname}.com/"
+license=("custom:SSPL")
+# lsb-release::/etc/lsb-release required by src/mongo/util/processinfo_linux.cpp::getLinuxDistro()
+depends=("curl" "libstemmer" "lsb-release" "pcre" "wiredtiger>=3.1.1.20190808" "yaml-cpp")
+optdepends=("${pkgname}-tools: mongoimport, mongodump, mongotop, etc")
+makedepends=("libpcap" "ncurses" "python2-cheetah" "python2-regex" "python2-requests" "python2-setuptools" "python2-typing" "python2-yaml" "readline" "python2-scons")
+checkdepends=("python2-pymongo")
+backup=("etc/${pkgname}.conf")
+source=(
+  "http://downloads.${pkgname}.org/src/${pkgname}-src-r${pkgver}.tar.gz"
+  "${pkgname}.sysusers"
+  "${pkgname}.tmpfiles"
+)
+sha256sums=('2132def2478c7d45b028a9b79db346a19f9c56f456b52c0ff243982c89c20dc9'
+            '3757d548cfb0e697f59b9104f39a344bb3d15f802608085f838cb2495c065795'
+            'b7d18726225cd447e353007f896ff7e4cbedb2f641077bce70ab9d292e8f8d39')
 
 _scons_args=(
   --use-system-pcre
@@ -40,38 +40,95 @@ _scons_args=(
   --use-sasl-client
   --ssl
   --disable-warnings-as-errors
-  # --use-system-asio     # https://jira.mongodb.org/browse/SERVER-21839
-  # --use-system-v8       # Doesn't compile
-  # --use-system-icu
-  # --use-system-tcmalloc # Disabled as upstream suggests in https://jira.mongodb.org/browse/SERVER-17447?focusedCommentId=841890&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-841890
+  # --use-system-asio     # https://jira.mongodb.org/browse/SERVER-21839 marked as fixed, but still doesn't compile.  MongoDB uses custom patches.
+  # --use-system-icu      # Doesn't compile
+  --use-system-tcmalloc   # in gperftools
+  # --use-system-boost    # Doesn't compile
+  # --use-system-valgrind # Compiles, but namcap says not used
+  # --use-system-sqlite   #   "
+  # --use-system-mongo-c  # Doesn't compile
 )
 
 prepare() {
-  cd "mongodb-src-r$pkgver"
+  cd "${srcdir}/${pkgname}-src-r${pkgver}"
 
-  # Broken tls13 support, removing to fix build
-  sed -i '/counts.tls13/d' src/mongo/util/net/ssl_manager_openssl.cpp
+  # Keep historical Arch dbPath
+  sed -i 's|dbPath: /var/lib/mongo|dbPath: /var/lib/mongodb|' rpm/mongod.conf
+
+  # Keep historical Arch conf file name
+  sed -i 's|-f /etc/mongod.conf|-f /etc/mongodb.conf|' rpm/mongod.service
+
+  # Keep historical Arch user name (no need for separate daemon group name)
+  sed -i 's/User=mongod/User=mongodb/' rpm/mongod.service
+  sed -i 's/Group=mongod/Group=mongodb/' rpm/mongod.service
+  sed -i 's/chown mongod:mongod/chown mongodb:mongodb/' rpm/mongod.service
+
+  # Remove sysconfig file, used by upstream's init.d script not used on Arch
+  sed -i '/EnvironmentFile=-\/etc\/sysconfig\/mongod/d' rpm/mongod.service
+
+  # Make systemd wait as long as it takes for MongoDB to start
+  # If MongoDB needs a long time to start, prevent systemd from restarting it every 90 seconds
+  # See: https://jira.mongodb.org/browse/SERVER-38086
+  sed -i 's/\[Service]/[Service]\nTimeoutStartSec=infinity/' rpm/mongod.service
 }
 
 build() {
-  cd "mongodb-src-r${pkgver}"
+  cd "${srcdir}/${pkgname}-src-r${pkgver}"
+
+  export SCONSFLAGS="$MAKEFLAGS"
+  scons core "${_scons_args[@]}"
+}
+
+check() {
+  cd "${srcdir}/${pkgname}-src-r${pkgver}"
 
   export SCONSFLAGS="$MAKEFLAGS"
 
-  scons core tools "${_scons_args[@]}"
+  scons unittests "${_scons_args[@]}"
+
+  # These use mlock(), which will fail under systemd-nspawn (using devtools)
+  # See https://jira.mongodb.org/browse/SERVER-32773
+  # "systemd-detect-virt" outputs "systemd-nspawn" as root, but "none" as builduser
+  if [[ -f /chrootbuild ]]; then
+    sed -i "/build\/opt\/mongo\/base\/secure_allocator_test/d" build/unittests.txt
+    sed -i "/build\/opt\/mongo\/crypto\/mechanism_scram_test/d" build/unittests.txt
+    sed -i "/build\/opt\/mongo\/db\/auth\/authorization_manager_test/d" build/unittests.txt
+    sed -i "/build\/opt\/mongo\/db\/auth\/authorization_session_test/d" build/unittests.txt
+    sed -i "/build\/opt\/mongo\/db\/auth\/sasl_mechanism_registry_test/d" build/unittests.txt
+    sed -i "/build\/opt\/mongo\/db\/auth\/sasl_scram_test/d" build/unittests.txt
+    sed -i "/build\/opt\/mongo\/db\/auth\/user_document_parser_test/d" build/unittests.txt
+    sed -i "/build\/opt\/mongo\/db\/logical_session_id_test/d" build/unittests.txt
+  fi
+
+  python2 "${srcdir}/${pkgname}-src-r${pkgver}/buildscripts/resmoke.py" --suites=unittests
+
+  scons dbtest "${_scons_args[@]}"
+  python2 "${srcdir}/${pkgname}-src-r${pkgver}/buildscripts/resmoke.py" --suites=dbtest
+
+  scons integration_tests "${_scons_args[@]}"
+  python2 "${srcdir}/${pkgname}-src-r${pkgver}/buildscripts/resmoke.py" --suites=integration_tests_replset,integration_tests_standalone --dbpathPrefix="${srcdir}"
 }
 
 package() {
-  cd "mongodb-src-r${pkgver}"
+  cd "${srcdir}/${pkgname}-src-r${pkgver}"
 
-  scons install --prefix="$pkgdir/usr" --nostrip "${_scons_args[@]}"
+  scons install --prefix="${pkgdir}/usr" "${_scons_args[@]}"
 
-  install -Dm 644 "$srcdir/mongodb.conf" "$pkgdir/etc/mongodb.conf"
-  install -Dm 644 "$srcdir/mongodb.service" \
-    "$pkgdir/usr/lib/systemd/system/mongodb.service"
-  install -Dm 644 "$srcdir/mongodb.sysusers" \
-    "$pkgdir/usr/lib/sysusers.d/mongodb.conf"
-  install -Dm 644 "$srcdir/mongodb.tmpfiles" \
-    "$pkgdir/usr/lib/tmpfiles.d/mongodb.conf"
+  # Keep historical Arch conf file name
+  install -Dm644 "rpm/mongod.conf" "${pkgdir}/etc/${pkgname}.conf"
+
+  # Keep historical Arch service name
+  install -Dm644 "rpm/mongod.service" "${pkgdir}/usr/lib/systemd/system/${pkgname}.service"
+
+  # Install manpages
+  install -Dm644 "debian/mongo.1" "${pkgdir}/usr/share/man/man1/mongo.1"
+  install -Dm644 "debian/mongod.1" "${pkgdir}/usr/share/man/man1/mongod.1"
+  install -Dm644 "debian/mongos.1" "${pkgdir}/usr/share/man/man1/mongos.1"
+
+  install -Dm644 "${srcdir}/${pkgname}.sysusers" "${pkgdir}/usr/lib/sysusers.d/${pkgname}.conf"
+  install -Dm644 "${srcdir}/${pkgname}.tmpfiles" "${pkgdir}/usr/lib/tmpfiles.d/${pkgname}.conf"
+  install -Dm644 LICENSE-Community.txt "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE-Community.txt"
+
+  # This script won't run on Arch. If needed, see AUR package mongodb-compass.
+  rm "${pkgdir}/usr/bin/install_compass"
 }
-
