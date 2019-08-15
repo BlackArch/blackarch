@@ -2,21 +2,22 @@
 # See COPYING for license details.
 
 pkgname=smbexec
-pkgver=148.7827616
-pkgrel=10
-epoch=1
+pkgver=59.a54fc14
+pkgrel=1
+epoch=2
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-fuzzer'
         'blackarch-exploitation')
 pkgdesc='A rapid psexec style attack with samba tools.'
-depends=('ruby' 'ruby-bundler' 'make')
 arch=('any')
-makedepends=('git')
 url='https://github.com/pentestgeek/smbexec'
 license=('custom:unknown')
 options=('!strip')
-install="$pkgname.install"
-source=('git+https://github.com/pentestgeek/smbexec.git')
+depends=('ruby' 'ruby-bundler' 'ruby-pkg-config' 'libxslt')
+makedepends=('git' 'make')
+source=("git+https://github.com/brav0hax/$pkgname.git")
+#source=("git+https://github.com/pentestgeek/$pkgname.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
@@ -30,7 +31,7 @@ package() {
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 644 README "$pkgdir/usr/share/doc/$pkgname/"
+  install -Dm 644 README -t "$pkgdir/usr/share/doc/$pkgname/"
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
@@ -38,7 +39,8 @@ package() {
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-exec ruby /usr/share/$pkgname/$pkgname.rb "\$@"
+cd /usr/share/$pkgname
+exec bundle exec ./$pkgname.rb "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"

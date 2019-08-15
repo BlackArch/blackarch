@@ -2,28 +2,18 @@
 # See COPYING for license details.
 
 pkgname=scoutsuite
-pkgver=3690.5a498fbd
+pkgver=3843.daa49c0e
 pkgrel=1
 pkgdesc='Multi-Cloud Security Auditing Tool.'
 groups=('blackarch' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/nccgroup/ScoutSuite'
 license=('GPL3')
-depends=('python' 'python-dateutil' 'python-netaddr' 'python-sqlitedict'
-         'python-cherrypy' 'python-cherrypy-cors' 'python-coloredlogs'
-         'python-boto3' 'python-botocore' 'python-iampoliciesgonewild'
-         'python-grpcio' 'python-google-cloud-container' 'python-google-cloud-core'
-         'python-google-cloud-iam' 'python-google-cloud-logging' 'python-google-cloud-monitoring'
-         'python-google-cloud-resource-manager' 'python-google-cloud-storage'
-         'python-google-api-python-client' 'python-oauth2client' 'python-azure-mgmt-storage'
-         'python-azure-mgmt-monitor' 'python-azure-mgmt-sql' 'python-azure-mgmt-security'
-         'python-azure-mgmt-keyvault' 'python-azure-mgmt-network' 'python-azure-mgmt-redis'
-         'python-azure-mgmt-web' 'python-azure-cli-core' 'python-pyaml')
-makedepends=('git' 'python-setuptools')
-source=("$pkgname::git+https://github.com/nccgroup/ScoutSuite.git"
-        'requirements.patch')
-sha512sums=('SKIP'
-            'SKIP')
+depends=('python' 'python-virtualenv')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/nccgroup/ScoutSuite.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
@@ -31,29 +21,26 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  cd $pkgname
-
-  patch -i "$srcdir/requirements.patch" < requirements.txt
-}
-
-build() {
-  cd $pkgname
-
-  python setup.py build
-}
-
 package() {
   cd $pkgname
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  #mv "$pkgdir/usr/bin/Scout" "$pkgdir/usr/bin/scout"
-  #mv "$pkgdir/usr/bin/Scout2Listall" "$pkgdir/usr/bin/scout2listall"
-  #mv "$pkgdir/usr/bin/Scout2RulesGenerator" \
-    #"$pkgdir/usr/bin/scout2rulesgenerator"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm -rf "$pkgdir/usr/lib/python3.7/site-packages/opinel"
+  rm *.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+source venv/bin/activate
+exec python scout.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
