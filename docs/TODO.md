@@ -129,7 +129,11 @@ Just check out the following:
 
   [ ] XFCE
       create an xfce hardened spin with claramares installer.
-      note: should include apparmor, firewalld and hardened kernel
+      note: should include apparmor, firewalld, hardened kernel and lightdm
+      [?]
+
+  [ ] GTK theme
+      create a proper gtk3 theme
       [?]
 
   [ ] blackman
