@@ -109,8 +109,8 @@ Just check out the following:
       rewrite in python3 from scratch.
       [sepehrdad]
 
-  [x] wordlistctl
-      enhance performance, add checksums and size.
+  [ ] wordlistctl
+      refactor and optimize.
       [sepehrdad]
 
   [ ] infrastructure
@@ -127,9 +127,14 @@ Just check out the following:
       something like that. note: @PedroSFreitas already worked on this.
       [psf, ?]
 
+  [ ] XFCE
+      create an xfce hardened spin with claramares installer.
+      note: should include apparmor, firewalld and hardened kernel
+      [?]
+
   [ ] blackman
       either update and fix current bugs or rewrite it from scratch. python3?
-      [?]
+      [sepehrdad, noptrix]
 
   [ ] python-packages
       add missing python dependencies to python-packages. use setup.py and grep
