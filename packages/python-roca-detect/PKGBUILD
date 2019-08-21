@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-roca-detect
+pkgname=('python2-roca-detect' 'python-roca-detect')
+_pkgname=roca-detect
+pkgver=1.2.12
+pkgrel=1
+pkgdesc='ROCA key detector / fingerprinter tool.'
+arch=('any')
+url='https://pypi.org/project/roca-detect/#files'
+license=('MIT')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/75/99/5e1d21ba51da24db4cd084bba39c2192b068c975b442a2663b70019bd21e/$_pkgname-$pkgver.tar.gz")
+sha512sums=('da93317c358813a6a85b0c21b57d1656bbccd86e5649e82a119e6f7318ae707a682554d90f7b6027f640b5d7c0d4a105adcd574fe61935725a9593cdbbe6fea4')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-roca-detect() {
+  depends=('python' 'python-cryptography' 'python-six' 'python-future'
+           'python-coloredlogs' 'python-pgpdump' 'python-dateutil')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i "${i}2"
+  done
+}
+
+package_python-roca-detect() {
+  depends=('python' 'python-cryptography' 'python-six' 'python-future'
+           'python-coloredlogs' 'python-pgpdump' 'python-dateutil')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+}
+
