@@ -118,9 +118,9 @@ Just check out the following:
       release packages.
       [noptrix]
 
-  [ ] blackarch-config-*
+  [x] blackarch-config-*
       update, tweak, improve and QA all blackarch-config-* packages.
-      [?]
+      [noptrix]
 
   [ ] ISO
       create and release a slim-ISO with xfce(?) mate(?) with top100 tools or
@@ -140,10 +140,10 @@ Just check out the following:
       either update and fix current bugs or rewrite it from scratch. python3?
       [sepehrdad, noptrix]
 
-  [ ] python-packages
+  [x] python-packages
       add missing python dependencies to python-packages. use setup.py and grep
       for imports.
-      [?]
+      [noptrix]
 
   [ ] linux-blackarch-hardened
       custom hardened kernel patches
