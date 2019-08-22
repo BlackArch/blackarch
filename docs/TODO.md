@@ -105,11 +105,11 @@ Just check out the following:
       tweak, update, bugfix the current setup for docker and vagrant.
       [?]
 
-  [.] sploitctl
+  [x] sploitctl
       rewrite in python3 from scratch.
       [sepehrdad]
 
-  [ ] wordlistctl
+  [.] wordlistctl
       refactor and optimize.
       [sepehrdad]
 
