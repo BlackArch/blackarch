@@ -165,6 +165,10 @@ Just check out the following:
       update the howto for blackarch developers
       [noptrix]
 
+  [ ] re-write the website
+      re-write the website with modern DevOps to be more easily modifiable
+      and maintainable
+      [noraj]
 
 ===> 2018
 
