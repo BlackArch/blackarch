@@ -3,16 +3,17 @@
 
 pkgname=automato
 pkgver=31.4ac82e6
-pkgrel=1
+pkgrel=2
 pkgdesc='Should help with automating some of the user-focused enumeration tasks during an internal penetration test.'
 groups=('blackarch' 'blackarch-automation' 'blackarch-recon')
 arch=('any')
 url='https://github.com/skahwah/automato'
 license=('custom:unknown')
-depends=('ruby')
+depends=('ruby' 'ruby-bundler')
 makedepends=('git')
 source=("git+https://github.com/skahwah/$pkgname.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
@@ -23,7 +24,21 @@ pkgver() {
 package() {
   cd $pkgname
 
-  install -Dm 755 "$pkgname.rb" "$pkgdir/usr/bin/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bundler exec ./$pkgname.rb "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

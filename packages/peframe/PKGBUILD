@@ -3,7 +3,7 @@
 
 pkgname=peframe
 pkgver=123.2a06f46
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-malware' 'blackarch-binary'
         'blackarch-reversing')
 pkgdesc='Tool to perform static analysis on (portable executable) malware.'
@@ -11,7 +11,8 @@ arch=('any')
 url='https://github.com/guelfoweb/peframe'
 license=('custom:unknown')
 depends=('python' 'python-pefile' 'python-python-magic' 'python-oletools'
-         'python-yara' 'python-m2crypto' 'python-virustotal-api' 'python-magic')
+         'python-yara' 'python-m2crypto' 'python-virustotal-api' 'python-magic'
+         'python-msoffcrypto-tool')
 makedepends=('git' 'python-setuptools')
 source=('git+https://github.com/guelfoweb/peframe.git')
 sha512sums=('SKIP')
@@ -22,24 +23,32 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
+  python setup.py install --root="$pkgdir" --skip-build
+
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/README.md" README.rst
 
   rm README.rst
 
-  cp -a * "$pkgdir/usr/share/$pkgname/"
+#  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname
-exec python3 $pkgname-cli.py "\$@"
-EOF
+#cd /usr/share/$pkgname
+#exec python3 $pkgname-cli.py "\$@"
+#EOF
 
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
+#  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 

@@ -1,0 +1,939 @@
+#!/usr/bin/python2
+
+#############################################################################
+##                                                                         ##
+## ilty.py --- phone interception system in VoIP network                   ##
+##                                                                         ##
+## Copyright (C) 2006  Nicolas Bareil  nicolas.bareil @ eads.net           ##
+##                                     nbareil @ mouarf.org                ##
+##                                                                         ##
+## This program is free software; you can redistribute it and/or modify it ##
+## under the terms of the GNU General Public License version 2 as          ##
+## published by the Free Software Foundation; version 2.                   ##
+##                                                                         ##
+## This program is distributed in the hope that it will be useful, but     ##
+## WITHOUT ANY WARRANTY; without even the implied warranty of              ##
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       ##
+## General Public License for more details.                                ##
+##                                                                         ##
+#############################################################################
+
+import pcap, socket, struct, curses, time, os, re, string
+import curses.ascii, sys
+
+class SignalsContainer:
+    sigs = None
+    def __init__(self, p=None):
+        self.current = 0
+        if p is not None:
+            self.sigs = p
+        else:
+            self.sigs = []
+
+    def add(self, s):
+        self.sigs.append(s)
+
+    def remove(self, s):
+        pass
+
+    def next(self):
+        self.current += 1
+        return self.sigs[self.current - 1]
+        
+    def notfinish(self):
+        # print 'current=%d len=%d' % (self.current, len(self.sigs))
+        return len(self.sigs) - self.current > 0
+
+    def __repr__(self):
+        s = ''
+        for signal in self.sigs:
+            s = s + signal.__repr__() + ' | '
+        return s
+
+gui_needupdate = True
+
+class IltyUI:
+    cmd = ''
+    idsel = 0
+    x = 3
+    y = 4
+    def __init__(self, network):
+        self.screen = curses.initscr()
+        curses.noecho()
+        curses.cbreak()
+        self.screen.keypad(1)
+        self.net = network
+        self.ysize, self.xsize = self.screen.getmaxyx()
+        self.viewphone = False
+        self.update()
+        
+    def set_fd_nonblocking(self, fd):
+        fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)
+
+    def printscreen(self):
+        global gui_needupdate
+        if gui_needupdate:
+            self.screen.erase()
+            self.screen.box()
+            if self.viewphone:
+                self.printphone()
+            else:
+                self.printconversations()
+            gui_needupdate = False
+        self.waitinput()
+
+    def printphone(self):
+        conversation = None
+        for conv in self.net.getconversations():
+            if conv.convid == self.idsel:
+                conversation = conv
+                break
+        
+        if conversation is None:
+            self.screen.addstr('Bad conversation selected! WTF?')
+            return
+        self.screen.vline(1, self.xsize/2, curses.ACS_VLINE, self.ysize - 2)
+        x = 3
+        for p in conversation.parties:
+            y = 3
+            self.screen.addstr(y, x, str(p), curses.A_REVERSE)
+            y += 2
+            phone = p.getphone()
+            for msg in phone.screen:
+                self.screen.addstr(y, x, msg)
+                y += 1
+            x += (self.xsize/2)
+
+    def waitinput(self):
+        # non-blocking mode
+        self.screen.addstr(self.ysize - 2, 2, self.cmd)
+        self.screen.nodelay(1)
+        char = self.screen.getch()
+        if char != -1:
+            if char in (curses.ascii.NL, curses.ascii.LF):
+                #  <ENTER>
+                self.evalcmd(self.cmd.lower())
+                self.cmd = ""
+            else:
+                if char == curses.ascii.BS or char == 263:
+                    # backspace
+                    self.cmd = self.cmd[:-1]
+                    self.screen.addstr("  ")
+                    
+                if not curses.ascii.ismeta(char):
+                    # on ajoute les caracteres a la suite de self.cmd pour
+                    # former la chaine de caractere
+                    self.cmd = self.cmd + '%c' % char
+                    self.screen.addch(char)
+        self.update()
+
+    def printconversations(self):
+        self.screen.addstr(2, 2, 'Conversations :')
+        y = self.y
+        id = 1
+        for conv in self.net.getconversations():
+            if self.idsel == conv.convid:
+                selected = curses.A_BOLD
+            else:
+                selected = curses.A_NORMAL
+            self.screen.addstr(y, self.x, '%d) %s' % (id, conv), selected)
+            y += 1
+            for party in conv.parties:
+                self.screen.addstr(y, self.x+10, str(party))
+                y += 1
+            id += 1
+
+    def update(self):
+        global gui_needupdate
+        gui_needupdate = True
+
+    def evalcmd(self, s):
+        if s == 'quit':
+            self.__end__()
+            sys.exit(0)
+        self.update()
+        
+        try:
+            selection = int(s)
+        except ValueError:
+            if s == 'view':
+                self.viewphone = True
+            elif s == 'back':
+                self.viewphone = False
+            return
+        
+        c = self.net.getconversations()
+        if selection > len(c) or selection <= 0:
+            self.idsel = 0
+        else:
+            sel = c[selection-1].convid
+            if sel == self.idsel:
+                self.idsel = 0
+            else:
+                self.idsel = sel
+            return
+
+    def __end__(self):
+        curses.nocbreak()
+        self.screen.keypad(0)
+        curses.echo()
+        curses.endwin()
+            
+class Pipe:
+    pipe = None
+    
+    def __init__(self, cmd='', mode='w'):
+        self.pipe = os.popen(cmd, mode)
+        self.cmd  = cmd
+        
+    def is_in_use(self):
+        ret = False
+        if self.pipe is not None:
+            ret = True
+        return ret
+
+    def close(self):
+        if self.pipe is not None:
+            self.pipe.close()
+
+    def write(self, data):
+        if self.pipe is not None:
+            self.pipe.write(data)
+
+
+APPEND_SCREEN = 1
+RTP           = 2048
+
+class Phone:
+    addr = ''
+    port = 0
+    screen = []
+    recording = 1
+    listening = 1
+    conv = None
+    
+    def __init__(self, addr='0.0.0.0', port=0, screen=''):
+        if type(addr) is str:
+            self.addr = socket.inet_aton(addr)
+        else:
+            self.addr = addr
+        self.port = port
+        self.screen = [screen]
+        
+    def updatescreen(self, string):
+        self.screen.append(string)
+
+    def getport(self):
+        return self.port
+
+    def setport(self, p):
+        self.port = p
+
+    def getaddr(self):
+        return self.addr[:]
+
+    def __repr__(self):
+        return '%s:%d' % (socket.inet_ntoa(struct.pack('!I',self.addr)), self.port)
+
+    def update(self, sig):
+        if sig.event == RTP:
+            if self.conv:
+                self.conv.write(sig.data)
+        elif sig.event == APPEND_SCREEN:
+            self.updatescreen(sig.data)
+        elif sig.event == SET_PORT:
+            self.port = sig.data
+
+    def attach(self, conv):
+        self.conv = conv
+
+    def detach(self):
+        self.conv = None
+
+class Party:
+    name = ''
+    phone = None
+    number = 0
+    isthecaller = False
+    
+    def __init__(self, name='(unknow)', number=0, phone=None, iscaller=False):
+        self.name = name
+        if phone is not None:
+            self.phone = phone
+        self.number = number
+        self.isthecaller = iscaller
+        
+    def sethost(self, phone):
+        self.phone = phone
+
+    def gethost(self):
+        return self.phone
+
+    def getphone(self):
+        return self.phone
+
+    def close(self):
+        pass
+
+    def recordme(self, start):
+        self.phone.recordme(start)
+
+    def listentome(self, start):
+        if self.phone is not None:
+            self.phone.listentome(start)
+        else:
+            print 'ko [%s] ' % self
+
+    def __repr__(self):
+        return '%s [%s] %s' % (self.name, self.number, self.phone)
+
+    def iscaller(self):
+        return self.isthecaller
+
+class Conversation:
+    convid = 0
+    flags = {}
+    caller = ''
+    parties = []
+    enddate   = 0
+    startdate = 0
+    recording=False
+    listening=False
+    piperecord=False
+    pipelisten=False
+    
+    def __init__(self, convid=0, flags={}, parties=None):
+        self.convid = convid
+        self.flags   = dict(flags)
+        if parties is not None:
+            self.parties = parties[:]
+        else:
+            self.parties = []
+        self.startdate = int(time.time())
+
+    def addparty(self, party):
+        if len(self.parties) >= 2:
+            return
+        if party.iscaller():
+            self.caller = party
+        self.parties.append(party)
+
+    def setflag(self, key, val):
+        self.flags[key] = val
+
+    def recordme(self, start):
+        self.recording = start
+        if self.recording:
+            self.piperecord = Pipe('sox  -Ub -r 8000 -t .raw - -t vorbis "conversation-%s.ogg"' % self)
+        else:
+            self.piperecord.close()
+
+    def listentome(self, start):
+        self.listening=start
+        if self.listening:
+            self.pipelisten = Pipe('(sox  -Ub -r 8000 -t .raw - -t .ub -|esdcat -b -m -r 8000) > /dev/null 2>&1')
+        else:
+            self.pipelisten.close()
+            
+    def write(self, data):
+        if self.listening:
+            self.pipelisten.write(data)
+        if self.recording:
+            self.piperecord.write(data)
+
+    def getflag(self, key):
+        ret = ''
+        if self.flags.has_key(key):
+            ret = self.flags[key]
+        else:
+            ret = ''
+        return ret
+
+    def getid(self):
+        return self.convid
+
+    def end(self):
+        self.enddate = int(time.time())
+        self.setflag('finished', True)
+        for party in self.parties:
+            party.close()
+
+    def update(self, sig):
+        if   sig.event == ADD:
+            self.addparty(sig.data)
+        elif sig.event == LIVE:
+            self.recordme(True)
+            self.listentome(True)
+            for p in self.parties:
+                phone=p.getphone()
+                if phone:
+                    phone.attach(self)
+        elif sig.event == RECORD:
+            self.recordme(True)
+        elif sig.event == LISTEN:
+            self.listentome(True)
+        elif sig.event == ASSIGN_CALLER:
+            self.caller = sig.data
+        elif sig.event == ASSIGN:
+            for party in self.parties:
+                if not party.iscaller() or not party.gethost():
+                    party.sethost(sig.data)
+        elif sig.event == FINISHED:
+            for p in self.parties:
+                phone=p.getphone()
+                if phone:
+                    phone.detach()
+            self.recordme(False)
+            self.listentome(False)
+
+    def __repr__(self):
+        return 'Conversation id=%d' % self.convid
+
+
+ADD    = 1
+CREATE = 2
+LIVE   = 3
+UPDATE = 4
+RECORD = 8
+ASSIGN = 16
+LISTEN = 32
+FINISHED = 64
+SET_PORT = 128
+MAP_CONFID = 256
+CREATE_PHONE = 512
+CREATE_CONVERSATION = 1024
+ASSIGN_CALLER  = 65536
+ABOUT_CONVERSATION = 4096
+ABOUT_PHONE        = 8182
+ABOUT_PARTY        = 16384
+ABOUT_NETWORK      = 32768
+
+phones = {}
+
+class Network:
+    conversations = {}
+    def __init__(self):
+        pass
+
+    def addconversation(self, conv):
+        convid = conv.getid()
+        if not self.conversations.has_key(convid):
+            self.conversations[convid] = conv
+    
+    def getconversation(self, convid):
+        if self.conversations.has_key(convid):
+            return self.conversations[convid]
+        else:
+            return Conversation()
+
+    def addphone(self, phone):
+        global phones
+        addr = phone.getaddr()
+        if not phones.has_key(addr):
+            phones[addr] = phone
+
+    def getphonebyaddr(self, address, port=0):
+        global phones
+        if not phones.has_key(address):
+            phones[address] = Phone(address, port)
+        return phones[address]
+
+    def update(self, signals):
+        while signals.notfinish():
+            s = signals.next()
+            if   s.about == ABOUT_CONVERSATION:
+                conv = self.getconversation(s.getconvid())
+                conv.update(s)
+            elif s.about == ABOUT_PHONE:
+                phone = self.getphonebyaddr(s.getphoneaddr())
+                phone.update(s)
+            elif s.about == ABOUT_NETWORK:
+                self.updateme(s)
+
+    def updateme(self, sig):
+        if   sig.event == CREATE_CONVERSATION:
+            self.addconversation(Conversation(sig.getconvid()))
+        elif sig.event == CREATE_PHONE:
+            if not phones.has_key(sig.getaddr()):
+                phones[sig.getaddr()] = Phone(sig.getaddr(), sig.getphone())
+            self.addphone(phones[sig.getaddr()])
+
+    def isphonelistening(self, addr, port):
+        global phones
+        ret = False
+        if phones.has_key(addr) and port == phones[addr].getport():
+            ret = phones[addr].islistenned()
+        return ret
+    
+    def isphonerecording(self, addr, port):
+        global phones
+        ret = False
+        if phones.has_key(addr) and port == phones[addr].getport():
+            ret = phones[addr].isrecorded()
+        return ret
+
+    def istracked(self, addr, port):
+        return True # self.isphonerecording(addr, port) or self.isphonelistening(addr, port)
+
+    def getconversations(self):
+        return self.conversations.values()
+
+
+class SignalEvent:
+    saddr  = 0
+    daddr  = 0
+    addr   = 0
+    port   = 0
+    data   = ''
+    event  = 0
+    convid = ''
+    about  = 0
+
+    def __init__(self, s=None, addr=0, port=0, event=0, convid='', data='', about=0):
+        if s is not None:
+            self.data  = s.data
+            self.addr  = s.addr
+            self.port  = s.port
+            self.event = s.event
+            self.convid = str(s.convid)
+            self.about  = about
+        else:
+            self.data  = data
+            self.addr  = addr
+            self.port  = port
+            self.event = event
+            self.about = about
+            self.convid = convid
+            
+    def getphoneaddr(self):
+        return self.addr
+
+    def getphoneport(self):
+        return self.port
+
+    def getconversation(self):
+        return self.data
+
+    def get(self):
+        return self.data
+
+    def getconvid(self):
+        return self.convid
+
+    def __repr__(self):
+        return 'Signal(about=%d, event=%d)' % (self.about, self.event)
+
+class SIPEvent(SignalEvent):
+    pass
+
+
+class SkinnyEvent(SignalEvent):
+    SKINNY_SPEAKER_MODE      = 0x00000088
+    SKINNY_SPEAKER_ON        = 0x00000001
+    SKINNY_SPEAKER_OFF       = 0x00000002
+    SKINNY_CALL_INFO         = 0x0000008f
+    SKINNY_STOP_TONE         = 0x00000083
+    SKINNY_RINGER_MSG        = 0x00000085
+    SKINNY_START_TONE        = 0x00000082
+    SKINNY_SET_TIME_DATE     = 0x00000094
+    SKINNY_KEYPAD_PRESSED    = 0x00000003
+    SKINNY_SOFT_KEYPAD       = 0x00000110
+    SKINNY_KEYSET_RINGIN     = 0x00000003
+    SKINNY_START_MEDIA_TRANS = 0x0000008a
+    SKINNY_CLOSE_MEDIA_TRANS = 0x0000008b
+    SKINNY_RINGER_ON         =  0x2
+    SKINNY_RINGER_OFF        =  0x1
+    SKINNY_KEYSET_MORE_DIGITS = 0x6
+    SKINNY_OPEN_RECEIVE_CHANNEL = 0x00000105
+    SKINNY_OPEN_RECEIVE_CHANNEL_ACK = 0x00000022
+    SKINNY_CALLSTATE_MSG    = 0x00000111
+    SKINNY_CLOSE_CONV       = 0x00000016
+
+    CALLSTATE_OFFHOOK = 1
+
+    sigcontainer = None
+    
+    def __init__(self, sigcont, payload, size, saddr, daddr):
+        if size < 12:
+            return
+        msgid = struct.unpack('I', payload[8:12])[0]
+        self.sigcontainer = sigcont
+        self.saddr = saddr
+        self.daddr = daddr
+        if msgid == self.SKINNY_START_MEDIA_TRANS:
+            self.parse_start_media_transmission(payload, 12, size - 12)
+        elif msgid == self.SKINNY_OPEN_RECEIVE_CHANNEL_ACK:
+            self.parse_open_receive_channel_ack_message(payload, 12, size - 12)
+        elif msgid == self.SKINNY_CALLSTATE_MSG:
+            self.parsecallstatemsg(daddr, payload, 12, size-12)
+        elif msgid == self.SKINNY_OPEN_RECEIVE_CHANNEL:
+            self.parse_open_receive_channel_message(payload, 12, size - 12)
+        elif msgid == self.SKINNY_OPEN_RECEIVE_CHANNEL_ACK:
+            self.parse_open_receive_channel_ack_message(payload, 12, size - 12)
+        elif msgid == self.SKINNY_CLOSE_MEDIA_TRANS:
+            self.parse_close_media_transmission(payload, 12, size - 12)
+        elif msgid == self.SKINNY_CALL_INFO:
+            self.parse_call_info_message(payload, 12, size - 12)
+        elif msgid == self.SKINNY_KEYPAD_PRESSED:
+            self.parse_keypad_pressed(saddr, daddr, payload, 12, size - 12)
+        elif msgid == self.SKINNY_START_TONE:
+            self.updatescreen(daddr, 'server> Beeeeeeeeeeeeep...')
+            self.sigcontainer.add(self)
+        elif msgid == self.SKINNY_STOP_TONE:
+            self.updatescreen(daddr, "server> stop tone")
+            self.sigcontainer.add(self)
+        elif msgid == self.SKINNY_SPEAKER_MODE:
+            self.parse_speaker_mode(daddr, payload, 12, size - 12)
+        elif msgid == self.SKINNY_SET_TIME_DATE:
+            self.parse_define_time_date(daddr, payload, 12, size - 12)
+        elif msgid == self.SKINNY_SOFT_KEYPAD:
+            self.parse_soft_key_message(daddr, payload, 12, size - 12)
+        elif msgid == self.SKINNY_RINGER_MSG:
+            self.parse_ring_msg(daddr, payload, 12, size - 12)
+
+    def parsecallstatemsg(self, addr, payload, offset, size):
+        if size < 12:
+            return
+        callstate = struct.unpack('I', payload[offset:offset+4])[0]
+        if callstate == self.CALLSTATE_OFFHOOK:
+            self.sigcontainer.add(SignalEvent( about = ABOUT_NETWORK,
+                                               event = CREATE_CONVERSATION,
+                                               convid = struct.unpack('I', payload[offset+8:offset+12])[0]))
+
+    def parse_ring_msg(self, addr, payload, offset, size):
+        if size < 4:
+            return
+        
+        ringmsg = struct.unpack("I", payload[offset:offset+4])[0]
+        if ringmsg == self.SKINNY_RINGER_ON:
+            self.updatescreen(addr, 'server> Riiiiiiiing')
+        elif ringmsg == self.SKINNY_RINGER_OFF:
+            self.updatescreen(addr, 'server> Ring off')
+        self.sigcontainer.add(self)
+        
+    def parse_soft_key_message(self, addr, payload, offset, size):
+        if size < 12:
+            return
+
+        keyset = struct.unpack("I", payload[offset+8:offset+12])[0]
+        if keyset == self.SKINNY_KEYSET_MORE_DIGITS:
+            self.updatescreen(addr, "server> Waiting more digits to dial")
+        elif keyset == self.SKINNY_KEYSET_RINGIN:
+            self.updatescreen(addr, "server> Ring in")
+        self.sigcontainer.add(self)
+        
+    def parse_speaker_mode(self, addr, payload, offset, size):
+        if size < 4:
+            return
+        
+        mode = struct.unpack('I', payload[offset:offset+4])[0]
+
+        if mode == self.SKINNY_SPEAKER_ON:
+            self.updatescreen(addr, "server> Turn on speaker")
+        elif mode == self.SKINNY_SPEAKER_OFF:
+            self.updatescreen(addr, "server> Turn off speaker") 
+        self.sigcontainer.add(self)
+        
+    def parse_keypad_pressed(self, sip, dip, payload, offset, size):
+        if size < 8:
+            return
+        
+        msg = '> key %s pressed' % (struct.unpack("I", payload[offset:offset+4])[0])
+        
+        # XXX: ethereal doesn't show this field
+        # it may indicate if the message is relayed by the call
+        # manager or is coming from directly from the phone
+        i=struct.unpack("I", payload[offset+4:offset+8])[0]
+
+        # phoneA is phoning to phoneB
+        if i == 1:
+            # message:  call manager -> phoneB
+            ip = dip
+            msg = 'server'+ msg + ' by the peer'
+        elif i == 2:
+            # message: phoneA -> call manager
+            ip = sip
+            msg = 'client' + msg
+        self.addr = ip
+        #hprint '[update for %s;%s' % (socket.inet_ntoa(struct.pack('!I', ip)), msg)
+        self.updatescreen(ip, msg)
+        self.sigcontainer.add(self)
+        
+    def parse_call_info_message(self, payload, offset, size):
+        maxSizeName   = 40
+        maxSizeNumber = 24
+        # callingName + CallingNumber + CalledName + CalledNumber + LineInstance
+        off = offset + 2*(maxSizeNumber+maxSizeName) + 4
+
+        if size < off+8:
+            return
+        
+        self.convid  = struct.unpack('I', payload[off:off+4])[0]
+        self.sigcontainer.add(SignalEvent(  about=ABOUT_CONVERSATION
+                                            , event=CREATE
+                                            , convid=self.convid))
+
+        name1 = self.string_nullpadded(payload[offset:offset+maxSizeName])
+        offset += maxSizeName
+        number1  = self.string_nullpadded(payload[offset:offset+maxSizeNumber])
+        offset += maxSizeNumber
+
+        name2   = self.string_nullpadded(payload[offset:offset+maxSizeName])
+        offset += maxSizeName
+        number2 = self.string_nullpadded(payload[offset:offset+maxSizeNumber])
+
+        global phones
+        if not phones.has_key(self.daddr):
+            phones[self.daddr] = Phone(self.daddr)
+        
+        if not phones.has_key(self.saddr):
+            phones[self.saddr] = Phone(self.saddr)
+
+        calltype = struct.unpack('!I', payload[offset+8:offset+12])[0]        
+        if calltype == 2:
+            pcaller = Party(name=name2, number=number2, iscaller=True, phone=phones[self.saddr])
+            pcalled = Party(name=name1, number=number1, phone=phones[self.daddr])
+        else:
+            pcalled = Party(name=name1, number=number1, iscaller=True, phone=phones[self.daddr])
+            pcaller = Party(name=name2, number=number2, phone=phones[self.saddr])
+
+        self.sigcontainer.add(SignalEvent( about = ABOUT_CONVERSATION
+                                           , event = ADD
+                                           , convid = self.convid
+                                           , data = pcaller))
+        
+        self.sigcontainer.add(SignalEvent( about = ABOUT_CONVERSATION
+                                           , event = ADD
+                                           , convid = self.convid
+                                           , data = pcalled))
+
+
+    def string_nullpadded(self, payload):
+        tmp = string.rstrip(payload, "\0")
+        i = string.find(tmp, "\0")
+        if i > 0:
+            tmp = tmp[:i]
+        return tmp[:]
+
+    def parse_open_receive_channel_message(self, payload, offset, size):
+        if size < 8:
+            return
+        
+        self.about = ABOUT_CONVERSATION
+        self.event = MAP_CONFID
+        self.convid = struct.unpack('I', payload[offset:offset+4])[0]
+        self.passthruid = struct.unpack('I', payload[offset+4:offset+8])[0]
+        self.sigcontainer.add(self)
+        
+    def parse_open_receive_channel_ack_message(self, payload, offset, size):
+        global phones
+        if size < 4 or struct.unpack('I', payload[offset:offset+4])[0] != 0:
+            return
+        
+        self.addr = struct.unpack('!I', payload[offset+4:offset+8])[0]
+        self.port = struct.unpack('I', payload[offset+8:offset+12])[0]
+        self.passthruid = struct.unpack('I', payload[offset+12:offset+16])[0]
+        self.about  = ABOUT_CONVERSATION
+        self.event  = ASSIGN_CALLER
+        if phones.has_key(self.addr):
+            phones[self.addr].setport(self.port)
+        else:
+            phones[self.addr] = Phone(self.addr, self.port)
+        self.data = phones[self.addr]
+        #print 'Open Receive Channel ACK : %s:%s' % (self.addr, self.port)
+        self.sigcontainer.add(self)
+        
+    def parse_start_media_transmission(self, payload, offset, size):
+        global phones
+        
+        if size < 16:
+            return
+
+        self.convid  = struct.unpack('I', payload[offset:offset+4])[0]
+        self.passthruid = struct.unpack('I', payload[offset+4:offset+8])[0]
+        self.addr =  struct.unpack('!I', payload[offset+8:offset+12])[0]
+        self.port = struct.unpack('I', payload[offset+12:offset+16])[0]
+        self.sigcontainer.add(SignalEvent(  about=ABOUT_CONVERSATION
+                                            , event=LISTEN
+                                            , convid=self.convid))
+        self.sigcontainer.add(SignalEvent(  about=ABOUT_CONVERSATION
+                                            , event=LIVE
+                                            , convid=self.convid))
+        self.about = ABOUT_CONVERSATION
+        self.event = ASSIGN
+        if not phones.has_key(self.addr):
+            phones[self.addr] = Phone(self.addr, self.port)
+        self.data  = phones[self.addr]
+        self.sigcontainer.add(self)
+        
+    def parse_close_media_transmission(self, payload, offset, size):
+        if size < 4:
+            return
+        self.convid = struct.unpack('I', payload[offset:offset+4])[0]
+        self.about  = ABOUT_CONVERSATION
+        self.event  = FINISHED
+        self.sigcontainer.add(self)
+    
+    def parse_define_time_date(self, addr, payload, offset, size):
+        if size < 24:
+            print 'too short'
+            return
+        day = struct.unpack('I', payload[offset:offset+4])[0]
+        offset += 4
+        month = struct.unpack('I', payload[offset:offset+4])[0]
+        offset += 8
+        year = struct.unpack('I', payload[offset:offset+4])[0]
+        offset += 4
+        hour = struct.unpack('I', payload[offset:offset+4])[0]
+        offset += 4
+        minute = struct.unpack('I', payload[offset:offset+4])[0]
+        self.updatescreen(addr, "server> setting time to %d/%d/%d %d:%02d" %
+                                   (year, month, day, hour, minute))
+        self.sigcontainer.add(self)
+        
+    def updatescreen(self, addr, s):
+        self.data = s
+        self.addr = addr
+        self.about = ABOUT_PHONE
+        self.event = APPEND_SCREEN
+        
+TYPE_G711_PCMU  = 0x0
+
+class RTPMessage(SignalEvent):
+    def __init__(self, sigcont, payload, size, saddr, daddr):
+        enctype = ord(payload[1]) & 0x7f
+        self.about = ABOUT_PHONE
+        self.event = RTP
+        self.addr  = saddr
+        self.saddr = saddr
+        self.daddr = daddr
+        
+        if enctype == TYPE_G711_PCMU:
+            self.data = payload[12:]
+        else:
+            self.data = ''
+        sigcont.add(self)
+
+
+class Ilty:
+    ETH_TYPE_IP     = 0x800
+    ETH_TYPE_VLAN   = 0x8100
+
+    UDP_PROT        = 0x11
+    TCP_PROT        = 0x06
+        
+    SIZE_HDR_UDP    = 8
+
+    TCP_PORT_SKINNY = 2000
+    TCP_PORT_SIP    = 5060
+
+    current_id = 1
+    p = None                            # instance de pcap
+    ui = None
+    net = None
+    
+    def __init__(self):
+        self.p = pcap.pcapObject()
+        self.net = Network()
+        self.ui = IltyUI(self.net)
+        # self.ui.setTrafficManager(self.trafman)
+        
+    def snifnet(self, iface):
+        self.p.open_live(iface, 1500, 1, 100)
+    
+    def callback(self, pktlen, data, timestamp):
+        #try:
+            if self.p.datalink() == pcap.DLT_EN10MB:
+                self.layer_ethernet(data, pktlen)
+        #finally:
+            #print 'was a bad packet'
+        
+    def offline(self, file):
+        self.p.open_offline(file)
+
+    def startengine(self):
+        self.p.setnonblock(1)
+
+        while 1:
+            next = self.p.next()
+            if next[1] is not None:
+                self.callback(*next)
+            else:
+                time.sleep(0.1)
+
+            self.ui.update()
+            self.ui.printscreen()
+
+    def layer_ethernet(self, ethernet, size):
+        da = ''
+        for i in range(0, 6):
+            da += '%0.2x' % (ord(ethernet[i]))
+            if i != 5:
+                da += ':'
+            
+        sa = ''
+        for i in range(6, 12):
+            sa += '%0.2x' % (ord(ethernet[i]))
+            if i != 11:
+                sa += ':'
+
+        ethtype = struct.unpack('!H', ethernet[12:14])[0]
+
+        offset = 0
+        if ethtype == self.ETH_TYPE_VLAN:
+            ethtype =  struct.unpack('!H', ethernet[16:18])[0]
+            offset = 4
+        
+        if ethtype == self.ETH_TYPE_IP:
+            self.layer_ip(ethernet[14+offset:], 0)
+        
+    def layer_ip(self, d, size):
+        if (ord(d[0]) & 0xf0) >> 4 != 4:
+            return
+        
+        hlen  = (ord(d[0]) & 0x0f) << 2
+        iplen = struct.unpack('!H', d[2:4])[0]
+        proto = ord(d[9])
+        src   = struct.unpack('!I', d[12:16])[0]
+        dst   = struct.unpack('!I', d[16:20])[0]
+
+        if proto == self.UDP_PROT:
+            self.layer_udp(d[hlen:], src, dst, iplen - hlen)
+        elif proto == self.TCP_PROT:
+            self.layer_tcp(d[hlen:], src, dst, iplen - hlen)
+
+    def layer_udp(self, d, ipsrc, ipdst, size):
+        sport = struct.unpack('!H', d[0:2])[0]
+        dport = struct.unpack('!H', d[2:4])[0]
+
+        size = size - self.SIZE_HDR_UDP
+        sigcont = SignalsContainer()
+        if self.net.istracked(ipsrc, sport):
+            RTPMessage(sigcont, d[self.SIZE_HDR_UDP:], size, ipsrc, ipdst)
+        elif self.TCP_PORT_SIP in (sport, dport):
+            SIP(sigcont, d, self.SIZE_HDR_UDP, size, ipsrc, self.trafman)
+        self.net.update(sigcont)
+        
+    def layer_tcp(self, d, ipsrc, ipdst, size):
+        sport = struct.unpack('!H', d[0:2])[0]
+        dport = struct.unpack('!H', d[2:4])[0]
+        hlen  = (ord(d[12]) & 0xf0) >> 2
+        size -= hlen
+        sigcont = SignalsContainer()
+        if self.TCP_PORT_SKINNY in (sport, dport):
+            SkinnyEvent(sigcont, d[hlen:], size, ipsrc, ipdst)
+        elif self.TCP_PORT_SIP in (sport, dport):
+            SIP(sigcont, d, hlen, size, ipsrc, ipdst)
+        self.net.update(sigcont)
+
+    def end(self):
+        self.ui.__end__()
+        sys.exit(0)
+    
+if __name__ == '__main__':
+    i = Ilty()
+    # i.offline("/foo/bar")
+    i.snifnet('eth0')
+    #i.snifnet('dummy0')
+    i.startengine()
+    #i.end()

@@ -2,32 +2,39 @@
 # See COPYING for license details.
 
 pkgname=cms-explorer
-pkgver=1.0
-pkgrel=6
+pkgver=15.23b58cd
+pkgrel=1
 groups=('blackarch' 'blackarch-fingerprint' 'blackarch-webapp')
-pkgdesc="Designed to reveal the specific modules, plugins, components and themes that various cms driven websites are running"
+pkgdesc='Designed to reveal the specific modules, plugins, components and themes that various cms driven websites are running.'
 arch=('any')
-url='http://code.google.com/p/cms-explorer'
+url='https://github.com/FlorianHeigl/cms-explorer'
 license=('GPL3')
-makedepends=('subversion')
-depends=('perl')
-source=('svn+http://cms-explorer.googlecode.com/svn/trunk/')
+depends=('perl' 'perl-libwhisker2')
+makedepends=('git')
+#source=('svn+http://cms-explorer.googlecode.com/svn/trunk/')
+source=("git+https://github.com/FlorianHeigl/$pkgname.git")
 sha512sums=('SKIP')
 
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
 package() {
-  cd trunk
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -m 644 *.txt *.pm "$pkgdir/usr/share/$pkgname"
-  install -m 755 *.pl "$pkgdir/usr/share/$pkgname"
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" *.pl
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" *.pm *.txt
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
 exec perl $pkgname.pl "\$@"
 EOF
+
   chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

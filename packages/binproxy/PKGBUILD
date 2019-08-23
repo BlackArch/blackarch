@@ -3,7 +3,7 @@
 
 pkgname=binproxy
 pkgver=8.d02fce9
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-proxy' 'blackarch-networking')
 pkgdesc='A proxy for arbitrary TCP connections.'
 arch=('any')
@@ -21,6 +21,12 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  sed -i 's|"bundler", "~> 1.3"|"bundler"|g' "$pkgname.gemspec"
+}
+
 package() {
   cd $pkgname
 
@@ -34,7 +40,7 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-bundle-2.3 exec bin/$pkgname bin/$pkgname "\$@"
+exec bundle exec bin/$pkgname "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
