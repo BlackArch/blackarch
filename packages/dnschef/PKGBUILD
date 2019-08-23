@@ -2,36 +2,42 @@
 # See COPYING for license details.
 
 pkgname=dnschef
-pkgver=0.3
-pkgrel=2
+pkgver=17.a395411
+pkgrel=1
 groups=('blackarch' 'blackarch-proxy')
 pkgdesc='A highly configurable DNS proxy for pentesters.'
 url='http://thesprawl.org/projects/dnschef/'
 arch=('any')
-depends=('python2')
+depends=('python' 'python-dnslib')
 license=('GPL3')
-source=("https://thesprawl.org/media/projects/$pkgname-$pkgver.zip")
-DLAGENTS=("https::/usr/bin/curl -k -o %o %u")
-sha512sums=('472429f1ff562cdc4eca814574508eaf197e9fc9fe8ad03fe7807f0b4c9bd325b8281575e91dac10a78f876b4ceeb4acec42a19ab41e285c2228eb9dc5cf4645')
+source=("git+https://github.com/iphelix/$pkgname.git")
+#source=("https://thesprawl.org/media/projects/$pkgname-$pkgver.zip")
+#DLAGENTS=("https::/usr/bin/curl -k -o %o %u")
+sha512sums=('SKIP')
 
-prepare() {
-  cd "$pkgname-$pkgver"
+pkgver() {
+  cd $pkgname
 
-  sed -i 's/env python/env python2/' *.py
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README CHANGELOG TODO
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm LICENSE README CHANGELOG TODO
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 $pkgname.py "\$@"
+exec python3 $pkgname.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
