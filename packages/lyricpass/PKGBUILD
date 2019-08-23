@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=lyricpass
+pkgver=39.f03bf88
+pkgrel=1
+pkgdesc='Tool to generate wordlists based on lyrics.'
+arch=('any')
+groups=('blackarch' 'blackarch-automation' 'blackarch-cracker')
+url='https://github.com/initstring/lyricpass'
+license=('unknown')
+depends=('python2' 'python2-requests' 'python2-beautifulsoup4')
+makedepends=('python-setuptools' 'git')
+source=("git+https://github.com/initstring/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$pkgname"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  cp -a ${pkgname}.py "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 ${pkgname}.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
