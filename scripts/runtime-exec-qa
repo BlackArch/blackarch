@@ -1,0 +1,49 @@
+#!/bin/sh
+#
+# quick'n'dirty runtime-exec QA checks on all blackarch packages.
+# this is kinda bullshit but covers at least the top lowhanging fruits for us.
+#
+# a proper way would be to parse out pacman -Fs or pkgfile -lb of $pkg and see
+# which binaries and scripts are installed and call them rather than the
+# $pkgname. this will be implemented in our blackarch-controller framework. <3
+#
+# NOTE: make sure to run this at least in a (dedicated) VM ;)
+
+LOG='exec-qa.log'
+pkgs=$(pacman -Sg blackarch | cut -d ' ' -f 2)
+total=$(echo $pkgs | wc -w)
+VERBOSE='/dev/null'
+
+# remove evilgrade
+
+for pkg in $pkgs
+do
+  let count=$count+1
+
+  echo "trying $pkg... ($count/$total)"
+
+  # exclude packages
+  case $pkg in
+    'blackarch-mirrorlist') continue ;;
+    'evilgrade') continue ;;
+  esac
+
+  sudo pacman -Sq $pkg --overwrite='*' --needed --noconfirm > $VERBOSE 2>&1
+
+  echo "[ $pkg ] ">> $LOG
+  echo -e "\n" >> $LOG
+
+  sudo timeout 2s $pkg --help >> $LOG 2>&1
+  sudo killall -9 $pkg > $VERBOSE 2>&1
+
+  echo -e "\n" >> $LOG
+  line=$(printf "%80s")
+  echo ${line// /=} >> $LOG
+  echo -e "\n" >> $LOG
+
+  # you can also use this outside (would be faster, but i don't want to bloat up
+  # the VM)
+  sudo pacman -Rns $pkg --noconfirm > $VERBOSE 2>&1
+  yes | sudo pacman -Scc > $VERBOSE 2>&1
+done
+
