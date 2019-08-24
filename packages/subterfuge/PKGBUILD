@@ -2,18 +2,24 @@
 # See COPYING for license details.
 
 pkgname=subterfuge
-pkgver=5.0
-pkgrel=4
+pkgver=64.69dda99
+pkgrel=1
 epoch=2
 groups=('blackarch' 'blackarch-exploitation')
 pkgdesc='Automated Man-in-the-Middle Attack Framework.'
-url='http://kinozoa.com'
+url='https://github.com/Subterfuge-Framework/Subterfuge'
 arch=('any')
 license=('GPL3')
-depends=('python-django')
-source=("https://subterfuge.googlecode.com/files/SubterfugePublicBeta$pkgver.tar.gz")
-sha512sums=('8c8bb64985ce2a661f5f5d50c72840f3102ca05a')
-install="$pkgname.install"
+depends=('python2' 'python2-django' 'python2-configparser')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/Subterfuge-Framework/Subterfuge.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 package() {
   cd $pkgname
@@ -22,17 +28,14 @@ package() {
   install -dm 755 "$pkgdir/usr/share/$pkgname"
   install -dm 755 "$pkgdir/usr/share/licenses/$pkgname"
 
-  tar xzf subterfuge_packages.tar.gz
-
-  cp -a subterfuge/* "$pkgdir/usr/share/$pkgname/"
-
-  mv "$pkgdir/usr/share/$pkgname/COPYING" "$pkgdir/usr/share/licenses/$pkgname"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat >> "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-exec python2 /usr/share/$pkgname/$pkgname
+cd /usr/share/$pkgname
+exec python2 $pkgname.py "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/$pkgna,e"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

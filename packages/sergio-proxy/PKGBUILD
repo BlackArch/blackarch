@@ -2,16 +2,22 @@
 # See COPYING for license details.
 
 pkgname=sergio-proxy
-pkgver=0.2.1
-pkgrel=6
+pkgver=20.8a91bb4
+pkgrel=1
 groups=('blackarch' 'blackarch-proxy' 'blackarch-spoof')
 pkgdesc='A multi-threaded transparent HTTP proxy for manipulating web traffic.'
-url='https://github.com/darkoperator/dnsrecon'
+url='https://github.com/supernothing/sergio-proxy'
 license=('GPL3')
 arch=('any')
-depends=('python2')
-source=("https://sergio-proxy.googlecode.com/files/$pkgname-v$pkgver.tar.gz")
-sha512sums=('c7c16f248b5f36d32990a5d683354e2f5723467f')
+depends=('python2' 'python2-twisted' 'python2-pyopenssl')
+source=("git+https://github.com/supernothing/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 package() {
   cd $pkgname
@@ -19,11 +25,16 @@ package() {
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.txt
+
+  rm README.txt
+
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" <<EOF
 #!/bin/sh
-exec python2 /usr/share/$pkgname/$pkgname.py "\$@"
+cd /usr/share/$pkgname
+exec python2 $pkgname.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"

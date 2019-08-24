@@ -9,23 +9,16 @@ pkgdesc='A command line tool to enumerate TLS cipher-suites supported by a serve
 arch=('any')
 url='https://github.com/Ayrx/tlsenum'
 license=('MIT')
-depends=('python2' 'python2-coverage' 'python2-flake8' 'python2-pytest'
-         'python2-tox' 'python2-pretend' 'python2-idna' 'python2-enum34'
-         'python2-construct' 'python2-click')
+depends=('python2' 'python2-virtualenv' 'python2-pip')
 makedepends=('git')
-source=('git+https://github.com/Ayrx/tlsenum.git')
+source=("git+https://github.com/Ayrx/$pkgname.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
-prepare() {
-  cd $pkgname
-
-  sed -i 's|Construct<2.8|Construct|g' setup.py
 }
 
 build() {
@@ -37,6 +30,27 @@ build() {
 package() {
   cd $pkgname
 
-  python2 setup.py install --root="$pkgdir" --optimize=1 --skip-build
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE *.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  mv "$pkgdir/usr/bin/$pkgname" "$pkgdir/usr/share/$pkgname/$pkgname-bin"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/tlsenum
+source venv/bin/activate
+exec python2 $pkgname-bin "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

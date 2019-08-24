@@ -3,17 +3,19 @@
 
 pkgname=whitewidow
 pkgver=605.4f27bfe
-pkgrel=5
+pkgrel=6
 pkgdesc='SQL Vulnerability Scanner.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
 arch=('any')
 url='https://github.com/Ekultek/whitewidow'
 license=('GPL3' 'custom:unknown')
-depends=('ruby' 'ruby-bundler')
+depends=('ruby' 'ruby-bundler' 'ruby-pkg-config' 'libxslt')
 makedepends=('git')
-source=('git+https://github.com/Ekultek/whitewidow.git')
+source=("git+https://github.com/Ekultek/$pkgname.git"
+        'Gemfile.patch')
+sha512sums=('SKIP'
+            '4383eb1f2204e4546f581dcf50c8ceb263ab5efbb0f44f163dda221b2aacf4424e905ae4a4330d38efd6095937c3d5af715e761877829bd754a49d1192263768')
 install="$pkgname.install"
-sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
@@ -22,9 +24,9 @@ pkgver() {
 }
 
 prepare() {
-  cd $pkgname
+  patch -p1 < Gemfile.patch
 
-  echo -e "\ngem 'test-unit'" >> Gemfile
+  sed -i 's|local/env|bin/env|' "$pkgname/$pkgname.rb"
 }
 
 package() {
@@ -42,7 +44,7 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec ruby $pkgname.rb "\$@"
+exec bundle exec ./$pkgname.rb "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
