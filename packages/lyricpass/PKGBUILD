@@ -8,9 +8,9 @@ pkgdesc='Tool to generate wordlists based on lyrics.'
 arch=('any')
 groups=('blackarch' 'blackarch-automation' 'blackarch-cracker')
 url='https://github.com/initstring/lyricpass'
-license=('unknown')
+license=('custom:unknown')
 depends=('python2' 'python2-requests' 'python2-beautifulsoup4')
-makedepends=('python-setuptools' 'git')
+makedepends=('git' 'python2-setuptools')
 source=("git+https://github.com/initstring/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -20,21 +20,18 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-package() {
-  cd "$pkgname"
+prepare() {
+  cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-
-  cp -a ${pkgname}.py "$pkgdir/usr/share/$pkgname/"
+  sed -i '1i\#!/usr/bin/python2' "$pkgname.py"
+}
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 exec python2 /usr/share/$pkgname/$pkgname.py "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 "$pkgname.py" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 }
 

@@ -3,7 +3,7 @@
 
 pkgname=rtlsdr-scanner
 pkgver=1013.3c032de
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='A cross platform Python frequency scanning GUI for the OsmoSDR rtl-sdr library.'
 url='https://github.com/EarToEarOak/RTLSDR-Scanner'
@@ -11,7 +11,7 @@ arch=('any')
 license=('GPL3')
 depends=('python2' 'python2-pyrtlsdr' 'wxpython' 'python2-pyserial'
          'python2-pillow' 'python2-numpy' 'rtl-sdr' 'python2-matplotlib')
-makedepends=('git')
+makedepends=('git' 'python2-setuptools')
 source=("$pkgname::git+https://github.com/EarToEarOak/RTLSDR-Scanner.git")
 sha512sums=('SKIP')
 
@@ -21,27 +21,18 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python2 setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python2 setup.py install --root="$pkgdir" --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" readme.md
   install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
-
-  cp -a doc/* "$pkgdir/usr/share/doc/$pkgname/"
-
-  rm -rf readme.md COPYING doc/
-
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 src/rtlsdr_scan.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

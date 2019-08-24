@@ -2,15 +2,15 @@
 # See COPYING for license details.
 
 pkgname=dorkbot
-pkgver=84.41a8706
-pkgrel=1
+pkgver=91.bd34b47
+pkgrel=2
 pkgdesc='Command-line tool to scan Google search results for vulnerabilities.'
 groups=('blackarch' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/utiso/dorkbot'
 license=('custom:unknown')
-depends=('python2' 'python2-argparse')
-makedepends=('git')
+depends=('python')
+makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/utiso/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -20,25 +20,18 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python setup.py install --root="$pkgdir" --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm README.md LICENSE
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

@@ -1,0 +1,73 @@
+# $Id: PKGBUILD 310007 2017-11-15 14:11:34Z foutrelis $
+# Maintainer: Jan de Groot <jgc@archlinux.org>
+
+pkgname=libgksu
+pkgver=2.0.12
+pkgrel=1
+pkgdesc='gksu authorization library.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='http://www.nongnu.org/gksu/index.html'
+license=('GPL')
+depends=('gconf' 'gtk2' 'libgnome-keyring' 'libgtop' 'startup-notification')
+makedepends=('intltool' 'gtk-doc')
+options=('!emptydirs')
+source=("http://people.debian.org/~kov/gksu/$pkgname-$pkgver.tar.gz"
+        'libgksu-2.0.0-fbsd.patch'
+        'libgksu-2.0.12-automake-1.11.2.patch'
+        'libgksu-2.0.12-fix-make-3.82.patch'
+        'libgksu-2.0.12-notests.patch'
+        'libgksu-2.0.12-revert-forkpty.patch'
+        'libgksu-2.0.7-libs.patch'
+        'libgksu-2.0.7-polinguas.patch')
+sha512sums=('06935583787c2d63db5ee345efeabd46ce1b2f36ec5c94ba0219d7c27d0935ddbf9987c0368158e57486d541b4a8e75140da53a806061d465985452fd1128573'
+            '8c99781e617b7fa96d9ff019a42b362c18f107bf335fbd591c23ac49d9f8ab4ee15a633968a60ba3ae92fe2004f4cdbd4d69b7f7c60c8d5abbd3db90c632c9be'
+            'f4509984cfcd2de42a786cd111c980a985fac21956042a4d68431503f5d2f7fb28850052d876545be538a8bdeaf7a0cd9f7df823ee3011149c6f819e612fec8e'
+            '6d099480e2d70f4192dc1dcffd28e8d65cd67d1e2951f9c91a09d9f7c14ff20d5f9d184203cc8a1be33767e702f36b91da0602eb62c16b2f65bed46f64ec3484'
+            '359f009101e7d12cf2c4be2d03eb7a65944231941ae49813be84ad1609db843c31f8e28f0efe739831b33a1f287c2800d651adf299f36a7bdf7498119eebb19e'
+            '1e4572774c28a8c9e48b790df80553b5222dfbe04dd52062d9e16687c826aeb59a67c813327fae1ed1daa3e820258b59ed0bcb54223eeb05552c8a753bc707e7'
+            '9c68a54d2f7cb3eb30d070a6946f9416fdf2e2690705f42289608d926aab3cd0742dd3510c262dcbe1b5d81d579f671770107f24366126adace085df2ba54b48'
+            'e20010cec36dd9d3df8c4cb0b7bbc395b63c1bd0d40d5a7ef68ae82236f7c471467ffb947203873e8db25e4c833dc6c731131e44c6f23595578f064e9e01e060')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -Np1 -i "$srcdir/libgksu-2.0.0-fbsd.patch"
+  patch -Np1 -i "$srcdir/libgksu-2.0.7-libs.patch"
+  patch -Np1 -i "$srcdir/libgksu-2.0.7-polinguas.patch"
+  patch -Np1 -i "$srcdir/libgksu-2.0.12-revert-forkpty.patch"
+  patch -Np0 -i "$srcdir/libgksu-2.0.12-fix-make-3.82.patch"
+  patch -Np1 -i "$srcdir/libgksu-2.0.12-notests.patch"
+  patch -Np1 -i "$srcdir/libgksu-2.0.12-automake-1.11.2.patch"
+
+  touch NEWS README
+
+  intltoolize --force --copy --automake
+  autoreconf -fi
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var \
+    --disable-static --disable-schemas-install --disable-gtk-doc
+
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make GCONF_DISABLE_MAKEFILE_SCHEMA_INSTALL=1 DESTDIR="$pkgdir" install
+
+  rm -f ${pkgdir}/usr/lib/*.a
+
+  install -m755 -d "$pkgdir/usr/share/gconf/schemas"
+
+  gconf-merge-schema "$pkgdir/usr/share/gconf/schemas/${pkgname}.schemas" \
+    --domain libgksu "$pkgdir/etc/gconf/schemas/*.schemas"
+
+  rm -f "$pkgdir/etc/gconf/schemas/*.schemas"
+}
+

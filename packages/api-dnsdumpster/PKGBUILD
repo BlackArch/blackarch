@@ -3,13 +3,13 @@
 
 pkgname=api-dnsdumpster
 pkgver=59.eda15d6
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
 pkgdesc='Unofficial Python API for http://dnsdumpster.com/.'
 arch=('any')
 url='https://github.com/PaulSec/API-dnsdumpster.com'
 license=('custom:unknown')
-depends=('python2-beautifulsoup4')
+depends=('python' 'python-beautifulsoup4' 'python-requests')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/PaulSec/API-dnsdumpster.com.git")
 sha512sums=('SKIP')
@@ -23,7 +23,7 @@ pkgver() {
 build() {
   cd $pkgname
 
-  python2 setup.py build
+  python setup.py build
 }
 
 package() {
@@ -32,18 +32,18 @@ package() {
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  python2 setup.py install --root="$pkgdir" --prefix=/usr --optimize=1 \
+  python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1 \
     --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" README.md
 
   rm README.md
 
-  cp -a * "$pkgdir/usr/share/$pkgname"
+  cp -a dnsdumpster/* "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-exec python2 /usr/share/$pkgname/API_example.py "\$@"
+exec python /usr/share/$pkgname/API_example.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"

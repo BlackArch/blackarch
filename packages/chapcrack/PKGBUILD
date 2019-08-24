@@ -3,14 +3,14 @@
 
 pkgname=chapcrack
 pkgver=17.ae2827f
-pkgrel=4
+pkgrel=5
 groups=('blackarch' 'blackarch-cracker')
 pkgdesc='A tool for parsing and decrypting MS-CHAPv2 network handshakes.'
 arch=('any')
 url='https://github.com/moxie0/chapcrack'
 license=('GPL3')
-depends=('python2' 'python2-passlib' 'python2-dpkt')
-makedepends=('git' 'python2-setuptools')
+depends=('python2' 'python2-passlib' 'python2-dpkt' 'python2-m2crypto')
+makedepends=('git')
 source=("git+https://github.com/moxie0/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -20,17 +20,32 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-build() {
-  cd $pkgname
-
-  python2 setup.py build
-}
-
 package() {
   cd $pkgname
 
-  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname-nthash" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 nthash.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-nthash"
 }
 
