@@ -3,28 +3,50 @@
 
 pkgname=tlspretense
 pkgver=0.7.0
-pkgrel=1
+pkgrel=2
 pkgdesc='SSL/TLS client testing framework.'
 groups=('blackarch' 'blackarch-crypto' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/iSECPartners/tlspretense'
 license=('MIT')
-depends=('ruby' 'ruby-ruby-termios' 'ruby-eventmachine')
+depends=('ruby' 'ruby-bundler')
 makedepends=('rubygems')
 options=(!emptydirs)
-source=("https://rubygems.org/downloads/$pkgname-$pkgver.gem")
-noextract=("tlspretense-$pkgver.gem")
-sha512sums=('29b0e7f416c12aa13991110194c1f1dfb47ddcb6b346ab90f81ebdc65aadc54affc53a20c06610cf53e8fd4c1573e99fd8900772aa3eb659dd52ec6eb8234fe8')
+source=("https://rubygems.org/downloads/$pkgname-$pkgver.gem"
+        "$pkgname.gemspec.patch")
+sha512sums=('29b0e7f416c12aa13991110194c1f1dfb47ddcb6b346ab90f81ebdc65aadc54affc53a20c06610cf53e8fd4c1573e99fd8900772aa3eb659dd52ec6eb8234fe8'
+            'f4e280134de9a90c2d953c7f3f69d8f48feaf93160e969762ea0d588df92a3dda02d46b175e377e838b9005476a6b8ffb56b12bf5ddd452ed122ae056f4332b0')
+install="$pkgname.install"
+
+prepare() {
+  mkdir -p $pkgname
+  tar xfz data.tar.gz -C $pkgname
+
+  patch -p1 < "$pkgname.gemspec.patch"
+}
 
 package() {
-  _gemdir="$(ruby -e'puts Gem.default_dir')"
+  cd $pkgname
 
-  gem install --ignore-dependencies --no-user-install \
-    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" "$pkgname-$pkgver.gem"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  rm "$pkgdir/$_gemdir/cache/$pkgname-$pkgver.gem"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rdoc
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  install -Dm 644 "$pkgdir/$_gemdir/gems/$pkgname-$pkgver/LICENSE.txt" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  rm LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bundle exec ./bin/$pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+
+  find "$pkgdir/usr/share/$pkgname/bin" -type f -exec chmod 755 {} \;
+  chmod 644 "$pkgdir/usr/share/$pkgname/"{Gemfile*,*gemspec}
 }
 
