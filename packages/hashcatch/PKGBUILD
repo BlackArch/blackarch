@@ -1,14 +1,16 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
+# Maintainer: Sivanesh Ashok <sivaneshashok at gmail dot com>
+# Submitter: noptrix
 
 pkgname=hashcatch
-pkgver=26.ef629de
+pkgver=1.0
 pkgrel=1
 pkgdesc='Capture handshakes of nearby WiFi networks automatically.'
 groups=('blackarch' 'blackarch-wireless' 'blackarch-cracker')
 arch=('any')
-url='https://github.com/staz0t/hashcatch'
-license=('custom:unknown')
+url='https://stazot.tk/hashcatch.html'
+license=('GPL3')
 depends=('bash' 'aircrack-ng' 'hashcat-utils' 'hcxtools' 'jq')
 makedepends=('git')
 source=("git+https://github.com/staz0t/$pkgname.git")
@@ -21,26 +23,20 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+	cd "$pkgname"
+	touch $pkgname.conf
+	touch db
+	mkdir handshakes
+}
+
 package() {
-  cd $pkgname
-
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname/handshakes"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-
-  rm README.md
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  touch "$pkgdir/usr/share/$pkgname/"{config,db}
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec bash $pkgname.sh
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+	cd "$pkgname"
+	
+	install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+	install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/hashcatch/LICENSE"
+	install -Dm 644 README.md "$pkgdir/usr/share/doc/hashcatch/README.md"
+	install -Dm 755 $pkgname.conf "$pkgdir/etc/hashcatch/$pkgname.conf"
+	install -Dm 755 db "$pkgdir/usr/share/hashcatch/db"
 }
 
