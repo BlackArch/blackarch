@@ -3,14 +3,21 @@
 
 pkgname=yawast
 pkgver=903.66cfc5a
-pkgrel=1
+pkgrel=2
 pkgdesc='The YAWAST Antecedent Web Application Security Toolkit.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
-arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+arch=('any')
 url='https://github.com/adamcaudill/yawast'
 license=('BSD')
-depends=('ruby')
-makedepends=('git' 'ruby-rdoc')
+depends=('python' 'python-asn1crypto' 'python-attrs' 'python-beautifulsoup4'
+         'python-certifi' 'python-cffi' 'python-chardet' 'python-colorama'
+         'python-cryptography' 'python-dnspython' 'python-idna'
+         'python-jsonschema' 'python-nassl' 'python-packaging' 'python-psutil'
+         'python-publicsuffixlist' 'python-pycparser' 'python-pyparsing'
+         'python-requests-mock' 'python-requests' 'python-selenium' 'python-six'
+         'python-soupsieve' 'sslyze' 'python-tls-parser' 'python-urllib3'
+         'python-validator-collection')
+makedepends=('git' 'python-setuptools' 'python-requirementslib')
 source=("git+https://github.com/adamcaudill/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -20,16 +27,18 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
+  python setup.py install --root="$pkgdir" --prefix=/usr --skip-build
 
-  _gemdir="$(ruby -e'puts Gem.default_dir')"
-
-  gem install --ignore-dependencies --no-user-install -n "$pkgdir/usr/bin" \
-    -i "$pkgdir/$_gemdir" $pkgname
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
