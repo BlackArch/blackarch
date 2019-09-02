@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=phantap
+pkgver=47.758fba1
+pkgrel=1
+pkgdesc="An 'invisible' network tap aimed at red teams."
+groups=('blackarch' 'blackarch-networking')
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/nccgroup/phantap'
+license=('MIT')
+depends=('libpcap')
+makedepends=('git' 'cmake')
+source=("git+https://github.com/nccgroup/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$pkgname/src"
+
+  cmake -DCMAKE_INSTALL_PREFIX=/usr .
+
+  make
+}
+
+package() {
+  cd "$pkgname/src"
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  make DESTDIR="$pkgdir" install
+
+  cd "$srcdir/$pkgname"
+
+  cp -a files/etc "$pkgdir/etc"
+  cp -a img "$pkgdir/usr/share/$pkgname/"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  mv "$pkgdir/usr/sbin" "$pkgdir/usr/bin"
+}
+
