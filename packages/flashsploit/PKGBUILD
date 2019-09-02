@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=flashsploit
+pkgver=21.8b6c051
+pkgrel=1
+pkgdesc='Exploitation Framework for ATtiny85 Based HID Attacks.'
+groups=('blackarch' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/thewhiteh4t/flashsploit'
+license=('custom:unknown')
+depends=('python' 'openssh' 'php' 'metasploit')
+makedepends=('git')
+source=("git+https://github.com/thewhiteh4t/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
