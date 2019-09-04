@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=shellpop
+pkgver=148.a145349
+pkgrel=1
+pkgdesc='Generate easy and sophisticated reverse or bind shell commands.'
+arch=('any')
+groups=('blackarch' 'blackarch-automation')
+url='https://github.com/0x00-0x00/ShellPop'
+license=('MIT')
+depends=('python2' 'python2-pyperclip' 'python2-netifaces' 'python2-argcomplete')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/0x00-0x00/ShellPop.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 "bin/$pkgname" "$pkgdir/usr/share/$pkgname/${pkgname}.py"
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/$pkgname/" src/*.py
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 ${pkgname}.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
