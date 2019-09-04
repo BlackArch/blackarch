@@ -2,7 +2,7 @@
 
 BASE=${BASH_SOURCE[0]%/*}
 X86LOG='/tmp/to-release'
-ARMLOG="${BASE}/../lists/to-release-arm"
+ARMLOG="$BASE/../lists/to-release-arm"
 
 CORE='iputils traceroute argon2'
 COMMUNITY='afl afpfs-ng aircrack-ng arduino arp-scan atftp batctl bettercap
@@ -78,7 +78,7 @@ sort -u $X86LOG -o $X86LOG
 # x86_64
 if [ -f $X86LOG ]
 then
-  pkgs=$(cat $X86LOG)
+  pkgs="$(cat $X86LOG)"
 fi
 if [ -n "$pkgs" ]
 then
@@ -88,13 +88,13 @@ then
     echo "    > $pkg"
   done
   echo
-  ${BASE}/baofficial $pkgs && ${BASE}/baclean
+  ${BASE}/baofficial $pkgs
 
   # arm
   echo "[+] checking for arm packages"
-  for apkg in $(cat $X86LOG)
+  for apkg in $pkgs
   do
-    arch="$(yay -Si $pkg | grep 'Architecture ' | head -1 | cut -d ':' -f 2 |
+    arch="$(yay -Si $apkg | grep 'Architecture ' | head -1 | cut -d ':' -f 2 |
       sed 's/^ //')"
     if [ "$arch" = "x86_64" ]
     then
@@ -104,7 +104,7 @@ then
   sort -u $ARMLOG -o $ARMLOG
   if [ -f $ARMLOG ]
   then
-    apkgs=$(cat $ARMLOG)
+    apkgs="$(cat $ARMLOG)"
   else
     echo "[+] done"
     exit
@@ -123,6 +123,7 @@ then
   fi
 fi
 
+${BASE}/baclean
 ssh blackarch.org -l root 'date +%s > /var/www/blackarch/lastupdate'
 ssh blackarch.org -l root 'cd /var/www && ./fixperms.sh'
 
