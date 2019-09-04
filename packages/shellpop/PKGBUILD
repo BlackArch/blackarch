@@ -20,23 +20,18 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python2 setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
+  python2 setup.py install --root="$pkgdir" --skip-build
 
-  install -Dm 755 "bin/$pkgname" "$pkgdir/usr/share/$pkgname/$pkgname.py"
-  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/$pkgname/" src/*.py
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md KNOWN_ISSUES
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
