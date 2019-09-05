@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=keye
+pkgver=29.d44a578
+pkgrel=1
+pkgdesc='Recon tool detecting changes of websites based on content-length differences.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon' 'blackarch-automation')
+url='https://github.com/clirimemini/Keye'
+license=('MIT')
+depends=('python' 'python-requests' 'python-argparse')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/clirimemini/Keye.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" *.py
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 655 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
