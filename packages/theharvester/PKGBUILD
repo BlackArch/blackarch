@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname=theharvester
-pkgver=730.165d691
-pkgrel=1
+pkgver=908.dab2c19
+pkgrel=2
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='Python tool for gathering e-mail accounts and subdomain names from different public sources (search engines, pgp key servers).'
 url='http://www.edge-security.com/theHarvester.php'
@@ -11,7 +11,8 @@ arch=('any')
 license=('GPL2')
 depends=('python' 'python-requests' 'python-shodan' 'python-texttable'
          'python-beautifulsoup4' 'python-plotly' 'python-pytest' 'python-yaml'
-         'python-censys' 'python-pytz' 'python-decorator' 'python-retrying')
+         'python-censys' 'python-pytz' 'python-decorator' 'python-retrying'
+         'python-gevent' 'python-grequests' 'flake8')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/laramies/theHarvester.git")
 sha512sums=('SKIP')
@@ -22,17 +23,28 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  sed -i "s|'api-keys.yaml',|'/usr/share/theharvester/api-keys.yaml',|g" \
+    theHarvester/lib/core.py
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr --skip-build
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" changelog.txt
+  install -Dm 644 api-keys.yaml "$pkgdir/usr/share/$pkgname/api-keys.yaml"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" COPYING LICENSES
 
-  cp --no-preserve=ownership -a * "$pkgdir/usr/share/$pkgname/"
-
-  ln -s "/usr/share/$pkgname/theHarvester.py" "$pkgdir/usr/bin/$pkgname"
+  mv "$pkgdir/usr/bin/theHarvester" "$pkgdir/usr/bin/$pkgname"
 }
 

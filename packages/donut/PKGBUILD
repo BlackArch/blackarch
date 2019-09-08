@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=donut
+pkgver=160.8c5d2b7
+pkgrel=1
+pkgdesc='Generates x86, x64 or AMD64+x86 P.I. shellcode loading .NET Assemblies from memory.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-backdoor' 'blackarch-exploitation')
+url='https://github.com/TheWover/donut'
+license=('BSD')
+depends=('python')
+makedepends=('gcc' 'make' 'git' 'python-setuptools')
+source=("git+https://github.com/TheWover/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  make
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 -t "$pkgdir/usr/bin/" $pkgname
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" docs/* *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+}
+

@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=osfooler-ng
+pkgver=2.c0b20d6
+pkgrel=2
+pkgdesc='Prevents remote active/passive OS fingerprinting by tools like nmap or p0f.'
+arch=('any')
+groups=('blackarch' 'blackarch-defensive')
+url='https://github.com/segofensiva/OSfooler-ng'
+license=('GPL3')
+depends=('python2' 'python2-scapy' 'python2-nfqueue' 'python2-dpkt')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/segofensiva/OSfooler-ng.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a --no-preserve=ownership osfooler_ng/ "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/osfooler_ng/
+exec python2 osfooler_ng.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
