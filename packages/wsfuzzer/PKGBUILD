@@ -3,14 +3,14 @@
 
 pkgname=wsfuzzer
 pkgver=1.9.5
-pkgrel=8
+pkgrel=9
 groups=('blackarch' 'blackarch-fuzzer' 'blackarch-webapp')
 pkgdesc='A Python tool written to automate SOAP pentesting of web services.'
 url='https://www.owasp.org/index.php/Category:OWASP_WSFuzzer_Project'
 arch=('any')
 license=('LGPL')
 depends=('python2' 'python2-pyxml' 'java-environment')
-source=("http://downloads.sourceforge.net/project/wsfuzzer/wsfuzzer/version1.9.5/wsfuzzer-$pkgver.tar.gz")
+source=("http://downloads.sourceforge.net/project/wsfuzzer/wsfuzzer/version1.9.5/$pkgname-$pkgver.tar.gz")
 sha512sums=('1e7551293a0421ff982473f1940e6b4c6c73aeb427336509ed3fb06200fdacafc90c452ee00d3e30c9c21e484dcaf7c849a045c9162765b604440f576daa0075')
 
 prepare() {
@@ -21,10 +21,21 @@ package() {
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" docs/LICENSE \
+    docs/COPYING
+  rm docs/{LICENSE,COPYING}
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" docs/*
+  rm -rf docs
+
   cp -La --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
 
-  find "$pkgdir" -name .svn -exec rm -rf {} +
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 WSFuzzer.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 
-  ln -s "/usr/share/$pkgname/WSFuzzer.py" "$pkgdir/usr/bin/$pkgname"
+  find "$pkgdir" -name .svn -exec rm -rf {} +
 }
 
