@@ -4,15 +4,14 @@
 pkgname=operative
 pkgver=107.6a08245
 pkgrel=1
-epoch=1
+epoch=2
 pkgdesc='Framework based on fingerprint action, this tool is used for get information on a website or a enterprise target with multiple modules (Viadeo search,Linkedin search, Reverse email whois, Reverse ip whois, SQL file forensics ...).'
 groups=('blackarch' 'blackarch-fingerprint')
 arch=('any')
 url='https://github.com/graniet/operative-framework'
 license=('Apache2')
-depends=('python2' 'python2-colorama' 'python2-requests' 'python2-pythonwhois'
-         'python2-beautifulsoup4' 'sslyze' 'wafw00f')
-makedepends=('git')
+depends=('glibc')
+makedepends=('git' 'go')
 source=("$pkgname::git+https://github.com/graniet/operative-framework.git")
 sha512sums=('SKIP')
 
@@ -22,25 +21,30 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  export GOOS=linux
+  export GOPATH="$srcdir"
+
+  if [ "$CARCH" == "x86_64" ]
+  then
+    export GOARCH=amd64
+  elif [ "$CARCH" == "armv6h" ] || [ "$CARCH" == "armv7h" ]
+  then
+    export GOARCH=arm
+  fi
+
+  go get -d -v ./...
+  go build -v -o $pkgname
+
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm README.md LICENSE
-
-  cp -a * "$pkgdir/usr/share/$pkgname"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
