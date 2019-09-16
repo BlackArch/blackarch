@@ -3,14 +3,13 @@
 
 pkgname=cloudmare
 pkgver=40.1cc4773
-pkgrel=1
+pkgrel=2
 pkgdesc='A simple tool to find origin servers of websites protected by CloudFlare with a misconfiguration DNS.'
 groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/MrH0wl/Cloudmare'
 license=('GPL3')
-depends=('python2' 'python2-colorama' 'python2-dnspython' 'python2-requests'
-         'python2-urllib3' 'python2-html-similarity' 'punter')
+depends=('python' 'python-pip')
 makedepends=('git' 'dos2unix')
 source=("$pkgname::git+https://github.com/MrH0wl/Cloudmare.git")
 sha512sums=('SKIP')
@@ -25,15 +24,27 @@ prepare() {
   cd $pkgname
 
   dos2unix Cloudmare.py
-
-  sed -i 's|/bin/env python|/bin/env python2|g' Cloudmare.py
 }
 
 package() {
   cd $pkgname
 
-  install -Dm 755 Cloudmare.py "$pkgdir/usr/bin/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python3 Cloudmare.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
