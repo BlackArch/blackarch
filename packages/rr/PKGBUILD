@@ -2,21 +2,28 @@
 # See COPYING for license details.
 
 pkgname=rr
-pkgver=5.2.0
-pkgrel=2
+pkgver=4893.77c116f8
+pkgrel=1
 groups=('blackarch' 'blackarch-debugger' 'blackarch-misc')
 pkgdesc='A Record and Replay Framework.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/mozilla/rr'
 license=('custom')
-depends=('libpfm4' 'zlib' 'python2-pexpect' 'man-pages' 'libpfm4'
-         'gcc-libs' 'bash' 'lib32-zlib' 'python2' 'gcc' 'libpcap')
+depends=('libpfm4' 'zlib' 'python-pexpect' 'man-pages' 'libpfm4' 'gcc-libs'
+         'gcc-libs' 'bash' 'lib32-zlib' 'python2' 'gcc' 'libpcap' 'libcap-ng'
+         'libcap' 'capnproto')
 makedepends=('cmake' 'gdb' 'capnproto')
-source=("https://github.com/mozilla/rr/archive/$pkgver.tar.gz")
-sha512sums=('4465985f67e9812b62b91ac7942105a9f976faf0c0d7c352a99a638fe6bdfde024f939b3daa922d431c7fc87118ae4d9d039b00345760fb547c349e8737dc168')
+source=("git+https://github.com/mozilla/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 build(){
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   export CFLAGS="$CFLAGS -fPIC"
 
@@ -26,14 +33,14 @@ build(){
 
   cmake -Ddisable32bit=ON -DCMAKE_VERBOSE_MAKEFILE=ON \
     -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
-    -DPYTHON_EXECUTABLE=/usr/bin/python2 ..
+    -DPYTHON_EXECUTABLE=/usr/bin/python3 ..
 
   make
 }
 
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   cd build
 
