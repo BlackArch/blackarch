@@ -1,6 +1,7 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
+_pkgname=gOSINT
 pkgname=gosint
 pkgver=196.9c86ed2
 pkgrel=1
@@ -10,41 +11,38 @@ arch=('x86_64' 'aarch64')
 url='https://github.com/Nhoya/gOSINT'
 license=('GPL3')
 depends=('glibc')
-makedepends=('git' 'go-pie')
-source=("$pkgname::git+https://github.com/Nhoya/gOSINT.git")
+makedepends=('git' 'go-pie' 'dep' 'tesseract')
+source=("git+https://github.com/Nhoya/$_pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
-  cd $pkgname
+  cd $_pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  mkdir -p "gopath/src/github.com/Nhoya"
+  ln -rTsf $_pkgname "gopath/src/github.com/Nhoya/$_pkgname"
+
+  export GOPATH="$srcdir/gopath"
+  cd "$GOPATH/src/github.com/Nhoya/$_pkgname"
+
+  dep ensure
+}
+
+build() {
+  export GOPATH="$srcdir/gopath"
+  
+  cd "$GOPATH/src/github.com/Nhoya/$_pkgname"
+  go build -o $pkgname -v -ldflags="-s -w" cmd/gosint/main.go
+}
+
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  cd "$_pkgname"
 
-  _deps='github.com/deckarep/golang-set github.com/nhoya/goPwned'
-  _deps="$_deps github.com/jessevdk/go-flags gopkg.in/src-d/go-git.v4"
-  _deps="$_deps github.com/jaytaylor/html2text"
-  _deps="$_deps gopkg.in/ns3777k/go-shodan.v2/shodan"
-  _deps="$_deps github.com/deckarep/golang-set"
-  _deps="$_deps github.com/jessevdk/go-flags"
-
-  export GOPATH="$srcdir"
-
-  for d in $_deps ; do
-    go get -v -u $d
-  done
-
-  cd $pkgname
-
-  go build
-
-  #install -Dm 644 config/gOSINT.conf "$HOME/.config/gOSINT.conf"
-  install -Dm 644 config/config.json "$HOME/.config/gOSINT.conf"
-  install -Dm 755 gOSINT "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 README.md "$pkgdir/usr/share/doc/$pkgname/README"
 }
 
