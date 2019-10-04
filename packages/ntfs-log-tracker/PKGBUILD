@@ -1,0 +1,31 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ntfs-log-tracker
+pkgver=1.51
+pkgrel=1
+groups=('blackarch' 'blackarch-forensic' 'blackarch-windows')
+pkgdesc='This tool can parse $LogFile, $UsnJrnl of NTFS.'
+arch=('x86_64')
+url='https://sites.google.com/site/forensicnote/ntfs-log-tracker'
+license=('custom:unknown')
+depends=('wine' 'wine_gecko' 'wine-mono')
+source=("https://sites.google.com/site/forensicnote/ntfs-log-tracker/NTFS%20Log%20Tracker%20v$pkgver%20CMD.zip")
+sha512sums=('01151c346d1fd7337f1353313303b7c2dc16f3a565f9c582d618fae72bcdcca0fb9c9648e85642f8add264637549fd8787d08a0b29f5d350eb6ec012514487d0')
+
+package() {
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
+
+  cp --no-preserve=ownership sqlite3.dll \
+    NTFS_Log_Tracker_CMD_v$pkgver.exe "$pkgdir/usr/share/windows/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname
+exec wine NTFS_Log_Tracker_CMD_v$pkgver.exe "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
