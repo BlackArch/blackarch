@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=analyzemft
+pkgver=124.64c71d7
+pkgrel=1
+pkgdesc='Parse the MFT file from an NTFS filesystem.'
+groups=('blackarch' 'blackarch-forensic')
+arch=('any')
+url='https://github.com/dkovar/analyzeMFT'
+license=('CPL 1.0')
+depends=('python2')
+makedepends=('git' 'python2-setuptools')
+source=("$pkgname::git+https://github.com/dkovar/analyzeMFT.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  python2 setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" CHANGES.txt README.txt
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
+    --skip-build
+
+  ln -fs /usr/bin/analyzeMFT.py "$pkgdir/usr/bin/$pkgname"
+}
+
