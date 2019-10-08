@@ -2,9 +2,10 @@
 # See COPYING for license details.
 
 pkgbase=python-google
+_pkgname=google
 pkgname=('python2-google' 'python-google')
 pkgver=2.0.2
-pkgrel=2
+pkgrel=3
 pkgdesc='Python bindings to the Google search engine.'
 arch=('any')
 url='https://pypi.org/project/google/#files'
@@ -13,12 +14,26 @@ makedepends=('python2-setuptools' 'python-setuptools')
 source=("https://files.pythonhosted.org/packages/34/4c/9bc51ae2611e5893ff45f8972f20dd7c8408eb5d706a541182ac2da3b0b7/google-$pkgver.tar.gz")
 sha512sums=('b29cace14ceb2dee292e207b21ebe0ccd03fe33f372133b30c1b2291585dfe607ba016627495c30bb9c42eea379a9b3d86fb1b2734338080a0a7f902a5314516')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
 package_python2-google() {
   depends=('python2' 'python2-beautifulsoup4')
 
-  cd "google-$pkgver"
+  cd "$_pkgname-$pkgver-2"
 
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1
+  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
 
   mv "$pkgdir/usr/bin/google" "$pkgdir/usr/bin/google2"
 }
@@ -26,8 +41,8 @@ package_python2-google() {
 package_python-google() {
   depends=('python' 'python-beautifulsoup4')
 
-  cd "google-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1
+  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
 }
 
