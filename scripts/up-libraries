@@ -57,8 +57,6 @@ def update_pkgbuild(name, url, current_version, available_version):
 
     temp = re.sub('source=.*', ('source=("' + url + '")'), temp)  # source update
 
-#    temp = re.sub(name_to_replace, '$_pkgname', temp)
-
     with open('../packages/{name}/PKGBUILD'.format(name=name), 'w', encoding='utf-8') as file:
         file.write(temp)
 
@@ -92,7 +90,7 @@ def python_packages_version_check(name):
                     update_pkgbuild(name, url, current_version, available_version)
                 else:
                     print(
-                        'Please, do manual update {name} to {version}, because i cant find any *.tar.gz or *.zip archives'.format(
+                        'Please, do manual update [{name}] to {version}, because i cant find any *.tar.gz or *.zip archives'.format(
                             name=name, version=available_version))
 
         except Exception as e:
@@ -115,47 +113,6 @@ def ruby_packages_version_check(name):
             update_pkgbuild(name, url, current_version, available_version)
 
 
-# update tools
-def hacking_tools_update(name):
-    global to_update
-    current_version = get_current_version(name)
-    try:
-        url = ''  # no cheat
-        if current_version.replace('.', '').isdigit():
-            with open('../packages/{name}/PKGBUILD'.format(name=name), 'r', encoding='utf-8') as file:
-                for line in file:
-                    if 'source=(' in line and (
-                            '$pkgver' in line or '${pkgver}' in line) and 'git+' not in line and 'python' not in line and 'ruby' not in line:  # 'git+' for include tarball from github.com
-                        url = str(line[9:-3].strip())  # got url without 'source=("' and '")'
-                        break
-        if len(url) > 0:
-            i = 0  # no cheat
-            req = requests.get(url.replace('$pkgver', current_version).replace('$pkgname', name).replace('${pkgver}',
-                                                                                                         current_version).replace(
-                '${pkgname}', name))
-            while req.ok and req.headers['Content-Type'].replace(' ', '').lower() != 'text/html' and req.headers[
-                'Content-Type'].replace(' ', '').lower() != 'text/plain' and req.headers[
-                'Content-Type'].repalce(' ', '').lower() != 'text/html;charset=utf-8' and req.headers[
-                'Content-Type'].replace(' ', '').lower() != 'text/plain;charset=utf-8':
-                i += 1
-                if current_version.count('.') == 0:
-                    available_version = ''.join(current_version.split[:-1]) + str(int(current_version[-1]) + i)
-                else:
-                    available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(
-                        int(current_version.split('.')[-1]) + i)  # so far only last number++
-                req = requests.get(url.replace('$pkgver', available_version).replace('$pkgname', name))
-            i -= 1  # end
-            if current_version.count('.') == 0:
-                available_version = ''.join(current_version.split[:-1]) + str(int(current_version[-1]) + i)
-            else:
-                available_version = '.'.join(current_version.split('.')[:-1]) + '.' + str(
-                    int(current_version.split('.')[-1]) + i)  # so far only last number++
-            if i > 0:
-                print('Time to update: ' + name + ' to: ' + available_version + ' ' + req.headers['Content-Type'])
-    except Exception:
-        pass
-
-
 def main(function, needed):
     to_check = []
 
@@ -172,21 +129,18 @@ def main(function, needed):
 
     ruby_exclusions = ['ruby-unf']
 
-    tools_exclusions = []
 
     if needed == 'python':
         exclusions = python_exclusions
     elif needed == 'ruby':
         exclusions = ruby_exclusions
-    else:
-        exclusions = tools_exclusions
 
     for root, dirs, files in os.walk('../packages/'):
         for dir in dirs:
             if needed in dir and dir not in exclusions:
                 to_check.append(dir)
 
-    with ThreadPoolExecutor(5) as executor:  # i think 16 is enough
+    with ThreadPoolExecutor(5) as executor:
         for _ in executor.map(function, to_check):
             pass
 
@@ -211,9 +165,8 @@ if __name__ == '__main__':
 
     main(ruby_packages_version_check, 'ruby')  # start version updating ruby packages
 
-    # main(hacking_tools_update, '')
-
     with open('../lists/to-release', 'a', encoding='utf-8') as file:
         file.write(to_release)
 
     print('Done!')
+
