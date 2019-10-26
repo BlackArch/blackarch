@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=jdeserialize
+pkgver=.31.20635ba
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-reversing')
+pkgdesc='A library that interprets Java serialized objects. It also comes with a command-line tool that can generate compilable class declarations, extract block data, and print textual representations of instance values.'
+arch=('any')
+url='https://github.com/frohoff/jdeserialize/'
+license=('custom:unknown')
+depends=('java-runtime' 'java-environment')
+makedepends=('git' 'ant')
+source=("git+https://github.com/frohoff/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git describe --tags).$(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$pkgname/$pkgname"
+
+  ant
+}
+
+package() {
+  cd "$pkgname/$pkgname"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+java -jar /usr/share/$pkgname/$pkgname.jar "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
