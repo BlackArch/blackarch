@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=dirstalk
+pkgver=1.3.0
+pkgrel=1
+pkgdesc='Modern alternative to dirbuster/dirb.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
+url='https://github.com/stefanoj3/dirstalk'
+license=('MIT')
+makedepends=('go' 'dep' 'git')
+source=("https://github.com/stefanoj3/$pkgname/archive/$pkgver.tar.gz")
+sha512sums=('bafa76ce85f0d87bd63e814f120f2a16111aeecdeaef52f853415fcac7e8823aa04d788ae76a3ce4ebc0465321142392c2e8081364af624e11d9fe25b385e68c')
+
+prepare() {
+  export GOPATH="$srcdir/go"
+
+  mkdir -p go/src/github.com/stefanoj3
+  ln -rTsf "$pkgname-$pkgver" go/src/github.com/stefanoj3/$pkgname
+}
+
+build() {
+  export GOPATH="$srcdir/go"
+
+  cd go/src/github.com/stefanoj3/$pkgname
+  dep ensure
+  make build
+}
+
+package() {
+  cd $pkgname-$pkgver
+
+  install -Dm 755 dist/$pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README"
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
