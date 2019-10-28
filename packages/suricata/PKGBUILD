@@ -10,7 +10,7 @@ url='https://suricata-ids.org/'
 groups=('blackarch' 'blackarch-defensive' 'blackarch-ids')
 license=('GPL2')
 depends=('zlib' 'nss' 'jansson' 'libcap-ng' 'libnetfilter_queue' 'libnfnetlink'
-         'libnet' 'libpcap' 'libyaml' 'pcre' 'python2-magic' 'file' 'lua'
+         'libnet' 'libpcap' 'libyaml' 'pcre' 'python-magic' 'file' 'lua'
          'luajit' 'geoip' 'libnetfilter_log' 'libmaxminddb')
 makedepends=('cargo')
 optdepends=('snort: suricata can use rulesets provided by snort')
@@ -21,17 +21,17 @@ sha512sums=('0dc8941fdf29d615531eeda6f6076052cca79fda6dda3c96300c08b343a64a1700f
 prepare() {
   cd "$pkgname-$pkgver"
 
-  find "$srcdir" -type f -name '*.py' -exec \
-    sed -i 's|#!/usr/bin/env python|#!/usr/bin/env python2|' {} +
-  find "$srcdir" -type f -name '*.py' -exec \
-    sed -i 's|#!/usr/bin/python|#!/usr/bin/python2|' {} +
+#  find "$srcdir" -type f -name '*.py' -exec \
+#    sed -i 's|#!/usr/bin/env python|#!/usr/bin/env python2|' {} +
+#  find "$srcdir" -type f -name '*.py' -exec \
+#    sed -i 's|#!/usr/bin/python|#!/usr/bin/python2|' {} +
 }
 
 build() {
   cd "$pkgname-$pkgver"
 
   ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var \
-    HAVE_PYTHON_CONFIG=/usr/bin/python2 --enable-gccprotect \
+    HAVE_PYTHON_CONFIG=/usr/bin/python3 --enable-gccprotect \
     --enable-nfqueue --enable-nflog --enable-luajit --enable-geoip \
     --disable-coccinelle --enable-old-barnyard2 --with-pic \
     --enable-python
@@ -48,9 +48,9 @@ package() {
   make DESTDIR="$pkgdir" install
 
   install -Dm 644 "$pkgname.yaml" "$pkgdir/etc/$pkgname/$pkgname.yaml"
-  install -Dm 644 classification.config \
+  install -Dm 644 etc/classification.config \
     "$pkgdir/etc/$pkgname/classification.config"
-  install -Dm 644 reference.config "$pkgdir/etc/$pkgname/reference.config"
+  install -Dm 644 etc/reference.config "$pkgdir/etc/$pkgname/reference.config"
   install -Dm 644 rules/*.rules "$pkgdir/etc/$pkgname/rules/"
 }
 
