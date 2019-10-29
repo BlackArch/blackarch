@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=traxss
+pkgver=81.48dee2e
+pkgrel=1
+pkgdesc='Automated XSS Vulnerability Scanner.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-automation')
+arch=('any')
+url='https://github.com/M4cs/traxss'
+license=('custom:unknown')
+depends=('python' 'python-requests' 'python-selenium' 'python-crayons')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/M4cs/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" CONTRIBUTING.md \
+    CONTRIBUTORS.md README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm CONTRIBUTING.md CONTRIBUTORS.md Dockerfile \
+    LICENSE README.md requirements.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python3 "$pkgname.py" "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
