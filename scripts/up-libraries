@@ -68,33 +68,31 @@ def update_pkgbuild(name, url, current_version, available_version):
 
 # update python packages version
 def python_packages_version_check(name):
-    pypi_name = str(name[7:])  # python-...
+    if 'python2' not in name:
+        pypi_name = str(name[7:])  # python-...
 
-    if 'python2' in name:
-        pypi_name = name[8:]  # python2-...
+        req = requests.get('https://pypi.python.org/pypi/{name}/json'.format(name=pypi_name))  # pypi json api ^-^
 
-    req = requests.get('https://pypi.python.org/pypi/{name}/json'.format(name=pypi_name))  # pypi json api ^-^
+        if req.ok:
+            current_version = get_current_version(name)
 
-    if req.ok:
-        current_version = get_current_version(name)
+            data = json.loads(req.text)
 
-        data = json.loads(req.text)
+            try:
+                available_version = str(max([distutils.version.LooseVersion(release) for release in data['releases'] if
+                                             not packaging.version.parse(release).is_prerelease]))  # got new version
+                if available_version != current_version:
+                    url = str(data.get('releases')[available_version][-1]['url'])
 
-        try:
-            available_version = str(max([distutils.version.LooseVersion(release) for release in data['releases'] if
-                                         not packaging.version.parse(release).is_prerelease]))  # got new version
-            if available_version != current_version:
-                url = str(data.get('releases')[available_version][-1]['url'])
+                    if url[-3:] == 'zip' or url[-6:] == 'tar.gz':
+                        update_pkgbuild(name, url, current_version, available_version)
+                    else:
+                        print(
+                            'Please, do manual update [{name}] to {version}, because i cant find any *.tar.gz or *.zip archives'.format(
+                                name=name, version=available_version))
 
-                if url[-3:] == 'zip' or url[-6:] == 'tar.gz':
-                    update_pkgbuild(name, url, current_version, available_version)
-                else:
-                    print(
-                        'Please, do manual update [{name}] to {version}, because i cant find any *.tar.gz or *.zip archives'.format(
-                            name=name, version=available_version))
-
-        except Exception as e:
-            print('Please, do manual update {name}, because this error occured: {e}'.format(name=name, e=e))
+            except Exception as e:
+                print('Please, do manual update {name}, because this error occured: {e}'.format(name=name, e=e))
 
 
 # update ruby packages version
