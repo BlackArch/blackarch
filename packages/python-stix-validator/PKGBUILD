@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-stix-validator
+pkgname=('python2-stix-validator' 'python-stix-validator')
+_pkgname=stix-validator
+pkgver=2.5.0
+pkgrel=1
+pkgdesc='APIs and scripts for validating STIX and CybOX documents.'
+arch=('any')
+url='https://pypi.org/project/stix-validator/#files'
+license=('MIT')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/c2/f4/2efb9dcd05dc271781339445661b43163f0679514e37ff62a4e9bae9dfaa/$_pkgname-$pkgver.zip")
+sha512sums=('52f24509c71e187bb40317e111ced19b88a03c23d2c83740ca552867e4483e38e6025c50685dd03a681ea4fd13e42057717534827432c10fe23982833db4d2f8')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-stix-validator() {
+  depends=('python2' 'python2-lxml' 'python2-xlrd' 'python2-ordereddict')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i "${i}2"
+  done
+}
+
+package_python-stix-validator() {
+  depends=('python' 'python-lxml' 'python-xlrd' 'python-ordereddict')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+}
+
