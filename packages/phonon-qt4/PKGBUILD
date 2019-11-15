@@ -1,0 +1,41 @@
+# Maintainer : bartus <arch-user-repoᘓbartus.33mail.com>
+pkgname=phonon-qt4
+pkgver=4.10.2
+pkgrel=1
+pkgdesc='The multimedia framework for KDE4.'
+arch=('x86_64' 'aarch64')
+optdepends=('pulseaudio: PulseAudio support')
+makedepends=('extra-cmake-modules' 'libpulse' 'qt4')
+url='http://phonon.kde.org/'
+install="$pkgname.install"
+license=('LGPL')
+source=("https://download.kde.org/stable/${pkgname%-qt4}/$pkgver/${pkgname%-qt4}-$pkgver.tar.xz")
+sha512sums=('205c2f41691ed37a2b24aa5e900f7720ba024d2046ea4bf0a9b9c46235ffd72dfb4010287ccf753b13e395f84c2a202cbb76454806de3519faf52c3ac7001c4e')
+
+build() {
+  mkdir -p build && cd build
+  cmake ../${pkgname%-qt4}-$pkgver \
+    -DOpenGL_GL_PREFERENCE=GLVND \
+    -DCMAKE_SKIP_RPATH=ON \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DPHONON_INSTALL_QT_EXTENSIONS_INTO_SYSTEM_QT=ON \
+    -DQT_QMAKE_EXECUTABLE=/usr/bin/qmake-qt4 \
+    -DCMAKE_INSTALL_LIBDIR=lib
+  make
+}
+
+package() {
+  depends=(qt4 libpulse)
+  optdepends+=('phonon-qt4-backend: !!! REQUIRED FOR PHONO TO WORK AT ALL !!!')
+
+  cd build
+  make DESTDIR="$pkgdir" install
+
+  # Install headers into the Qt4 dir
+  install -d "$pkgdir"/usr/include/qt4
+  mv "$pkgdir"/usr/include/{phonon,KDE} "$pkgdir"/usr/include/qt4/
+
+  sed -i 's#includedir=/usr/include#includedir=/usr/include/qt4#' \
+    "$pkgdir/usr/lib/pkgconfig/phonon.pc"
+}
+
