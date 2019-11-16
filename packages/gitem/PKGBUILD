@@ -3,7 +3,7 @@
 
 pkgname=gitem
 pkgver=96.20e8763
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='A Github organization reconnaissance tool.'
 arch=('any')
@@ -11,13 +11,19 @@ url='https://github.com/mschwager/gitem'
 depends=('python' 'python-requests')
 makedepends=('git' 'python-setuptools')
 license=('GPL3')
-source=("git+https://github.com/mschwager/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/mschwager/$pkgname.git"
+        'requirements.txt.patch')
+sha512sums=('SKIP'
+            '858e7040f448c7cd0c11adfafde5f34748d48e4130dc8610a373753e29eb8d12d56f571b0ddd747befddb26e6f18857b5ab776885bc116b06eb35f27515366ea')
 
 pkgver() {
   cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  patch -p1 < requirements.txt.patch
 }
 
 build() {
@@ -29,7 +35,7 @@ build() {
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/$pkgname/LICENSE"
