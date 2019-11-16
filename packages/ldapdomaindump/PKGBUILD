@@ -4,7 +4,7 @@
 pkgbase=ldapdomaindump
 pkgname=('ldapdomaindump' 'python2-ldapdomaindump')
 pkgver=0.9.1
-pkgrel=4
+pkgrel=5
 pkgdesc='Active Directory information dumper via LDAP.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-networking')
 arch=('any')
@@ -15,11 +15,13 @@ source=("https://files.pythonhosted.org/packages/ee/5b/9992efa799b2f4769225b5938
 sha512sums=('952981d65366b1f243714ce5ed053bbb08e27174e3789d803a65010a7ff5ae2b9af88f4b91ad826c8b75b3f323bf0505a217dc42224ef7974e236ee8bc5f6c5e')
 
 prepare() {
-  cp -a "$pkgbase-$pkgver" "$pkgbase-$pkgver"2
+  sed -i 's|ldap3==2.5.1|ldap3|g' "$pkgbase-$pkgver/setup.py"
+
+  cp -a "$pkgbase-$pkgver"{,-2}
 }
 
 build() {
-  cd "$pkgbase-$pkgver"2
+  cd "$pkgbase-$pkgver-2"
 
   python2 setup.py build
 
@@ -33,17 +35,23 @@ package_ldapdomaindump() {
 
   cd "$pkgbase-$pkgver"
 
-  python setup.py install --root="$pkgdir" --optimize=1 --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
 package_python2-ldapdomaindump() {
   depends=('python2' 'python2-ldap3' 'python2-future' 'python2-dnspython')
 
-  cd "$pkgbase-$pkgver"2
+  install -dm 755 "$pkgdir/usr"
 
-  python2 setup.py install --root="$pkgdir" --optimize=1 --skip-build
+  cd "$pkgbase-$pkgver-2"
 
-  mv "$pkgdir/usr/bin/$pkgbase" "$pkgdir/usr/bin/${pkgbase}2"
-  mv "$pkgdir/usr/bin/ldd2bloodhound" "$pkgdir/usr/bin/ldd2bloodhound2"
+  python2 setup.py install --root="$pkgdir" --prefix=/isr -O1 --skip-build
+
+  mv "$pkgdir/isr/"* "$pkgdir/" && rmdir "$pkgdir/isr"
+  mv "$pkgdir/"{lib,bin} "$pkgdir/usr/"
+
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i "${i}2"
+  done
 }
 
