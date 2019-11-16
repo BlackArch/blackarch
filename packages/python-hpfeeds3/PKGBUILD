@@ -1,32 +1,50 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python2-hpfeeds3
+pkgbase=python-hpfeeds3
+pkgname=('python2-hpfeeds3' 'python-hpfeeds3')
 _pkgname=hpfeeds3
 pkgver=0.9.8
-pkgrel=1
+pkgrel=2
 pkgdesc='Python implementation of the honeypot feeds broker.'
 url='https://pypi.org/project/hpfeeds3/#files'
 arch=('any')
 license=('GPL')
-depends=('python2')
-makedepends=('python2-setuptools')
+makedepends=('python2-setuptools' 'python-setuptools')
 source=("https://files.pythonhosted.org/packages/0e/a2/e5bf9e80551303484a48bb2b2b451dd816dcb4687cad292cf07c6fcad1a5/$_pkgname-$pkgver.tar.gz")
 sha512sums=('f9c304522cf4eb476f0a051bc22ec3c9b7546eae7bef70d5b8052140cb8dc4fbd69c54b4610ea4cecd3999aff1de1496f37cb7a4ce1aa335e3f7aaab57836080')
 
-build() {
-  cd "$_pkgname-$pkgver"
-
-  python2 setup.py build
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
 }
 
-package() {
-  cd "$_pkgname-$pkgver"
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-hpfeeds3() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
 
   python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   for i in "$pkgdir/usr/bin/"*; do
     mv $i "${i}2"
   done
+}
+
+package_python-hpfeeds3() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
