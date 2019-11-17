@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gcpbucketbrute
+pkgver=13.eefb716
+pkgrel=1
+pkgdesc='A script to enumerate Google Storage buckets, determine what access you have to them, and determine if they can be privilege escalated.'
+groups=('blackarch' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/RhinoSecurityLabs/GCPBucketBrute'
+license=('MIT')
+depends=('python' 'python-requests' 'python-google-cloud-storage')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/RhinoSecurityLabs/GCPBucketBrute.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
