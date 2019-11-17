@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=trivy
+pkgver=229.438680f
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='A Simple and Comprehensive Vulnerability Scanner for Containers, Suitable for CI.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/aquasecurity/trivy'
+license=('AGPL')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/aquasecurity/$pkgname.git")
+sha512sums=('SKIP')
+_url='github.com/aquasecurity/trivy'
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
+    cd "src/$_url/cmd/trivy"
+
+  export GO111MODULE=on
+  GOPATH="$srcdir" go install
+
+}
+
+package() {
+  cd "src/$_url"
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 "$srcdir/bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
