@@ -10,14 +10,20 @@ groups=('blackarch' 'blackarch-networking')
 url='https://github.com/insomniacslk/dublin-traceroute'
 license=('BSD')
 depends=('jsoncpp' 'libtins' 'libpcap')
-makedepends=('cmake' 'git')
-source=("git+https://github.com/insomniacslk/$pkgname.git")
-sha512sums=('SKIP')
+makedepends=('cmake' 'git' 'libcap')
+source=("git+https://github.com/insomniacslk/$pkgname.git"
+        'CMakeLists.txt.patch')
+sha512sums=('SKIP'
+            '2d3b0b0286edb4fc56d203c17477710a7b9ab469a254401448501f58f268737d0a3ab1e967868d0a32b8728c4bfda38816edbbe6a2620bab96176abd014c55f4')
 
 pkgver() {
   cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  patch -p1 < CMakeLists.txt.patch
 }
 
 build() {
@@ -33,10 +39,12 @@ package() {
   cd "$pkgname/build"
 
   make DESTDIR="$pkgdir" install
+  setcap cap_net_raw+ep "$pkgdir/usr/bin/$pkgname"
 
   cd ..
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" documentation/* *.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" documentation/*.tex \
+    documentation/readme/*
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
