@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=citadel
+pkgver=95.3b1adbc
+pkgrel=1
+pkgdesc='A library of OSINT tools.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon' 'blackarch-social')
+url='https://github.com/jakecreps/Citadel'
+license=('custom:unknown')
+depends=('python' 'python-colorama')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/jakecreps/Citadel.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm -r README.md requirements.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
