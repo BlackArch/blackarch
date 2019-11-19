@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=dublin-traceroute
+pkgver=VERSION
+pkgrel=1
+pkgdesc='NAT-aware multipath tracerouting tool.'
+arch=('any')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/insomniacslk/dublin-traceroute'
+license=('BSD')
+depends=('jsoncpp' 'libtins' 'libpcap-dev')
+makedepends=('cmake' 'git')
+source=("git+https://github.com/insomniacslk/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$pkgname"
+
+  mkdir build
+  cd build
+  cmake -D CMAKE_INSTALL_PREFIX=/usr ..
+  make
+}
+
+package() {
+  cd "$pkgname/build"
+
+  make DESTDIR="$pkgdir" install
+
+  cd ..
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" documentation/* *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
