@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=libtins
+pkgver=1249.28663b0
+pkgrel=1
+pkgdesc='High-level, multiplatform C++ network packet sniffing and crafting library.'
+arch=('any')
+groups=('blackarch' 'blackarch-networking')
+url='https://github.com/mfontanini/libtins'
+license=('BSD')
+depends=('libpcap' 'openssl' 'boost')
+makedepends=('cmake' 'git')
+source=("git+https://github.com/mfontanini/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$pkgname"
+
+  mkdir build
+  cd build
+  cmake -D CMAKE_INSTALL_PREFIX=/usr -D LIBTINS_ENABLE_CXX11=yes ../
+  make
+}
+
+package() {
+  cd "$pkgname/build"
+
+  make DESTDIR="$pkgdir" install
+
+  cd ..
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" docs/* *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
