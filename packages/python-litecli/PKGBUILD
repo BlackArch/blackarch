@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-litecli
+pkgname=('python2-litecli' 'python-litecli')
+_pkgname=litecli
+pkgver=1.2.0
+pkgrel=1
+pkgdesc='CLI for SQLite Databases with auto-completion and syntax highlighting.'
+arch=('any')
+url='https://pypi.org/project/litecli/#files'
+license=('BSD')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/b6/eb/048133989550c544f4dfbd73e7faf6d5b742e42419b1295c4007f2f879f4/$_pkgname-$pkgver.tar.gz")
+sha512sums=('51b0792b02a07a736cf737ba96d478a28a51d4766ea789c1640f2f5d0ef19ae64daac64d2e3ddb0c6889d0e5a40264f206d71e3b424ca0cba0bbdafe901fcf1c')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-litecli() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
+}
+
+package_python-litecli() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+}
+
