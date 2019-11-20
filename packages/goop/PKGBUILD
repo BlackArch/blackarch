@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=goop
+pkgver=12.39b34eb
+pkgrel=3
+pkgdesc='Perform google searches without being blocked by the CAPTCHA or hitting any rate limits.'
+groups=('blackarch' 'blackarch-recon')
+arch=('any')
+url='https://github.com/s0md3v/goop'
+license=('GPL3')
+depends=('python' 'python-requests')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/s0md3v/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i '1i\#!/usr/bin/python3' cli.py
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" -O1 --skip-build
+
+  install -Dm 755 cli.py "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf "$pkgdir/usr/LICENSE"
+}
+
