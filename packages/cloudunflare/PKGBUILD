@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=cloudunflare
+pkgver=14.b91a8a7
+pkgrel=1
+pkgdesc='Reconnaissance Real IP address for Cloudflare Bypass.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/greycatz/CloudUnflare'
+license=('custom:unknown')
+depends=('bash' 'curl' 'bind-tools' 'whois')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/greycatz/CloudUnflare.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bash $pkgname.bash "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
