@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=auto-eap
+pkgver=16.25ec6a3
+pkgrel=1
+pkgdesc='Automated Brute-Force Login Attacks Against EAP Networks.'
+groups=('blackarch' 'blackarch-wireless' 'blackarch-cracker')
+arch=('any')
+url='https://github.com/Tylous/Auto_EAP'
+license=('GPL2')
+depends=('python2' 'wpa_supplicant')
+makedepends=('git' 'python2-setuptools')
+source=("$pkgname::git+https://github.com/Tylous/Auto_EAP.git")
+sha1sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$pkgname/lib"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$pkgname/lib"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  cd "$srcdir/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+python2 Auto_EAP.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
