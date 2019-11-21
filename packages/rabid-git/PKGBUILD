@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+_gemname=rabid
+pkgname=$_gemname-git
+pkgver=v0.0.4.r12.g9f86a70
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-misc')
+pkgdesc='A CLI tool and library allowing to simply decode all kind of BigIP cookies'
+arch=('any')
+url='https://orange-cyberdefense.github.io/rabid/'
+license=('MIT')
+depends=('ruby' 'ruby-paint' 'ruby-docopt')
+conflicts=('rabid')
+provides=('rabid')
+options=(!emptydirs)
+source=("git+https://github.com/Orange-Cyberdefense/$_gemname.git")
+b2sums=('SKIP')
+
+pkgver() {
+  cd $_gemname
+
+  git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $_gemname
+
+  gem build bigipcookie.gemspec
+}
+
+package() {
+  cd $_gemname
+
+  local _gemdir="$(ruby -e'puts Gem.default_dir')"
+  local _release=$(gem build bigipcookie.gemspec | grep Version | cut -d' ' -f4)
+  gem install --ignore-dependencies --no-user-install --no-document -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$_release.gem
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$_release.gem"
+  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
+  rm -r "$pkgdir/$_gemdir/gems/$_gemname-$_release/test"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$_release/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
