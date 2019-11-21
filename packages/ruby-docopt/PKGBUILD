@@ -1,0 +1,26 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+_gemname=docopt
+pkgname=ruby-$_gemname
+pkgver=0.6.1
+pkgrel=1
+pkgdesc='Command line option parser, that will make you smile'
+arch=('any')
+url='http://docopt.org/'
+license=('MIT')
+depends=('ruby')
+conflicts=('ruby-docopt-git')
+provides=('ruby-docopt')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem")
+noextract=("$_gemname-$pkgver.gem")
+sha256sums=('73f837ed376d015971712c17f7aafa021998b964b77d52997dcaff79d6727467')
+
+package() {
+  local _gemdir="$(ruby -e'puts Gem.default_dir')"
+  gem install --ignore-dependencies --no-user-install --no-document -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
+  rm -r "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/{test,examples}"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
