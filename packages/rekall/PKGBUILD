@@ -1,19 +1,19 @@
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
 
-pkgbase=rekall
-pkgname=('python2-rekall' 'python-rekall')
+pkgname=rekall
 pkgver=1396.041d6964
-pkgrel=4
+pkgrel=5
 groups=('blackarch' 'blackarch-forensic')
 pkgdesc='Memory Forensic Framework.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/google/rekall'
-makedepends=('git' 'python-setuptools' 'python2-setuptools' 'python-pip'
-             'python2-pip' 'python-virtualenv' 'python2-virtualenv')
+depends=('python' 'python-virtualenv')
+makedepends=('git' 'python-setuptools' 'python-pip')
 license=('GPL2')
-source=("git+https://github.com/google/$pkgbase.git")
+source=("git+https://github.com/google/$pkgname.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgbase
@@ -21,65 +21,33 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-package_python2-rekall() {
-  depends=('python2' 'python2-psutil' 'python2-virtualenv' 'python2-wheel'
-           'python2-yaml' 'python2-yara')
-  cd $pkgbase
+prepare() {
+  cd $pkgname
 
-  install -dm 755  "$pkgdir/usr/bin"
-
-  virtualenv2 "$pkgdir/usr/share/rekall2/virtualenv/"
-  source "$pkgdir/usr/share/rekall2/virtualenv/bin/activate"
-
-  PIP_CONFIG_FILE=/dev/null pip2 install 'future==0.16.0' # run requirement for rekall-efilter
-  PIP_CONFIG_FILE=/dev/null pip2 install "./rekall-lib"
-  PIP_CONFIG_FILE=/dev/null pip2 install "./rekall-core"
-  PIP_CONFIG_FILE=/dev/null pip2 install "./rekall-agent"
-  PIP_CONFIG_FILE=/dev/null pip2 install "./"
-
-  grep -rl '/build/rekall/pkg/python2-rekall' \
-    "$pkgdir/usr/share/rekall2/virtualenv/bin" |
-    xargs sed -i 's|/build/rekall/pkg/python2-rekall||g'
-  rm -rf "$pkgdir/usr/share/rekall2/virtualenv/lib/python*/__pycache__"
-
-  for fname in rekal rekall rekal.py; do
-    cat > "$pkgdir/usr/bin/${fname}2" << EOF
-#!/usr/bin/env bash
-source /usr/share/rekall2/virtualenv/bin/activate
-python /usr/share/rekall2/virtualenv/bin/$fname "\$@"
-EOF
-    chmod 755 "$pkgdir/usr/bin/${fname}2"
-  done
+  sed -i '1i\rekall-efilter' requirements.txt
+  sed -i '1i\future==0.16.0' requirements.txt
 }
 
-package_python-rekall() {
-  depends=('python' 'python-psutil' 'python-virtualenv' 'python-wheel'
-           'python-yaml' 'python-yara')
+package() {
   cd $pkgbase
 
-  install -dm 755  "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  virtualenv "$pkgdir/usr/share/rekall/virtualenv/"
-  source "$pkgdir/usr/share/rekall/virtualenv/bin/activate"
+  install -Dm 644 LICENSE.txt "$pkgname/usr/share/licenses/$pkgname/LICENSE"
+  rm LICENSE.txt
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.txt *.md
+  rm *.txt *.md
 
-  PIP_CONFIG_FILE=/dev/null pip install 'future==0.16.0' # run requirement for rekall-efilter
-  PIP_CONFIG_FILE=/dev/null pip install "./rekall-lib"
-  PIP_CONFIG_FILE=/dev/null pip install "./rekall-core"
-  PIP_CONFIG_FILE=/dev/null pip install "./rekall-agent"
-  PIP_CONFIG_FILE=/dev/null pip install "./"
-
-  grep -rl '/build/rekall/pkg/python-rekall' \
-    "$pkgdir/usr/share/rekall/virtualenv/bin" |
-    xargs sed -i 's|/build/rekall/pkg/python-rekall||g'
-  rm -rf "$pkgdir/usr/share/rekall/virtualenv/lib/python*/__pycache__"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
   for fname in rekal rekall rekal.py; do
     cat > "$pkgdir/usr/bin/$fname" << EOF
 #!/usr/bin/env bash
-source /usr/share/rekall/virtualenv/bin/activate
-python /usr/share/rekall/virtualenv/bin/$fname "\$@"
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/venv/bin/$fname "\$@"
 EOF
-    chmod 755 "$pkgdir/usr/bin/$fname"
+    chmod +x "$pkgdir/usr/bin/$fname"
   done
 }
 
