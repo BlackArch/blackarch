@@ -9,13 +9,18 @@ pkgdesc='A collection of traffic analysis tools developed by the CERT NetSA to f
 arch=('x86_64' 'aarch64')
 url='https://tools.netsa.cert.org/silk/'
 license=('GPL2')
+depends=('python' 'libfixbuf' 'lzo' 'libpcap' 'gnutls' 'c-ares' 'adns' 'snappy')
 source=("https://tools.netsa.cert.org/releases/$pkgname-$pkgver.tar.gz")
 sha512sums=('cb4ad3dcf7d34763251e3ede3389b5e85bc4b139aa234660a27278950f17c8e24877e831cd6b878a99dc1a06001a8c6d151d0e6ff43f8d8941d566e1e58df247')
 
 build() {
   cd "$pkgname-$pkgver"
 
-  ./configure --prefix=/usr --enable-ipv6 --sbindir=/usr/sbin
+  export LIBS="-lpthread"
+
+  ./configure --prefix=/usr --enable-ipv6 --sbindir=/usr/bin --with-gnutls \
+    --with-pic --with-pcap -with-libfixbuf --enable-output-compression \
+    --enable-localtime --enable-data-rootdir="/usr/share/$pkgname"
 
   make
 }
@@ -30,8 +35,5 @@ package() {
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" doc/*
 
   make DESTDIR="$pkgdir" install
-
-  mv "$pkgdir/usr/sbin/"* "$pkgdir/usr/bin/"
-  rmdir "$pkgdir/usr/sbin"
 }
 
