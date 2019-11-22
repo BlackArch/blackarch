@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=vmcloak
-pkgver=0.4.8
+pkgver=912.13853ff
 pkgrel=1
 epoch=2
 pkgdesc='Automated Virtual Machine Generation and Cloaking for Cuckoo Sandbox.'
@@ -10,22 +10,37 @@ groups=('blackarch-malware')
 url='https://github.com/jbremer/vmcloak'
 arch=('any')
 license=('GPL3')
-depends=('cdrkit' 'virtualbox' 'dmidecode' 'lshw' 'python2-lockfile'
-         'python2-sphinx')
-makedepends=('python2-setuptools' 'unzip')
-source=("https://github.com/jbremer/vmcloak/archive/$pkgver.tar.gz")
-sha512sums=('bc66e64ceed4b35eb1fbfe82cef8bd4a4024571ed66ecaadb247494b91fcfd4cde1f9ff0183148dc654da6a6c1b5061b7e17ab36aeffbf67080ea45f6afd5d8a')
+depends=('python2' 'python2-sphinx' 'python-setuptools' 'python2-lockfile'
+         'python2-requests' 'python2-alembic' 'python2-sqlalchemy'
+         'python2-yaml' 'python2-pytest' 'python2-pefile' 'python2-jinja'
+         'python2-pyaml' 'python2-click' 'virtualbox' 'lshw' 'dmidecode'
+         'cdrtools')
+makedepends=('git' 'python2-setuptools')
+source=("$pkgname::git+https://github.com/jbremer/$pkgname.git"
+        'setup.py.patch')
+sha512sums=('SKIP'
+            'ac4bf47e6ddf166add9bc55e05328cab32700b7a0c99ffc67986144c13638a13ccb7be9c26912d1a18bd2d3715ab6d52e065372618254c9edc592c47fff8e32f')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  patch -p1 < setup.py.patch
+}
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   python2 setup.py build
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
-  python2 setup.py install --root="$pkgdir" --skip-build
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 docs/LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
