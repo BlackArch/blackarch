@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ultimate-facebook-scraper
+pkgver=131.dc71281
+pkgrel=1
+pkgdesc="A bot which scrapes almost everything about a Facebook user's profile."
+groups=('blackarch' 'blackarch-social' 'blackarch-recon')
+arch=('any')
+url='https://github.com/harismuneer/Ultimate-Facebook-Scraper'
+license=('MIT')
+depends=('python' 'python-selenium' 'chromium')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/harismuneer/Ultimate-Facebook-Scraper.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/ufb-scraper" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/src
+exec python scraper.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/ufb-scraper"
+}
+
