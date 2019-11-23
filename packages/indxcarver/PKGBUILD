@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=indxcarver
+pkgver=5.dee36608
+pkgrel=1
+groups=('blackarch' 'blackarch-forensic' 'blackarch-windows')
+pkgdesc='Carve INDX records from a chunk of data.'
+arch=('x86_64')
+url='https://github.com/jschicht/IndxCarver'
+license=('CCPL')
+depends=('wine' 'wine_gecko' 'wine-mono')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/jschicht/IndxCarver.git")
+sha512sums=('SKIP')
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" changelog.txt \
+    readme.txt
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf *.txt *.md
+  cp -a --no-preserve=ownership * \
+    "$pkgdir/usr/share/windows/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname
+exec wine IndxCarver64.exe
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
