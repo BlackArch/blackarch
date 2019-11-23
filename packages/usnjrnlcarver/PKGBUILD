@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=usnjrnlcarver
+pkgver=3.fbfc31f2
+pkgrel=1
+groups=('blackarch' 'blackarch-forensic' 'blackarch-windows')
+pkgdesc='Carving Usn pages (UsnJrnl records).'
+arch=('x86_64')
+url='https://github.com/jschicht/UsnJrnlCarver'
+license=('custom:unknown')
+depends=('wine' 'wine_gecko' 'wine-mono')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/jschicht/UsnJrnlCarver.git")
+sha512sums=('SKIP')
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" changelog.txt \
+    readme.txt
+
+  rm -rf *.txt
+  cp -a --no-preserve=ownership * \
+    "$pkgdir/usr/share/windows/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname
+exec wine UsnJrnlCarver64.exe
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
