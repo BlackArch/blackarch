@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=hxd
+pkgver=2.3.0.0
+pkgrel=1
+groups=('blackarch' 'blackarch-misc' 'blackarch-windows')
+pkgdesc='Freeware Hex Editor and Disk Editor.'
+arch=('x86_64')
+url='https://mh-nexus.de/en/hxd/'
+license=('custom:unknown')
+depends=('wine' 'wine_gecko' 'wine-mono')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/mrsmith0x00/hxd.git")
+sha512sums=('SKIP')
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" changelog.txt \
+    readme.txt
+  install -Dm 644 license.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf *.txt
+  cp -a --no-preserve=ownership * \
+    "$pkgdir/usr/share/windows/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname
+exec wine HxD64.exe
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
