@@ -1,56 +1,47 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=haiti
+pkgname=haiti-git
+_pkgname=haiti
+_gemname=haiti-hash
 pkgver=v1.0.0.r10.g9baf8df
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-crypto')
-pkgdesc='A CLI tool to identify the hash type of a given hash.'
+pkgdesc='A CLI tool to identify the hash type of a given hash'
 arch=('any')
-url='https://github.com/Orange-Cyberdefense/haiti/'
+url='https://orange-cyberdefense.github.io/haiti/'
 license=('MIT')
-depends=('ruby' 'ruby-bundler' 'libxslt')
-makedepends=('git')
-source=("git+https://github.com/Orange-Cyberdefense/$pkgname.git")
+depends=('ruby' 'ruby-paint' 'ruby-docopt')
+options=(!emptydirs)
+source=("git+https://github.com/Orange-Cyberdefense/$_pkgname.git")
 sha512sums=('SKIP')
-install="$pkgname.install"
 
 pkgver() {
-  cd $pkgname
+  cd $_pkgname
 
   git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
-package() {
-  cd $pkgname
+build() {
+  cd $_pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
-  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  cp -a docs/* "$pkgdir/usr/share/doc/$pkgname/"
-
-  rm -rf *.md LICENSE.txt docs
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-  cp -a .gitignore .editorconfig .rubocop.yml .yardopts .yardopts-dev \
-    "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec bundle exec ./bin/$pkgname "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
-
-  cat > "$pkgdir/usr/bin/$pkgname-console" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec bundle exec ./bin/${pkgname}_console "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/$pkgname-console"
+  gem build $_pkgname.gemspec
 }
+
+package() {
+  cd $_pkgname
+
+  _gemdir="$(ruby -e'puts Gem.default_dir')"
+  _release=$(gem build $_pkgname.gemspec | grep Version | cut -d' ' -f4)
+
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$_release.gem
+
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$_release.gem"
+  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
+  rm -r "$pkgdir/$_gemdir/gems/$_gemname-$_release/test"
+
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$_release/LICENSE.txt" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

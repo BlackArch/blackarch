@@ -1,58 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=rabid
+pkgname=rabid-git
+_gemname=rabid
 pkgver=v0.0.4.r14.gd5398d2
 pkgrel=1
-epoch=1
 groups=('blackarch' 'blackarch-webapp' 'blackarch-misc')
-pkgdesc='A CLI tool and library allowing to simply decode all kind of BigIP cookies.'
+pkgdesc='A CLI tool and library allowing to simply decode all kind of BigIP cookies'
 arch=('any')
-url='https://github.com/Orange-Cyberdefense/rabid'
+url='https://orange-cyberdefense.github.io/rabid/'
 license=('MIT')
-depends=('ruby' 'ruby-bundler' 'libxslt')
-makedepends=('git')
-source=("git+https://github.com/Orange-Cyberdefense/$pkgname.git")
+depends=('ruby' 'ruby-paint' 'ruby-docopt')
+options=(!emptydirs)
+source=("git+https://github.com/Orange-Cyberdefense/$_gemname.git")
 sha512sums=('SKIP')
-install="$pkgname.install"
 
 pkgver() {
-  cd $pkgname
+  cd $_gemname
 
   git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
+build() {
+  cd $_gemname
+
+  gem build bigipcookie.gemspec
+}
+
 package() {
-  cd $pkgname
+  cd $_gemname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  _gemdir="$(ruby -e'puts Gem.default_dir')"
+  _release=$(gem build bigipcookie.gemspec | grep Version | cut -d' ' -f4)
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
-  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$_release.gem
 
-  cp -a docs/* "$pkgdir/usr/share/doc/$pkgname/"
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$_release.gem"
+  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
+  rm -r "$pkgdir/$_gemdir/gems/$_gemname-$_release/test"
 
-  rm -rf *.md LICENSE.txt docs
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-  cp -a .gitignore .rubocop.yml .yardopts .yardopts-dev \
-    "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec bundle exec ./bin/$pkgname "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
-
-  cat > "$pkgdir/usr/bin/$pkgname-console" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec bundle exec ./bin/${pkgname}_console "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/$pkgname-console"
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$_release/LICENSE.txt" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
