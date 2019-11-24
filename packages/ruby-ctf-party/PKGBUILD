@@ -1,10 +1,10 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=ruby-ctf-party
+pkgname=ruby-ctf-party-git
 _gemname=ctf-party
-pkgver=1.0.0
-pkgrel=1
+pkgver=v1.0.0.r8.g0d9a22a
+pkgrel=2
 groups=('blackarch' 'blackarch-misc')
 pkgdesc='A library to enhance and speed up script/exploit writting for CTF players'
 arch=('any')
@@ -12,21 +12,35 @@ url='https://orange-cyberdefense.github.io/ctf-party/'
 license=('MIT')
 depends=('ruby')
 options=(!emptydirs)
-source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem")
-noextract=("$_gemname-$pkgver.gem")
-sha512sums=('b965f544ad4f903108d151298b75b7573ad705d9455cfb8a314f94118099e6f596cb2fd736c6ae07ff12c4c7bcbc556fbc78706e87e6767c2f49683ac7697192')
+source=("git+https://github.com/Orange-Cyberdefense/$_gemname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_gemname
+
+  git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $_gemname
+
+  gem build ctf_party.gemspec
+}
 
 package() {
+  cd $_gemname
+
   _gemdir="$(ruby -e'puts Gem.default_dir')"
+  _release=$(gem build ctf_party.gemspec | grep Version | cut -d' ' -f4)
 
   gem install --ignore-dependencies --no-user-install --no-document \
-    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$_release.gem
 
-  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$_release.gem"
   find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
-  rm -r "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/test"
+  rm -r "$pkgdir/$_gemdir/gems/$_gemname-$_release/test"
 
-  install -Dm 644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/LICENSE.txt" \
+  install -D -m644 "$pkgdir/$_gemdir/gems/$_gemname-$_release/LICENSE.txt" \
     "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
