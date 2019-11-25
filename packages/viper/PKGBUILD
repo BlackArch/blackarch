@@ -3,7 +3,7 @@
 
 pkgname=viper
 pkgver=2033.5b01cdc
-pkgrel=2
+pkgrel=1
 groups=('blackarch' 'blackarch-disassembler' 'blackarch-binary'
         'blackarch-malware')
 pkgdesc='A Binary analysis framework.'
@@ -19,10 +19,13 @@ depends=('python' 'python-magic' 'python-pefile' 'python-pydeep'
          'python-pymisp' 'python-dateutil' 'python-requests-cache'
          'python-terminaltables' 'python-pydeep' 'python-ssdeep' 'ssdeep'
          'oletools' 'python-django' 'python-r2pipe' 'python-pbkdf2'
-         'python-django-extensions' 'python-whitenoise' 'python-jsonschema')
+         'python-django-extensions' 'python-whitenoise' 'python-jsonschema'
+         'python-rarfile' 'python-scandir' 'python-python-magic')
 makedepends=('git' 'python-sphinx' 'python-pip')
-source=("git+https://github.com/botherder/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/botherder/$pkgname.git"
+        'setup.py.patch')
+sha512sums=('SKIP'
+            '2b03c019cf02d239d863c1a5b7eef9a63f623d191789e54964259d18d68033d42489bacd8399fb8281fb18b5f2f0ca2891d510c1ba79c6bd49c37dcb68fd0bc6')
 
 pkgver() {
   cd $pkgname
@@ -32,6 +35,8 @@ pkgver() {
 
 prepare() {
   cd $pkgname
+
+  patch -p0 < "$srcdir/setup.py.patch"
 
   git submodule init
   git submodule update
@@ -50,40 +55,13 @@ package() {
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  python setup.py install --record installed_files.txt --root="$pkgdir"
+  python setup.py install --record installed_files.txt --root="$pkgdir" -O1
 
   install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm README.md LICENSE
 
-  cp -a data/* "$pkgdir/usr/share/$pkgname/"
   cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/viper-cli" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python viper-cli "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/viper-cli"
-
-  cat > "$pkgdir/usr/bin/viper-api" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python viper-api "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/viper-api"
-
-  cat > "$pkgdir/usr/bin/viper-web" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python viper-web "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/viper-web"
-
-  #mv "$pkgdir"/viper.conf.sample "$pkgdir/usr/share/${pkgname}/"
 }
 
