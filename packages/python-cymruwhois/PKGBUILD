@@ -1,26 +1,47 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-cymruwhois
+pkgbase=python-cymruwhois
+pkgname=('python2-cymruwhois' 'python-cymruwhois')
 _pkgname=cymruwhois
 pkgver=1.6
-pkgrel=4
+pkgrel=5
 pkgdesc='Python client for the whois.cymru.com service'
 groups=('blackarch' 'blackarch-networking' )
 arch=('any')
 url='https://pypi.org/project/cymruwhois/#files'
-depends=('python')
-makedepends=('python-setuptools')
+makedepends=('python2-setuptools' 'python-setuptools')
 source=("https://files.pythonhosted.org/packages/54/a9/183163481f717d435e9a971f28ce8360e4bc2fa2adc7311ab0d321b207d9/$_pkgname-$pkgver.tar.gz")
 sha512sums=('7ff9a2473d6c8a97b21c2460157a3b51ab9af76ecdb202dd134f063b24344834446b8fda932a09e6fb59b1fcae8e92452e57bc3f5ae070ea25bcafdf39ae051b')
 
-build() {
-  cd "$_pkgname-$pkgver"
-
-  python setup.py build
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
 }
 
-package() {
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+
+}
+
+package_python2-cymruwhois() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
+}
+
+package_python-cymruwhois() {
+  depends=('python')
+
   cd "$_pkgname-$pkgver"
 
   python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
