@@ -2,29 +2,31 @@
 # See COPYING for license details
 
 pkgname=('python-django-rest-framework' 'python2-django-rest-framework')
+_pkgname=django-rest-framework
 pkgver=0.1.0
-pkgrel=2
+pkgrel=1
+epoch=1
 pkgdesc='Awesome web-browsable Web APIs.'
 arch=('any')
 url='https://github.com/tomchristie/django-rest-framework'
 license=('MIT')
 options=(!emptydirs)
-source=("https://files.pythonhosted.org/packages/ed/d2/61159bc6efd1bf16adc4a2a48f7ace2080d1f7aef054f606d1857cab490c/django-rest-framework-0.1.0.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/ed/d2/61159bc6efd1bf16adc4a2a48f7ace2080d1f7aef054f606d1857cab490c/$_pkgname-$pkgver.tar.gz")
 sha512sums=('1b5a208f00fd8b53f30071e4dc76ceb36ed016ba5fc583f2ffc520ec13ac36211c1c3bc5ea9c15bdfc3f571975b0c0767d4483f1280273d9a5465f34f54c80f3')
-makedepends=('python-setuptools' 'python2-setuptools')
 
-package_python-django-rest-framework() {
-  depends=('python-django')
-  optdepends=(
-    'python-pygments: Pygments support for API docs'
-    'python-markdown: Markdown support for the browsable API'
-    'python-django-crispy-forms: Improved HTML display for filtering'
-    'python-coreapi: Schema generation support'
-  )
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
 
-  cd "django-rest-framework-$pkgver"
-  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-  python setup.py install --root="$pkgdir" --optimize=1
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
 }
 
 package_python2-django-rest-framework() {
@@ -36,8 +38,22 @@ package_python2-django-rest-framework() {
     'python2-coreapi: Schema generation support'
   )
 
-  cd "django-rest-framework-$pkgver"
-  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-  python2 setup.py install --root="$pkgdir" --optimize=1
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+}
+
+package_python-django-rest-framework() {
+  depends=('python-django')
+  optdepends=(
+    'python-pygments: Pygments support for API docs'
+    'python-markdown: Markdown support for the browsable API'
+    'python-django-crispy-forms: Improved HTML display for filtering'
+    'python-coreapi: Schema generation support'
+  )
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
