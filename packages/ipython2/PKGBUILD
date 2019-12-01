@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ipython2
+_pkgname=ipython
+pkgver=5.8.0
+pkgrel=1
+pkgdesc='Provides a rich toolkit to help you make the most out of using Python interactively.'
+url='https://pypi.org/project/ipython/#files'
+arch=('any')
+license=('BSD')
+depends=('python2' 'python2-simplegeneric' 'python2-pexpect' 'python2-pathlib'
+         'python2-pickleshare' 'python2-setuptools' 'python2-prompt_toolkit1'
+         'python2-backports.shutil_get_terminal_size' 'python2-traitlets'
+         'sqlite')
+makedepends=('python2-setuptools')
+source=("https://files.pythonhosted.org/packages/41/a6/2d25314b1f9375639d8f8e0f8052e8cec5df511d3449f22c4f1c2d8cb3c6/$_pkgname-$pkgver.tar.gz"
+        'http://www.packal.org/sites/default/files/public/styles/icon_large/public/workflow-files/nkeimipynbworkflow/icon/icon.png')
+sha512sums=('946afb8f1623c8a7564ba2d782e05f5c961577dfb1e4a0f27e4a10e2932d5d041035c12aea7eb3e1d61af87867fab85a29919499822f93f638634bc343084b3e'
+            'defa879afcbe55957de381a6c9e7a0276237015a33221958354dc3ae13e0ed66a25e00b28e857c1d3d4cedd9baf15d2bbeefee94cf1f35e170b87a923fea9952')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  find ./ -type f -exec sed -i -e 's/prompt_toolkit/prompt_toolkit1/g' {} \;
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O0
+
+  # .desktop + icon shit
+  sed -i 's|python|python2|g' "examples/IPython Kernel/"*.desktop
+  sed -i 's|gnome-netstatus-idle|ipython2|g' "examples/IPython Kernel/"*.desktop
+  install -Dm 644 "examples/IPython Kernel/ipython.desktop" \
+    "$pkgdir/usr/share/applications/ipython2.desktop"
+  install -Dm 644 "$srcdir/icon.png" "$pkgdir/usr/share/pixmaps/ipython2.png"
+
+  rm -rf "$pkgdir/usr/share/"
+}
+
