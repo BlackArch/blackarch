@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python2-dbus
+_pkgname=dbus-python
+pkgver=1.2.12
+pkgrel=1
+pkgdesc='Python bindings for libdbus'
+url='https://pypi.org/project/dbus/#files'
+arch=('x86_64' 'aarch64')
+license=('custom:MIT')
+depends=('python2' 'python-dbus-common')
+makedepends=('python2-setuptools')
+source=("https://dbus.freedesktop.org/releases/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('6f90eaeeb74ea71a026a331d4c611911eda6dfb6c9086a0a80352f9963a9ae126db6f3e32d183916b8517f177fc947f1ddb15df83ff0b5c886532116868383b4')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  autoreconf -fi
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  PYTHON=/usr/bin/python2 PYTHON_VERSION=2 ./configure --prefix=/usr
+  sed -i -e 's| -shared | -Wl,-O1,--as-needed\0|g' libtool
+
+  make
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  rm -rf "$pkgdir/usr/"{share,include,lib/pkgconfig}
+}
+
