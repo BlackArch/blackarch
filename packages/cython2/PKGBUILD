@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=cython2
+_pkgname=Cython
+pkgver=0.29.14
+pkgrel=1
+pkgdesc='The Cython compiler for writing C extensions for the Python language.'
+url='https://pypi.org/project/Cython/#files'
+arch=('x86_64' 'aarch64')
+license=('Apache')
+depends=('python2' 'python2-setuptools')
+makedepends=('python2-setuptools')
+source=("https://files.pythonhosted.org/packages/9c/9b/706dac7338c2860cd063a28cdbf5e9670995eaea408abbf2e88ba070d90d/$_pkgname-$pkgver.tar.gz")
+sha512sums=('50e9a11593e44539a14fd505427dfcbbc3783585d079eb2314832f6852e415a151130e6ee3aa790c3e3ae5b77e64cf920e62d55b57fc1157e535286b170775df')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  find . -name '*.py' |
+  xargs sed -i -e 's|/usr/bin/env python|/usr/bin/env python2|' \
+  -e 's|/usr/bin/python|/usr/bin/python2|'
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i "${i}2"
+  done
+}
+
