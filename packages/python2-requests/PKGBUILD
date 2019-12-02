@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python2-requests
+_pkgname=requests
+pkgver=2.22.0
+pkgrel=1
+pkgdesc='Python HTTP for Humans.'
+url='https://pypi.org/project/requests/#files'
+arch=('any')
+license=('Apache')
+depends=('python2' 'python2-urllib3' 'python2-chardet' 'python2-idna')
+makedepends=('python2-setuptools')
+source=("https://files.pythonhosted.org/packages/01/62/ddcf76d1d19885e8579acb1b1df26a852b03472c0e46d2b959a714c90608/$_pkgname-$pkgver.tar.gz"
+        'certs.py.patch')
+sha512sums=('8b8e9da8a0c816fb4ff39be89ac7e1a9d5a99503ed93e44a0d78b28818f1c0eb253b151972a144151a616ba1b4bc5595245458a8268c5161391db54f740ac9a5'
+            'ae33d8f19ba3aa131343a4027f54bfb08fd1847280ed19eb9c9b3e781020ecdb31e96bc51e06f837883a958f384ce6513999296d4140a90ca8b0248accb703a1')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  patch -p2 < ../certs.py.patch
+
+  find . -name '*.py' |
+    xargs sed -i -e 's|/usr/bin/env python|/usr/bin/env python2|' \
+    -e 's|/usr/bin/python|/usr/bin/python2|'
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+}
+
