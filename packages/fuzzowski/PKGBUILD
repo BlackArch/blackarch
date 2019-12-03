@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=fuzzowski
+pkgver=5.7ecf914
+pkgrel=1
+pkgdesc='A Network Protocol Fuzzer made by NCCGroup based on Sulley and BooFuzz.'
+arch=('any')
+groups=('blackarch' 'blackarch-fuzzer' 'blackarch-networking')
+url='https://github.com/nccgroup/fuzzowski'
+license=('GPL')
+depends=('python' 'python-prompt_toolkit' 'python-attrs' 'python-pygments'
+         'python-pydot')
+makedepends=('git')
+source=("git+https://github.com/nccgroup/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE" 
+
+  rm -r tests/ *.txt README.md
+
+  cp -a --no-preserve=ownership docs/* "$pkgdir/usr/share/doc/$pkgname/"
+  cp -a --no-preserve=ownership fuzzowski/ "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python -m $pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
