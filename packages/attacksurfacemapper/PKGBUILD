@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=attacksurfacemapper
+pkgver=19.6d095d1
+pkgrel=1
+pkgdesc='Tool that aims to automate the reconnaissance process.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon' 'blackarch-automation')
+url='https://github.com/superhedgy/AttackSurfaceMapper'
+license=('GPL3')
+depends=('python' 'python-beautifulsoup4' 'python-colorama' 'python-dnslib'
+         'python-dnspython' 'python-ipwhois' 'python-netaddr' 'python-pymongo'
+         'python-pyopenssl' 'python-requests' 'python-requests-html'
+         'python-shodan' 'python-tld' 'python-trans' 'python-validator-collection'
+         'python-selenium')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/superhedgy/AttackSurfaceMapper.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/LICENSE"
+
+  rm -r LICENSE README.md requirements.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python asm.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
