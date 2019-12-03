@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=waybackurls
+pkgver=9.58bbafe
+pkgrel=1
+pkgdesc='Fetch all the URLs that the Wayback Machine knows about for a domain.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/tomnomnom/waybackurls'
+license=('MIT')
+depends=('glibc')
+makedepends=('git' 'go-pie' 'wget')
+source=("git+https://github.com/tomnomnom/$pkgname.git")
+sha512sums=('SKIP')
+_url='github.com/tomnomnom/waybackurls'
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  # TomNomNom asked me to pull the LICENSE from the gron repo until he updates waybackurls's one
+  wget -q https://raw.githubusercontent.com/tomnomnom/gron/master/LICENSE
+}
+
+build() {
+  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
+    cd "src/$_url"
+
+  GOPATH="$srcdir" go get -v -d $_url
+}
+
+package() {
+  install -dm 755 "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v $_url
+
+  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 "src/$_url/README.mkd" "$pkgdir/usr/share/doc/$pkgname/README.md"
+
+  install -Dm 644 "src/$_url/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
