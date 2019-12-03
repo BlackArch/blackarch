@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ccrawldns
+pkgver=3.6325110
+pkgrel=1
+pkgdesc='Retrieves from the CommonCrawl data set unique subdomains for a given domain name.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/lgandx/CCrawlDNS'
+license=('GPL')
+depends=('python' 'python-requests' 'python-argparse')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/lgandx/CCrawlDNS.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" *.py
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python CCrawlDNS.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
