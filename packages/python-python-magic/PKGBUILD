@@ -1,31 +1,56 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-python-magic
+pkgbase=python-python-magic
+pkgname=('python2-python-magic' 'python-python-magic')
+_pkgname=python-magic
 pkgver=0.4.15
-pkgrel=4
+pkgrel=5
 pkgdesc='File type identification using libmagic.'
 arch=('any')
 url='https://pypi.org/project/python-magic/#files'
-license=('custom')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/84/30/80932401906eaf787f2e9bd86dc458f1d2e75b064b4c187341f29516945c/python-magic-$pkgver.tar.gz")
+license=('MIT')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/84/30/80932401906eaf787f2e9bd86dc458f1d2e75b064b4c187341f29516945c/$_pkgname-$pkgver.tar.gz")
 sha512sums=('df028669209e02cde06f4db0481d84c316cefc191273ab3c749e88a23c92cb79a703077f601a0cc194fccbbcf62b38de8bab79290827a8505bc06e2f4aa0c2bb')
 
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
 build() {
-  cd "python-magic-$pkgver"
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
-  cd "python-magic-$pkgver"
+package_python2-python-magic() {
+  depends=('python2' 'python2-libmagic')
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  cd "$_pkgname-$pkgver"
 
-  rm -rf "$pkgdir"/usr/lib/python3*/site-*/__pycache__/magic.cpython*
-  cd "$pkgdir/usr/lib/python3.8/site-packages/" && mv magic.py python-magic.py
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  mkdir -p "$pkgdir/usr/lib/python2.7/site-packages/"{python-magic,python_magic}
+  cp -a magic.py* "$pkgdir/usr/lib/python2.7/site-packages/python-magic/"
+  cp -a magic.py* "$pkgdir/usr/lib/python2.7/site-packages/python-magic/"
+  find $pkgdir -type d -name '__pycache__' -exec rm -rf {} +
+}
+
+package_python-python-magic() {
+  depends=('python' 'python-libmagic')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  mkdir -p "$pkgdir/usr/lib/python3.8/site-packages/"{python-magic,python_magic}
+  cp -a magic.py* "$pkgdir/usr/lib/python3.8/site-packages/python-magic/"
+  cp -a magic.py* "$pkgdir/usr/lib/python3.8/site-packages/python-magic/"
+  find $pkgdir -type d -name '__pycache__' -exec rm -rf {} +
 }
 
