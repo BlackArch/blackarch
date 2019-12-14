@@ -9,10 +9,15 @@ arch=('any')
 groups=('blackarch' 'blackarch-honeypot' 'blackarch-networking')
 url='https://github.com/rep/hpfeeds'
 license=('BSD')
-depends=('python2')
-makedepends=('git')
-source=("git+https://github.com/rep/$pkgname.git")
-sha512sums=('SKIP')
+depends=('python' 'python-aiohttp' 'python-attrs' 'python-async-timeout'
+         'python-chardet' 'python-idna' 'python-multidict' 'python-yarl'
+         'python-prometheus_client' 'python-wrapt' 'python-aiorun'
+         'python-idna_ssl')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/rep/$pkgname.git"
+        'requirements.txt.patch')
+sha512sums=('SKIP'
+            '2097d35fb648e40405de8e1f26ff17c58a6db3578bacda7fcb9141bd93ab016f0b6f00af316d2b3b49b1a0a517ae50270ed1765df84d402af9beb3d640807ea3')
 
 pkgver() {
   cd $pkgname
@@ -20,15 +25,19 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  patch -p1 < requirements.txt.patch
+}
+
 build() {
   cd $pkgname
 
-  python2 setup.py build
+  python setup.py build
 }
 
 package() {
   cd $pkgname
 
-  python2 setup.py install --root="$pkgdir" -O1 --skip-build
+  python setup.py install --root="$pkgdir" -O1 --skip-build
 }
 

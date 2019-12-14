@@ -13,6 +13,7 @@ depends=('glibc')
 makedepends=('git' 'go-pie')
 source=("git+https://github.com/lanrat/$pkgname.git")
 sha512sums=('SKIP')
+_url="github.com/lanrat/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -21,22 +22,21 @@ pkgver() {
 }
 
 build() {
-  mkdir -p "src/$url" && mv $pkgname "src/$url" && cd "src/$url"
+  mkdir -p "src/$_url" && mv $pkgname "src/$_url" && cd "src/$_url/$pkgname"
 
-  GOPATH="$srcdir" go get -d -t $url
+  GOPATH="$srcdir" go get -d -t $_url
 }
 
 package() {
   install -dm 755 "$pkgdir/usr/bin"
 
-  GOPATH="$srcdir" go build -v $url
+  cd "src/$_url/$pkgname"
+  GOPATH="$srcdir" go build -v .
 
-  install -Dm 755 "$srcdir/certgraph" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 "src/$url/docs/index.html" \
-    "$pkgdir/usr/share/$pkgname/index.html"
-  install -Dm 644 "src/$url/README.md" \
-    "$pkgdir/usr/share/doc/$pkgname/README.md"
-  install -Dm 644 "src/$url/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  cd "$srcdir/src/$_url/$pkgname"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 docs/index.html "$pkgdir/usr/share/$pkgname/index.html"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

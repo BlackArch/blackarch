@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=roguehostapd
+pkgver=78.381b373
+pkgrel=1
+pkgdesc='Hostapd fork including Wi-Fi attacks and providing Python bindings with ctypes.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-wireless')
+url='https://github.com/wifiphisher/roguehostapd'
+license=('BSD')
+depends=('python')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/wifiphisher/$pkgname")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  find $pkgdir -name examples -type d | xargs rm -rf
+
+  pwd
+  cp -a "$pkgname/"* "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python run.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
