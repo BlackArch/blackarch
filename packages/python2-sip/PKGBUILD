@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python2-sip
+pkgname=('python2-sip' 'python2-sip-pyqt5')
+_pkgname=sip
+pkgver=4.19.19
+pkgrel=5
+pkgdesc='Python SIP bindings for C/C++ libraries.'
+url='https://www.riverbankcomputing.com/software/sip/intro'
+arch=('x86_64' 'aarch64')
+license=('custom:unknown')
+makedepends=('python2')
+source=("https://www.riverbankcomputing.com/static/Downloads/$_pkgname/$pkgver/$_pkgname-$pkgver.tar.gz")
+sha512sums=('396c625f59ccef67c2e94221b26dd4ed5d536652a9b63a9f23b340ddf16adf34c6bdb0fbd7c0c1cc403e1d59e8ebf716b478a24bade66a2703fcc5f00b62533d')
+
+prepare() {
+  mkdir -p build{,-pyqt5}
+}
+
+build() {
+  cd build
+  python2 "$srcdir/$_pkgname-$pkgver/configure.py" \
+    CFLAGS="$CFLAGS" LFLAGS="$LDFLAGS"
+  make
+
+  cd "$srcdir/build-pyqt5"
+  python2 "$srcdir/$_pkgname-$pkgver/configure.py" \
+    CFLAGS="$CFLAGS" LFLAGS="$LDFLAGS" --sip-module PyQt5.sip --no-tools
+  make
+}
+
+package_python2-sip() {
+  depends=('python2')
+
+  cd build
+
+  make DESTDIR="$pkgdir" install
+
+  rm -r "$pkgdir/usr/"{bin,include}
+
+  install -Dm 644 "$srcdir/sip-$pkgver/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+package_python2-sip-pyqt5() {
+  pkgdesc='Python SIP bindings for C/C++ libraries (PyQt5 version).'
+  depends=('python2')
+
+  cd build-pyqt5
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 "$srcdir/$_pkgname-$pkgver/LICENSE" \
+    "$pkgdir/usr/share/licenses/${pkgname[1]}/LICENSE"
+}
+
