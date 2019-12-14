@@ -1,9 +1,10 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=hpfeeds
+pkgbase=hpfeeds
+pkgname=('python2-hpfeeds' 'hpfeeds')
 pkgver=350.d18a533
-pkgrel=1
+pkgrel=3
 pkgdesc='Honeynet Project generic authenticated datafeed protocol.'
 arch=('any')
 groups=('blackarch' 'blackarch-honeypot' 'blackarch-networking')
@@ -14,30 +15,47 @@ depends=('python' 'python-aiohttp' 'python-attrs' 'python-async-timeout'
          'python-prometheus_client' 'python-wrapt' 'python-aiorun'
          'python-idna_ssl')
 makedepends=('git' 'python-setuptools')
-source=("git+https://github.com/rep/$pkgname.git"
+replaces=('python2-hpfeeds3' 'python-hpfeeds3')
+conflicts=('python2-hpfeeds3' 'python-hpfeeds3')
+provides=('python2-hpfeeds3' 'python-hpfeeds3' 'hpfeeds')
+source=("git+https://github.com/rep/$pkgbase.git"
         'requirements.txt.patch')
 sha512sums=('SKIP'
             '2097d35fb648e40405de8e1f26ff17c58a6db3578bacda7fcb9141bd93ab016f0b6f00af316d2b3b49b1a0a517ae50270ed1765df84d402af9beb3d640807ea3')
 
 pkgver() {
-  cd $pkgname
+  cd $pkgbase
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
   patch -p1 < requirements.txt.patch
+
+  cp -a "$pkgbase"{,-2}
 }
 
 build() {
-  cd $pkgname
+  cd "$srcdir/$pkgbase-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$pkgbase"
 
   python setup.py build
 }
 
-package() {
-  cd $pkgname
+package_python2-hpfeeds() {
+  cd "$pkgbase-2"
 
-  python setup.py install --root="$pkgdir" -O1 --skip-build
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  rm -rf "$pkgdir/usr/bin"
+}
+
+package_hpfeeds() {
+  cd $pkgbase
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
