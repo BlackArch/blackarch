@@ -14,6 +14,7 @@ makedepends=('git' 'go-pie')
 source=("git+https://github.com/projectdiscovery/$pkgname.git")
 sha512sums=('SKIP')
 _url="github.com/projectdiscovery/$pkgname/cmd/$pkgname"
+_rurl="github.com/projectdiscovery/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -21,22 +22,12 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-build() {
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
-    cd "src/$_url"
-
-  GOPATH="$srcdir" go get -v -d -t $_url
-}
-
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  GOPATH="$srcdir" go get -v -t $_url
 
-  GOPATH="$srcdir" go build -v $_url
-
-  install -Dm 755 "$srcdir/subfinder" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 "src/$_url/README.md" \
-    "$pkgdir/usr/share/doc/$pkgname/README.md"
-  install -Dm 644 "src/$_url/LICENSE" \
+  install -Dm 755 "$srcdir/bin/subfinder" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "src/$_rurl/"*.md
+  install -Dm 644 "src/$_rurl/LICENSE" \
     "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
