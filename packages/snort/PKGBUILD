@@ -24,13 +24,22 @@ source=("https://www.snort.org/downloads/snort/$pkgname-$_pkgver.tar.gz"
         'http://rules.emergingthreats.net/open/snort-2.9.0/emerging.rules.tar.gz'
         'snort'
         'snort.conf.d'
-        'snort.service')
+        'snort.service'
+        'http://cgit.openembedded.org/meta-openembedded/plain/meta-networking/recipes-connectivity/snort/snort/0001-chdeck-for-gettid-API-during-configure.patch')
 sha512sums=('21830dc4c9ce7b5bc96defa800f78de6ad24c1ab96dbeab0d79a7bf4298a81d6bdb4be8fd3bbec3b28b33aa7bb27cdc48a2a00b33c494f68d1649bc609928eea'
-            'eddb04206935a6a17198ec7ec61eb609987d9d65f6be5b0f143e8a591188258579036df7ca6d0bfc4e9483aff620f511a46dca0270660da9fe259039b333d533'
+            'fb01acc4e1674b371e68b6ae13dccbe401ef187fb905a3f1fbfb58285eeabcf1764bcf3f12c3a99cc79ce7c2aef613715ccc289582fd923264a41f6ee1d087e0'
             '96d3a27752c60cec9b188cdc358f3a38c0f6f0a179e16f3778abaf6385cc82169cdf0b41ea9bf39cfa64455e6ca5e484c2d952c72ced0901512b4750343ec5d9'
             '08341de9f302622b40917914e5e67c0f79c1800c463be7675bb019a3c033c3302a1be522ffd7a5b4759211f962ce4557557ea2653c4c89843dbd33b95a2e2e35'
-            '8cd77b2046e5efd069aa4e236caa701391b2e3a91eac2e4ba21a60157c6f7b618d6552b831d5a4f7a2ba77612cf203ba7da1b672dade19c3396594e29aa7706f')
+            '8cd77b2046e5efd069aa4e236caa701391b2e3a91eac2e4ba21a60157c6f7b618d6552b831d5a4f7a2ba77612cf203ba7da1b672dade19c3396594e29aa7706f'
+            '0e10f6e67a87834dea746aeba2fb5894fa52f1e21de0b1dc315fb36d169b1138f7a7af5354d7d0750f22103ec62722b78c746d74cf5ffcda791fbed84a1de6d2')
 install="$pkgname.install"
+
+prepare() {
+  cd "$pkgname-$_pkgver"
+
+  patch -p1 -i ../0001-chdeck-for-gettid-API-during-configure.patch
+  autoreconf -fi
+}
 
 build() {
   cd "$pkgname-$_pkgver"
@@ -38,7 +47,8 @@ build() {
   CPPFLAGS="$CPPFLAGS -I/usr/include/tirpc/" ./configure --prefix=/usr \
     --sysconfdir="/etc/$pkgname" --with-libpcap-includes=/usr/include/pcap \
     --with-daq-includes=/usr/include --with-daq-libraries=/usr/lib/daq \
-    --disable-static-daq --enable-zlib --enable-sourcefire --enable-large-pcap
+    --disable-static-daq --enable-zlib --enable-sourcefire --enable-large-pcap \
+    --enable-64bit-gcc --enable-linux-smp-stats --enable-large-pcap
 
   make
 }
@@ -46,7 +56,7 @@ build() {
 package() {
   cd "$pkgname-$_pkgver"
 
-  make DESTDIR="$pkgdir" install-full
+  make DESTDIR="$pkgdir" install
 
   install -dm 755 "$pkgdir/etc/rc.d"
   install -dm 755 "$pkgdir/etc/$pkgname/rules"

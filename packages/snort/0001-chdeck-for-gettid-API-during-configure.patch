@@ -1,0 +1,48 @@
+From c45ab69f9428e4d2fc1146301a4546bb2b42c9ae Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Sat, 27 Jul 2019 00:25:58 -0700
+Subject: [PATCH] chdeck for gettid API during configure
+
+glibc 2.30 added gettid syscall wrapper
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ configure.in | 2 +-
+ src/util.h   | 2 ++
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/configure.in b/configure.in
+index 000bb91..d79e6d0 100644
+--- a/configure.in
++++ b/configure.in
+@@ -256,7 +256,7 @@ SN_CHECK_DECLS(printf fprintf syslog puts fputs fputc fopen  \
+            strcasecmp strncasecmp strerror perror socket sendto   \
+            vsnprintf snprintf strtoul)
+ 
+-AC_CHECK_FUNCS([sigaction strlcpy strlcat strerror vswprintf wprintf memrchr inet_ntop])
++AC_CHECK_FUNCS([sigaction strlcpy strlcat strerror vswprintf wprintf memrchr inet_ntop gettid])
+ 
+ AC_CHECK_FUNC([snprintf],[have_snprintf="yes"],[have_snprintf="no"])
+ AM_CONDITIONAL(BUILD_SNPRINTF, test "x$have_snprintf" != "xyes")
+diff --git a/src/util.h b/src/util.h
+index 6880906..c310b83 100644
+--- a/src/util.h
++++ b/src/util.h
+@@ -374,6 +374,7 @@ static inline int IsEmptyStr(const char *str)
+     return 0;
+ }
+ 
++#if !HAVE_GETTID
+ static inline pid_t gettid(void)
+ {
+ #if defined(LINUX) && defined(SYS_gettid)
+@@ -382,5 +383,6 @@ static inline pid_t gettid(void)
+     return getpid();
+ #endif
+ }
++#endif
+ 
+ #endif /*__UTIL_H__*/
+-- 
+2.22.0
+
