@@ -65,8 +65,8 @@ are given and everything is setup. Anything else can be discussed on IRC.
 
 - If you are unsure, copy an existing PKGBUILD from a package and use that as a
   template or ask other developers.
-  
-  
+
+
 ## Creating packages
 
 The following information was written with the goal of creating hight-quality PKGBUILDs and ensure that ever package uploaded to the BlackArch Linux repository is really working.
@@ -87,7 +87,7 @@ The following information was written with the goal of creating hight-quality PK
 
 - Check the syntax to ensure that the code is the most efficient possible and upload the PKGBUILD.
 
-- For your pull request use the syntax <pkgname>: <initial commit> or <pkgname>: <change done>
+- For your pull request use the syntax \<pkgname\>: \<initial commit\> or \<pkgname\>: \<change done\>
 
 ## ISO
 
@@ -97,4 +97,3 @@ foo
 ## Website
 
 foo
-
