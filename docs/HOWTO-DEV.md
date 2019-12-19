@@ -87,6 +87,8 @@ The following information was written with the goal of creating hight-quality PK
 
 - Check the syntax to ensure that the code is the most efficient possible and upload the PKGBUILD.
 
+- For your pull request use the syntax <pkgname>: <initial commit> or <pkgname>: <change done>
+
 ## ISO
 
 foo
