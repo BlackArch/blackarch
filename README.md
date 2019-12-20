@@ -26,6 +26,8 @@ You can get in touch with the BlackArch Linux team. Just check out the following
 
 **Please, send us pull requests!**
 
+To start developing for BlackArch please refer to the [Dev-Guide](./docs/HOWTO-DEV.md)
+
 **Web:** https://www.blackarch.org/
 
 **Mail:** team@blackarch.org
