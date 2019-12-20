@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=aiodnsbrute
+pkgver=38.e773a4c
+pkgrel=1
+pkgdesc='Python 3 DNS asynchronous brute force utility.'
+groups=('blackarch' 'blackarch-recon')
+arch=('any')
+url='https://github.com/blark/aiodnsbrute'
+license=('GPL3')
+depends=('python' 'python-aiodns' 'python-click' 'python-tqdm' 'python-uvloop'
+         'python-asyncio')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/blark/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a screenshot.png aiodnsbrute/wordlists "$pkgdir/usr/share/$pkgname/"
+}
+
