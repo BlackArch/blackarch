@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=libparistraceroute
+pkgver=378.6fb8f48
+pkgrel=1
+pkgdesc='A library written in C dedicated to active network measurements with examples, such as paris-ping and paris-traceroute.'
+groups=('blackarch' 'blackarch-networking')
+arch=('x86_64' 'aarch64')
+url='https://github.com/libparistraceroute/libparistraceroute'
+license=('MIT')
+depends=('glibc')
+makedepends=('git' 'autoconf' 'automake')
+source=("git+https://github.com/libparistraceroute/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  ./autogen.sh
+}
+
+build() {
+  cd $pkgname
+
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd $pkgname
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md AUTHORS NEWS \
+    README INSTALL ChangeLog TODO
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
