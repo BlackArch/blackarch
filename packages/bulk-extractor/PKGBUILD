@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname=bulk-extractor
-pkgver=1.5.5
-pkgrel=3
+pkgver=1527.674867b
+pkgrel=1
 groups=('blackarch' 'blackarch-forensic' 'blackarch-misc')
 pkgdesc='Bulk Email and URL extraction tool.'
 arch=('x86_64')
@@ -11,17 +11,29 @@ url='https://github.com/simsong/bulk_extractor'
 license=('GPL')
 depends=('tre' 'java-environment' 'openssl' 'exiv2' 'afflib' 'libewf'
          'ncurses5-compat-libs')
-source=("http://digitalcorpora.org/downloads/bulk_extractor/bulk_extractor-$pkgver.tar.gz")
-sha512sums=('9f1384f9d3b499beecc858f78e0abd4c904dad0c64ea04bf98c1a0195b62b17be19ed2bb7b104a3c65545988c6ec729d83f75673e27690585f18b5eb468a083a')
+makedepends=('git' 'autoconf' 'automake')
+#source=("http://digitalcorpora.org/downloads/bulk_extractor/bulk_extractor-$pkgver.tar.gz")
+source=("git+https://github.com/simsong/${pkgname//-/_}.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "${pkgname//-/_}"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 prepare() {
-  cd "bulk_extractor-$pkgver"
+  cd ${pkgname//-/_}
+
+  git submodule update --recursive --remote
 
   sed -i 's|`dirname $0`|/usr/share/bulk-extractor|' java_gui/BEViewer
+
+  sh bootstrap.sh
 }
 
 build() {
-  cd "bulk_extractor-$pkgver"
+  cd ${pkgname//-/_}
 
   ./configure --prefix=/usr --sysconfdir=/etc
 
@@ -31,7 +43,7 @@ build() {
 }
 
 package() {
-  cd "bulk_extractor-$pkgver"
+  cd ${pkgname//-/_}
 
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
