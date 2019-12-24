@@ -2,25 +2,30 @@
 # See COPYING for license details.
 
 pkgname=tls-attacker
-pkgver=2.6
+_pkgname=TLS-Attacker
+pkgver=3.3.1
 pkgrel=1
 pkgdesc='A Java-based framework for analyzing TLS libraries.'
 groups=('blackarch' 'blackarch-crypto')
 arch=('any')
 url='https://github.com/RUB-NDS/TLS-Attacker'
-license=('Apache2')
+license=('Apache')
 depends=('java-environment')
-makedepends=('git')
-source=("https://github.com/RUB-NDS/TLS-Attacker/releases/download/v$pkgver/TLS-Attacker-$pkgver.zip")
-sha512sums=('af5702010ae23aad43eedc4b675cf87f174e6d61cd761e9c875f5b3523c7c3e3a5e28ed90892f70e2d6670035ef02c389fc7df0fc190918dd91be451a563a673')
+makedepends=('git' 'maven')
+source=("https://github.com/RUB-NDS/TLS-Attacker/archive/$pkgver.tar.gz")
+sha512sums=('4a7eb348968476479106fe17f125be72e104d3d35c97eeb962d67e405435c989c6d7a78889c4f25280bb76906a87dc27877dbea75fe21b114b1ef05ed98570c4')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  mvn package
+}
 
 package() {
   _tools="Attacks TLS-Client TLS-Forensics TLS-Mitm TLS-Server TraceTool"
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  rm "TLS-Attacker-$pkgver.zip"
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
@@ -30,7 +35,7 @@ package() {
 cd /usr/share/$pkgname
 exec java -jar $t.jar "\$@"
 EOF
-    chmod +x "$pkgdir/usr/bin/$pkgname-${t}"
+    chmod +x "$pkgdir/usr/bin/$pkgname-$t"
   done
 }
 
