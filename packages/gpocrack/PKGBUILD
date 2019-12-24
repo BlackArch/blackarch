@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gpocrack
+pkgver=3.cf63c86
+pkgrel=2
+pkgdesc='Active Directory Group Policy Preferences cpassword cracker/decrypter.'
+groups=('blackarch' 'blackarch-cracker')
+arch=('any')
+url='https://github.com/MartinIngesen/gpocrack'
+license=('custom:unknown')
+depends=('python' 'python-pycryptodome')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/MartinIngesen/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i '1s/^/#!\/usr\/bin\/env python3\n/' "$pkgname.py"
+  sed -i 's|key = |key = b|' "$pkgname.py"
+  sed -i 's|AES.MODE_CBC, |AES.MODE_CBC, b|' "$pkgname.py"
+  sed -i 's|plain_text.strip()|plain_text.strip().decode()|' "$pkgname.py"
+
+  ### dirty sed's hack to move to python3 ###
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "$pkgname.py" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+
