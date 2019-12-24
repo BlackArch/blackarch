@@ -11,8 +11,10 @@ url='https://github.com/huntergregal/mimipenguin'
 license=('custom:unknown')
 depends=('python')
 makedepends=('git')
-source=("git+https://github.com/huntergregal/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/huntergregal/$pkgname.git"
+        'Makefile.patch')
+sha512sums=('SKIP'
+            '69e32fe1cea743ea56e1c284f98d02575fda2d31f1e612497284132730c779a1c89acb60f6f4504f772904ec362c07fe37411bd52a2ec3796de81114b1fafaca')
 
 pkgver() {
   cd $pkgname
@@ -20,13 +22,27 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  patch -p1 < Makefile.patch
+}
+
+build() {
+  cd $pkgname
+
+  make all
+}
+
 package() {
   cd $pkgname
 
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
-  install -Dm 755 "${pkgname}_x32" "$pkgdir/usr/bin/$pkgname-32"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 }
 
