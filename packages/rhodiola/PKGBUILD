@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=rhodiola
+pkgver=3.9cffa48
+pkgrel=1
+pkgdesc='Personalized wordlist generator with NLP, by analyzing tweets (A.K.A crunch2049).'
+arch=('any')
+groups=('blackarch' 'blackarch-automation' 'blackarch-cracker')
+url='https://github.com/utkusen/rhodiola'
+license=('BSD')
+depends=('exrex' 'nltk-data' 'python2' 'python2-nltk' 'python2-textblob'
+         'python2-wikipedia' 'python2-hurry-filesize' 'python2-colorama'
+         'python2-tweepy' 'python2-geotext' 'python2-requests'
+         'python2-beautifulsoup4' 'python2-gensim')
+makedepends=('git')
+source=("git+https://github.com/utkusen/$pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" \
+    README.md "${pkgname}_paper.pdf"
+
+  rm install.py README.md "${pkgname}_paper.pdf" *.png
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
