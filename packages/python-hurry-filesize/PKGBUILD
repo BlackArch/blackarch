@@ -1,21 +1,46 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details
 
-pkgname=python-hurry-filesize
+pkgbase=python-hurry-filesize
+pkgname=('python2-hurry-filesize' 'python-hurry-filesize')
+_pkgname=hurry.filesize
 pkgver=0.9
-pkgrel=2
+pkgrel=3
 pkgdesc='A simple Python library for human readable file sizes (or anything sized in bytes).'
 arch=('any')
-url='http://pypi.python.org/pypi/hurry.filesize/'
+url='https://pypi.org/project/hurry.filesize/#files'
 license=('GPL')
-depends=('python')
-makedepends=('python-setuptools')
-source=("https://pypi.python.org/packages/source/h/hurry.filesize/hurry.filesize-$pkgver.tar.gz")
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://pypi.python.org/packages/source/h/hurry.filesize/$_pkgname-$pkgver.tar.gz")
 sha512sums=('24b7ebf5a6e833cec01d1904e5202ab5bde238fbeabb92d893866118e152c0f861f853e11bb71c58d84060bffaf0b7bc88221e37aaacc0b07751febf8a2b1606')
 
-package() {
-  cd "hurry.filesize-$pkgver"
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
 
-  python setup.py install --root="$pkgdir" --optimize=1
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-hurry-filesize() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+}
+
+package_python-hurry-filesize() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
