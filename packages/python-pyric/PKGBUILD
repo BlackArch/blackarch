@@ -4,8 +4,8 @@
 pkgbase=python-pyric
 pkgname=('python2-pyric' 'python-pyric')
 _pkgname=PyRIC
-pkgver=0.1.6.3
-pkgrel=6
+pkgver=184.bc0dce3
+pkgrel=1
 pkgdesc='Python Radio Interface Controller Linux wireless library for the Python Wireless Developer and Pentester.'
 arch=('any')
 url='https://pypi.org/project/pyric/#files'
@@ -14,16 +14,22 @@ makedepends=('git' 'python2-setuptools' 'python-setuptools')
 source=("git+https://github.com/sophron/$_pkgname.git")
 sha512sums=('SKIP')
 
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
 prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
+  cp -a "$_pkgname"{,-2}
 }
 
 build() {
-  cd "$_pkgname-$pkgver-2"
+  cd "$_pkgname-2"
 
   python2 setup.py build
 
-  cd "$srcdir/$_pkgname-$pkgver"
+  cd "$srcdir/$_pkgname"
 
   python setup.py build
 }
@@ -31,18 +37,16 @@ build() {
 package_python2-pyric() {
   depends=('python2')
 
-  cd "$_pkgname-$pkgver-2"
+  cd "$_pkgname-2"
 
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
 package_python-pyric() {
   depends=('python')
 
-  cd "$_pkgname-$pkgver"
+  cd $_pkgname
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
