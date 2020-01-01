@@ -14,6 +14,9 @@ out_dir=.
 
 base=${BASH_SOURCE[0]%/*}
 
+# default file type extension
+FEXT="xz"
+
 err() {
 	echo >&2 "baofficial: $*"
 }
@@ -166,19 +169,29 @@ handle_package() {
 #    curl -Os "$mirror_arm/$arch/$repo/$pkgname-$pkgver-$pkg_arch.pkg.tar.xz"
 #    curl -Os "$mirror_arm/$arch/$repo/$pkgname-$pkgver-$pkg_arch.pkg.tar.xz.sig"
 #  else
-    curl -Os "$mirror/$repo/os/$arch/$pkgname-$pkgver-$pkg_arch.pkg.tar.xz"
-    curl -Os "$mirror/$repo/os/$arch/$pkgname-$pkgver-$pkg_arch.pkg.tar.xz.sig"
+    curl -Os "$mirror/$repo/os/$arch/$pkgname-$pkgver-$pkg_arch.pkg.tar.$FEXT"
+    curl -Os "$mirror/$repo/os/$arch/$pkgname-$pkgver-$pkg_arch.pkg.tar.$FEXT.sig"
+    ftype="$(file $pkgname-$pkgver-$pkg_arch.pkg.tar.xz | cut -d ' ' -f 2)"
+    if [[ "$ftype" == "HTML" ]]; then
+      FEXT="zst"
+      echo $FEXT
+      rm -f $pkgname-$pkgver-$pkg_arch.pkg.tar.*
+      curl -Os "$mirror/$repo/os/$arch/$pkgname-$pkgver-$pkg_arch.pkg.tar.$FEXT"
+      curl -Os "$mirror/$repo/os/$arch/$pkgname-$pkgver-$pkg_arch.pkg.tar.$FEXT.sig"
+    fi
 #  fi
 	)
+  FEXT="zst"
 }
 
 handle_finale() {
+  echo $FEXT
 	if $do_release ; then
-		"$base/barelease" -o "$tmp"/*.pkg.tar.xz
+    "$base/barelease" -o "$tmp"/*.pkg.tar.$FEXT
 	else
-		cp -i "$tmp"/*.pkg.tar.xz "$out_dir"
+		cp -i "$tmp"/*.pkg.tar.$FEXT "$out_dir"
 		if $signatures ; then
-			cp -i "$tmp"/*.pkg.tar.xz.sig "$out_dir"
+			cp -i "$tmp"/*.pkg.tar.$FEXT.sig "$out_dir"
 		fi
 	fi
 }
