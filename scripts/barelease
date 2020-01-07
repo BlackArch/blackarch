@@ -1,6 +1,6 @@
 #!/bin/bash
 # Please excuse the multiple connections.
-# Use baclean to clean up the old .pkg.tar.xz files.
+# Use baclean to clean up the old .pkg.tar.zst files.
 # TODO: delegate lock
 # TODO: test delegated notification
 # TODO: fatal error if pushing package in official repos
@@ -61,7 +61,7 @@ usage: barelease [options and package files]
   -u <user>   Specify the user to use on the remote host.
   -d <dir>    Specify the location of the repo on the site (Default: /nginx/var/www)
   -s <site>   Specify the site to use (Default: blackarch.org)
-  -e          Release all *.pkg.tar.xz files in the cwd.
+  -e          Release all *.pkg.tar.zst files in the cwd.
   -b          Use signature files that are in the same directories as the
               released packages. This disables gpg signing.
   -o          Call scripts/group-official to handle any official packages. This
@@ -127,7 +127,7 @@ parse_args() {
 				shift
 				;;
 			-e)
-				packages+=(*.pkg.tar.xz)
+        packages+=(*.pkg.tar.zst)
 				;;
 			-b)
 				use_existing_sigs=true
@@ -251,11 +251,11 @@ do_release() {
 
 	if ! $remove ; then
 		for package in "${packages[@]}" ; do
-			if [[ $package == *-any.pkg.tar.xz ]] ; then
+			if [[ $package == *-any.pkg.tar.zst ]] ; then
 				dests=(x86_64 aarch64)
-			elif [[ $package == *-x86_64.pkg.tar.xz ]] ; then
+			elif [[ $package == *-x86_64.pkg.tar.zst ]] ; then
 				dests=(x86_64)
-			elif [[ $package == *-aarch64.pkg.tar.xz ]] ; then
+			elif [[ $package == *-aarch64.pkg.tar.zst ]] ; then
 				dests=(aarch64)
 			else
 				err "unknown arch for '$package'"
@@ -273,7 +273,7 @@ do_release() {
 				cp "$package" "$tmp/$dest" 2> /dev/null
 			done
 
-			notify_list+=("$(sed 's|.*/||;s|.pkg.tar.xz$||' <<< "$package")")
+			notify_list+=("$(sed 's|.*/||;s|.pkg.tar.zst$||' <<< "$package")")
 		done
 	fi
 
@@ -287,7 +287,7 @@ do_release() {
 	for arch in x86_64 aarch64 ; do
 		cd "$tmp/$arch"
 
-		if ! $remove && ! ls *.pkg.tar.xz &> /dev/null ; then
+		if ! $remove && ! ls *.pkg.tar.zst &> /dev/null ; then
 			continue
 		fi
 
@@ -312,13 +312,13 @@ do_release() {
 			done
 		else
 			echo "signing and adding to databases..."
-				for package in *.pkg.tar.xz ; do
+				for package in *.pkg.tar.zst ; do
 					if ! $use_existing_sigs ; then
 						gpg --no-tty --default-key "$key" --yes -b "$package" > /dev/null 2>&1
 					fi
 				done
 
-			repo-add --nocolor -n -q blackarch.db.tar.gz *.pkg.tar.xz
+			repo-add --nocolor -n -q blackarch.db.tar.gz *.pkg.tar.zst
 		fi
 
 		if $handle_official ; then
@@ -330,7 +330,7 @@ do_release() {
 
 		echo "pushing..."
 		if ! $remove ; then
-			rsync --ignore-existing --chmod 644 -e "ssh -l $user" ./*.pkg.tar.xz{,.sig} \
+			rsync --ignore-existing --chmod 644 -e "ssh -l $user" ./*.pkg.tar.zst{,.sig} \
 			  "$site:$sitedir/blackarch/$repo/os/$arch" || true
 		fi
 		rsync --chmod 644 -e "ssh -l $user" blackarch.files.tar.gz{,.sig} \
