@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=wifi-autopwner
+pkgver=36.faa4d01
+pkgrel=1
+pkgdesc='Script to automate searching and auditing Wi-Fi networks with weak security.'
+groups=('blackarch' 'blackarch-automation' 'blackarch-wireless')
+arch=('any')
+url='https://github.com/Mi-Al/WiFi-autopwner'
+license=('GPL3')
+depends=('reaver' 'aircrack-ng' 'pixiewps' 'wireshark-qt'
+         'nmap' 'routersploit' 'crunch' 'sipcalc'
+         'wireless-regdb' 'crda' 'iw' 'wpa_supplicant'
+         'xterm' 'create_ap' 'git' 'curl' 'hashcat')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/Mi-Al/WiFi-autopwner.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" \
+    CONTRIBUTORS.md README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm CONTRIBUTORS.md README.md LICENSE
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bash "$pkgname.sh" "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
