@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=backoori
+pkgver=51.de58528
+pkgrel=1
+pkgdesc='Tool aided persistence via Windows URI schemes abuse.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-exploitation')
+url='https://github.com/giuliocomi/backoori'
+license=('GPL3')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/giuliocomi/$pkgname.git")
+sha512sums=('SKIP')
+_url='github.com/giuliocomi/backoori'
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
+    cd "src/$_url"
+
+  GOPATH="$srcdir" go get -v -d $_url
+}
+
+package() {
+  install -dm 755 "$pkgdir/usr/bin"
+
+  env GOOS=linux GOARCH=amd64 GOPATH="$srcdir" go build -v $_url
+
+  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "src/$_url/README.md"
+  install -Dm 644 "src/$_url/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
