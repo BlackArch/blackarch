@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gtfoblookup
+pkgver=48.7ed88a4
+pkgrel=1
+pkgdesc='Offline command line lookup utility for GTFOBins and LOLBAS.'
+arch=('any')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/nccgroup/GTFOBLookup'
+license=('GPL3')
+depends=('python' 'python-argparse' 'python-colorama' 'python-gitpython'
+         'python-yaml')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/nccgroup/GTFOBLookup.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" *.py
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 "$pkgname.1" "$pkgdir/usr/share/man/man1/$pkgname.1"
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
