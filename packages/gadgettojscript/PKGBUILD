@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gadgettojscript
+pkgver=14.5ac70f6
+pkgrel=1
+pkgdesc='.NET serialized gadgets that can trigger .NET assembly from JS/VBS/VBA based scripts.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-windows')
+url='https://github.com/med0x2e/GadgetToJScript'
+license=('GPL3')
+depends=('mono')
+makedepends=('git' 'msbuild')
+source=("$pkgname::git+https://github.com/med0x2e/GadgetToJScript.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  msbuild GadgetToJScript.sln
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"  
+  install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a --no-preserve=ownership GadgetToJScript/bin/Debug/* \
+	"$pkgdir/usr/share/windows/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname
+mono GadgetToJScript.exe "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
