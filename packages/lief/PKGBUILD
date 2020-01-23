@@ -2,28 +2,36 @@
 # See COPYING for license details.
 
 pkgname=lief
-pkgver=0.9.0
+_pkgname=LIEF
+pkgver=0.10.1
 pkgrel=1
 pkgdesc='Library to Instrument Executable Formats.'
 arch=('any')
 url='https://lief.quarkslab.com/'
 license=('Apache')
 groups=('blackarch' 'blackarch-disassembler' 'blackarch-reversing')
-depends=('python2')
-makedepends=('python2-setuptools')
-source=("https://github.com/lief-project/LIEF/releases/download/$pkgver/pylief-$pkgver.zip")
-sha512sums=('c536e7d1be9e04907705321473ef1d097b0e3cc7f39759505cae0bb5ed346f158b385a04f1b21ccb68599bea4bb791180f7a59e403169b0572e3255a2e843121')
+depends=('python')
+makedepends=('python-setuptools')
+source=("https://github.com/lief-project/LIEF/archive/$pkgver.tar.gz")
+sha512sums=('08cc6374fa5026099e4d43cb6bcd6401a8eadb6ea9749f5cde09ce80a555eb5ebc05ef6db8f01085ff20d56ba506fa0ab07e8d5f2e12dea723bebeb0f93410e3')
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python2 setup.py build
+  python setup.py build
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md AUTHORS \
+    CHANGELOG
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i $(echo $i | sed 's|_|-|g;s|.py||g')
+  done
 }
 
