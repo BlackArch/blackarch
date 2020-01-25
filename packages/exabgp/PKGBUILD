@@ -9,11 +9,11 @@ pkgdesc='The BGP swiss army knife of networking.'
 arch=('any')
 url='https://github.com/Exa-Networks/exabgp'
 license=('custom:unknown')
-depends=('python2' 'python2-ipaddr' 'python2-nose' 'python2-psutil')
-makedepends=('git' 'python2-setuptools')
+depends=('python' 'python-ipaddr' 'python-nose' 'python-psutil')
+makedepends=('git' 'python-setuptools')
 backup=('etc/exabgp.conf')
 source=("git+https://github.com/Exa-Networks/$pkgname.git"
-        'exabgp.service')
+        "$pkgname.service")
 sha512sums=('SKIP'
             '225726cf424d9c2a23a2c0e9d3c7ed8c5cf03993f9518efd8e45079822b2d8cbc4d6fd18b49794beee522530478b57e5e3b268b3abd92442680cdd695504360d')
 
@@ -26,18 +26,21 @@ pkgver() {
 build() {
   cd $pkgname
 
-  python2 setup.py build
+  python setup.py build
 }
 
 package() {
   cd $pkgname
 
-  python2 setup.py install --root="$pkgdir" -O1 --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
-  install -Dm 644 "$srcdir/exabgp.service" \
-    "$pkgdir/usr/lib/systemd/system/exabgp.service"
-  install -Dm 644 /dev/null "$pkgdir/etc/exabgp.conf"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" CHANGELOG PEP8 README.md
-  install -Dm 644 COPYRIGHT "$pkgdir/usr/share/licenses/$pkgname/COPYRIGHT"
+  install -Dm 644 "$srcdir/$pkgname.service" \
+    "$pkgdir/usr/lib/systemd/system/$pkgname.service"
+  install -Dm 644 /dev/null "$pkgdir/etc/$pkgname.conf"
+  install -Dm 644 "doc/man/$pkgname.1" "$pkgdir/usr/share/man/man1/$pkgname.1"
+  install -Dm 644 "doc/man/$pkgname.conf.5" \
+    "$pkgdir/usr/share/man/man5/$pkgname.conf.5"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md *.rst PEP8
+  install -Dm 644 LICENCE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
