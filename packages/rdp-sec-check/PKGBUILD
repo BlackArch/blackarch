@@ -1,0 +1,35 @@
+pkgname=rdp-sec-check
+pkgver=9.5956857
+pkgrel=1
+pkgdesc='Script to enumerate security settings of an RDP Service'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-networking' 'blackarch-windows')
+url='https://github.com/portcullislabs/rdp-sec-check'
+license=('GPL2')
+depends=('perl' 'perl-encoding-ber')
+makedepends=('git')
+source=("git+https://github.com/portcullislabs/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" rdp-sec-check.pl
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec perl /usr/share/rdp-sec-check/rdp-sec-check.pl "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
