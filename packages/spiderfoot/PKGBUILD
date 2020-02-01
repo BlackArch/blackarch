@@ -2,27 +2,31 @@
 # See COPYING for license details.
 
 pkgname=spiderfoot
-pkgver=2.12.0
-pkgrel=2
+pkgver=3.0
+pkgrel=1
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='The Open Source Footprinting Tool.'
 url='http://spiderfoot.net/'
 arch=('any')
 license=('GPL2')
-depends=('python2' 'python2-mako' 'python2-cherrypy' 'python2-m2crypto'
-         'python2-lxml' 'python2-netaddr' 'swig' 'python2-bs4' 'python-pypdf2'
-         'python2-phonenumbers' 'python2-stem')
-source=("https://github.com/smicallef/$pkgname/archive/v$pkgver-final.tar.gz")
-sha512sums=('5657eecdf68078019dbae490f35ba868483dd92993718b86bdbe819d5fc0c01e226bfadf7e6f0dc900d7f017351bd66e1855ebfb4e6964b5f3b39bd5de34c0dd')
+depends=('python' 'python-adblockparser' 'python-dnspython' 'python-exifread'
+         'python-cherrypy' 'python-mako' 'python-beautifulsoup4' 'python-lxml'
+         'python-netaddr' 'python-pysocks' 'python-requests' 'python-ipwhois'
+         'python-ipaddr' 'python-phonenumbers' 'python-pygexf' 'python-pypdf2'
+         'python-stem' 'python-python-whois' 'python-future' 'python-secure'
+         'python-pyopenssl' 'python-python-docx' 'python-python-pptx'
+         'python-networkx' 'python-cryptography')
+source=("https://github.com/smicallef/$pkgname/archive/v$pkgver.tar.gz")
+sha512sums=('abf64b6b819f8535f87237649be677af27aaddc729897eff8d4c27bd441e32862a42f8b84cf61ad3a0b9e1fc940fddf9d2e47d7decfcb62812239c5a9e01850a')
 
 prepare() {
-  cd "$pkgname-$pkgver-final"
+  cd "$pkgname-$pkgver"
 
   #sed -i 's|treebuilders._base|treebuilders.base|g' ext/bs4/builder/_html5lib.py
 }
 
 package() {
-  cd "$pkgname-$pkgver-final"
+  cd "$pkgname-$pkgver"
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
@@ -35,12 +39,20 @@ package() {
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
-cat > "$pkgdir/usr/bin/$pkgname" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 sf.py "\$@"
+exec python sf.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname-cli" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python sfcli.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-cli"
 }
 
