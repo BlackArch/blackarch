@@ -3,13 +3,13 @@
 
 pkgname=ldapscripts
 pkgver=2.0.8
-pkgrel=1
+pkgrel=2
 pkgdesc='Simple shell scripts to handle POSIX entries in an LDAP directory.'
 arch=('any')
 groups=('blackarch' 'blackarch-automation' 'blackarch-misc')
 url='https://sourceforge.net/projects/ldapscripts'
 license=('GPL2')
-makedepends=('make')
+depends=('openldap' 'sharutils')
 source=("https://sourceforge.net/projects/$pkgname/files/$pkgname/$pkgname-$pkgver/$pkgname-$pkgver.tgz")
 sha512sums=('d2ce0114d66ab7c37a6b1029e94403bf15ce2721c1fa8f139247a08eac3b1b11291225388f0158222bdc1e259d399afe8f3a60d89efe42353cf4a65f3ab4f2d4')
 
@@ -17,6 +17,8 @@ prepare() {
   cd "$pkgname-$pkgver"
 
   sed -i 's|install -m 750|install -m 755|' Makefile
+  sed -i 's/^ETCDIR.*/ETCDIR = \/etc\/$(NAME)/g' Makefile
+  sed -i 's/^\#ICONVCHAR=/ICONVCHAR=/g' etc/ldapscripts.conf
 }
 
 package() {
@@ -27,7 +29,6 @@ package() {
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README
   install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  mv "$pkgdir/usr/etc" "$pkgdir/etc"
   mv "$pkgdir/usr/sbin" "$pkgdir/usr/bin"
 }
 
