@@ -2,8 +2,7 @@
 # See COPYING for license details.
 
 pkgname=bro-aux
-_pkgname=zeek-aux
-pkgver=0.43
+pkgver=437.0181cc0
 pkgrel=2
 groups=('blackarch' 'blackarch-networking' 'blackarch-defensive'
         'blackarch-sniffer')
@@ -12,12 +11,29 @@ arch=('x86_64' 'aarch64')
 url='https://www.bro.org/sphinx/components/bro-aux/README.html'
 license=('custom:unknown')
 depends=('bro')
-makedepends=('cmake')
-source=("https://github.com/zeek/zeek-aux/archive/v$pkgver.tar.gz")
-sha512sums=('b5d49c0d0233eda452be577fce449140d68493ed84fc1fcc5c1c7e02520f3bb52adf173ae9869ae39e33cee216ca3cca9f9c642494ec78baded68ef84696188e')
+makedepends=('git' 'cmake')
+source=("$pkgname::git+https://github.com/zeek/zeek-aux.git"
+        "git+https://github.com/zeek/cmake.git"
+        )
+sha512sums=('SKIP'
+            'SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  git submodule init
+  git config cmake.https://github.com/zeek/cmake.git "$srcdir/cmake"
+  git submodule update
+}
 
 build() {
-  cd "$_pkgname-$pkgver"
+  cd $pkgname
 
   ./configure --prefix="$pkgdir/usr"
 
@@ -25,7 +41,7 @@ build() {
 }
 
 package() {
-  cd "$_pkgname-$pkgver"
+  cd $pkgname
 
   make install
 
