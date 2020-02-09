@@ -11,16 +11,29 @@ url='https://github.com/libyal/libsmraw'
 arch=('x86_64' 'aarch64')
 license=('LGPLv3')
 makedepends=('python2-setuptools' 'python-setuptools')
-source=("https://files.pythonhosted.org/packages/3e/81/b5fe3bd34cc199fffc28e52fe878f44fcafe95dd251aba2e13bfe4d6e8c5/$_pkgname-$pkgver.tar.gz")
+source=("https://files.pythonhosted.org/packages/3e/81/b5fe3bd34cc199fffc28e52fe878f44fcafe95dd251aba2e13bfe4d6e8c5/$_pkgname-python-$pkgver.tar.gz")
 sha512sums=('a590a769bac7dee4aa3c90d2cfb2a2aaf1181325d3bcba46936c0e5d441707d04753f45b5abf39d7a901addbb852f72ed8a184066e2d0c76d174a21183009c71')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
 
 package_python2-libsmraw-python() {
   depends=('python2')
 
-  cd "$_pkgname-$pkgver"
+  cd "$_pkgname-$pkgver-2"
 
-  python2 setup.py build
-  python2 setup.py install --root="$pkgdir" --optimize=1 --skip-build
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
 package_python-libsmraw-python() {
@@ -28,7 +41,6 @@ package_python-libsmraw-python() {
 
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
-  python setup.py install --root="$pkgdir" --optimize=1 --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
