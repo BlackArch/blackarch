@@ -2,26 +2,45 @@
 # See COPYING for license details.
 
 pkgname=gophish
-pkgver=0.8.0
+pkgver=701.1733da1
 pkgrel=1
 groups=('blackarch' 'blackarch-social')
 pkgdesc='Open-Source Phishing Framework.'
-arch=('x86_64')
-url='https://getgophish.com/'
+arch=('x86_64' 'aarch64')
+url='https://github.com/gophish/gophish'
 license=('MIT')
-options=(!strip)
-source=("https://github.com/gophish/gophish/releases/download/v$pkgver/$pkgname-v$pkgver-linux-64bit.zip")
-sha512sums=('79cc4633368c421ae4daaeda0751255cc8d00fbdd6f56946134837e928ba9ff2081691b693a015979ad3137f41702f257da1ffd63712424822ea09520b9b92ec')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/$pkgname/$pkgname.git")
+sha512sums=('SKIP')
+_url="github.com/$pkgname/$pkgname"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
+    cd "src/$_url"
+
+  GOPATH="$srcdir" go get -d -t $_url
+}
 
 package() {
+  cd $pkgname
+
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  rm "gophish-v$pkgver-linux-64bit.zip"
+  GOPATH="$srcdir" go build -v $_url
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md VERSION
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md VERSION
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
+  rm -rf LICENSE *.md
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
   chmod -R g-w "$pkgdir/usr/share/$pkgname"
