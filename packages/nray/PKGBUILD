@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=nray
+pkgver=18.2aedc1f
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='Distributed port scanner.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/nray-scanner/nray'
+license=('GPL3')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/nray-scanner/$pkgname.git")
+sha512sums=('SKIP')
+_url="github.com/nray-scanner/$pkgname"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go get -d -t .
+}
+
+package() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go build -v .
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md AUTHORS
+}
+
