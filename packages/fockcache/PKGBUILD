@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=fockcache
+pkgver=10.3e7efa9
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer')
+pkgdesc='Tool to make cache poisoning by trying X-Forwarded-Host and X-Forwarded-Scheme headers on web pages.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/tismayil/fockcache'
+license=('GPL2')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/tismayil/$pkgname.git")
+sha512sums=('SKIP')
+_url="github.com/tismayil/$pkgname"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
+    cd "src/$_url"
+
+  GOPATH="$srcdir" go get -d -t github.com/briandowns/spinner
+  GOPATH="$srcdir" go get -d -t github.com/christophwitzko/go-curl
+  GOPATH="$srcdir" go get -d -t $_url
+}
+
+package() {
+  install -dm 755 "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v $_url
+
+  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "src/$_url/"*.md
+  install -Dm 644 "src/$_url/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
