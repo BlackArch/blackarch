@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=fuzzbunch
+pkgver=32.2b76c22
+pkgrel=1
+pkgdesc='NSA Exploit framework'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-exploitation')
+url='https://github.com/mdiazcl/fuzzbunch-debian'
+license=('custom:unknown')
+depends=('wine' 'winetricks')
+makedepends=('git')
+source=("git+https://github.com/mdiazcl/$pkgname-debian.git"
+        'path.reg'
+        'fuzzbunch.desktop')
+sha512sums=('SKIP'
+            'x'
+            'x')
+
+pkgver() {
+  cd "$pkgname-debian"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  # Configure a wine32 environment
+  WINEPREFIX="/usr/share/$pkgname/.wine-fuzzbunch" WINEARCH=win32 wine wineboot
+  # Export this environment to the session
+  export WINEPREFIX=/usr/share/$pkgname/.wine-fuzzbunch
+  # Add python and fuzzbunch to the wine environment PATH by importing a registry file
+  wine regedit path.reg
+  # Fix permissions
+  find "$pkgdir"/usr/share -type f -exec chmod 644 "{}" \;
+  find "$pkgdir"/usr/share -type d -exec chmod 755 "{}" \;
+  # Import fuzzbunch source
+  cp -r "$pkgname-debian" "/usr/share/$pkgname/.wine-fuzzbunch/drive_c"
+  # Install python2.6 and pywin32
+  cd "/usr/share/$pkgname/.wine-fuzzbunch/drive_c"
+  winetricks -q python26
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/.wine-fuzzbunch/drive_c/fuzzbunch-debian/windows
+echo "run: python fb.py"
+exec wine cmd.exe
+EOF
+
+  # menu entry
+  install -Dm644 "${srcdir}/${pkgname}.desktop" "${pkgdir}/usr/share/applications/${pkgname}.desktop"
+}
