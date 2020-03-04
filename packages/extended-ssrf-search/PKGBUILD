@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=extended-ssrf-search
+_pkgname=ssrf-search
+pkgver=24.97b0516
+pkgrel=1
+pkgdesc='Smart ssrf scanner using different methods like parameter brute forcing in post and get.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/Damian89/extended-ssrf-search'
+license=('custom:unknown')
+depends=('python')
+makedepends=('git')
+source=("git+https://github.com/Damian89/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  mv "$pkgdir/usr/share/$pkgname/example.app-settings.conf" \
+    "$pkgdir/usr/share/$pkgname/app-settings.conf"
+
+  cat > "$pkgdir/usr/bin/$_pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$_pkgname"
+}
+
