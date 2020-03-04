@@ -2,18 +2,19 @@
 # See COPYING for license details.
 
 pkgname=ncurses5-compat-libs
+_pkgname=ncurses
 pkgver=6.1
-pkgrel=2
-pkgdesc='System V Release 4.0 curses emulation library, ABI 5'
+pkgrel=3
+pkgdesc='System V Release 4.0 curses emulation library, ABI 5.'
 arch=('x86_64' 'aarch64')
 url='http://invisible-island.net/ncurses/ncurses.html'
 license=('MIT')
 depends=('glibc' 'gcc-libs' 'sh')
-source=("http://invisible-mirror.net/archives/ncurses/ncurses-$pkgver.tar.gz")
+source=("http://invisible-mirror.net/archives/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('e308af43f8b7e01e98a55f4f6c4ee4d1c39ce09d95399fa555b3f0cdf5fd0db0f4c4d820b4af78a63f6cf6d8627587114a40af48cfc066134b600520808a77ee')
 
 build() {
-  cd "ncurses-${pkgver/_/-}"
+  cd "$_pkgname-${pkgver/_/-}"
 
   ./configure --prefix=/usr --mandir=/usr/share/man --with-shared \
     --with-normal --without-debug --without-ada --enable-widec \
@@ -23,16 +24,19 @@ build() {
 }
 
 package() {
-  cd "ncurses-${pkgver/_/-}"
+  cd "$_pkgname-${pkgver/_/-}"
 
   make DESTDIR="$pkgdir" install.libs
 
-  rm -rf "$pkgdir/usr/include/" "$pkgdir/usr/lib/pkgconfig" "$pkgdir/usr/lib/*.so"
+  rm -rf "$pkgdir/usr/include/" "$pkgdir/usr/lib/pkgconfig" \
+    "$pkgdir/usr/lib/*.so"
 
   # fool packages looking to link to non-wide-character ncurses libraries
   for lib in ncurses ncurses++ form panel menu; do
     ln -s /usr/lib/lib${lib}w.so.5 "$pkgdir"/usr/lib/lib${lib}.so.5
   done
+  ln -s /usr/lib/libncurses.so.5 "$pkgdir/usr/lib/libtinfo.so.5"
+  ln -s /usr/lib/libncurses.so.5 "$pkgdir/usr/lib/libtic.so.5"
 
   _rm='libformw.so libmenuw.so libncurses++w.so libncursesw.so libpanelw.so'
   for f in $_rm ; do
