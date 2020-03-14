@@ -1,5 +1,5 @@
---- src/fastnetmon/src/CMakeLists.txt	2020-03-14 20:32:44.346666657 +0100
-+++ CMakeLists.txt	2020-03-14 20:36:20.873333314 +0100
+--- src/fastnetmon/src/CMakeLists.txt	2020-03-14 22:36:07.153333289 +0100
++++ CMakeLists.txt	2020-03-14 22:10:41.883333324 +0100
 @@ -7,7 +7,7 @@
  
  # set(ENABLE_GOBGP_SUPPORT "yes")
@@ -95,7 +95,7 @@
  endif()
  
  option(ENABLE_NETMAP_SUPPORT "Enable Netmap support" ON)
-@@ -142,14 +142,14 @@
+@@ -142,24 +142,24 @@
  
  if (ENABLE_PFRING_SUPPORT)
      # Set path to manually compiled PF_RING
@@ -113,15 +113,23 @@
      link_directories("${PFRING_CUSTOM_INSTALL_PATH}/lib")
      add_definitions(-DPF_RING)
  
-@@ -158,7 +158,7 @@
-         # Enable ZC support
-         add_definitions(-DPF_RING_ZC)
-     else()
+-    if (EXISTS "${PFRING_CUSTOM_INSTALL_PATH}/include/pfring_zc.h" OR EXISTS "/usr/local/include/pfring_zc.h")
+-        message(STATUS "We found PF_RING ZC headers and will build PF_RING ZC support")
+-        # Enable ZC support
+-        add_definitions(-DPF_RING_ZC)
+-    else()
 -        message(WARNING "We can't find PF_RING ZC header pfring_zc.h in folder /opt/pf_ring/include. Will not compile ZC support") 
-+        message(WARNING "We can't find PF_RING ZC header pfring_zc.h in folder /opt/pf_ring/include. Will not compile ZC support")
-     endif()
+-    endif()
++    #if (EXISTS "${PFRING_CUSTOM_INSTALL_PATH}/include/pfring_zc.h" OR EXISTS "/usr/local/include/pfring_zc.h")
++    #    message(STATUS "We found PF_RING ZC headers and will build PF_RING ZC support")
++    #    # Enable ZC support
++    #    add_definitions(-DPF_RING_ZC)
++    #else()
++    #    message(WARNING "We can't find PF_RING ZC header pfring_zc.h in folder /opt/pf_ring/include. Will not compile ZC support")
++    #endif()
  
      include_directories(${PFRING_INCLUDE_DIRS})
+ 
 @@ -186,7 +186,7 @@
  
  # -DENABLE_SNABBSWITCH_SUPPORT=ON ..
@@ -151,7 +159,7 @@
          message(STATUS "You are running Linux with enough recent kernel and we can build AF_PACKET support")
          set (ENABLE_AFPACKET_SUPPORT ON)
      else()
-@@ -215,27 +215,27 @@
+@@ -215,57 +215,57 @@
  
  # -DENABLE_AFPACKET_SUPPORT=ON ..
  if (ENABLE_AFPACKET_SUPPORT)
@@ -169,22 +177,48 @@
  add_library(netflow_plugin STATIC netflow_plugin/netflow_collector.cpp)
  target_link_libraries(netflow_plugin ipfix_rfc)
  
- option(ENABLE_DPI_SUPPORT "Enable Deep Packet Inspection support" ON)
+-option(ENABLE_DPI_SUPPORT "Enable Deep Packet Inspection support" ON)
 -if (ENABLE_DPI_SUPPORT) 
-+if (ENABLE_DPI_SUPPORT)
-     message(STATUS "We will enable nDPI support")
- 
-     add_library(fast_dpi STATIC fast_dpi.cpp)
- 
+-    message(STATUS "We will enable nDPI support")
+-
+-    add_library(fast_dpi STATIC fast_dpi.cpp)
+-
 -    set(NDPI_INCLUDE_DIRS "/opt/ndpi/include/libndpi-1.7.1")
-+    set(NDPI_INCLUDE_DIRS "/usr/include/libndpi")
- 
+-
 -    find_library(NDPI_LIBRARIES NAMES ndpi PATHS "/opt/ndpi/lib" NO_DEFAULT_PATH)
-+    find_library(NDPI_LIBRARIES NAMES ndpi PATHS "/usr/lib" NO_DEFAULT_PATH)
- 
-     if (NOT NDPI_LIBRARIES)
-         message(FATAL_ERROR "Could not find nDPI library")
-@@ -251,21 +251,21 @@
+-
+-    if (NOT NDPI_LIBRARIES)
+-        message(FATAL_ERROR "Could not find nDPI library")
+-    endif()
+-
+-    link_directories("/opt/ndpi/lib")
+-    include_directories(${NDPI_INCLUDE_DIRS})
+-
+-    add_definitions(-DENABLE_DPI)
+-
+-    target_link_libraries(fast_dpi ${NDPI_LIBRARIES})
+-endif()
++# option(ENABLE_DPI_SUPPORT "Enable Deep Packet Inspection support" ON)
++# if (ENABLE_DPI_SUPPORT)
++#     message(STATUS "We will enable nDPI support")
++#
++#     add_library(fast_dpi STATIC fast_dpi.cpp)
++#
++#     set(NDPI_INCLUDE_DIRS "/usr/include")
++#
++#     find_library(NDPI_LIBRARIES NAMES ndpi PATHS "/usr/lib" NO_DEFAULT_PATH)
++#
++#     if (NOT NDPI_LIBRARIES)
++#         message(FATAL_ERROR "Could not find nDPI library")
++#     endif()
++#
++#     link_directories("/usr/lib")
++#     include_directories(${NDPI_INCLUDE_DIRS})
++#
++#     add_definitions(-DENABLE_DPI)
++#
++#     target_link_libraries(fast_dpi ${NDPI_LIBRARIES})
++# endif()
  
  # We do not enable it by default, it's testing feature
  # If you want it please build with:
