@@ -3,7 +3,7 @@
 
 pkgname=chipsec
 pkgver=1.4.8.r0.gf0eabf1
-pkgrel=1
+pkgrel=2
 epoch=3
 pkgdesc='Platform Security Assessment Framework.'
 groups=('blackarch' 'blackarch-hardware' 'blackarch-binary' 'blackarch-forensic'
@@ -11,8 +11,8 @@ groups=('blackarch' 'blackarch-hardware' 'blackarch-binary' 'blackarch-forensic'
 arch=('x86_64' 'armv8h')
 url='https://github.com/chipsec/chipsec'
 license=('GPL2')
-depends=('dkms' 'libelf' 'linux-headers' 'nasm' 'python2' 'python2-lxml')
-makedepends=('git' 'python2-setuptools')
+depends=('dkms' 'libelf' 'linux-headers' 'nasm' 'python' 'python-lxml')
+makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/chipsec/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -25,14 +25,14 @@ pkgver() {
 build() {
   cd $pkgname
 
-  python2 setup.py build
+  python setup.py build
 }
 
 package() {
   cd $pkgname
 
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build --skip-driver
+  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build \
+    --skip-driver
 
   install -Dm 644 drivers/linux/dkms.conf \
     "$pkgdir/usr/src/$pkgname-$pkgver/dkms.conf"
@@ -44,5 +44,9 @@ package() {
   install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE COPYING
 
   rm -rf "$pkgdir/usr/chipsec-manual.pdf"
+
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i "$(echo $i | tr -s '_' '-')"
+  done
 }
 
