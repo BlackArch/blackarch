@@ -7,10 +7,10 @@ for FILE in $CHANGED_FILES; do
   # Check PKGBUILD for errors/warnings
   if [[ $(basename $FILE) == "PKGBUILD" ]]; then
     pkgcheck $FILE
-  fi
 
-  # try to build
-  docker build -t builder -f travis/Dockerfile travis/
-  docker run -v "$(realpath $(dirname ${FILE})):/src" builder
+    # try to build
+    docker build -t builder -f travis/Dockerfile $(dirname $FILE)
+    docker run --rm builder
+  fi
 
 done
