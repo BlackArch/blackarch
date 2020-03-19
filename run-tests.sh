@@ -9,6 +9,8 @@ for FILE in $CHANGED_FILES; do
     pkgcheck $FILE
   fi
 
-  # TODO: try to build
+  # try to build
+  docker build -t builder -f travis/Dockerfile travis/
+  docker run -v "$(realpath ${FILE}):/src" builder
 
 done
