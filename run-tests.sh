@@ -11,6 +11,6 @@ for FILE in $CHANGED_FILES; do
 
   # try to build
   docker build -t builder -f travis/Dockerfile travis/
-  docker run -v "$(realpath ${FILE}):/src" builder
+  docker run -v "$(dirname ${FILE}):/src" builder
 
 done
