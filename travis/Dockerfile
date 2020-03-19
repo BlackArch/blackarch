@@ -23,6 +23,8 @@ USER builder
 # Change working directory
 WORKDIR /src
 
+COPY --chown=builder:users . .
+
 # Run entrypoint
 ENTRYPOINT ["makepkg"]
 
