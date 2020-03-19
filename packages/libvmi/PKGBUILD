@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD was from AUR.
+# Old Maintainer: Aaron McDaniel (mcd1992) <'aur' at the domain 'fgthou.se'>
+
+pkgname=libvmi
+pkgver=0.12.0
+pkgrel=1
+pkgdesc='A virtual machine introspection library.'
+url='https://github.com/libvmi/libvmi'
+arch=('x86_64' 'aarch64')
+license=('LGPL')
+depends=('json-c')
+makedepends=('automake' 'autoconf' 'libtool' 'bison' 'flex' 'libvirt')
+source=("https://github.com/$pkgname/$pkgname/archive/v$pkgver.tar.gz")
+sha512sums=('6e9626719b2557676c20f6f560ba1828ecd5f0f322ededee8baacf4405c9ab54cfcc8161df7b6895f58ee8cf1f7ff3ccd2c691efab5f8e3f5024856676432f55')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  ./autogen.sh
+  ./configure --prefix=/usr --disable-xen
+}
+
+build() {
+  cd "$pkgname-$pkgver/libvmi/config"
+  make -j1
+
+  cd "$srcdir/$pkgname-$pkgver"
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a "$srcdir/$pkgname-$pkgver/libvmi/"*.h "$pkgdir/usr/include/libvmi/"
+}
+
