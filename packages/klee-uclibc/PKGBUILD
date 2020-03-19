@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD from AUR.
+# Old Maintainer: Niklas Krafczyk <krafczyk.n at gmail dot com>
+
+pkgname=klee-uclibc
+pkgver=1.2
+pkgrel=1
+pkgdesc="KLEE's version of uClibc."
+arch=('x86_64' 'aarch64')
+url='https://github.com/klee/klee-uclibc'
+license=('LGPL')
+makedepends=('llvm' 'clang' 'python' 'wget')
+source=("https://github.com/klee/klee-uclibc/archive/klee_uclibc_v$pkgver.tar.gz")
+sha512sums=('845eb2a68960c98da8a28c595b666d3642e24d34a4723f262164184168e8e8be638abbae2615ece38305570f335b9e7016eaaecaa9cb178ec5406b90b39ac945')
+
+prepare() {
+  mv "$pkgname-klee_uclibc_v$pkgver" $pkgname
+
+  cd $pkgname
+
+  DEVEL_PREFIX="/usr/share/klee-uclibc/" ./configure --make-llvm-lib
+
+  sed -i 's|DEVEL_PREFIX="[^"]*"|DEVEL_PREFIX="/usr/share/klee-uclibc/usr"|' \
+    .config
+  sed -i 's|RUNTIME_PREFIX="[^"]*"|RUNTIME_PREFIX="/usr/share/klee-uclibc/usr"|' \
+    .config
+}
+
+build() {
+  cd $pkgname
+
+	make -j$(nproc)
+}
+
+package() {
+	cd $pkgname
+
+  make DESTDIR="$pkgdir" install
+}
+
