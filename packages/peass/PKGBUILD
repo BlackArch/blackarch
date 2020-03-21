@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=peass
+pkgver=VERSION
+pkgrel=1
+pkgdesc='PEASS - Privilege Escalation Awesome Scripts SUITE (with colors).'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner'
+        'blackarch-recon')
+url='https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite'
+license=('MIT')
+makedepends=('git')
+optdepends=('fping' 'nmap' 'ping' 'gnu-netcat')
+source=("$pkgname::git+https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+  install -Dm 644 linPEAS/README.md \
+    "$pkgdir/usr/share/doc/$pkgname/README_linPEAS.md"
+  install -Dm 644 winPEAS/README.md \
+    "$pkgdir/usr/share/doc/$pkgname/README_winPEAS.md"
+
+  rm README.md LICENSE .gitignore linPEAS/README.md winPEAS/README.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/linpeas" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/linPEAS
+exec ./linpeas.sh "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/linpeas"
+}
+
