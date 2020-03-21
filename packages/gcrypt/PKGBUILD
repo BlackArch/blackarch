@@ -2,21 +2,27 @@
 # See COPYING for license details.
 
 pkgname=gcrypt
-pkgver='3.2@faf9eb3'
-_pkgver=3.2-faf9eb3
-pkgrel=2
+pkgver=8.e5648d6
+pkgrel=1
 epoch=1
 pkgdesc='Simple, secure and performance file encryption tool written in C'
 groups=('blackarch' 'blackarch-crypto')
 arch=('x86_64' 'aarch64')
 url='https://github.com/GasparVardanyan/GCrypt'
-license=('custom:unknown')
+license=('MIT')
 depends=('glibc')
-source=("https://github.com/GasparVardanyan/$pkgname/archive/v$pkgver.tar.gz")
-sha512sums=('8f6e9f002bb1226ebd26e72ee548b9ddef73c1aa0a3d7c6c18c52ea7a53666465511c985d8ef7a4d329f20a079707dd4408c314428118a1750934704bead11a8')
+makedepends=('git')
+source=("git+https://github.com/GasparVardanyan/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 build() {
-  cd "$pkgname-$_pkgver"
+  cd $pkgname
 
   gcc -o $pkgname *.c -std=c18 -pedantic -pedantic-errors -Wall -O \
     -fstack-protector-all -fPIE -fPIC \
@@ -24,9 +30,10 @@ build() {
 }
 
 package() {
-  cd "$pkgname-$_pkgver"
+  cd $pkgname
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
