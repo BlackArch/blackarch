@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=richsploit
+pkgver=2.583f553
+pkgrel=1
+pkgdesc='Exploitation toolkit for RichFaces.'
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-webapp')
+arch=('any')
+url='https://github.com/redtimmy/Richsploit'
+license=('custom:unknown')
+depends=('java-environment')
+makedepends=('git' 'maven')
+source=("$pkgname::git+https://github.com/redtimmy/Richsploit.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  mvn package
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 644 target/Richsploit.jar \
+    "$pkgdir/usr/share/$pkgname/Richsploit.jar"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.MD
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec java -jar Richsploit.jar "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
