@@ -16,14 +16,20 @@ makedepends=('python2-numpy' 'pygobject2-devel')
 optdepends=('python2-numpy')
 #source=("https://download.gnome.org/sources/$pkgname/${pkgver%.*}/$pkgname-$pkgver.tar.bz2"
 source=("$pkgname-$pkgver-patched.tar.xz"
+        "$pkgname-$pkgver-patched-arm.tar.xz"
         'python27.patch'
         'fix-leaks-of-pango-objects.patch')
 sha512sums=('ba38ccab6c16fac9f8e972a0098310eb1e2a9061999fbed3ce334bd75f06063cca37b712b93a16dcd2c25b39cb063d6ac32361823bd2b1a8f62c1ae39a7062f3'
+            'c423616f7c3e2e03d3e5526a18631a3a0ec1a1c964ae594c8e4a438a3134a03ebf17ed5f52566e4030e0d484894f0723b4e8349cbb8529ebbfcacd3e76bbf166'
             'badc250bfc592408a14e321060f087e3c28f81c5b40f60468737267ad4cae85a3fff2842fc9a488fe884390b2f33d58525eeebca56499a612de4f05cea3dccc8'
             'bc385060c0b0cfee406d245c26bf7895be43db36160cf976c4def6416d7c06284a4d1eea0332fbe10e4065a1a3f1ca49ef3286a557e027fb953910a2aaa8359c')
 
 prepare() {
-  cd "$pkgname-$pkgver-patched"
+  if [[ "$CARCH" == "x86_64" ]]; then
+    cd "$pkgname-$pkgver-patched"
+  else
+    cd "$pkgname-$pkgver-patched-arm"
+  fi
 
   # https://bugzilla.gnome.org/show_bug.cgi?id=623965
   #patch -Np1 -i "$srcdir/python27.patch"
@@ -39,7 +45,11 @@ prepare() {
 }
 
 build() {
-  cd "$pkgname-$pkgver-patched"
+  if [[ "$CARCH" == "x86_64" ]]; then
+    cd "$pkgname-$pkgver-patched"
+  else
+    cd "$pkgname-$pkgver-patched-arm"
+  fi
 
   #PYTHON=/usr/bin/python2 ./configure --prefix=/usr --disable-docs
   #sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
@@ -47,7 +57,11 @@ build() {
 }
 
 package() {
-  cd "$pkgname-$pkgver-patched"
+  if [[ "$CARCH" == "x86_64" ]]; then
+    cd "$pkgname-$pkgver-patched"
+  else
+    cd "$pkgname-$pkgver-patched-arm"
+  fi
 
   make DESTDIR="$pkgdir" install
 
