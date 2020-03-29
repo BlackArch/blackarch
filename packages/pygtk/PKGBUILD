@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Old Maintainer: Jan de Groot <jgc@archlinux.org>
+# Old Contributor: Sarah Hay <sarahhay@mb.sympatico.ca>
+
+pkgname=pygtk
+pkgver=2.24.0
+pkgrel=9
+pkgdesc='Python bindings for the GTK widget set.'
+url='http://www.pygtk.org/'
+arch=('x86_64' 'aarch64')
+license=('LGPL')
+depends=('libglade' 'python2-cairo' 'python2-gobject2')
+makedepends=('python2-numpy' 'pygobject2-devel')
+optdepends=('python2-numpy')
+source=("https://download.gnome.org/sources/$pkgname/${pkgver%.*}/$pkgname-$pkgver.tar.bz2"
+        'python27.patch'
+        'fix-leaks-of-pango-objects.patch')
+sha512sums=('64f4344fcf7636e0b2016ffd5310250b5c02a1bf87e44aef39b5d4cf4a5fc50d27cb4f030d4c6802cff61fffb88dee7752821e3d8a4cd1c34dc3745d9ff2f0da'
+            'badc250bfc592408a14e321060f087e3c28f81c5b40f60468737267ad4cae85a3fff2842fc9a488fe884390b2f33d58525eeebca56499a612de4f05cea3dccc8'
+            'bc385060c0b0cfee406d245c26bf7895be43db36160cf976c4def6416d7c06284a4d1eea0332fbe10e4065a1a3f1ca49ef3286a557e027fb953910a2aaa8359c')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  # https://bugzilla.gnome.org/show_bug.cgi?id=623965
+  patch -Np1 -i "$srcdir/python27.patch"
+
+  # https://bugzilla.gnome.org/show_bug.cgi?id=660216
+  patch -Np1 -i "$srcdir/fix-leaks-of-pango-objects.patch"
+
+  # Python 2
+  sed -i -e 's#env python$#env python2#' examples/pygtk-demo/{,demos/}*.py
+
+  # No docs
+  sed -i '/^SUBDIRS =/s/docs//' Makefile.in
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  PYTHON=/usr/bin/python2 ./configure --prefix=/usr --disable-docs
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+  install -Dm 644 gtk/gtk-extrafuncs.defs "$pkgdir/usr/share/pygtk/2.0/defs/"
+}
+

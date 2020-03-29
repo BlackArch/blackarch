@@ -1,0 +1,59 @@
+From eca72baa5616fbe4dbebea43c7e5940847dc5ab8 Mon Sep 17 00:00:00 2001
+From: "Owen W. Taylor" <otaylor@fishsoup.net>
+Date: Tue, 27 Sep 2011 00:17:52 -0400
+Subject: Fix leaks of Pango objects
+
+Gtk.PrintContext.create_pango_context()
+Gtk.PrintContext.create_pango_layout()
+pangocairo.CairoContext.create_layout()
+
+were leaking the objects they returned.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=660216
+
+diff --git a/gtk/gtk-2.10.defs b/gtk/gtk-2.10.defs
+index 69c7e0c..faa45e1 100644
+--- a/gtk/gtk-2.10.defs
++++ b/gtk/gtk-2.10.defs
+@@ -1388,12 +1388,14 @@
+ (define-method create_pango_context
+   (of-object "GtkPrintContext")
+   (c-name "gtk_print_context_create_pango_context")
++  (caller-owns-return #t)
+   (return-type "PangoContext*")
+ )
+ 
+ (define-method create_pango_layout
+   (of-object "GtkPrintContext")
+   (c-name "gtk_print_context_create_pango_layout")
++  (caller-owns-return #t)
+   (return-type "PangoLayout*")
+ )
+ 
+diff --git a/pangocairo.override b/pangocairo.override
+index bb923e6..5101107 100644
+--- a/pangocairo.override
++++ b/pangocairo.override
+@@ -118,11 +118,16 @@ _wrap_pango_cairo_update_context(PyGObject *self, PyObject *args, PyObject *kwar
+ static PyObject *
+ _wrap_pango_cairo_create_layout(PyGObject *self)
+ {
+-    PangoLayout *ret;
++    PangoLayout *layout;
++    PyObject *ret;
+ 
+-    ret = pango_cairo_create_layout(PycairoContext_GET(self));
++    layout = pango_cairo_create_layout(PycairoContext_GET(self));
+     /* pygobject_new handles NULL checking */
+-    return pygobject_new((GObject *)ret);
++    ret = pygobject_new((GObject *)layout);
++    if (layout)
++	g_object_unref(layout);
++
++    return ret;
+ }
+ 
+ static PyObject *
+-- 
+cgit v0.10.2
+
