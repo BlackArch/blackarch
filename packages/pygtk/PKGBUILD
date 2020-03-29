@@ -6,7 +6,7 @@
 
 pkgname=pygtk
 pkgver=2.24.0
-pkgrel=9
+pkgrel=10
 pkgdesc='Python bindings for the GTK widget set.'
 url='http://www.pygtk.org/'
 arch=('x86_64' 'aarch64')
@@ -15,15 +15,15 @@ depends=('libglade' 'python2-cairo' 'python2-gobject2')
 makedepends=('python2-numpy' 'pygobject2-devel')
 optdepends=('python2-numpy')
 #source=("https://download.gnome.org/sources/$pkgname/${pkgver%.*}/$pkgname-$pkgver.tar.bz2"
-source=("$pkgname-$pkgver-binary.tar.xz"
+source=("$pkgname-$pkgver-patched.tar.xz"
         'python27.patch'
         'fix-leaks-of-pango-objects.patch')
-sha512sums=('40993ed8bdc10e26d8a512c4db35fc91dafd96042352f59268af2fb3dc95495f2b7d2f50bdfede6080e0cc82e4c38816c5a9063962591bc65e1acefd2cea2e08'
+sha512sums=('ba38ccab6c16fac9f8e972a0098310eb1e2a9061999fbed3ce334bd75f06063cca37b712b93a16dcd2c25b39cb063d6ac32361823bd2b1a8f62c1ae39a7062f3'
             'badc250bfc592408a14e321060f087e3c28f81c5b40f60468737267ad4cae85a3fff2842fc9a488fe884390b2f33d58525eeebca56499a612de4f05cea3dccc8'
             'bc385060c0b0cfee406d245c26bf7895be43db36160cf976c4def6416d7c06284a4d1eea0332fbe10e4065a1a3f1ca49ef3286a557e027fb953910a2aaa8359c')
 
 prepare() {
-  cd "$pkgname-$pkgver-binary"
+  cd "$pkgname-$pkgver-patched"
 
   # https://bugzilla.gnome.org/show_bug.cgi?id=623965
   #patch -Np1 -i "$srcdir/python27.patch"
@@ -39,7 +39,7 @@ prepare() {
 }
 
 build() {
-  cd "$pkgname-$pkgver-binary"
+  cd "$pkgname-$pkgver-patched"
 
   #PYTHON=/usr/bin/python2 ./configure --prefix=/usr --disable-docs
   #sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
@@ -47,14 +47,10 @@ build() {
 }
 
 package() {
-  cd "$pkgname-$pkgver-binary"
+  cd "$pkgname-$pkgver-patched"
 
-  #make DESTDIR="$pkgdir" install
+  make DESTDIR="$pkgdir" install
 
-  #install -Dm 644 gtk/gtk-extrafuncs.defs "$pkgdir/usr/share/pygtk/2.0/defs/"
-
-  pwd
-  ls
-  mv * "$pkgdir/"
+  install -Dm 644 gtk/gtk-extrafuncs.defs "$pkgdir/usr/share/pygtk/2.0/defs/"
 }
 
