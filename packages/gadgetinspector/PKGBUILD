@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gadgetinspector
+_pkgname=gadget-inspector-all
+pkgver=6.ac7832d
+pkgrel=1
+pkgdesc='A byte code analyzer for finding deserialization gadget chains in Java applications.'
+groups=('blackarch' 'blackarch-decompiler' 'blackarch-binary')
+arch=('any')
+url='https://github.com/JackOfMostTrades/gadgetinspector'
+license=('MIT')
+depends=('java-runtime')
+makedepends=('git' 'apache-ant' 'jdk-openjdk' 'gradle')
+source=("git+https://github.com/JackOfMostTrades/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  ./gradlew shadowJar
+  #./gradlew
+  #./gradlew build
+  #./gradlew jar
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 644 "build/libs/$_pkgname.jar" \
+    "$pkgdir/usr/share/$pkgname/$_pkgname.jar"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec java -jar /usr/share/$pkgname/$_pkgname.jar "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
