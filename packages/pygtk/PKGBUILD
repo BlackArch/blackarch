@@ -1,0 +1,68 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Old Maintainer: Jan de Groot <jgc@archlinux.org>
+# Old Contributor: Sarah Hay <sarahhay@mb.sympatico.ca>
+
+pkgname=pygtk
+pkgver=2.24.0
+pkgrel=10
+pkgdesc='Python bindings for the GTK widget set.'
+url='http://www.pygtk.org/'
+arch=('x86_64' 'aarch64')
+license=('LGPL')
+depends=('libglade' 'python2-cairo' 'python2-gobject2')
+makedepends=('python2-numpy' 'pygobject2-devel')
+optdepends=('python2-numpy')
+#source=("https://download.gnome.org/sources/$pkgname/${pkgver%.*}/$pkgname-$pkgver.tar.bz2"
+source=("$pkgname-$pkgver-patched.tar.xz"
+        'python27.patch'
+        'fix-leaks-of-pango-objects.patch')
+sha512sums=('05b4d0126c4c624da84c6a0f339befb59a6d9aa043db815984f2f34d9502480309df4de1676f4937201a844420c33013590aa645244f320619ee2eb629aaf88b'
+            'badc250bfc592408a14e321060f087e3c28f81c5b40f60468737267ad4cae85a3fff2842fc9a488fe884390b2f33d58525eeebca56499a612de4f05cea3dccc8'
+            'bc385060c0b0cfee406d245c26bf7895be43db36160cf976c4def6416d7c06284a4d1eea0332fbe10e4065a1a3f1ca49ef3286a557e027fb953910a2aaa8359c')
+
+prepare() {
+  if [[ "$CARCH" == "x86_64" ]]; then
+    cd "$pkgname-$pkgver-patched/x86_64"
+  else
+    cd "$pkgname-$pkgver-patched/arm"
+  fi
+
+  # https://bugzilla.gnome.org/show_bug.cgi?id=623965
+  #patch -Np1 -i "$srcdir/python27.patch"
+
+  # https://bugzilla.gnome.org/show_bug.cgi?id=660216
+  #patch -Np1 -i "$srcdir/fix-leaks-of-pango-objects.patch"
+
+  # Python 2
+  #sed -i -e 's#env python$#env python2#' examples/pygtk-demo/{,demos/}*.py
+
+  # No docs
+  #sed -i '/^SUBDIRS =/s/docs//' Makefile.in
+}
+
+build() {
+  if [[ "$CARCH" == "x86_64" ]]; then
+    cd "$pkgname-$pkgver-patched/x86_64"
+  else
+    cd "$pkgname-$pkgver-patched/arm"
+  fi
+
+  #PYTHON=/usr/bin/python2 ./configure --prefix=/usr --disable-docs
+  #sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  #make
+}
+
+package() {
+  if [[ "$CARCH" == "x86_64" ]]; then
+    cd "$pkgname-$pkgver-patched/x86_64"
+  else
+    cd "$pkgname-$pkgver-patched/arm"
+  fi
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 gtk/gtk-extrafuncs.defs "$pkgdir/usr/share/pygtk/2.0/defs/"
+}
+
