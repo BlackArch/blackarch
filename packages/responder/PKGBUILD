@@ -3,15 +3,15 @@
 
 pkgname=responder
 pkgver=338.eb449bb
-pkgrel=1
+pkgrel=2
 epoch=3
-pkgdesc='A LLMNR and NBT-NS poisoner, with built-in HTTP/SMB/MSSQL/FTP/LDAP rogue authentication server supporting NTLMv1/NTLMv2/LMv2, Extended Security NTLMSSP and Basic HTTP authentication.'
+pkgdesc='A LLMNR and NBT-NS poisoner, with built-in HTTP/SMB/MSSQL/FTP/LDAP rogue authentication server supporting NTLMv1/NTLMv2/LMv2 (multirelay version).'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-spoof'
         'blackarch-networking')
 arch=('any')
-depends=('python2')
+depends=('python2' 'python2-configparser' 'python2-pycryptodome')
 makedepends=('git')
-url='https://github.com/SpiderLabs/Responder/'
+url='https://github.com/lgandx/Responder'
 license=('GPL3')
 source=("$pkgname::git+https://github.com/lgandx/Responder.git")
 sha512sums=('SKIP')
@@ -29,11 +29,13 @@ package() {
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm README.md
+  rm README.md LICENSE *.sh
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
+  # Responder
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
@@ -42,6 +44,7 @@ EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
 
+  # Responder DumpHash
   cat > "$pkgdir/usr/bin/$pkgname-dumphash" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
@@ -50,6 +53,7 @@ EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-dumphash"
 
+  # Responder Report
   cat > "$pkgdir/usr/bin/$pkgname-report" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
@@ -58,6 +62,7 @@ EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-report"
 
+  # Responder DHCP
   cat > "$pkgdir/usr/bin/$pkgname-dhcp" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/tools
@@ -66,30 +71,16 @@ EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-dhcp"
 
-#  cat > "$pkgdir/usr/bin/$pkgname-smbrelay" << EOF
-#!/bin/sh
-#cd /usr/share/$pkgname/tools
-#exec python2 SMBRelay.py "\$@"
-#EOF
-
-#chmod +x "$pkgdir/usr/bin/$pkgname-smbrelay"
-
-  cat > "$pkgdir/usr/bin/$pkgname-icmp-redirect" << EOF
+  # Responder DHCP_Auto
+  cat > "$pkgdir/usr/bin/$pkgname-dhcp-auto" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/tools
-exec python2 Icmp-Redirect.py "\$@"
+exec bash DHCP_Auto.sh "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/$pkgname-icmp-redirect"
+  chmod +x "$pkgdir/usr/bin/$pkgname-dhcp-auto"
 
-  cat > "$pkgdir/usr/bin/$pkgname-runfinger" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname/tools
-exec python2 RunFinger.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname-runfinger"
-
+  # Responder FindSMB2Uptime
   cat > "$pkgdir/usr/bin/$pkgname-findsmb2uptime" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/tools
@@ -98,5 +89,67 @@ EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-findsmb2uptime"
 
+  # Responder FindSQLSrv
+  cat > "$pkgdir/usr/bin/$pkgname-findsqlsrv" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/tools
+exec python2 FindSQLSrv.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-findsqlsrv"
+
+  # Responder ICMP-Redirect
+  cat > "$pkgdir/usr/bin/$pkgname-icmp-redirect" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/tools
+exec python2 Icmp-Redirect.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-icmp-redirect"
+
+  # Responder Multirelay
+  cat > "$pkgdir/usr/bin/$pkgname-multirelay" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/tools
+exec python2 MultiRelay.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-multirelay"
+
+  # Responder RunFinger
+  cat > "$pkgdir/usr/bin/$pkgname-runfinger" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/tools
+exec python2 RunFinger.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-runfinger"
+
+  # Responder cachedump
+  cat > "$pkgdir/usr/bin/$pkgname-cachedump" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/tools/MultiRelay/creddump
+exec python2 cachedump.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-cachedump"
+
+  # Responder lsadump
+  cat > "$pkgdir/usr/bin/$pkgname-lsadump" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/tools/MultiRelay/creddump
+exec python2 lsadump.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-lsadump"
+
+  # Responder pwdump
+  cat > "$pkgdir/usr/bin/$pkgname-pwdump" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/tools/MultiRelay/creddump
+exec python2 pwdump.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-pwdump"
 }
 
