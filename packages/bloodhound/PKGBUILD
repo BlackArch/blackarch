@@ -10,8 +10,8 @@ groups=('blackarch' 'blackarch-recon' 'blackarch-windows')
 arch=('x86_64' 'aarch64')
 url='https://github.com/BloodHoundAD/BloodHound'
 license=('GPL3')
-depends=('nodejs' 'neo4j-community' 'alsa-lib' 'gtk2' 'libxss' 'gconf' 'nss'
-         'libxtst')
+depends=('nodejs' 'neo4j-community' 'alsa-lib' 'gtk3' 'libxss' 'gconf' 'nss'
+         'libxtst' 'jre8-openjdk-headless')
 makedepends=('git' 'nodejs-electron-packager' 'npm' 'unzip')
 optdepends=('python: for some scripts' 'powershell: for PowerShell ingestion')
 source=('git+https://github.com/BloodHoundAD/BloodHound.git'
@@ -19,10 +19,11 @@ source=('git+https://github.com/BloodHoundAD/BloodHound.git'
 options=(!strip)
 sha512sums=('SKIP'
             'def465fd091d4c62b1ba6c829062fc9f9bcd90e9c262a0ec057348eca777bc70c71323e818829c838cf3b36d2ce79795b1e6b6dc37f2a91665e40c486724c039')
-if [ "$CARCH" = "x86_64" ]
-then
-	_npmcmd='linuxbuild_64'
-	_arch='x64'
+install="$pkgname.install"
+
+if [ "$CARCH" = "x86_64" ]; then
+  _npmcmd='linuxbuild_64'
+  _arch='x64'
   _path='BloodHound-linux-x64'
 else
   _npmcmd='linuxbuild_arm'
@@ -66,6 +67,9 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/$_path
+export NEO4J_HOME=/usr/share/java/neo4j
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk/jre
+exec neo4j console &
 exec ./BloodHound "\$@"
 EOF
 
