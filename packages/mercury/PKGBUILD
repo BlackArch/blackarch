@@ -4,26 +4,34 @@
 pkgname=mercury
 pkgver=1
 pkgrel=0
-groups=('blackarch' 'blackarch-networking')
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-networking')
 pkgdesc='This package contains two programs for fingerprinting network traffic and capturing and analyzing packet metadata: mercury, a Linux application that leverages the modern Linux kernel high-performance networking capabilities (AF_PACKET and TPACKETv3).'
 url='https://github.com/cisco/mercury'
 license=('2019 Cisco Systems')
-arch=('x86_64')
-source=("$pkgname::git+https://github.com/cisco/$pkgname.git")
+arch=('x86_64' 'aarch64')
+depends=('glibc')
+makedepends=('git')
+source=("git+https://github.com/cisco/$pkgname.git")
 sha512sums=('SKIP')
 
-prepare() {
-  cd "$pkgname"
-  ./configure
+pkgver() {
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$pkgname"
+  cd $pkgname
+
+  ./configure --prefix=/usr
   make
 }
 
 package() {
-  cd "$pkgname-$pkgver"
-  make DESTDIR="$pkgdir/" install
+  cd $pkgname
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md VERSION \
+    "doc/$pkgname.pdf"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
