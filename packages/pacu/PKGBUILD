@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pacu
+pkgver=861.ffb3bb9
+pkgrel=1
+pkgdesc='The AWS exploitation framework, designed for testing the security of Amazon Web Services environments.'
+groups=('blackarch' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/RhinoSecurityLabs/pacu'
+license=('BSD-3-Clause')
+depends=('python' 'python-argparse' 'aws-cli' 'python-botocore' 'python-pysocks'
+         'python-s3transfer' 'python-flake8-debugger' 'python-pytz' 'python-requests'
+         'python-urllib3' 'python-sqlalchemy' 'python-sqlalchemy-utils')
+makedepends=('git')
+source=("git+https://github.com/RhinoSecurityLabs/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE install.sh
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
