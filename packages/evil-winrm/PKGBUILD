@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=evil-winrm
+pkgver=246.e501272
+pkgrel=1
+pkgdesc='The ultimate WinRM shell for hacking/pentesting.'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-backdoor')
+url='https://github.com/Hackplayers/evil-winrm'
+license=('LGPL3')
+depends=('ruby' 'ruby-bundler' 'libxslt')
+makedepends=('git')
+source=("git+https://github.com/Hackplayers/$pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  cp -a --no-preserve=ownership resources/ "$pkgdir/usr/share/doc/$pkgname/"
+
+  rm -r *.md resources/ .github/ LICENSE
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bundle exec $pkgname.rb "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
