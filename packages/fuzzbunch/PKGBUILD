@@ -11,12 +11,15 @@ url='https://github.com/mdiazcl/fuzzbunch-debian'
 license=('custom:unknown')
 depends=('wine' 'winetricks')
 makedepends=('git')
+install='fuzzbunch.install'
 source=("git+https://github.com/mdiazcl/$pkgname-debian.git"
-        'path.reg'
-        'fuzzbunch.desktop')
+        'fuzzbunch.desktop'
+        'fuzzbunch.install'
+        'path.reg')
 sha512sums=('SKIP'
-            'x'
-            'x')
+            'cb0516c5c568670f580d075e5368ec9a92cfae6c0481c1865cff5cabe0591069d75320f13e1d9fdd5fdfe8bf83dff82d94e2071039d9884b04f72b1c1f5ed195'
+            '84e280f667b009caebcc712ed47139e04d4a63082d9eb65df961584749133b3668034cf1ff12ee14dd48286651fa410ac7c6a112b4a85648f470cebe91ff4846'
+            '392092bedaa348964d68a68bf21756052d81666fdadc3c3488923ee69ac4a4cb3385174ae068170b4f568964ca1c9983fb6fce6abb6de0529b2a8160b3dd017b')
 
 pkgver() {
   cd "$pkgname-debian"
@@ -25,20 +28,14 @@ pkgver() {
 }
 
 package() {
-  # Configure a wine32 environment
-  WINEPREFIX="/usr/share/$pkgname/.wine-fuzzbunch" WINEARCH=win32 wine wineboot
-  # Export this environment to the session
-  export WINEPREFIX=/usr/share/$pkgname/.wine-fuzzbunch
-  # Add python and fuzzbunch to the wine environment PATH by importing a registry file
-  wine regedit path.reg
-  # Fix permissions
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/.wine-fuzzbunch/drive_c/"
+
+  cp path.reg "$pkgdir/usr/share/$pkgname/.wine-fuzzbunch/path.reg"
+  cp -a "$pkgname-debian" "$pkgdir/usr/share/$pkgname/.wine-fuzzbunch/drive_c"
+
   find "$pkgdir"/usr/share -type f -exec chmod 644 "{}" \;
   find "$pkgdir"/usr/share -type d -exec chmod 755 "{}" \;
-  # Import fuzzbunch source
-  cp -r "$pkgname-debian" "/usr/share/$pkgname/.wine-fuzzbunch/drive_c"
-  # Install python2.6 and pywin32
-  cd "/usr/share/$pkgname/.wine-fuzzbunch/drive_c"
-  winetricks -q python26
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
@@ -48,6 +45,9 @@ echo "run: python fb.py"
 exec wine cmd.exe
 EOF
 
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+
   # menu entry
   install -Dm644 "${srcdir}/${pkgname}.desktop" "${pkgdir}/usr/share/applications/${pkgname}.desktop"
 }
+
