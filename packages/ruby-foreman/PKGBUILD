@@ -11,20 +11,25 @@ pkgver=0.87.1
 pkgrel=1
 pkgdesc="Process manager for Procfile based applications"
 arch=('any')
-depends=('ruby' 'ruby-thor')
+depends=('ruby2.6' 'ruby-thor')
 url="https://rubygems.org/gems/${_gemname}"
 noextract=($_gemname-$pkgver.gem)
 license=('MIT')
-source=(
-	"https://rubygems.org/downloads/${_gemname}-${pkgver}.gem"
-)
-sha512sums=(
-	'cc511cca4afe90ab784af60bf07420d2ae36bbd3e58689e684be66dc47c24df231fd4b793d53698616a8c6ec6a02b9f1dc0210111613edaf18b636da3c3767cc'
-)
+source=("https://rubygems.org/downloads/${_gemname}-${pkgver}.gem")
+sha512sums=('cc511cca4afe90ab784af60bf07420d2ae36bbd3e58689e684be66dc47c24df231fd4b793d53698616a8c6ec6a02b9f1dc0210111613edaf18b636da3c3767cc')
 
 package() {
-	local _gemdir="$(ruby -e'puts Gem.default_dir')"
-	gem install --ignore-dependencies --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
-	rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  local _gemdir="$(ruby -e'puts Gem.default_dir')"
+
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
+
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
+  rm -r "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/spec"
+
+
+  install -Dm 644 "$pkgdir/$_gemdir/gems/$_gemname-$pkgver/README.md" \
+    "$pkgdir/usr/share/licenses/$pkgname/README.md"
 }
 
