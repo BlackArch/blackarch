@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=shellcode-compiler
+pkgver=24.e8edc8e
+pkgrel=1
+pkgdesc='Compiles C/C++ style code into a small, position-independent and NULL-free shellcode for Windows & Linux.'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation')
+url='https://github.com/NytroRST/ShellcodeCompiler'
+license=('GPL3')
+depends=('glibc')
+optdepends=('mono' 'mono-msbuild' 'mono-msbuild-sdkresolver')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/NytroRST/ShellcodeCompiler.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" \
+    Release/ShellcodeCompiler_x64 Release/ShellcodeCompiler_x86
+
+  install -Dm 755 -t "$pkgdir/usr/share/windows/$pkgname/" Release/*.exe
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  rm -r Release/ LICENSE README.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  ln -s "/usr/share/$pkgname/ShellcodeCompiler_x86" \
+    "$pkgdir/usr/bin/$pkgname-x86"
+  ln -s "/usr/share/$pkgname/ShellcodeCompiler_x64" \
+    "$pkgdir/usr/bin/$pkgname-x64"
+}
+

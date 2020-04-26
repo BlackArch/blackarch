@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=unfurl
+pkgver=16.99ad735
+pkgrel=1
+pkgdesc='Pull out bits of URLs provided on stdin.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/tomnomnom/unfurl'
+license=('MIT')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/tomnomnom/$pkgname.git")
+sha512sums=('SKIP')
+_url='github.com/tomnomnom/unfurl'
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
+    cd "src/$_url"
+
+  GOPATH="$srcdir" go get -v -d $_url
+}
+
+package() {
+  install -dm 755 "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v $_url
+
+  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 "src/$_url/README.mkd" \
+    "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 "src/$_url/CONTRIBUTING.mkd" \
+    "$pkgdir/usr/share/doc/$pkgname/CONTRIBUTING.md"
+  install -Dm 644 "src/$_url/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
