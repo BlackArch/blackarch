@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pspy
+pkgver=149.9c63e5d
+pkgrel=1
+pkgdesc='Monitor linux processes without root permissions.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-misc' 'blackarch-recon')
+url='https://github.com/DominicBreuker/pspy'
+license=('GPL3')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/DominicBreuker/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go get -d -t .
+}
+
+package() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go build -v .
+
+  install -Dm 755 pspy "$pkgdir/usr/bin/$pkgname"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/"{images,docker}
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
