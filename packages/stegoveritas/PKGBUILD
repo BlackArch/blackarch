@@ -3,36 +3,43 @@
 
 pkgname=stegoveritas
 _pkgname=stegoVeritas
-pkgver=1.5
-pkgrel=2
+pkgver=1.7
+pkgrel=1
 pkgdesc='Automatic image steganography analysis tool.'
 arch=('any')
 groups=('blackarch' 'blackarch-stego')
 url='https://github.com/bannsec/stegoVeritas/'
 license=('MIT')
-depends=('python' 'python-pillow' 'python-numpy' 'python-python-magic'
-         'python-prettytable' 'python-exifread' 'python-xmp-toolkit' 'binwalk'
-         'python-pypng' 'python-apng' 'perl-image-exiftool' 'p7zip' 'foremost'
-         'python-stegoveritas-pfp' 'python-distro')
-makedepends=('python-setuptools')
+depends=('python' 'perl-image-exiftool' 'p7zip' 'foremost' 'steghide' 'exempi')
+makedepends=('python-setuptools' 'python-pip')
 source=("https://github.com/bannsec/stegoVeritas/archive/$pkgver.tar.gz"
-        'setup.py.patch')
-sha512sums=('8378d1020794f4b44231eec0928e457cb9f1b9a61327e3a515b996b7bb585984e004a8be262e283fb3092827832164cf652f939198148790d752b8470245fc19'
-            '53bc7ea78f184719e3c6abd32c55f38c7f9854ff920fb5ce4eb6fec1cdabbfcf024e65ba6a8c25c8ea7cd3d49da860ea1585d2990b9a30d908950affab4c41bb')
+        'requirements.txt')
+sha512sums=('25091223f8cfdc329d5b42b3a23da942d86cc9699b9683746a37f4338e17bcccabe588922f85fefd4c4ebd1778715dafd40f58b42e2a4f2db30833ea6a5d6646'
+            'cd163a1d274d15c6f8280d62f4bd3c80d0f2392c60b346cd300a579a3b0b25b15ea2570086b279ce2ca7fe4f5044044c3ed05c1d4823adaae6667763cd4283a3')
+install="$pkgname.install"
 
 prepare() {
-  patch -p1 < setup.py.patch
-}
-
-build() {
-  cd "$_pkgname-$pkgver"
-
-  python setup.py build
+  cp requirements.txt "$_pkgname-$pkgver"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 LICENSE.md "$pkgname/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  rm *.md
+
+  cp -a stegoveritas/ "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/usr/bin/env bash
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/$pkgname/$pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
