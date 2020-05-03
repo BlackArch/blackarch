@@ -3,15 +3,15 @@
 
 pkgname=uefi-firmware-parser
 pkgver=158.2f5c83a
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-firmware' 'blackarch-reversing')
-pkgdesc='Parse BIOS/Intel ME/UEFI firmware related structures: Volumes, FileSystems, Files, etc'
+pkgdesc='Parse BIOS/Intel ME/UEFI firmware related structures: Volumes, FileSystems, Files, etc.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/theopolis/uefi-firmware-parser'
 license=('GPL3')
-depends=('python2' 'python2-pefile')
-makedepends=('git' 'python2-setuptools')
-source=('git+https://github.com/theopolis/uefi-firmware-parser.git')
+depends=('python' 'python-pefile')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/theopolis/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
@@ -20,13 +20,19 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.rst AUTHORS \
     requirements.txt
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  python2 setup.py install --root="$pkgdir" --optimize=1
 }
 
