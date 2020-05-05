@@ -21,7 +21,10 @@ def get_current_version(name):
 def update_pkgbuild(name, url, current_version, available_version):
     global to_release
 
-    if 'git' not in url:
+    with open('../packages/{name}/PKGBUILD'.format(name=name), 'r', encoding='utf-8') as file:
+            temp = file.read()
+
+    if 'https://github.com' not in temp and 'git+https://' not in temp:
         old_url = url  # backup
 
         url = url.replace('$pkgname', name).replace('$pkgver', available_version)
@@ -33,9 +36,6 @@ def update_pkgbuild(name, url, current_version, available_version):
         sha512 = hashlib.sha512(req.content).hexdigest()  # calculate sha512
 
         url = old_url  # restore
-
-        with open('../packages/{name}/PKGBUILD'.format(name=name), 'r', encoding='utf-8') as file:
-            temp = file.read()
 
         temp = re.sub(current_version, available_version, temp)  # version bump
 
