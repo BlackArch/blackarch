@@ -21,42 +21,45 @@ def get_current_version(name):
 def update_pkgbuild(name, url, current_version, available_version):
     global to_release
 
-    old_url = url  # backup
+    if 'git' not in url:
+        old_url = url  # backup
 
-    url = url.replace('$pkgname', name).replace('$pkgver', available_version)
-    url = url.replace('${pkgname}', name).replace('${pkgver}', available_version)
+        url = url.replace('$pkgname', name).replace('$pkgver', available_version)
+        url = url.replace('${pkgname}', name).replace('${pkgver}', available_version)
 
-    url = re.sub('.*::', '', url)  # fix for foo::<url>.bar
+        url = re.sub('.*::', '', url)  # fix for foo::<url>.bar
 
-    req = requests.get(url)  # got file
-    sha512 = hashlib.sha512(req.content).hexdigest()  # calculate sha512
+        req = requests.get(url)  # got file
+        sha512 = hashlib.sha512(req.content).hexdigest()  # calculate sha512
 
-    url = old_url  # restore
+        url = old_url  # restore
 
-    with open('../packages/{name}/PKGBUILD'.format(name=name), 'r', encoding='utf-8') as file:
-        temp = file.read()
+        with open('../packages/{name}/PKGBUILD'.format(name=name), 'r', encoding='utf-8') as file:
+            temp = file.read()
 
-    temp = re.sub(current_version, available_version, temp)  # version bump
+        temp = re.sub(current_version, available_version, temp)  # version bump
 
-    temp = re.sub('pkgrel=.*', 'pkgrel=1', temp)  # pkgrel=1
+        temp = re.sub('pkgrel=.*', 'pkgrel=1', temp)  # pkgrel=1
 
-    temp = re.sub('sha512sums=.*', ("sha512sums=('" + sha512 + "')"), temp)  # sha512 update
+        temp = re.sub('sha512sums=.*', ("sha512sums=('" + sha512 + "')"), temp)  # sha512 update
 
-    name_to_replace = '-'.join(name.split('-')[1:])
+        name_to_replace = '-'.join(name.split('-')[1:])
 
-    url = url.replace(name_to_replace,'$_pkgname')
+        url = url.replace(name_to_replace,'$_pkgname')
 
-    url = url.replace(available_version, '$pkgver')
+        url = url.replace(available_version, '$pkgver')
 
-    temp = re.sub('source=.*', ('source=("' + url + '")'), temp)  # source update
+        temp = re.sub('source=.*', ('source=("' + url + '")'), temp)  # source update
 
-    with open('../packages/{name}/PKGBUILD'.format(name=name), 'w', encoding='utf-8') as file:
-        file.write(temp)
+        with open('../packages/{name}/PKGBUILD'.format(name=name), 'w', encoding='utf-8') as file:
+            file.write(temp)
 
-    to_release += (name + '\n')
-    print('Successfully updated {name} from {current_version} to {available_version}'.format(name=name,
+        to_release += (name + '\n')
+        print('Successfully updated {name} from {current_version} to {available_version}'.format(name=name,
                                                                                              current_version=current_version,
                                                                                              available_version=available_version))
+    else:
+        print('Please, do manual update {name}'.format(name=name))
 
 
 # update python packages version
@@ -80,12 +83,10 @@ def python_packages_version_check(name):
                     if url[-3:] == 'zip' or url[-6:] == 'tar.gz':
                         update_pkgbuild(name, url, current_version, available_version)
                     else:
-                        print(
-                            'Please, do manual update {name} to {version}, because i cant find any *.tar.gz or *.zip archives'.format(
-                                name=name, version=available_version))
+                        print('Please, do manual update {name}'.format(name=name))
 
             except Exception as e:
-                print('Please, do manual update {name}, because this error occured: {e}'.format(name=name, e=e))
+                print('Please, do manual update {name}'.format(name=name))
 
 
 # update ruby packages version
