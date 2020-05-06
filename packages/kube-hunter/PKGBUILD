@@ -3,18 +3,20 @@
 
 pkgname=kube-hunter
 pkgver=623.a012765
-pkgrel=1
+pkgrel=2
 pkgdesc='Hunt for security weaknesses in Kubernetes clusters.'
 arch=('any')
 groups=('blackarch' 'blackarch-scanner')
 url='https://github.com/aquasecurity/kube-hunter'
 license=('Apache')
-depends=('python2' 'python2-netaddr' 'python2-netifaces' 'python2-enum34'
-         'python2-scapy' 'python2-requests' 'python2-prettytable'
-         'python2-urllib3' 'python2-ruamel-yaml')
+depends=('python' 'python-netaddr' 'python-netifaces' 'python-scapy'
+         'python-requests' 'python-prettytable' 'python-urllib3'
+         'python-ruamel-yaml' 'python-future' 'python-packaging')
 makedepends=('git')
-source=("git+https://github.com/aquasecurity/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/aquasecurity/$pkgname.git"
+        'setup.cfg.patch')
+sha512sums=('SKIP'
+            'f99733000c3920ad3b0d39bf64e4b3a7a09a03eec54fa82f875e97f65b1182d728566abb32de88aa5af13d962f1923cde10baba4bc901c0a9d444125dbcfbfbf')
 
 pkgver() {
   cd $pkgname
@@ -22,25 +24,22 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  patch -p1 < ../setup.cfg.patch
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin/"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm LICENSE README.md
-
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
