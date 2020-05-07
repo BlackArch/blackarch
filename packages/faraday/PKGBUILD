@@ -10,27 +10,35 @@ groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation'
         'blackarch-misc')
 arch=('x86_64' 'aarch64')
 url='http://www.faradaysec.com/'
-depends=('couchdb' 'python2' 'gtk3' 'gobject-introspection' 'python2-argparse'
-         'gobject-introspection-runtime' 'python2-gobject' 'vte3' 'zsh' 'curl'
-         'python2-couchdbkit' 'python2-mockito' 'python2-whoosh' 'python2-ipy'
-         'python2-restkit' 'python2-requests' 'python2-tornado' 'python2-flask'
-         'python2-colorama' 'java-environment' 'python2-pip' 'python2-dateutil'
-         'pyqt3' 'python2-pysvn' 'libpqxx' 'python2-psycopg2' 'ruby'
-         'python2-lxml' 'python2-pysqlite' 'python2-sphinx' 'python2-twisted'
-         'python2-beautifulsoup4' 'python2-sqlalchemy' 'python2-werkzeug'
-         'python2-w3af-api-client' 'python2-urllib3' 'python2-responses'
-         'python2-simplejson' 'python2-pytz' 'python2-pytest' 'python2-msgpack'
-         'python2-itsdangerous' 'python2-deprecation' 'python2-click'
-         'python2-python-slugify' 'python2-hypothesis' 'python2-autobahn'
-         'python2-pgcli' 'python2-alembic' 'python2-websocket-client'
-         'python2-tqdm' 'python2-flask-sqlalchemy' 'python2-marshmallow'
-         'python2-pillow' 'python2-service-identity' 'python2-webargs'
-         'python2-selenium' 'python2-shodan')
+depends=('couchdb' 'python' 'gtk3' 'gobject-introspection' 'python-argparse'
+         'gobject-introspection-runtime' 'python-gobject' 'vte3' 'zsh' 'curl'
+         'python-couchdb' 'python-mockito' 'python-whoosh' 'python-ipy'
+         'python-restkit' 'python-requests' 'python-tornado' 'python-flask'
+         'python-colorama' 'java-environment' 'python-pip' 'python-dateutil'
+         'pyqt3' 'libpqxx' 'python-psycopg2' 'ruby' 'python-apispec-webframeworks'
+         'python-lxml' 'python-pysqlite3' 'python-sphinx' 'python-twisted'
+         'python-beautifulsoup4' 'python-sqlalchemy' 'python-werkzeug'
+         'python-w3af-api-client' 'python-urllib3' 'python-responses'
+         'python-simplejson' 'python-pytz' 'python-pytest' 'python-msgpack'
+         'python-itsdangerous' 'python-deprecation' 'python-click'
+         'python-slugify' 'python-hypothesis' 'python-autobahn'
+         'python-pgcli' 'python-alembic' 'python-websocket-client'
+         'python-tqdm' 'python-flask-sqlalchemy' 'python-marshmallow'
+         'python-pillow' 'python-service_identity' 'python-webargs'
+         'python-selenium' 'python-shodan' 'python-bcrypt' 'python-simplekv'
+         'python-wtforms' 'python-flask-login' 'python-flask-security'
+         'python-pyopenssl' 'python-pyasn1' 'python-tqdm' 'python-apispec'
+         'python-marshmallow-sqlalchemy' 'python-flask-classful'
+         'python-filteralchemy-fork' 'python-filedepot' 'python-nplusone'
+         'python-flask-restless' 'python-syslog-rfc5424-formatter'
+         'python-flask-kvsession-fork' 'python-distro' 'python-faraday-plugins')
 makedepends=('git')
 options=('!strip')
 license=('GPL')
-source=("git+https://github.com/infobyte/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/infobyte/$pkgname.git"
+        'requirements.txt.patch')
+sha512sums=('SKIP'
+            'a3f669b1ad4c81f530c4674fa4cdc61ad2607a052b7fef0c1e5298b9e98a2712a2e673f8ee9664da1f8b7cc76da270eca12394c49021dd9d4ea85d2da80c2ea1')
 
 pkgver() {
   cd $pkgname
@@ -38,26 +46,21 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  patch -p0 < ../requirements.txt.patch
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  _tools="faraday faraday-server"
-
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" AUTHORS *.md
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" doc/*
-
-  cp -r --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
-
-  for t in $_tools ; do
-    cat > "$pkgdir/usr/bin/$t" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname/
-exec python2 $t.py "\$@"
-EOF
-    chmod +x "$pkgdir/usr/bin/$pkgname"
-  done
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
