@@ -1,6 +1,7 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 #
-# This PKGBUILD was extracted from AUR.
+# This PKGBUILD was extracted from AUR and adapted to our style
+#
 # Maintainer: aimileus <me at aimileus dot nl>
 # Maintainer: Maciej Borzecki <maciek.borzecki@gmail.com>
 # Contributor: Timothy Redaelli <timothy.redaelli@gmail.com>
@@ -16,18 +17,17 @@ license=('GPL3')
 depends=('squashfs-tools' 'libseccomp' 'libsystemd' 'apparmor')
 optdepends=('bash-completion: bash completion support'
             'xdg-desktop-portal: desktop integration')
-makedepends=('git' 'go' 'go-tools'
-             'libseccomp' 'libcap' 'systemd'
-             'xfsprogs' 'python-docutils' 'apparmor')
+makedepends=('git' 'go' 'go-tools' 'libseccomp' 'libcap' 'systemd' 'xfsprogs'
+             'python-docutils' 'apparmor')
 conflicts=('snap-confine')
 options=('!strip' 'emptydirs')
-install=snapd.install
 source=("$pkgname-$pkgver.tar.xz::https://github.com/snapcore/${pkgname}/releases/download/${pkgver}/${pkgname}_${pkgver}.vendor.tar.xz"
-        "0001-fontconfig-compat.patch"
-        "0002-zsh-completion.patch")
-sha256sums=('54399873d874d3797784ff685e2b21840751d77ccfada6292b34060d58ee4256'
-            'ceb4592363a5b56a1fa118b96764fc24e477f8e2bf727331ce7d726bf36ab9e3'
-            'c9f40bb1e1b9aa7f3cbf3431a910e0da38cdf467de160870f75ad03e4a3ebb17')
+        '0001-fontconfig-compat.patch'
+        '0002-zsh-completion.patch')
+install="$pkgname.install"
+sha512sums=('3fa169cc85d105a350f5149efc52ff913d345b7034fa90a9bb49ef8e2627243eeb812890be61ba022f3b17d532ce3eb51ad3bf158a93a0ccb95476a6e7772d86'
+            '67282a5829e23e47fba4e580ac831f973e3bf7cf9701e78c46b1909f63d7bc4bbed0bda005e497d6281fcbc801ff69a925768bec0e8439fbd5d73aa9fafd1669'
+            'e43137129d0cf57911c98642413da3f6d1d783a1c6f4dbf358842150373ca0f88bcd46715c0942e09be8eabb528f9403785f550ca31e68b8cd4903404764dfcb')
 
 _gourl=github.com/snapcore/snapd
 
@@ -40,8 +40,8 @@ prepare() {
   # Have snapd checkout appear in a place suitable for subsequent GOPATH. This
   # way we don't have to go get it again and it is exactly what the tag/hash
   # above describes.
-  mkdir -p "$(dirname "$GOPATH/src/${_gourl}")"
-  ln --no-target-directory -fs "$srcdir/$pkgname-$pkgver" "$GOPATH/src/${_gourl}"
+  mkdir -p "$(dirname "$GOPATH/src/$_gourl")"
+  ln --no-target-directory -fs "$srcdir/$pkgname-$pkgver" "$GOPATH/src/$_gourl"
 
   for name in "${source[@]}"; do
       if [[ "${name%.patch}" == "$name" ]]; then
@@ -70,14 +70,18 @@ build() {
   flags=(-buildmode=pie -ldflags "-s -extldflags '$LDFLAGS'")
   staticflags=(-buildmode=pie -ldflags "-s -extldflags '$LDFLAGS -static'")
   # Build/install snap and snapd
-  go build "${flags[@]}" -o "$srcdir/go/bin/snap" "${_gourl}/cmd/snap"
-  go build "${flags[@]}" -o "$srcdir/go/bin/snapd" "${_gourl}/cmd/snapd"
-  go build "${flags[@]}" -o "$srcdir/go/bin/snap-seccomp" "${_gourl}/cmd/snap-seccomp"
-  go build "${flags[@]}" -o "$srcdir/go/bin/snap-failure" "${_gourl}/cmd/snap-failure"
+  go build "${flags[@]}" -o "$srcdir/go/bin/snap" "$_gourl/cmd/snap"
+  go build "${flags[@]}" -o "$srcdir/go/bin/snapd" "$_gourl/cmd/snapd"
+  go build "${flags[@]}" -o "$srcdir/go/bin/snap-seccomp" \
+    "$_gourl/cmd/snap-seccomp"
+  go build "${flags[@]}" -o "$srcdir/go/bin/snap-failure" \
+    "$_gourl/cmd/snap-failure"
   # build snap-exec and snap-update-ns completely static for base snaps
-  go build "${staticflags[@]}" -o "$srcdir/go/bin/snap-update-ns" "${_gourl}/cmd/snap-update-ns"
-  go build "${staticflags[@]}" -o "$srcdir/go/bin/snap-exec" "${_gourl}/cmd/snap-exec"
-  go build "${staticflags[@]}" -o "$srcdir/go/bin/snapctl" "${_gourl}/cmd/snapctl"
+  go build "${staticflags[@]}" -o "$srcdir/go/bin/snap-update-ns" \
+    "$_gourl/cmd/snap-update-ns"
+  go build "${staticflags[@]}" -o "$srcdir/go/bin/snap-exec" \
+    "$_gourl/cmd/snap-exec"
+  go build "${staticflags[@]}" -o "$srcdir/go/bin/snapctl" "$_gourl/cmd/snapctl"
 
   # Generate data files such as real systemd units, dbus service, environment
   # setup helpers out of the available templates
@@ -106,7 +110,8 @@ check() {
 
     # make sure the binaries that need to be built statically really are
     for binary in snap-exec snap-update-ns snapctl; do
-        LC_ALL=C ldd "$srcdir/go/bin/$binary" 2>&1 | grep -q 'not a dynamic executable'
+      LC_ALL=C ldd "$srcdir/go/bin/$binary" 2>&1 |
+      grep -q 'not a dynamic executable'
     done
 }
 
@@ -134,10 +139,14 @@ package() {
   install -Dm 755 "$srcdir/go/bin/snap" "$pkgdir/usr/bin/snap"
   install -Dm 755 "$srcdir/go/bin/snapctl" "$pkgdir/usr/lib/snapd/snapctl"
   install -Dm 755 "$srcdir/go/bin/snapd" "$pkgdir/usr/lib/snapd/snapd"
-  install -Dm 755 "$srcdir/go/bin/snap-seccomp" "$pkgdir/usr/lib/snapd/snap-seccomp"
-  install -Dm 755 "$srcdir/go/bin/snap-failure" "$pkgdir/usr/lib/snapd/snap-failure"
-  install -Dm 755 "$srcdir/go/bin/snap-update-ns" "$pkgdir/usr/lib/snapd/snap-update-ns"
-  install -Dm 755 "$srcdir/go/bin/snap-exec" "$pkgdir/usr/lib/snapd/snap-exec"
+  install -Dm 755 "$srcdir/go/bin/snap-seccomp" \
+    "$pkgdir/usr/lib/snapd/snap-seccomp"
+  install -Dm 755 "$srcdir/go/bin/snap-failure" \
+    "$pkgdir/usr/lib/snapd/snap-failure"
+  install -Dm 755 "$srcdir/go/bin/snap-update-ns" \
+    "$pkgdir/usr/lib/snapd/snap-update-ns"
+  install -Dm 755 "$srcdir/go/bin/snap-exec" \
+    "$pkgdir/usr/lib/snapd/snap-exec"
 
   install -dm 755 "$pkgdir/var/lib/snapd/snap"
   install -dm 755 "$pkgdir/var/cache/snapd"
@@ -158,7 +167,8 @@ package() {
   install -dm 111 "$pkgdir/var/lib/snapd/void"
   install -dm 700 "$pkgdir/var/lib/snapd/cookie"
   install -dm 700 "$pkgdir/var/lib/snapd/cache"
-  install -Dm 644 "$srcdir/go/src/${_gourl}/data/info" "$pkgdir/usr/lib/snapd/info"
+  install -Dm 644 "$srcdir/go/src/${_gourl}/data/info" \
+    "$pkgdir/usr/lib/snapd/info"
 
   install -Dm 644 data/completion/bash/snap \
     "$pkgdir/usr/share/bash-completion/completions/snap"
