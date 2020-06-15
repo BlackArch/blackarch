@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=lethalhta
+pkgver=1.a8d772a
+pkgrel=1
+pkgdesc='Lateral Movement technique using DCOM and HTA.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-windows' 'blackarch-exploitation')
+url='https://github.com/codewhitesec/LethalHTA'
+license=('MIT')
+depends=('mono')
+makedepends=('git' 'mono-msbuild' 'mono-msbuild-sdkresolver')
+source=("$pkgname::git+https://github.com/codewhitesec/LethalHTA.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  cd DotNet/
+
+  msbuild LethalHTADotNet.sln
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a --no-preserve=ownership DotNet/LethalHTADotNet/bin/Debug/*.exe \
+    "$pkgdir/usr/share/windows/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname
+exec mono LethalHTADotNet.exe "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
