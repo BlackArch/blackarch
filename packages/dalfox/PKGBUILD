@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=dalfox
+pkgver=281.7b51652
+pkgrel=1
+pkgdesc='Parameter Analysis and XSS Scanning tool.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer')
+url='https://github.com/hahwul/dalfox'
+license=('MIT')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/hahwul/$pkgname.git")
+sha512sums=('SKIP')
+_url="github.com/hahwul/$pkgname"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go get -v -d $_url
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v $_url
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

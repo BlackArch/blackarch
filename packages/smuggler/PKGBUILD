@@ -2,31 +2,43 @@
 # See COPYING for license details.
 
 pkgname=smuggler
-pkgver=1.0
+pkgver=14.7a3fb9f
 pkgrel=1
-pkgdesc='Python tool used to test for HTTP Desync/Request Smuggling attacks.'
+pkgdesc='An HTTP Request Smuggling / Desync testing tool written in Python 3.'
 arch=('any')
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
-url='https://github.com/gwen001/pentest-tools/blob/master/smuggler.py'
-license=('custom:IDBIL')
-depends=('python' 'python-argparse' 'python-requests' 'python-colored')
+url='https://github.com/defparam/smuggler'
+license=('MIT')
+depends=('python' 'python-colorama')
 makedepends=('git')
-source=("$pkgname::git+https://github.com/gwen001/pentest-tools.git")
+source=("git+https://github.com/defparam/$pkgname.git")
 sha512sums=('SKIP')
 
-prepare() {
+pkgver() {
   cd $pkgname
 
-  sed -ri 's|python3.5|python|' "$pkgname.py"
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
   cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" "$pkgname.py"
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" LICENSE
 
-  ln -s "/usr/share/$pkgname/$pkgname.py" "$pkgdir/usr/bin/$pkgname"
+  rm LICENSE README.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

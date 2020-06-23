@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=xxeserv
+pkgver=12.046c559
+pkgrel=1
+groups=('blackarch' 'blackarch-networking')
+pkgdesc='A mini webserver with FTP support for XXE payloads.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/staaldraad/xxeserv'
+license=('custom:unknown')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/staaldraad/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go get -d -t .
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v .
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+

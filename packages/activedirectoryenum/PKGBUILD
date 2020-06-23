@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=activedirectoryenum
+_pkgname=ActiveDirectoryEnumeration
+__pkgname=active-directory-enum
+pkgver=203.149a00d
+pkgrel=1
+pkgdesc='Enumerate AD through LDAP.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/CasperGN/ActiveDirectoryEnumeration'
+license=('MIT')
+depends=('python' 'python-cffi' 'python-click' 'python-cryptography'
+         'python-dnspython' 'python-flask' 'python-future' 'impacket'
+         'python-itsdangerous' 'python-jinja' 'python-ldap3' 'ldapdomaindump'
+         'python-markupsafe' 'python-progressbar' 'python-pyasn1'
+         'python-pycparser' 'python-pycryptodomex' 'python-pyopenssl'
+         'python-six' 'python-termcolor' 'python-werkzeug')
+makedepends=('python-setuptools' 'git')
+source=("git+https://github.com/CasperGN/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf .github/ *.md LICENSE requirements.txt setup.py
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$__pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ./activeDirectoryEnum.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$__pkgname"
+}
+
