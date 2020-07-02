@@ -3,6 +3,8 @@
 
 # Contributor: xgdgsc <xgdgsc @t gmail dot com>
 
+_android=android-10
+_sdk=android-sdk
 pkgname=android-sdk-build-tools
 pkgver=r29.0.3
 pkgrel=1
@@ -12,22 +14,20 @@ url='http://developer.android.com/sdk/index.html'
 license=('custom:unknown')
 depends_i686=('gcc-libs' 'zlib')
 depends_x86_64=('lib32-gcc-libs' 'lib32-zlib')
-_sdk=android-sdk
-
 source=("https://dl-ssl.google.com/android/repository/build-tools_r$pkgver-linux.zip")
 sha512sums=('845e527b3ef809d5e32bdce0023401ae80c545504f152d7c05ccef64e4006def6cbda07a295a66518356e992abbbe8f30522c5e63d6eb12a1651c614643602d8')
-_android=android-10
 options=('!strip')
 
 package() {
-  cd $pkgdir
-  install -Dm644 "$srcdir/$_android/NOTICE.txt" usr/share/licenses/$pkgname/NOTICE.txt
+  cd "$pkgdir"
+  ver=$(cat "${srcdir}/$_android/source.properties" |grep ^Pkg.Revision=|sed 's/Pkg.Revision=\([0-9.]*\).*/\1/')
+  
+  install -dm 755 "$pkgdir/opt/$_sdk/build-tools/$ver"
+  install -Dm 644 "$srcdir/$_android/NOTICE.txt" usr/share/licenses/$pkgname/NOTICE.txt
   # mkdir -p opt etc/profile.d
   # echo 'export PATH=$PATH:/opt/android-sdk/build-tools/'"$_ver/" > etc/profile.d/${pkgname}.sh
   # echo 'setenv PATH ${PATH}:/opt/android-sdk/build-tools/'"$_ver/" > etc/profile.d/${pkgname}.csh
   # chmod 755 etc/profile.d/${pkgname}.{csh,sh}
-  ver=$(cat "${srcdir}/$_android/source.properties" |grep ^Pkg.Revision=|sed 's/Pkg.Revision=\([0-9.]*\).*/\1/')
-  install -dm $pkgdir/opt/$_sdk/build-tools/$ver
   cp -r "$srcdir/$_android/"* "$pkgdir/opt/$_sdk/build-tools/$ver"
   chmod +Xr -R "$pkgdir/opt/$_sdk/build-tools/$ver"
 }
