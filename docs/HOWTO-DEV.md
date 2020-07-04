@@ -81,7 +81,7 @@ The following information was written with the goal of creating hight-quality PK
 
 - Create the PKGBUILD and build it in the clean chroot environment to ensure that buildtime dependeces aren't missing.
 
-- If the package was built, install and execute it in the clean chroot environment to ensure that runtime dependences aren't missing.
+- If the package was built, install and execute it in the clean chroot environment to ensure that runtime dependencies aren't missing.
 
 - Install the package in the full existing BlackArch Linux installation to ensure that there aren't conflicting files.
 
