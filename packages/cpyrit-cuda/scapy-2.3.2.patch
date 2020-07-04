@@ -1,0 +1,42 @@
+From 14ec997174b8e8fd20d22b6a97c57e19633f12a0 Mon Sep 17 00:00:00 2001
+From: Ilya Terentyev <bacondropped@gmail.com>
+Date: Tue, 1 Nov 2016 20:40:15 +0300
+Subject: [PATCH] update isinstance(EnumField) for scapy 2.3.3+
+
+scapy 2.3.2- requires that scapy.fields.EnumField is passed to
+isinstance, while scapy 2.3.3+ needs scapy.fields._EnumField.
+This patch accomodates pyrit for both versions.
+Fixes #500.
+---
+ cpyrit/pckttools.py | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/cpyrit/pckttools.py b/cpyrit/pckttools.py
+index 326829d..d58fff1 100644
+--- a/cpyrit/pckttools.py
++++ b/cpyrit/pckttools.py
+@@ -54,12 +54,23 @@
+                                             scapy.layers.dot11.PrismHeader)
+ 
+ 
++def isEnumField(f):
++    """Return True if f is an instance of EnumField.  This function tries to be
++       portable: scapy versions 2.3.2 and earlier need isinstance(EnumField),
++       while scapy 2.3.3+ requires isinstance(_EnumField).
++    """
++    try:
++        return isinstance(f, scapy.fields._EnumField)
++    except AttributeError:
++        return isinstance(f, scapy.fields.EnumField)
++
++
+ def isFlagSet(self, name, value):
+     """Return True if the given field 'includes' the given value.
+        Exact behaviour of this function is specific to the field-type.
+     """
+     field, val = self.getfield_and_val(name)
+-    if isinstance(field, scapy.fields.EnumField):
++    if isEnumField(field):
+         if val not in field.i2s:
+             return False
+         return field.i2s[val] == value
