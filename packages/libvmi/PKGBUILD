@@ -5,38 +5,41 @@
 # Old Maintainer: Aaron McDaniel (mcd1992) <'aur' at the domain 'fgthou.se'>
 
 pkgname=libvmi
-pkgver=0.12.0
+pkgver=1440.c461e20
 pkgrel=1
+epoch=1
 pkgdesc='A virtual machine introspection library.'
 url='https://github.com/libvmi/libvmi'
 arch=('x86_64' 'aarch64')
 license=('LGPL')
 depends=('json-c')
-makedepends=('automake' 'autoconf' 'libtool' 'bison' 'flex' 'libvirt')
-source=("https://github.com/$pkgname/$pkgname/archive/v$pkgver.tar.gz")
-sha512sums=('6e9626719b2557676c20f6f560ba1828ecd5f0f322ededee8baacf4405c9ab54cfcc8161df7b6895f58ee8cf1f7ff3ccd2c691efab5f8e3f5024856676432f55')
+makedepends=('git' 'cmake' 'glib2' 'libvirt')
+source=("git+https://github.com/$pkgname/$pkgname.git")
+sha512sums=('SKIP')
 
 prepare() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
-  ./autogen.sh
-  ./configure --prefix=/usr --disable-xen
+  sed 's|"Build Xen driver" ON|"Build Xen driver" OFF|g' \
+    -i CMakeLists.txt
 }
 
 build() {
-  cd "$pkgname-$pkgver/libvmi/config"
-  make -j1
+  cd $pkgname
 
-  cd "$srcdir/$pkgname-$pkgver"
+  mkdir -p build
+  cd build
+
+  cmake -DCMAKE_INSTALL_PREFIX=/usr ..
   make
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
-  make DESTDIR="$pkgdir" install
   install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  cp -a "$srcdir/$pkgname-$pkgver/libvmi/"*.h "$pkgdir/usr/include/libvmi/"
+  cd build
+  make DESTDIR="$pkgdir" install
 }
 
