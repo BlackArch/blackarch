@@ -2,43 +2,42 @@
 # See COPYING for license details.
 
 pkgname=ssh-audit
-pkgver=165.22b671e
+pkgver=v2.2.0.r0.ge447c42
 pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='SSH server auditing (banner, key exchange, encryption, mac, compression, compatbility, etc).'
 arch=('any')
-url='https://github.com/arthepsy/ssh-audit'
+url='https://github.com/jtesta/ssh-audit'
 license=('MIT')
-depends=('python2')
-makedepends=('git')
-source=("git+https://github.com/arthepsy/$pkgname.git")
+depends=('python')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/jtesta/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+  cd $pkgname
+
+  # Symbolic link workaround, https://github.com/jtesta/ssh-audit/issues/46
+  cp ssh-audit.py pypi/sshaudit/sshaudit.py
+  cp README.md pypi/sshaudit/README.md
+}
+
+build() {
+  cd "$pkgname/pypi"
+
+  python setup.py build
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname/pypi"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm README.md LICENSE
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
