@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=jbytemod
+pkgver=1.8.2.285.57e6f8e
+pkgrel=1
+groups=('blackarch' 'blackarch-decompiler' 'blackarch-reversing')
+pkgdesc='Java bytecode editor & decompiler.'
+arch=('any')
+url='https://grax.info/'
+license=('GPL2')
+depends=('java-runtime' 'java-environment')
+makedepends=('maven' 'git' 'jdk-openjdk')
+source=("$pkgname::git+https://github.com/GraxCode/JByteMod-Beta.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git describe --tags --abbrev=0).$(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  mvn package
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  cp target/JByteMod-*.jar \
+    "$pkgdir/usr/share/$pkgname/$pkgname.jar"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+java -jar /usr/share/$pkgname/$pkgname.jar "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
