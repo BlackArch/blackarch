@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=subjack
+pkgver=170.b800ca4
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='Subdomain Takeover tool written in Go.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/subjack/subjack'
+license=('Apache')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/haccer/$pkgname.git")
+sha512sums=('SKIP')
+_url="github.com/haccer/$pkgname"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
+    cd "src/$_url"
+
+  GOPATH="$srcdir" go get -d -t $_url
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  GOPATH="$srcdir" go build -v $_url
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE *.md
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  chmod -R g-w "$pkgdir/usr/share/$pkgname"
+  chmod +x "$pkgdir/usr/share/subjack/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ./$pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
