@@ -3,7 +3,7 @@
 
 pkgname=subjack
 pkgver=170.b800ca4
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='Subdomain Takeover tool written in Go.'
 arch=('x86_64' 'aarch64')
@@ -32,26 +32,15 @@ build() {
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   GOPATH="$srcdir" go build -v $_url
 
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm -rf LICENSE *.md
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  chmod -R g-w "$pkgdir/usr/share/$pkgname"
-  chmod +x "$pkgdir/usr/share/subjack/$pkgname"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec ./$pkgname "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  cp -a fingerprints.json "$pkgdir/usr/share/$pkgname/"
 }
 
