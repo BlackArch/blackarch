@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=metabigor
+pkgver=32.5e7c91f
+pkgrel=1
+groups=('blackarch' 'blackarch-recon')
+pkgdesc='Intelligence Tool but without API key.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/j3ssie/metabigor'
+license=('MIT')
+depends=('glibc' 'nmap' 'masscan' 'zmap')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/j3ssie/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go get -d -t .
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v .
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
