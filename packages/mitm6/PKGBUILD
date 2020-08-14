@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=mitm6
+pkgver=24.a4842cb
+pkgrel=1
+pkgdesc='Pwning IPv4 via IPv6.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-spoof'
+        'blackarch-networking')
+url='https://github.com/fox-it/mitm6'
+license=('GPL2')
+depends=('python' 'scapy' 'python-twisted' 'python-netifaces')
+makedepends=('git')
+source=("git+https://github.com/fox-it/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 644 Readme.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm LICENSE *.txt *.md *.py
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
