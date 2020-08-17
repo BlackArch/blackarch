@@ -2,28 +2,43 @@
 # See COPYING for license details.
 
 pkgname=metagoofil
-pkgver=1.4b
-pkgrel=7
+pkgver=12.823b114
+pkgrel=1
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='An information gathering tool designed for extracting metadata of public documents.'
 url='http://www.edge-security.com/metagoofil.php'
 arch=('any')
 license=('GPL2')
-depends=('libextractor' 'python')
-source=("http://www.edge-security.com/soft/$pkgname-$pkgver.tar")
-sha512sums=('340c7df7c56b83e7f4977d342c5b1a5982d267a009fcc4f3e64c61dc77fb070d7512d69809db07d69a8d759ad60a4cf4b22a1faf7a4c3c43a5d17331d572ac44')
+depends=('libextractor' 'python2')
+#source=("http://www.edge-security.com/soft/$pkgname-$pkgver.tar")
+source=("git+https://github.com/laramies/$pkgname.git")
+sha512sums=('SKIP')
 
-prepare() {
+pkgver() {
   cd $pkgname
 
-  sed -i '1 i\#!/usr/bin/python2' "$pkgname.py"
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
   cd $pkgname
 
-  install -Dm 755 "$pkgname.py" "$pkgdir/usr/bin/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
   install -Dm 644 -t "$pkgdir/usr/share/$pkgname/doc/" README
-  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" COPYING LICENSES
+
+  rm -rf README COPYING LICENSES
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
