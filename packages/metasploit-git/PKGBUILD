@@ -1,0 +1,76 @@
+# Maintainer: Pedro 'psf' Freitas <team@blackarch.org>
+# Extracted from Arch Linux Repositories
+# Arch Contributor: Levente Polyak <anthraxx[at]archlinux[dot]org>
+# Contributor: Sabart Otto - Seberm <seberm[at]seberm[dot]com>
+# Contributor: Tobias Veit - nIcE <m.on.key.tobi[at]gmail[dot]com>
+
+pkgname=metasploit-git
+pkgver=57678.d300ddbb81
+pkgrel=1
+pkgdesc='Advanced open-source platform for developing, testing, and using exploit code (git)'
+#url='https://www.metasploit.com/'
+url='https://github.com/rapid7/metasploit-framework'
+#arch=('x86_64')
+arch=('any')
+license=('BSD')
+conflicts=('metasploit')
+depends=('ruby' 'libpcap' 'postgresql-libs' 'ruby-bundler' 'sqlite' 'libxslt' 'libxml2' 'inetutils' 'git')
+options=('!strip' '!emptydirs')
+source=(git+https://github.com/rapid7/metasploit-framework.git)
+#sha512sums=('7f52253a1dac3fae94e06b889de62f4413cb0fade422facf72f2b3bfef36d77139793cbcd74096d94ec0924cb8884fd3be7048294e92929d0f8505bba2c26f45')
+sha512sums=('SKIP')
+#b2sums=('d49dcb46ec810a64d2a30b64af7e041bfb1b9f11106b8c0642531f072426d5110f1cb474a1c53d952e3832462c3e449c33c1b48372e3e3682df8460659759bdb')
+b2sums=('SKIP')
+
+pkgver() {
+  cd ${pkgname//-git}-framework
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd ${pkgname//-git}-framework
+
+  # https://github.com/bundler/bundler/issues/6882
+  sed -e '/BUNDLED WITH/,+1d' -i Gemfile.lock
+
+  bundle config build.nokogiri --use-system-libraries
+  sed 's|git ls-files|find -type f|' -i metasploit-framework.gemspec
+}
+
+build() {
+  cd ${pkgname//-git}-framework
+  CFLAGS+=" -I/usr/include/libxml2"
+  bundle install -j"$(nproc)" --no-cache --deployment
+  find vendor/bundle/ruby -exec chmod o+r '{}' \;
+  find vendor/bundle/ruby \( -name gem_make.out -or -name mkmf.log \) -delete
+}
+
+package() {
+  cd ${pkgname//-git}-framework
+
+  install -d "${pkgdir}/opt/${pkgname//-git}" "${pkgdir}/usr/bin"
+  cp -r . "${pkgdir}/opt/${pkgname//-git}"
+
+  for f in "${pkgdir}"/opt/${pkgname//-git}/msf*; do
+    local _msffile="${pkgdir}/usr/bin/`basename "${f}"`"
+    echo -e "#!/bin/sh\nBUNDLE_GEMFILE=/opt/${pkgname//-git}/Gemfile bundle exec ruby /opt/${pkgname//-git}/`basename "${f}"` \"\$@\"" > "${_msffile}"
+    chmod 755 "${_msffile}"
+  done
+
+  (cd "${pkgdir}/opt/${pkgname//-git}"
+    for f in tools/*/*.rb; do
+      install -Dm 755 "${f}" ".${f}"
+      echo -e "#!/bin/sh\nBUNDLE_GEMFILE=/opt/${pkgname//-git}/Gemfile bundle exec ruby /opt/${pkgname//-git}/."${f}" \"\$@\"" > "${f}"
+      chmod 755 "${f}"
+    done
+  )
+
+  install -Dm 644 external/zsh/_* -t "${pkgdir}/usr/share/zsh/site-functions"
+  install -Dm 644 LICENSE COPYING -t "${pkgdir}/usr/share/licenses/${pkgname//-git}"
+  install -d "${pkgdir}/usr/share/doc"
+  mv "${pkgdir}/opt/${pkgname//-git}/documentation" "${pkgdir}/usr/share/doc/${pkgname//-git}"
+  rm "${pkgdir}/usr/bin/msfupdate"
+  rm -r "${pkgdir}"/opt/metasploit/vendor/bundle/ruby/*/cache
+}
+
