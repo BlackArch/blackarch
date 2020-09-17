@@ -3,9 +3,10 @@
 
 pkgname=activedirectoryenum
 _pkgname=ActiveDirectoryEnumeration
-__pkgname=active-directory-enum
-pkgver=203.149a00d
+__pkgname=ActiveDirectoryEnum
+pkgver=0.4.2
 pkgrel=1
+epoch=1
 pkgdesc='Enumerate AD through LDAP.'
 arch=('any')
 groups=('blackarch' 'blackarch-recon')
@@ -17,35 +18,20 @@ depends=('python' 'python-cffi' 'python-click' 'python-cryptography'
          'python-markupsafe' 'python-progressbar' 'python-pyasn1'
          'python-pycparser' 'python-pycryptodomex' 'python-pyopenssl'
          'python-six' 'python-termcolor' 'python-werkzeug')
-makedepends=('python-setuptools' 'git')
-source=("git+https://github.com/CasperGN/$_pkgname.git")
-sha512sums=('SKIP')
+makedepends=('python-setuptools')
+source=("https://files.pythonhosted.org/packages/5e/91/4fdb4c1ae55215ac527735d6fd94b8a9338b80c823ebea235ba08a84f662/$__pkgname-$pkgver.tar.gz")
+sha512sums=('07414c4ed6ed212368fe9afa5ab1747446a0de6daf760ebba9ece2a693c82c2ab07d8058e3cb4c9558d6f8591efa4f3b4b1b54b03e39bde4f9796f0afe55db63')
 
-pkgver() {
-  cd $_pkgname
+build() {
+  cd "$__pkgname-$pkgver"
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  python setup.py build
 }
 
 package() {
-  cd $_pkgname
+  cd "$__pkgname-$pkgver"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm -rf .github/ *.md LICENSE requirements.txt setup.py
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$__pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec ./activeDirectoryEnum.py "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/$__pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
+
 
