@@ -1,0 +1,39 @@
+# Maintainer: Levente Polyak <anthraxx[at]archlinux[dot]org>
+# Contributor: Eduard Tolosa <edu4rdshl[at]blackarch[dot]org>
+
+pkgname=python2-service_identity
+_pyname=service-identity
+pkgver=18.1.0
+pkgrel=4
+pkgdesc='Service Identity Verification for Python'
+url='https://service-identity.readthedocs.io/'
+arch=('any')
+license=('MIT')
+depends=('python2' 'python2-attrs' 'python2-pyasn1' 'python2-pyasn1-modules' 'python2-idna')
+makedepends=('python2' 'python2-setuptools' 'python2-attrs' 'python2-pyasn1'
+             'python2-pyasn1-modules' 'python2-idna' 'python2-sphinx')
+checkdepends=('python2-pytest' 'python2-cryptography')
+source=(${pkgname}-${pkgver}.tar.gz::https://github.com/pyca/service_identity/archive/$pkgver.tar.gz)
+sha512sums=('6b6da48c543bfbe0d9da9f0d03dbd735ce97e64a76cbf9eae2b615ced7b91c5fcca1f25353e53858c48da9c4e0c0be4e33fa4559adb50899a79689cbb372f49b')
+
+build() {
+  cd $_pyname-$pkgver
+  python2 setup.py build
+  sphinx-build2 -b text docs docs/_build/text
+  sphinx-build2 -b man docs docs/_build/man
+}
+
+check() {
+  cd $_pyname-$pkgver
+  PYTHONPATH=src py.test2
+}
+
+package() {
+  cd $_pyname-$pkgver
+  python2 setup.py install -O1 --root="$pkgdir" --skip-build
+  install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname"
+  install -Dm 644 README.rst -t "$pkgdir/usr/share/doc/$pkgname"
+  install -Dm 644 docs/_build/text/*.txt -t "$pkgdir/usr/share/doc/$pkgname"
+  install -Dm 644 docs/_build/man/service_identity.1 "$pkgdir/usr/share/man/man1/service_identity.1"
+}
+
