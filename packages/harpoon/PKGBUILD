@@ -2,28 +2,24 @@
 # See COPYING for license details.
 
 pkgname=harpoon
-pkgver=202.7e24ae8
-pkgrel=2
+pkgver=220.3b04b09
+pkgrel=1
 pkgdesc='CLI tool for open source and threat intelligence.'
 groups=('blackarch' 'blackarch-automation' 'blackarch-recon')
 arch=('any')
 url='https://github.com/Te-k/harpoon'
 license=('GPL3')
-depends=('python' 'python-archiveis' 'python-beautifulsoup4' 'python-censys'
-         'python-click' 'python-consolemd' 'python-dnspython'
-         'python-fullcontactpy' 'python-geoip2' 'python-ipy'
-         'python-lxml' 'python-maxminddb' 'python-mispy' 'python-otxv2'
-         'python-passivetotal' 'python-pyasn' 'python-pybinaryedge'
-         'python-pycrtsh' 'python-pygithub' 'python-pygreynoisev1'
-         'python-pyhunter' 'python-pypdns' 'python-pypermacc'
-         'python-pysafebrowsing' 'python-pythreatgrid2' 'python-pytz'
-         'python-requests' 'python-selenium' 'python-shodan' 'python-spyonweb'
-         'python-telethon' 'python-tweepy' 'python-virustotal-api')
-makedepends=('git' 'python-setuptools')
+depends=('python' 'python-virtualenv')
+makedepends=('git')
 source=("git+https://github.com/Te-k/$pkgname.git"
-        'setup.py.patch')
+        'setup.py.patch'
+        'requirements.txt.patch'
+        'harpoon.install')
 sha512sums=('SKIP'
-            'b2d80effe27ea12a0fbe596f3db5d236cfc2bb6c5207e889854a41f3467538aa13b4aa74a616c33b5bdf1c380290dd0a4666a2dede5573f9685a17a65c8cceef')
+            '4872239ee15c8d3fb6cc20262b2c671aa0d5fb17660bcc81f46624977084e97a6279369484e7039bb334722f6fdfc8da21834d648f97b842d2f16a280a054d87'
+            'fddfc908a9ac8f2aadbf3b8c008b6adc8ef12b8b8e0afff251a40c6cfe8858f2c4c3b8ab6f20a843b68f4190f653088722739c2bfff0f23c443a7192ec121712'
+            'abb35ec4732568961b660e919b3c4a554ecc0797c28a1b479712f6f9ccab7d39c03745b746b32d256d838d73f9c83a5b7a0cba434af46925541e5102435df88f')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
@@ -33,37 +29,28 @@ pkgver() {
 
 prepare() {
   patch -p1 < setup.py.patch
+  patch -p1 < requirements.txt.patch
 }
 
-build() {
-  cd $pkgname
-
-  python setup.py build
-}
 
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  # the next parts have to be removed once we fixed the installation via
-  # setup.py: claims that configparser doesn't exist although it's python
-  # build-in lib...
-
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  rm README.md LICENSE
+  rm -r LICENSE tests
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname/$pkgname
-exec python main.py "\$@"
+cd /usr/share/$pkgname
+source venv/bin/activate
+exec python $pkgname/main.py "\$@"
 EOF
 
   chmod a+x "$pkgdir/usr/bin/$pkgname"
