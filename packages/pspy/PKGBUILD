@@ -1,39 +1,54 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
+# ArchLinux go guidelines --
+# https://wiki.archlinux.org/index.php/Go_package_guidelines
+
 pkgname=pspy
-pkgver=159.2312eed
+pkgver=149.9c63e5d
 pkgrel=1
 pkgdesc='Monitor linux processes without root permissions.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-misc' 'blackarch-recon')
-url='https://github.com/DominicBreuker/pspy'
+url="https://github.com/DominicBreuker/$pkgname"
 license=('GPL3')
-depends=('glibc')
 makedepends=('git' 'go-pie')
-source=("git+https://github.com/DominicBreuker/$pkgname.git")
-sha512sums=('SKIP')
+source=("$url/archive/master.zip")
+sha256sums=('7774cc9df3bbf7def59b5ab6ca97b048c40ccd155f9bb0fe9d13ecd42c217725')
 
-pkgver() {
-  cd $pkgname
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+prepare(){
+    mkdir -p build/
+    pkgver=1.20-master
 }
 
 build() {
-  cd $pkgname
+    cd "$pkgname-master"
+    echo $PWD
 
-  GOPATH="$srcdir" go get -d -t .
+    export GO111MODULE=on
+    export GO111MODULE=auto
+    go mod init github.com/DominicBreuker/$pkgname
+    go get github.com/DominicBreuker/$pkgname
+    go mod vendor
+
+    go build \
+        -buildmode=pie \
+        -trimpath \
+        -mod=readonly \
+        -modcacherw \
+        -ldflags="-X 'main.version=${pkgver}' -X 'main.commit=${sha256sums}'" .
 }
 
 package() {
-  cd $pkgname
+    cd "$pkgname-master"
 
-  GOPATH="$srcdir" go build -v .
-
-  install -Dm 755 pspy "$pkgdir/usr/bin/$pkgname"
-  install -dm 755 "$pkgdir/usr/share/$pkgname/"{images,docker}
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    install -Dm 755 pspy "$pkgdir/usr/bin/$pkgname"
+    install -Dm 644 images/* -t "$pkgdir/usr/share/$pkgname/images/"
+    install -Dm 644 docker/Dockerfile.* -t "$pkgdir/usr/share/$pkgname/docker/"
+    install -Dm 644 docker/entrypoint-* -t "$pkgdir/usr/share/$pkgname/docker/"
+    install -Dm 644 docker/etc/cron.d/changepwds -t "$pkgdir/usr/share/$pkgname/docker/etc/crond.d/"
+    install -Dm 644 docker/root/scripts/password_reset.py -t "$pkgdir/usr/share/$pkgname/docker/root/scripts/"
+    install -Dm 644 docker/var/spool/cron/crontabs/root -t "$pkgdir/usr/share/$pkgname/docker/var/spool/cron/crontabs/"
+    install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+    install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
-
