@@ -3,37 +3,61 @@
 
 pkgname=pspy
 pkgver=159.2312eed
-pkgrel=1
+pkgrel=2
 pkgdesc='Monitor linux processes without root permissions.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-misc' 'blackarch-recon')
-url='https://github.com/DominicBreuker/pspy'
+url="https://github.com/DominicBreuker/pspy"
 license=('GPL3')
-depends=('glibc')
 makedepends=('git' 'go-pie')
-source=("git+https://github.com/DominicBreuker/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/DominicBreuker/pspy")
+sha256sums=('SKIP')
+_url='github.com/DominicBreuker/pspy'
 
-pkgver() {
-  cd $pkgname
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+prepare(){
+    cd $pkgname
+    echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd $pkgname
+    cd "$pkgname"
 
-  GOPATH="$srcdir" go get -d -t .
+    mkdir -p "src/$_url" && \
+        rm -rf "src/$_url" && \
+        mv $pkgname "src/$_url" 2>/dev/null && \
+        cd "src/$_url"
+
+    GOPATH="$srcdir" \
+        go get -v -d $_url
 }
 
 package() {
-  cd $pkgname
+    cd "$pkgname"
 
-  GOPATH="$srcdir" go build -v .
+    VERSION=`git describe --tags --always || echo "unknown"`
+    BUILD_SHA=`git rev-parse HEAD || echo "unknown"`
 
-  install -Dm 755 pspy "$pkgdir/usr/bin/$pkgname"
-  install -dm 755 "$pkgdir/usr/share/$pkgname/"{images,docker}
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    export GO111MODULE=on
+    export GO111MODULE=auto
+    go mod init $_url
+    go get $_url
+    go mod vendor
+    GOPATH="$srcdir" \
+        GOOS=linux \
+        GOARCH=amd64 \
+        go build \
+            -buildmode=pie \
+            -trimpath \
+            -mod=readonly \
+            -modcacherw \
+            -ldflags="-X 'main.version=${VERSION}' -X 'main.commit=${BUILD_SHA}'" .
+
+    install -Dm 755 pspy "$pkgdir/usr/bin/$pkgname"
+    install -Dm 644 images/* -t "$pkgdir/usr/share/$pkgname/images/"
+    install -Dm 644 docker/Dockerfile.* -t "$pkgdir/usr/share/$pkgname/docker/"
+    install -Dm 644 docker/entrypoint-* -t "$pkgdir/usr/share/$pkgname/docker/"
+    install -Dm 644 docker/etc/cron.d/changepwds -t "$pkgdir/usr/share/$pkgname/docker/etc/crond.d/"
+    install -Dm 644 docker/root/scripts/password_reset.py -t "$pkgdir/usr/share/$pkgname/docker/root/scripts/"
+    install -Dm 644 docker/var/spool/cron/crontabs/root -t "$pkgdir/usr/share/$pkgname/docker/var/spool/cron/crontabs/"
+    install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 }
-
