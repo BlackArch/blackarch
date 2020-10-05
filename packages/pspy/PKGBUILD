@@ -1,47 +1,56 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-# ArchLinux go guidelines --
-# https://wiki.archlinux.org/index.php/Go_package_guidelines
-
 pkgname=pspy
 pkgver=159.2312eed
-pkgrel=1
+pkgrel=2
 pkgdesc='Monitor linux processes without root permissions.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-misc' 'blackarch-recon')
-url="https://github.com/DominicBreuker/$pkgname"
+url="https://github.com/DominicBreuker/pspy"
 license=('GPL3')
 makedepends=('git' 'go-pie')
-source=("$url/archive/master.zip")
-sha256sums=('7774cc9df3bbf7def59b5ab6ca97b048c40ccd155f9bb0fe9d13ecd42c217725')
+source=("git+https://github.com/DominicBreuker/pspy")
+sha256sums=('SKIP')
+_url='github.com/DominicBreuker/pspy'
 
 prepare(){
-    mkdir -p build/
-
-    VERSION="v1.2.0-10-g2312eed"
-    BUILD_SHA='2312eed49fdb4014b4f80a24b7141d0d9e40dc45'
+    cd $pkgname
+    echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-    cd "$pkgname-master"
-    echo $PWD
+    cd "$pkgname"
 
-    export GO111MODULE=on
-    export GO111MODULE=auto
-    go mod init github.com/DominicBreuker/$pkgname
-    go mod vendor
+    mkdir -p "src/$_url" && \
+        rm -rf "src/$_url" && \
+        mv $pkgname "src/$_url" 2>/dev/null && \
+        cd "src/$_url"
 
-    go build \
-        -buildmode=pie \
-        -trimpath \
-        -mod=readonly \
-        -modcacherw \
-        -ldflags="-X 'main.version=${VERSION}' -X 'main.commit=${BUILD_SHA}'" .
+    GOPATH="$srcdir" \
+        go get -v -d $_url
 }
 
 package() {
-    cd "$pkgname-master"
+    cd "$pkgname"
+
+    VERSION=`git describe --tags --always || echo "unknown"`
+    BUILD_SHA=`git rev-parse HEAD || echo "unknown"`
+
+    export GO111MODULE=on
+    export GO111MODULE=auto
+    go mod init $_url
+    go get $_url
+    go mod vendor
+    GOPATH="$srcdir" \
+        GOOS=linux \
+        GOARCH=amd64 \
+        go build \
+            -buildmode=pie \
+            -trimpath \
+            -mod=readonly \
+            -modcacherw \
+            -ldflags="-X 'main.version=${VERSION}' -X 'main.commit=${BUILD_SHA}'" .
 
     install -Dm 755 pspy "$pkgdir/usr/bin/$pkgname"
     install -Dm 644 images/* -t "$pkgdir/usr/share/$pkgname/images/"
@@ -51,5 +60,4 @@ package() {
     install -Dm 644 docker/root/scripts/password_reset.py -t "$pkgdir/usr/share/$pkgname/docker/root/scripts/"
     install -Dm 644 docker/var/spool/cron/crontabs/root -t "$pkgdir/usr/share/$pkgname/docker/var/spool/cron/crontabs/"
     install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-    install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
