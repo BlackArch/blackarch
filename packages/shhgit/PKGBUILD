@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=shhgit
+pkgver=55.046cf0b
+pkgrel=1
+pkgdesc='Find committed secrets and sensitive files across GitHub, Gists, GitLab and BitBucket or your local repositories in real time.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/eth0izzle/shhgit'
+license=('MIT')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/eth0izzle/$pkgname.git")
+sha512sums=('SKIP')
+install='shhgit.install'
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go get -d -t .
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  GOPATH="$srcdir" go build -v .
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  cp -a --no-preserve=ownership images/ "$pkgdir/usr/share/doc/$pkgname/"
+
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  cp -a --no-preserve=ownership www/ config.yaml $pkgname \
+    "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ./$pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
