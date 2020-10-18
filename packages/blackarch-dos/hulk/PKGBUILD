@@ -1,4 +1,7 @@
-pkgname=hulk
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname="hulk"
 pkgver=1.0.2
 pkgrel=1
 pkgdesc='A webserver DoS tool (Http Unbearable Load King) ported to Go and updated in python3 with some additional features.'
@@ -6,9 +9,9 @@ groups=('blackarch' 'blackarch-dos')
 arch=('x86_64' 'aarch64')
 url='https://github.com/Chr0m0s0m3s/hulk'
 license=('GPL3')
-depends=('glibc', 'python3', 'docopt', 'bs4', 'requests')
+depends=('glibc' 'python3' 'python-docopt' 'python-requests')
 makedepends=('git' 'go-pie')
-source=('$pkgname::git://github.com/Chr0m0s0m3s/$pkgname.git')
+source=("$pkgname::git://github.com/Chr0m0s0m3s/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
@@ -18,32 +21,40 @@ pkgver() {
 }
 
 build() {
-  cd $pkgname
+  cd $pkgname/hulk_go
 
   export GO386=387
   export GOOS=linux
 
   if [ "$CARCH" == "x86_64" ]
   then
-    export GOARCH=amd64
+    export $CARCH=amd64
   elif [ "$CARCH" == "armv6h" ] || [ "$CARCH" == "armv7h" ]
   then
-    export GOARCH=arm
+    export $CARCH=arm
   fi
 
-  GOPATH="$srcdir" go build -v -o $pkgname
+  GOPATH="$srcdir" go build -v -o "hulk_go"
 }
 
 package() {
-  cd $pkgname
+  cd $pkgname/hulk_go
+  
+  install -Dm 755 "hulk_go" "$pkgdir/usr/bin/hulk_go"
 
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  cd ..
+
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cd LICENSE
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname"
+  
+  cd ..
   
   rm README.md
 
-  cp -a * "$pkgdir/usr/share/$pkgname/"
+  cp -a * "$pkgdir/usr/share/doc/$pkgname"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
   
@@ -54,4 +65,3 @@ EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
 }
-
