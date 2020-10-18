@@ -1,0 +1,57 @@
+pkgname=hulk
+pkgver=1.0.2
+pkgrel=1
+pkgdesc='A webserver DoS tool (Http Unbearable Load King) ported to Go and updated in python3 with some additional features.'
+groups=('blackarch' 'blackarch-dos')
+arch=('x86_64' 'aarch64')
+url='https://github.com/Chr0m0s0m3s/hulk'
+license=('GPL3')
+depends=('glibc', 'python3', 'docopt', 'bs4', 'requests')
+makedepends=('git' 'go-pie')
+source=('$pkgname::git://github.com/Chr0m0s0m3s/$pkgname.git')
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  export GO386=387
+  export GOOS=linux
+
+  if [ "$CARCH" == "x86_64" ]
+  then
+    export GOARCH=amd64
+  elif [ "$CARCH" == "armv6h" ] || [ "$CARCH" == "armv7h" ]
+  then
+    export GOARCH=arm
+  fi
+
+  GOPATH="$srcdir" go build -v -o $pkgname
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+  
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python3 $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

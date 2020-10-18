@@ -1,0 +1,66 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=vipermonkey
+_pkgname=ViperMonkey
+pkgver=1160.511ecd5
+pkgrel=2
+groups=('blackarch' 'blackarch-forensic' 'blackarch-malware')
+pkgdesc='A VBA parser and emulation engine to analyze malicious macros.'
+arch=('any')
+url='https://github.com/decalage2/ViperMonkey'
+license=('BSD')
+depends=('python2' 'python2-virtualenv' 'python2-pip')
+makedepends=('git')
+source=("git+https://github.com/decalage2/$_pkgname.git"
+        'setup.py.patch'
+        "$pkgname.install")
+sha512sums=('SKIP'
+            '3b1ec5325d146de9cbb2484e77dda98c14942a0a5529fc8da3f248cb640220f8111e87c6989d31c55652d82a447869c4df88b58b2316815c03b8e42d162ba8fa'
+            '48193bacadcf899bbf3acf09b42165ff7204fa8df4b6dbd65ba1f7d7e307c60f7c692591cbfc156f0d29a907dd52e1a51da3752581a0792f78a83e160b1895af')
+install="$pkgname.install"
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+
+prepare() {
+  patch -p1 < setup.py.patch
+}
+
+
+build() {
+  cd $_pkgname
+
+  python2 setup.py build
+}
+
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md docs/*.md
+
+  rm -r README.md tests/ .github/ .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  mv "$pkgdir/usr/bin/vmonkey" "$pkgdir/usr/share/$pkgname/$pkgname-bin"
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+source venv/bin/activate
+exec python2 $pkgname-bin "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
