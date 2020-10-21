@@ -34,26 +34,26 @@ pkgver() {
 prepare() {
   cd $_pkgname
 
-  # https://github.com/bundler/bundler/issues/6882
-  sed -e '/BUNDLED WITH/,+1d' -i Gemfile.lock
-
   bundle config build.nokogiri --use-system-libraries
   sed 's|git ls-files|find -type f|' -i metasploit-framework.gemspec
 }
 
 build() {
   cd $_pkgname
+
   CFLAGS+=" -I/usr/include/libxml2"
   bundle install -j"$(nproc)" --no-cache --deployment
   find vendor/bundle/ruby -exec chmod o+r '{}' \;
   find vendor/bundle/ruby \( -name gem_make.out -or -name mkmf.log \) -delete
 }
 
+
+
 package() {
   cd $_pkgname
 
   install -dm 755 "$pkgdir/opt/$_pkgname" "$pkgdir/usr/bin"
-  cp -r ./* "$pkgdir/opt/$_pkgname"
+  cp -r . "$pkgdir/opt/$_pkgname"
 
   for f in "$pkgdir"/opt/$_pkgname/msf*; do
     local _msffile="$pkgdir/usr/bin/`basename "$f"`"
@@ -74,6 +74,7 @@ package() {
   install -d "$pkgdir/usr/share/doc"
   mv "$pkgdir/opt/$_pkgname/documentation" "$pkgdir/usr/share/doc/$_pkgname"
   rm "$pkgdir/usr/bin/msfupdate"
+  rm -rf "$pkgdir/opt/$_pkgname/.git"
   rm -rf "$pkgdir/opt/$_pkgname/vendor/bundle/ruby/*/cache"
 }
 
