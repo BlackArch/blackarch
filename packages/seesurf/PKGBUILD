@@ -1,0 +1,43 @@
+
+# Maintainer : In3tinct
+
+pkgname=seesurf
+pkgver=87.0ab36ba
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='A Python based scanner to find potential SSRF parameters in a web application.'
+arch=('any')
+url='https://github.com/In3tinct/See-SURF'
+license=('GPL3')
+depends=('python3' 'python-pip')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/In3tinct/See-SURF.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm LICENSE README.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python3 "see-surf.py" "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
