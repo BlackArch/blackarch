@@ -8,7 +8,7 @@
 # Contributor: Zygmunt Krynicki <me at zygoon dot pl>
 
 pkgname=snapd
-pkgver=2.46
+pkgver=2.47.1
 pkgrel=1
 pkgdesc='Service and tools for management of snap packages.'
 arch=('x86_64' 'aarch64')
@@ -21,13 +21,9 @@ makedepends=('git' 'go' 'go-tools' 'libseccomp' 'libcap' 'systemd' 'xfsprogs'
              'python-docutils' 'apparmor')
 conflicts=('snap-confine')
 options=('!strip' 'emptydirs')
-source=("$pkgname-$pkgver.tar.xz::https://github.com/snapcore/${pkgname}/releases/download/${pkgver}/${pkgname}_${pkgver}.vendor.tar.xz"
-        '0001-fontconfig-compat.patch'
-        '0002-zsh-completion.patch')
+source=("$pkgname-$pkgver.tar.xz::https://github.com/snapcore/${pkgname}/releases/download/${pkgver}/${pkgname}_${pkgver}.vendor.tar.xz")
 install="$pkgname.install"
-sha512sums=('3615fb36e147b23368bae51b13a64037c33d5ecfbac9963dd66d2223fa90692caae396a6b482a037f1cba4916467f1a2f5b5c53f0e298c059b9e3c206222ef30'
-            '67282a5829e23e47fba4e580ac831f973e3bf7cf9701e78c46b1909f63d7bc4bbed0bda005e497d6281fcbc801ff69a925768bec0e8439fbd5d73aa9fafd1669'
-            'e43137129d0cf57911c98642413da3f6d1d783a1c6f4dbf358842150373ca0f88bcd46715c0942e09be8eabb528f9403785f550ca31e68b8cd4903404764dfcb')
+sha512sums=('e08dd7057b85b970a1177996c483d3f663b1424cdbf6643a69923a7012d38fc13109b449ce3a2c5c8d65e5836f93a36567f2f641a62caea6e9989a458f7f2892')
 
 _gourl=github.com/snapcore/snapd
 
@@ -67,8 +63,8 @@ build() {
 
   ./mkversion.sh $pkgver-$pkgrel
 
-  flags=(-buildmode=pie -ldflags "-s -extldflags '$LDFLAGS'")
-  staticflags=(-buildmode=pie -ldflags "-s -extldflags '$LDFLAGS -static'")
+  flags=(-buildmode=pie -ldflags "-s -linkmode external -extldflags '$LDFLAGS'" -trimpath)
+  staticflags=(-buildmode=pie -ldflags "-s -linkmode external -extldflags '$LDFLAGS -static'" -trimpath)
   # Build/install snap and snapd
   go build "${flags[@]}" -o "$srcdir/go/bin/snap" "$_gourl/cmd/snap"
   go build "${flags[@]}" -o "$srcdir/go/bin/snapd" "$_gourl/cmd/snapd"
@@ -191,6 +187,7 @@ package() {
   # Remove snappy core specific units
   rm -f "$pkgdir/usr/lib/systemd/system/snapd.system-shutdown.service"
   rm -f "$pkgdir/usr/lib/systemd/system/snapd.autoimport.service"
+  rm -fv "$pkgdir/usr/lib/systemd/system/snapd.recovery-chooser-trigger.service"
   rm -f "$pkgdir"/usr/lib/systemd/system/snapd.snap-repair.*
   rm -f "$pkgdir"/usr/lib/systemd/system/snapd.core-fixup.*
   rm -f "$pkgdir/usr/lib/snapd/snapd.core-fixup.sh"
