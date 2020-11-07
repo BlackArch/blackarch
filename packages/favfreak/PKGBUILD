@@ -10,11 +10,10 @@ arch=('any')
 groups=('blackarch' 'blackarch-recon' 'blackarch-fingerprint')
 url='https://github.com/devanshbatham/FavFreak'
 license=('custom:unknown')
-depends=('python' 'python-virtualenv')
+depends=('python' 'python-virtualenv' 'python-mmh3')
 makedepends=('git' 'python-pip')
 source=("git+https://github.com/devanshbatham/$_pkgname.git")
 sha512sums=('SKIP')
-install="$pkgname.install"
 
 pkgver() {
   cd $_pkgname
@@ -27,18 +26,10 @@ package() {
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
-
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 
   cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
 
-    cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-source venv/bin/activate
-exec python favfreak.py "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
