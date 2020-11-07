@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=favfreak
+_pkgname=FavFreak
+pkgver=19.3a0bf2a
+pkgrel=1
+pkgdesc='Weaponizing favicon.ico for BugBounties , OSINT and what not.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon' 'blackarch-fingerprint')
+url='https://github.com/devanshbatham/FavFreak'
+license=('custom:unknown')
+depends=('python' 'python-virtualenv')
+makedepends=('git' 'python-pip')
+source=("git+https://github.com/devanshbatham/$_pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+    cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+source venv/bin/activate
+exec python favfreak.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
