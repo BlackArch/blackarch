@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=bagbak
+pkgver=119.ea3713f
+pkgrel=1
+pkgdesc='Yet another frida based App decryptor.'
+arch=('any')
+groups=('blackarch' 'blackarch-mobile' 'blackarch-reversing' 'blackarch-binary')
+url='https://github.com/ChiChou/bagbak'
+license=('Apache')
+depends=('nodejs-lts-fermium' 'zip')
+makedepends=('npm' 'git')
+source=("git+https://github.com/ChiChou/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$pkgname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd "$pkgname"
+
+  _npmdir="$pkgdir/usr/lib/node_modules/"
+
+  install -dm 755 "$_npmdir"
+
+  cd "$_npmdir"
+
+  npm install --user root -g --prefix "$pkgdir/usr" "$pkgname@"
+
+  cd "$srcdir/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
