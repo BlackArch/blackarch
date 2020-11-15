@@ -3,14 +3,13 @@
 
 pkgname=stringsifter
 pkgver=14.f4331a0
-pkgrel=1
+pkgrel=2
 pkgdesc='Machine learning tool that automatically ranks strings based on their relevance for malware analysis.'
 arch=('any')
 groups=('blackarch' 'blackarch-binary' 'blackarch-forensic')
-url='ihttps://github.com/fireeye/stringsifter'
+url='https://github.com/fireeye/stringsifter'
 license=('Apache')
-depends=('python' 'python-virtualenv' 'python-numpy' 'python-scikit-learn'
-         'python-joblib' 'python-pytest')
+depends=('python' 'python-numpy' 'python-scikit-learn' 'python-joblib')
 makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/fireeye/$pkgname.git")
 sha512sums=('SKIP')
@@ -19,6 +18,13 @@ pkgver() {
   cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  # use setuptools not distutils else entry_points is not recognized
+  sed -i 's/from distutils.core import setup/from setuptools import setup/' setup.py
 }
 
 build() {
@@ -30,27 +36,6 @@ build() {
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md *.txt
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm -rf *.md LICENSE *.txt
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/flarestrings" << EOF
-#!/bin/sh
-exec python /usr/share/$pkgname/$pkgname/flarestrings.py "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/flarestrings"
-
-  cat > "$pkgdir/usr/bin/rank_strings" << EOF
-#!/bin/sh
-exec python /usr/share/$pkgname/$pkgname/rank_strings.py "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/rank_strings"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
