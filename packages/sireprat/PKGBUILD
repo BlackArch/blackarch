@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sireprat
+_pkgname=SirepRAT
+pkgver=13.efed1d8
+pkgrel=1
+pkgdesc='Remote Command Execution as SYSTEM on Windows IoT Core.'
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-windows')
+arch=('any')
+url="https://github.com/SafeBreach-Labs/$_pkgname"
+license=('custom:unknown') # WIP! Issue opened
+depends=('python2' 'python2-enum34' 'python2-hexdump')
+makedepends=('git')
+source=("git+https://github.com/SafeBreach-Labs/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  # install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE" WIP!
+
+  rm -r README.md .gitignore docs/
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 $_pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
