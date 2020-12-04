@@ -1,0 +1,403 @@
+#!/bin/sh
+
+################################################################################
+#
+# Generate .desktop files from BlackArch PKGBUILD files
+#
+################################################################################
+
+################################################################################
+# TODO List
+# TODO: Add desktop menus for categories
+# TODO: modify dependencies to use blackarch-menus
+#
+################################################################################
+
+VERSION="0.1"
+ICON=""
+
+# Get name of executable
+#
+# Arguments:
+#       pkg : PKGBUILD file
+#
+# Return:
+#       name : name of executable
+#
+get_prog_name()
+{
+  pkg=$1
+  name="$(awk -F '=' '/^_pkgname/ {print $2}' "$pkg")"
+
+  if [ -z "$name" ]; then 
+    name="$(awk -F '=' '/^pkgname/ {print $2}' "$pkg")"
+  fi
+
+  echo "$name"
+}
+
+# Get name of pkg
+#
+# Arguments:
+#       pkg : PKGBUILD file
+#
+# Return:
+#       name : name of pkg
+#
+get_name()
+{
+  pkg=$1
+  name="$(basename "$(dirname "$pkg")")"
+  echo "$name"
+}
+
+# Get pkg description
+#
+# Arguments:
+#       pkg : PKGBUILD file
+#
+# Return:
+#       comment : comment for desktop file
+#
+get_desc()
+{
+  pkg=$1
+  comment="$(awk -F '=' '/pkgdesc/ {print substr($2, 2, length($2) - 2)}' "$pkg")"
+  echo "$comment"
+}
+
+
+# Extract all the groups to order in categories
+#
+# Argmuents:
+#       pkg : PKGBUILD file
+#
+# Return:
+#       cat : BA menu groups
+#
+get_groups()
+{
+  pkg=$1
+  groups=$(awk -F '=' '/groups/ { print substr($2, 2, length($2) - 2)}' "$pkg")
+  cat=""
+  for group in $groups; do
+    case "$group" in
+      \'blackarch-anti-forensic\')
+        cat="${cat} X-Blackarch-Anti-Forensic;"
+        ;;
+      \'blackarch-automation\')
+        cat="${cat} X-Blackarch-Automation;"
+        ;;
+      \'blackarch-automobile\')
+        cat="${cat} X-Blackarch-Automobile;"
+        ;;
+      \'blackarch-backdoor\')
+        cat="${cat} X-Blackarch-Backdoor;"
+        ;;
+      \'blackarch-binary\')
+        cat="${cat} X-Blackarch-Binary;"
+        ;;
+      \'blackarch-bluetooth\')
+        cat="${cat} X-Blackarch-Bluetooth;"
+        ;;
+      \'blackarch-Code-audit\')
+        cat="${cat} X-Blackarch-Code-Audit;"
+        ;;
+      \'blackarch-cracker\')
+        cat="${cat} X-Blackarch-Cracker;"
+        ;;
+      \'blackarch-crypto\')
+        cat="${cat} X-Blackarch-Crypto;"
+        ;;
+      \'blackarch-cryptography\')
+        cat="${cat} X-Blackarch-Cryptography;"
+        ;;
+      \'blackarch-database\')
+        cat="${cat} X-Blackarch-Database;"
+        ;;
+      \'blackarch-debugger\')
+        cat="${cat} X-Blackarch-Debugger;"
+        ;;
+      \'blackarch-decompiler\')
+        cat="${cat} X-Blackarch-Decompiler;"
+        ;;
+      \'blackarch-defensive\')
+        cat="${cat} X-Blackarch-Defensive;"
+        ;;
+      \'blackarch-disassembler\')
+        cat="${cat} X-Blackarch-Disassembler;"
+        ;;
+      \'blackarch-dos\')
+        cat="${cat} X-Blackarch-Dos;"
+        ;;
+      \'blackarch-drone\')
+        cat="${cat} X-Blackarch-Drone;"
+        ;;
+      \'blackarch-exploitation\')
+        cat="${cat} X-Blackarch-Exploitation;"
+        ;;
+      \'blackarch-fingerprint\')
+        cat="${cat} X-Blackarch-Fingerprint;"
+        ;;
+      \'blackarch-firmware\')
+        cat="${cat} X-Blackarch-Firmware;"
+        ;;
+      \'blackarch-fuzzer\')
+        cat="${cat} X-Blackarch-Fuzzer;"
+        ;;
+      \'blackarch-forensic\')
+        cat="${cat} X-Blackarch-Forensic;"
+        ;;
+      \'blackarch-gpu\')
+        cat="${cat} X-Blackarch-Gpu;"
+        ;;
+      \'blackarch-hardware\')
+        cat="${cat} X-Blackarch-Hardware;"
+        ;;
+      \'blackarch-honeypot\')
+        cat="${cat} X-Blackarch-Honeypot;"
+        ;;
+      \'blackarch-ids\')
+        cat="${cat} X-Blackarch-Ids;"
+        ;;
+      \'blackarch-keylogger\')
+        cat="${cat} X-Blackarch-Keylogger;"
+        ;;
+      \'blackarch-malware\')
+        cat="${cat} X-Blackarch-Malware;"
+        ;;
+      \'blackarch-misc\')
+        cat="${cat} X-Blackarch-Misc;"
+        ;;
+      \'blackarch-mobile\')
+        cat="${cat} X-Blackarch-Mobile;"
+        ;;
+      \'blackarch-mobile-reversing\')
+        cat="${cat} X-Blackarch-Mobile-Reversing;"
+        ;;
+      \'blackarch-networking\')
+        cat="${cat} X-Blackarch-Networking;"
+        ;;
+      \'blackarch-nfc\')
+        cat="${cat} X-Blackarch-Nfc;"
+        ;;
+      \'blackarch-packer\')
+        cat="${cat} X-Blackarch-Packer;"
+        ;;
+      \'blackarch-proxy\')
+        cat="${cat} X-Blackarch-Proxy;"
+        ;;
+      \'blackarch-radio\')
+        cat="${cat} X-Blackarch-Radio;"
+        ;;
+      \'blackarch-recon\')
+        cat="${cat} X-Blackarch-Recon;"
+        ;;
+      \'blackarch-reversing\')
+        cat="${cat} X-Blackarch-Reversing;"
+        ;;
+      \'blackarch-scan\')
+        cat="${cat} X-Blackarch-Scan;"
+        ;;
+      \'blackarch-scanner\')
+        cat="${cat} X-Blackarch-Scanner;"
+        ;;
+      \'blackarch-sniffer\')
+        cat="${cat} X-Blackarch-Sniffer;"
+        ;;
+      \'blackarch-social\')
+        cat="${cat} X-Blackarch-Social;"
+        ;;
+      \'blackarch-spoof\')
+        cat="${cat} X-Blackarch-Spoof;"
+        ;;
+      \'blackarch-stego\')
+        cat="${cat} X-Blackarch-Stego;"
+        ;;
+      \'blackarch-tunnel\')
+        cat="${cat} X-Blackarch-Tunnel;"
+        ;;
+      \'blackarch-unpacker\')
+        cat="${cat} X-Blackarch-Unpacker;"
+        ;;
+      \'blackarch-voip\')
+        cat="${cat} X-Blackarch-Voip;"
+        ;;
+      \'blackarch-webapp\')
+        cat="${cat} X-Blackarch-Webapp;"
+        ;;
+      \'blackarch-windows\')
+        cat="${cat} X-Blackarch-Windows;"
+        ;;
+      \'blackarch-wireless\')
+        cat="${cat} X-Blackarch-Wireless;"
+        ;;
+    esac
+  done
+  echo "$cat"
+}
+
+# Add line to PKGBUILD to install .desktop file
+#
+# Arguments:
+#       pkg: PKGBUILD file
+#
+modify_pkgbuild()
+{
+  pkg="$1"
+
+  # add desktop file to install list
+  tac "$pkg" | \
+    awk '/install/ && ! seen { \
+    print "  install -m 644 *.desktop \"$pkgdir/usr/share/applications/\""; \
+    seen=1} {print}' | \
+    tac > /tmp/PKGBUILD && \
+    mv /tmp/PKGBUILD $pkg
+
+  if [ ! -z "$ICON" ]; then
+    tac $pkg | \
+      awk '/install/ && ! seen { \
+      print "  install -Dm 644 $ICON \"$pkgdir/usr/share/pixmaps/$pkgname.png\""; \
+      seen=1} {print}' | \
+      tac > /tmp/PKGBUILD && \
+      mv /tmp/PKGBUILD $pkg
+  fi
+
+  # add blackarch-menus as dependency
+
+}
+
+# Write .desktop file
+#
+# Arguments:
+#       pkg : PKGBUILD file
+#
+write_desktop_file()
+{
+  pkg="$1"
+  name="$(get_name "$pkg")"
+  comment="$(get_desc "$pkg")"
+  ex_name="$(get_prog_name "$pkg")"
+  categories="$(get_groups "$pkg")"
+  if [ -z $ICON ]; then
+    icon="utilities-terminal"
+  else
+    icon="$name"
+  fi
+
+  cat > "$(dirname $pkg)/ba-${name}.desktop" << EOF
+[Desktop Entry]
+Name="$name"
+Icon="$icon"
+Comment="$comment"
+TryExec=/usr/bin$ex_name
+Exec=sh -c '/usr/bin/"$ex_name";\$SHELL'
+StartupNotify=true
+Terminal=true
+Type=Application
+Categories="$categories"
+EOF
+  modify_pkgbuild "$pkg"
+}
+
+# Generate .desktop files for all packages without .dekstop files
+generate_all()
+{
+  # TODO: change to path/default path
+  for pkg in $(awk '/groups/ {print FILENAME}' $(pwd)/../packages/*/PKGBUILD)
+  do
+    BUILDFILE="$(dirname $pkg)/PKGBUILD"
+    if [ -z "$(awk '/install .*\.desktop/ {print $0}' $BUILDFILE)" ]; then
+      write_desktop_file "$pkg"
+    fi
+  done
+}
+
+
+# Generate desktop files for a certain letter
+#
+# Arguments:
+# letter - generate desktop files for this letter
+#
+gen_letter()
+{
+  letter="$1"
+  for pkg in $(awk '/groups/ {print FILENAME}' $(pwd)/../packages/"${letter}"*/PKGBUILD)
+  do
+    BUILDFILE="$(dirname $pkg)/PKGBUILD"
+    if [ -z "$(awk '/install .*\.desktop/ {print $0}' $BUILDFILE)" ]; then
+      write_desktop_file "$pkg"
+    fi
+  done
+}
+
+
+# print help
+#
+call_help()
+{
+  printf "BlackArchs .desktop generation script\n\n"
+  printf "\t -a, --all:\t generate .desktop files for all packages\n"
+  printf "\t -h, --help:\t print this help\n"
+  printf "\t -i, --icon \t path to icon for application\n"
+  printf "\t -p, --pkg:\t generate .desktop file for a given package\n"
+  printf "\t -V, --version:\t print version of script\n"
+}
+
+
+# main function
+#
+# Arguments:
+# args - command line arguments
+#
+main()
+{
+  args=$@
+  options=ahi:l:p:vV
+  loptions=all,help,icon:,letter:,pkg:,verbose,version
+
+
+  ! parsed=$(getopt --options=$options --longoptions=$loptions --name "$0" -- $args)
+  if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+      exit $FAILURE
+  fi
+  eval set -- "$parsed"
+
+  while true; do
+    case "$1" in
+      -a | --all)
+        generate_all
+        shift
+        ;;
+      -h | --help)
+        call_help
+        exit
+        ;;
+      -i | --icon)
+        ICON="$2"
+        shift 2
+        ;;
+      -l | --letter)
+        letter=$2
+        shift 2
+        ;;
+      -p | --pkg)
+        write_pkg=$2
+        shift 2
+        ;;
+      -V | --version)
+        printf "Version: $VERSION\n"
+        exit
+        ;;
+      --)
+        break
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+  write_desktop_file "$write_pkg"
+}
+
+main "$@"
