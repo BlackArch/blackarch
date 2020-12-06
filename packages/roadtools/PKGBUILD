@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=roadtools
+_pkgbase=ROADtools
+pkgname=('python-roadlib' 'roadrecon')
+pkgver=39.4929c9d
+pkgrel=1
+pkgdesc='Azure AD and O365 exploration framework'
+arch=('any')
+groups=('blackarch' 'blackarch-networking' 'blackarch-recon')
+url='https://github.com/dirkjanm/ROADtools'
+license=('MIT')
+makedepends=('python-setuptools' 'git')
+source=("git+https://github.com/dirkjanm/$_pkgbase.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgbase
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build_python-roadlib() {
+  cd "$_pkgbase/roadlib"
+
+  python setup.py build
+}
+
+build_roadrecon() {
+  cd "$_pkgbase/roadrecon"
+
+  python setup.py build
+}
+
+package_python-roadlib() {
+  depends=('python' 'python-adal' 'python-sqlalchemy')
+
+  cd "$_pkgbase/roadlib"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+}
+
+package_roadrecon() {
+  depends=('python' 'python-roadlib' 'python-flask' 'python-sqlalchemy'
+           'python-marshmallow' 'python-flask-sqlalchemy'
+           'python-flask-marshmallow' 'python-flask-cors'
+           'python-marshmallow-sqlalchemy' 'python-aiohttp')
+
+  cd "$_pkgbase/roadrecon"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+}
+
