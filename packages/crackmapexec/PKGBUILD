@@ -20,12 +20,8 @@ depends=('python' 'impacket' 'ldapdomaindump' 'python-gevent' 'python-requests'
          'python-pyasn1' 'python-pycparser' 'python-pycryptodomex' 'python-bs4'
          'python-pynacl' 'python-pyopenssl' 'python-pywinrm' 'python-six'
          'python-soupsieve' 'python-urllib3' 'python-werkzeug' 'python-pypsrp'
-         'python-neo4j-driver' 'python-lsassy' 'python-pyspnego' 'python-msldap'
-         'python-aiowinreg' 'python-asn1crypto' 'python-asysocks' 'python-pytz'
-         'python-minidump' 'python-minikerberos' 'python-netaddr' 'python-tqdm'
-         'python-pypykatz' 'python-wcwidth' 'python-winacl' 'python-winsspi'
-         'python-zope-interface' 'python-zope-event')
-makedepends=('git' 'python-setuptools')
+         'python-neo4j-driver' 'python-lsassy' 'python-pyspnego')
+makedepends=('git' 'python-pipx')
 source=("$pkgname::git+https://github.com/byt3bl33d3r/CrackMapExec.git")
 sha512sums=('SKIP')
 
@@ -39,14 +35,6 @@ prepare() {
   cd $pkgname
 
   git submodule init && git submodule update --recursive
-
-  sed -i '/msgpack/d' requirements.txt
-}
-
-build() {
-  cd $pkgname
-
-  python setup.py build
 }
 
 package() {
@@ -55,7 +43,10 @@ package() {
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  export PIPX_HOME="$pkgdir/usr/share/$pkgname/pipx"
+  export PIPX_BIN_DIR="$pkgdir/usr/bin"
+  pipx ensurepath
+  pipx install crackmapexec
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
