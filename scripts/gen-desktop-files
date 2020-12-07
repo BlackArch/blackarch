@@ -61,8 +61,8 @@ get_name()
 #
 get_desc()
 {
-  pkg=$1
-  comment="$(awk -F '=' '/pkgdesc/ {print substr($2, 2, length($2) - 2)}' "$pkg")"
+  pkg="$1"
+  comment="$(awk -F '=' '/pkgdesc/ {print substr($2, 2, length($2) - 2)}' $pkg)"
   echo "$comment"
 }
 
@@ -379,10 +379,9 @@ generate_all()
   # TODO: change to path/default path
   for pkg in $(awk '/groups/ {print FILENAME}' $(pwd)/../packages/*/PKGBUILD)
   do
-    #BUILDFILE="$(dirname $pkg)/PKGBUILD"
-    #if [ -z "$(awk '/install .*\.desktop/ {print $0}' $BUILDFILE)" ]; then
-    write_desktop_file "$pkg"
-    #fi
+    if [ ! -f $(dirname $pkg)/ba-*.desktop ]; then
+      write_desktop_file "$pkg"
+    fi
   done
 }
 
@@ -440,7 +439,7 @@ main()
     case "$1" in
       -a | --all)
         generate_all
-        shift
+        exit
         ;;
       -h | --help)
         call_help
