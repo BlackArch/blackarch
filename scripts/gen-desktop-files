@@ -319,19 +319,22 @@ modify_pkgbuild()
     print "  install -m 644 *.desktop \"$pkgdir/usr/share/applications/\""; \
     seen=1} {print}' | \
     tac > $tmp
-
-  if [ ! -z "$ICON" ]; then
-    tac $orig_pkg | \
-      awk '/install/ && ! seen { \
-      print "  install -Dm 644 $ICON \"$pkgdir/usr/share/pixmaps/$pkgname.png\""; \
-      seen=1} {print}' | \
-      tac > $tmp
-  fi
-
-  # add blackarch-menus as dependency
   add_dep $tmp
   add_source $tmp $name
   add_shasum $tmp "$(dirname $orig_pkg)/$name"
+
+  if [ ! -z "$ICON" ]; then
+    tac $tmp | \
+      awk '/install/ && ! seen { \
+      print "  install -Dm 644 $ICON \"$pkgdir/usr/share/pixmaps/$pkgname.png\""; \
+      seen=1} {print}' | \
+      tac > "${tmp}.mod"
+    mv "${tmp}.mod" $tmp
+    add_source $tmp "$(get_name $orig_pkg).png"
+    add_shasum $tmp "$(dirname $orig_pkg)/$(get_name $orig_pkg).png"
+  fi
+
+  # add blackarch-menus as dependency
   incr_release $tmp
 
   mv $tmp $orig_pkg
