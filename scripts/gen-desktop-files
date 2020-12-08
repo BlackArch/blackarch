@@ -393,15 +393,14 @@ generate_all()
 # Generate desktop files for a certain letter
 #
 # Arguments:
-# letter - generate desktop files for this letter
+# letter - generate desktop files for this letter(group)
 #
 gen_letter()
 {
   letter="$1"
   for pkg in $(awk '/groups/ {print FILENAME}' $(pwd)/../packages/"${letter}"*/PKGBUILD)
   do
-    BUILDFILE="$(dirname $pkg)/PKGBUILD"
-    if [ -z "$(awk '/install .*\.desktop/ {print $0}' $BUILDFILE)" ]; then
+    if [ ! -f $(dirname $pkg)/ba-*.desktop ]; then
       write_desktop_file "$pkg"
     fi
   done
@@ -454,8 +453,8 @@ main()
         shift 2
         ;;
       -l | --letter)
-        letter=$2
-        shift 2
+        gen_letter $2
+        exit
         ;;
       -p | --pkg)
         write_pkg=$2
