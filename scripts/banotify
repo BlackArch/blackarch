@@ -22,6 +22,16 @@ while (( $# )) ; do
 	shift
 done
 
+discord_notify() {
+    webhook_file="/etc/discord_webhook"
+    webhook_url="$(cat ${webhook_file})"
+
+    curl "${webhook_url}" \
+        -X 'POST' \
+        -H 'Content-Type: application/json' \
+        -d "{\"username\": \"Bitch Talker\",\"embeds\": [{\"description\": \"${1}\",\"color\": 15258703}]}" 
+}
+
 remote_irc_notify() {
 	b=''
 
@@ -58,17 +68,21 @@ remote_irc_notify() {
 	# TODO: color?
 	if $use_list ; then
 		send_payload "$b$user$b pushed ${#packages[@]} backd00r$s to the bin repo, including:"
+		discord_notify "$user pushed ${#packages[@]} backd00r$s to the bin repo, including:"
 	else
 		send_payload "$b$user$b pushed ${#packages[@]} backd00r$s to the bin repo: $sprunge"
+		discord_notify "$user pushed ${#packages[@]} backd00r$s to the bin repo: $sprunge"
 	fi
 
 	if $use_list ; then
 		for p in ${packages[@]:0:$list_len} ; do
 			send_payload "- $p"
+			discord_notify "- $p"
 		done
 
 		if (( ${#packages[@]} > $list_len )) ; then
 			send_payload "full list: $sprunge"
+			discord_notify "full list: $sprung"
 		fi
 	fi
 }
