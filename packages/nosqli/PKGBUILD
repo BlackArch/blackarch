@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=nosqli
+pkgver=27.c208972
+pkgrel=1
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner'
+        'blackarch-exploitation')
+pkgdesc='NoSQL scanner and injector.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/Charlie-belmer/nosqli'
+license=('GPL3')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/Charlie-belmer/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go get -d -t .
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  GOPATH="$srcdir" go build -v .
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
