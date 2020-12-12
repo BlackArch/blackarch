@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=osi.ig
+pkgver=95.c468e5e
+pkgrel=1
+pkgdesc="Instagram OSINT Tool gets a range of information from an Instagram account."
+groups=('blackarch' 'blackarch-social' 'blackarch-recon')
+arch=('any')
+url='https://github.com/th3unkn0n/osi.ig'
+license=('custom:unknown')
+depends=('python' 'python-certifi' 'python-chardet' 'python-idna'
+         'python-requests' 'python-urllib3')
+makedepends=('git')
+source=("git+https://github.com/th3unkn0n/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  mv .lib lib
+  mv main.py lib/
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/lib
+exec python main.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
