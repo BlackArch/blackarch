@@ -60,7 +60,7 @@ are given and everything is setup. Anything else can be discussed on IRC.
 ## Packaging style
 
 - Use our [PKGBUILD templates](https://github.com/BlackArch/blackarch-pkgbuilds)
-  for creating and releasing new packagaes in order to keep the same style and
+  for creating and releasing new packages in order to keep the same style and
   consistency.
 
 - If you are unsure, copy an existing PKGBUILD from a package and use that as a
@@ -69,7 +69,7 @@ are given and everything is setup. Anything else can be discussed on IRC.
 
 ## Creating packages
 
-The following information was written with the goal of creating hight-quality PKGBUILDs and ensure that ever package uploaded to the BlackArch Linux repository is really working.
+The following information was written with the goal of creating high-quality PKGBUILDs and ensure that ever package uploaded to the BlackArch Linux repository is really working.
 
 **Prerequisites:**
 
@@ -79,7 +79,7 @@ The following information was written with the goal of creating hight-quality PK
 
 **Steps:**
 
-- Create the PKGBUILD and build it in the clean chroot environment to ensure that buildtime dependeces aren't missing.
+- Create the PKGBUILD and build it in the clean chroot environment to ensure that buildtime dependencies aren't missing.
 
 - If the package was built, install and execute it in the clean chroot environment to ensure that runtime dependencies aren't missing.
 
