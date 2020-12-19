@@ -1,0 +1,32 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=restler-fuzzer
+pkgver=v7.1.0.r21.g0798d34
+pkgrel=1
+pkgdesc='First stateful REST API fuzzing tool for automatically testing cloud services through their REST APIs and finding security and reliability bugs in these services.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-webapp'  'blackarch-fuzzer')
+url='https://github.com/microsoft/restler-fuzzer'
+license=('MIT')
+depends=()
+makedepends=('git' 'python' 'dotnet-sdk')
+source=("git+https://github.com/microsoft/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $pkgname
+  install -dm 755 "$pkgdir/usr/bin/"
+
+  python ./build-restler.py --dest_dir "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" docs/*/* README.md
+
+  ln -sf "/usr/share/$pkgname/engine/restler.py" "$pkgdir/usr/bin/$pkgname"
+}
+
