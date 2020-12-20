@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=cloudlist
+pkgver=9.3d63db5
+pkgrel=1
+groups=('blackarch' 'blackarch-recon')
+pkgdesc='Cloudlist is a tool for listing Assets from multiple Cloud Providers.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/projectdiscovery/cloudlist'
+license=('MIT')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/projectdiscovery/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$pkgname/cmd/$pkgname"
+
+  GOPATH="$srcdir" go build -v .
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 "cmd/$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md PROVIDERS.md
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
