@@ -10,27 +10,36 @@ arch=('x86_64' 'aarch64')
 url='http://www.thoughtcrime.org/software/sslsniff/'
 license=('custom')
 depends=('boost' 'log4cpp' 'dsniff')
-source=("http://www.thoughtcrime.org/software/$pkgname/$pkgname-$pkgver.tar.gz"
+source=("git+https://github.com/moxie0/$pkgname.git"
+#source=("http://www.thoughtcrime.org/software/$pkgname/$pkgname-$pkgver.tar.gz"
         'boost-1.47.patch'
         'gcc-4.7-link-fix.patch')
-sha512sums=('4ac1bcff8f396d868b2381bc73bb0307022e9a7d5228c83722abde8d4d01e4c6273042763c1e003c8e60f606d60923a573122d33680f5d892b4ef7b62f02009f'
+sha512sums=('SKIP'
             'e2c824efded6099f4820376bf1715cc444f0648a5ba515f5dea89c47e4357769ed00842d35179407042e72294a7ff24c3c547af232c2388911349ba502867f66'
             '4fef9e8033aefa22a08315e98f5efc9e88787f4a113b172bdddfa94085762c5dfcbe3957910b92f53e03328c029b9f3182be307bb2efd4f1faac67648d93c7c5')
 
+prepare() {
+  cd $pkgname
+
+  aclocal
+  autoconf
+  automake --add-missing
+}
+
 build() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   # Boost 1.47 patch
-  patch -p0 < "${srcdir}"/boost-1.47.patch
+  #patch -p0 < "${srcdir}"/boost-1.47.patch
   # Fix linking with libraries in gcc 4.7.x
-  patch -p1 < "${srcdir}"/gcc-4.7-link-fix.patch
+  #patch -p1 < "${srcdir}"/gcc-4.7-link-fix.patch
 
   ./configure --prefix=/usr --disable-dependency-tracking
   make
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   make install DESTDIR="$pkgdir"
 
