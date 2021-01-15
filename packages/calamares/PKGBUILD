@@ -7,12 +7,13 @@
 pkgname=calamares
 pkgver=3.2.35.1
 pkgrel=1
-pkgdesc='Distribution-independent installer framework'
+pkgdesc='Distribution-independent installer framework.'
 url='https://github.com/calamares/calamares'
 arch=('x86_64' 'aarch64')
 license=('LGPL')
-depends=('kconfig' 'kcoreaddons' 'kiconthemes' 'ki18n' 'kio' 'solid' 'yaml-cpp' 'kpmcore' 'mkinitcpio-openswap'
-         'boost-libs' 'ckbcomp' 'hwinfo' 'qt5-svg' 'polkit-qt5' 'gtk-update-icon-cache' 'plasma-framework'
+depends=('kconfig' 'kcoreaddons' 'kiconthemes' 'ki18n' 'kio' 'solid' 'yaml-cpp'
+         'kpmcore' 'mkinitcpio-openswap' 'boost-libs' 'ckbcomp' 'hwinfo'
+         'qt5-svg' 'polkit-qt5' 'gtk-update-icon-cache' 'plasma-framework'
          'qt5-xmlpatterns' 'squashfs-tools' 'libpwquality')
 makedepends=('extra-cmake-modules' 'qt5-tools' 'qt5-translations' 'git' 'boost')
 backup=('usr/share/calamares/modules/bootloader.conf'
@@ -20,35 +21,37 @@ backup=('usr/share/calamares/modules/bootloader.conf'
         'usr/share/calamares/modules/initcpio.conf'
         'usr/share/calamares/modules/unpackfs.conf')
 source=("https://github.com/calamares/$pkgname/archive/v$pkgver.tar.gz")
-sha256sums=('b36c27c1c76b7092c6e4d86e812927b410987cfbafdd3ffdf8f7256e62b4049e')
+sha512sums=('5c0c19fdfaeea85f467a6b59a3e088ad5709940a25521a28bbf8a9bb69a2e87d44f40a4500688c383036c48d4c4d70176bb170dcc39897fff3e09be3117de9ff')
 
 prepare() {
-  cd ${srcdir}/calamares-${pkgver}
+  cd "$pkgdir-$pkgver"
 
   sed -i -e 's/"Install configuration files" OFF/"Install configuration files" ON/' CMakeLists.txt
-  _ver="$(cat CMakeLists.txt | grep -m3 -e "  VERSION" | grep -o "[[:digit:]]*" | xargs | sed s'/ /./g')"
-  printf 'Version: %s-%s' "${_ver}" "${pkgrel}"
+  _ver="$(cat CMakeLists.txt | grep -m3 -e "  VERSION" |
+  grep -o "[[:digit:]]*" | xargs | sed s'/ /./g')"
+  printf 'Version: %s-%s' "$_ver" "$pkgrel"
   sed -i -e "s|\${CALAMARES_VERSION_MAJOR}.\${CALAMARES_VERSION_MINOR}.\${CALAMARES_VERSION_PATCH}|${_ver}-${pkgrel}|g" CMakeLists.txt
   sed -i -e "s|CALAMARES_VERSION_RC 1|CALAMARES_VERSION_RC 0|g" CMakeLists.txt
 }
 
 build() {
-  cd ${srcdir}/calamares-${pkgver}
+  cd "$pkgdir-$pkgver"
 
-  mkdir -p build
-  cd build
+  mkdir -p build && cd build
+
   cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
-           -DCMAKE_INSTALL_LIBDIR=lib -DWITH_PYTHONQT:BOOL=ON \
-           -DBoost_NO_BOOST_CMAKE=ON \
-           -DSKIP_MODULES="tracking webview interactiveterminal initramfs \
-                              initramfscfg dracut dracutlukscfg \
-                              dummyprocess dummypython dummycpp \
-                              dummypythonqt services-openrc"
+    -DCMAKE_INSTALL_LIBDIR=lib -DWITH_PYTHONQT:BOOL=ON \
+    -DBoost_NO_BOOST_CMAKE=ON \
+    -DSKIP_MODULES="tracking webview interactiveterminal initramfs \
+      initramfscfg dracut dracutlukscfg dummyprocess dummypython dummycpp \
+      dummypythonqt services-openrc"
+
   make
 }
 
 package() {
-  cd ${srcdir}/calamares-${pkgver}/build
+  cd "$pkgdir-$pkgver/build"
 
   make DESTDIR="$pkgdir" install
 }
+
