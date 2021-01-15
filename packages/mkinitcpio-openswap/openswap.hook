@@ -1,0 +1,25 @@
+run_hook ()
+{
+    ## read openswap configurations
+    source /openswap.conf
+
+    ## Optional: To avoid race conditions
+    x=0;
+    while [ ! -b "$keyfile_device" ] && [ $x -le 10 ]; do
+          x=$((x+1))
+          sleep .2
+    done
+    ## End of optional
+
+    if [ -z "$keyfile_device" ] || [ -z "$keyfile_filename" ]
+    then
+      ## case when no keyfile provided in configurations
+      cryptsetup open $cryptsetup_options "$swap_device" "$crypt_swap_name"
+    else
+      ## case when keyfile is provided in configurations
+      mkdir openswap_keymount
+      mount $keyfile_device_mount_options "$keyfile_device" openswap_keymount
+      cryptsetup open $cryptsetup_options --key-file "openswap_keymount/$keyfile_filename" "$swap_device" "$crypt_swap_name"
+      umount openswap_keymount
+    fi
+}

@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+#
+# This PKGBUILD was extracted from Manjaro Linux and adapted to our style
+#
+# Old Maintainer: Philip Müller <philm[at]manjaro[dog]org>
+
+pkgname=calamares
+pkgver=3.2.35.1
+pkgrel=1
+pkgdesc='Distribution-independent installer framework'
+url='https://github.com/calamares/calamares'
+arch=('x86_64' 'aarch64')
+license=('LGPL')
+depends=('kconfig' 'kcoreaddons' 'kiconthemes' 'ki18n' 'kio' 'solid' 'yaml-cpp' 'kpmcore' 'mkinitcpio-openswap'
+         'boost-libs' 'ckbcomp' 'hwinfo' 'qt5-svg' 'polkit-qt5' 'gtk-update-icon-cache' 'plasma-framework'
+         'qt5-xmlpatterns' 'squashfs-tools' 'libpwquality')
+makedepends=('extra-cmake-modules' 'qt5-tools' 'qt5-translations' 'git' 'boost')
+backup=('usr/share/calamares/modules/bootloader.conf'
+        'usr/share/calamares/modules/displaymanager.conf'
+        'usr/share/calamares/modules/initcpio.conf'
+        'usr/share/calamares/modules/unpackfs.conf')
+source=("https://github.com/calamares/$pkgname/archive/v$pkgver.tar.gz")
+sha256sums=('b36c27c1c76b7092c6e4d86e812927b410987cfbafdd3ffdf8f7256e62b4049e')
+
+prepare() {
+	cd ${srcdir}/calamares-${pkgver}
+
+  sed -i -e 's/"Install configuration files" OFF/"Install configuration files" ON/' CMakeLists.txt
+	_ver="$(cat CMakeLists.txt | grep -m3 -e "  VERSION" | grep -o "[[:digit:]]*" | xargs | sed s'/ /./g')"
+	printf 'Version: %s-%s' "${_ver}" "${pkgrel}"
+	sed -i -e "s|\${CALAMARES_VERSION_MAJOR}.\${CALAMARES_VERSION_MINOR}.\${CALAMARES_VERSION_PATCH}|${_ver}-${pkgrel}|g" CMakeLists.txt
+	sed -i -e "s|CALAMARES_VERSION_RC 1|CALAMARES_VERSION_RC 0|g" CMakeLists.txt
+}
+
+build() {
+	cd ${srcdir}/calamares-${pkgver}
+
+	mkdir -p build
+	cd build
+  cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+           -DCMAKE_INSTALL_LIBDIR=lib -DWITH_PYTHONQT:BOOL=ON \
+           -DBoost_NO_BOOST_CMAKE=ON \
+           -DSKIP_MODULES="tracking webview interactiveterminal initramfs \
+                              initramfscfg dracut dracutlukscfg \
+                              dummyprocess dummypython dummycpp \
+                              dummypythonqt services-openrc"
+  make
+}
+
+package() {
+	cd ${srcdir}/calamares-${pkgver}/build
+
+  make DESTDIR="$pkgdir" install
+}
