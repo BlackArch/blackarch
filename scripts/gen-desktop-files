@@ -244,10 +244,16 @@ get_groups()
 add_source()
 {
   pkg="$1"
-  name="$2"
+
+  # if no name is provided, add ba-$pkgname to PKGBUILD file
+  if [ -z $2 ]; then
+    name='ba-$pkgname.desktop'
+  else
+    name="$2"
+  fi
 
   cat "$pkg" |  tr '\n' '\0'\ | \
-    sed  "s/\(\x00source=([^)]\+\))/\1\n        \'$name\'\)/" | \
+    sed  "s/\(\x00source=([^)]\+\))/\1\n        \"$name\"\)/" | \
     tr '\0' '\n' > "$pkg.mod"
   mv "$pkg.mod" $pkg
 }
@@ -305,12 +311,11 @@ incr_release()
 #
 # Arguments:
 #       orig_pkg: PKGBUILD file
-#       name: dekstop file name
 #
 modify_pkgbuild()
 {
   orig_pkg="$1"
-  name="$2"
+  pkg_name="$(get_name $orig_pkg)"
   tmp="/tmp/PKGBUILD"
 
   # add desktop file to install list
@@ -320,8 +325,8 @@ modify_pkgbuild()
     seen=1} {print}' | \
     tac > $tmp
   add_dep $tmp
-  add_source $tmp $name
-  add_shasum $tmp "$(dirname $orig_pkg)/$name"
+  add_source $tmp
+  add_shasum $tmp "$(dirname $orig_pkg)/ba-${pkg_name}.desktop"
 
   if [ ! -z "$ICON" ]; then
     tac $tmp | \
@@ -330,8 +335,8 @@ modify_pkgbuild()
       seen=1} {print}' | \
       tac > "${tmp}.mod"
     mv "${tmp}.mod" $tmp
-    add_source $tmp "$(get_name $orig_pkg).png"
-    add_shasum $tmp "$(dirname $orig_pkg)/$(get_name $orig_pkg).png"
+    add_source $tmp "${pkg_name}.png"
+    add_shasum $tmp "$(dirname $orig_pkg)/${pkg_name}.png"
   fi
 
   # add blackarch-menus as dependency
@@ -374,7 +379,7 @@ Terminal=true
 Type=Application
 Categories="$categories"
 EOF
-  modify_pkgbuild "$pkg" "ba-${name}.desktop"
+  modify_pkgbuild "$pkg"
 }
 
 # Generate ba-*.desktop files for all packages
