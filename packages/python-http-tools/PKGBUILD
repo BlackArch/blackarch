@@ -1,47 +1,36 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-http-tools
-pkgname=('python2-http-tools' 'python-http-tools')
+pkgname=python-http-tools
 _pkgname=http-tools
 pkgver=2.0.0
-pkgrel=1
+pkgrel=2
 pkgdesc='httptools helps you to capture, repeat and live intercept HTTP requests. It is built on top of [mitmproxy].'
 arch=('any')
 url='https://pypi.org/project/http-tools/#files'
 license=('GPL3')
-makedepends=('python2-setuptools' 'python-setuptools')
+depends=('python' 'mitmproxy')
+makedepends=('python-setuptools')
 source=("https://files.pythonhosted.org/packages/c9/2f/86f81c421c993f2c64d067351f258240a3d8f443d2b7d263fb1579e40e63/$_pkgname-$pkgver.tar.gz")
 sha512sums=('0e0858713cbef5f87dde4172647c3cc42afd299496700c01607cec9e055746b48a54481bba96aa068b4e2807829464139ad9203165a19be3aa77d57b32d98965')
 
 prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
+  cd $_pkgname-$pkgver
+
+  sed -i 's/==5.3.0//' setup.py
+  # Workaround until https://github.com/MobSF/httptools/pull/4 is merged
+  sed -i 's/mitmproxy.tools._main/mitmproxy.tools.main/' http_tools/modules/runner.py
 }
 
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
+  cd $_pkgname-$pkgver
 
   python setup.py build
 }
 
-package_python2-http-tools() {
-  depends=('python2')
+package() {
 
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
-
-  mv "$pkgdir/usr/bin/httptools" "$pkgdir/usr/bin/httptools2"
-}
-
-package_python-http-tools() {
-  depends=('python')
-
-  cd "$_pkgname-$pkgver"
+  cd $_pkgname-$pkgver
 
   python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
 }
