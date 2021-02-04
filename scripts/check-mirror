@@ -1,28 +1,36 @@
-#!/bin/sh
-#
-# check for outdated mirrors
+#!/bin/python3
 
-if [ $# != 1 ]
-then
-  echo 'usage: check-mirror <mirrorlist>'
-  exit 1
-else
-  mirror_list="${1}"
-fi
+import requests
 
-file='lastupdate'
-urls=$(cut -d '|' -f 2 $mirror_list | egrep -v 'ftpes|blackarch.org' |
-  cut -d '$' -f 1)
-epoch=$(curl -sm 10 --connect-timeout 5 https://blackarch.org/blackarch/$file)
+BASE_URL="https://www.blackarch.org/blackarch/lastupdate"
+MIRROR_LIST="https://raw.githubusercontent.com/BlackArch/blackarch/master/mirror/mirror.lst"
 
-echo "epoch: $epoch"
-for url in $urls
-do
-  mirror_epoch=$(curl -ks --connect-timeout 5 -m 10 "${url}${file}" | head -1)
+if __name__ == "__main__":
+    #check_mirror(requests.get(MIRROR_LIST), requests.get(BASE_URL).text)
+    mirrorlist = requests.get(MIRROR_LIST)
+    lastupdate = requests.get(BASE_URL).text
 
-  if [ "$epoch" != "$mirror_epoch" ]
-  then
-    echo "outdated or broken mirror: $url ($mirror_epoch)"
-  fi
-done
+    for line in mirrorlist.iter_lines():
+        try:
+            country, url, name = str(line).split('|')
+            name = name.strip('\'')
+            url = url.replace("$repo/os/$arch", "lastupdate")
+        except:
+            print("[SOMETHING IS WRONG] Error: {}.".format(line))
+
+        try:
+            r = requests.get(url, stream=True)
+            repo_statuscode = r.status_code
+            repo_lastupdate = r.text
+
+            if repo_lastupdate < lastupdate:
+                print("[OUT OF DATE] - {} -> {}".format(name, url))
+            elif repo_lastupdate > lastupdate:
+                print("[SOMETHING IS WRONG] - {} -> {}".format(name, url))
+            else:
+                print("[IN SYNC] - {} -> {}".format(name, url))
+        except:
+            print("[HOST DOWN?] - {} -> {}".format(name, url))
+
+
 
