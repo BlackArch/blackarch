@@ -2,9 +2,8 @@
 # See COPYING for license details.
 
 pkgname=chipsec
-pkgver=1069.f27ad9d
-pkgrel=1
-epoch=4
+pkgver=1070.7966175
+pkgrel=2
 pkgdesc='Platform Security Assessment Framework.'
 groups=('blackarch' 'blackarch-hardware' 'blackarch-binary' 'blackarch-forensic'
         'blackarch-scanner' 'blackarch-fuzzer')
@@ -13,39 +12,48 @@ url='https://github.com/chipsec/chipsec'
 license=('GPL2')
 depends=('dkms' 'libelf' 'linux-headers' 'nasm' 'python' 'python-lxml')
 makedepends=('git' 'python-setuptools')
-source=("git+https://github.com/chipsec/$pkgname.git")
-sha512sums=('SKIP')
+source=(
+  "git+https://github.com/chipsec/${pkgname}.git"
+  "Makefile.patch")
+sha512sums=('SKIP'
+            'db20e5be31325ac64d1640cec233b9428101c95f434d745f187fc218136fb708a5bbe0c0fea84f389567d58ceb9db0313e08ffcf386a3f895fe9db48d43db629')
 
 pkgver() {
-  cd $pkgname
+  cd ${pkgname}
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd ${srcdir}/${pkgname}/drivers/linux
+  
+  patch -Np0 < ${srcdir}/Makefile.patch
+}
+
 build() {
-  cd $pkgname
+  cd ${pkgname}
 
   python setup.py build
 }
 
 package() {
-  cd $pkgname
+  cd ${pkgname}
 
-  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build \
+  python setup.py install --prefix=/usr --root="${pkgdir}" -O1 --skip-build \
     --skip-driver
 
   install -Dm 644 drivers/linux/dkms.conf \
-    "$pkgdir/usr/src/$pkgname-$pkgver/dkms.conf"
+    "${pkgdir}/usr/src/${pkgname}-$pkgver/dkms.conf"
   cp -a --no-preserve=ownership drivers/linux/* \
-    "$pkgdir/usr/src/$pkgname-$pkgver/"
+    "${pkgdir}/usr/src/${pkgname}-$pkgver/"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md \
+  install -Dm 644 -t "${pkgdir}/usr/share/doc/${pkgname}/" README.md \
     chipsec-manual.pdf
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE COPYING
+  install -Dm 644 -t "${pkgdir}/usr/share/licenses/${pkgname}/" LICENSE COPYING
 
-  rm -rf "$pkgdir/usr/chipsec-manual.pdf"
+  rm -f "${pkgdir}/usr/chipsec-manual.pdf"
 
-  for i in "$pkgdir/usr/bin/"*; do
+  for i in "${pkgdir}/usr/bin/"*; do
     mv $i "$(echo $i | tr -s '_' '-')"
   done
 }
