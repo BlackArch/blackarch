@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=netkit-rusers
+pkgver=0.17
+pkgrel=1
+pkgdesc='Logged in users; Displays who is logged in to machines on local network.'
+groups=('blackarch' 'blackarch-recon')
+arch=('x86_64' 'aarch64')
+url='https://packages.debian.org/source/sid/net/netkit-rusers'
+license=('BSD')
+depends=('glibc' 'rpcsvc-proto' 'libtirpc-compat')
+source=("http://deb.debian.org/debian/pool/main/n/netkit-rusers/${pkgname}_${pkgver}.orig.tar.gz")
+sha512sums=('4bc64ead60941c7d92f9d45f18806bd8575441d95d5d2679a718cec58a31001b1b7320d34e20bd7f2f6b5072fc703e003b97c7cfde014d73a767c8e4d3f2b9b6')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  ./configure --prefix=/usr --installroot="$pkgdir"
+
+  make LDFLAGS=-ltirpc
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -dm 755 "$pkgdir/usr/"{bin,sbin,share,man/man1,man/man8}
+
+  make install
+
+  mv "$pkgdir/usr/sbin/"* "$pkgdir/usr/bin"
+  mv "$pkgdir/usr/man" "$pkgdir/usr/share/man"
+
+  rmdir "$pkgdir/usr/sbin"
+}
+
