@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=venom
+_pkgname=Venom
+pkgver=135.2b84e68
+pkgrel=1
+pkgdesc='A Multi-hop Proxy for Penetration Testers.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-proxy')
+url='https://github.com/Dliv3/Venom'
+license=('MIT')
+depends=()
+makedepends=('git' 'go')
+source=("git+https://github.com/Dliv3/$_pkgname.git")
+sha512sums=('SKIP')
+_url='github.com/Dliv3/Venom/...'
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  mkdir -p $_url && \
+    rm -rf $_url && \
+    mv $_pkgname $_url && \
+    cd $_url
+
+  GOPATH="$srcdir" GO111MODULE=auto go get -u "$_url"
+  cd $srcdir/$_url && \
+    ./build.sh
+}
+
+package() {
+  cd $srcdir/$_url
+
+  install -Dm 755 release/admin_linux_x64 "$pkgdir/usr/bin/venom_admin"
+
+  install -dm 644 "$pkgdir/usr/share/$pkgname/release/admin"
+  install -dm 644 "$pkgdir/usr/share/$pkgname/release/agent"
+  install -dm 644 "$pkgdir/usr/share/$pkgname/release/scripts"
+
+  install -Dm 755 release/admin* "$pkgdir/usr/share/$pkgname/release/admin/"
+  install -Dm 755 release/agent* "$pkgdir/usr/share/$pkgname/release/agent/"
+  install -Dm 755 release/scripts/*.py "$pkgdir/usr/share/$pkgname/release/scripts/"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "$srcdir/$_url/README.md"
+  install -Dm 644 "$srcdir/$_url/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
