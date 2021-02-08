@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=syft
+pkgver=490.8d838b1
+pkgrel=1
+pkgdesc='A CLI tool and go library for generating a Software Bill of Materials (SBOM) from container images and filesystems.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-forensic')
+url='https://github.com/anchore/syft'
+license=('Apache2')
+depends=()
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/anchore/$pkgname.git")
+sha512sums=('SKIP')
+_url='github.com/anchore/syft/...'
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  mkdir -p $_url && \
+    rm -rf $_url && \
+    mv $pkgname $_url && \
+    cd $_url
+
+  GOPATH="$srcdir" GO111MODULE=auto go get -u "$_url"
+  GOPATH="$srcdir" go build -v $_url
+}
+
+package() {
+  cd $_url
+
+  install -Dm 755 "$srcdir/bin/syft" "$pkgdir/usr/bin/syft"
+  install -Dm 755 "$srcdir/bin/json" "$pkgdir/usr/bin/json"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" \
+    "$srcdir/$_url/README.md"
+  install -Dm 644 "$srcdir/$_url/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
