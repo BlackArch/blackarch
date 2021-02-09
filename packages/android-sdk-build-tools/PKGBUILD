@@ -1,6 +1,5 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
-
 # Contributor: xgdgsc <xgdgsc @t gmail dot com>
 
 _android=android-11
@@ -10,10 +9,9 @@ pkgver=r30.0.3
 pkgrel=1
 pkgdesc='Build-Tools for Google Android SDK (aapt, aidl, dexdump, dx, llvm-rs-cc)'
 arch=('x86_64' 'aarch64')
-url='http://developer.android.com/sdk/index.html'
+url='https://developer.android.com/studio/releases/build-tools'
 license=('custom:unknown')
-depends_i686=('gcc-libs' 'zlib')
-depends_x86_64=('lib32-gcc-libs' 'lib32-zlib')
+depends=('zlib')
 source=("https://dl-ssl.google.com/android/repository/build-tools_$pkgver-linux.zip")
 sha512sums=('7e5d1f672b249d074ba3b1a175bff987983d8e47c573856d5088ebde0be2db0de83c9ee8b8d4a99a358040d50e67a5a135a593feca8997921d818e2d74cdc090')
 options=('!strip')
@@ -23,13 +21,15 @@ package() {
 
   ver=$(cat "${srcdir}/$_android/source.properties" |grep ^Pkg.Revision=|sed 's/Pkg.Revision=\([0-9.]*\).*/\1/')
 
-  install -dm 755 "$pkgdir/opt/$_sdk/build-tools/$ver"
+  install -dm 755 "opt/$_sdk/build-tools/$ver"
+  install -dm 755 "usr/bin"
   install -Dm 644 "$srcdir/$_android/NOTICE.txt" usr/share/licenses/$pkgname/NOTICE.txt
-  # mkdir -p opt etc/profile.d
-  # echo 'export PATH=$PATH:/opt/android-sdk/build-tools/'"$_ver/" > etc/profile.d/${pkgname}.sh
-  # echo 'setenv PATH ${PATH}:/opt/android-sdk/build-tools/'"$_ver/" > etc/profile.d/${pkgname}.csh
-  # chmod 755 etc/profile.d/${pkgname}.{csh,sh}
-  cp -r "$srcdir/$_android/"* "$pkgdir/opt/$_sdk/build-tools/$ver"
+  cp -r "$srcdir/$_android/"* "opt/$_sdk/build-tools/$ver"
   chmod +Xr -R "$pkgdir/opt/$_sdk/build-tools/$ver"
+  
+  binaries=("aapt" "aapt2" "aidl" "apksigner" "bcc_compat" "d8" "dexdump" "dx" "llvm-rs-cc" "mainDexClasses" "split-select" "zipalign")
+  for f in "${binaries[@]}"
+  do
+    ln -s "/opt/$_sdk/build-tools/$ver/$f" "usr/bin/$f"
+  done
 }
-
