@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=subjs
+pkgver=32.2aeaa83
+pkgrel=1
+pkgdesc='Fetches javascript file from a list of URLS or subdomains.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch')
+url='https://github.com/lc/subjs'
+license=('MIT' 'blackarch-webapp' 'blackarch-recon')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/lc/$pkgname.git")
+sha512sums=('SKIP')
+_url='github.com/lc/subjs'
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
+    cd "src/$_url"
+
+  GOPATH="$srcdir" go get -v -d $_url
+  GOPATH="$srcdir" go build -v $_url
+}
+
+package() {
+  cd "src/$_url"
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
