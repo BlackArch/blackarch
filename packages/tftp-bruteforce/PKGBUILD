@@ -2,31 +2,29 @@
 # See COPYING for license details.
 
 pkgname=tftp-bruteforce
+_pkgname=TFTP-bruteforce
 pkgver=0.1
-pkgrel=7
+pkgrel=9
 pkgdesc='A fast TFTP filename bruteforcer written in perl.'
 url='http://www.hackingexposedcisco.com/'
 groups=('blackarch' 'blackarch-cracker')
 license=('LGPL')
 depends=('perl')
 arch=('any')
-source=('http://dl.packetstormsecurity.net/UNIX/audit/TFTP-bruteforce.tar.gz')
+source=("http://dl.packetstormsecurity.net/UNIX/audit/$_pkgname.tar.gz")
 sha512sums=('903c1f7671dc001ed4329dad54c294b00746a8479654199c506bb1faf7c0f95f4a23c20fd39948167078016f3bea36b3ac025fe5de648cc9cdfeda4f881c16b1')
 
+prepare() {
+  cd $_pkgname
+
+  sed -i '11s/brutefile.txt/\/usr\/share\/tftp-bruteforce\/brutefile.txt/' tftpbrute.pl
+}
+
 package() {
-  cd TFTP-bruteforce
+  cd $_pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" tftpbrute.pl brutefile.txt
+  install -Dm 755 tftpbrute.pl "$pkgdir/usr/bin/tftpbrute"
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" brutefile.txt
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.txt
-
-  cat > "$pkgdir/usr/bin/tftpbrute" << EOF
-#!/bin/sh
-exec /usr/share/$pkgname/tftpbrute.pl
-EOF
-
-  chmod +x "$pkgdir/usr/bin/tftpbrute"
 }
 

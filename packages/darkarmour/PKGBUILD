@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=darkarmour
+pkgver=4.f10228a
+pkgrel=1
+pkgdesc='Store and execute an encrypted windows binary from inside memory, without a single bit touching disk.'
+arch=('any')
+groups=('blackarch' 'blackarch-windows' 'blackarch-malware')
+url='https://github.com/bats3c/darkarmour'
+license=('MIT')
+depends=('python' 'python-argparse' 'mingw-w64-binutils' 'mingw-w64-headers'
+         'mingw-w64-crt' 'mingw-w64-winpthreads' 'mingw-w64-gcc' 'upx'
+         'osslsigncode')
+makedepends=('git')
+source=("git+https://github.com/bats3c/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" LICENSE
+
+  rm README.md LICENSE
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
