@@ -2,7 +2,6 @@
 # See COPYING for license details.
 
 pkgname=jwt-tool
-_pkgname=jwt_tool
 pkgver=52.3d92dcd
 pkgrel=1
 pkgdesc='Toolkit for validating, forging and cracking JWTs (JSON Web Tokens).'
@@ -10,21 +9,38 @@ arch=('any')
 groups=('blackarch' 'blackarch-cracker')
 url='https://github.com/ticarpi/jwt_tool'
 license=('GPL3')
-depends=('python' 'python-pycryptodomex')
+depends=('python' 'python-pycryptodomex' 'python-termcolor' 'python-cprint'
+         'python-pycryptodomex' 'python-requests')
 makedepends=('git')
-source=("git+https://github.com/ticarpi/$_pkgname.git")
+source=("$pkgname::git+https://github.com/ticarpi/jwt_tool.git")
 sha512sums=('SKIP')
 
 pkgver() {
-  cd $_pkgname
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd $_pkgname
+  cd $pkgname
 
-  install -Dm 755 "$_pkgname.py" "$pkgdir/usr/bin/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  rm README.md LICENSE setup.txt requirements.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+
+cd /usr/share/$pkgname
+exec python jwt_tool.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
