@@ -10,8 +10,9 @@ groups=('blackarch' 'blackarch-windows' 'blackarch-exploitation')
 url='https://github.com/bats3c/shad0w'
 license=('MIT')
 depends=('python' 'python-cffi' 'donut' 'python-flask' 'python-pefile' 'python-prettytable'
-         'python-prompt_toolkit' 'python-pygments' 'python-pyopenssl' 'python-requests')
-makedepends=('git' 'python-setuptools')
+         'python-prompt_toolkit' 'python-pygments' 'python-pyopenssl' 'python-requests'
+         'mingw-w64-gcc' 'upx' 'nasm' 'mono' 'dotnet-sdk' 'metasploit')
+makedepends=('git' 'wget' 'python-setuptools')
 source=("git+https://github.com/bats3c/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -21,8 +22,21 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  find . -type f -name '*.pyc' -exec rm -r {} \;
+  for i in `grep -r -i '/root/shad0w' * | cut -d ":" -f 1 | uniq`; \
+    do sed -i 's/\/root\/shad0w/\/usr\/share\/shad0w/g' $i; done
+}
+
 package() {
   cd $pkgname
+  
+  wget https://packages.microsoft.com/config/ubuntu/20.10/packages-microsoft-prod.deb \
+    -O /tmp/packages-microsoft-prod.deb
+  ar x /tmp/packages-microsoft-prod.deb --output=/tmp/
+  tar xf /tmp/data.tar.gz -C "$pkgdir"
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
@@ -32,6 +46,7 @@ package() {
 
   rm README.md LICENSE
 
+  cp -a --no-preserve=ownership .bridge/ "$pkgdir/usr/share/$pkgname"
   cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
