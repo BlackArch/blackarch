@@ -26,3 +26,4 @@ COPY --chown=builder:users . .
 ENTRYPOINT ["makepkg"]
 
 CMD ["-s", "-f", "--noconfirm", "--needed", "--noprogressbar"]
+
