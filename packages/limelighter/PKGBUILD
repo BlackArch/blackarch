@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=limelighter
+_pkgname=Limelighter
+pkgver=16.c808c3c
+pkgrel=1
+pkgdesc='A tool for generating fake code signing certificates or signing real ones.'
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-windows')
+url='https://github.com/Tylous/Limelighter'
+license=('MIT')
+depends=('glibc' 'openssl' 'osslsigncode')
+makedepends=('git' 'go-pie')
+source=("$pkgname::git+https://github.com/Tylous/Limelighter.git")
+sha512sums=('SKIP')
+_url='github.com/Tylous/Limelighter'
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
+    cd "src/$_url"
+
+  GOPATH="$srcdir" go get -v $_url
+}
+
+package() {
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 bin/$_pkgname "$pkgdir/usr/bin/$pkgname"
+
+  cd "src/$_url"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
