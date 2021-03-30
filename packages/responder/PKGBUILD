@@ -9,17 +9,26 @@ pkgdesc='A LLMNR and NBT-NS poisoner, with built-in HTTP/SMB/MSSQL/FTP/LDAP rogu
 groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-spoof'
         'blackarch-networking')
 arch=('any')
-depends=('python2' 'python2-configparser' 'python2-pycryptodome')
+depends=('impacket' 'mingw-w64-gcc' 'python' 'python-cryptography'
+         'python-pycryptodome')
 makedepends=('git')
 url='https://github.com/lgandx/Responder'
 license=('GPL3')
 source=("$pkgname::git+https://github.com/lgandx/Responder.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname/tools
+
+  x86_64-w64-mingw32-gcc ./MultiRelay/bin/Runas.c -o ./MultiRelay/bin/Runas.exe -municode -lwtsapi32 -luserenv
+  x86_64-w64-mingw32-gcc ./MultiRelay/bin/Syssvc.c -o ./MultiRelay/bin/Syssvc.exe -municode
 }
 
 package() {
@@ -39,7 +48,7 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 Responder.py "\$@"
+exec python Responder.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
@@ -48,7 +57,7 @@ EOF
   cat > "$pkgdir/usr/bin/$pkgname-dumphash" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 DumpHash.py "\$@"
+exec python DumpHash.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-dumphash"
@@ -57,7 +66,7 @@ EOF
   cat > "$pkgdir/usr/bin/$pkgname-report" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 Report.py "\$@"
+exec python Report.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-report"
@@ -66,7 +75,7 @@ EOF
   cat > "$pkgdir/usr/bin/$pkgname-dhcp" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/tools
-exec python2 DHCP.py "\$@"
+exec python DHCP.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-dhcp"
@@ -80,20 +89,11 @@ EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-dhcp-auto"
 
-  # Responder FindSMB2Uptime
-  cat > "$pkgdir/usr/bin/$pkgname-findsmb2uptime" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname/tools
-exec python2 FindSMB2UPTime.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname-findsmb2uptime"
-
   # Responder FindSQLSrv
   cat > "$pkgdir/usr/bin/$pkgname-findsqlsrv" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/tools
-exec python2 FindSQLSrv.py "\$@"
+exec python FindSQLSrv.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-findsqlsrv"
@@ -102,7 +102,7 @@ EOF
   cat > "$pkgdir/usr/bin/$pkgname-icmp-redirect" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/tools
-exec python2 Icmp-Redirect.py "\$@"
+exec python Icmp-Redirect.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-icmp-redirect"
@@ -111,7 +111,7 @@ EOF
   cat > "$pkgdir/usr/bin/$pkgname-multirelay" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/tools
-exec python2 MultiRelay.py "\$@"
+exec python MultiRelay.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-multirelay"
@@ -120,36 +120,18 @@ EOF
   cat > "$pkgdir/usr/bin/$pkgname-runfinger" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/tools
-exec python2 RunFinger.py "\$@"
+exec python RunFinger.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-runfinger"
 
-  # Responder cachedump
-  cat > "$pkgdir/usr/bin/$pkgname-cachedump" << EOF
+  # Responder's Impacket secretsdump
+  cat > "$pkgdir/usr/bin/$pkgname-secretsdump" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname/tools/MultiRelay/creddump
-exec python2 cachedump.py "\$@"
+cd /usr/share/$pkgname/tools/MultiRelay/impacket-dev
+exec python secretsdump.py "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/$pkgname-cachedump"
-
-  # Responder lsadump
-  cat > "$pkgdir/usr/bin/$pkgname-lsadump" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname/tools/MultiRelay/creddump
-exec python2 lsadump.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname-lsadump"
-
-  # Responder pwdump
-  cat > "$pkgdir/usr/bin/$pkgname-pwdump" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname/tools/MultiRelay/creddump
-exec python2 pwdump.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname-pwdump"
+  chmod +x "$pkgdir/usr/bin/$pkgname-secretsdump"
 }
 
