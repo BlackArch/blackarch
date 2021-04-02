@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# AUR Maintainer:  b00rt00s <b00rt00s.aur@gmail.com>
+# AUR Contributor: Iyán Méndez Veiga <me (at) iyanmv (dot) com>
+# AUR Contributor: Shaun Ren <shaun DOT ren (at) linux (dOt) com>
+# AUR Contributor: Simon Hanna <simon DOT hanna (at) serve-me (dOt) info>
+
+pkgname=rtl8814au-aircrack-dkms
+_pkgname=rtl8814au
+pkgver=94.bdf80b5
+pkgrel=1
+pkgdesc='Aircrack-ng kernel module for Realtek (USB adapters only) network cards
+with 8814au chipset.'
+url='https://github.com/aircrack-ng/rtl8814au'
+license=('GPL')
+arch=('x86_64' 'aarch64')
+makedepends=('git')
+depends=('dkms')
+replaces=('rtl8814au-dkms-git')
+conflicts=('rtl8814au-dkms-git')
+source=("git+https://github.com/aircrack-ng/$_pkgname.git"
+        'dkms.conf')
+
+sha256sums=('SKIP'
+            'b48a357efd1fd4365741c7cd5993619f60e518061e61fcb1c438f54b2d08149d')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  # Set name and version
+  sed -e "s/@_PKGBASE@/$_pkgname-dkms/" \
+  -e "s/@PKGVER@/$pkgver/" \
+  -i dkms.conf
+}
+
+package() {
+  cd $_pkgname
+
+  install -Dm 755 "$srcdir/dkms.conf" \
+    "$pkgdir/usr/src/$_pkgname-$pkgver/dkms.conf"
+
+  cp -r * "$pkgdir/usr/src/$_pkgname-$pkgver"
+}
+
