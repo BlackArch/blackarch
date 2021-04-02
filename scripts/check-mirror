@@ -8,8 +8,17 @@ BASE_URL='https://www.blackarch.org/blackarch/lastupdate'
 MIRROR_LIST='https://raw.githubusercontent.com/BlackArch/blackarch/master/mirror/mirror.lst'
 THX = 30
 
+states = {
+  'isync':  0,
+  'osync':  0,
+  'wrong':  0,
+  'down':   0,
+}
+
 
 def check(sess, url, name, lastupdate):
+  global states
+
   try:
     r = sess.get(url, stream=True)
     repo_statuscode = r.status_code
@@ -17,12 +26,16 @@ def check(sess, url, name, lastupdate):
 
     if repo_lastupdate < lastupdate:
       print(f'[OUT OF DATE] - {name} -> {url}')
+      states['osync'] = states['osync'] + 1
     elif repo_lastupdate > lastupdate:
       print(f'[SOMETHING IS WRONG] - {name} -> {url}')
+      states['wrong'] = states['wrong'] + 1
     else:
       print(f'[IN SYNC] - {name} -> {url}')
+      states['isync'] = states['isync'] + 1
   except:
     print(f'[HOST DOWN?] - {name} -> {url}')
+    states['down'] = states['down'] + 1
 
   return
 
@@ -31,9 +44,10 @@ def main():
   sess = requests.Session()
   mirrorlist = sess.get(MIRROR_LIST)
   lastupdate = sess.get(BASE_URL).text
+  num = 1
 
   with ThreadPoolExecutor(THX) as exe:
-    for line in mirrorlist.iter_lines():
+    for num, line in enumerate(mirrorlist.iter_lines()):
       try:
         country, url, name = str(line).split('|')
         name = name.strip('\'')
@@ -42,6 +56,16 @@ def main():
         print(f'[SOMETHING IS WRONG] Error: {line}.')
 
       exe.submit(check, sess, url, name, lastupdate)
+
+  print()
+  print('=' * 80)
+  print(f'''
+checked:      {num}
+in sync:      {states['isync']}
+out of sync:  {states['osync']}
+down:         {states['down']}
+wrong:        {states['wrong']}
+  ''')
 
   return
 
