@@ -10,11 +10,15 @@ THX = 25
 TIMEOUT = 10
 
 states = {
-  'isync':  0,
-  'osync':  0,
-  'wrong':  0,
-  'down':   0,
-  'iperc':  0,
+  'isync':      [],
+  'osync':      [],
+  'wrong':      [],
+  'down':       [],
+  'isync_num':  0,
+  'osync_num':  0,
+  'wrong_num':  0,
+  'down_num':   0,
+  'iperc_num':  0,
 }
 
 
@@ -27,20 +31,53 @@ def check(url, name, lastupdate):
     repo_lastupdate = r.text
 
     if repo_lastupdate < lastupdate:
-      print(f'[OUT OF DATE] - {name} -> {url}')
-      states['osync'] = states['osync'] + 1
+      #print(f'[OUT OF DATE] - {name} -> {url}')
+      states['osync'].append(f'{name} -> {url}')
+      states['osync_num'] = states['osync_num'] + 1
     elif repo_lastupdate > lastupdate:
-      print(f'[SOMETHING IS WRONG] - {name} -> {url}')
-      states['wrong'] = states['wrong'] + 1
+      #print(f'[SOMETHING IS WRONG] - {name} -> {url}')
+      states['wrong'].append(f'{name} -> {url}')
+      states['wrong_num'] = states['wrong_num'] + 1
     else:
-      print(f'[IN SYNC] - {name} -> {url}')
-      states['isync'] = states['isync'] + 1
+      #print(f'[IN SYNC] - {name} -> {url}')
+      states['isync'].append(f'{name} -> {url}')
+      states['isync_num'] = states['isync_num'] + 1
   except:
-    print(f'[HOST DOWN?] - {name} -> {url}')
-    states['down'] = states['down'] + 1
+    #print(f'[HOST DOWN?] - {name} -> {url}')
+    states['down'].append(f'{name} -> {url}')
+    states['down_num'] = states['down_num'] + 1
 
   return
 
+
+def print_stats(total):
+  global states
+
+  print('[IN SYNC]\n')
+  for i in states['isync']:
+    print(i)
+  print('\n[OUT OF SYNC]\n')
+  for i in states['osync']:
+    print(i)
+  print('\n[WRONG]\n')
+  for i in states['wrong']:
+    print(i)
+  print('\n[DOWN]\n')
+  for i in states['down']:
+    print(i)
+
+  states['iperc_num'] = round((states['isync_num'] / total) * 100)
+  print()
+  print('=' * 80)
+  print(f'''
+in sync:      {states['isync_num']} ({states['iperc_num']}%)
+out of sync:  {states['osync_num']}
+down:         {states['down_num']}
+wrong:        {states['wrong_num']}
+total:        {total}
+  ''')
+
+  return
 
 def main():
   sess = requests.Session()
@@ -48,6 +85,7 @@ def main():
   lastupdate = sess.get(BASE_URL).text
   num = 1
 
+  print('[+] checking mirror sites, please wait...\n')
   with ThreadPoolExecutor(THX) as exe:
     for num, line in enumerate(mirrorlist.iter_lines()):
       try:
@@ -55,20 +93,11 @@ def main():
         name = name.strip('\'')
         url = url.replace('$repo/os/$arch', 'lastupdate').rstrip('/')
       except:
-        print(f'[SOMETHING IS WRONG] Error: {line}.')
+        print(f'[-] Error: {line}.')
 
       exe.submit(check, url, name, lastupdate)
 
-  states['iperc'] = round((states['isync'] / num) * 100)
-  print()
-  print('=' * 80)
-  print(f'''
-in sync:      {states['isync']} ({states['iperc']}%)
-out of sync:  {states['osync']}
-down:         {states['down']}
-wrong:        {states['wrong']}
-total:        {num}
-  ''')
+  print_stats(num)
 
   return
 
