@@ -1,0 +1,60 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=kiterunner
+pkgver=11.e7a7fa6
+pkgrel=1
+pkgdesc='Contextual Content Discovery Tool.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner' 'blackarch-webapp')
+url='https://github.com/assetnote/kiterunner'
+license=('AGPL3')
+depends=('glibc')
+makedepends=('git' 'go-pie')
+source=("git+https://github.com/assetnote/$pkgname.git"
+        "https://wordlists-cdn.assetnote.io/data/kiterunner/routes-large.kite.tar.gz"
+        "https://wordlists-cdn.assetnote.io/data/kiterunner/routes-small.kite.tar.gz")
+sha512sums=('SKIP'
+            '5d5dbbb0618f805f6e6a9a8464693a49fb0f670babf161348d1b99e790af97cd9e9be5573949ce3637e84ccaa4b888bedd42192737dd26b5796d1934ba5d9c68'
+            '1d0c626eced818fc15d9b3bd20416fbd4524268abe1c5850ec9245d1ecf4a721a0962fa1ee9dce1aa1164d5369ba24c419e8e76aae8f1359d6360a5a7bf799e1')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  GO111MODULE=auto GOPATH="$srcdir" go get -v -d -t .
+
+  mkdir -p dist
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" GOOS="linux" go build -v -tags "netgo osusergo" \
+    -a -ldflags "-extld 'g++' -extldflags '-static'" \
+    -o dist/$pkgname ./cmd/$pkgname
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 755 dist/$pkgname "$pkgdir/usr/bin/$pkgname"
+
+  install -Dm 644 "$srcdir/routes-large.kite" \
+    "$pkgdir/usr/share/$pkgname/"
+  install -Dm 644 "$srcdir/routes-small.kite" \
+    "$pkgdir/usr/share/$pkgname/"
+
+  install -Dm 644 readme.md \
+    "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 644 LICENSE \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
