@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sip5
+_pkgname=sip
+pkgver=5.5.0
+_pyver=3.9
+pkgrel=1
+arch=('x86_64' 'aarch64')
+pkgdesc='A tool that makes it easy to create Python bindings for C and C++ libraries.'
+url='https://www.riverbankcomputing.com/software/sip/intro'
+license=('custom:sip')
+depends=('python' 'python-toml')
+makedepends=('python-setuptools')
+source=("https://pypi.python.org/packages/source/s/sip/$_pkgname-$pkgver.tar.gz")
+sha512sums=('0122beab575239cdb3b1430dc53a7f74175e3fbb3e113bcafced122ffbc4bd3d339b64a672ac1319ea14cd540b5877c2bcfeb7f8821fe8a3c8ba3ce9744bf803')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  mv "$pkgdir/usr/lib/python${_pyver}/site-packages/sipbuild" \
+    "$pkgdir/usr/lib/python${_pyver}/site-packages/sipbuild5"
+
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i "${i}5"
+  done
+}
+

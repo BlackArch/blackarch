@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gitrecon
+pkgver=30.6467e78
+pkgrel=1
+pkgdesc="OSINT tool to get information from a Github and Gitlab profile and find user's email addresses leaked on commits."
+groups=('blackarch' 'blackarch-recon' 'blackarch-social')
+arch=('any')
+url='https://github.com/GONZOsint/gitrecon'
+license=('custom:unknown')
+depends=('python' 'python-requests' 'python-rich')
+makedepends=('git')
+source=("git+https://github.com/GONZOsint/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  mv modules mods
+
+  sed -i 's|from modules|from mods|i' "$pkgname.py"
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md requirements.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

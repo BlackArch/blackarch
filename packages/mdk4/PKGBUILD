@@ -3,42 +3,37 @@
 
 pkgname=mdk4
 pkgver=29.002f64a
-pkgrel=3
+pkgrel=4
 groups=('blackarch' 'blackarch-wireless' 'blackarch-fuzzer')
 pkgdesc='Proof-of-Concept tool to exploit common IEEE 802.11 protocol weaknesses.'
 arch=('x86_64' 'aarch64')
 license=('GPL3')
 url='https://github.com/aircrack-ng/mdk4'
-depends=('glibc' 'libpcap' 'libnl' 'linux-headers')
+depends=('libpcap')
 makedepends=('git')
 source=("git+https://github.com/aircrack-ng/$pkgname.git"
         'Makefile.patch')
 sha512sums=('SKIP'
-            '1dd19d230d826b02f72050fca31c0df5db7be1655959d2bb47d5b5140bb4e6c05be4f95f181cc57af37c6d01c19980b00ab0c3e2d98c4778b084f5906cc0bc12')
+            'ba6e75848f80090b2a614811bfe3d789f199834a652cf7d1f9e24e0c34221b424d4553be1ef83d3cf2154f85c94f784e3824f2080e4d786c8f811e01423b746e')
 
 prepare() {
   cd $pkgname
 
   patch < "$srcdir/Makefile.patch"
-
-  sed -i "s|-g -O3|$CFLAGS|g" Makefile
-
-  sed 's|sbin|bin|g' -i "src/Makefile"
+  sed "s|$(PREFIX)/sbin|$(PREFIX)/bin|g" -i src/Makefile
 }
 
 build() {
   cd $pkgname
 
-  make
+  CFLAGS="-fcommon" make
 }
 
 package() {
   cd $pkgname
 
-  make DESTDIR="$pkgdir" install
+  CFLAGS="-fcommon" make DESTDIR="$pkgdir" install
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md AUTHORS \
-    CHANGELOG
-  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" docs/*.html README.md
 }
 

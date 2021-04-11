@@ -1,0 +1,58 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=shad0w
+pkgver=375.bfc3437
+pkgrel=1
+pkgdesc='A modular C2 framework designed to successfully operate on mature environments.'
+arch=('any')
+groups=('blackarch' 'blackarch-windows' 'blackarch-exploitation')
+url='https://github.com/bats3c/shad0w'
+license=('MIT')
+depends=('python' 'python-cffi' 'donut' 'python-flask' 'python-pefile' 'python-prettytable'
+         'python-prompt_toolkit' 'python-pygments' 'python-pyopenssl' 'python-requests'
+         'mingw-w64-gcc' 'upx' 'nasm' 'mono' 'dotnet-sdk' 'metasploit')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/bats3c/$pkgname.git"
+        'https://packages.microsoft.com/config/ubuntu/20.10/packages-microsoft-prod.deb')
+sha512sums=('SKIP'
+            '71818840ca12119c063872426db71bd37f74d0251d47e22cd3b1bf41cfe79032ade8332f1363b16a2084cd9490dcc7facb1e20ff7e5222f11dca1e94d39a85ad')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  find ./ -iname *.pyc | xargs rm
+  grep -Irl '/root/shad0w/' ./ | xargs sed -i 's/\/root\/shad0w/\/usr\/share\/shad0w/g'
+}
+
+package() {
+  cd $pkgname
+  
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" LICENSE
+
+  rm README.md LICENSE
+
+  cp -a --no-preserve=ownership .bridge/ "$pkgdir/usr/share/$pkgname"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname"
+
+  tar xf $srcdir/data.tar.gz -C "$pkgdir"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

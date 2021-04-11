@@ -1,28 +1,32 @@
-# Maintainer: Felix Yan <felixonmars@archlinux.org>
-# Contributor: Andrea Scarpino <andrea@archlinux.org>
-# Contributor: Yichao Yu <yyc1992@gmail.com>
-# Contributor: Douglas Soares de Andrade <douglas@archlinux.org>
-# Contributor: riai <riai@bigfoot.com> Ben <ben@benmazer.net>
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Old Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Old Contributor: Andrea Scarpino <andrea@archlinux.org>
+# Old Contributor: Yichao Yu <yyc1992@gmail.com>
+# Old Contributor: Douglas Soares de Andrade <douglas@archlinux.org>
+# Old Contributor: riai <riai@bigfoot.com> Ben <ben@benmazer.net>
 
 pkgbase=python2-pyqt5
 pkgname=('pyqt5-common' 'python2-pyqt5')
-pkgver=5.15.2
-pkgrel=2
+_pkgname=PyQt5
+pkgver=5.15.4
+pkgrel=1
 arch=('x86_64' 'aarch64')
-url='https://riverbankcomputing.com/software/pyqt/intro'
-license=('GPL')
-makedepends=('sip5' 'python2-sip-pyqt5' 'sip' 'python2-opengl' 'python2-enum34'
-             'python2-dbus' 'qt5-connectivity' 'qt5-multimedia' 'qt5-tools'
+url='https://pypi.org/project/PyQt5/'
+license=('GPL3')
+makedepends=('sip4' 'python2-sip-pyqt5' 'sip' 'python2-opengl' 'python2-enum34'
+             'dbus-python' 'qt5-connectivity' 'qt5-multimedia' 'qt5-tools'
              'qt5-serialport' 'qt5-svg' 'qt5-webkit' 'qt5-websockets'
              'qt5-x11extras' 'qt5-networkauth' 'qt5-xmlpatterns'
              'qt5-remoteobjects')
-source=("https://www.riverbankcomputing.com/static/Downloads/PyQt5/PyQt5-$pkgver.dev2009281246.tar.gz")
-sha512sums=('9d1320dc095ac5c57d18fd075ca1c5b02cc86ef13db5e2d7ead802fe7971f11edb6eed0588f6b471f80b0353d8baeca155363f1db076817bd61e51ae50832564')
+source=("https://files.pythonhosted.org/packages/8e/a4/d5e4bf99dd50134c88b95e926d7b81aad2473b47fde5e3e4eac2c69a8942/PyQt5-$pkgver.tar.gz")
+sha512sums=('6d19f549a71eb8df8ba8407398ccd6e3d339436f4f2e7c5dca6885849d6ce510c4f4dea3c97257685aa462bb09a2ead33d80234ccb934f9b1a40285dbec631c7')
 
 build() {
-  cd "PyQt5-$pkgver.dev2009281246"
+  cd "$_pkgname-$pkgver"
 
-  python2 configure.py --confirm-license --sip='/usr/bin/sip' --no-sip-files \
+  python2 configure.py --confirm-license --sip=/usr/bin/sip --no-sip-files \
     --qsci-api
 
   make
@@ -32,10 +36,11 @@ package_pyqt5-common(){
   pkgdesc="Common PyQt files shared between python-pyqt5 and python2-pyqt5"
   depends=('qt5-base')
 
-  cd "PyQt5-$pkgver.dev2009281246"
-  install -Dm 644 PyQt5.api "$pkgdir/usr/share/qt/qsci/api/python/PyQt5.api"
+  cd "$_pkgname-$pkgver"
 
-  install -d "$pkgdir"/usr/share/sip/PyQt5
+  install -d "$pkgdir/usr/share/sip/PyQt5"
+
+  install -Dm 644 PyQt5.api "$pkgdir/usr/share/qt/qsci/api/python/PyQt5.api"
   cp -a sip/* "$pkgdir"/usr/share/sip/PyQt5
 }
 
@@ -43,7 +48,7 @@ package_python2-pyqt5(){
   pkgdesc="A set of Python 2.x bindings for the Qt5 toolkit"
   depends=('python2-sip-pyqt5' 'python2-enum34')
   optdepends=('python2-opengl: enable OpenGL 3D graphics in PyQt applications'
-              'python-dbus: for python-dbus mainloop support'
+              'dbus-python: for python-dbus mainloop support'
               'qt5-multimedia: QtMultimedia, QtMultimediaWidgets'
               'qt5-tools: QtHelp, QtDesigner'
               'qt5-svg: QtSvg'
@@ -57,24 +62,26 @@ package_python2-pyqt5(){
               'qt5-networkauth: QtNetworkAuth'
               'qt5-remoteobjects: QtRemoteObjects')
 
-  cd "PyQt5-$pkgver.dev2009281246"
-  # INSTALL_ROOT is needed for the QtDesigner module, the other Makefiles use DESTDIR
+  cd "$_pkgname-$pkgver"
+
+  # INSTALL_ROOT is needed for the QtDesigner module, the other Makefiles use
+  # DESTDIR
   make DESTDIR="$pkgdir" INSTALL_ROOT="$pkgdir" install -j1
 
   # Remove unused py3 version of uic modules:
-  rm -r "$pkgdir"/usr/lib/python*/site-packages/PyQt5/uic/port_v3
+  rm -rf "$pkgdir"/usr/lib/python*/site-packages/PyQt5/uic/port_v3
 
   # compile Python bytecode
-  python2 -m compileall -d / "$pkgdir"/usr/lib
-  python2 -O -m compileall -d / "$pkgdir"/usr/lib
+  python2 -m compileall -d / "$pkgdir/usr/lib"
+  python2 -O -m compileall -d / "$pkgdir/usr/lib"
 
   # Fix conflicts with python-pyqt5
   mv "$pkgdir"/usr/bin/{,python2-}pyuic5
   mv "$pkgdir"/usr/bin/{,python2-}pylupdate5
   mv "$pkgdir"/usr/bin/{,python2-}pyrcc5
 
-  rm "$pkgdir"/usr/lib/qt/plugins/designer/libpyqt5.so
-  rm "$pkgdir"/usr/lib/qt/plugins/PyQt5/libpyqt5qmlplugin.so
-  rm "$pkgdir"/usr/share/qt/qsci/api/python/PyQt5.api
+  rm -f "$pkgdir"/usr/lib/qt/plugins/designer/libpyqt5.so
+  rm -f "$pkgdir"/usr/lib/qt/plugins/PyQt5/libpyqt5qmlplugin.so
+  rm -f "$pkgdir"/usr/share/qt/qsci/api/python/PyQt5.api
 }
 

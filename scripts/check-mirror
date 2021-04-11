@@ -4,49 +4,100 @@ import requests
 from concurrent.futures import ThreadPoolExecutor
 
 
-BASE_URL="https://www.blackarch.org/blackarch/lastupdate"
-MIRROR_LIST="https://raw.githubusercontent.com/BlackArch/blackarch/master/mirror/mirror.lst"
+BASE_URL='https://www.blackarch.org/blackarch/lastupdate'
+MIRROR_LIST='https://raw.githubusercontent.com/BlackArch/blackarch/master/mirror/mirror.lst'
 THX = 25
+TIMEOUT = 10
+
+states = {
+  'isync':      [],
+  'osync':      [],
+  'wrong':      [],
+  'down':       [],
+  'isync_num':  0,
+  'osync_num':  0,
+  'wrong_num':  0,
+  'down_num':   0,
+  'iperc_num':  0,
+}
 
 
-def check(sess, url, name, lastupdate):
+def check(url, name, lastupdate):
+  global states
+
   try:
-    r = sess.get(url, stream=True)
+    r = requests.get(url, stream=True, timeout=TIMEOUT)
     repo_statuscode = r.status_code
     repo_lastupdate = r.text
 
     if repo_lastupdate < lastupdate:
-      print("[OUT OF DATE] - {} -> {}".format(name, url))
+      states['osync'].append(f'{name} -> {url}')
+      states['osync_num'] = states['osync_num'] + 1
     elif repo_lastupdate > lastupdate:
-      print("[SOMETHING IS WRONG] - {} -> {}".format(name, url))
+      states['wrong'].append(f'{name} -> {url}')
+      states['wrong_num'] = states['wrong_num'] + 1
     else:
-      print("[IN SYNC] - {} -> {}".format(name, url))
+      states['isync'].append(f'{name} -> {url}')
+      states['isync_num'] = states['isync_num'] + 1
   except:
-    print("[HOST DOWN?] - {} -> {}".format(name, url))
+    states['down'].append(f'{name} -> {url}')
+    states['down_num'] = states['down_num'] + 1
 
   return
 
 
+def print_stats(total):
+  global states
+
+  print('[IN SYNC]\n')
+  for i in states['isync']:
+    print(i)
+  print('\n[OUT OF SYNC]\n')
+  for i in states['osync']:
+    print(i)
+  print('\n[WRONG]\n')
+  for i in states['wrong']:
+    print(i)
+  print('\n[DOWN]\n')
+  for i in states['down']:
+    print(i)
+
+  states['iperc_num'] = round((states['isync_num'] / total) * 100)
+  print()
+  print('=' * 80)
+  print(f'''
+in sync:      {states['isync_num']} ({states['iperc_num']}%)
+out of sync:  {states['osync_num']}
+down:         {states['down_num']}
+wrong:        {states['wrong_num']}
+total:        {total}
+  ''')
+
+  return
+
 def main():
-  #check_mirror(requests.get(MIRROR_LIST), requests.get(BASE_URL).text)
   sess = requests.Session()
   mirrorlist = sess.get(MIRROR_LIST)
   lastupdate = sess.get(BASE_URL).text
 
+  print('[+] checking mirror sites, please wait...\n')
   with ThreadPoolExecutor(THX) as exe:
-    for line in mirrorlist.iter_lines():
+    for num, line in enumerate(mirrorlist.iter_lines()):
       try:
         country, url, name = str(line).split('|')
         name = name.strip('\'')
-        url = url.replace("$repo/os/$arch", "lastupdate")
+        url = url.replace('$repo/os/$arch', 'lastupdate').rstrip('/')
       except:
-        print("[SOMETHING IS WRONG] Error: {}.".format(line))
+        print(f'[-] Error: {line}.')
 
-      exe.submit(check, sess, url, name, lastupdate)
+      exe.submit(check, url, name, lastupdate)
+
+  num += 1
+  print_stats(num)
 
   return
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
   main()
 

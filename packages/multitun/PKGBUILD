@@ -2,18 +2,19 @@
 # See COPYING for license details.
 
 pkgname=multitun
-pkgver=45.515db52
-pkgrel=3
+pkgver=1.319a134
+pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-tunnel')
 pkgdesc='Tunnel arbitrary traffic through an innocuous WebSocket.'
 arch=('any')
 url='https://github.com/covertcodes/multitun'
 license=('GPL3')
-depends=('python2' 'python2-twisted' 'python2-iniparse' 'python2-autobahn'
+depends=('python2' 'python2-twistedx' 'python2-iniparse' 'python2-autobahn'
          'python2-python-pytun' 'python2-pycryptodome' 'python2-dpkt'
          'python2-cryptography' 'python2-streql')
 makedepends=('git')
-source=("git+https://github.com/covertcodes/$pkgname.git")
+source=("git+https://github.com/BlackArch/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
@@ -22,27 +23,11 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  cd $pkgname
-
-  sed -i 's|multitun.conf|/etc/multitun.conf|g' "$pkgname.py"
-}
-
-build() {
-  cd $pkgname
-
-  python2 setup.py build
-}
-
 package() {
   cd $pkgname
 
-  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-  mv "$pkgdir/usr/bin/$pkgname.py" "$pkgdir/usr/bin/$pkgname"
-  sed 's|, debug=debug, debugCodePaths=False||g' -i "$pkgdir/usr/bin/$pkgname"
-
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 "$pkgname.conf" "$pkgdir/etc/$pkgname.conf"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

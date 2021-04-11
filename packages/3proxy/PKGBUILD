@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=3proxy
-pkgver=0.8.13
+pkgver=0.9.3
 pkgrel=1
 groups=('blackarch' 'blackarch-proxy')
 pkgdesc='Tiny free proxy server.'
@@ -11,33 +11,60 @@ license=('GPL')
 arch=('x86_64' 'aarch64')
 options=('!makeflags')
 depends=('openssl')
-source=("https://github.com/z3APA3A/$pkgname/archive/$pkgver.tar.gz")
-sha512sums=('94b4a2568917c1d720276e38050a13e144d3e92ff41edd02eeebac0a6c21e6a839a58ea7dcb3abc03370e0f18452c953cfd7ad15ebac87e66b78d94fa52fbd79')
-
-prepare() {
-  cd "$pkgname-$pkgver"
-
-  sed -i "s|/usr/bin/install|/bin/install|g" Makefile.Linux
-  sed -i "s|/usr/local|/usr|g" Makefile.Linux
-  sed -i "s|-s ||g" Makefile.Linux
-  sed -i "s|-Wall -g -O2|$CFLAGS|g" Makefile.Linux
-  sed -i "s|\$(prefix)/etc/|/etc/|g" Makefile.Linux
-}
+source=("https://github.com/z3APA3A/$pkgname/archive/$pkgver.tar.gz"
+        "$pkgname.service"
+        'sysusers.conf'
+        'tmpfiles.conf')
+sha512sums=('26f25c4664aa7ca3913fd5cdd81f1f21caa2bc29ee0c73b77389e71aab6b580e3659c7d694d8adebc22085439328a058ad989cea1f41c03ef986f3100bc1bacb'
+            '3010f5626148459ba7cecc0929fb47b801a1aa70d3df02a7ddd46a147a7a5e811330d9bcaf5ea092c2f0ef7663c8d4d44d67236e9224362850f72a95817f5936'
+            '0b98afd23e04f3a8fd249821b9a45bc8b6ad7f62d8b0119ed0cc7e8135675d33d39be7d18474330bf4e898b6d27a6e810f78ddf00163007e45bfa30c4bffbe2a'
+            '5ef573d9e0e763bab5b67e9735843e2c7d931000b967aeac332f3cbb2e079c9ba282b1aa6d1adf5e23af6e97675ea83192d0c81734aa23743638e556f52e006f')
 
 build() {
   cd "$pkgname-$pkgver"
 
-  make -f Makefile.Linux prefix=/usr
+  make prefix=/usr \
+    DESTDIR="$pkgdir" \
+    ETCDIR="/etc/$pkgname" \
+    INITDIR=/etc/init.d \
+    BINDIR=/usr/bin \
+    -f Makefile.Linux
 }
 
 package() {
   cd "$pkgname-$pkgver"
 
-  make -f Makefile.Linux install DESTDIR="$pkgdir"
+  install -dm 755 "$pkgdir/usr/lib/systemd/system"
 
-  find "$pkgdir/etc/$pkgname" -type f | xargs chmod 644
+  make prefix=/usr \
+    install DESTDIR="$pkgdir" \
+    ETCDIR="$pkgdir/etc/$pkgname" \
+    INITDIR="$pkgdir/etc/init.d" \
+    LOGBASE="$pkgdir/var/log" \
+    RUNBASE="$pkgdir/run" \
+    -f Makefile.Linux
+
+  install -Dm 644 -t "$pkgdir/etc/$pkgname/" "cfg/$pkgname.cfg.sample" \
+    cfg/counters.sample
+
+  # local files
+  install -Dm 644 "$srcdir/$pkgname.service" \
+    "$pkgdir/usr/lib/systemd/system/$pkgname.conf"
+  install -Dm 644 "$srcdir/sysusers.conf" \
+    "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
+  install -Dm 644 "$srcdir/tmpfiles.conf" \
+    "$pkgdir/usr/lib/tmpfiles.d/$pkgname.conf"
+
+  find "$pkgdir/etc/$pkgname" -type f | xargs chmod 640
 
   # Fix conflict with extra/libproxy.
   mv "$pkgdir/usr/bin/proxy" "$pkgdir/usr/bin/$pkgname"
+
+  mv "$pkgdir/usr/local/$pkgname/libexec/"*.so "$pkgdir/usr/lib/"
+
+  rm -rf "$pkgdir/usr/local" "$pkgdir/etc/$pkgname/conf" \
+    "$pkgdir/var/log/$pkgname"
+
+  mkdir -p "$pkgdir/var/log/$pkgname"
 }
 

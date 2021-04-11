@@ -3,7 +3,7 @@
 
 pkgname=python-semgrep
 _pkgname=semgrep
-pkgver=0.39.1
+pkgver=0.46.0
 pkgrel=1
 pkgdesc='Lightweight static analysis for many languages.'
 arch=('x86_64')
@@ -13,13 +13,22 @@ depends=('python' 'python-colorama' 'python-requests' 'python-attrs'
          'python-tqdm' 'python-packaging' 'python-ruamel-yaml' 'python-wheel'
          'python-jsonschema' 'python-junit-xml')
 makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/55/f9/df3a2e79e9353ff8023f918f0f749c2fbf75864e7868dc87b6c1c9403d73/$_pkgname-$pkgver.tar.gz"
+source=("https://files.pythonhosted.org/packages/69/08/67accab21d00ef0e518290a684dd78693ab7b28d656940ef76c484ea94d0/$_pkgname-$pkgver.tar.gz"
         "https://github.com/returntocorp/$_pkgname/releases/download/v$pkgver/semgrep-v$pkgver-ubuntu-16.04.tgz")
-sha512sums=('731728735a7ab3f84d2cd3e79338fb194c2c3d1805a7aeb53856eaec78c90f0bf1ac50955e51a705132716b36ed64c532e1a1463b269bae6284279b5d895cc22'
-            '5763a6f14e160ca5691513ef049b555df833ac1424083a6a02c2a8c76c04f50246d6f4fd0f481fe40c94b5ea0c6205beb4ce552d13ec7198fc35bcf4cb15b558')
+sha512sums=('8dcf30727cc4d58513865ca6d7a7f0a5d0d70733d73ab406aa34d318e50611df26ab30e153e3356ad32705fbdf02ef29760daed7b6077b659c28092c84a53b67'
+            'cdfbb21331bc21ef8226e2de688c49be466becaa4911f02b641a0347cbb9813afcb609f1b2f8efe6af86591ac74ea24bc72910976bfbac7e535d049866e98031')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  sed -i 's/ruamel.yaml==0.16.10/ruamel.yaml>=0.16.10/' setup.py
+}
 
 build() {
   cd "$_pkgname-$pkgver"
+
+  export SEMGREP_CORE_BIN="$srcdir/semgrep-files/semgrep-core"
+  export SPACEGREP_BIN="$srcdir/semgrep-files/spacegrep"
 
   python setup.py build
 }
@@ -32,6 +41,7 @@ package() {
   rm -rf "$pkgdir/usr/lib/python3.9/site-packages/tests"
 
   # default is enough for now
-  strip "$pkgdir/usr/bin/"{spacegrep,semgrep-core}
+  strip "$pkgdir/usr/lib/python3.9/site-packages/$_pkgname/bin/spacegrep"
+  strip "$pkgdir/usr/lib/python3.9/site-packages/$_pkgname/bin/semgrep-core"
 }
 

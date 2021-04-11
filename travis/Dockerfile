@@ -3,10 +3,7 @@ FROM archlinux
 # Setup mirrors
 RUN printf "[multilib]\nInclude = /etc/pacman.d/mirrorlist\n" \
         >> "$path/etc/pacman.conf" && \
-    pacman --noconfirm --noprogressbar --needed -Sy pacman-contrib && \
-    cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak && \
-    sed -i 's/^#Server/Server/' /etc/pacman.d/mirrorlist.bak && \
-    rankmirrors -n 6 /etc/pacman.d/mirrorlist.bak > /etc/pacman.d/mirrorlist && \
+    sed -i 's/^#Server/Server/' /etc/pacman.d/mirrorlist && \
     curl -s https://blackarch.org/strap.sh | bash -
 
 # Setup build dependencies
@@ -29,3 +26,4 @@ COPY --chown=builder:users . .
 ENTRYPOINT ["makepkg"]
 
 CMD ["-s", "-f", "--noconfirm", "--needed", "--noprogressbar"]
+
