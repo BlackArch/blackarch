@@ -75,7 +75,7 @@ The following information was written with the goal of creating high-quality PKG
 
 - Set up a clean chroot environment according to https://wiki.archlinux.org/index.php/DeveloperWiki:Building_in_a_clean_chroot#Setting_up_a_chroot
 
-- A BackArch Linux system with all tools installed (`# pacman -Syu --needed blackarch`).
+- A BlackArch Linux system with all tools installed (`# pacman -Syu --needed blackarch`).
 
 **Steps:**
 
