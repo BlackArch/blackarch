@@ -45,7 +45,7 @@ are given and everything is setup. Anything else can be discussed on IRC.
 - CoC for BlackArch is almost the same like:
 [https://wiki.archlinux.org/index.php/Code_of_conduct](https://wiki.archlinux.org/index.php/Code_of_conduct)
 
-- Read and refer always to ArchLinux's wiki pages.
+- Read and refer always to ArchLinux's wiki pages. There is further documentation for each individual tool/file inside the file, any files without documentation should be documented.
 
 - If you are new try to follow other developers's work as much as possible. Talk
   to us on IRC / Discord for further details. We've got our own private channels
@@ -54,7 +54,7 @@ are given and everything is setup. Anything else can be discussed on IRC.
 - Any work is much appreciated. Even if it's a version bump on a package or a
   typo-fix.
 
-- Try to automate anything you can and share the tools with us.
+- Try to automate anything you can and share the tools with us. Now you can help write the script framework with Noptrix
 
 
 ## Packaging style
@@ -64,10 +64,11 @@ are given and everything is setup. Anything else can be discussed on IRC.
   consistency.
 
 - If you are unsure, copy an existing PKGBUILD from a package and use that as a
-  template or ask other developers.
+  template or ask other developers. Packages are located in the packages folder of the blackarch github repository(the current repository)
 
 
 ## Creating packages
+
 
 The following information was written with the goal of creating high-quality PKGBUILDs and ensure that ever package uploaded to the BlackArch Linux repository is really working.
 
@@ -91,9 +92,9 @@ The following information was written with the goal of creating high-quality PKG
 
 ## ISO
 
-foo
+The ISO can be maintained and code can be found in the blackarch-iso repository, please refer to the README for documentation, further documentation will be provided inside the files
 
 
 ## Website
 
-foo
+Can be located in the blackarch-website repository, it is currently starting the process of being rebuilt, talk to Noptrix and other devs on the Discord or IRC for more info.
