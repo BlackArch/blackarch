@@ -3,16 +3,15 @@
 
 pkgname=chisel
 pkgver=160.92d90be
-pkgrel=1
+pkgrel=2
 pkgdesc='A fast TCP tunnel over HTTP.'
 groups=('blackarch' 'blackarch-tunnel' 'blackarch-proxy')
 arch=('x86_64' 'aarch64')
 url='https://github.com/jpillora/chisel'
 license=('MIT')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/jpillora/$pkgname.git")
 sha512sums=('SKIP')
-_url='github.com/jpillora/chisel'
 
 pkgver() {
   cd $pkgname
@@ -23,10 +22,14 @@ pkgver() {
 build() {
   cd $pkgname
 
-  export GOPATH="$srcdir"
-
-  go get -d -u $_url
-  go build -ldflags "-X github.com/jpillora/chisel/share.BuildVersion=$(git describe --abbrev=0 --tags)"
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w -X github.com/jpillora/chisel/share.BuildVersion=$(git describe --abbrev=0 --tags)" \
+    -o $pkgname .
 }
 
 package() {

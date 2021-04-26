@@ -2,20 +2,19 @@
 # See COPYING for license details.
 
 pkgname=hetty
-pkgver=64.98dacbe
+pkgver=95.ca3a729
 pkgrel=1
 pkgdesc='HTTP toolkit for security research. It aims to become an open source alternative to commercial software like Burp Suite Pro, with powerful features tailored to the needs of the infosec and bug bounty community.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-webapp' 'blackarch-proxy')
 url='https://github.com/dstotijn/hetty'
 license=('MIT')
-makedepends=('git' 'go-pie' 'yarn')
+makedepends=('git' 'go' 'yarn')
 source=("$pkgname.install"
         "git+https://github.com/dstotijn/$pkgname.git")
 sha512sums=('ec0cd49c178b1b94084e6ae2b03d6a5825c02853fb42662f4b0150611a7f9dd0c5a13f585a51a1dbbc43c6514186a8eadb5eaa51d4b0b2397ace04a3adfb8815'
-	          'SKIP')
+            'SKIP')
 install="$pkgname.install"
-_url="github.com/dstotijn/hetty/cmd/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -25,10 +24,22 @@ pkgver() {
 
 build() {
   cd $pkgname
+  export GOPATH="$srcdir"
 
-  GOPATH="$srcdir" GO111MODULE=auto go get -u -v "$_url"
-  cd admin/ && yarn install && yarn export && cd ../
-  PATH="$PATH:$(go env GOPATH)/bin" make build
+  go get github.com/GeertJohan/go.rice
+  go get github.com/GeertJohan/go.rice/rice
+
+  NEXT_TELEMETRY_DISABLED=1 cd admin/ && yarn install && yarn run export && cd -
+  cd cmd/hetty && PATH="$PATH:$srcdir/bin" rice embed-go && cd -
+
+  go mod download
+  CGO_ENABLED=1 go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/$pkgname
 }
 
 package() {
@@ -36,7 +47,5 @@ package() {
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" \
-    LICENSE
 }
 

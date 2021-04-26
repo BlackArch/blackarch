@@ -3,10 +3,10 @@
 
 pkgname=git-hound
 pkgver=116.f1528c0
-pkgrel=1
+pkgrel=2
 pkgdesc='Pinpoints exposed API keys on GitHub. A batch-catching, pattern-matching, patch-attacking secret snatcher.'
 groups=('blackarch' 'blackarch-recon' 'blackarch-social')
-arch=('any')
+arch=('x86_64' 'aarch64')
 url='https://github.com/tillson/git-hound'
 license=('MIT')
 makedepends=('git' 'go-pie')
@@ -22,19 +22,22 @@ pkgver() {
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go get -v -d -t .
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
   cd $pkgname
 
-  GOPATH="$srcdir" go build -v .
-
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
-
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
   install -Dm 644 config.example.yml "$pkgdir/usr/share/$pkgname/config.yml"
 }
 

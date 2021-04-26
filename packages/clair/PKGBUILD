@@ -2,30 +2,58 @@
 # See COPYING for license details.
 
 pkgname=clair
-pkgver=2.1.4
-pkgrel=2
+pkgver=1301.1f9b5657
+pkgrel=1
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='Vulnerability Static Analysis for Containers.'
 arch=('x86_64' 'aarch64')
-url='https://github.com/coreos/clair'
+url='https://github.com/quay/clair'
 license=('APACHE')
 depends=('glibc' 'rpm-tools')
-makedepends=('git' 'go-pie')
-source=("https://github.com/coreos/$pkgname/archive/v$pkgver.tar.gz")
-sha512sums=('67fedb487c297d95c9ab7f8e5ac9a08df85d16a218a718be56ed1af4d7ecee65550e448b9468c3c5bf387a8e37716dda22ac482ee2c2b4d41cbaac3672028570')
+makedepends=('git' 'go')
+source=("git+https://github.com/quay/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/$pkgname
+
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o clairctl ./cmd/clairctl
+}
+
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/etc/clair"
 
-  GOPATH="$srcdir" go install -v "github.com/coreos/$pkgname/cmd/$pkgname"
-
-  install -Dm 755 "$srcdir/bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/etc/clair/" *.yml *.yaml
-  cp "$pkgdir/etc/clair/config.example.yaml" "$pkgdir/etc/clair/config.yaml"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md NOTICE \
-    Documentation/*
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 clairctl "$pkgdir/usr/bin/clairctl"
+  install -Dm 644 -t "$pkgdir/etc/clair/" *.yaml *.yaml.sample
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md NOTICE
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -r --no-preserve=ownership Documentation/* "$pkgdir/usr/share/doc/$pkgname/"
+  cp "$pkgdir/etc/clair/config.yaml.sample" "$pkgdir/etc/clair/config.yaml"
 }
 

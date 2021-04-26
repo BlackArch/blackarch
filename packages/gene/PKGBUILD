@@ -3,14 +3,13 @@
 
 pkgname=gene
 pkgver=57.bd12ed4
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-windows')
 pkgdesc='Signature Engine for Windows Event Logs.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/0xrawsec/gene'
 license=('GPL3')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 options=('!strip')
 source=("git+https://github.com/0xrawsec/$pkgname.git")
 sha512sums=('SKIP')
@@ -22,7 +21,7 @@ pkgver() {
 }
 
 prepare() {
-  cd "$pkgname/$pkgname"
+  cd $pkgname/$pkgname
 
   cat > "version.go" << EOF
 package main
@@ -34,17 +33,24 @@ const(
 EOF
 }
 
-build() {
-  cd "$pkgname/$pkgname"
 
-  GOPATH="$srcdir" go build -v .
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./$pkgname
 }
 
 package() {
   cd $pkgname
 
-  install -Dm 755 "$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 $pkgname/$pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

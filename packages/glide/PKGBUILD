@@ -8,37 +8,39 @@
 # Old Contributor: fanningert <thomas@fanninger.at>
 
 pkgname=glide
-pkgver=0.13.3
+pkgver=1093.b94b39d
 pkgrel=1
 pkgdesc='Vendor Package Management for Golang.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/Masterminds/glide'
 license=('MIT')
-makedepends=('git' 'go-pie')
-options=('!strip' '!emptydirs')
-_commit=8ed5b9292379d86c39592a7e6a58eb9c903877cf  # tags/v0.13.3^0
-source=("git+$url#tag=v$pkgver")
+makedepends=('git' 'go')
+source=("git+https://github.com/Masterminds/$pkgname.git")
 sha512sums=('SKIP')
 
-prepare() {
-  export GOPATH="$srcdir/go"
-  _gosrc="$GOPATH/src/${url#https://}"
+pkgver() {
+  cd $pkgname
 
-  rm -rf "$GOPATH"
-  mkdir -p "${_gosrc%/*}"
-  mv -T glide "$_gosrc"
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  export GOPATH="$srcdir/go"
-  cd "$GOPATH/src/${url#https://}"
+  cd $pkgname
 
-  go build -o $pkgname -ldflags "-X main.version=$pkgver" "$pkgname.go"
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w -X main.version=$pkgver-git" \
+    -o $pkgname .
 }
 
 package() {
-  export GOPATH="$srcdir/go"
-  cd "$GOPATH/src/${url#https://}"
+  cd $pkgname
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md

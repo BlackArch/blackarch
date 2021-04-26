@@ -1,48 +1,38 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-_pkgname=gOSINT
 pkgname=gosint
 pkgver=196.9c86ed2
-pkgrel=2
+pkgrel=3
 pkgdesc='OSINT framework in Go.'
 groups=('blackarch' 'blackarch-recon')
 arch=('x86_64' 'aarch64')
 url='https://github.com/Nhoya/gOSINT'
 license=('GPL3')
-depends=('glibc' 'tesseract')
-makedepends=('git' 'go-pie' 'dep')
-source=("git+https://github.com/Nhoya/$_pkgname.git")
+depends=('tesseract')
+makedepends=('git' 'go')
+source=("$pkgname::git+https://github.com/Nhoya/gOSINT.git")
 sha512sums=('SKIP')
 
 pkgver() {
-  cd $_pkgname
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  mkdir -p "gopath/src/github.com/Nhoya"
-  ln -rTsf $_pkgname "gopath/src/github.com/Nhoya/$_pkgname"
-
-  export GOPATH="$srcdir/gopath"
-  cd "$GOPATH/src/github.com/Nhoya/$_pkgname"
-
-  dep ensure
-}
-
 build() {
-  export GOPATH="$srcdir/gopath"
+  cd $pkgname
 
-  cd "$GOPATH/src/github.com/Nhoya/$_pkgname"
-  go build -o $pkgname -v -ldflags="-s -w" cmd/gosint/main.go
+  # Package uses a old dependency declaration format and can't be build with the
+  # new process. Details of the issue: https://golang.org/doc/go1.4#internalpackages
+  # Upstream report: https://github.com/Nhoya/gOSINT/issues/34
+  GOPATH="$srcdir/$pkgname" go get github.com/Nhoya/gOSINT/cmd/gosint
 }
 
 package() {
-  cd "$_pkgname"
+  cd "$pkgname"
 
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 bin/$pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

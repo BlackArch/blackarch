@@ -12,7 +12,6 @@ license=('MIT')
 makedepends=('git' 'go-pie')
 source=("git+https://github.com/$pkgname/$pkgname.git")
 sha512sums=('SKIP')
-_url="github.com/$pkgname/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -23,28 +22,27 @@ pkgver() {
 build() {
   cd $pkgname
 
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
-    cd "src/$_url"
-
-  GOPATH="$srcdir" go get -d -t $_url
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
   cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  GOPATH="$srcdir" go build -v $_url
+  install -Dm 755 $pkgname "$pkgdir/usr/share/$pkgname/$pkgname"
+  install -Dm 644 VERSION config.json -t "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md VERSION
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm -rf LICENSE *.md
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  chmod -R g-w "$pkgdir/usr/share/$pkgname"
-  chmod +x "$pkgdir/usr/share/gophish/$pkgname"
+  cp -r --no-preserve=ownership static/ db/ templates/ \
+    "$pkgdir/usr/share/$pkgname"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
