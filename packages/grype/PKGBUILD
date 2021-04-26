@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=grype
-pkgver=0.5.0
+pkgver=0.11.0
 pkgrel=1
 epoch=1
 groups=('blackarch' 'blackarch-scanner')
@@ -10,33 +10,28 @@ pkgdesc='A vulnerability scanner for container images and filesystems.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/anchore/grype'
 license=('Apache')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
-sha512sums=('1138a63b640f8cb918c0c439b37a60e7c9c2c8c9a1d2e2b239a279850d4937bae054620e2ba817fba124b0b048f8e812f00f2783115277edc4e147361e59e3db')
+sha512sums=('ac7ba7b9c761eafc0b60e43ef2ed9a3b5ef5bd73df0fb511bfba972fb7c4456436d6fd4f7bf3aaf6444b83d3441087634e5658d1065b803d0dc827f61a1bc1f2')
 
 build() {
   cd "$pkgname-$pkgver"
 
-  GOPATH="$srcdir" go get -d -t .
-}
-
-package() {
-  cd "$pkgname-$pkgver"
-
-  install -dm 755 "$pkgdir/usr/bin"
-
+  GOPATH="$srcdir" go mod download
   GOPATH="$srcdir" go build \
     -trimpath \
     -buildmode=pie \
     -mod=readonly \
     -modcacherw \
-    -ldflags "-linkmode external -extldflags \"${LDFLAGS}\"" \
-    -v -o "$pkgname.bin" .
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
 
-  install -Dm 755 "$pkgname.bin" "$pkgdir/usr/bin/$pkgname"
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -Dm 755 $pkgname/$pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md \
     DEVELOPING.md CONTRIBUTING.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

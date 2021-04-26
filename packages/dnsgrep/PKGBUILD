@@ -3,7 +3,7 @@
 
 pkgname=dnsgrep
 pkgver=14.3f4fa7c
-pkgrel=2
+pkgrel=3
 pkgdesc='A utility for quickly searching presorted DNS names.'
 groups=('blackarch' 'blackarch-recon')
 arch=('x86_64' 'aarch64')
@@ -20,45 +20,41 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  sed -i 's/github.com\/golang\/example/golang.org\/x\/example/' DNSBinarySearch/DNSBinarySearch.go
+  sed -i "s/config.json/\/usr\/share\/dnsgrep\/config.json/" experimentalServer/experimentalServer.go
+  # Horrible hack to fix https://github.com/erbbysam/DNSGrep/issues/3 and offer
+  # package binaries. It only affects the build directory, so not a big deal
+  cp -r /usr/lib/go "$srcdir/go"
+  cd .. && cp -r $pkgname "$srcdir/go/src"
+}
+
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t github.com/jessevdk/go-flags
-  GOPATH="$srcdir" go get -d -t github.com/gorilla/mux
-  GOPATH="$srcdir" go get -d -t github.com/golang/example/stringutil
+  GOFLAGS="-trimpath -buildmode=pie -mod=readonly -modcacherw"
+
+  GOROOT="$srcdir/go" GOPATH="$srcdir" go mod init go.mod
+  GOROOT="$srcdir/go" GOPATH="$srcdir" go mod tidy
+  GOROOT="$srcdir/go" GOPATH="$srcdir" go mod download
+  GOROOT="$srcdir/go" GOPATH="$srcdir" go build \
+    $GOFLAGS \
+    -ldflags "-s -w" \
+    -o $pkgname .
+
+  GOROOT="$srcdir/go" GOPATH="$srcdir" go build \
+    $GOFLAGS \
+    -ldflags "-s -w" \
+    -o $pkgname-server ./experimentalServer/
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname/src/$pkgname"
-
+  install -Dm 755 $pkgname $pkgname-server -t "$pkgdir/usr/bin"
+  install -Dm 644 experimentalServer/config.json -t "$pkgdir/usr/share/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm README.md LICENSE
-
-  cp -a * "$pkgdir/usr/share/$pkgname/src/$pkgname/"
-
-  mv "$srcdir/src/github.com"* "$pkgdir/usr/share/$pkgname/src/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname/src
-export GOPATH="/usr/share/$pkgname/."
-exec go run $pkgname/$pkgname.go "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
-
-  cat > "$pkgdir/usr/bin/$pkgname-server" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname/src
-export GOPATH="/usr/share/$pkgname/."
-exec go run $pkgname/experimentalServer/experimentalServer.go "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname-server"
 }
 

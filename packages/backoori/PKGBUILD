@@ -3,7 +3,7 @@
 
 pkgname=backoori
 pkgver=55.988e507
-pkgrel=1
+pkgrel=2
 pkgdesc='Tool aided persistence via Windows URI schemes abuse.'
 arch=('x86_64')
 groups=('blackarch' 'blackarch-exploitation')
@@ -13,7 +13,6 @@ depends=('glibc')
 makedepends=('git' 'go-pie')
 source=("git+https://github.com/giuliocomi/$pkgname.git")
 sha512sums=('SKIP')
-_url='github.com/giuliocomi/backoori'
 
 pkgver() {
   cd $pkgname
@@ -22,20 +21,24 @@ pkgver() {
 }
 
 build() {
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
-    cd "src/$_url"
+  cd $pkgname
 
-  GOPATH="$srcdir" go get -v -d $_url
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd $pkgname
 
-  env GOOS=linux GOARCH=amd64 GOPATH="$srcdir" go build -v $_url
-
-  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "src/$_url/README.md"
-  install -Dm 644 "src/$_url/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 }
 

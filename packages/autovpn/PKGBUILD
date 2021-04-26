@@ -3,15 +3,17 @@
 
 pkgname=autovpn
 pkgver=18.28b1a87
-pkgrel=2
+pkgrel=3
 pkgdesc='Easily connect to a VPN in a country of your choice.'
 groups=('blackarch' 'blackarch-automation' 'blackarch-misc')
 arch=('x86_64' 'aarch64')
 url='https://github.com/adtac/autovpn'
 license=('GPL3')
 depends=('openvpn')
-makedepends=('git' 'go-pie')
-source=("git+https://github.com/adtac/$pkgname.git")
+makedepends=('git' 'go')
+# The original repo was deleted, so it was changed to one of the existing forks
+# that was up to date with the original one before the deletion
+source=("git+https://github.com/DevelopedLogic/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
@@ -23,7 +25,13 @@ pkgver() {
 build() {
   cd $pkgname
 
-  go build "$pkgname.go"
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname "$pkgname.go"
 }
 
 package() {
@@ -31,6 +39,5 @@ package() {
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
