@@ -3,15 +3,15 @@
 
 pkgname=mylg
 pkgver=659.faba867
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-networking' 'blackarch-recon'
         'blackarch-sniffer')
 pkgdesc='Network Diagnostic Tool.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/mehrdadrad/mylg'
 license=('MIT')
-depends=('glibc' 'libpcap')
-makedepends=('git' 'go-pie')
+depends=('libpcap')
+makedepends=('git' 'go')
 source=("git+https://github.com/mehrdadrad/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -22,20 +22,22 @@ pkgver() {
 }
 
 build() {
-  mkdir -p "src/$url" && rm -rf "src/$url" && mv $pkgname "src/$url" &&
-    cd "src/$url"
+  cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t $url
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd $pkgname
 
-  GOPATH="$srcdir" go build -v $url
-
-  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "src/$url/README.md"
-  install -Dm 644 "src/$url/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 }
 

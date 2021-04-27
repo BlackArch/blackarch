@@ -3,17 +3,15 @@
 
 pkgname=s3-fuzzer
 pkgver=4.0a2a6f0
-pkgrel=2
+pkgrel=3
 pkgdesc='A concurrent, command-line AWS S3 Fuzzer.'
 groups=('blackarch' 'blackarch-fuzzer')
 arch=('x86_64' 'aarch64')
 url='https://github.com/petermbenjamin/s3-fuzzer'
 license=('BSD')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/petermbenjamin/$pkgname.git")
 sha512sums=('SKIP')
-_url="github.com/petermbenjamin/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -21,29 +19,33 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  sed -i 's/Sirupsen/sirupsen/g' main.go
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod edit -replace \
+    github.com/petermbenjamin/go-open@v0.1.1=github.com/pbnj/go-open@v0.1.1
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  export GOPATH="$pkgdir/usr/share/$pkgname"
-
-  go get -u -v $_url
-
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm README.md LICENSE
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-export GOPATH=/usr/share/$pkgname/
-exec /usr/share/$pkgname/bin/$pkgname "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

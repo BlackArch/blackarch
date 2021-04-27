@@ -3,14 +3,13 @@
 
 pkgname=proxify
 pkgver=18.6252e3f
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-proxy')
 pkgdesc='Swiss Army knife Proxy tool for HTTP/HTTPS traffic capture, manipulation, and replay on the go.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/projectdiscovery/proxify'
 license=('MIT')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/projectdiscovery/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -21,18 +20,22 @@ pkgver() {
 }
 
 build() {
-  cd "$pkgname/cmd/$pkgname"
+  cd "$pkgname"
 
-  GOPATH="$srcdir" go build -v .
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/$pkgname
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-
-  install -Dm 755 "cmd/$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md THANKS.md
-  install -Dm 644 LICENSE.MD "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

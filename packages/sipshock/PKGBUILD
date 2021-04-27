@@ -3,14 +3,13 @@
 
 pkgname=sipshock
 pkgver=7.6ab5591
-pkgrel=6
+pkgrel=7
 groups=('blackarch' 'blackarch-scanner' 'blackarch-voip')
 pkgdesc='A scanner for SIP proxies vulnerable to Shellshock.'
-arch=('any')
+arch=('x86_64' 'aarch64')
 url='https://github.com/zaf/sipshock'
 license=('GPL3')
-depends=('glibc' 'go')
-makedepends=('git')
+makedepends=('git' 'go')
 source=("git+https://github.com/zaf/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -20,21 +19,25 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 "$pkgname.go" "$pkgdir/usr/share/$pkgname/$pkgname.go"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" Readme.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-exec go run /usr/share/$pkgname/$pkgname.go "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

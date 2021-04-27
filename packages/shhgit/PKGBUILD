@@ -3,14 +3,13 @@
 
 pkgname=shhgit
 pkgver=65.65351a7
-pkgrel=2
+pkgrel=3
 pkgdesc='Find committed secrets and sensitive files across GitHub, Gists, GitLab and BitBucket or your local repositories in real time.'
-arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-recon')
 url='https://github.com/eth0izzle/shhgit'
 license=('MIT')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/eth0izzle/$pkgname.git")
 sha512sums=('SKIP')
 install='shhgit.install'
@@ -24,30 +23,25 @@ pkgver() {
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t .
-  GOPATH="$srcdir" go build -v .
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  cp -a --no-preserve=ownership images/ "$pkgdir/usr/share/doc/$pkgname/"
 
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
-
-  cp -a --no-preserve=ownership www/ config.yaml $pkgname \
-    "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec ./$pkgname "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  cp -a --no-preserve=ownership images/ "$pkgdir/usr/share/doc/$pkgname"
+  cp -a --no-preserve=ownership www/ config.yaml "$pkgdir/usr/share/$pkgname"
 }
 

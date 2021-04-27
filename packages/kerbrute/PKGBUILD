@@ -3,17 +3,15 @@
 
 pkgname=kerbrute
 pkgver=90.9cfb81e
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-cracker')
 pkgdesc='A tool to perform Kerberos pre-auth bruteforcing.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/ropnop/kerbrute'
 license=('Apache')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/ropnop/$pkgname.git")
 sha512sums=('SKIP')
-_url="github.com/ropnop/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -24,15 +22,18 @@ pkgver() {
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t .
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
   cd $pkgname
-
-  install -dm 755 "$pkgdir/usr/bin"
-
-  GOPATH="$srcdir" go build -v .
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md

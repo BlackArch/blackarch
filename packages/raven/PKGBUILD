@@ -2,32 +2,51 @@
 # See COPYING for license details.
 
 pkgname=raven
-pkgver=0.3
-pkgrel=4
+pkgver=33.8646a58
+pkgrel=1
 epoch=1
 pkgdesc='A Linkedin information gathering tool that can be used by pentesters to gather information about an organization employees using Linkedin.'
 groups=('blackarch' 'blackarch-social' 'blackarch-recon')
 arch=('x86_64')
 url='https://github.com/0x09AL/raven'
 license=('GPL3')
-depends=('glibc')
-makedepends=('git' 'go-pie')
-source=("https://github.com/0x09AL/$pkgname/releases/download/v$pkgver-Linux/Raven-Linux-x64.tar.xz")
-sha512sums=('24d3aaefc6c8cfa26cf1d20bdd77564c133838240ee8858804e83cc2c46ed0b85bc50c4d80337d28405b7484348585584422fa36bed43a60ad9c8a8a6db7a54d')
+makedepends=('git' 'go')
+source=("git+https://github.com/0x09AL/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+  # Horrible hack to fix: main.go:5:2: package raven/{model,scrapper,terminal}
+  # is not in GOROOT. It only affects the build directory, so not a big deal
+  cp -r /usr/lib/go "$srcdir/go"
+  cd .. && cp -r $pkgname "$srcdir/go/src"
+}
+
+build() {
+  cd $pkgname
+
+  GOROOT="$srcdir/go" GOPATH="$srcdir" go mod init go.mod
+  GOROOT="$srcdir/go" GOPATH="$srcdir" go mod tidy
+  GOROOT="$srcdir/go" GOPATH="$srcdir" go mod download
+  GOROOT="$srcdir/go" GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  cd $pkgname
 
-  install -m 755 $pkgname "$pkgdir/usr/share/$pkgname/$pkgname"
-  install -m 644 -t "$pkgdir/usr/share/$pkgname/" config.conf db_file.db
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec ./$pkgname "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname" config.conf db_file.db
 }
 

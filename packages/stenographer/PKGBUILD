@@ -3,18 +3,16 @@
 
 pkgname=stenographer
 pkgver=486.355604b
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-sniffer' 'blackarch-networking'
         'blackarch-forensic')
 pkgdesc='A packet capture solution which aims to quickly spool all packets to disk, then provide simple, fast access to subsets of those packets.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/google/stenographer'
 license=('APACHE')
-depends=('glibc')
-makedepends=('git' 'mercurial' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/google/$pkgname.git")
 sha512sums=('SKIP')
-_url='github.com/google/stenographer'
 
 pkgver() {
   cd $pkgname
@@ -23,21 +21,25 @@ pkgver() {
 }
 
 build() {
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
-    cd "src/$_url"
+  cd $pkgname
 
-  GOPATH="$srcdir" go get -v -d -t $_url
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd $pkgname
 
-  GOPATH="$srcdir" go build -v $_url
-
-  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 "src/$_url/README.md" \
-    "$pkgdir/usr/share/doc/$pkgname/README.md"
-  install -Dm 644 "src/$_url/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
+  install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname"
 }
 

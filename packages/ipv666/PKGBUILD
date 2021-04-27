@@ -3,14 +3,13 @@
 
 pkgname=ipv666
 pkgver=182.ad45ae8
-pkgrel=1
+pkgrel=2
 pkgdesc='Golang IPv6 address enumeration.'
 groups=('blackarch' 'blackarch-recon' 'blackarch-networking')
 arch=('any')
 url='https://github.com/lavalamp-/ipv666'
 license=('BSD')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/lavalamp-/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -23,15 +22,20 @@ pkgver() {
 build() {
   cd $pkgname
 
-  export GOCACHE="$srcdir/$pkgname/gocache"
-
-  make build
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname-bin ./$pkgname
 }
 
 package() {
   cd $pkgname
 
-  install -Dm 755 "bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 $pkgname-bin "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md
   install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

@@ -3,14 +3,13 @@
 
 pkgname=subfinder
 pkgver=912.1c17b7f
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='Modular subdomain discovery tool that can discover massive amounts of valid subdomains for any target.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/projectdiscovery/subfinder'
 license=('MIT')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/projectdiscovery/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -20,19 +19,25 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname/v2
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/$pkgname
+}
+
 package() {
-  cd "$pkgname/v2/cmd/$pkgname"
-
-  GOPATH="$srcdir" go get -v -t .
-
-  cd $srcdir
-
-  install -Dm 755 "bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
-
   cd "$pkgname"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 755 v2/$pkgname "$pkgdir/usr/bin/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
   rm "$pkgdir/usr/share/doc/$pkgname/LICENSE.md"
-  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

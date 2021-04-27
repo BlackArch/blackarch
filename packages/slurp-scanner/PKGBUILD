@@ -2,53 +2,41 @@
 # See COPYING for license details.
 
 pkgname=slurp-scanner
-_pkgname=slurp
 pkgver=90.6a4eaaf
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='Evaluate the security of S3 buckets.'
 arch=('x86_64' 'aarch64')
-url='https://github.com/hehnope/slurp'
+# Move to an existing fork
+url='https://github.com/0xbharath/slurp'
 license=('GPL3')
-depends=('glibc')
-makedepends=('git' 'go-pie')
-source=("git+https://github.com/hehnope/$_pkgname.git")
+makedepends=('git' 'go')
+source=("$pkgname::git+https://github.com/0xbharath/slurp.git")
 sha512sums=('SKIP')
-_url="github.com/hehnope/$_pkgname"
 
 pkgver() {
-  cd $_pkgname
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  cd $_pkgname
-
-  # fool it. fucking GO with its gopath shit ...
-  sed -i "s|slurp/scanner/external|$_url/scanner/external|g" main.go
-  sed -i "s|slurp/scanner/cmd|$_url/scanner/cmd|g" main.go
-  sed -i "s|slurp/scanner/intern|$_url/scanner/intern|g" main.go
-  sed -i "s|slurp/scanner/cmd|$_url/scanner/cmd|g" scanner/external/external.go
-  sed -i "s|slurp/scanner/stats|$_url/scanner/stats|g" scanner/cmd/cmd.go
-}
-
 build() {
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $_pkgname "src/$_url" &&
-    cd "src/$_url"
+  cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t $_url
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd $pkgname
 
-  GOPATH="$srcdir" go build -v $_url
-
-  install -Dm 755 "$srcdir/$_pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/README.md" \
-    "src/$_url/README.md"
-  install -Dm 644 "src/$_url/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
 }
 

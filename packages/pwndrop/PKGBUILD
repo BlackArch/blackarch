@@ -3,19 +3,17 @@
 
 pkgname=pwndrop
 pkgver=18.385ba70
-pkgrel=1
+pkgrel=2
 pkgdesc='Self-deployable file hosting service for red teamers, allowing to easily upload and share payloads over HTTP and WebDAV.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation'
         'blackarch-automation')
 url='https://github.com/kgretzky/pwndrop'
 license=('GPL3')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/kgretzky/$pkgname.git")
 sha512sums=('SKIP')
 install="$pkgname.install"
-_url="github.com/kgretzky/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -24,36 +22,26 @@ pkgver() {
 }
 
 build() {
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
-    cd "src/$_url"
+  cd $pkgname
 
-  GOPATH="$srcdir" go get -v -d $_url
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd $pkgname
+
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  GOPATH="$srcdir" go build -v $_url
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md media/*
 
-  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "src/$_url/README.md"
-  cp -a --no-preserve=ownership "src/$_url/media/" \
-    "$pkgdir/usr/share/doc/$pkgname"
-
-  install -Dm 644 "src/$_url/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  cp -a --no-preserve=ownership "src/$_url/www" \
-    "$pkgdir/usr/share/$pkgname/admin"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec ./$pkgname "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  cp -r --no-preserve=ownership www "$pkgdir/usr/share/$pkgname/admin"
 }
 
