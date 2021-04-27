@@ -3,14 +3,13 @@
 
 pkgname=ssllabs-scan
 pkgver=249.a7f3d49
-pkgrel=1
+pkgrel=2
 pkgdesc='Command-line client for the SSL Labs APIs'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-crypto')
 arch=('x86_64' 'aarch64')
 url='https://github.com/ssllabs/ssllabs-scan'
 license=('APACHE')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/ssllabs/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -21,15 +20,24 @@ pkgver() {
 }
 
 build() {
-	cd $pkgname
+  cd $pkgname
 
-  make
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-	cd $pkgname
+  cd $pkgname
 
-	install -Dm 755 ssllabs-scan-v3 "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/$pkgname" *.sql
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md AUTHORS TODO.md
 }

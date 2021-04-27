@@ -3,7 +3,7 @@
 
 pkgname=ilo4-toolbox
 pkgver=33.a08e718
-pkgrel=3
+pkgrel=4
 pkgdesc='Toolbox for HPE iLO4 analysis.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-automation'
         'blackarch-backdoor')
@@ -22,16 +22,32 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o iloscan ./scanner
+}
+
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
+  install -Dm 755 iloscan "$pkgdir/usr/bin/iloscan"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst
   install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
 
-  rm README.rst COPYING
+  rm -r README.rst COPYING scanner
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 }

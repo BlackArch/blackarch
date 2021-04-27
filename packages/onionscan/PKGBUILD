@@ -3,17 +3,16 @@
 
 pkgname=onionscan
 pkgver=130.da42865
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-scanner' 'blackarch-defensive')
 pkgdesc='Scan Onion Services for Security Issues.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/s-rah/onionscan'
 license=('MIT')
-depends=('glibc' 'libexif')
-makedepends=('git' 'go-pie')
+depends=('libexif')
+makedepends=('git' 'go')
 source=("git+https://github.com/s-rah/$pkgname.git")
 sha512sums=('SKIP')
-_url='github.com/s-rah/onionscan'
 
 pkgver() {
   cd $pkgname
@@ -22,21 +21,24 @@ pkgver() {
 }
 
 build() {
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
-    cd "src/$_url"
+  cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t $_url
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname-bin .
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd $pkgname
 
-  GOPATH="$srcdir" go build -v $_url
-
-  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 "src/$_url/README.md" \
-    "$pkgdir/usr/share/doc/$pkgname/README.md"
-  install -Dm 644 "src/$_url/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 $pkgname-bin "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
 }
 
