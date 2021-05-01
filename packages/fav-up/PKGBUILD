@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=fav-up
+pkgver=47.30d9059
+pkgrel=1
+pkgdesc='IP lookup by favicon using Shodan.'
+groups=('blackarch' 'blackarch-recon')
+arch=('any')
+url='https://github.com/pielco11/fav-up'
+license=('MIT')
+depends=('python' 'python-beautifulsoup4' 'python-ipwhois' 'python-mmh3'
+         'python-shodan' 'python-requests' 'python-tqdm'
+         'python-fake-useragent')
+makedepends=('git')
+source=("git+https://github.com/pielco11/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i '1i\#!/usr/bin/python' favUp.py
+  sed -i \
+    's|"{}/data/ua.json".format(self.current_work_dir)|"/usr/share/fav-up/data/ua.json"|' \
+    favUp.py
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 755 favUp.py "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE requirements.txt favUp.py
+
+  cp -a data "$pkgdir/usr/share/$pkgname/"
+}
+
