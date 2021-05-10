@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Jan de Groot <jgc@archlinux.org>
+
+pkgname=gtksourceview2
+pkgver=2.10.5
+pkgrel=6
+pkgdesc='A text widget adding syntax highlighting and more to GNOME.'
+arch=('x86_64' 'aarch64')
+url='http://www.gnome.org/'
+license=('GPL')
+depends=('gtk2' 'libxml2')
+makedepends=('intltool' 'pkg-config' 'python')
+source=("https://download.gnome.org/sources/gtksourceview/2.10/${pkgname//2/}-$pkgver.tar.bz2")
+sha512sums=('6f64acef6196bfc5953e0b148d7e460d366073b5e21367c01b01fc4d1c86ffe8aca71ecd77cf0814e47d8fc3085495f25bbbdc69e746987b02fd02fcda64886d')
+
+prepare() {
+  cd "${pkgname//2/}-$pkgver"
+
+  sed -i 's#python#python2#' gtksourceview/language-specs/convert.py
+}
+
+build() {
+  cd "${pkgname//2/}-$pkgver"
+
+  ./configure --prefix=/usr --sysconfdir=/etc \
+      --localstatedir=/var --disable-static
+
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+
+  make
+}
+
+package() {
+  cd "${pkgname//2/}-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+}
+
