@@ -8,6 +8,7 @@
 
 VERSION="0.1"
 ICON=""
+NO_VERSION_BUMP=''
 
 # Get name of executable
 #
@@ -332,8 +333,9 @@ modify_pkgbuild()
     add_shasum $tmp "$(dirname $orig_pkg)/${pkg_name}.png"
   fi
 
-  # add blackarch-menus as dependency
-  incr_release $tmp
+  if [ -z $NO_VERSION_BUMP ]; then
+    incr_release $tmp
+  fi
 
   mv $tmp $orig_pkg
 }
@@ -410,11 +412,13 @@ gen_letter()
 call_help()
 {
   printf "BlackArchs .desktop generation script\n\n"
-  printf "\t -a, --all:\t generate .desktop files for all packages\n"
-  printf "\t -h, --help:\t print this help\n"
-  printf "\t -i, --icon \t path to icon for application\n"
-  printf "\t -p, --pkg:\t generate .desktop file for a given package\n"
-  printf "\t -V, --version:\t print version of script\n"
+  printf "\t -a, --all:\t\t generate .desktop files for all packages\n"
+  printf "\t -h, --help:\t\t print this help\n"
+  printf "\t -i, --icon \t\t path to icon for application\n"
+  printf "\t -l, --letter \t\t generate .desktop files for multiple packages\n"
+  printf "\t -n, --no-version-bump \t dont bump package version\n"
+  printf "\t -p, --pkg:\t\t generate .desktop file for a given package\n"
+  printf "\t -V, --version:\t\t print version of script\n"
 }
 
 
@@ -426,8 +430,8 @@ call_help()
 main()
 {
   args=$@
-  options=ahi:l:p:vV
-  loptions=all,help,icon:,letter:,pkg:,verbose,version
+  options=ahi:l:np:vV
+  loptions=all,help,icon:,letter:,no-version-bump,pkg:,verbose,version
 
 
   ! parsed=$(getopt --options=$options --longoptions=$loptions --name "$0" -- $args)
@@ -453,6 +457,10 @@ main()
       -l | --letter)
         gen_letter $2
         exit
+        ;;
+      -n | --no-version-bump)
+        NO_VERSION_BUMP='n'
+        shift
         ;;
       -p | --pkg)
         write_pkg=$2
