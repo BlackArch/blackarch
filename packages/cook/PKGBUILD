@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=cook
-pkgver=128.aa703e7
+pkgver=132.77316fb
 pkgrel=1
 groups=('blackarch' 'blackarch-automation')
 pkgdesc="Easily create word's permutation and combination to generate complex wordlists and passwords."
@@ -22,13 +22,22 @@ pkgver() {
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" GO111MODULE=on go get github.com/giteshnxtlvl/cook
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname
 }
 
 package() {
   cd $pkgname
 
-  install -Dm 755 "$srcdir/bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" "$pkgname.yaml"
 }
