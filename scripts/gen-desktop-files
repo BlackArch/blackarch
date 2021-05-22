@@ -56,7 +56,7 @@ get_name()
 get_desc()
 {
   pkg="$1"
-  comment="$(awk -F '=' '/pkgdesc/ {print substr($2, 2, length($2) - 2)}' $pkg)"
+  comment=$(awk -F '=' '/pkgdesc/ {print substr($2, 2, length($2) - 2)}' "$pkg")
   echo "$comment"
 }
 
@@ -240,16 +240,16 @@ add_source()
   pkg="$1"
 
   # if no name is provided, add ba-$pkgname to PKGBUILD file
-  if [ -z $2 ]; then
+  if [ -z "$2" ]; then
     name='ba-$pkgname.desktop'
   else
     name="$2"
   fi
 
-  cat "$pkg" |  tr '\n' '\0'\ | \
+  tr '\n' '\0'\ < "$pkg" | \
     sed  "s/\(\x00source=([^)]\+\))/\1\n        \"$name\"\)/" | \
     tr '\0' '\n' > "$pkg.mod"
-  mv "$pkg.mod" $pkg
+  mv "$pkg.mod" "$pkg"
 }
 
 
@@ -262,10 +262,10 @@ add_dep()
 {
   pkg="$1"
 
-  cat "$pkg" |  tr '\n' '\0'\ | \
+  tr '\n' '\0'\ < "$pkg" | \
     sed "s/\(\x00depends=([^)]\+\))/\1 \'blackarch-menus\'\)/" | \
     tr '\0' '\n' > "$pkg.mod"
-  mv "$pkg.mod" $pkg
+  mv "$pkg.mod" "$pkg"
 }
 
 
@@ -280,11 +280,11 @@ add_shasum()
   pkg="$1"
   path="$2"
 
-  sum=$(sha512sum $path | awk '{print $1}')
-  cat "$pkg" |  tr '\n' '\0'\ | \
+  sum=$(sha512sum "$path" | awk '{print $1}')
+  tr '\n' '\0'\ < "$pkg" | \
     sed "s/\(\x00sha512sums=([^)]\+\))/\1\n            \'$sum\'\)/" | \
     tr '\0' '\n' > "$pkg.mod"
-  mv "$pkg.mod" $pkg
+  mv "$pkg.mod" "$pkg"
 }
 
 
@@ -296,8 +296,8 @@ add_shasum()
 incr_release()
 {
   pkg="$1"
-  cat $pkg | awk -F'=' '/pkgrel/{$2=$2+1}1' > "$pkg.mod"
-  mv "$pkg.mod" $pkg
+  awk -F'=' '/pkgrel/{$2=$2+1}1' < "$pkg" > "$pkg.mod"
+  mv "$pkg.mod" "$pkg"
 }
 
 
@@ -309,35 +309,35 @@ incr_release()
 modify_pkgbuild()
 {
   orig_pkg="$1"
-  pkg_name="$(get_name $orig_pkg)"
+  pkg_name=$(get_name "$orig_pkg")
   tmp="/tmp/PKGBUILD"
 
   # add desktop file to install list
   tac "$orig_pkg" | \
-    awk '/install/ && ! seen { \
-    print "  install -m 644 *.desktop \"$pkgdir/usr/share/applications/\""; \
-    seen=1} {print}' | \
+    awk '/install/ && ! seen {
+      print "  install -m 644 *.desktop \"$pkgdir/usr/share/applications/\"";
+      seen=1} {print}' | \
     tac > $tmp
   add_dep $tmp
   add_source $tmp
-  add_shasum $tmp "$(dirname $orig_pkg)/ba-${pkg_name}.desktop"
+  add_shasum $tmp "$(dirname "$orig_pkg")/ba-${pkg_name}.desktop"
 
-  if [ ! -z "$ICON" ]; then
+  if [ -n "$ICON" ]; then
     tac $tmp | \
-      awk '/install/ && ! seen { \
-      print "  install -Dm 644 $ICON \"$pkgdir/usr/share/pixmaps/$pkgname.png\""; \
-      seen=1} {print}' | \
+      awk '/install/ && ! seen { 
+        print "  install -Dm 644 $ICON \"$pkgdir/usr/share/pixmaps/$pkgname.png\"";
+        seen=1} {print}' | \
       tac > "${tmp}.mod"
     mv "${tmp}.mod" $tmp
     add_source $tmp "${pkg_name}.png"
-    add_shasum $tmp "$(dirname $orig_pkg)/${pkg_name}.png"
+    add_shasum $tmp "$(dirname "$orig_pkg")/${pkg_name}.png"
   fi
 
-  if [ -z $NO_VERSION_BUMP ]; then
+  if [ -z "$NO_VERSION_BUMP" ]; then
     incr_release $tmp
   fi
 
-  mv $tmp $orig_pkg
+  mv $tmp "$orig_pkg"
 }
 
 # Write .desktop file
@@ -352,22 +352,22 @@ write_desktop_file()
   comment="$(get_desc "$pkg")"
   ex_name="$(get_prog_name "$pkg")"
   categories="$(get_groups "$pkg")"
-  if [ -z $ICON ]; then
-    if [ ! -f "$(dirname $pkg)/${name}.png" ]; then
+  if [ -z "$ICON" ]; then
+    if [ ! -f "$(dirname "$pkg")/${name}.png" ]; then
       icon="utilities-terminal"
     else
       icon="$name"
     fi
   else
-    icon=$(basename $ICON)
+    icon="$(basename "$ICON")"
   fi
 
-  cat > "$(dirname $pkg)/ba-${name}.desktop" << EOF
+  cat > "$(dirname "$pkg")/ba-${name}.desktop" << EOF
 [Desktop Entry]
 Name="$name"
 Icon="$icon"
 Comment="$comment"
-TryExec=/usr/bin$ex_name
+TryExec=/usr/bin/$ex_name
 Exec=sh -c '/usr/bin/"$ex_name";\$SHELL'
 StartupNotify=true
 Terminal=true
@@ -381,9 +381,9 @@ EOF
 generate_all()
 {
   # TODO: change to path/default path
-  for pkg in $(awk '/groups/ {print FILENAME}' $(pwd)/../packages/*/PKGBUILD)
+  for pkg in $(awk '/groups/ {print FILENAME}' "$(pwd)"/../packages/*/PKGBUILD)
   do
-    if [ ! -f $(dirname $pkg)/ba-*.desktop ]; then
+    if [ ! -f "$(dirname "$pkg")/ba-*.desktop" ]; then
       write_desktop_file "$pkg"
     fi
   done
@@ -398,9 +398,9 @@ generate_all()
 gen_letter()
 {
   letter="$1"
-  for pkg in $(awk '/groups/ {print FILENAME}' $(pwd)/../packages/"${letter}"*/PKGBUILD)
+  for pkg in $(awk '/groups/ {print FILENAME}' "$(pwd)"/../packages/"${letter}"*/PKGBUILD)
   do
-    if [ ! -f $(dirname $pkg)/ba-*.desktop ]; then
+    if [ ! -f "$(dirname "$pkg")/ba-*.desktop" ]; then
       write_desktop_file "$pkg"
     fi
   done
@@ -429,15 +429,17 @@ call_help()
 #
 main()
 {
-  args=$@
   options=ahi:l:np:vV
   loptions=all,help,icon:,letter:,no-version-bump,pkg:,verbose,version
 
 
-  ! parsed=$(getopt --options=$options --longoptions=$loptions --name "$0" -- $args)
-  if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
-      exit $FAILURE
+  parsed=$(getopt --options="$options" \
+                  --longoptions="$loptions" \
+                  -- "$@")
+  if [ "$?" -ne 0 ]; then
+      exit "$FAILURE"
   fi
+
   eval set -- "$parsed"
 
   while true; do
@@ -455,7 +457,7 @@ main()
         shift 2
         ;;
       -l | --letter)
-        gen_letter $2
+        gen_letter "$2"
         exit
         ;;
       -n | --no-version-bump)
@@ -467,7 +469,7 @@ main()
         shift 2
         ;;
       -V | --version)
-        printf "Version: $VERSION\n"
+        printf "Version: %s\n" "$VERSION"
         exit
         ;;
       --)
