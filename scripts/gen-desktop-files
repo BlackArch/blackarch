@@ -296,7 +296,7 @@ add_shasum()
 incr_release()
 {
   pkg="$1"
-  awk -F'=' '/pkgrel/{$2=$2+1}1' < "$pkg" > "$pkg.mod"
+  awk -F'=' '/pkgrel/{$2=$2+1}1' < "$pkg" | sed 's;pkgrel ;pkgrel=;' > "$pkg.mod"
   mv "$pkg.mod" "$pkg"
 }
 
@@ -359,7 +359,8 @@ write_desktop_file()
       icon="$name"
     fi
   else
-    icon="$(basename "$ICON")"
+    cp "$ICON" "$(dirname "$pkg")/${name}.png"
+    icon="$name"
   fi
 
   cat > "$(dirname "$pkg")/ba-${name}.desktop" << EOF
@@ -436,7 +437,8 @@ main()
   parsed=$(getopt --options="$options" \
                   --longoptions="$loptions" \
                   -- "$@")
-  if [ "$?" -ne 0 ]; then
+  ret=$?
+  if [ "$ret" -ne 0 ]; then
       exit "$FAILURE"
   fi
 
