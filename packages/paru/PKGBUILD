@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# AUR Maintainer: Morgan <morganamilo@archlinux.org>
+
+pkgname=paru
+pkgver=1.7.0
+pkgrel=1
+pkgdesc='Feature packed AUR helper'
+url='https://github.com/morganamilo/paru'
+source=("$pkgname-$pkgver.tar.gz::https://github.com/Morganamilo/paru/archive/v$pkgver.tar.gz")
+backup=("etc/paru.conf")
+arch=('x86_64' 'aarch64')
+license=('GPL3')
+depends=('git' 'pacman')
+optdepends=('asp: downloading repo pkgbuilds' 'bat: colored pkgbuild printing' 'devtools: build in chroot')
+sha256sums=('68e1761d3e6bcebce18bef6c49a8f0b00ce3469de7a7297e21b95e94407f24af')
+
+build () {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  if pacman -T pacman-git > /dev/null; then
+    _features+="git,"
+  fi
+
+  if [[ $(rustc -V) == *"nightly"* ]]; then
+    _features+="backtrace,"
+  fi
+
+  if [[ $CARCH != x86_64 ]]; then
+    export CARGO_PROFILE_RELEASE_LTO=off
+  fi
+
+  cargo build --locked --features "${_features:-}" --release --target-dir target
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  install -Dm755 target/release/paru "${pkgdir}/usr/bin/paru"
+  install -Dm644 paru.conf "${pkgdir}/etc/paru.conf"
+
+  install -Dm644 man/paru.8 "$pkgdir/usr/share/man/man8/paru.8"
+  install -Dm644 man/paru.conf.5 "$pkgdir/usr/share/man/man5/paru.conf.5"
+
+  install -Dm644 completions/bash "${pkgdir}/usr/share/bash-completion/completions/paru.bash"
+  install -Dm644 completions/fish "${pkgdir}/usr/share/fish/vendor_completions.d/paru.fish"
+  install -Dm644 completions/zsh "${pkgdir}/usr/share/zsh/site-functions/_paru"
+}
+
