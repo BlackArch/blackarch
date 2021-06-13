@@ -13,10 +13,10 @@ NO_VERSION_BUMP=''
 # Get name of executable
 #
 # Arguments:
-#       pkg : PKGBUILD file
+#   pkg : PKGBUILD file
 #
 # Return:
-#       name : name of executable
+#   name : name of executable
 #
 get_prog_name()
 {
@@ -33,25 +33,25 @@ get_prog_name()
 # Get name of pkg
 #
 # Arguments:
-#       pkg : PKGBUILD file
+#   pkg : PKGBUILD file
 #
 # Return:
-#       name : name of pkg
+#   name : name of pkg
 #
 get_name()
 {
   pkg=$1
-  name="$(basename "$(dirname "$pkg")")"
+  name="$(awk -F '=' '/^pkgname/ {print $2}' "$pkg")"
   echo "$name"
 }
 
 # Get pkg description
 #
 # Arguments:
-#       pkg : PKGBUILD file
+#   pkg : PKGBUILD file
 #
 # Return:
-#       comment : comment for desktop file
+#   comment : comment for desktop file
 #
 get_desc()
 {
@@ -64,10 +64,10 @@ get_desc()
 # Extract all the groups to order in categories
 #
 # Argmuents:
-#       pkg : PKGBUILD file
+#   pkg : PKGBUILD file
 #
 # Return:
-#       cat : BA menu groups
+#   cat : BA menu groups
 #
 get_groups()
 {
@@ -232,8 +232,8 @@ get_groups()
 # Add .desktop file to sources
 #
 # Arguments:
-#         pkg: PKGBUILD file
-#         name: desktop/icon file name
+#   pkg: PKGBUILD file
+#   name: desktop/icon file name
 #
 add_source()
 {
@@ -256,7 +256,7 @@ add_source()
 # Add blackarch-menus to dependencies
 #
 # Arguments:
-#         pkg: PKGBUILD file
+#   pkg: PKGBUILD file
 #
 add_dep()
 {
@@ -291,7 +291,7 @@ add_shasum()
 # Increase pkg release
 #
 # Arguments:
-#        pkg: PKGBUILD file
+#   pkg: PKGBUILD file
 #
 incr_release()
 {
@@ -304,7 +304,7 @@ incr_release()
 # Add line to PKGBUILD to install .desktop file
 #
 # Arguments:
-#       orig_pkg: PKGBUILD file
+#   orig_pkg: PKGBUILD file
 #
 modify_pkgbuild()
 {
@@ -324,7 +324,7 @@ modify_pkgbuild()
 
   if [ -n "$ICON" ]; then
     tac $tmp | \
-      awk '/install/ && ! seen { 
+      awk '/install/ && ! seen {
         print "  install -Dm 644 $ICON \"$pkgdir/usr/share/pixmaps/$pkgname.png\"";
         seen=1} {print}' | \
       tac > "${tmp}.mod"
@@ -343,7 +343,7 @@ modify_pkgbuild()
 # Write .desktop file
 #
 # Arguments:
-#       pkg : PKGBUILD file
+#   pkg : PKGBUILD file
 #
 write_desktop_file()
 {
@@ -379,10 +379,14 @@ EOF
 }
 
 # Generate ba-*.desktop files for all packages
+#
+# Arguments:
+#   path - path to PKGBUILD files
 generate_all()
 {
-  # TODO: change to path/default path
-  for pkg in $(awk '/groups/ {print FILENAME}' "$(pwd)"/../packages/*/PKGBUILD)
+  path="$1"
+
+  for pkg in $(awk '/groups/ {print FILENAME}' "${path}"/*/PKGBUILD)
   do
     if [ ! -f "$(dirname "$pkg")/ba-*.desktop" ]; then
       write_desktop_file "$pkg"
@@ -394,12 +398,15 @@ generate_all()
 # Generate desktop files for a certain letter
 #
 # Arguments:
-# letter - generate desktop files for this letter(group)
+#   letter - generate desktop files for this letter(group)
+#   path - path to PKGBUILD files
 #
-gen_letter()
+generate_letter()
 {
   letter="$1"
-  for pkg in $(awk '/groups/ {print FILENAME}' "$(pwd)"/../packages/"${letter}"*/PKGBUILD)
+  path="$2"
+
+  for pkg in $(awk '/groups/ {print FILENAME}' "${path}"/"${letter}"*/PKGBUILD)
   do
     if [ ! -f "$(dirname "$pkg")/ba-*.desktop" ]; then
       write_desktop_file "$pkg"
@@ -412,13 +419,15 @@ gen_letter()
 #
 call_help()
 {
-  printf "BlackArchs .desktop generation script\n\n"
+  printf "BlackArchs .desktop file generation script\n\n"
   printf "\t -a, --all:\t\t generate .desktop files for all packages\n"
   printf "\t -h, --help:\t\t print this help\n"
   printf "\t -i, --icon \t\t path to icon for application\n"
   printf "\t -l, --letter \t\t generate .desktop files for multiple packages\n"
   printf "\t -n, --no-version-bump \t dont bump package version\n"
   printf "\t -p, --pkg:\t\t generate .desktop file for a given package\n"
+  printf "\t -P, --path:\t\t path to PKGBUILD file collection, only used with\n"
+  printf "\t            \t\t\t -a, --all | -P, --path\n"
   printf "\t -V, --version:\t\t print version of script\n"
 }
 
@@ -426,12 +435,12 @@ call_help()
 # main function
 #
 # Arguments:
-# args - command line arguments
+#   args - command line arguments
 #
 main()
 {
-  options=ahi:l:np:vV
-  loptions=all,help,icon:,letter:,no-version-bump,pkg:,verbose,version
+  options=ahi:l:np:P:vV
+  loptions=all,help,icon:,letter:,no-version-bump,pkg:path:,verbose,version
 
 
   parsed=$(getopt --options="$options" \
@@ -447,8 +456,8 @@ main()
   while true; do
     case "$1" in
       -a | --all)
-        generate_all
-        exit
+        gen_all='y'
+        shift
         ;;
       -h | --help)
         call_help
@@ -459,15 +468,19 @@ main()
         shift 2
         ;;
       -l | --letter)
-        gen_letter "$2"
-        exit
+        gen_letter="$2"
+        shift 2
         ;;
       -n | --no-version-bump)
         NO_VERSION_BUMP='n'
         shift
         ;;
       -p | --pkg)
-        write_pkg=$2
+        write_pkg="$2"
+        shift 2
+        ;;
+      -P | --path)
+        package_path="${2%/}"
         shift 2
         ;;
       -V | --version)
@@ -482,6 +495,22 @@ main()
         ;;
     esac
   done
+
+  if [ -n "$package_path" ]; then
+    if [ -n "$gen_all" ]; then
+      generate_all "$package_path"
+      exit
+    fi
+
+    if [ -n "$gen_letter" ]; then
+      generate_letter "$gen_letter" "$package_path"
+      exit
+    fi
+
+    printf "Error: Use -P | --path with -a|--all or -p|--package only\n"
+    exit
+  fi
+
   write_desktop_file "$write_pkg"
 }
 
