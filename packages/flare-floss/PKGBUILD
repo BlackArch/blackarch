@@ -2,37 +2,43 @@
 # See COPYING for license details.
 
 pkgname=flare-floss
-pkgver=1.7.0
+pkgver=675.0b2d097
 pkgrel=1
 pkgdesc='Obfuscated String Solver - Automatically extract obfuscated strings from malware.'
 groups=('blackarch' 'blackarch-malware')
 arch=('x86_64')
 url='https://github.com/fireeye/flare-floss'
 license=('Apache')
-depends=('python2' 'python2-utils' 'python2-simplejson' 'python2-tabulate'
-         'python2-plugnplay' 'python2-pyaml' 'python2-viv-utils' 'python2-q'
-         'python2-enum34' 'vivisect')
-makedepends=('git' 'python2-setuptools')
-source=("https://github.com/fireeye/$pkgname/archive/v$pkgver.tar.gz")
-#source=("https://github.com/fireeye/flare-floss/releases/download/v$pkgver/floss-$pkgver-GNU.Linux.zip")
-sha512sums=('a2beb6c71669f47e30330b2366c52e998c54df8173fb0456916ac277fa6af31b6acabbd4c83f371e213fa9739d1cd072cb55741ef458d227c00245a3369f0512')
+depends=('python' 'python-tabulate' 'python-simplejson' 'python-viv-utils'
+         'vivisect')
+makedepends=('git' 'python-setuptools')
+#source=("https://github.com/fireeye/$pkgname/archive/v$pkgver.tar.gz")
+source=("git+https://github.com/fireeye/$pkgname.git"
+        'setup.py.patch')
+sha512sums=('SKIP'
+            '74db2205c2aedec7e94e193a0ae8c57e66a6593b51518034b9e658feb4a43263c23ee414dc833342ef29e0eb4f81e944d9fc73806c2247235daf143f4addff7d')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 prepare() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
-  sed -i 's/vivisect==0.1.0/vivisect/' setup.py
-  sed -i 's/viv-utils==0.3.17/viv-utils/' setup.py
+  patch -p0 < ../setup.py.patch
 }
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
-  python2 setup.py build
+  python setup.py build
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
-  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
