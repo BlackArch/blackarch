@@ -70,7 +70,7 @@ are given and everything is setup. Anything else can be discussed on IRC.
 ## Creating packages
 
 
-The following information was written with the goal of creating high-quality PKGBUILDs and ensure that ever package uploaded to the BlackArch Linux repository is really working.
+The following information was written with the goal of creating high-quality PKGBUILDs and ensure that every package uploaded to the BlackArch Linux repository is really working.
 
 **Prerequisites:**
 
