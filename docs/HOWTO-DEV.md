@@ -11,36 +11,14 @@ Further details or any questions can be discussed in IRC or Discord.
 
 The categories are structured to have at least a little bit of an overview.
 
+- [General information](#general-information)
+- [Packaging style](#packaging-style)
+- [Creating packages](#creating-packages)
+- [ISO](#iso)
+- [Website](#website)
+- [On-Boarding for new developers](#on-boarding-for-new-developers)
 
-## On-Boarding for new Developers
-
-Following information are immediately needed when you want to join the BlackArch
-Linux project:
-
-- **Name**: Your name will be used on website. Say fuckoff to stay anonym.
-
-- **E-Mail**: For the team@blackarch.org mailinglist. You will receive any mails
-sent to that list.
-
-- **Handle**: For references in any BlackArch project and also for IRC/Discord.
-
-- **Twitter**: Your twitter name if present. @blackarchlinux will then follow
-you.
-
-- **Github**: Your github Account name with 2-fa enabled. You will get full
-read-write access to all repositories.
-
-- **Pub-Keys**: Your GPG and SSH pubkeys. SSH Key will be used for our shared
-build-system.
-
-- **Role**: The role you want to have and where you will mostly focus on. Roles
-can be multiple.
-
-You should then continue reading the rest of this document once all information
-are given and everything is setup. Anything else can be discussed on IRC.
-
-
-## General Infos
+## General information
 
 - CoC for BlackArch is almost the same like:
 [https://wiki.archlinux.org/index.php/Code_of_conduct](https://wiki.archlinux.org/index.php/Code_of_conduct)
@@ -90,11 +68,42 @@ The following information was written with the goal of creating high-quality PKG
 
 - For your pull request use the syntax \<pkgname\>: \<initial commit\> or \<pkgname\>: \<change done\>
 
+- Add every pkgname you modified to `lists/to-release`. **Don't** use `lists/to-release-arm' as it is for internal use only.
+
 ## ISO
 
-The ISO can be maintained and code can be found in the blackarch-iso repository, please refer to the README for documentation, further documentation will be provided inside the files
+The ISO can be maintained and code can be found in the [blackarch-iso](https://github.com/BlackArch/blackarch-iso) repository, please refer to the README for documentation, further documentation will be provided inside the files
 
 
 ## Website
 
-Can be located in the blackarch-website repository, it is currently starting the process of being rebuilt, talk to Noptrix and other devs on the Discord or IRC for more info.
+Can be located in the [blackarch-website](https://github.com/BlackArch/blackarch-site) repository, it is currently starting the process of being rebuilt, talk to Noptrix and other devs on the Discord or IRC for more info.
+
+## On-Boarding for new developers
+
+Following information are immediately needed when you want to join the BlackArch
+Linux project:
+
+- **Name**: Your name will be used on website. Say fuckoff to stay anonym.
+
+- **E-Mail**: For the team@blackarch.org mailinglist. You will receive any mails
+sent to that list.
+
+- **Handle**: For references in any BlackArch project and also for IRC/Discord.
+
+- **Twitter**: Your twitter name if present. @blackarchlinux will then follow
+you.
+
+- **Github**: Your github Account name with 2-fa enabled. You will get full
+read-write access to all repositories.
+
+- **Pub-Keys**: Your GPG and SSH pubkeys. SSH Key will be used for our shared
+build-system.
+
+- **Role**: The role you want to have and where you will mostly focus on. Roles
+can be multiple.
+
+You should then continue reading the rest of this document once all information
+are given and everything is setup. Anything else can be discussed on IRC.
+
+
