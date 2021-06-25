@@ -2,6 +2,7 @@
 # See COPYING for license details.
 
 pkgname=torghostng
+_pkgname=TorghostNG
 pkgver=119.348f639
 pkgrel=1
 pkgdesc='TorghostNG is a tool that make all your internet traffic anonymized through Tor network.'
@@ -15,26 +16,25 @@ source=('git+https://github.com/GitHackTools/TorghostNG.git')
 sha512sums=('SKIP')
 
 pkgver(){
-  cd TorghostNG
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  cd $_pkgname
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
 package(){
-  cd TorghostNG
+  cd $_pkgname
 
   install -dm 755 "$pkgdir/usr/bin/"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm *.md LICENSE
+  rm LICENSE *.md
 
   cp -a * "$pkgdir/usr/share/$pkgname"
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python torghostng.py "\$@"
+exec python $pkgname.py "\$@"
 EOF
   chmod +x "$pkgdir/usr/bin/$pkgname"
 }
