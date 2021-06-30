@@ -9,6 +9,11 @@
 VERSION="0.1"
 ICON=""
 NO_VERSION_BUMP=''
+OVERWRITE='no'
+OLD_HASH=''
+OLD_IMG_HASH=''
+EXISTS='0'
+DOES_NOT_EXIST='1'
 
 # Get name of executable
 #
@@ -229,6 +234,23 @@ get_groups()
 }
 
 
+# Checks if a string exists in file
+#
+# Arguments:
+#   pkg: PKGBUILD file
+#   string: String to check for existence
+#
+# Returns:
+#   existance: 0 if string exists, 1 else
+#
+check_string() {
+  pkg="$1"
+  string="$2"
+
+  grep -q "$string" "$pkg"
+  echo $?
+}
+
 # Add .desktop file to sources
 #
 # Arguments:
@@ -246,6 +268,11 @@ add_source()
     name="$2"
   fi
 
+  ret=$(check_string "$pkg" "$name")
+  if [ "$ret" -eq "$EXISTS" ]; then
+    return
+  fi
+
   tr '\n' '\0'\ < "$pkg" | \
     sed  "s/\(\x00source=([^)]\+\))/\1\n        \"$name\"\)/" | \
     tr '\0' '\n' > "$pkg.mod"
@@ -261,6 +288,11 @@ add_source()
 add_dep()
 {
   pkg="$1"
+
+  ret="$(check_string "$pkg" 'blackarch-menus')"
+  if [ "$ret" -eq "$EXISTS" ]; then
+    return
+  fi
 
   tr '\n' '\0'\ < "$pkg" | \
     sed "s/\(\x00depends=([^)]\+\))/\1 \'blackarch-menus\'\)/" | \
@@ -288,6 +320,29 @@ add_shasum()
 }
 
 
+# Replace shasum
+#
+# Arguments:
+#        pkg: PKGBUILD file
+#        path: desktop file path
+#        shasum: hash to check
+#
+replace_shasum()
+{
+  pkg="$1"
+  path="$2"
+  shasum="$3"
+
+  if [ $(check_string "$pkg" "$shasum") -eq "$DOES_NOT_EXIST" ] || \
+     [ -z "$shasum" ]; then
+    add_shasum "$pkg" "$path"
+  else
+    sum=$(sha512sum "$path" | awk '{print $1}')
+    sed -i "s;${shasum};${sum};" "$pkg"
+  fi
+}
+
+
 # Increase pkg release
 #
 # Arguments:
@@ -312,25 +367,45 @@ modify_pkgbuild()
   pkg_name=$(get_name "$orig_pkg")
   tmp="/tmp/PKGBUILD"
 
-  # add desktop file to install list
-  tac "$orig_pkg" | \
-    awk '/install/ && ! seen {
-      print "  install -m 644 *.desktop \"$pkgdir/usr/share/applications/\"";
-      seen=1} {print}' | \
-    tac > $tmp
+  cp "$orig_pkg" "$tmp"
   add_dep $tmp
   add_source $tmp
-  add_shasum $tmp "$(dirname "$orig_pkg")/ba-${pkg_name}.desktop"
 
-  if [ -n "$ICON" ]; then
-    tac $tmp | \
+  # add desktop file to install list
+  ret="$(check_string "$tmp" 'install -Dm 644 \"ba-\$pkgname.desktop\"')"
+  if [ "$ret" -eq "$DOES_NOT_EXIST" ]; then
+    tac "$tmp" | \
       awk '/install/ && ! seen {
-        print "  install -Dm 644 $ICON \"$pkgdir/usr/share/pixmaps/$pkgname.png\"";
+        print "  install -Dm 644 \"ba-$pkgname.desktop\" \"$pkgdir/usr/share/applications/\"";
         seen=1} {print}' | \
       tac > "${tmp}.mod"
     mv "${tmp}.mod" $tmp
+  fi
+
+  if [ "$OVERWRITE" = 'no' ]; then
+    add_shasum $tmp "$(dirname "$orig_pkg")/ba-${pkg_name}.desktop"
+  else
+    replace_shasum $tmp "$(dirname "$orig_pkg")/ba-${pkg_name}.desktop" "$OLD_HASH"
+  fi
+
+  # add icon
+  if [ -n "$ICON" ]; then
     add_source $tmp "${pkg_name}.png"
-    add_shasum $tmp "$(dirname "$orig_pkg")/${pkg_name}.png"
+
+    ret="$(check_string "$tmp" 'install -Dm 644 \"\$pkgname.png\"')"
+    if [ "$ret" -eq "$DOES_NOT_EXIST" ]; then
+      cmd="  install -Dm 644 \"\$pkgname.png\" \"\$pkgdir/usr/share/pixmaps/\$pkgname.png\""
+      tac $tmp | \
+        awk -v command="$cmd" '/install/ && ! seen {print command; seen=1} {print}' | \
+        tac > "${tmp}.mod"
+      mv "${tmp}.mod" $tmp
+
+      if [ "$OVERWRITE" = 'no' ]; then
+        add_shasum $tmp "$(dirname "$orig_pkg")/${pkg_name}.png"
+      else
+        replace_shasum $tmp "$(dirname "$orig_pkg")/${pkg_name}.png" "$OLD_IMG_HASH"
+      fi
+    fi
   fi
 
   if [ -z "$NO_VERSION_BUMP" ]; then
@@ -352,6 +427,17 @@ write_desktop_file()
   comment="$(get_desc "$pkg")"
   ex_name="$(get_name "$pkg")"
   categories="$(get_groups "$pkg")"
+
+  if [ -f "$(dirname "$pkg")/ba-${ex_name}.desktop" ]; then
+    if [ "$OVERWRITE" = "no" ]; then
+      printf "%s already has a blackarch desktop file\n" "$(dirname "$pkg")"
+      return
+    else
+      OLD_HASH="$(sha512sum "$(dirname "$pkg")/ba-${ex_name}.desktop" | \
+                  awk '{print $1}')"
+    fi
+  fi
+
   if [ -z "$ICON" ]; then
     if [ ! -f "$(dirname "$pkg")/${ex_name}.png" ]; then
       icon="utilities-terminal"
@@ -359,6 +445,8 @@ write_desktop_file()
       icon="$ex_name"
     fi
   else
+    OLD_IMG_HASH="$(sha512sum "$(dirname "$pkg")/${ex_name}.png" | \
+                    awk '{print $1}')"
     cp "$ICON" "$(dirname "$pkg")/${ex_name}.png"
     icon="$ex_name"
   fi
@@ -388,9 +476,7 @@ generate_all()
 
   awk '/groups/ {print FILENAME}' "${path}"/*/PKGBUILD |  while IFS= read -r pkg
   do
-    if [ ! -f "$(dirname "$pkg")/ba-*.desktop" ]; then
-      write_desktop_file "$pkg"
-    fi
+    write_desktop_file "$pkg"
   done
 }
 
@@ -408,9 +494,7 @@ generate_letter()
 
   awk '/groups/ {print FILENAME}' "${path}"/"${letter}"*/PKGBUILD |  while IFS= read -r pkg
   do
-    if [ ! -f "$(dirname "$pkg")/ba-*.desktop" ]; then
-      write_desktop_file "$pkg"
-    fi
+    write_desktop_file "$pkg"
   done
 }
 
@@ -421,6 +505,7 @@ call_help()
 {
   printf "BlackArchs .desktop file generation script\n\n"
   printf "\t -a, --all:\t\t generate .desktop files for all packages\n"
+  printf "\t -f, --force\t\t overwrite existing BA desktop file\n"
   printf "\t -h, --help:\t\t print this help\n"
   printf "\t -i, --icon \t\t path to icon for application\n"
   printf "\t -l, --letter \t\t generate .desktop files for multiple packages\n"
@@ -439,8 +524,8 @@ call_help()
 #
 main()
 {
-  options=ahi:l:np:P:vV
-  loptions=all,help,icon:,letter:,no-version-bump,pkg:path:,verbose,version
+  options=afhi:l:np:P:vV
+  loptions=all,force,help,icon:,letter:,no-version-bump,pkg:path:,verbose,version
 
 
   parsed=$(getopt --options="$options" \
@@ -457,6 +542,10 @@ main()
     case "$1" in
       -a | --all)
         gen_all='y'
+        shift
+        ;;
+      -f | --force)
+        OVERWRITE='yes'
         shift
         ;;
       -h | --help)
