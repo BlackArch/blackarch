@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Levente Polyak <anthraxx[at]archlinux[dot]org>
+# Old Contributor: Andrés Cordero <arch@andrew67.com>
+# Old Contributor: Jens Pranaitis <jens@chaox.net>
+
+pkgname=mdk3
+pkgver=v6
+pkgrel=9
+pkgdesc='WLAN penetration tool.'
+groups=('blackarch' 'blackarch-wireless' 'blackarch-fuzzer'
+        'blackarch-exploitation')
+url='https://aspj.aircrack-ng.org/'
+arch=('x86_64' 'aarch64')
+license=('GPL2')
+depends=('glibc')
+#source=("$pkgname-$pkgver.tar.bz2::https://aspj.aircrack-ng.org/$pkgname-$pkgver.tar.bz2")
+source=("https://github.com/Wikel/$pkgname-$pkgver/raw/master/$pkgname-$pkgver.tar.bz2")
+sha512sums=('a7879e832a7184f85b9b4f591fddb313731a8d8899c98ca3a1f026284bec79018d4ae373d5fd9cc1935915ad848761dc5f865aeca38ca4e13122e9c9f9108c3a')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  sed "s|-g -O3|${CFLAGS}|g" -i Makefile
+  sed 's|sbin|bin|g' -i Makefile
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  make -C osdep
+  make
+}
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" PREFIX="/usr" install
+
+  install -Dm 644 docs/*.html -t "$pkgdir/usr/share/doc/$pkgname"
+}
+
