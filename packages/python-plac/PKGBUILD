@@ -1,0 +1,60 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-plac
+pkgname=('python-plac' 'python2-plac')
+_pkgname=plac
+pkgver=1.3.3
+pkgrel=1
+pkgdesc='Python package that can generate command line parameters from function signatures.'
+arch=('any')
+url='https://pypi.org/project/plac/'
+license=('BSD')
+makedepends=('python-setuptools' 'python2-setuptools')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('304cd2ca23adf45b150adb395d83c3653228177c0a14db207150b7f9cd5a992421959c6e3c1204dd80f5cb09f7e601bd689034fa158a500e9214d4357f68a2e8')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-plac() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  for s in "$pkgdir/usr/bin/"*;do
+    arrS=(${s//./ })
+    mv $s "${arrS[0]}-2"
+  done
+
+   install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+package_python-plac() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  for s in "$pkgdir/usr/bin/"*;do
+    arrS=(${s//./ })
+    mv $s "${arrS[0]}"
+  done
+
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
