@@ -32,6 +32,4 @@ To start developing for BlackArch please refer to the [Dev-Guide](./docs/HOWTO-D
 
 **Mail:** team@blackarch.org
 
-**IRC:** [irc://irc.freenode.net/blackarch](irc://irc.freenode.net/blackarch)
-
-**Discord:** https://discord.gg/DtEfRtx
+**IRC:** [irc://irc.blackarch.org:1337/blackarch](irc://irc.blackarch.org:1337/blackarch)
