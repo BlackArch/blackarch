@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=intelmq
+pkgver=3.0.0.r13.g98f83da72
+pkgrel=1
+pkgdesc='A tool for collecting and processing security feeds using a message queuing protocol.'
+arch=('any')
+groups=('blackarch' 'blackarch-network')
+url='https://github.com/certtools/intelmq'
+license=('AGPL3')
+depends=('python' 'python-dnspython' 'python-psutil' 'python-dateutil'
+         'python-termstyle' 'python-pytz' 'python-redis' 'python-requests'
+         'python-ruamel-yaml')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/certtools/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.rst *.md
+}
+
