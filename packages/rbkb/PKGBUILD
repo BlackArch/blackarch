@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=rbkb
+pkgver=v0.7.2.r0.ga6d35c0
+pkgrel=1
+pkgdesc='A miscellaneous collection of command-line tools related to pen-testing and reversing.'
+arch=('any')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/emonti/rbkb'
+license=('MIT')
+depends=('ruby')
+makedepends=('git')
+source=("git+https://github.com/emonti/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  gem build rbkb.gemspec
+}
+
+package() {
+  cd $pkgname
+
+  _gemdir="$(ruby -e'puts Gem.default_dir')"
+  _release=$(gem build rbkb.gemspec | grep Version | cut -d' ' -f4)
+
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" "$pkgname-$_release.gem"
+
+  rm "$pkgdir/$_gemdir/cache/$pkgname-$_release.gem"
+
+  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
+
+  rm -r "$pkgdir/$_gemdir/gems/$pkgname-$_release/test"
+
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
