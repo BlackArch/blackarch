@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=mobsf
-pkgver=1603.68bdcd15
+pkgver=1715.bb5a70dc
 pkgrel=1
 epoch=1
 groups=('blackarch' 'blackarch-mobile')
@@ -30,7 +30,7 @@ depends=('python' 'python-distro' 'python-django' 'python-pdfkit' 'androguard'
          'python-traitlets' 'python-colorlog' 'python-play-scraper'
          'python-whitenoise' 'python-macholib' 'gunicorn' 'python-libsast'
          'python-google-play-scraper' 'python-shelljob' 'python-http-tools'
-         'python-frida' 'python-oscrypto' 'python-ip2location' 'lief')
+         'python-frida' 'python-oscrypto' 'python-ip2location' 'lief' 'quark-engine')
 makedepends=('git' 'python-setuptools' 'python-pip')
 source=("$pkgname::git+https://github.com/MobSF/Mobile-Security-Framework-MobSF.git")
 sha512sums=('SKIP')
@@ -43,7 +43,7 @@ pkgver() {
 }
 
 prepare() {
-  cd $pkgname
+  cd $pkgname/$pkgname
   sed -i 's/USE_HOME = False/USE_HOME = True/g' MobSF/settings.py
 }
 
@@ -58,17 +58,16 @@ package() {
 
   rm docker-compose.yml Dockerfile LICENSE README.md requirements.txt *.bat \
     *.sh scripts/*.bat
-  rm -r scripts/wheels/ scripts/stack/
+  #rm -r scripts/wheels/ scripts/stack/
 
   cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec gunicorn -b 0.0.0.0:8000 MobSF.wsgi:application \
-  --workers=1 --threads=4 --timeout=1800
+exec gunicorn -b 0.0.0.0:8000 mobsf.MobSF.wsgi:application \
+  --workers=1 --threads=10 --timeout=3600
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
 }
-
