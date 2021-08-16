@@ -2,14 +2,15 @@
 # See COPYING for license details.
 
 pkgname=evil-winrm
-pkgver=267.3c318f1
+pkgver=v3.2.r0.g1e157e4
 pkgrel=1
+epoch=1
 pkgdesc='The ultimate WinRM shell for hacking/pentesting.'
 arch=('any')
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-backdoor')
 url='https://github.com/Hackplayers/evil-winrm'
 license=('LGPL3')
-depends=('ruby' 'ruby-bundler' 'libxslt')
+depends=('ruby' 'ruby-bundler' 'libxslt' 'ruby-rexml')
 makedepends=('git')
 source=("git+https://github.com/Hackplayers/$pkgname.git")
 sha512sums=('SKIP')
@@ -18,7 +19,14 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+  cd $pkgname
+
+  # tmp fix https://github.com/BlackArch/blackarch/issues/3102
+  echo "gem 'rexml'" >> Gemfile
 }
 
 package() {
@@ -28,7 +36,6 @@ package() {
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
 
   cp -a --no-preserve=ownership resources/ "$pkgdir/usr/share/doc/$pkgname/"
 

@@ -2,18 +2,17 @@
 # See COPYING for license details.
 
 pkgname=cameradar
-pkgver=139.0984607
-pkgrel=1
+pkgver=189.4c14935
+pkgrel=3
 pkgdesc='Hacks its way into RTSP videosurveillance cameras.'
 arch=('x86_64')
 groups=('blackarch' 'blackarch-scanner')
 url='https://github.com/Ullaakut/cameradar'
 license=('MIT')
-makedepends=('go-pie' 'dep' 'git')
+depends=('nmap')
+makedepends=('go' 'git')
 source=("git+https://github.com/Ullaakut/$pkgname.git")
 sha512sums=('SKIP')
-_src='src/github.com/Ullaakut'
-_gopath="gopath/$_src"
 
 pkgver() {
   cd $pkgname
@@ -21,45 +20,26 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  mkdir -p $_gopath
-  ln -rTsf $pkgname "$_gopath/$pkgname"
-
-  export GOPATH="$srcdir/gopath"
-  cd "$GOPATH/$_src/$pkgname"
-
-  dep ensure
-}
-
 build() {
-  export GOPATH="$srcdir/gopath"
-  cd "$GOPATH/$_src/$pkgname/$pkgname"
+  cd $pkgname
 
-  go install
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/cameradar
 }
 
 package() {
-  export GOPATH="$srcdir/gopath"
-  cd "$GOPATH/bin"
+  cd $pkgname
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname/$_src/$pkgname"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 
-  install -Dm 755 $pkgname "$pkgdir/usr/share/$pkgname/$pkgname"
-  install -Dm 755 "$GOPATH/$_src/$pkgname/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" \
-    "$GOPATH/$_src/$pkgname/"*.md \
-
-  cd "$srcdir/$_gopath/$pkgname"
   cp -a dictionaries examples images "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-export GOPATH="/usr/share/$pkgname/"
-exec /usr/share/$pkgname/$pkgname "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 

@@ -9,8 +9,7 @@ pkgdesc='Dotmil subdomain discovery tool that scrapes domains from official DoD 
 arch=('x86_64' 'aarch64')
 url='https://github.com/daehee/mildew'
 license=('custom:unknown')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/daehee/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -23,15 +22,20 @@ pkgver() {
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go build -v .
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname-bin ./cmd/$pkgname
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 $pkgname-bin "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 }
 

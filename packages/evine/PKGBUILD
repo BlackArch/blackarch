@@ -2,15 +2,14 @@
 # See COPYING for license details.
 
 pkgname=evine
-pkgver=38.1643204
+pkgver=41.d2584e5
 pkgrel=1
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
 pkgdesc='Interactive CLI Web Crawler.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/saeeddhqan/evine.git'
 license=('GPL3')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/saeeddhqan/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -23,15 +22,18 @@ pkgver() {
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t .
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
   cd $pkgname
-
-  install -dm 755 "$pkgdir/usr/bin"
-
-  GOPATH="$srcdir" go build -v .
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md

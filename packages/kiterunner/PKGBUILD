@@ -2,15 +2,14 @@
 # See COPYING for license details.
 
 pkgname=kiterunner
-pkgver=11.e7a7fa6
+pkgver=19.7d5824c
 pkgrel=1
 pkgdesc='Contextual Content Discovery Tool.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-recon')
 url='https://github.com/assetnote/kiterunner'
 license=('AGPL3')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/assetnote/$pkgname.git"
         "https://wordlists-cdn.assetnote.io/data/kiterunner/routes-large.kite.tar.gz"
         "https://wordlists-cdn.assetnote.io/data/kiterunner/routes-small.kite.tar.gz")
@@ -24,34 +23,25 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  cd $pkgname
-
-  GO111MODULE=auto GOPATH="$srcdir" go get -v -d -t .
-
-  mkdir -p dist
-}
-
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" GOOS="linux" go build -v -tags "netgo osusergo" \
-    -a -ldflags "-extld 'g++' -extldflags '-static'" \
-    -o dist/$pkgname ./cmd/$pkgname
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/$pkgname
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 755 dist/$pkgname "$pkgdir/usr/bin/$pkgname"
-
-  install -Dm 644 "$srcdir/routes-large.kite" \
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 "$srcdir/routes-large.kite" "$srcdir/routes-small.kite" -t \
     "$pkgdir/usr/share/$pkgname/"
-  install -Dm 644 "$srcdir/routes-small.kite" \
-    "$pkgdir/usr/share/$pkgname/"
-
   install -Dm 644 readme.md \
     "$pkgdir/usr/share/doc/$pkgname/README.md"
   install -Dm 644 LICENSE \

@@ -2,15 +2,14 @@
 # See COPYING for license details.
 
 pkgname=dnsx
-pkgver=112.6688056
+pkgver=174.4aa871c
 pkgrel=1
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='Fast and multi-purpose DNS toolkit allow to run multiple DNS queries of your choice with a list of user-supplied resolvers.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/projectdiscovery/dnsx'
 license=('MIT')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/projectdiscovery/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -23,18 +22,20 @@ pkgver() {
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t "./cmd/$pkgname"
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/$pkgname
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-
-  GOPATH="$srcdir" go build -v "./cmd/$pkgname"
-
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

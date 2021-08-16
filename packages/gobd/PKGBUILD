@@ -3,14 +3,14 @@
 
 pkgname=gobd
 pkgver=82.3bbd17c
-pkgrel=3
+pkgrel=4
 groups=('blackarch' 'blackarch-backdoor')
 pkgdesc='A Golang covert backdoor.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/razc411/GoBD'
 license=('custom:unknown')
-depends=('glibc' 'libpcap')
-makedepends=('git' 'libpcap' 'go-pie')
+depends=('libpcap')
+makedepends=('git' 'go')
 source=("$pkgname::git+https://github.com/razc411/GoBD.git")
 sha512sums=('SKIP')
 
@@ -23,15 +23,20 @@ pkgver() {
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t .
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
   cd $pkgname
-
-  install -dm 755 "$pkgdir/usr/bin"
-
-  GOPATH="$srcdir" go build -v .
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md

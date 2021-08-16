@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=xxxpwn
+pkgver=10.27a2d27
+pkgrel=1
+pkgdesc='A tool Designed for blind optimized XPath 1 injection attacks.'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp')
+url='https://github.com/feakk/xxxpwn'
+license=('GPL3')
+depends=('python2')
+makedepends=('git')
+source=("git+https://github.com/feakk/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin/"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md *.pdf
+
+  rm *.md LICENSE* *.pdf
+
+  cp -a * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

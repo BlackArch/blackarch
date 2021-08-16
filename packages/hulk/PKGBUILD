@@ -2,15 +2,14 @@
 # See COPYING for license details.
 
 pkgname=hulk
-pkgver=25.9670699
-pkgrel=1
+pkgver=27.ed2b11c
+pkgrel=2
 pkgdesc='A webserver DoS tool (Http Unbearable Load King) ported to Go with some additional features.'
 groups=('blackarch' 'blackarch-dos')
 arch=('x86_64' 'aarch64')
 url='https://github.com/grafov/hulk'
 license=('GPL3')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/grafov/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -23,18 +22,14 @@ pkgver() {
 build() {
   cd $pkgname
 
-  export GO386=387
-  export GOOS=linux
-
-  if [ "$CARCH" == "x86_64" ]
-  then
-    export GOARCH=amd64
-  elif [ "$CARCH" == "armv6h" ] || [ "$CARCH" == "armv7h" ]
-  then
-    export GOARCH=arm
-  fi
-
-  GOPATH="$srcdir" go build -v -o $pkgname
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
@@ -42,6 +37,5 @@ package() {
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

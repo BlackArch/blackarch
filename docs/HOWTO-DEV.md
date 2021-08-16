@@ -11,8 +11,75 @@ Further details or any questions can be discussed in IRC or Discord.
 
 The categories are structured to have at least a little bit of an overview.
 
+- [General information](#general-information)
+- [Packaging style](#packaging-style)
+- [Creating packages](#creating-packages)
+- [ISO](#iso)
+- [Website](#website)
+- [On-Boarding for new developers](#on-boarding-for-new-developers)
 
-## On-Boarding for new Developers
+## General information
+
+- CoC for BlackArch is almost the same like:
+[https://wiki.archlinux.org/index.php/Code_of_conduct](https://wiki.archlinux.org/index.php/Code_of_conduct)
+
+- Read and refer always to ArchLinux's wiki pages. There is further documentation for each individual tool/file inside the file, any files without documentation should be documented.
+
+- If you are new try to follow other developers's work as much as possible. Talk
+  to us on IRC / Discord for further details. We've got our own private channels
+  to discuss.
+
+- Any work is much appreciated. Even if it's a version bump on a package or a
+  typo-fix.
+
+- Try to automate anything you can and share the tools with us. Now you can help write the script framework with Noptrix
+
+
+## Packaging style
+
+- Use our [PKGBUILD templates](https://github.com/BlackArch/blackarch-pkgbuilds)
+  for creating and releasing new packages in order to keep the same style and
+  consistency.
+
+- If you are unsure, copy an existing PKGBUILD from a package and use that as a
+  template or ask other developers. Packages are located in the packages folder of the blackarch github repository(the current repository)
+
+
+## Creating packages
+
+
+The following information was written with the goal of creating high-quality PKGBUILDs and ensure that every package uploaded to the BlackArch Linux repository is really working.
+
+**Prerequisites:**
+
+- Set up a clean chroot environment according to https://wiki.archlinux.org/index.php/DeveloperWiki:Building_in_a_clean_chroot#Setting_up_a_chroot
+
+- A BlackArch Linux system with all tools installed (`# pacman -Syu --needed blackarch`).
+
+**Steps:**
+
+- Create the PKGBUILD and build it in the clean chroot environment to ensure that buildtime dependencies aren't missing.
+
+- If the package was built, install and execute it in the clean chroot environment to ensure that runtime dependencies aren't missing.
+
+- Install the package in the full existing BlackArch Linux installation to ensure that there aren't conflicting files.
+
+- Check the syntax to ensure that the code is the most efficient possible and upload the PKGBUILD.
+
+- For your pull request use the syntax \<pkgname\>: \<initial commit\> or \<pkgname\>: \<change done\>
+
+- Add every pkgname you modified to `lists/to-release`. **Don't** use `lists/to-release-arm' as it is for internal use only.
+
+## ISO
+
+The ISO can be maintained and code can be found in the [blackarch-iso](https://github.com/BlackArch/blackarch-iso) repository, please refer to the README for documentation, further documentation will be provided inside the files
+
+
+## Website
+
+Can be located in the [blackarch-website](https://github.com/BlackArch/blackarch-site) repository, it is currently starting the process of being rebuilt, talk to Noptrix and other devs on the Discord or IRC for more info.
+
+## On-Boarding for new developers
 
 Following information are immediately needed when you want to join the BlackArch
 Linux project:
@@ -40,60 +107,3 @@ You should then continue reading the rest of this document once all information
 are given and everything is setup. Anything else can be discussed on IRC.
 
 
-## General Infos
-
-- CoC for BlackArch is almost the same like:
-[https://wiki.archlinux.org/index.php/Code_of_conduct](https://wiki.archlinux.org/index.php/Code_of_conduct)
-
-- Read and refer always to ArchLinux's wiki pages.
-
-- If you are new try to follow other developers's work as much as possible. Talk
-  to us on IRC / Discord for further details. We've got our own private channels
-  to discuss.
-
-- Any work is much appreciated. Even if it's a version bump on a package or a
-  typo-fix.
-
-- Try to automate anything you can and share the tools with us.
-
-
-## Packaging style
-
-- Use our [PKGBUILD templates](https://github.com/BlackArch/blackarch-pkgbuilds)
-  for creating and releasing new packages in order to keep the same style and
-  consistency.
-
-- If you are unsure, copy an existing PKGBUILD from a package and use that as a
-  template or ask other developers.
-
-
-## Creating packages
-
-The following information was written with the goal of creating high-quality PKGBUILDs and ensure that ever package uploaded to the BlackArch Linux repository is really working.
-
-**Prerequisites:**
-
-- Set up a clean chroot environment according to https://wiki.archlinux.org/index.php/DeveloperWiki:Building_in_a_clean_chroot#Setting_up_a_chroot
-
-- A BackArch Linux system with all tools installed (`# pacman -Syu --needed blackarch`).
-
-**Steps:**
-
-- Create the PKGBUILD and build it in the clean chroot environment to ensure that buildtime dependencies aren't missing.
-
-- If the package was built, install and execute it in the clean chroot environment to ensure that runtime dependencies aren't missing.
-
-- Install the package in the full existing BlackArch Linux installation to ensure that there aren't conflicting files.
-
-- Check the syntax to ensure that the code is the most efficient possible and upload the PKGBUILD.
-
-- For your pull request use the syntax \<pkgname\>: \<initial commit\> or \<pkgname\>: \<change done\>
-
-## ISO
-
-foo
-
-
-## Website
-
-foo

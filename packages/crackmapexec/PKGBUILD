@@ -2,18 +2,35 @@
 # See COPYING for license details.
 
 pkgname=crackmapexec
-pkgver=620.15df163
+pkgver=667.195d18f
 pkgrel=1
 groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation' 'blackarch-windows')
 pkgdesc='A swiss army knife for pentesting Windows/Active Directory environments.'
 arch=('any')
 url='https://github.com/byt3bl33d3r/CrackMapExec'
 license=('custom:unknown')
-depends=('python' 'impacket' 'ldapdomaindump' 'python-pipx')
-makedepends=('git')
-source=("$pkgname::git+https://github.com/byt3bl33d3r/CrackMapExec.git")
-sha512sums=('SKIP')
-install="$pkgname.install"
+depends=('impacket' 'python' 'python-aiowinreg' 'python-asn1crypto'
+        'python-asysocks' 'python-bcrypt' 'python-beautifulsoup4' 'python-bs4'
+        'python-certifi' 'python-cffi' 'python-chardet' 'python-click'
+        'python-cryptography' 'python-dnspython' 'python-flask' 'python-future'
+        'python-greenlet' 'python-idna' 'python-itsdangerous' 'python-jinja'
+        'python-ldap3' 'ldapdomaindump' 'python-lsassy'
+        'python-markupsafe' 'python-minidump' 'python-minikerberos'
+        'python-msgpack' 'python-msldap' 'python-netaddr' 'python-ntlm-auth'
+        'python-paramiko' 'python-prompt_toolkit' 'python-pyasn1'
+        'python-pycparser' 'python-pycryptodomex' 'python-pylnk3'
+        'python-pynacl' 'python-pyopenssl' 'python-pypsrp' 'python-pypykatz'
+        'python-pyspnego' 'python-pytz' 'python-requests-ntlm' 'python-six'
+        'python-soupsieve' 'python-termcolor' 'python-terminaltables'
+        'python-tqdm' 'python-urllib3' 'python-wcwidth' 'python-werkzeug'
+        'python-winacl' 'python-winsspi' 'python-xmltodict' 'python-zope-event'
+        'python-zope-interface' 'python-pywerview' 'python-gevent'
+        'python-neo4j-driver' 'python-aiosmb' 'python-aioconsole')
+makedepends=('git' 'python-setuptools' 'python-poetry')
+source=("$pkgname::git+https://github.com/byt3bl33d3r/CrackMapExec.git"
+        'setup.py.patch')
+sha512sums=('SKIP'
+            '9eda3d42be1881e396e9f117a9fd85312530069c376dc1e6ae5f6e7d3a95d35e20ee0ff4bfaecd978aa07a1af1b7d18df2f897719f0d3e18645a89bb861ccd17')
 
 pkgver() {
   cd $pkgname
@@ -24,16 +41,26 @@ pkgver() {
 prepare() {
   cd $pkgname
 
+  make clean
   git submodule init && git submodule update --recursive
 }
 
-package() {
+build() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  poetry build
+  cd dist
+  mkdir cme_dir
+  tar zxvf $pkgname-*.tar.gz -C cme_dir
+}
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+package() {
+  cd "$pkgname/dist/cme_dir/$pkgname"-*
+
+  #patch < "$srcdir/setup.py.patch"
+  python setup.py install --root="$pkgdir" -O1
+
+  install -dm 755 "$pkgdir/usr/lib/python3.9/site-packages/cme/thirdparty/pywerview/"
+  touch "$pkgdir/usr/lib/python3.9/site-packages/cme/thirdparty/pywerview/.default"
 }
 

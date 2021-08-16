@@ -3,14 +3,14 @@
 
 pkgname=assetfinder
 pkgver=19.4e95d87
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
 pkgdesc='Find domains and subdomains potentially related to a given domain.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/tomnomnom/assetfinder'
 license=('MIT')
 depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/tomnomnom/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -21,21 +21,24 @@ pkgver() {
 }
 
 build() {
-  mkdir -p "src/$url" && rm -rf "src/$url" && mv $pkgname "src/$url" &&
-    cd "src/$url"
+  cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t $url
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd $pkgname
 
-  GOPATH="$srcdir" go build -v $url
-
-  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/README.md" \
-    "src/$url/README.md"
-  install -Dm 644 "src/$url/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
 }
 

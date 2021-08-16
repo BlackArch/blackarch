@@ -3,16 +3,15 @@
 
 pkgname=subjack
 pkgver=182.49c51e5
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='Subdomain Takeover tool written in Go.'
 arch=('x86_64' 'aarch64')
-url='https://github.com/subjack/subjack'
+url='https://github.com/haccer/subjack'
 license=('Apache')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/haccer/$pkgname.git")
 sha512sums=('SKIP')
-_url="github.com/haccer/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -23,24 +22,24 @@ pkgver() {
 build() {
   cd $pkgname
 
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
-    cd "src/$_url"
-
-  GOPATH="$srcdir" go get -d -t $_url
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname-bin .
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  GOPATH="$srcdir" go build -v $_url
-
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm -rf LICENSE *.md
-  cp -a fingerprints.json "$pkgdir/usr/share/$pkgname/"
+  install -Dm 755 $pkgname-bin "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 fingerprints.json -t "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 *.md -t "$pkgdir/usr/share/doc/$pkgname/"
+  install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname"
 }
 

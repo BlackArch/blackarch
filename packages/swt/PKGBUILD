@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Guillaume ALAUX <guillaume@archlinux.org>
+
+pkgname=swt
+pkgver=4.6.3
+pkgrel=2
+_date=201703010400
+pkgdesc='An open source widget toolkit for Java.'
+arch=('x86_64' 'aarch64')
+url='https://www.eclipse.org/swt/'
+license=('EPL')
+depends=('java-runtime>=7' 'libxtst')
+makedepends=('jdk8-openjdk' 'glu' 'unzip' 'pkgconfig' 'gtk2' 'gtk3' 'ant')
+optdepends=('glu' 'gtk2' 'gtk3')
+source=("https://archive.eclipse.org/eclipse/downloads/drops4/R-$pkgver-${_date}/$pkgname-$pkgver-gtk-linux-x86_64.zip"
+        'build-swt.xml')
+sha512sums=('ad9531a773bf2e556354e462975b4a4637148469c5e883a1dc9b47d40e19a313be5b84e53283e9292518e95e113e5b8d0ed03e1a86301427d95f596fc9b36f4d'
+            '0aca87197c8fea15f520e0f93015ab58101ccd488185af1282421542078cb9da30e7e50ed40158e48d849b285c212cface74bd593ec6eb43a59ca0d29ef51334')
+
+build() {
+  unzip -oq src.zip -d src
+
+  export JAVA_HOME=/usr/lib/jvm/java-8-openjdk
+
+  ant -f build-swt.xml compile
+  ant -f build-swt.xml jar
+}
+
+package() {
+  cd src
+
+  install -Dm 644 ../swt.jar "$pkgdir/usr/share/java/swt-$pkgver.jar"
+  ln -s "swt-$pkgver.jar" "$pkgdir/usr/share/java/swt.jar"
+
+  install -d "$pkgdir/usr/lib"
+  OUTPUT_DIR="$pkgdir/usr/lib" ./build.sh -gtk-all install
+}
+

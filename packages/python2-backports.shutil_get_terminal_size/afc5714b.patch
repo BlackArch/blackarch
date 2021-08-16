@@ -1,0 +1,55 @@
+From afc5714b1545a5a3aa44cfb5e078d39165bf76ab Mon Sep 17 00:00:00 2001
+From: Anthony Sottile <asottile@umich.edu>
+Date: Sat, 20 Feb 2016 21:29:47 -0800
+Subject: [PATCH] Fix fallback on linux
+
+---
+ .../get_terminal_size.py                        |  6 +++---
+ test_shutil_get_terminal_size.py                | 17 +++++++++++++++++
+ 2 files changed, 20 insertions(+), 3 deletions(-)
+
+diff --git a/backports/shutil_get_terminal_size/get_terminal_size.py b/backports/shutil_get_terminal_size/get_terminal_size.py
+index 16ab4f7..79fc9f7 100644
+--- a/backports/shutil_get_terminal_size/get_terminal_size.py
++++ b/backports/shutil_get_terminal_size/get_terminal_size.py
+@@ -48,9 +48,9 @@ def _get_terminal_size(fd):
+     def _get_terminal_size(fd):
+         try:
+             res = fcntl.ioctl(fd, termios.TIOCGWINSZ, b"\x00" * 4)
+-            lines, columns = struct.unpack("hh", res)
+-        except Exception:
+-            columns = lines = 0
++        except IOError as e:
++            raise OSError(e)
++        lines, columns = struct.unpack("hh", res)
+ 
+         return terminal_size(columns, lines)
+ 
+diff --git a/test_shutil_get_terminal_size.py b/test_shutil_get_terminal_size.py
+index be9497a..64a748d 100644
+--- a/test_shutil_get_terminal_size.py
++++ b/test_shutil_get_terminal_size.py
+@@ -18,6 +18,23 @@ def test_does_not_crash():
+     assert size.lines >= 0
+ 
+ 
++def test_not_a_tty():
++    proc = subprocess.Popen(
++        (
++            sys.executable, '-c',
++            'import backports.shutil_get_terminal_size as shutil;'
++            'print(tuple(shutil.get_terminal_size((1, 2))))',
++        ),
++        stdout=subprocess.PIPE,
++        stderr=subprocess.PIPE,
++    )
++    out, err = proc.communicate()
++    out, err = out.decode('UTF-8'), err.decode('UTF-8')
++    assert not proc.returncode, (proc.returncode, out, err)
++    assert err == ''
++    assert out == '(1, 2)\n'
++
++
+ def test_os_environ_first(monkeypatch):
+     "Check if environment variables have precedence"
+ 

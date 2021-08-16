@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Jan de Groot <jgc@archlinux.org>
+
+pkgname=libglade
+pkgver=2.6.4
+pkgrel=8
+pkgdesc='Allows you to load glade interface files in a program at runtime.'
+arch=('x86_64' 'aarch64')
+url='http://www.gnome.org/'
+license=('LGPL')
+depends=('gtk2' 'libxml2')
+makedepends=('python2' 'pkgconfig')
+optdepends=('python2: libglade-convert script')
+install=glade.install
+source=("https://download.gnome.org/sources/${pkgname}/2.6/$pkgname-$pkgver.tar.bz2"
+        "$pkgname-2.0.1-nowarning.patch")
+sha512sums=('b725842febaf4c1f0d305a629ae1c61ea2de24dd6f41937e806c078fada2cea483195ef40f5238ce2045e47130c92559e984f677de667b840dd7fff0f8559735'
+            '5ab9dfb85938fb7e9ec637a9d68f3db961f3986e1eb9eec0d684af4ce2361c83d6998283b2bd5b4e1bd7950ca456cc3ea7fae567ac52ae391f6c9d5456c6dd2e')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -Np1 -i "../$pkgname-2.0.1-nowarning.patch"
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  PYTHON=/usr/bin/python2 ./configure --sysconfdir=/etc --prefix=/usr \
+    --localstatedir=/var
+
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="${pkgdir}" install
+
+  install -Dm 755 "$pkgname-convert" "$pkgdir/usr/bin/"
+}
+

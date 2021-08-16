@@ -3,15 +3,15 @@
 
 pkgname=operative
 pkgver=147.4448b19
-pkgrel=1
+pkgrel=3
 epoch=1
 pkgdesc='Framework based on fingerprint action, this tool is used for get information on a website or a enterprise target with multiple modules (Viadeo search,Linkedin search, Reverse email whois, Reverse ip whois, SQL file forensics ...).'
 groups=('blackarch' 'blackarch-fingerprint')
-arch=('any')
+arch=('x86_64' 'aarch64')
 url='https://github.com/graniet/operative-framework'
 license=('Apache')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+depends=('sqlite')
+makedepends=('git' 'go')
 source=("$pkgname::git+https://github.com/graniet/operative-framework.git")
 sha512sums=('SKIP')
 
@@ -21,23 +21,27 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  rm -r glide.* vendor
+
+}
+
 build() {
   cd $pkgname
 
-  export GOOS=linux
-  export GOPATH="$srcdir"
-
-  if [ "$CARCH" == "x86_64" ]
-  then
-    export GOARCH=amd64
-  elif [ "$CARCH" == "aarch64" ]
-  then
-    export GOARCH=arm
-  fi
-
-  go get -d -v ./...
-  go build -v -o $pkgname
-
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod edit -replace gopkg.in/ahmdrz/goinsta.v2@v2.4.5=github.com/ahmdrz/goinsta/v2@v2.4.5
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" CGO_ENABLED=1 go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {

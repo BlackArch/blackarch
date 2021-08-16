@@ -2,19 +2,17 @@
 # See COPYING for license details.
 
 pkgname=ffuf
-pkgver=174.8a9a075
+pkgver=188.3c78f89
 pkgrel=1
 groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer')
 pkgdesc='Fast web fuzzer written in Go.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/ffuf/ffuf'
 license=('MIT')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 options=('!strip')
 source=("git+https://github.com/ffuf/$pkgname.git")
 sha512sums=('SKIP')
-_url="github.com/$pkgname/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -25,20 +23,22 @@ pkgver() {
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t .
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-
-  GOPATH="$srcdir" go build -v .
-
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 "${pkgname}rc.example" \
     "$pkgdir/usr/share/$pkgname/${pkgname}rc.example"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

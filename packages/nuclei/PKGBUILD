@@ -2,15 +2,14 @@
 # See COPYING for license details.
 
 pkgname=nuclei
-pkgver=1125.781a71e
+pkgver=1393.985a7c0
 pkgrel=1
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
 pkgdesc='A fast tool for configurable targeted scanning based on templates offering massive extensibility and ease of use.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/projectdiscovery/nuclei'
 license=('MIT')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/projectdiscovery/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -21,18 +20,22 @@ pkgver() {
 }
 
 build() {
-  cd "$pkgname/v2/cmd/$pkgname"
+  cd "$pkgname/v2"
 
-  GOPATH="$srcdir" go build -v .
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/$pkgname
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-
-  install -Dm 755 "v2/cmd/$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 "v2/$pkgname" "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md THANKS.md
-  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

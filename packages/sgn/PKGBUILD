@@ -3,14 +3,14 @@
 
 pkgname=sgn
 pkgver=22.686e60d
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-binary')
 pkgdesc='Shikata ga nai encoder ported into go with several improvements.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/EgeBalci/sgn'
 license=('MIT')
-depends=('glibc' 'capstone' 'keystone')
-makedepends=('git' 'go-pie')
+depends=('capstone' 'keystone')
+makedepends=('git' 'go')
 source=("git+https://github.com/EgeBalci/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -23,8 +23,14 @@ pkgver() {
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t .
-  GOPATH="$srcdir" go build -v .
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
@@ -32,6 +38,5 @@ package() {
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

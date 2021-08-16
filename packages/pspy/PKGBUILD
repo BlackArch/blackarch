@@ -3,55 +3,44 @@
 
 pkgname=pspy
 pkgver=159.2312eed
-pkgrel=3
+pkgrel=4
 pkgdesc='Monitor linux processes without root permissions.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-misc' 'blackarch-recon')
 url='https://github.com/DominicBreuker/pspy'
 license=('GPL3')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/DominicBreuker/$pkgname.git")
 sha256sums=('SKIP')
-_url="github.com/DominicBreuker/$pkgname"
 
-prepare(){
+pkgver(){
   cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
-  cd "$pkgname"
+  cd $pkgname
 
-  mkdir -p "src/$_url" && \
-    rm -rf "src/$_url" && \
-    mv $pkgname "src/$_url" 2>/dev/null && \
-    cd "src/$_url"
+  VERSION=$(git describe --tags --always)
+  BUILD_SHA=$(git rev-parse HEAD)
 
-  GOPATH="$srcdir" go get -v -d $_url
-  VERSION=`git describe --tags --always || echo "unknown"`
-  BUILD_SHA=`git rev-parse HEAD || echo "unknown"`
-  export GO111MODULE=on
-  export GO111MODULE=auto
-
-  go mod init $_url
-  go get $_url
-  go mod vendor
-  GOPATH="$srcdir" \
-    GOOS=linux \
-    GOARCH=amd64 \
-    go build \
-    -buildmode=pie \
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
     -trimpath \
+    -buildmode=pie \
     -mod=readonly \
     -modcacherw \
-    -ldflags="-X 'main.version=${VERSION}' -X 'main.commit=${BUILD_SHA}'" .
+    -ldflags "-s -w -X 'main.version=${VERSION}' -X 'main.commit=${BUILD_SHA}'" \
+    -o $pkgname .
 }
 
 package() {
-  cd "$pkgname"
+  cd $pkgname
 
-  install -Dm 755 pspy "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 docker/Dockerfile.* -t "$pkgdir/usr/share/$pkgname/docker/"
   install -Dm 644 docker/entrypoint-* -t "$pkgdir/usr/share/$pkgname/docker/"
   install -Dm 644 docker/etc/cron.d/changepwds -t \

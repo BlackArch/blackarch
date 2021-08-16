@@ -3,29 +3,32 @@
 
 pkgname=rtlamr
 pkgver=197.03369d1
-pkgrel=3
+pkgrel=4
 groups=('blackarch' 'blackarch-radio' 'blackarch-hardware')
 pkgdesc='An rtl-sdr receiver for smart meters operating in the 900MHz ISM band.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/bemasher/rtlamr/'
 license=('AGPL')
 depends=('fftw')
-makedepends=('git' 'go-pie')
-source=("git+https://github.com/bemasher/$pkgname.git"
-        'https://raw.githubusercontent.com/bemasher/rtlamr/master/LICENSE')
-sha512sums=('SKIP'
-            'f60e469b9f7fa366642c01373bd2ca247c1eeff9ea445651725d3d6ffc09f5380270e8c3e9e6c97b0266058aa8badcb550f1c89adf834326d2cdf8740ddfb0b8')
+makedepends=('git' 'go')
+source=("git+https://github.com/bemasher/$pkgname.git")
+sha512sums=('SKIP')
 
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t .
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
   cd $pkgname
-
-  GOPATH="$srcdir" go build -v .
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"

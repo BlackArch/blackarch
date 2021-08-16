@@ -9,8 +9,7 @@ pkgdesc='A special payload generator that can bypass all antivirus software.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/EgeBalci/HERCULES'
 license=('MIT')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("$pkgname::git+https://github.com/EgeBalci/HERCULES.git"
         'hercules.patch')
 sha512sums=('SKIP'
@@ -29,32 +28,22 @@ prepare() {
 build() {
   cd $pkgname
 
-  export GOPATH="$srcdir"
-
-  go get -d -t github.com/fatih/color
-
-  go run Setup.go
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./SOURCE
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm LICENSE README.md
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname/SOURCE
-exec ./HERCULES "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
