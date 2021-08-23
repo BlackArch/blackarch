@@ -1,47 +1,37 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=slopShell
-pkgver=1
-_SLOP_DIR="/opt/$pkgname-$pkgver/"
+pkgname="slopShell"
+pkgver=1.0.0
 pkgrel=1
+srcdir="/opt/$pkgname/"
 pkgdesc='PHP based backdoor/webshell with C2 capabilities'
-arch=('any')
+arch=('x86_64', 'arm')
 groups=('blackarch', 'blackarch-backdoor')
 url='https://github.com/oldkingcone/slopShell'
 license=('Apache')
-depends=('postgresql-server', 'php', 'nginx', 'postgresql', 'php-pear', 'php-fpm')
+depends=('postgresql', 'php')
+optdepends=('nginx', 'php-pear', 'php-fpm')
 makedepends=('git')
 source=("git+https://github.com/oldkingcone/$pkgname.git")
-# without .git directory
-sha512sums=('4A0F0EAADF1EEE376148847CC4C5B49FCFD494192C2F059F3BA5ECB499E2C41B')
+sha512sums=('SKIP')
 
-prepare() {
-if ! [ -e $_SLOP_DIR ];then
-    cd $pkgname
+
+pkgver(){
+    cd "$pkgname"
     echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-    sudo git clone $url $_SLOP_DIR && sudo chown -R $( whoami ):postgres $_SLOP_DIR
-else
-    echo "Directory is already created."
-fi
-$( which pg_ctl ) initdb -D $_SLOP_DIR/slop_data -l $_SLOP_DIR/main.log
-cd $_SLOP_DIR/slop_data && $( which createdb ) sloppy_bots -E utf-8 -O $( whoami ) -h localhost -p 5432 -U postgres
-sudo $( which chmod ) 770 /var/run/postgresql
-sudo $( which chown ) postgres:postgres /var/run/postgresql
-$( which pg_ctl ) start -D $_SLOP_DIR/slop_data -l $_SLOP_DIR/main.log
-echo "If any of these commands failed, you will need to re-run them yourself."
-echo "Creating a setup script in your home directory."
-curl https://raw.githubusercontent.com/oldkingcone/slopShell/master/setup.sh -o ~/slop_setup.sh
-echo "export PG_SLOP=1" >> ~/.bashrc
-echo "export SLOP_DIR=$_SLOP_DIR" >> ~/.bashrc
-echo "Set env variables: "
-env | grep -i "slop"
-echo "If you are using the callback functions from a deployed dropper or shell, ensure you look up nginx and php-fpm."
-echo "and how to configure the 2 to work together."
-source ~/.bashrc
 }
 
 package() {
-cd $_SLOP_DIR
-install -Dm 644 -t "$_SLOP_DIR/usr/share/doc/$pkgname/" doc/* *.md
+    cd $pkgname
+    git clone $url $srcdir && chown -R $( whoami ):postgres $srcdir
+    $( which pg_ctl ) initdb -D $srcdir/slop_data -l $srcdir/main.log
+    $( which createdb ) sloppy_bots -E utf-8 -O $( whoami ) -h localhost -p 5432 -U postgres
+    sudo $( which chmod ) 770 /var/run/postgresql
+    sudo $( which chown ) postgres:postgres /var/run/postgresql
+    $( which pg_ctl ) start -D $srcdir/slop_data -l $srcdir/main.log
+    install -dm 755 "$pkgdir/usr/share/$pkgname"
+    install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+    install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
+
