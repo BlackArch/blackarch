@@ -1,0 +1,35 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname="slopShell"
+pkgver=1.0.0
+pkgrel=1
+pkgdesc='PHP based backdoor/webshell with C2 capabilities'
+arch=('x86_64', 'arm')
+groups=('blackarch', 'blackarch-backdoor')
+url='https://github.com/oldkingcone/slopShell'
+license=('Apache')
+depends=('postgresql', 'php')
+optdepends=('nginx', 'php-pear', 'php-fpm')
+makedepends=('git')
+source=("git+https://github.com/oldkingcone/$pkgname.git")
+sha512sums=('SKIP')
+
+
+pkgver(){
+    cd "$pkgname"
+    echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+    cd $pkgname
+    $( which pg_ctl ) initdb -D $pkgdir/slop_data -l $pkgdir/main.log
+    $( which createdb ) sloppy_bots -E utf-8 -O $( whoami ) -h localhost -p 5432 -U postgres
+    sudo $( which chmod ) 770 /var/run/postgresql
+    sudo $( which chown ) postgres:postgres /var/run/postgresql
+    $( which pg_ctl ) start -D $pkgdir/slop_data -l $pkgdir/main.log
+    install -dm 755 "$pkgdir/usr/share/$pkgname"
+    install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+    install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
