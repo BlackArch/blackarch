@@ -3,10 +3,10 @@
 
 pkgname=rustcat
 _binname=rc
-pkgver=129.15e116a
+pkgver=1.1.1
 pkgrel=1
 groups=("blackarch", "blackarch-networking")
-pkgdesc="Rustcat - Modern Port Listener & Reverse Shell"
+pkgdesc="Rustcat - A Modern Port Listener & Reverse Shell"
 url="https://github.com/robiot/rustcat"
 license=('MIT')
 arch=('x86_64')
@@ -14,23 +14,24 @@ makedepends=(
     'rustup'
     'git'
 )
-md5sums=('SKIP')
+sha512sums=('SKIP')
 
 source=("$pkgname::git+https://github.com/robiot/rustcat.git")
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  echo $(git describe --tags --abbrev=0 | cut -c 2-)
 }
 
 build() {
     cd $pkgname
+    git checkout "v${pkgver}" &> /dev/null
     cargo build --release
 }
 
 package() {
     cd $pkgname
-    install -dm 755 "$pkgdir/usr/share/$pkgname"
+    install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
     install -Dm 755 "target/release/$_binname" "$pkgdir/usr/bin/$_binname"
 }
