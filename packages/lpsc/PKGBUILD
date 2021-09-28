@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=lpsc
+_pkgname='local-php-security-checker'
+pkgver=v1.2.0.r0.gf883cc5
+pkgrel=1
+pkgdesc='A command line tool that checks your PHP application packages with known security vulnerabilities.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-scanner')
+url='https://github.com/fabpot/local-php-security-checker'
+license=('AGPL3')
+makedepends=('git' 'go')
+source=("git+https://github.com/fabpot/$_pkgname")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $_pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd $_pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+}
+
