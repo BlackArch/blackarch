@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=metaforge
+pkgver=115.7b32693
+pkgrel=1
+pkgdesc='Auto Scanning to SSL Vulnerability.'
+groups=('blackarch' 'blackarch-misc' 'blackarch-social')
+arch=('any')
+url='https://github.com/chriswmorris/Metaforge'
+license=('GPL3')
+depends=('python' 'python-colorama' 'python-progress' 'python-dominate'
+         'python-pyexifinfo' 'perl-image-exiftool')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/chriswmorris/Metaforge.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
