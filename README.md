@@ -33,4 +33,4 @@ To start developing for BlackArch please refer to the [Dev-Guide](./docs/HOWTO-D
 
 **Mail:** team@blackarch.org
 
-*Matrix:** [BlackArch:matrix.org](https://app.alement.io/)
+**Matrix:** [#BlackArch:matrix.org](https://matrix.to/#/#BlackArch:matrix.org)
