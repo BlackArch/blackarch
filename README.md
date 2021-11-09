@@ -7,7 +7,7 @@ individually or in groups. BlackArch Linux is compatible with existing Arch
 installs. For more information, see the installation instructions.
 
 To report bugs and request new tools, please visit the issue tracker on Github,
-stop by IRC, or email us.
+stop by Matrix, or email us.
 
 ## Download and Installation
 
@@ -33,4 +33,4 @@ To start developing for BlackArch please refer to the [Dev-Guide](./docs/HOWTO-D
 
 **Mail:** team@blackarch.org
 
-**IRC:** [irc://irc.blackarch.org:1337/blackarch](irc://irc.blackarch.org:1337/blackarch)
+*Matrix:** [BlackArch:matrix.org](https://app.alement.io/)

@@ -7,7 +7,7 @@ new developers.
 
 This document contains a simple lists of information rather than detailed
 descriptions. Longer text blocks should be avoided except for this description.
-Further details or any questions can be discussed in IRC or Discord.
+Further details or any questions can be discussed in Matrix.
 
 The categories are structured to have at least a little bit of an overview.
 
@@ -26,7 +26,7 @@ The categories are structured to have at least a little bit of an overview.
 - Read and refer always to ArchLinux's wiki pages. There is further documentation for each individual tool/file inside the file, any files without documentation should be documented.
 
 - If you are new try to follow other developers's work as much as possible. Talk
-  to us on IRC / Discord for further details. We've got our own private channels
+  to us on Matrix for further details. We've got our own private channels
   to discuss.
 
 - Any work is much appreciated. Even if it's a version bump on a package or a
@@ -77,7 +77,7 @@ The ISO can be maintained and code can be found in the [blackarch-iso](https://g
 
 ## Website
 
-Can be located in the [blackarch-website](https://github.com/BlackArch/blackarch-site) repository, it is currently starting the process of being rebuilt, talk to Noptrix and other devs on the Discord or IRC for more info.
+Can be located in the [blackarch-website](https://github.com/BlackArch/blackarch-site) repository, it is currently starting the process of being rebuilt, talk to Noptrix and other devs on the Discord or Matrix for more info.
 
 ## On-Boarding for new developers
 
@@ -89,7 +89,7 @@ Linux project:
 - **E-Mail**: For the team@blackarch.org mailinglist. You will receive any mails
 sent to that list.
 
-- **Handle**: For references in any BlackArch project and also for IRC/Discord.
+- **Handle**: For references in any BlackArch project and also for Matrix.
 
 - **Twitter**: Your twitter name if present. @blackarchlinux will then follow
 you.
@@ -104,6 +104,6 @@ build-system.
 can be multiple.
 
 You should then continue reading the rest of this document once all information
-are given and everything is setup. Anything else can be discussed on IRC.
+are given and everything is setup. Anything else can be discussed on Matrix.
 
 
