@@ -7,7 +7,8 @@ new developers.
 
 This document contains a simple lists of information rather than detailed
 descriptions. Longer text blocks should be avoided except for this description.
-Further details or any questions can be discussed in Matrix.
+Further details or any questions can be discussed in
+[Matrix](https://matrix.to/#/#BlackArch:matrix.org).
 
 The categories are structured to have at least a little bit of an overview.
 
@@ -26,8 +27,8 @@ The categories are structured to have at least a little bit of an overview.
 - Read and refer always to ArchLinux's wiki pages. There is further documentation for each individual tool/file inside the file, any files without documentation should be documented.
 
 - If you are new try to follow other developers's work as much as possible. Talk
-  to us on Matrix for further details. We've got our own private channels
-  to discuss.
+  to us on [Matrix](https://matrix.to/#/#BlackArch:matrix.org) for further
+  details. We've got our own private channels to discuss.
 
 - Any work is much appreciated. Even if it's a version bump on a package or a
   typo-fix.
