@@ -1,0 +1,26 @@
+From 1693848c9f6ca863868d94d63499830f7f4f3a1f Mon Sep 17 00:00:00 2001
+From: INADA Naoki <methane@users.noreply.github.com>
+Date: Wed, 7 Jun 2017 15:46:20 +0900
+Subject: [PATCH] Fix compile error with MariaDB 10.2. (#177)
+
+Don't touch MYSQL.reconnect directly.
+---
+ _mysql.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/_mysql.c b/_mysql.c
+index c3ebc16..8295f6c 100644
+--- a/_mysql.c
++++ b/_mysql.c
+@@ -1908,7 +1908,10 @@ _mysql_ConnectionObject_ping(
+ 	int r, reconnect = -1;
+ 	if (!PyArg_ParseTuple(args, "|I", &reconnect)) return NULL;
+ 	check_connection(self);
+-	if ( reconnect != -1 ) self->connection.reconnect = reconnect;
++	if (reconnect != -1) {
++		my_bool recon = reconnect;
++		mysql_options(&self->connection, MYSQL_OPT_RECONNECT, &recon);
++	}
+ 	Py_BEGIN_ALLOW_THREADS
+ 	r = mysql_ping(&(self->connection));
+ 	Py_END_ALLOW_THREADS
