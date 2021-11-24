@@ -3,20 +3,28 @@
 
 pkgname=subjack
 pkgver=182.49c51e5
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='Subdomain Takeover tool written in Go.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/haccer/subjack'
 license=('Apache')
 makedepends=('git' 'go')
-source=("git+https://github.com/haccer/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/haccer/$pkgname.git"
+        'main.go.patch')
+sha512sums=('SKIP'
+            'c96e6d36f5221c6bde4aa1bb8cc481e3167b8c7215b11f2709bc27a206874c9f2bcbff39eb65892b763357cd9a0c257c6eeb17ce5d51631acbcf6bb7ddfd307e')
 
 pkgver() {
   cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  patch -p0 < ../main.go.patch
 }
 
 build() {
@@ -31,15 +39,14 @@ build() {
     -mod=readonly \
     -modcacherw \
     -ldflags "-s -w" \
-    -o $pkgname-bin .
+    -o "$pkgname-bin" .
 }
 
 package() {
   cd $pkgname
 
-  install -Dm 755 $pkgname-bin "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 "$pkgname-bin" "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 fingerprints.json -t "$pkgdir/usr/share/$pkgname"
   install -Dm 644 *.md -t "$pkgdir/usr/share/doc/$pkgname/"
-  install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname"
 }
 
