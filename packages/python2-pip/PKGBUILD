@@ -1,0 +1,72 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Old Maintainer: Dan McGee <dan@archlinux.org>
+# Old Contributor: Eli Schwartz <eschwartz@archlinux.org>
+# Old Contributor: Sebastien Binet <binet@lblbox>
+
+pkgname=python2-pip
+_pkgname=pip
+pkgver=20.3.4
+pkgrel=2
+pkgdesc="The PyPA recommended tool for installing Python packages"
+url="https://pip.pypa.io/"
+arch=('any')
+license=('MIT')
+_deps=('appdirs' 'cachecontrol' 'colorama' 'contextlib2' 'distlib' 'distro'
+       'html5lib' 'packaging' 'pep517' 'progress' 'requests' 'retrying' 'six'
+       'resolvelib' 'setuptools' 'toml' 'pyopenssl')
+makedepends=("${_deps[@]/#/python2-}" 'python2-ipaddress')
+source=("https://github.com/pypa/pip/archive/$pkgver.tar.gz"
+        resolvelib-0.5.5.patch)
+sha512sums=('30e9d6d5dfc54681ca07e5701e26cdde202326848f6b37a013fe1fcc38402efa81284e15d7750de97d871e0da995cf5363e5c9676a036d271ff06bb0052cc1ec'
+            'f339a20e965c583c1dc741d9fff90749aab049d591f0ac974e2187d4f41842661802b96266e8e35454b65d61d65c337a770d58b81119af07483fde0eda48001b')
+
+shopt -s extglob
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  # Backported from:
+  # https://github.com/pypa/pip/commit/0d39ae9734d054c25e48e2da7ddb76545e5de330
+  patch -p1 -i ../resolvelib-0.5.5.patch
+
+  # Remove certifi usage
+  sed -i 's|from pip._vendor.certifi import where|where = lambda: "/etc/ssl/certs/ca-certificates.crt"|' src/pip/_internal/commands/debug.py
+
+  rm -rf src/pip/_vendor/!(__init__.py)
+  sed -i -e 's/DEBUNDLED = False/DEBUNDLED = True/' src/pip/_vendor/__init__.py
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  depends=("${_deps[@]/#/python2-}" 'python2-ipaddress')
+  conflicts=('python-pyinstall')
+  replaces=('python-pyinstall')
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr --skip-build
+
+  mv "$pkgdir/usr/bin/pip" "$pkgdir/usr/bin/pip2"
+  sed -i "s|#!/usr/bin/env python$|#!/usr/bin/env python2|" \
+    "$pkgdir"/usr/lib/python2.7/site-packages/pip/__init__.py
+  python2 -m compileall \
+    "$pkgdir"/usr/lib/python2.7/site-packages/pip/__init__.py
+
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  PYTHONPATH="$pkgdir"/usr/lib/python2.7/site-packages \
+    "$pkgdir"/usr/bin/pip2 completion --bash \
+    | install -Dm 644 /dev/stdin \
+      "$pkgdir"/usr/share/bash-completion/completions/pip2
+  PYTHONPATH="$pkgdir"/usr/lib/python2.7/site-packages \
+    "$pkgdir"/usr/bin/pip2 completion --fish \
+    | install -Dm 644 /dev/stdin \
+      "$pkgdir"/usr/share/fish/vendor_completions.d/pip2.fish
+}
+
