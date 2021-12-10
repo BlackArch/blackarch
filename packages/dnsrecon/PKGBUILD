@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=dnsrecon
-pkgver=0.10.1
+pkgver=1.0.0
 pkgrel=1
 epoch=2
 groups=('blackarch' 'blackarch-recon')
@@ -11,7 +11,7 @@ url='https://github.com/darkoperator/dnsrecon'
 license=('custom')
 arch=('any')
 depends=('python' 'python-netaddr' 'python-dnspython' 'python-lxml')
-makedepends=('git')
+makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/darkoperator/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -21,24 +21,15 @@ pkgver() {
   grep -m1 __version "$pkgname.py" | cut -d '=' -f 2 | sed "s/'//g" | tr -d ' '
 }
 
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-
-  rm README.md
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python3 $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
