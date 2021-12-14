@@ -4,7 +4,7 @@
 pkgname=pwncat-caleb
 _pkgname=pwncat
 pkgver=v0.5.1.r0.gf8f9598
-pkgrel=2
+pkgrel=1
 pkgdesc='A post-exploitation platform.'
 arch=('any')
 groups=('blackarch' 'blackarch-exploitation')
@@ -14,7 +14,7 @@ depends=('python' 'python-netifaces' 'python-packaging' 'python-pycryptodome'
          'python-requests' 'python-rich' 'python-rapidjson' 'python-zodb'
          'python-zodburi' 'python-jinja' 'python-paramiko'
          'python-prompt_toolkit')
-makedepends=('python-setuptools' 'git')
+makedepends=('git' 'python-setuptools' 'poetry')
 source=("git+https://github.com/calebstewart/$_pkgname.git")
 sha512sums=('SKIP')
 
@@ -27,16 +27,20 @@ pkgver() {
 build() {
   cd $_pkgname
 
-  python setup.py build
+  poetry build
+  cd dist
+  mkdir -p pwncat_dir
+  tar zxvf $_pkgname-*.tar.gz -C pwncat_dir
 }
 
 package() {
-  cd $_pkgname
+  cd "$_pkgname/dist/${_pkgname}_dir/$_pkgname-cs-0.5.1"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1
 
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-  install -Dm 755 "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/$pkgname"
+  cd "$srcdir/$_pkgname"
+
+  #install -Dm 755 "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 
