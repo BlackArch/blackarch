@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=log4j-scan
+pkgver=45.070fbd0
+pkgrel=1
+pkgdesc='A fully automated, accurate, and extensive scanner for finding log4j RCE CVE-2021-44228.'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
+url='https://github.com/fullhunt/log4j-scan'
+license=('MIT')
+depends=('python' 'python-requests' 'python-termcolor' 'python-pycryptodome')
+makedepends=('git')
+source=("git+https://github.com/fullhunt/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md FAQ.md
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE.txt *.md Dockerfile requirements.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
