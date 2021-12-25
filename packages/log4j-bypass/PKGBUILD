@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=log4j-bypass
+pkgver=25.3d9716a
+pkgrel=1
+pkgdesc='Log4j web app tester that includes WAF bypasses.'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer' 'blackarch-scanner')
+url='https://github.com/cyberqueen-meg/log4j-bypass'
+license=('MIT')
+depends=('python' 'python-requests' 'python-pycryptodome' 'python-termcolor')
+makedepends=('git')
+source=("git+https://github.com/cyberqueen-meg/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE README.d
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python bypass.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
