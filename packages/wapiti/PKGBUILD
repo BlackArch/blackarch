@@ -2,34 +2,49 @@
 # See COPYING for license details.
 
 pkgname=wapiti
-_pkgname=${pkgname}3
-pkgver=3.0.5
-pkgrel=3
+pkgver=478.68099fe
+pkgrel=1
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
 pkgdesc='A vulnerability scanner for web applications. It currently search vulnerabilities like XSS, SQL and XPath injections, file inclusions, command execution, LDAP injections, CRLF injections...'
-url='http://wapiti.sourceforge.net/'
+url='https://github.com/wapiti-scanner/wapiti'
 license=('GPL')
-depends=('python' 'python-requests' 'python-beautifulsoup4' 'python-tld'
-         'python-yaswfp' 'python-mako' 'python-pysocks' 'python-html5lib'
-         'python-httpx' 'python-browser-cookie3' 'python-keyring'
-         'python-httpx-socks')
-makedepends=('python-setuptools' 'python-wheel' 'python-pip')
+depends=('python' 'python-httpx' 'python-httpx-socks' 'python-beautifulsoup4'
+         'python-tld' 'python-yaswfp' 'python-mako' 'python-pysocks'
+         'python-markupsafe' 'python-six' 'python-importlib-metadata'
+         'python-browser-cookie3' 'python-cryptography' 'python-sqlalchemy'
+         'python-aiosqlite' 'python-loguru' 'python-dnspython'
+         'python-httpcore' 'sslyze' 'python-humanize' 'python-keyring'
+         'python-aiocache' 'python-brotli' 'python-brotlicffi'
+         'python-async-timeout')
+makedepends=('git' 'python-setuptools' 'python-wheel' 'python-pip')
 arch=('any')
-source=("${pkgname}3-$pkgver.tar.gz::https://sourceforge.net/projects/$pkgname/files/$pkgname/$pkgname-$pkgver/${pkgname}3-$pkgver.tar.gz/download")
-sha512sums=('c1bfdcd4114ec508b4b16e7a4389b23b25326816c7daf0e7fb634ce08b59b983dec92f92287a18cbe7ecde9a06a04da98cfd744f818efc57c606be143fe7db4d')
+source=("git+https://github.com/wapiti-scanner/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$pkgname"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -ri 's/==/>=/g' setup.py
+}
 
 build() {
-  cd "$_pkgname-$pkgver"
+  cd "$pkgname"
 
   python setup.py build
 }
 
 package() {
-  cd "$_pkgname-$pkgver"
+  cd "$pkgname"
 
   python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.rst INSTALL.md \
-    VERSION doc/AUTHORS doc/ChangeLog*
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst INSTALL.md \
+    VERSION doc/AUTHORS doc/ChangeLog* doc/*.md doc/*.txt doc/*.html doc/*.ico
 }
 
