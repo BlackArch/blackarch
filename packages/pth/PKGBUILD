@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# stolen from ArchLinux. adapted to our style.
+pkgname=pth
+pkgver=2.0.7
+pkgrel=8
+pkgdesc='The GNU Portable Threads.'
+arch=('x86_64' 'aarch64')
+url='https://www.gnu.org/software/pth/'
+license=('LGPL')
+depends=('glibc' 'awk')
+options=('!makeflags')
+source=("https://ftp.gnu.org/gnu/pth/$pkgname-$pkgver.tar.gz{,.sig}")
+sha512sums=('f79d74047c50e06f3198356f88647c5c1c8a04ebdd94641fc31d5ab0fd2750d86615fcb81da2f98d7ea73d012a501195d3fa09060571d18dcfdaec5d7a0ecb12'
+            'SKIP')
+validpgpkeys=('4E23E878D41A0A88EDFCFA5A6E744ACBA9C09E30')  # Ralf Engelschall
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var \
+    --mandir=/usr/share/man --disable-static --enable-shared --with-pic
+
+  sed -i "s|awk=''|awk=/bin/awk|g" shtool # "Cannot find a reasonable Awk"
+
+  make
+}
+
+check() {
+  cd "$pkgname-$pkgver"
+
+  make check
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="${pkgdir}" install
+}
+
