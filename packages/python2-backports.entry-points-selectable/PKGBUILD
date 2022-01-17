@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# This file was taken in modified form from AUR
+# AUR Maintainer: Felix Yan <felixonmars@archlinux.org>
+# AUR Contributor: Crass00 <crass00 @ hotmail . com>
+
+pkgname=python2-backports.entry-points-selectable
+pkgver=66.d4b54f4
+pkgrel=1
+pkgdesc="Compatibility shim providing selectable entry points for older implementations"
+arch=('any')
+url="https://github.com/jaraco/backports.entry_points_selectable"
+license=('MIT')
+depends=('python2-backports' 'python2-pluggy' 'python2-funcsigs')
+makedepends=('python2-setuptools' 'git')
+checkdepends=('python2-pytest')
+source=("git+https://github.com/jaraco/backports.entry_points_selectable.git")
+sha512sums=('SKIP')
+
+prepare() {
+  cd backports.entry_points_selectable
+  # No idea how this is supposed to work (FS#71629)
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd backports.entry_points_selectable
+  python2 setup.py build
+}
+
+check() {
+  cd backports.entry_points_selectable
+  python2 -m pytest
+}
+
+package() {
+  cd backports.entry_points_selectable
+  python2 setup.py install --root="$pkgdir" --optimize=1
+
+  install -Dm644 LICENSE -t "$pkgdir"/usr/share/licenses/$pkgname/
+
+  rm "$pkgdir"/usr/lib/python2.7/site-packages/backports/__init__.py*
+}
