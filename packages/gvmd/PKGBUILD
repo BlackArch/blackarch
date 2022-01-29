@@ -1,32 +1,32 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-# Old Maintainer  : Christian Rebischke <chris.rebischke@archlinux.org>
-# Old Maintainer  : Levente Polyak <anthraxx[at]archlinux[dot]org>
-# Old Contributor : Daniel Micay <danielmicay@gmail.com>
-
 pkgname=gvmd
-pkgver=20.8.0
+pkgver=21.4.4
 pkgrel=1
-pkgdesc='greenbone-vulnerability-manager'
+pkgdesc='OpenVAS / Greenbone vulnerability manager'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-fuzzer'
         'blackarch-exploitation')
 arch=('x86_64' 'aarch64')
 url='https://github.com/greenbone/gvmd/'
 license=('GPL')
-depends=('gvm-libs' 'libical' 'python3' 'sqlite3')
+depends=('gvm-libs' 'libical' 'python3' 'sqlite3' 'postgresql')
 makedepends=('cmake' 'doxygen' 'xmltoman')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/greenbone/gvmd/archive/v$pkgver.tar.gz"
-        "https://github.com/greenbone/gvmd/releases/download/v$pkgver/$pkgname-$pkgver.tar.gz.asc")
-sha512sums=('5f14dde3f40926a39be87d1866b0b5bd73a3fd8d646ee53395db746b59ffed0e48f4a98ec76f97e13a18becd4e4ec81de8a7425be9575d103fc13a5a4ca82848'
-            'SKIP')
-validpgpkeys=(
-              '8AE4BE429B60A59B311C2E739823FAA60ED1E580' # GVM Transfer Integrity
+        "gvmd.install"
 )
+sha512sums=('4bff2cafab6672d30cac03c306083c703a42b299020fa662165143ef604a00cad0f1ce7e144005f2c9acb4dd5e2dd61ac0542b088328e8428f91a830fbbe5eed'
+            '9d6b6f5e5ff9add2a919846e02b01139084efebf33b462d773e801b6634c4ac9f30cbc822eb9cebc2d00448c0b857d2d918206e2077785e189111ceb8a574549'
+            )
 replaces=('openvas-manager')
-changelog=CHANGELOG.md
+
+prepare() {
+  # Patch for libpq-fe.h search folder
+  sed -ri "s/include <postgresql\/libpq-fe.h>/include <libpq-fe.h>/" "$pkgname-$pkgver/src/sql_pg.c"
+}
 
 build() {
+  install=gmvd.install
   cd "$pkgname-$pkgver"
 
   cmake -DCMAKE_BUILD_TYPE=Release -DSBINDIR=/usr/bin \
@@ -36,8 +36,15 @@ build() {
 }
 
 package() {
+  install=gvmd.install
   cd "$pkgname-$pkgver"
 
   make DESTDIR="$pkgdir" install
+
+  rm -rf $pkgdir/lib
+  install -d $pkgdir/usr/lib/systemd/system
+  install -m 644 $srcdir/$pkgname-$pkgver/config/gvmd.service $pkgdir/usr/lib/systemd/system
+  #Fix unit file issue
+  sed -ri '15d' $pkgdir/usr/lib/systemd/system/gvmd.service
 }
 

@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gvm-libs
+pkgver=21.4.3
+pkgrel=1
+pkgdesc='greenbone-vulnerability-manager libraries'
+arch=('x86_64')
+url="https://github.com/greenbone/gvm-libs"
+license=('GPL')
+depends=('gnutls' 'libpcap' 'gpgme' 'libssh' 'glib2' 'libldap' 'hiredis' 'sudo' 'libnet')
+makedepends=('cmake' 'doxygen' 'graphviz')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-fuzzer'
+        'blackarch-exploitation')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/greenbone/gvm-libs/archive/v${pkgver}.tar.gz"
+        "gvm.sudoers"
+        "gvm-libs.install"
+        'gvm.tmpfiles')
+sha512sums=('68fa7b8ce6db64bbd7eb9862891cbdae1abb04d80b4dc0dbea1a5b027a4bf1c0450dce83185d3007799f3f31830a3e014263677e04354ee15fbc8b9b20f1d525'
+            'ff3f4122f5fc08c1edc2813aebd55b26e11c220852d011a84e62a27ac44a64ca4770a68488f408e62d82aa194b6d4706738745ea15bfbb2e61f3f264436d92a7'
+            'bef9b41c8b142b0ec186e1d99925d9a17a130b6f04e69b8fc0138735ef50c36bea86ef944d540775a9c4cbf9259a8acc0c2aa3d7446a98db528c23a4a00a3b35'
+            '8cae5b14e5cb1e8ea9ed33d7cd95b9800d46809f72f01498ab46aedae7bdef78da23725d36dd6ae58137b08884dd4a9aa663041196111e91803e34674316a775')
+replaces=('openvas-libraries')
+
+build() {
+  cd "${pkgname}-${pkgver}"
+  LDFLAGS+=" -Wl,--no-as-needed"
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+    -DLIBDIR=/usr/lib -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var \
+    -DGVM_PID_DIR=/run/gvm .
+  make
+}
+
+package() {
+  install=gvm-libs.install
+  cd "${pkgname}-${pkgver}"
+  make DESTDIR="${pkgdir}/" install
+
+  install -m 750 -d $pkgdir/run/gvm
+  install -m 750 -d $pkgdir/var/lib/gvm
+  install -m 750 -d $pkgdir/var/lib/openvas
+  install -d $pkgdir/var/lib/gvm/gvmd
+  install -m 750 -d $pkgdir/var/log/gvm
+  install -m 750 -d $pkgdir/etc/sudoers.d
+  install -m 600 ${srcdir}/gvm.sudoers $pkgdir/etc/sudoers.d/gvm
+  install -m 755 -d $pkgdir/usr/lib/tmpfiles.d
+  install -m 644 ${srcdir}/gvm.tmpfiles $pkgdir/usr/lib/tmpfiles.d/gvm.conf
+}
