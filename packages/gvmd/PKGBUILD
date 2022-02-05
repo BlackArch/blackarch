@@ -4,7 +4,7 @@
 pkgname=gvmd
 pkgver=21.4.4
 pkgrel=1
-pkgdesc='OpenVAS / Greenbone vulnerability manager'
+pkgdesc='OpenVAS / Greenbone vulnerability manager.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-fuzzer'
         'blackarch-exploitation')
 arch=('x86_64' 'aarch64')
@@ -19,14 +19,15 @@ sha512sums=('4bff2cafab6672d30cac03c306083c703a42b299020fa662165143ef604a00cad0f
             '9d6b6f5e5ff9add2a919846e02b01139084efebf33b462d773e801b6634c4ac9f30cbc822eb9cebc2d00448c0b857d2d918206e2077785e189111ceb8a574549'
             )
 replaces=('openvas-manager')
+install="$pkgname.install"
 
 prepare() {
   # Patch for libpq-fe.h search folder
-  sed -ri "s/include <postgresql\/libpq-fe.h>/include <libpq-fe.h>/" "$pkgname-$pkgver/src/sql_pg.c"
+  sed -ri "s/include <postgresql\/libpq-fe.h>/include <libpq-fe.h>/" \
+    "$pkgname-$pkgver/src/sql_pg.c"
 }
 
 build() {
-  install=gmvd.install
   cd "$pkgname-$pkgver"
 
   cmake -DCMAKE_BUILD_TYPE=Release -DSBINDIR=/usr/bin \
@@ -36,15 +37,17 @@ build() {
 }
 
 package() {
-  install=gvmd.install
+
   cd "$pkgname-$pkgver"
 
   make DESTDIR="$pkgdir" install
 
-  rm -rf $pkgdir/lib
-  install -d $pkgdir/usr/lib/systemd/system
-  install -m 644 $srcdir/$pkgname-$pkgver/config/gvmd.service $pkgdir/usr/lib/systemd/system
+  rm -rf "$pkgdir/lib"
+  install -d "$pkgdir/usr/lib/systemd/system"
+  install -m 644 "$srcdir/$pkgname-$pkgver/config/$pkgname.service" \
+    "$pkgdir/usr/lib/systemd/system"
+
   #Fix unit file issue
-  sed -ri '15d' $pkgdir/usr/lib/systemd/system/gvmd.service
+  sed -ri '15d' "$pkgdir/usr/lib/systemd/system/$pkgname.service"
 }
 
