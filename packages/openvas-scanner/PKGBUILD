@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=openvas-scanner
+pkgver=21.4.3
+pkgrel=1
+pkgdesc='The OpenVAS scanning Daemon.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-fuzzer'
+        'blackarch-exploitation')
+arch=('x86_64')
+url='https://github.com/greenbone/openvas-scanner/'
+license=('GPL')
+depends=('gvm-libs' 'redis' 'rsync')
+conflicts=('openvas')
+makedepends=('cmake' 'doxygen')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/greenbone/$pkgname/archive/v$pkgver.tar.gz"
+        "greenbone-nvt-sync.service"
+        "greenbone-nvt-sync.timer"
+        "openvas-scanner.install"
+      )
+sha512sums=('cd2c41c3ed99f2d673c2a6ec1559d6016c4e7ef309ca0cdac5c951caae9eb5e1a77b10274e2e7f88fcac6c87fc61d2fedbe781f27d54ad3447061e20537e6415'
+            "8200125112be5f31702308cc7c74f9ad0c5149797bf7df7751cddfc9b7dabe9c567543ff0903f28f722960cbc032c796fe2ab81d0c7aef5cc6df403aeac91981"
+            "4ba7a6d7bb639940c3b442486c0196ac1a112f54e6577773fdd8715050211ef92df60bd27897439b04cbc2c0578200f2119553815c6bd5f6ca64c41e50ef7000"
+            "a7a743ab2899187cf4dd71c605ed3acb722f19d5e3077858f3a6b3199b384de3d59c05c2c5d6cf0ce2df7ab1de99f058de6ff8c931b6fd33a8fbccf8d3afd82c"
+)
+
+build() {
+  cd "${pkgname}-${pkgver}"
+  cmake -DCMAKE_BUILD_TYPE=Release -DSBINDIR=/usr/bin -DLIBDIR=/usr/lib \
+    -DCMAKE_INSTALL_PREFIX=/usr -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var .
+  make
+}
+
+package() {
+  install=openvas-scanner.install
+  cd "$pkgname-$pkgver"
+  make DESTDIR="$pkgdir" install
+  cp ${srcdir}/$pkgname-$pkgver/config/redis-openvas.conf $pkgdir/etc/openvas
+  install -m 755 -d $pkgdir/usr/lib/systemd/system
+  install -m 644 ${srcdir}/greenbone-nvt-sync.service $pkgdir/usr/lib/systemd/system
+  install -m 644 ${srcdir}/greenbone-nvt-sync.timer $pkgdir/usr/lib/systemd/system
+}
+
