@@ -1,33 +1,42 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname='gsa'
+pkgname=gsa
 pkgver=21.4.3
 pkgrel=1
 pkgdesc='Greenbone Security Assistant'
-arch=('x86_64')
-url="https://github.com/greenbone/gsa"
+arch=('x86_64' 'aarch64')
+url='https://github.com/greenbone/gsa'
 license=('GPL')
-depends=('gvm-libs' 'libgcrypt' 'gnutls' 'postgresql' 'libxml2' 'libmicrohttpd' 'openvas-scanner' 'ospd-openvas')
+depends=('gvm-libs' 'libgcrypt' 'gnutls' 'postgresql' 'libxml2' 'libmicrohttpd'
+         'openvas-scanner' 'ospd-openvas')
 makedepends=('cmake' 'doxygen' 'xmltoman' 'nodejs' 'npm')
-groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-fuzzer'
-        'blackarch-exploitation')
-source=("${pkgname}-${pkgver}.tar.gz::https://github.com/greenbone/gsa/archive/v${pkgver}.tar.gz")
+source=("https://github.com/greenbone/gsa/archive/v$pkgver.tar.gz")
 sha512sums=('6ddf25829afcdf62b7b589d7d2cf1e141ea95907019ad5ca01c3546d48df702f5c3aa56b9556acfcc5c4b5f3412c909eaab7a9ebca937dcf0b0b423ea3038aa3')
 
 build() {
-  cd "${pkgname}-${pkgver}"
+  cd "$pkgname-$pkgver"
+
   cmake -DCMAKE_BUILD_TYPE=Release -DSBINDIR=/usr/bin \
     -DCMAKE_INSTALL_PREFIX=/usr -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var .
+
   make
 }
 
 package() {
-  cd "${pkgname}-${pkgver}"
-  make DESTDIR="${pkgdir}" install
-  rm -rf $pkgdir/lib
-  install -d $pkgdir/usr/lib/systemd/system
-  install -m 644 $srcdir/$pkgname-$pkgver/gsad/config/gsad.service $pkgdir/usr/lib/systemd/system
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  rm -rf "$pkgdir/lib"
+
+  install -d "$pkgdir/usr/lib/systemd/system"
+
+  install -m 644 "$srcdir/$pkgname-$pkgver/gsad/config/gsad.service" \
+    "$pkgdir/usr/lib/systemd/system"
+
   #Fix systemd unit file missing directive yet
-  sed -ri '11i RuntimeDirectory=gvm' "$pkgdir/usr/lib/systemd/system/gsad.service"
+  sed -ri '11i RuntimeDirectory=gvm' \
+    "$pkgdir/usr/lib/systemd/system/gsad.service"
 }
+
