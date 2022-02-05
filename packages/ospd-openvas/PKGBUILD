@@ -4,36 +4,34 @@
 pkgname=ospd-openvas
 pkgver=21.4.3
 pkgrel=1
-pkgdesc='OSP Server for openvas'
-arch=('x86_64')
-url="https://github.com/greenbone/ospd-openvas"
+pkgdesc='OSP Server for openvas.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/greenbone/ospd-openvas'
 license=('GPL')
-depends=('python-ospd' 'python-redis' 'python-psutil' 'python-packaging' 'openvas-scanner')
+depends=('python-ospd' 'python-redis' 'python-psutil' 'python-packaging'
+         'openvas-scanner')
 provides=('python-ospd-openvas')
 conflicts=('python-ospd-openvas')
 makedepends=('python-setuptools')
-groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-fuzzer'
-        'blackarch-exploitation')
-source=("${pkgname}-${pkgver}.tar.gz::https://github.com/greenbone/ospd-openvas/archive/v${pkgver}.tar.gz")
+source=("https://github.com/greenbone/ospd-openvas/archive/v$pkgver.tar.gz")
 sha512sums=('2403c20b6062c02ce8d907fb01f92195506cd26a1b51835cd3d3bdf73b6bd871995a27a24c15c609635dcc1792ec2bab3be4f0d57f0992e6c37be474c0669945')
 
 prepare() {
   # Patch for usr/local/bin folder
-  sed -ri "s/\/usr\/local\/bin\/ospd-openvas/\/usr\/bin\/ospd-openvas/" "$pkgname-$pkgver/config/ospd-openvas.service"
-}
-
-check() {
-  cd "$srcdir/$pkgname-$pkgver"
-  LANG=en_US.UTF-8 pytest
+  sed -ri "s/\/usr\/local\/bin\/ospd-openvas/\/usr\/bin\/ospd-openvas/" \
+    "$pkgname-$pkgver/config/ospd-openvas.service"
 }
 
 package() {
   cd "$pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --optimize=1
+  python setup.py install --root="$pkgdir" -O1
 
-  install -d $pkgdir/etc/gvm/
-  install -m 644 $srcdir/$pkgname-$pkgver/config/ospd-openvas.conf $pkgdir/etc/gvm
-  install -d $pkgdir/usr/lib/systemd/system
-  install -m 644 $srcdir/$pkgname-$pkgver/config/ospd-openvas.service $pkgdir/usr/lib/systemd/system
+  install -d "$pkgdir/etc/gvm/"
+  install -m 644 "$srcdir/$pkgname-$pkgver/config/ospd-openvas.conf" \
+    "$pkgdir/etc/gvm"
+  install -d "$pkgdir/usr/lib/systemd/system"
+  install -m 644 "$srcdir/$pkgname-$pkgver/config/ospd-openvas.service" \
+    "$pkgdir/usr/lib/systemd/system"
 }
+
