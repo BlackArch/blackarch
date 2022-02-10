@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+_pkgname=Cutter
+
+pkgname="${_pkgname}"-appimage
+pkgver=2.0.5
+pkgrel=1
+pkgdesc="Free and Open Source Reverse Engineering Platform powered by rizin"
+arch=('x86_64')
+groups=('blackarch' 'blackarch-reversing' 'blackarch-decompiler' 'blackarch-disassembler' 'blackarch-debugger')
+url="https://github.com/rizinorg/cutter"
+license=('GPL3')
+depends=('git')
+options=(!strip)
+_appimage="${pkgname}-${pkgver}.AppImage"
+source_x86_64=("${_appimage}::https://github.com/rizinorg/cutter/releases/download/v${pkgver}/${_pkgname}-v${pkgver}-x64.Linux.AppImage"
+  "https://raw.githubusercontent.com/rizinorg/cutter/dev/COPYING")
+noextract=("${_appimage}")
+sha512sums_x86_64=('8dcb47cc0ea1aed87b0c822504e6d1d78ea9aa22d7687d5c5deae322bd3deb50a39cdeabe6f119bac77d6eecb01dafc8a290625755972a916a904644e97792ad'
+  'SKIP')
+
+prepare() {
+    chmod +x "${_appimage}"
+    ./"${_appimage}" --appimage-extract
+}
+
+build() {
+  sed -i -E "s|Exec=AppRun|Exec=env DESKTOPINTEGRATION=false /usr/bin/${_pkgname}|" \
+    "squashfs-root/re.rizin.cutter.desktop"
+    chmod -R a-x+rX squashfs-root/usr
+}
+
+package() {
+    install -Dm755 "${srcdir}/${_appimage}" "${pkgdir}/opt/${pkgname}/${pkgname}.AppImage"
+
+    install -dm755 "${pkgdir}/usr/share/applications"
+    cp -a "${srcdir}/squashfs-root/usr/share/icons" "${pkgdir}/usr/share/"
+    cp -a "${srcdir}/squashfs-root/re.rizin.cutter.desktop" "${pkgdir}/usr/share/applications/"
+
+    install -dm755 "${pkgdir}/usr/bin"
+    ln -s "/opt/${pkgname}/${pkgname}.AppImage" "${pkgdir}/usr/bin/cutter"
+
+    install -dm755 "${pkgdir}/usr/share/licenses/${pkgname}/"
+    install -m644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/"
+}
