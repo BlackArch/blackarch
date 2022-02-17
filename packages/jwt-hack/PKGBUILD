@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=jwt-hack
+pkgver=v1.1.2.r1.g335a7e8
+pkgrel=1
+pkgdesc='A tool for hacking / security testing to JWT.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-cracker')
+url='https://github.com/hahwul/jwt-hack'
+license=('MIT')
+depends=('glibc')
+makedepends=('git' 'go')
+source=("git+https://github.com/hahwul/$pkgname.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md SECURITY.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
