@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=zipexec
+pkgver=17.e91923f
+pkgrel=1
+pkgdesc='A unique technique to execute binaries from a password protected zip.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-crypto' 'blackarch-backdoor' 'blackarch-windows')
+url='https://github.com/Tylous/ZipExec'
+license=('MIT')
+depends=('glibc')
+makedepends=('git' 'go')
+source=("$pkgname::git+https://github.com/Tylous/ZipExec.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
