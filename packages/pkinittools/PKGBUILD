@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pkinittools
+pkgver=8.0f7f9a5
+pkgrel=1
+pkgdesc='Tools for Kerberos PKINIT and relaying to AD CS.'
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-windows')
+arch=('any')
+url='https://github.com/dirkjanm/PKINITtools'
+license=('MIT')
+depends=('python' 'python-oscrypto' 'python-pyasn1' 'python-minikerberos'
+         'python-asysocks' 'impacket')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/dirkjanm/PKINITtools.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  _tools="getnthash gets4uticket gettgtpkinit"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  for i in $_tools; do
+    cat > "$pkgdir/usr/bin/$i" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $i.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/$i"
+  done
+}
+
