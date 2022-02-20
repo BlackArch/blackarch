@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=udp-hunter
+pkgver=4.b95cce5
+pkgrel=1
+pkgdesc='Network assessment tool for various UDP Services covering both IPv4 and IPv6 protocols.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer'
+        'blackarch-fingerprint')
+arch=('any')
+url='https://github.com/NotSoSecure/udp-hunter'
+license=('Apache')
+depends=('python' 'python-netaddr' 'python-colorama' 'python-ifaddr')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/NotSoSecure/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i '1i\#!/usr/bin/python' "$pkgname.py"
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm -rf README.md LICENSE requirements.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
