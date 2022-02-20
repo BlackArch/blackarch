@@ -4,7 +4,7 @@
 pkgname=fortiscan
 pkgver=0.7.r7.gd54faa0
 _pkgver=0.5
-pkgrel=2
+pkgrel=3
 pkgdesc='A high performance FortiGate SSL-VPN vulnerability scanning and exploitation tool.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation')
@@ -21,24 +21,25 @@ pkgver() {
   git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname "${pkgname}_v0.5.go"
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-
-  rm -rf README.md screenshots
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec go run ${pkgname}_v$_pkgver.go "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
