@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=token-hunter
+pkgver=329.46809c6
+pkgrel=1
+pkgdesc="OSINT Tool - Search the group and group members' snippets, issues, and issue discussions for sensitive data that may be included in these assets."
+groups=('blackarch' 'blackarch-social' 'blackarch-recon')
+arch=('any')
+url='https://github.com/GitLab-Red-Team/token-hunter'
+license=('BSD')
+depends=('python' 'python-requests' 'python-requests-mock' 'python-retry'
+         'python-coloredlogs' 'python-furl')
+makedepends=('git')
+source=("git+https://github.com/GitLab-Red-Team/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm *.md LICENSE requirements.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
