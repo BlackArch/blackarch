@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=boofuzz
+pkgver=v0.4.1.r0.gdbe720a
+pkgrel=1
+pigdesc='A fork and successor of the Sulley Fuzzing Framework.'
+groups=('blackarch' 'blackarch-fuzzer')
+arch=('any')
+url='https://github.com/jtpereyda/boofuzz'
+license=('GPL2')
+depends=('python' 'python-virtualenv')
+makedepends=('git' 'python-pip')
+source=("git+https://github.com/jtpereyda/$pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  rm -rf *.rst LICENSE.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+source venv/bin/activate
+exec python venv/bin/boo "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
