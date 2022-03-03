@@ -1,8 +1,9 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
+_npmname=BloodHound
 pkgname=bloodhound
-pkgver=1316.5ac7a21
+pkgver=1195.0da9efe
 pkgrel=1
 pkgdesc='Six Degrees of Domain Admin'
 groups=('blackarch' 'blackarch-recon' 'blackarch-windows')
@@ -10,10 +11,10 @@ arch=('x86_64' 'aarch64')
 url='https://github.com/BloodHoundAD/BloodHound'
 license=('GPL3')
 depends=('nodejs' 'neo4j-community' 'alsa-lib' 'gtk3' 'libxss' 'gconf' 'nss'
-         'libxtst' 'jre11-openjdk-headless')
+         'libxtst' 'jre8-openjdk-headless')
 makedepends=('git' 'nodejs-electron-packager' 'npm' 'unzip')
 optdepends=('python: for some scripts' 'powershell: for PowerShell ingestion')
-source=("$pkgname::git+https://github.com/BloodHoundAD/BloodHound.git"
+source=('git+https://github.com/BloodHoundAD/BloodHound.git'
         'singlearch.patch')
 options=(!strip)
 sha512sums=('SKIP'
@@ -31,27 +32,26 @@ else
 fi
 
 pkgver() {
-  cd "$pkgname"
+  cd "$_npmname"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 prepare() {
-  cd "$pkgname"
+  cd "$_npmname"
 
-  #patch -Np2 -i ../singlearch.patch
+  patch -Np2 -i ../singlearch.patch
 }
 
 build() {
-  cd "$pkgname"
+  cd "$_npmname"
 
-  #npm audit fix --force
   npm install
   npm run $_npmcmd
 }
 
 package() {
-  cd "$pkgname"
+  cd "$_npmname"
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
@@ -69,7 +69,9 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/$_path
-echo "To start neo4j: systemctl start neo4j"
+export NEO4J_HOME=/usr/share/java/neo4j
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk/jre
+exec neo4j console &
 exec ./BloodHound --no-sandbox "\$@"
 EOF
 
