@@ -1,77 +1,62 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-_npmname=BloodHound
 pkgname=bloodhound
-pkgver=1195.0da9efe
-pkgrel=1
+pkgver=1316.5ac7a21
+pkgrel=2
 pkgdesc='Six Degrees of Domain Admin'
 groups=('blackarch' 'blackarch-recon' 'blackarch-windows')
 arch=('x86_64' 'aarch64')
 url='https://github.com/BloodHoundAD/BloodHound'
 license=('GPL3')
-depends=('nodejs' 'neo4j-community' 'alsa-lib' 'gtk3' 'libxss' 'gconf' 'nss'
-         'libxtst' 'jre8-openjdk-headless')
+depends=('nodejs-lts-gallium' 'neo4j-community' 'alsa-lib' 'gtk3' 'libxss' 'gconf' 'nss'
+         'libxtst' 'jre11-openjdk-headless')
 makedepends=('git' 'nodejs-electron-packager' 'npm' 'unzip')
 optdepends=('python: for some scripts' 'powershell: for PowerShell ingestion')
-source=('git+https://github.com/BloodHoundAD/BloodHound.git'
+source=("$pkgname::git+https://github.com/BloodHoundAD/BloodHound.git"
         'singlearch.patch')
 options=(!strip)
-sha512sums=('SKIP'
-            '74602a4c0efbdebc64e15c52d57dbc43dc325fa844d86b0d858d934b90105de945d29cf5f8116eafaeebd266eb9f89fb16d6216af152b89ffd67b10ff48b9846')
+sha512sums=('SKIP')
 install="$pkgname.install"
 
 if [ "$CARCH" = "x86_64" ]; then
-  _npmcmd='linuxbuild_64'
-  _arch='x64'
   _path='BloodHound-linux-x64'
 else
-  _npmcmd='linuxbuild_arm'
-  _arch='armv7l'
   _path='BloodHound-linux-armv7l'
 fi
 
 pkgver() {
-  cd "$_npmname"
+  cd "$pkgname"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  cd "$_npmname"
-
-  #patch -Np2 -i ../singlearch.patch
-}
-
 build() {
-  cd "$_npmname"
+  cd "$pkgname"
 
   npm install
-  npm run $_npmcmd
+  npm run build
 }
 
 package() {
-  cd "$_npmname"
+  cd "$pkgname"
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE*.md
 
   cp -a --no-preserve=ownership docs/ "$pkgdir/usr/share/doc/$pkgname/"
 
   rm -r *.md docs/
 
-  cp -a --no-preserve=ownership $_path BloodHoundExampleDB.db Collectors/ \
-    dist/ src/ *.js *.yml *.json *.html *.sh "$pkgdir/usr/share/$pkgname/"
+  cp -a --no-preserve=ownership $_path Collectors/ \
+    dist/ src/ *.js *.json *.html "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/$_path
-export NEO4J_HOME=/usr/share/java/neo4j
-export JAVA_HOME=/usr/lib/jvm/java-8-openjdk/jre
-exec neo4j console &
+echo "To start neo4j: systemctl start neo4j"
 exec ./BloodHound --no-sandbox "\$@"
 EOF
 
