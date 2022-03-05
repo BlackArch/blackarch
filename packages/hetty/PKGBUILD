@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=hetty
-pkgver=96.569f7bc
+pkgver=134.f60202e
 pkgrel=1
 pkgdesc='HTTP toolkit for security research. Aims to become an open source alternative to commercial software like Burp Suite Pro.'
 arch=('x86_64' 'aarch64')
@@ -24,28 +24,15 @@ pkgver() {
 
 build() {
   cd $pkgname
-  export GOPATH="$srcdir"
 
-  go get github.com/GeertJohan/go.rice
-  go get github.com/GeertJohan/go.rice/rice
-
-  NEXT_TELEMETRY_DISABLED=1 cd admin/ && yarn install && yarn run export && cd -
-  cd cmd/hetty && PATH="$PATH:$srcdir/bin" rice embed-go && cd -
-
-  go mod download
-  CGO_ENABLED=1 go build \
-    -trimpath \
-    -buildmode=pie \
-    -mod=readonly \
-    -modcacherw \
-    -ldflags "-s -w" \
-    -o $pkgname ./cmd/$pkgname
+  make
 }
 
 package() {
-  cd "$pkgname"
+  cd $pkgname
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
