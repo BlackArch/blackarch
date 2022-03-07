@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=spraycharles
+pkgver=83.a8c2f02
+pkgrel=1
+pkgdesc='Low and slow password spraying tool, designed to spray on an interval over a long period of time.'
+groups=('blackarch' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/Tw1sm/spraycharles'
+license=('BSD3')
+depends=('python' 'impacket' 'python-numpy' 'python-requests'
+         'python-requests-ntlm' 'python-texttable')
+makedepends=('git')
+source=("git+https://github.com/Tw1sm/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE .gitignore
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
