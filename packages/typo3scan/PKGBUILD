@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=typo3scan
+_pkgname=Typo3Scan
+pkgver=v1.0.1.r0.g669435a
+pkgrel=1
+pkgdesc='Enumerate Typo3 version and extensions.'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+url='https://github.com/whoot/Typo3Scan'
+license=('GPL2')
+depends=('python' 'python-requests' 'python-colorama' 'python-progressbar'
+          'python-setuptools')
+makedepends=('git')
+source=("git+https://github.com/whoot/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" doc/* *.md
+
+  cp -a $pkgname.py lib "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+python $pkgname.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
