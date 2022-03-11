@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=manspider
+pkgver=56.e10bb6a
+pkgrel=1
+pkgdesc='Spider entire networks for juicy files sitting on SMB shares. Search filenames or file content - regex supported!'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+arch=('any')
+url='https://github.com/blacklanternsecurity/MANSPIDER'
+license=('custom:unknown')
+depends=('python')
+makedepends=('git' 'python-pipx')
+source=("$pkgname::git+https://github.com/blacklanternsecurity/MANSPIDER")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec /usr/share/$pkgname/bin/$pkgname "\$@"
+EOF
+
+   chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
