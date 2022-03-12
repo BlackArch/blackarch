@@ -1,0 +1,51 @@
+# Contributor: Thomas Dziedzic <gostrc@gmail.com>
+# Contributor: Allan McRae <allan@archlinux.org>
+# Contributor: John Proctor <jproctor@prium.net>
+# Contributor: Jeramy Rutley <jrutley@gmail.com>
+
+pkgname=ruby2.6
+_pkgname=ruby
+pkgver=2.6.8
+pkgrel=3
+arch=('x86_64' 'aarch64')
+pkgdesc='An object-oriented language for quick and easy programming, version 2.6.'
+url='https://www.ruby-lang.org/en/'
+license=('BSD' 'custom')
+depends=('libxcrypt' 'gdbm' 'openssl' 'libffi' 'libyaml' 'gmp' 'zlib')
+optdepends=('tk: for Ruby/TK')
+makedepends=('tk')
+options=(!emptydirs)
+source=("https://cache.ruby-lang.org/pub/ruby/${pkgver:0:3}/$_pkgname-${pkgver}.tar.xz")
+sha512sums=('d040ad2238523587d8f356fcb796b8b6ad7f8caff7dd6df09e3f7efcbfa0369e33600e78c7f2bc713ae77c040757cce5c4fec223cb9070209f2bf741899c556d')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  ./configure \
+    --prefix=/usr \
+    --program-suffix=-2.6 \
+    --with-soname=ruby-2.6 \
+    --sysconfdir=/etc \
+    --localstatedir=/var \
+    --sharedstatedir=/var/lib \
+    --libexecdir=/usr/lib/ruby \
+    --enable-shared \
+    --disable-rpath \
+    --with-dbm-type=gdbm_compat \
+    --disable-install-doc
+
+  make
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install-nodoc
+
+  install -Dm 644 COPYING "${pkgdir}/usr/share/licenses/ruby2.6/LICENSE"
+  install -Dm 644 BSDL "${pkgdir}/usr/share/licenses/ruby2.6/BSDL"
+
+  # remove files conflicting with 'ruby' package
+  rm -r "$pkgdir"/usr/share/man/
+}
+

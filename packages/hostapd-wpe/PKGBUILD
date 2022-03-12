@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# NOTE: initially ripped from AUR, but we changed a lot here (style).
+
+pkgname=hostapd-wpe
+_pkgname=hostapd
+pkgver=2.9.1
+_pkgver=2.9
+pkgrel=2
+groups=('blackarch' 'blackarch-wireless')
+pkgdesc='Modified hostapd to facilitate AP impersonation attacks.'
+arch=('x86_64' 'aarch64')
+url='https://w1.fi/hostapd/'
+license=('BSD')
+depends=('openssl-1.0' 'libnl' 'sqlite')
+source=("https://w1.fi/releases/$_pkgname-$_pkgver.tar.gz"
+        "https://raw.githubusercontent.com/aircrack-ng/aircrack-ng/master/patches/wpe/hostapd-wpe/$pkgname.patch")
+install="$pkgname.install"
+sha512sums=('66c729380152db18b64520bda55dfa00af3b0264f97b5de100b81a46e2593571626c4bdcf900f0988ea2131e30bc8788f75d8489dd1f57e37fd56e8098e48a9c'
+            'c1ef9f6b9b3d3d04fa98fb9568acc45a5c52a00411a5ebbbf3a80835cc27f6cdc5003343f37964fbac2c7c1fefffdf999d620f0e39797c0c37030090735526a5')
+
+prepare() {
+  cd "$_pkgname-$_pkgver"
+
+  patch -p1 -i "$srcdir/$pkgname.patch"
+}
+
+build() {
+  cd "$_pkgname-$_pkgver/$_pkgname"
+
+  make
+}
+
+package() {
+  cd "$_pkgname-$_pkgver/$_pkgname"
+
+  make DESTDIR="$pkgdir" install
+  make DESTDIR="$pkgdir" wpe
+
+  install -Dm 644  "$srcdir/$_pkgname-$_pkgver/COPYING" \
+    "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+
+  mv "$pkgdir/usr/local/bin" "$pkgdir/usr/bin"
+  rmdir "$pkgdir/usr/local"
+}
+

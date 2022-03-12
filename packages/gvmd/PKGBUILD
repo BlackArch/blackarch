@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gvmd
+pkgver=21.4.5
+pkgrel=1
+pkgdesc='OpenVAS / Greenbone vulnerability manager.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/greenbone/gvmd/'
+license=('GPL')
+depends=('gvm-libs>21.4' 'libical' 'python3' 'sqlite3' 'postgresql')
+makedepends=('cmake' 'doxygen' 'xmltoman')
+source=("https://github.com/greenbone/gvmd/archive/v$pkgver.tar.gz"
+        "$pkgname.install")
+sha512sums=('5b22b9bfd58ae73fb973941c7a96027599ccc5b78d822eac9c840460cb75bf60a398519569daa04d5c4d935dbe3974335f87e2c1c5fa751b4cec1ea6e5f064ec'
+            '9d6b6f5e5ff9add2a919846e02b01139084efebf33b462d773e801b6634c4ac9f30cbc822eb9cebc2d00448c0b857d2d918206e2077785e189111ceb8a574549')
+replaces=('openvas-manager')
+install="$pkgname.install"
+
+prepare() {
+  # Patch for libpq-fe.h search folder
+  sed -ri "s/include <postgresql\/libpq-fe.h>/include <libpq-fe.h>/" \
+    "$pkgname-$pkgver/src/sql_pg.c"
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  cmake -DCMAKE_BUILD_TYPE=Release -DSBINDIR=/usr/bin \
+    -DCMAKE_INSTALL_PREFIX=/usr -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var .
+
+  make
+}
+
+package() {
+
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  rm -rf "$pkgdir/lib"
+  install -d "$pkgdir/usr/lib/systemd/system"
+  install -m 644 "$srcdir/$pkgname-$pkgver/config/$pkgname.service" \
+    "$pkgdir/usr/lib/systemd/system"
+
+  #Fix unit file issue
+  sed -ri '15d' "$pkgdir/usr/lib/systemd/system/$pkgname.service"
+}
+

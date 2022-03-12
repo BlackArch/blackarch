@@ -1,0 +1,58 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=nettacker
+pkgver=0.0.3.5.r2.g0b79a5b
+pkgrel=1
+pkgdesc='Automated Penetration Testing Framework.'
+arch=('any')
+groups=('blackarch' 'blackarch-automation' 'blackarch-scanner'
+        'blackarch-recon')
+url='https://github.com/OWASP/Nettacker'
+license=('Apache')
+depends=('flake8' 'python-backoff' 'python-argparse' 'python-netaddr'
+         'python-ipaddr' 'python-requests' 'python-paramiko' 'python-texttable'
+         'python-pysocks' 'python-win_inet_pton' 'python-pyopenssl'
+         'python-flask' 'python-lockfile' 'python-bs4' 'python-pyspf'
+         'python-sqlalchemy' 'canari' 'python-py3dns' 'python-censys'
+         'python-six' 'python-shodan' 'python-pycurl' 'python-xmltodict' 'scapy'
+         'python-rule' 'python-mechanize' 'python-psycopg2' 'python-numpy'
+         'python-terminable-thread')
+makedepends=('python-setuptools' 'git')
+source=("git+https://github.com/OWASP/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  # setup is currently very lame. the tool installs everything under
+  # /site-packages/* + searches dirs in /usr/bin/.data if installed system-wide
+  # ... either we need to fix everything here or we wait until they improve this
+  # shit. sticking for now with joint-scripts and moving data to
+  # /usr/share/$pkgname
+  #python setup.py install --root="$pkgdir"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  rm -rf *.md LICENSE
+
+  cp -a .data * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

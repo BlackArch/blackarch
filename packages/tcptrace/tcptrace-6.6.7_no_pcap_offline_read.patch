@@ -1,0 +1,38 @@
+diff -rpU3 -x flex_bison tcptrace-6.6.7/tcpdump.c tcptrace-6.6.7_libpcapfix/tcpdump.c
+--- tcptrace-6.6.7/tcpdump.c	2004-10-07 13:07:30.000000000 -0700
++++ tcptrace-6.6.7_libpcapfix/tcpdump.c	2017-03-02 10:00:58.923356327 -0800
+@@ -68,9 +68,6 @@ static char const GCC_UNUSED rcsid[] =
+ 
+ 
+ 
+-/* external ref, in case missing in older version */
+-extern int pcap_offline_read(void *, int, pcap_handler, u_char *);
+-
+ /* global pointer, the pcap info header */
+ static pcap_t *pcap;
+ 
+@@ -246,9 +243,12 @@ pread_tcpdump(
+     void		**pplast)
+ {
+     int ret;
++    struct pcap_pkthdr *pkt_header;
++    const u_char *pkt_data;
+ 
+     while (1) {
+-	if ((ret = pcap_offline_read(pcap,1,(pcap_handler)callback,0)) != 1) {
++	ret = pcap_next_ex(pcap, &pkt_header, &pkt_data);
++	if (ret != 1) {
+ 	    /* prob EOF */
+ 
+ 	    if (ret == -1) {
+@@ -263,6 +263,10 @@ pread_tcpdump(
+ 	    return(0);
+ 	}
+ 
++	if (callback(0, pkt_header, (char *)pkt_data)) {
++		continue;
++	}
++
+ 	/* at least one tcpdump implementation (AIX) seems to be */
+ 	/* storing NANOseconds in the usecs field of the timestamp. */
+ 	/* This confuses EVERYTHING.  Try to compensate. */

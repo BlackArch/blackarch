@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname=enteletaor
-pkgver=65.d1fbda5
-pkgrel=3
+pkgver=66.e8e4daa
+pkgrel=7
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-scanner'
         'blackarch-recon')
 pkgdesc='Message Queue & Broker Injection tool that implements attacks to Redis, RabbitMQ and ZeroMQ.'
@@ -12,15 +12,22 @@ url='https://github.com/cr0hn/enteletaor'
 license=('BSD')
 depends=('python' 'python-six' 'python-lxml' 'python-wtforms' 'python-eventlet'
          'python-colorlog' 'python-requests' 'python-netaddr' 'python-amqp'
-         'python-redis' 'python-kombu' 'python-celery' 'python-pyzmq')
+         'python-redis' 'python-kombu' 'python-celery' 'python-pyzmq'
+         'python-future' 'python-markupsafe')
 makedepends=('git' 'python-setuptools')
-source=("git+https://github.com/cr0hn/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/cr0hn/$pkgname.git"
+        'requirements.txt.patch')
+sha512sums=('SKIP'
+            '7fedde239ce3ce537cd62e87b6b43e4d39ccdcfd3e0da4bdffca2a5eb166e301e4e785ea448660c3ce313d18dbac79952ea74ca533dbb0250e7b00214874c148')
 
 pkgver() {
   cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  patch -p1 < requirements.txt.patch
 }
 
 build() {
@@ -32,9 +39,11 @@ build() {
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --optimize=1 --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst CHANGELOG
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  mv "$pkgdir/usr/bin/${pkgname}3" "$pkgdir/usr/bin/$pkgname"
 }
 

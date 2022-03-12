@@ -2,15 +2,15 @@
 # See COPYING for license details.
 
 pkgname=vuls
-pkgver=958.00e52a8
+pkgver=1242.2fbc0a00
 pkgrel=1
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='Vulnerability scanner for Linux/FreeBSD, agentless, written in Go.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/future-architect/vuls'
 license=('GPL3')
-depends=('glibc' 'sqlite')
-makedepends=('dep' 'git' 'go-pie')
+depends=('sqlite')
+makedepends=('git' 'go')
 source=("git+https://github.com/future-architect/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -20,29 +20,34 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  export GOROOT=/usr/lib/go
-  export GOPATH="$srcdir/go"
-  export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-
-  mkdir -p "go/src/github.com/future-architect"
-
-  ln -rTsf $pkgname "go/src/github.com/future-architect/$pkgname"
-}
-
 build() {
-  cd "$GOPATH/src/github.com/future-architect/$pkgname"
+  cd $pkgname
 
-  make install
+  VERSION=$(git describe --tags --abbrev=0)
+  REVISION=$(git rev-parse --short HEAD)
+  BUILDTIME=$(date "+%Y%m%d_%H%M%S")
+
+  GOFLAGS="-trimpath -buildmode=pie -mod=readonly -modcacherw"
+  LDFLAGS="-X 'github.com/future-architect/vuls/config.Version=${VERSION}'"
+  LDFLAGS="$LDFLAGS -X 'github.com/future-architect/vuls/config.Revision=build-${BUILDTIME}_${REVISION}'"
+  LDFLAGS="$LDFLAGS -s -w"
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    $GOFLAGS \
+    -ldflags $LDFLAGS \
+    -o $pkgname ./cmd/$pkgname
+
+  GOPATH="$srcdir" go build \
+    $GOFLAGS \
+    -ldflags $LDFLAGS \
+    -o $pkgname-scanner ./cmd/scanner
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd $pkgname
 
-  install -Dm 755 "$GOPATH/bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" \
-    "go/src/github.com/future-architect/$pkgname/"*.md
-  install -Dm 644 "go/src/github.com/future-architect/$pkgname/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 $pkgname $pkgname-scanner -t "$pkgdir/usr/bin"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 }
 

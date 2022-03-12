@@ -2,20 +2,25 @@
 # See COPYING for license details.
 
 pkgname=vivisect
-pkgver=1188.39d4c1e
+pkgver=1687.b7903401
+_pyver=3.10
 pkgrel=1
-epoch=1
+epoch=2
 groups=('blackarch' 'blackarch-debugger' 'blackarch-disassembler'
         'blackarch-reversing')
-pkgdesc='A Python based static analysis and reverse engineering framework, Vdb is a Python based research/reversing focused debugger and programatic debugging API by invisigoth of kenshoto'
+pkgdesc='A Python based static analysis and reverse engineering framework.'
 arch=('any')
 url='http://visi.kenshoto.com/'
 license=('BSD')
-depends=('python2' 'python2-pyqt4' 'pyqt4-common' 'python2-msgpack')
-makedepends=('git')
-source=('git+https://github.com/vivisect/vivisect.git')
+depends=('python' 'python-pyasn1' 'python-pyasn1-modules' 'python-cxxfilt'
+         'python-msgpack' 'python-pycparser' 'python-pyqt5'
+         'python-pyqt5-webengine')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/$pkgname/$pkgname.git"
+        'setup.py.patch')
 options=('!emptydirs')
-sha512sums=('SKIP')
+sha512sums=('SKIP'
+            '2fd84fb57eb2d3769ed41a939622efb9cf10a2d35ed4c5df8ea86e532efea79455521e0d2641d7d000670937109842b0214bb51d0e0031664f802f8f8c43477c')
 
 pkgver() {
   cd $pkgname
@@ -23,28 +28,26 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  patch -p0 < ../setup.py.patch
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
-  cp -a * "$pkgdir/usr/share/$pkgname/"
+  sed -i 's/f"u/"u/' \
+    "$pkgdir/usr/lib/python$_pyver/site-packages/vivisect/__init__.py"
 
-  cat > "$pkgdir/usr/bin/vdbbin" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 /usr/share/$pkgname/vdbbin "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/vdbbin"
-
-  cat > "$pkgdir/usr/bin/vivbin" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 /usr/share/$pkgname/vivbin "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/vivbin"
+  #rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/vstruct/"
 }
 

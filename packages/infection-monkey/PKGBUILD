@@ -1,0 +1,65 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=infection-monkey
+_pkgname=monkey
+pkgver=v1.8.2.r3580.g65f0649d8
+pkgrel=1
+pkgdesc='Automated security testing tool for networks.'
+arch=('any')
+groups=('blackarch' 'blackarch-networking' 'blackarch-automation')
+url='https://github.com/guardicore/monkey'
+depends=('python' 'python-cryptography' 'python-cffi' 'python-ecdsa' 'aws-cli'
+         'pyinstaller' 'impacket' 'python-netifaces' 'python-odict'
+         'python-paramiko' 'python-psutil' 'python-pycryptodome'
+         'python-pyftpdlib' 'pymssql' 'python-pypykatz' 'python-pysmb'
+         'python-requests' 'python-urllib3'  'python-simplejson'
+         'python-flask-pymongo' 'python-flask-restful' 'python-boto3'
+         'python-botocore' 'python-pyjwt' 'python-flask' 'python-gevent'
+         'python-jsonschema' 'python-mongoengine' 'python-mongomock'
+         'python-pytest' 'python-dateutil' 'python-requests-mock' 'python-ring'
+         'python-stix2' 'python-six' 'python-tqdm' 'python-virtualenv'
+         'python-werkzeug' 'python-wheel' 'python-flask-jwt-extended'
+         'python-dpath' 'python-stix2-patterns')
+makedepends=('git')
+license=('GPL3')
+source=("git+https://github.com/guardicore/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  cp -a docs/ "$pkgdir/usr/share/doc/$pkgname/"
+
+  rm -rf *.yml *.md .g* .f* LICENSE docs/ $_pkgname/tests/ appimage/
+
+  cp -a * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/$_pkgname
+exec python infection_monkey.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+
+  cat > "$pkgdir/usr/bin/monkey-island" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/$_pkgname
+exec python monkey_island.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/monkey-island"
+}
+

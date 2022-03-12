@@ -3,7 +3,7 @@
 
 pkgname=cmsmap
 pkgver=8.59dd0e2
-pkgrel=4
+pkgrel=7
 epoch=1
 pkgdesc='A python open source Content Management System scanner that automates the process of detecting security flaws of the most popular CMSs.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-automation'
@@ -22,6 +22,15 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  sed 's|wp_plugins_small = data/wp_plugins_small.txt|wp_plugins_small = data/wp_plugins.txt|g' \
+    -i cmsmap/cmsmap.conf
+  sed 's|edbtype = apt|edbtype = GIT|g' -i cmsmap/cmsmap.conf
+  sed 's|edbpath = /usr/share/exploitdb/|edbpath = /opt/exploitdb/|g' -i cmsmap/cmsmap.conf
+}
+
 build() {
   cd $pkgname
 
@@ -31,9 +40,15 @@ build() {
 package() {
   cd $pkgname
 
+  install -dm 755 "$pkgdir/opt/"
+
   python setup.py install --root="$pkgdir" --prefix=/usr --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md DISCLAIMER.txt
   install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cd "$pkgdir/opt"
+
+  git clone https://github.com/offensive-security/exploit-database exploitdb
 }
 

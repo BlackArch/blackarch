@@ -2,18 +2,17 @@
 # See COPYING for license details.
 
 pkgname=certgraph
-pkgver=142.7b3a67c
-pkgrel=1
+pkgver=159.40ab604
+pkgrel=2
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='Crawl the graph of certificate Alternate Names.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/lanrat/certgraph'
 license=('GPL3')
 depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/lanrat/$pkgname.git")
 sha512sums=('SKIP')
-_url="github.com/lanrat/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -22,21 +21,23 @@ pkgver() {
 }
 
 build() {
-  mkdir -p "src/$_url" && mv $pkgname "src/$_url" && cd "src/$_url/$pkgname"
+  cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t $_url
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd $pkgname
 
-  cd "src/$_url/$pkgname"
-  GOPATH="$srcdir" go build -v .
-
-  cd "$srcdir/src/$_url/$pkgname"
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 docs/index.html "$pkgdir/usr/share/$pkgname/index.html"
   install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

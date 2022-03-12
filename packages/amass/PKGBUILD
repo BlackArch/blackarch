@@ -3,7 +3,7 @@
 
 pkgname=amass
 _pkgname=Amass
-pkgver=886.f12600b
+pkgver=1826.9527e7d
 pkgrel=1
 epoch=2
 pkgdesc='In-depth subdomain enumeration written in Go.'
@@ -11,7 +11,7 @@ arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
 url='https://github.com/OWASP/Amass'
 license=('Apache')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=('git+https://github.com/OWASP/Amass.git')
 sha512sums=('SKIP')
 
@@ -21,36 +21,29 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  mkdir -p "gopath/src/github.com/OWASP"
-  ln -rTsf $_pkgname "gopath/src/github.com/OWASP/$_pkgname"
-
-  export GOPATH="$srcdir/gopath"
-  cd "$GOPATH/src/github.com/OWASP/$_pkgname"
-
-  go get -d ./...
-}
-
 build() {
-  export GOPATH="$srcdir/gopath"
-  cd "$GOPATH/src/github.com/OWASP/$_pkgname"
+  cd $_pkgname
 
-  go install -v ./...
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/...
+
 }
 
 package() {
-  export GOPATH="$srcdir/gopath"
+  cd $_pkgname
 
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 755 "$GOPATH/bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
 
-  cp -a --no-preserve=ownership \
-    "$GOPATH/src/github.com/OWASP/$_pkgname/examples" \
-    "$pkgdir/usr/share/$pkgname"
-
+  cp -a --no-preserve=ownership examples "$pkgdir/usr/share/$pkgname"
   mv "$pkgdir/usr/share/$pkgname/examples/wordlists" "$pkgdir/usr/share/$pkgname"
-
   chmod 644 "$pkgdir/usr/share/$pkgname/"{wordlists/*,examples/*}
 }
 

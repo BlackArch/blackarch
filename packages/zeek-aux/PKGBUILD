@@ -1,0 +1,55 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=zeek-aux
+pkgver=516.e799fab
+pkgrel=1
+pkgdesc='Handy auxiliary programs related to the use of the Zeek Network Security Monitor.'
+groups=('blackarch' 'blackarch-networking' 'blackarch-defensive'
+        'blackarch-sniffer')
+arch=('x86_64' 'aarch64')
+url='https://github.com/zeek/zeek-aux'
+license=('custom:unknown')
+depends=('zeek')
+makedepends=('git' 'cmake')
+source=("$pkgname::git+https://github.com/zeek/zeek-aux.git"
+        "git+https://github.com/zeek/cmake.git"
+        )
+replaces=('bro-aux')
+provides=('bro-aux')
+sha512sums=('SKIP'
+            'SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  git submodule init
+  git config cmake.https://github.com/zeek/cmake.git "$srcdir/cmake"
+  git submodule update
+}
+
+build() {
+  cd $pkgname
+
+  ./configure --prefix="$pkgdir/usr"
+
+  make
+}
+
+package() {
+  cd $pkgname
+
+  make install
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README CHANGES VERSION
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+
+  rm -rf "$pkgdir/usr/bin/"{zeek-cut,bro-cut} "$pkgdir/usr/share/man/"
+}
+

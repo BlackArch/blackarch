@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=codeql
+pkgver=2.8.1
+pkgrel=1
+epoch=1
+groups=('blackarch' 'blackarch-automation' 'blackarch-code-audit')
+pkgdesc='The CLI tool for GitHub CodeQL'
+arch=('x86_64')
+url='https://github.com/codeql'
+license=('custom')
+depends=('java-runtime-headless' 'bash')
+source=("$pkgname-v$pkgver.zip::https://github.com/github/codeql-cli-binaries/releases/download/v$pkgver/$pkgname-linux64.zip")
+sha512sums=('0172fb743dc9b984b21a0bcdc87b8203c41e9ba278e2f6f93e17d8a33ef301faef6b8d3781f10eb309ea02109544ec8d510f4bbd2d574e6cfa7bcba45d272bbf')
+
+prepare() {
+  ln -sf "$pkgname/tools/linux64/lib64trace.so" \
+    "$pkgname/tools/linux64/libtrace.so"
+}
+
+package() {
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 "$pkgname/LICENSE.md" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a $pkgname "$pkgdir/usr/share/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec /usr/share/$pkgname/$pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

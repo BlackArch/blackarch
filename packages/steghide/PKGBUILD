@@ -1,0 +1,59 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Old Maintainer: Lukas Fleischer <lfleischer@archlinux.org>
+# Old Contributor: Tom Newsom <Jeepster@gmx.co.uk>
+# Old Contributor: Jason Chu <jason@archlinux.org>
+# Old Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
+
+pkgname=steghide
+pkgver=0.5.1
+pkgrel=10
+pkgdesc='Embeds a message in a file by replacing some of the least significant bits.'
+groups=('blackarch' 'blackarch-stego' 'blackarch-anti-forensic')
+arch=('x86_64' 'aarch64')
+url='http://steghide.sourceforge.net/'
+license=('GPL')
+depends=('libmcrypt' 'gcc-libs' 'mhash' 'libjpeg' 'zlib')
+source=("http://downloads.sourceforge.net/$pkgname/$pkgname-$pkgver.tar.gz"
+        'buildsystem.patch'
+        'gcc-4.2.patch'
+         "${pkgname}-climits.patch"
+        'steghide-gcc6.patch')
+sha512sums=('6cda3e33e91123fbc5caa112efcacf09180505abd4f6f229878cd443817c60a04498aead02509c7532fd6924225c6b752820c51e452a83c520f228273d610a57'
+            '9c28167ff75b4d6e74aed76ea2f083ae0a3a743c3eed6dc861fae44d8e3890f121731ba42d85be9d1fef647979064614a46afc974febd34e98a347692beec0bd'
+            '8ebbde6bda5f8d083f9a762a1049b797cdb1c640efab4490762317e65172c71c1c3045530be140ef10f9f50f8a59be8f37601c9e114710b85f05849e7c9a3051'
+            '0c0f1b0929ded881391a7f790434977164d9fab92007ab03685f07f6b6b60867ec6a502f4c647e31bf85660ecc08f7c224920c4227b549457bca4b3d9578d4f9'
+            'dfd63bfbcdb821bfe71be1dd592969dfa089377b4b4d0f6859e3f46a888d1aa1389e2a24b8908c17c74525cb5877d6f70729e60d0edd35a93b0851564d96080d')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -p1 < ../buildsystem.patch
+
+  # this patch courtesy gentoo bug tracker #178134
+  patch -Np1 -i ../gcc-4.2.patch
+  patch -Np1 -i ../steghide-climits.patch
+
+  patch -p1 -i ../steghide-gcc6.patch # Fix build with GCC 6
+
+  # touch files needed by GNU Autotools
+  touch NEWS AUTHORS ChangeLog
+
+  autoreconf -i
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  ./configure --prefix=/usr
+
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+}
+

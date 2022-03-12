@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gitdorker
+_pkgname=GitDorker
+pkgver=113.8199375
+pkgrel=2
+pkgdesc='Python program to scrape secrets from GitHub through usage of a large repository of dorks.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/obheda12/GitDorker'
+license=('custom:unknown')
+depends=('python' 'python-requests' 'python-termcolor' 'python-tqdm')
+makedepends=('git')
+source=("git+https://github.com/obheda12/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md *.png
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $_pkgname.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+

@@ -2,45 +2,33 @@
 # See COPYING for license details.
 
 pkgname=pcileech
-pkgver=4.4
-pkgrel=2
+pkgver=4.12
+_pkgver=20210925
+pkgrel=1
 pkgdesc='Tool, which uses PCIe hardware devices to read and write from the target system memory.'
 arch=('x86_64')
 groups=('blackarch' 'blackarch-hardware' 'blackarch-reversing')
 url='https://github.com/ufrisk/pcileech/releases'
 license=('GPL3')
 depends=('libusb' 'leechcore' 'linux-headers')
-source=("https://github.com/ufrisk/$pkgname/archive/v$pkgver.tar.gz"
-        'makefile.patch')
-sha512sums=('34f9a17120f250d9e507a0a50b0e945f65215d857e8285f84a1b745beffaf264898fad976ecbbdf5f4c5157cfbfa89859eaafedd675d2132a6912dc5b9e8c43f'
-            '7835ada3bff46b93159cc563363a89af8692ab4c785ba8027b8e81915617872fbcd28531617517cc6a0c749b0df953847bc5ff37b05dfaa816d0ce6819927f70'
-            )
-
-prepare() {
-  cd "$pkgname-$pkgver/$pkgname"
-
-  patch -p2 < "$srcdir/makefile.patch" Makefile
-}
-
-build() {
-  cd "$pkgname-$pkgver/$pkgname"
-
-  make
-
-# Commented source lines are because https://github.com/ufrisk/pcileech/issues/111
-#  cd ../pcileech_kmd/linux
-#  make
-}
+options=('!strip')
+source=("https://github.com/ufrisk/$pkgname/releases/download/v$pkgver/PCILeech_files_and_binaries_v$pkgver.0-linux_x64-$_pkgver.tar.gz")
+sha512sums=('1a6c115306d22fa90f46a423820a7cdd9190bb3c38812db1d8c72d29e96014b7710e558f6dbdc5f270e3d3e6777b0273d11213ad626f23f0ec1f7fb6e5777e08')
 
 package() {
-  cd "$pkgname-$pkgver"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -dm 755 "$pkgdir/usr/lib/modules/extramodules-ARCH"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
 
-  install -Dm 755 "files/$pkgname" "$pkgdir/usr/bin/$pkgname"
-#  install -m 644 pcileech_kmd/linux/pcileech_kmd.ko \
-#    "$pkgdir/usr/lib/modules/extramodules-ARCH/pcileech_kmd.ko"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" readme.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  chmod 755 "$pkgdir/usr/share/$pkgname/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ./$pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

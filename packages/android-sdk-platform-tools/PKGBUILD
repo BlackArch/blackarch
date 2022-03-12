@@ -1,16 +1,17 @@
 # Maintainer: Zhang Hai <dreaming.in.code.zh@gmail.com>
+# Contributor: Felix Golatofski <contact@xdfr.de>
 # Contributor: Vlad M. <vlad@archlinux.net>
 # Contributor: Gordin <9ordin @t gmail dot com>
 # Contributor: Christoph Bayer <chrbayer@criby.de>
 
 pkgname=android-sdk-platform-tools
-pkgver=r29.0.5
+pkgver=r33.0.0
 pkgrel=1
 pkgdesc='Platform-Tools for Google Android SDK (adb and fastboot)'
 arch=('x86_64')
-url='http://developer.android.com/sdk/index.html'
+url='https://developer.android.com/sdk/index.html'
 license=('custom')
-depends_x86_64=('zlib' 'ncurses')
+depends=('zlib' 'ncurses')
 provides=('adb' 'android-tools')
 conflicts=('adb')
 replaces=('android-tools')
@@ -18,21 +19,21 @@ install="$pkgname.install"
 source=("https://dl.google.com/android/repository/platform-tools_$pkgver-linux.zip"
         'adb.service'
         'license.html')
-sha512sums=('1f7e99895356370292da789a977b8c1f18ee74e6c8f3959900cede27bdd4864b72ce5e5d6f825b9d970477c28c07e3178c115a7268fa79a77ebfc3ecbd55c5e4'
+sha512sums=('80d0638b8930187d9ad8eee93c2501286b92bfd0a052aa86596d01da66a70324947b6acf4ae13fb0617d24a5f52d5ca85169c6c9d6d07be685d074810a987b6b'
             'faf315d2bb7a9caa099db32e21451a1fd8fcc76475f25b36742356adc4f758e6fc7512106f9539b2db687c9566ef5889a4fa051c3c1a84555090d4b175e485d4'
             '23f1533682c39e2ae2ae40083de343abcd6ed0a523eacdac58768067f8f450b1cec30073993dd7b972a5b8125136ed29a043ae894dff046fd75bb04c4d21a0f4')
 
 package() {
-  install -Dm 644 adb.service "$pkgdir/usr/lib/systemd/system/adb.service"
-  install -Dm 644 license.html "$pkgdir/usr/share/licenses/$pkgname/license.html"
+  install -dm 755 "$pkgdir/etc/profile.d"
+  install -dm 755 "$pkgdir/opt/android-sdk/"
 
-  install -d "$pkgdir/etc/profile.d"
-  echo 'export PATH="${PATH}:/opt/android-sdk/platform-tools"' > "$pkgdir/etc/profile.d/$pkgname.sh"
-  echo 'setenv PATH "${PATH}:/opt/android-sdk/platform-tools"' > "$pkgdir/etc/profile.d/$pkgname.csh"
-  chmod 755 "$pkgdir/etc/profile.d/${pkgname}".{csh,sh}
+  install -Dm 644 "$srcdir/adb.service" "$pkgdir/usr/lib/systemd/system/adb.service"
+  install -Dm 644 "$srcdir/license.html" "$pkgdir/usr/share/licenses/$pkgname/license.html"
 
-  install -d "$pkgdir/opt/android-sdk/"
-  cp -a platform-tools "$pkgdir/opt/android-sdk/platform-tools"
-  chmod -R +rX "${pkgdir}/opt/android-sdk/platform-tools"
+  echo 'export PATH="$PATH:/opt/android-sdk/platform-tools"' >"$pkgdir/etc/profile.d/$pkgname.sh"
+  echo 'setenv PATH "$PATH:/opt/android-sdk/platform-tools"' >"$pkgdir/etc/profile.d/$pkgname.csh"
+  chmod 755 "$pkgdir/etc/profile.d/$pkgname"{.csh,.sh}
+  cp -a "$srcdir/platform-tools" "$pkgdir/opt/android-sdk/platform-tools"
+  chmod -R +rX "$pkgdir/opt/android-sdk/platform-tools"
 }
 

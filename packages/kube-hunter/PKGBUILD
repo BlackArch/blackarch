@@ -2,17 +2,19 @@
 # See COPYING for license details.
 
 pkgname=kube-hunter
-pkgver=603.a4a8c71
+pkgver=686.7c62cc2
+_pyver=3.10
 pkgrel=1
 pkgdesc='Hunt for security weaknesses in Kubernetes clusters.'
 arch=('any')
 groups=('blackarch' 'blackarch-scanner')
 url='https://github.com/aquasecurity/kube-hunter'
 license=('Apache')
-depends=('python2' 'python2-netaddr' 'python2-netifaces' 'python2-enum34'
-         'python2-scapy' 'python2-requests' 'python2-prettytable'
-         'python2-urllib3' 'python2-ruamel-yaml')
-makedepends=('git')
+depends=('python' 'python-netaddr' 'python-netifaces' 'python-scapy'
+         'python-requests' 'python-prettytable' 'python-urllib3'
+         'python-ruamel-yaml' 'python-future' 'python-packaging'
+         'python-pluggy' 'python-kubernetes')
+makedepends=('git' 'python-setuptools' 'python-pip')
 source=("git+https://github.com/aquasecurity/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -22,25 +24,20 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin/"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm LICENSE README.md
-
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/tests"
 }
 

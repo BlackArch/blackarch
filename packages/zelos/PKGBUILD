@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=zelos
+pkgver=270.0c5bd57
+pkgrel=3
+pkgdesc='A comprehensive binary emulation and instrumentation platform.'
+groups=('blackarch' 'blackarch-binary')
+arch=('any')
+url='https://github.com/zeropointdynamics/zelos'
+license=('AGPL3')
+depends=('python' 'python-wheel' 'python-colorama' 'python-termcolor'
+         'python-capstone' 'python-sortedcontainers' 'python-verboselogs'
+         'python-dnslib' 'python-hexdump' 'python-dpkt' 'python-coloredlogs'
+         'python-configargparse' 'python-pypacker' 'lief' 'python-unicorn'
+         'python-zebracorn' 'python-lark-parser')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/zeropointdynamics/$pkgname.git"
+        'setup.py.patch')
+sha512sums=('SKIP'
+            'f0af72f4b77652ec903d0bcb741a36f86dfafddc9988568ae5dd2eb2fac09a5398ccd9fedc6b2a08281214b9e8445f12d80cc706336494a0542ab1172bcc9bad')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  patch -p1 < setup.py.patch
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

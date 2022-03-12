@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=grype
+pkgver=0.33.1
+pkgrel=1
+epoch=1
+groups=('blackarch' 'blackarch-scanner')
+pkgdesc='A vulnerability scanner for container images and filesystems.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/anchore/grype'
+license=('Apache')
+makedepends=('git' 'go')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
+sha512sums=('57b4983cefb7a50d27ccbb8310906c0d3fcd2a595305ed9035957be44af848642fb36723262bcf0de2c04e9efb74f7cdd83935598c5ef7ad8992929b2cd51f5b')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -Dm 755 $pkgname/$pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md \
+    DEVELOPING.md CONTRIBUTING.md
+}
+

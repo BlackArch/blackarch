@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Levente Polyak <anthraxx[at]archlinux[dot]org>
+# Old Contributor: Jonas Heinrich <onny@project-insanity.org>
+# Old Contributor: MatToufoutu <mattoufootu[at]gmail.com>
+# Initiator: BlackArch
+
+pkgname=sslstrip
+pkgver=0.9
+pkgrel=11
+pkgdesc='Python tool to hijack HTTPS connections during a MITM attack.'
+groups=('blackarch' 'blackarch-proxy' 'blackarch-networking'
+        'blackarch-exploitation')
+url='https://github.com/moxie0/sslstrip'
+arch=('any')
+license=('GPL3')
+depends=('python2' 'python2-pyopenssl' 'python2-twistedx'
+				 'python2-service-identity')
+source=("https://github.com/moxie0/sslstrip/archive/v$pkgver/$pkgname-$pkgver.tar.gz")
+sha512sums=('e4b1b434c0cb5338a083b33951ee3ec550d3efeff8f3d7869648bb62b4b0cc73c1a6153914a0ba6648840e2cfb8d701e9e0f1460b850e14129202cd5f8f880c2')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+	sed -i 's/env python$/env python2/g' sslstrip.py
+
+	# package data files ourselves
+  sed -i '/data_files = /d' setup.py
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README
+  install -Dm 644 lock.ico "$pkgdir/usr/share/$pkgname/lock.ico"
+}
+

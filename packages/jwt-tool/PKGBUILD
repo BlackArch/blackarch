@@ -2,29 +2,47 @@
 # See COPYING for license details.
 
 pkgname=jwt-tool
-_pkgname=jwt_tool
-pkgver=27.cef1013
+pkgver=63.aa496cf
 pkgrel=1
 pkgdesc='Toolkit for validating, forging and cracking JWTs (JSON Web Tokens).'
 arch=('any')
 groups=('blackarch' 'blackarch-cracker')
 url='https://github.com/ticarpi/jwt_tool'
 license=('GPL3')
-depends=('python' 'python-pycryptodomex')
+depends=('python' 'python-pycryptodomex' 'python-termcolor' 'python-cprint'
+         'python-requests')
 makedepends=('git')
-source=("git+https://github.com/ticarpi/$_pkgname.git")
-sha512sums=('SKIP')
+source=("$pkgname::git+https://github.com/ticarpi/jwt_tool.git"
+        "jwtconf.ini")
+sha512sums=('SKIP'
+            'a630e2ce2370678ca845550d8d7d62040cae8a9c87599931b26f6f0d009b14c78b57d369c88e00218cd992a1fac41826a9cce615334bd1e4e5e96c89ac7bd0ee')
+backup=("usr/share/$pkgname/jwtconf.ini")
 
 pkgver() {
-  cd $_pkgname
+  cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  cd $_pkgname
+  cd $pkgname
 
-  install -Dm 755 "$_pkgname.py" "$pkgdir/usr/bin/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" ../jwtconf.ini
+
+  rm README.md LICENSE setup.txt requirements.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/jwt_tool.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

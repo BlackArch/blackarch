@@ -2,37 +2,34 @@
 # See COPYING for license details.
 
 pkgname=dirstalk
-pkgver=1.3.2
-pkgrel=1
+pkgver=1.3.3
+pkgrel=3
 pkgdesc='Modern alternative to dirbuster/dirb.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
 url='https://github.com/stefanoj3/dirstalk'
 license=('MIT')
-makedepends=('git' 'go-pie' 'dep')
+makedepends=('git' 'go')
 source=("https://github.com/stefanoj3/$pkgname/archive/$pkgver.tar.gz")
-sha512sums=('446025552c2486a106bb49754054154f3f723179fa8e17d949df917c36a9fdc6c0b656d26976ed4426a7422e117289f46b325c9733703166c2a6371b79af6d03')
-
-prepare() {
-  export GOPATH="$srcdir/go"
-
-  mkdir -p go/src/github.com/stefanoj3
-  ln -rTsf "$pkgname-$pkgver" "go/src/github.com/stefanoj3/$pkgname"
-}
+sha512sums=('282f6de56054b3d6a92af3af0d658623213af6233dda667ff59fa890d1ef09e229f192c6fb0a3ba7e73ae0617637c342d71a17c41f703c3b10a44393873ab4ea')
 
 build() {
-  export GOPATH="$srcdir/go"
+  cd $pkgname-$pkgver
 
-  cd "go/src/github.com/stefanoj3/$pkgname"
-  dep init
-  dep ensure
-  make build
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/$pkgname
 }
 
 package() {
   cd "$pkgname-$pkgver"
 
-  install -Dm 755 "dist/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

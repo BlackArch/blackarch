@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=myjwt
+_pkgname=MyJWT
+pkgver=185.e69646a
+_pyver=3.10
+pkgrel=1
+pkgdesc='This cli is for pentesters, CTF players, or dev. You can modify your jwt, sign, inject, etc.'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-cracker')
+url='https://github.com/mBouamama/MyJWT'
+license=('MIT')
+depends=('python' 'python-click' 'python-cryptography' 'python-pyopenssl'
+         'python-requests' 'python-questionary' 'python-aiocmd' 'exrex'
+         'python-pyperclip')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/mBouamama/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $_pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $_pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/tests"
+}
+

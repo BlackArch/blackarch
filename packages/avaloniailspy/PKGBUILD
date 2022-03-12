@@ -2,24 +2,46 @@
 # See COPYING for license details.
 
 pkgname=avaloniailspy
-pkgver=5.0
+pkgver=213.5f0f231
 pkgrel=1
 groups=('blackarch' 'blackarch-decompiler')
 pkgdesc='.NET Decompiler (port of ILSpy)'
 arch=('x86_64')
 url='https://github.com/icsharpcode/AvaloniaILSpy'
 license=('MIT')
-options=('staticlibs')
-source=("https://github.com/icsharpcode/AvaloniaILSpy/releases/download/v$pkgver-rc1/ILSpy-linux-x64-Release.zip")
-sha512sums=('bf304073daecbab554c6bbd250c3ebfcb8800ef84182194fd02a16efec533e8911d80ea3b3a8c80a38b1f78f3a4f228dc76f08293e389205e137e17bc1c8f63a')
+depends=('dotnet-runtime')
+makedepends=('dotnet-sdk' 'git' 'libicns')
+source=("$pkgname::git+https://github.com/icsharpcode/AvaloniaILSpy")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  git submodule update --init --recursive
+}
+
+build() {
+  cd $pkgname
+
+  dotnet build --configuration release --output "build"
+}
 
 package() {
+  cd $pkgname
+
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  rm *.zip
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" doc/*
+  install -Dm 644 doc/license.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+  cp -a --no-preserve=ownership build/* "$pkgdir/usr/share/$pkgname/"
 
   chmod +x "$pkgdir/usr/share/$pkgname/ILSpy"
 

@@ -2,32 +2,49 @@
 # See COPYING for license details.
 
 pkgname=tls-attacker
-_pkgname=TLS-Attacker
-pkgver=3.3.1
+pkgver=5759.973f490a3
 pkgrel=1
+epoch=1
 pkgdesc='A Java-based framework for analyzing TLS libraries.'
 groups=('blackarch' 'blackarch-crypto')
 arch=('any')
 url='https://github.com/RUB-NDS/TLS-Attacker'
 license=('Apache')
-depends=('java-environment')
-makedepends=('git' 'maven')
-source=("https://github.com/RUB-NDS/TLS-Attacker/archive/$pkgver.tar.gz")
-sha512sums=('4a7eb348968476479106fe17f125be72e104d3d35c97eeb962d67e405435c989c6d7a78889c4f25280bb76906a87dc27877dbea75fe21b114b1ef05ed98570c4')
+depends=('jdk-openjdk' 'jre-openjdk')
+makedepends=('git' 'jdk-openjdk' 'jre-openjdk' 'maven')
+source=("$pkgname::git+https://github.com/RUB-NDS/TLS-Attacker.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  #sed '404s|^|        <maven.compiler.target>1.8</maven.compiler.target>\n|' -i pom.xml
+  #sed '405s|^|        <maven.compiler.source>1.8</maven.compiler.source>\n|' -i pom.xml
+
+  # to build with java 8
+}
 
 build() {
-  cd "$_pkgname-$pkgver"
+  cd $pkgname
 
-  mvn package
+  mvn package -DskipTests=true
 }
 
 package() {
+  cd $pkgname
+
   _tools="Attacks TLS-Client TLS-Forensics TLS-Mitm TLS-Server TraceTool"
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  cp -a * "$pkgdir/usr/share/$pkgname/"
+  cp -a --no-preserve=ownership apps/* "$pkgdir/usr/share/$pkgname/"
 
   for t in $_tools ; do
     cat > "$pkgdir/usr/bin/$pkgname-$t" << EOF

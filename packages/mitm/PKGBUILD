@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=mitm
+pkgver=8.bd2b351
+pkgrel=2
+pkgdesc='A simple yet effective python3 script to perform DNS spoofing via ARP poisoning.'
+arch=('any')
+groups=('blackarch' 'blackarch-networking' 'blackarch-proxy' 'blackarch-spoof')
+url='https://github.com/Th3Hurrican3/mitm'
+license=('custom:unknown')
+depends=('python' 'scapy' 'python-netifaces' 'python-python-nmap')
+makedepends=('git')
+source=("git+https://github.com/Th3Hurrican3/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md requirements.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

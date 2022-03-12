@@ -2,19 +2,43 @@
 # See COPYING for license details.
 
 pkgname=flare-floss
-pkgver=1.5.0
-pkgrel=2
+pkgver=860.7138b61
+pkgrel=1
 pkgdesc='Obfuscated String Solver - Automatically extract obfuscated strings from malware.'
 groups=('blackarch' 'blackarch-malware')
 arch=('x86_64')
 url='https://github.com/fireeye/flare-floss'
 license=('Apache')
-depends=('python2')
-makedepends=('git')
-source=("https://github.com/fireeye/flare-floss/releases/download/v$pkgver/floss-$pkgver-GNU.Linux.zip")
-sha512sums=('f29cb7cdd17b09d8a38bdd469a389e0b42093eaf34c44645f67c05ac6cf1c8ad685ef58158c58064112a3b08b626bc25fb7e598f0b8a34b1cd4aeca1a8a738e9')
+depends=('python' 'python-tabulate' 'python-simplejson' 'python-viv-utils'
+         'vivisect')
+makedepends=('git' 'python-setuptools')
+#source=("https://github.com/fireeye/$pkgname/archive/v$pkgver.tar.gz")
+source=("git+https://github.com/fireeye/$pkgname.git"
+        'setup.py.patch')
+sha512sums=('SKIP'
+            'ee135a3097238d928831d82481fbe8af24d054ad7b9d07b9893086109c063ed5a6605a364d80853799b29f988d7a4b7c979d9d8663a2ce9dd6201cedbd7f4f73')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  patch -p0 < ../setup.py.patch
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
 
 package() {
-  install -Dm 755 floss "$pkgdir/usr/bin/$pkgname"
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 

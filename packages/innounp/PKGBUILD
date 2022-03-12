@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=innounp
+pkgver=0.50
+pkgrel=1
+groups=('blackarch' 'blackarch-reversing')
+pkgdesc='Inno Setup Unpacker.'
+arch=('any')
+url='https://sourceforge.net/projects/innounp/files/innounp/'
+license=('GPL2')
+depends=('wine' 'wine_gecko' 'wine-mono')
+makedepends=('unrar')
+source=("$pkgname.rar::https://downloads.sourceforge.net/project/$pkgname/$pkgname/$pkgname%20$pkgver/$pkgname${pkgver//.}.rar")
+noextract=("$pkgname.rar")
+sha512sums=('dbbc809308267a866db9d6b751fdeda6d179e1a65d8ddb14bb51984431ae91493f9a76105e1789b245732043a2c696c869ed10964b48cf59f81e55bd52f85330')
+
+prepare() {
+  unrar x -y "$pkgname.rar"
+}
+
+package() {
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
+
+  cp --no-preserve=ownership "$pkgname.exe" \
+    "$pkgdir/usr/share/windows/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname
+exec wine "$pkgname.exe" "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

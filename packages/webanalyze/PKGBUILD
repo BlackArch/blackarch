@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=webanalyze
-pkgver=62.fb94f41
+pkgver=97.71f6751
 pkgrel=1
 pkgdesc='Port of Wappalyzer (uncovers technologies used on websites) in go to automate scanning.'
 arch=('x86_64' 'aarch64')
@@ -10,11 +10,9 @@ groups=('blackarch' 'blackarch-webapp' 'blackarch-recon' 'blackarch-scanner'
         'blackarch-fingerprint')
 url='https://github.com/rverton/webanalyze'
 license=('GPL3')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/rverton/$pkgname.git")
-install="$pkgname.install"
 sha512sums=('SKIP')
-_url="github.com/rverton/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -22,19 +20,25 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/$pkgname
+}
+
 package() {
-  export GOPATH="$srcdir"
+  cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  go get -u "$_url/..."
-
-  install -Dm 755 "$GOPATH/bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" \
-    "$GOPATH/$pkgname/README.md"
-
-  install -Dm 644 "$GOPATH/$pkgname/LICENSE.txt" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 technologies.json -t "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname"
 }
 

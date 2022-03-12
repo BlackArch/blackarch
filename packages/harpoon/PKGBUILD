@@ -2,28 +2,20 @@
 # See COPYING for license details.
 
 pkgname=harpoon
-pkgver=202.7e24ae8
-pkgrel=2
+pkgver=312.654381f
+pkgrel=1
 pkgdesc='CLI tool for open source and threat intelligence.'
 groups=('blackarch' 'blackarch-automation' 'blackarch-recon')
 arch=('any')
 url='https://github.com/Te-k/harpoon'
 license=('GPL3')
-depends=('python' 'python-archiveis' 'python-beautifulsoup4' 'python-censys'
-         'python-click' 'python-consolemd' 'python-dnspython'
-         'python-fullcontactpy' 'python-geoip2' 'python-ipy'
-         'python-lxml' 'python-maxminddb' 'python-mispy' 'python-otxv2'
-         'python-passivetotal' 'python-pyasn' 'python-pybinaryedge'
-         'python-pycrtsh' 'python-pygithub' 'python-pygreynoisev1'
-         'python-pyhunter' 'python-pypdns' 'python-pypermacc'
-         'python-pysafebrowsing' 'python-pythreatgrid2' 'python-pytz'
-         'python-requests' 'python-selenium' 'python-shodan' 'python-spyonweb'
-         'python-telethon' 'python-tweepy' 'python-virustotal-api')
-makedepends=('git' 'python-setuptools')
+depends=('python' 'python-virtualenv')
+makedepends=('git' 'libxml2' 'libxslt')
 source=("git+https://github.com/Te-k/$pkgname.git"
-        'setup.py.patch')
+        'harpoon.install')
 sha512sums=('SKIP'
-            'b2d80effe27ea12a0fbe596f3db5d236cfc2bb6c5207e889854a41f3467538aa13b4aa74a616c33b5bdf1c380290dd0a4666a2dede5573f9685a17a65c8cceef')
+            'fc96306e2aced98e18f06f137e3be89107f489d365689d75d9fdf73a91247e16f37441e437aba65c4a926a02c4ea080228cdfa303d478033daa36f6ef9ddaac1')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
@@ -31,39 +23,24 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  patch -p1 < setup.py.patch
-}
-
-build() {
-  cd $pkgname
-
-  python setup.py build
-}
-
 package() {
   cd $pkgname
-
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  # the next parts have to be removed once we fixed the installation via
-  # setup.py: claims that configparser doesn't exist although it's python
-  # build-in lib...
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  rm README.md LICENSE
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -r LICENSE tests
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname/$pkgname
-exec python main.py "\$@"
+cd /usr/share/$pkgname
+source venv/bin/activate
+exec python $pkgname/main.py "\$@"
 EOF
 
   chmod a+x "$pkgdir/usr/bin/$pkgname"

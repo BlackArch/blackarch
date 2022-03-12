@@ -2,34 +2,36 @@
 # See COPYING for license details.
 
 pkgname=mobsf
-pkgver=1369.e7f54416
-pkgrel=2
+pkgver=1765.fb15cf42
+pkgrel=1
 epoch=1
 groups=('blackarch' 'blackarch-mobile')
 pkgdesc='An intelligent, all-in-one open source mobile application (Android/iOS) automated pen-testing framework capable of performing static, dynamic analysis and web API testing.'
 arch=('any')
 url='https://github.com/MobSF/Mobile-Security-Framework-MobSF'
 license=('GPL3')
-depends=('python' 'python-django' 'python-pdfkit' 'androguard' 'wkhtmltopdf'
-         'python-lxml' 'python-rsa' 'python-biplist' 'python-requests'
-         'jre-openjdk' 'python-yara' 'sqlite' 'fontconfig' 'libjpeg-turbo'
-         'python-virtualenv' 'python-pytz' 'python-numpy' 'python-pyparsing'
-         'python-kiwisolver' 'python-six' 'python-dateutil' 'python-cycler'
-         'python-matplotlib' 'python-future' 'python-colorama' 'python-pygments'
-         'python-asn1crypto' 'python-parso' 'python-jedi' 'python-wcwidth'
-         'python-prompt_toolkit' 'python-decorator' 'python-traitlets'
-         'python-ptyprocess' 'python-pexpect' 'python-pickleshare' 'ipython'
-         'python-networkx' 'python-pyasn1' 'python-urllib3' 'python-idna'
-         'python-chardet' 'python-certifi' 'python-pycparser' 'python-cffi'
-         'python-brotlipy' 'python-pyperclip' 'python-blinker' 'python-psutil'
-         'python-cryptography' 'python-click' 'python-ldap3' 'mitmproxy'
-         'python-kaitaistruct' 'python-tornado' 'python-hyperframe'
-         'python-hpack' 'python-h2' 'python-h11' 'python-wsproto' 'python-urwid'
-         'python-ruamel-yaml' 'python-passlib' 'python-sortedcontainers'
-         'python-pyopenssl' 'capfuzz' 'python-traitlets' 'python-colorlog'
-         'python-play-scraper' 'python-whitenoise' 'python-macholib' 'gunicorn'
+depends=('python' 'python-distro' 'python-django' 'python-pdfkit' 'androguard'
+         'wkhtmltopdf' 'python-lxml' 'python-rsa' 'python-biplist'
+         'python-requests' 'jre-openjdk' 'python-yara' 'sqlite' 'fontconfig'
+         'libjpeg-turbo' 'python-virtualenv' 'python-pytz' 'python-numpy'
+         'python-pyparsing' 'python-kiwisolver' 'python-six' 'python-dateutil'
+         'python-cycler' 'python-matplotlib' 'python-future' 'python-colorama'
+         'python-pygments' 'python-asn1crypto' 'python-parso' 'python-jedi'
+         'python-wcwidth' 'python-prompt_toolkit' 'python-decorator'
+         'python-traitlets' 'python-ptyprocess' 'python-pexpect'
+         'python-pickleshare' 'ipython' 'python-networkx' 'python-pyasn1'
+         'python-urllib3' 'python-idna' 'python-chardet' 'python-certifi'
+         'python-pycparser' 'python-cffi' 'python-brotlipy' 'python-pyperclip'
+         'python-blinker' 'python-psutil' 'python-cryptography' 'python-click'
+         'python-ldap3' 'mitmproxy' 'python-kaitaistruct' 'python-tornado'
+         'python-hyperframe' 'python-hpack' 'python-h2' 'python-h11'
+         'python-wsproto' 'python-urwid' 'python-ruamel-yaml' 'python-passlib'
+         'python-sortedcontainers' 'python-pyopenssl' 'capfuzz' 'apkid'
+         'python-traitlets' 'python-colorlog' 'python-play-scraper'
+         'python-whitenoise' 'python-macholib' 'gunicorn' 'python-libsast'
          'python-google-play-scraper' 'python-shelljob' 'python-http-tools'
-         'python-frida' 'python-oscrypto' 'python-ip2location')
+         'python-frida' 'python-oscrypto' 'python-ip2location' 'lief'
+         'quark-engine')
 makedepends=('git' 'python-setuptools' 'python-pip')
 source=("$pkgname::git+https://github.com/MobSF/Mobile-Security-Framework-MobSF.git")
 sha512sums=('SKIP')
@@ -42,7 +44,7 @@ pkgver() {
 }
 
 prepare() {
-  cd $pkgname
+  cd $pkgname/$pkgname
   sed -i 's/USE_HOME = False/USE_HOME = True/g' MobSF/settings.py
 }
 
@@ -55,17 +57,18 @@ package() {
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm docker-compose.yml Dockerfile LICENSE README.md requirements.txt *.bat *.sh
+  rm docker-compose.yml Dockerfile LICENSE README.md requirements.txt *.bat \
+    *.sh scripts/*.bat
+  #rm -r scripts/wheels/ scripts/stack/
 
   cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec gunicorn -b 0.0.0.0:8000 MobSF.wsgi:application \
-  --workers=1 --threads=4 --timeout=1800
+exec gunicorn -b 0.0.0.0:8000 mobsf.MobSF.wsgi:application \
+  --workers=1 --threads=10 --timeout=3600
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
 }
-

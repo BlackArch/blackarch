@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=devaudit
+pkgver=803.ca0a68e
+pkgrel=1
+pkgdesc='An open-source, cross-platform, multi-purpose security auditing tool targeted at developers and teams.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-code-audit')
+url='https://github.com/sonatype-nexus-community/DevAudit'
+license=('BSD')
+depends=('mono' 'mono-tools' 'mono-msbuild')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/sonatype-nexus-community/DevAudit.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  ./build.sh
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 devaudit "$pkgdir/usr/share/$pkgname/devaudit"
+  cp --no-preserve=ownership -a DevAudit.AuditLibrary \
+    "$pkgdir/usr/share/$pkgname/"
+  cp --no-preserve=ownership -a DevAudit.CommandLine \
+    "$pkgdir/usr/share/$pkgname/"
+  cp --no-preserve=ownership -a DevAudit.sln \
+    "$pkgdir/usr/share/$pkgname/"
+  cp --no-preserve=ownership -a DevAudit.Tests \
+    "$pkgdir/usr/share/$pkgname/"
+  cp --no-preserve=ownership -a DevAudit.Tests.VMRequired \
+    "$pkgdir/usr/share/$pkgname/"
+
+  install -dm 644 "$pkgdir/usr/bin/"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bash "$pkgname" "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

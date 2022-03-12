@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=cook
+pkgver=236.55d2e8d
+pkgrel=1
+groups=('blackarch' 'blackarch-automation')
+pkgdesc="Easily create word's permutation and combination to generate complex wordlists and passwords."
+arch=('x86_64' 'aarch64')
+url='https://github.com/giteshnxtlvl/cook'
+license=('MIT')
+makedepends=('git' 'go')
+source=("git+https://github.com/giteshnxtlvl/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd "$pkgname/v2/cmd/$pkgname"
+
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "v2/cmd/$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+

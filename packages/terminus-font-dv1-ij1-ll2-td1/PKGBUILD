@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Thanks to the maintainers & contributors for allowing us to copy/modify their files.
+# Maintainer: Braden Pellett (daBrado) <aurcontact@dabrado.net>
+# Contributor: Vesa Kaihlavirta <vegai@iki.fi>
+# Contributor: Kristoffer Fossgård <kfs1@online.no>
+
+pkgname=terminus-font-dv1-ij1-ll2-td1
+_pkgname=terminus-font
+pkgver=4.49.1
+pkgrel=1
+pkgdesc='Monospace bitmap font (for X11 and console) with dv1 (cyrillic de & ve), ij1 (cyrillic i), ll2 (pass the il1I test) and td1 patches (centered ascii tilde)'
+arch=(any)
+url=https://sourceforge.net/projects/terminus-font/
+license=(GPL2 custom:OFL)
+makedepends=(xorg-bdftopcf fontconfig xorg-mkfontscale xorg-mkfontdir python3)
+optdepends=(xorg-fonts-alias)
+depends=(fontconfig xorg-fonts-encodings xorg-font-utils)
+conflicts=('terminus-font' 'terminus-font-ll2-td1')
+provides=('terminus-font')
+source=(
+  "https://downloads.sourceforge.net/project/terminus-font/$_pkgname-4.49/$_pkgname-$pkgver.tar.gz"
+  fix-75-yes-terminus.patch
+)
+sha512sums=('2e3a99960c459a453b5879bebbebeb653f0a22060177bf75c67bbeb7d32cfe1acce9e74a88fdc42e299b6dc402e0708552487abd26e80e985c7d6059b0d445a8'
+            'f524c7cbf02ce0e67c20ec6936a914964bbfc6f80e58a6f0128ac637929c95f6895f48405a0579143432bba2f245934bf838e96a71777b371669fb9a6bf000b1')
+
+prepare() {
+  cd "${srcdir}/${_pkgname}-${pkgver}"
+  patch < ../fix-75-yes-terminus.patch
+  patch < alt/dv1.diff
+  patch < alt/ij1.diff
+  patch < alt/ll2.diff
+  patch < alt/td1.diff
+}
+
+build() {
+  cd "${srcdir}/${_pkgname}-${pkgver}"
+  ./configure --prefix=/usr --x11dir=/usr/share/fonts/misc --psfdir=/usr/share/kbd/consolefonts
+  make
+}
+
+package() {
+  cd "${srcdir}/${_pkgname}-${pkgver}"
+  make DESTDIR="${pkgdir}" install
+  install -Dm644 75-yes-terminus.conf "${pkgdir}/etc/fonts/conf.avail/75-yes-terminus.conf"
+  install -Dm644 OFL.TXT "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  install -dm755 "${pkgdir}/etc/fonts/conf.d"
+  ln -sf -t "${pkgdir}/etc/fonts/conf.d" ../conf.avail/75-yes-terminus.conf
+}

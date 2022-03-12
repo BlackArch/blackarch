@@ -3,17 +3,16 @@
 
 pkgname=spfmap
 pkgver=8.a42d15a
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='A program to map out SPF and DKIM records for a large number of domains.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/BishopFox/spfmap'
 license=('custom:unknown')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+depends=('sqlite')
+makedepends=('git' 'go')
 source=("git+https://github.com/BishopFox/$pkgname.git")
 sha512sums=('SKIP')
-_url="github.com/BishopFox/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -22,19 +21,24 @@ pkgver() {
 }
 
 build() {
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
-    cd "src/$_url"
+  cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t $_url
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd $pkgname
 
-  GOPATH="$srcdir" go build -v $_url
-
-  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/README.md" \
-    "src/$_url/README.md"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
 }
 

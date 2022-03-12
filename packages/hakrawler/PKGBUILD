@@ -2,15 +2,14 @@
 # See COPYING for license details.
 
 pkgname=hakrawler
-pkgver=102.cf5683c
+pkgver=179.84f2955
 pkgrel=1
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
 pkgdesc='Simple, fast web crawler designed for easy, quick discovery of endpoints and assets within a web application.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/hakluke/hakrawler'
 license=('MIT')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/hakluke/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -23,18 +22,20 @@ pkgver() {
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t .
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-
-  GOPATH="$srcdir" go build -v .
-
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/README.md" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

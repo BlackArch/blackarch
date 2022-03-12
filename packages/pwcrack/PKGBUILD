@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pwcrack
+pkgver=317.de969eb
+pkgrel=1
+groups=('blackarch' 'blackarch-cracker')
+pkgdesc='Password hash automatic cracking framework.'
+arch=('any')
+url='https://github.com/L-codes/pwcrack-framework'
+license=('GPL3')
+makedepends=('git' 'ruby-bundler')
+depends=('ruby')
+source=("$pkgname::git+git://github.com/L-codes/$pkgname-framework.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+
+  rm -rf .gitignore *.md LICENSE
+
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bundle exec ./$pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir"/usr/bin/*
+}
+

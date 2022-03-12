@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=xxxpwn-smart
+_pkgname=xxxpwn_smart
+pkgver=6.b11b95b
+pkgrel=1
+pkgdesc='A fork of xxxpwn adding further optimizations and tweaks.'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp')
+url='https://github.com/aayla-secura/xxxpwn_smart'
+license=('GPL3')
+depends=('python2')
+makedepends=('git')
+source=("git+https://github.com/aayla-secura/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin/"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+
+  rm *.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 $_pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

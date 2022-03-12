@@ -2,18 +2,16 @@
 # See COPYING for license details.
 
 pkgname=wuzz
-pkgver=220.f087795
-pkgrel=1
+pkgver=229.66176b6
+pkgrel=2
 groups=('blackarch' 'blackarch-webapp' 'blackarch-misc')
 pkgdesc='Interactive cli tool for HTTP inspection.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/asciimoo/wuzz'
-license=('GAGPL3')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+license=('AGPL3')
+makedepends=('git' 'go')
 source=("git+https://github.com/asciimoo/$pkgname.git")
 sha512sums=('SKIP')
-_url="github.com/asciimoo/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -22,26 +20,25 @@ pkgver() {
 }
 
 build() {
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
-    cd "src/$_url"
+  cd $pkgname
 
-  GOPATH="$srcdir" go get -v -d -t $_url
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-  cd "$srcdir"
+  cd "$pkgname"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname"
 
-  GOPATH="$srcdir" go build -v $_url
-
-  install -Dm 755 "$srcdir/wuzz" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 "src/$_url/README.md" \
-    "$pkgdir/usr/share/doc/$pkgname/README.md"
-  install -Dm 644 "src/$_url/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  cp -a "src/$_url/docs/"* "$pkgdir/usr/share/doc/$pkgname/"
+  cp -a docs/* "$pkgdir/usr/share/doc/$pkgname/"
 }
 

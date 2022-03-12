@@ -2,17 +2,19 @@
 # See COPYING for license details.
 
 pkgname=simtrace2
-pkgver=892.baa6277
+pkgver=1033.8680677
 pkgrel=1
 pkgdesc='Host utilities to communicate with SIMtrace2 USB Devices.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-radio')
 url='https://osmocom.org/projects/simtrace2/wiki'
 license=('GPL')
-depends=('libosmocore' 'libusb' 'pcsclite' 'talloc')
-makedepends=('git')
-source=('git+git://git.osmocom.org/simtrace2.git')
-sha512sums=('SKIP')
+depends=('libosmocore' 'libusb' 'pcsclite' 'talloc' 'lksctp-tools')
+makedepends=('git' 'lksctp-tools')
+source=('git+git://git.osmocom.org/simtrace2.git'
+        '99-simtrace2.rules')
+sha512sums=('SKIP'
+            '7de2d855220f7320696e1a20a8c4b5cee4061915f35afa462d1f7c9333b11c5909c1c89ef816a8a90dffd7c9b37afb72614f1dc94f530230cc95c6a34d8ba07d')
 install="$pkgname.install"
 
 pkgver() {
@@ -24,17 +26,22 @@ pkgver() {
 build() {
   cd "$pkgname/host"
 
+  autoreconf -fi
+  ./configure
   make
 }
 
 package() {
-  cd "$pkgname/host"
+  cd "$pkgname/host/src"
 
   install -Dm 755 -t "$pkgdir/usr/bin/" simtrace2-list simtrace2-remsim \
     simtrace2-remsim-usb2udp simtrace2-sniff
+
+  cd $srcdir
   install -Dm 644 99-simtrace2.rules \
     "$pkgdir/etc/udev/rules.d/99-simtrace2.rules"
-  install -Dm 644 "$srcdir/$pkgname/README.md" \
-    "$pkgdir/usr/share/doc/$pkgname/README.md"
+
+  cd $pkgname
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 }
 

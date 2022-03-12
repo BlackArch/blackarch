@@ -1,3 +1,6 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
 # AUR Maintainer: Alexej Magura <agm2819*gmail*>
 # Contributor: Jeremy Whiting <jpwhiting@kde.org>
 # Contributor: Lisa Denia <eiffel56@gmail.com>
@@ -5,39 +8,45 @@
 # Contributor: judd <jvinet@zeroflux.org>
 
 pkgname=automake-1.11
+_pkgname=automake
 pkgver=1.11.6
-pkgrel=4
-pkgdesc="A GNU tool for automatically creating Makefiles"
+pkgrel=5
+pkgdesc='A GNU tool for automatically creating Makefiles.'
 arch=('any')
 license=('GPL')
-url="http://www.gnu.org/software/automake"
+url='https://www.gnu.org/software/automake'
 depends=('perl' 'bash')
 provides=('automake=1.11')
-install=automake.install
 source=("ftp://ftp.gnu.org/gnu/automake/automake-$pkgver.tar.gz")
-md5sums=('0286dc30295b62985ca51919202ecfcc')
+sha512sums=('6935efdf73c9fccd2cecf950494b2cf78a9ec1f1c8f1524df9f6ed8f171a68312163fcfc1d5d7862dc610e72b4fcb0bbb5fc2717b051ffc9751ebede0df19c70')
+install="$_pkgname.install"
 
 prepare() {
-  cd "$srcdir/automake-$pkgver"
+  cd "$_pkgname-$pkgver"
 
   ./configure --prefix=/usr
 }
 
 build() {
-  cd "$srcdir/automake-$pkgver"
+  cd "$_pkgname-$pkgver"
 
   make
 }
 
 package() {
-  cd "$srcdir/automake-$pkgver"
+  cd "$_pkgname-$pkgver"
+
   make DESTDIR="$pkgdir" install
 
   rm -rf "$pkgdir/usr/"{bin/{aclocal,automake},share/{doc,aclocal}}
 
-  for files in "$pkgdir"/usr/share/info/*; do
-    rename "$files" "$(echo $files | sed -r 's/(\.info)/-1.11\1/')" "$files"
+  for f in "$pkgdir"/usr/share/info/*; do
+    if [[ $f == *"dir"* ]]; then
+      continue
+    fi
+    mv $f "$(echo $f | sed -r 's/(\.info)/-1.11\1/')"
   done
 
-  rm "$pkgdir/usr/share/man/man1/"{aclocal,automake}.1
+  rm -f "$pkgdir/usr/share/man/man1/"{aclocal,automake}.1
 }
+

@@ -2,29 +2,37 @@
 # See COPYING for license details.
 
 pkgname=deblaze
-pkgver=0.3
-pkgrel=6
+pkgver=1.0608dc3
+pkgrel=2
+epoch=1
 groups=('blackarch' 'blackarch-scanner')
-pkgdesc='A remote method enumeration tool for flex servers.'
-url='http://deblaze-tool.appspot.com/'
+pkgdesc='Performs method enumeration and interrogation against flash remoting end points.'
+url='https://github.com/SpiderLabs/deblaze'
 arch=('any')
 license=('GPL3')
-depends=('python2' 'python2-pillow')
-source=("http://deblaze-tool.appspot.com/download")
-sha512sums=('0bdaf60152be9bad46c3b6e05eda333d6ed78827')
+depends=('python2' 'python2-pillow6')
+makedepends=('git')
+source=("git+https://github.com/SpiderLabs/$pkgname.git")
+sha512sums=('SKIP')
+
+prepare() {
+  cd $pkgname
+
+  sed 's|import Image|from PIL import Image|g' -i $pkgname.py
+}
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  cp -a * "$pkgdir/usr/share/$pkgname/"
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 $pkgname-$pkgver.py
+exec python2 $pkgname.py
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"

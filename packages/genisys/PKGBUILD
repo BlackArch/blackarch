@@ -1,0 +1,55 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=genisys
+pkgver=53.d53bb0c
+pkgrel=2
+pkgdesc='Powerful Telegram Members Scraping and Adding Toolkit.'
+groups=('blackarch' 'blackarch-social' 'blackarch-recon')
+arch=('any')
+url='https://github.com/Cryptonian007/Genisys'
+license=('custom:unknown')
+depends=('python' 'python-telethon' 'python-keyboard' 'python-colorama'
+         'python-pyfiglet')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/Cryptonian007/Genisys.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i 's|==.*||g' requirements.txt
+
+  touch vars.txt
+}
+
+package() {
+  cd $pkgname
+
+  tools='manager scraper tsadder'
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  for i in $tools ; do
+    cat > "$pkgdir/usr/bin/$pkgname-$i" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $i.py "\$@"
+EOF
+    chmod +x "$pkgdir/usr/bin/$pkgname-$i"
+  done
+}
+

@@ -1,0 +1,65 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# AUR Maintainer: Jan de Groot <jgc@archlinux.org>
+
+pkgname=libstdc++5
+pkgver=3.3.6
+pkgrel=7
+pkgdesc='GNU Standard C++ library version 3.'
+arch=('x86_64' 'aarch64')
+url='https://gcc.gnu.org/'
+license=('GPL' 'LGPL')
+depends=('gcc-libs')
+makedepends=('binutils' 'gcc')
+options=('!makeflags')
+source=(ftp://gcc.gnu.org/pub/gcc/releases/gcc-$pkgver/gcc-{core,g++}-$pkgver.tar.bz2
+        'gcc-3.4.3-no_multilib_amd64.patch'
+        'gcc-3.4.6-ucontext.patch'
+        'siginfo.patch')
+sha512sums=('6a68d5b293f4a2cca28b6443de88189b704e5b5fd80b50c3ac3ee5679b6fac2cb915a9744a82cdce0bc4b69609ab1a285cddd9a0021e127f9625f1be18bdffd8'
+            '41d828f32e8acf38e14bc84930d453a01aaa54d26f8cd1f5959b2a27cef4c3b208acc3a9b0b56404f6f65f0771357dc8b5e42e4b4ab0589b45681ec7a48f620f'
+            '27681d69284628717f9cfad3615e5653b9c7ddbde3c3ed78bf015083409f1852e1275cd9a33511de4a23f9daced3d79797bd81d6b8c95647760c420d23d43154'
+            'f9eab82e2297c25d13181857ee5994e4f3ecb59598d0183e09a7be005769a2427c2b1006b1f96391afe7fc461bb598eb5ead71e9eca5d0482ee870855b8cca56'
+            '9e69a80a9e3f154ef3ba97777a1218fabfa402466d3b1ca4c38cf931739860d8dc5d58089fa3cf1300465f46984bd6efaf56651f0264710fec44d3dbbfd8bb71')
+
+prepare() {
+  cd "gcc-$pkgver"
+
+  patch -Np1 -i "$srcdir/gcc-3.4.3-no_multilib_amd64.patch"
+  patch -Np1 -i "$srcdir/gcc-3.4.6-ucontext.patch"
+
+  # fix build issue with recent gcc
+  sed -i "s#O_CREAT#O_CREAT, 0666#" gcc/collect2.c
+
+  # No fixincludes
+  sed -i -e 's@\./fixinc\.sh@-c true@' gcc/Makefile.in
+
+  patch -Np0 -i ../siginfo.patch
+
+  mkdir ../gcc-build
+}
+
+build() {
+  export CFLAGS="-march=${CARCH/_/-} -O2"
+  export CXXFLAGS="-march=${CARCH/_/-} -O2"
+  unset CPPFLAGS
+
+  cd gcc-build
+  CPP=/usr/bin/cpp ../gcc-${pkgver}/configure --prefix=/usr --enable-shared \
+      --enable-languages=c++ --enable-threads=posix --enable-__cxa_atexit \
+      --disable-multilib --libdir=/usr/lib
+  make all-target-libstdc++-v3 BOOT_CFLAGS="${CFLAGS}" STAGE1_CFLAGS="-O"
+}
+
+package() {
+  cd gcc-build
+
+  make DESTDIR="$pkgdir" install-target-libstdc++-v3
+
+  # Remove includefiles and libs provided by gcc
+  rm -rf "$pkgdir"/usr/{include,share/locale}
+  rm -f "$pkgdir"/usr/lib/*.a
+  rm -f "$pkgdir"/usr/lib/libstdc++.so
+}
+

@@ -1,0 +1,88 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Old Maintainer: Kyle Keen <keenerd@gmail.com>
+# Contributor: minder
+
+pkgbase=python-pillow6
+pkgname=('python2-pillow6' 'python-pillow6')
+pkgver=6.2.1
+pkgrel=12
+_appname=Pillow
+_py2basever=2.7
+_py3basever=3.9
+pkgdesc='Python Imaging Library (PIL) fork. Python3 version.'
+arch=('x86_64' 'aarch64')
+url='https://python-pillow.github.io/'
+license=('BSD')
+depends=('lcms2' 'libtiff' 'openjpeg2' 'libimagequant')
+optdepends=('freetype2: for the ImageFont module'
+            'libraqm: for complex text scripts'
+            'libwebp: for webp images'
+            'tk: for the ImageTK module')
+makedepends=('python-setuptools' 'python2-setuptools' 'freetype2' 'libraqm'
+             'libwebp' 'tk')
+checkdepends=('python-pytest' 'python2-pytest')
+source=("https://files.pythonhosted.org/packages/source/P/$_appname/$_appname-$pkgver.tar.gz")
+sha512sums=('757bfdab2ba418195e96e696d2d111de3b38b6bafe4f6f94012f024f59c9bc8542fdab54f643eaf7b2867a9214db806e72eecbdd636bfceb55b47d3164f643ec')
+
+prepare() {
+  cp -r "$_appname-$pkgver" "$srcdir/python2-pillow"
+
+  cd "$srcdir/$_appname-$pkgver"
+  rm -rf src/PIL6
+  mv src/PIL src/PIL6
+  sed -i 's|/PIL/|/PIL6/|' setup.py Makefile
+  sed -i 's|"PIL\.|"PIL6.|' setup.py src/_imagingcms.c src/PIL6/Image.py
+  sed -i 's|"PIL"|"PIL6"|' setup.py
+  sed -i 's|from PIL import|from PIL6 import|' selftest.py
+  sed -i 's|import PIL$|import PIL6|' src/PIL6/*.py docs/conf.py Tests/test_000_sanity.py
+  sed -i 's|PIL\.|PIL6.|' docs/conf.py
+  sed -i 's|from PIL import|from PIL6 import|' src/PIL6/*.py Tests/*.py
+  sed -i 's|from PIL\.|from PIL6.|' src/PIL6/*.py Tests/*.py
+  sed -i 's|PIL\.Image|PIL6.Image|' Tests/*.py
+  sed -i 's|"PIL"|"PIL6"|' Tests/test_main.py
+  sed -i 's|/PIL/|/PIL6/|' Tests/import_all.py
+  sed -i 's|100x100 at"|100x100 a"|' Tests/test_image.py
+  sed -i 's|100x100 "|100x100"|' Tests/test_image.py
+}
+
+build() {
+  cd "$_appname-$pkgver"
+
+  python setup.py build
+
+  cd "$srcdir/python2-pillow"
+
+  python2 setup.py build
+}
+
+package_python2-pillow6() {
+  pkgdesc='Python Imaging Library (PIL) fork. Python2 version.'
+  depends+=('python2')
+  optdepends+=('python2-olefile: OLE2 file support'
+               'python2-pyqt5: for the ImageQt module')
+  provides=('python-imaging' 'python2-imaging' 'python2-pillow')
+  conflicts=('python-imaging' 'python2-imaging' 'python2-pillow')
+
+  cd "python2-pillow"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -dm 755 "$pkgdir/usr/include/python$_py2basever/"
+  install -m 644 -t "$pkgdir/usr/include/python$_py2basever/" src/libImaging/*.h
+}
+
+package_python-pillow6() {
+  depends+=('python')
+  optdepends+=('python-olefile: OLE2 file support'
+               'python-pyqt5: for the ImageQt module')
+
+  cd "$_appname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

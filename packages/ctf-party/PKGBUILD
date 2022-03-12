@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ctf-party
+_gemname=ctf-party
+pkgver=v2.1.0.r7.g84153b4
+pkgrel=1
+groups=('blackarch' 'blackarch-misc')
+pkgdesc='A CLI tool & library to enhance and speed up script/exploit writing for CTF players.'
+arch=('any')
+url='https://noraj.github.io/ctf-party/'
+license=('MIT')
+depends=('ruby' 'ruby-docopt')
+makedepends=('git')
+replaces=('ruby-ctf-party')
+options=(!emptydirs)
+source=("git+https://github.com/noraj/$_gemname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_gemname
+
+  git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $_gemname
+
+  gem build ctf_party.gemspec
+}
+
+package() {
+  cd $_gemname
+
+  _gemdir="$(ruby -e'puts Gem.default_dir')"
+  _release=$(gem build ctf_party.gemspec | grep Version | cut -d' ' -f4)
+
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" "$_gemname-$_release.gem"
+
+  rm -rf "$pkgdir/$_gemdir/cache/$_gemname-$_release.gem"
+  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_release/test"
+
+  install -Dm 644 "$pkgdir/$_gemdir/gems/$_gemname-$_release/LICENSE.txt" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

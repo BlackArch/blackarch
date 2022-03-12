@@ -2,36 +2,35 @@
 # See COPYING for license details.
 
 pkgname=web2ldap
-pkgver=1.5.37
+pkgver=1.6.21
+_pyver=3.10
 pkgrel=1
 pkgdesc='Full-featured LDAP client running as web application.'
 groups=('blackarch' 'blackarch-misc')
 arch=('any')
 url='https://web2ldap.de/'
-license=('APACHE')
-depends=('python')
-makedepends=('python' 'python-pip' 'python-virtualenv')
+license=('Apache')
+depends=('python' 'python-dnspython' 'python-paramiko' 'python-asn1crypto'
+         'python-xlwt' 'python-ldap0')
+makedepends=('python-setuptools' 'python-pip' 'python-wheel')
 source=("https://www.web2ldap.de/download/$pkgname-$pkgver.tar.gz")
-sha512sums=('88195a6735475e0554bbfd2bc2b7d2efe859ed2a46be384fa5f4564d1783c268bc7bac6b550d040fd17fadddfab66c38c0f7aed2648243ef33470ac9aa56ad4b')
+sha512sums=('97cb1dd549b1a96de796a23756430bae67b509c334a1f9d84d829a4327d7e8340dde1d092a6d818892677754548b7fd2bc4f4cb36ff4fb284badae2897b1dac8')
 
-pkgver() {
-  curl 'https://web2ldap.de/web2ldap.html' 2>/dev/null |
-    grep -P 'web2ldap (\d+\.)+' | sed -r 's/.* ([0-9.]+)<.*/\1/gi'
+build() {
+  cd "$pkgname-$pkgver"
+
+  python setup.py build
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd "$pkgname-$pkgver"
 
-  virtualenv2 -p python3 --no-site-packages \
-    "$pkgdir/usr/share/web2ldap/virtualenv"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
-  "$pkgdir/usr/share/$pkgname/virtualenv/bin/pip" install --find-links \
-    'https://www.web2ldap.de/download.html' web2ldap
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  cp -a "$pkgdir/usr/etc" "$pkgdir/etc"
 
-  #grep -rl '/build/web2ldap/pkg/web2ldap' \
-  #  "$pkgdir/usr/share/web2ldap/virtualenv/bin" |
-  #  xargs sed -i 's|/build/web2ldap/pkg/web2ldap||g'
-
-  ln -s "/usr/share/$pkgname/virtualenv/bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  chmod 644 \
+    "$pkgdir/usr/lib/python$_pyver/site-packages/web2ldap-$pkgver-py$_pyver.egg-info/"*
 }
 

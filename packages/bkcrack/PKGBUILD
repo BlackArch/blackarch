@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=bkcrack
+pkgver=v1.3.4.r0.g2c55a41
+pkgrel=1
+pkgdesc='Crack legacy zip encryption with Biham and Kocher known plaintext attack.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-cracker')
+url='https://github.com/kimci86/bkcrack'
+license=('ZLIB')
+depends=('gcc-libs')
+makedepends=('git' 'cmake')
+source=("git+https://github.com/kimci86/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release .
+
+  make
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname/"
+
+  install -Dm 755 "src/$pkgname" "$pkgdir/usr/bin/$pkgname"
+
+  install -Dm 644 license.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md doc/*.md
+
+  cp -a tools example "$pkgdir/usr/share/$pkgname/"
+}
+

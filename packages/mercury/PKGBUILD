@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=mercury
+pkgver=1448.9b372e9
+pkgrel=2
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-networking')
+pkgdesc='Tool to fingerprint network traffic, capturing and analyzing packet metadata that leverages the modern Linux kernel high-performance networking capabilities (AF_PACKET and TPACKETv3).'
+url='https://github.com/cisco/mercury'
+license=('custom:unknown')
+arch=('x86_64' 'aarch64')
+depends=('glibc' 'python' 'python-jsonschema')
+makedepends=('git')
+source=("git+https://github.com/cisco/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  ./configure --prefix=/usr --sbindir=/usr/bin
+
+  make
+}
+
+package() {
+  cd $pkgname
+
+  make prefix="$pkgdir/usr" install
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md VERSION \
+    "doc/$pkgname.pdf"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=spraykatz
+pkgver=62.1fb3aa7
+pkgrel=3
+pkgdesc='Credentials gathering tool automating remote procdump and parse of lsass process.'
+groups=('blackarch' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/aas-n/spraykatz'
+license=('MIT')
+depends=('python' 'python-pycryptodomex' 'python-pyasn1' 'python-pyopenssl'
+         'python-pypykatz' 'python-lxml' 'python-wget' 'impacket')
+makedepends=('git')
+source=("git+https://github.com/aas-n/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  git submodule update --init --recursive
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE preview.gif
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

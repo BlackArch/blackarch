@@ -1,47 +1,50 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-exiv2
-pkgname=('python2-exiv2' 'python-exiv2')
-_pkgname=pyexiv2
-pkgver=0.3.2
-pkgrel=23
-pkgdesc='A Python binding to exiv2, the C++ library for manipulation of EXIF, IPTC and XMP image metadata.'
-arch=('x86_64' 'aarch64')
-url='http://tilloy.net/dev/pyexiv2'
-license=('GPL')
-depends=('python2' 'boost-libs' 'exiv2')
-makedepends=('scons' 'boost')
-source=("http://launchpad.net/$_pkgname/0.3.x/$pkgver/+download/$_pkgname-$pkgver.tar.bz2")
-sha512sums=('d27bd6cf93ab6143b4d09e04d6d4a728f3cbcd6f4b80b2dd0bea19ae1a7cb7bb8be45c6f54e24488e8e933941bbddccc0ba79331d133a54b6ca632c73f84cce7')
+# Old Maintainer : Chris Elston chris.elston@blueyonder.co.uk
+# Old Contributor : Artem Klevtsov a.a.klevtsov@gmail.com
 
-prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
-}
+pkgname=python-exiv2
+_pkgname=python3-exiv2
+pkgver=0.9.3
+_pyver=3.10
+pkgrel=1
+pkgdesc='A Python3 binding to exiv2, the C++ library for manipulation of EXIF, IPTC and XMP image metadata.'
+url='https://launchpad.net/py3exiv2'
+arch=('x86_64' 'aarch64')
+depends=('python' 'boost-libs' 'exiv2')
+makedepends=('boost')
+license=('GPL3')
+source=("http://www.py3exiv2.tuxfamily.org/releases/$_pkgname-$pkgver.tar.gz")
+sha512sums=('5e36f3e78d9586ada3ba5cca1f3deb27c81a643c2edda139cfbf1a91d90ad9e39aeabf89b0fd355499af71ebe19dd179dbe62913c1f993eba40315fb05ea11d1')
 
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  scons
-
-  cd "$srcdir/$_pkgname-$pkgver"
-
-  scons
-}
-
-package_python2-exiv2() {
-  depends=('python2' 'boost-libs' 'exiv2')
-
-  cd "$_pkgname-$pkgver-2"
-
-  scons DESTDIR="$pkgdir" install
-}
-
-package_python-exiv2() {
-  depends=('python' 'boost-libs' 'exiv2')
-
   cd "$_pkgname-$pkgver"
 
-  scons DESTDIR="$pkgdir" install
+  mkdir -p build
+
+  g++ -O2 -o build/exiv2wrapper.os -c -fPIC \
+    -I"/usr/include/python$_pyver" src/exiv2wrapper.cpp
+  g++ -O2 -o build/exiv2wrapper_python.os -c -fPIC \
+    -I"/usr/include/python$_pyver" src/exiv2wrapper_python.cpp
+  g++ -O2 -o build/libexiv2python.so -shared \
+    build/exiv2wrapper.os build/exiv2wrapper_python.os -lboost_python3 -lexiv2
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  site_packages="$pkgdir/$(python -c 'from distutils.sysconfig import get_python_lib; print(get_python_lib())')"
+
+  mkdir -p "$site_packages/pyexiv2"
+
+  install -Dm 755 build/libexiv2python.so "$site_packages/libexiv2python.so"
+  install -Dm 644 src/pyexiv2/__init__.py "$site_packages/pyexiv2/__init__.py"
+  install -Dm 644 src/pyexiv2/exif.py "$site_packages/pyexiv2/exif.py"
+  install -Dm 644 src/pyexiv2/iptc.py "$site_packages/pyexiv2/iptc.py"
+  install -Dm 644 src/pyexiv2/metadata.py "$site_packages/pyexiv2/metadata.py"
+  install -Dm 644 src/pyexiv2/preview.py "$site_packages/pyexiv2/preview.py"
+  install -Dm 644 src/pyexiv2/utils.py "$site_packages/pyexiv2/utils.py"
+  install -Dm 644 src/pyexiv2/xmp.py "$site_packages/pyexiv2/xmp.py"
 }
 

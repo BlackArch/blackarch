@@ -3,9 +3,9 @@
 
 pkgname=beeswarm
 pkgver=1183.db51ea0
-pkgrel=4
+pkgrel=6
 groups=('blackarch' 'blackarch-honeypot')
-pkgdesc='Honeypot deployment made easy http://www.beeswarm-ids.org/'
+pkgdesc='Honeypot deployment made easy.'
 arch=('any')
 url='https://github.com/honeynet/beeswarm/'
 license=('GPL3')
@@ -16,7 +16,7 @@ depends=('python2' 'python2-pyzmq' 'python2-pycryptodome' 'python2-ecdsa'
          'python2-flask-login' 'python2-sqlalchemy' 'python2-pyopenssl'
          'python2-lxml' 'python2-mock' 'python2-enum34' 'python2-netifaces'
          'python2-fs' 'python2-flask-wtf' 'python2-typing' 'python2-future'
-         'python2-backports-os')
+         'python2-backports-os' 'python2-tornado')
 makedepends=('git')
 source=("git+https://github.com/honeynet/$pkgname.git")
 sha512sums=('SKIP')
@@ -41,5 +41,14 @@ package() {
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst changelog.txt \
     requirements.txt
   install -Dm 644 COPYING.txt "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+
+  sed 's|except ResourceNotFoundError:|except Exception:|g' -i \
+     "$pkgdir/usr/lib/python2.7/site-packages/beeswarm/drones/honeypot/capabilities/shared/shell.py"
+  sed 's|from fs.errors import ResourceNotFoundError||g' -i \
+     "$pkgdir/usr/lib/python2.7/site-packages/beeswarm/drones/honeypot/capabilities/shared/shell.py"
+  sed 's|from fs.utils import isdir||g' -i \
+     "$pkgdir/usr/lib/python2.7/site-packages/beeswarm/drones/honeypot/capabilities/shared/shell.py"
+  sed 's|if isdir|if os.path.isdir|g' -i \
+     "$pkgdir/usr/lib/python2.7/site-packages/beeswarm/drones/honeypot/capabilities/shared/shell.py"
 }
 

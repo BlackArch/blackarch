@@ -2,28 +2,29 @@
 # See COPYING for license details.
 
 pkgname=wifi-pumpkin
-pkgver=v0.8.8Release.r0.gfba63f2
+pkgver=v1.0.9R2.r0.g47d79c3
 pkgrel=1
-epoch=1
+epoch=2
 groups=('blackarch' 'blackarch-wireless' 'blackarch-dos' 'blackarch-spoof'
         'blackarch-exploitation' 'blackarch-sniffer' 'blackarch-social')
 pkgdesc='Framework for Rogue Wi-Fi Access Point Attack.'
 arch=('any')
-url='https://github.com/P0cL4bs/WiFi-Pumpkin'
+url='https://github.com/P0cL4bs/wifipumpkin3'
 license=('MIT')
-depends=('python2' 'python2-twisted' 'python2-scapy' 'python2-beautifulsoup4'
-         'python2-python-nmap' 'python2-netaddr' 'python2-dnspython'
-         'python2-config' 'python2-isc_dhcp_leases' 'python2-pyqt4'
-         'python2-pcapy' 'python2-lxml' 'ipython2' 'hostapd' 'rfkill' 'php-cgi'
-         'dhcp' 'python2-pyopenssl' 'python2-pygtail' 'python2-configparser'
-         'python2-netifaces' 'sslstrip' 'driftnet' 'python2-hyperframe'
-         'python2-pefile' 'python2-h2' 'capstone' 'python2-capstone'
-         'python2-configobj' 'python2-netfilterqueue' 'python2-pip'
-         'python2-magic' 'python2-libarchive' 'python2-scapy-http'
-         'networkmanager')
-makedepends=('git')
-source=("$pkgname::git+https://github.com/P0cL4bs/WiFi-Pumpkin.git")
-sha512sums=('SKIP')
+depends=('python' 'python-netifaces' 'python-netaddr' 'python-dhcplib'
+         'python-tabulate' 'python-beautifultable' 'python-urwid'
+         'python-termcolor' 'python-twisted' 'python-pyqt5' 'python-pyqt5-sip'
+         'python-pyopenssl' 'python-asn1crypto' 'python-beautifulsoup4'
+         'python-bs4' 'python-dnslib' 'python-loguru' 'python-isc_dhcp_leases'
+         'python-dnspython' 'python-flask' 'python-coverage' 'python-scapy'
+         'python-scapy-http' 'python-lxml' 'dhcp' 'networkmanager' 'responder'
+         'python-wcwidth' 'python-werkzeug' 'python-flask-restful'
+         'python-pyjwt')
+makedepends=('git' 'python-setuptools' 'python-pip' 'python-wheel')
+source=("$pkgname::git+https://github.com/P0cL4bs/wifipumpkin3.git"
+        'requirements.txt.patch')
+sha512sums=('SKIP'
+            '248ddf964518695ecd0ed4fd34484e80c8859dc66bb4173f0215bcc878e04be0cdc34a68bf65066c733188d6c24739f70cfbbed08adb3e721b03fdca5635893c')
 
 pkgver() {
   cd $pkgname
@@ -32,32 +33,24 @@ pkgver() {
 }
 
 prepare() {
+  patch -p1 < requirements.txt.patch
+}
+
+build() {
   cd $pkgname
 
-  find . -type f -exec \
-    sed -i 's|/usr/share/WiFi-Pumpkin/|/usr/share/wifi-pumpkin/|g' {} \;
+  python setup.py build
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG \
-    CONTRIBUTING.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  mv "$pkgdir/usr/bin/wifipumpkin3" "$pkgdir/usr/bin/$pkgname"
 
-  rm -rf README.md CONTRIBUTING.md LICENSE
-
-  cp -a --no-preserve=owner * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  rm "$pkgdir/usr/share/doc/$pkgname/LICENSE.md"
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

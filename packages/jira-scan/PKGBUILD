@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=jira-scan
+_gemname=jira_scan
+pkgver=5.22a050b
+pkgrel=1
+pkgdesc='A simple remote scanner for Atlassian Jira'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+arch=('any')
+url='https://github.com/bcoles/jira_scan'
+license=('MIT')
+depends=('ruby' 'ruby-bundler' 'ruby-pkg-config' 'ruby-terminal-table'
+         'libxslt')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/bcoles/jira_scan.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  bundle config build.nokogiri --use-system-libraries
+  bundle config set --local path 'vendor/bundle'
+}
+
+build() {
+  cd $pkgname
+
+  gem build "$_gemname.gemspec"
+}
+
+package() {
+  cd $pkgname
+
+  _gemdir="$(ruby -e 'puts Gem.default_dir')"
+
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" $_gemname
+}
+

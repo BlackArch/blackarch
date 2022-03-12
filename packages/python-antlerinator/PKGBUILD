@@ -1,50 +1,35 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-antlerinator
-pkgname=('python2-antlerinator' 'python-antlerinator')
+pkgname=python-antlerinator
 _pkgname=antlerinator
-pkgver=4.8
-pkgrel=1
+pkgver=4.9.2
+pkgrel=3
 pkgdesc='Python utility package to help keeping components of ANTLR v4 in sync.'
 arch=('any')
 url='https://pypi.org/project/antlerinator/#files'
 license=('BSD')
-makedepends=('python2-setuptools' 'python-setuptools')
-source=("https://files.pythonhosted.org/packages/ce/90/fd0f94e158f938d51bb619722991d546ea6c427d8ebbb626d7f42dce6b3f/$_pkgname-$pkgver.tar.gz")
-sha512sums=('e4b0eeaa967644e43ac58cc24b1f485ef355d5636234f097fc4f840eb201afa6947c82f566ba4f72920bcaa66a0b2872a6208f0ecbfeef8cef8013621c6c9e1c')
+depends=('python' 'python-typing' 'python-antlr4')
+makedepends=('python-setuptools')
+source=("https://files.pythonhosted.org/packages/94/a7/ee32497b76d1ab8a728fd90afd1bb6bbd907dd40c170987d67c43171f413/$_pkgname-$pkgver.tar.gz")
+sha512sums=('b82bfda21f36cc730bd195f27a642986367dd7f800a6fdcac23d3aa3a7a4093f0f9eb47a963ece98e1a8f8696379e3a39257dd75d846d72453f401e10a52542f')
 
 prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
+  cd "$_pkgname-$pkgver"
+
+  find . -type f -exec \
+    sed -i 's|antlr4-python3-runtime==4.9.2|antlr4-python3-runtime|g' {} \;
 }
 
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
+  cd "$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package_python2-antlerinator() {
-  depends=('python2' 'python2-typing')
-
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
-
-  mv "$pkgdir/usr/bin/$_pkgname-install" "$pkgdir/usr/bin/$_pkgname-install2"
-}
-
-package_python-antlerinator() {
-  depends=('python' 'python-typing')
-
+package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 

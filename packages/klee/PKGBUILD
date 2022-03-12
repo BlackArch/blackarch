@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD from AUR.
+# Old Maintainer: Niklas Krafczyk <krafczyk.n at gmail dot com>
+
+pkgname=klee
+pkgver=2.2
+pkgrel=3
+pkgdesc='A symbolic virtual machine built on top of the LLVM compiler infrastructure.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/klee/klee'
+license=('custom:UIUC')
+groups=('blackarch' 'blackarch-binary' 'blackarch-reversing'
+        'blackarch-debugger')
+depends=('gperftools' 'z3' 'libcap' 'python' 'llvm-libs' 'klee-uclibc' 'sqlite')
+makedepends=('llvm' 'clang' 'cmake' 'git')
+source=("git+https://github.com/$pkgname/$pkgname.git#commit=de471397338640df8ff792dab6d04c1a9a798d8c"
+        "git+https://github.com/google/googletest.git") #Building from the repo so it's built with the same compiler as klee is
+sha512sums=('SKIP'
+            'SKIP')
+
+prepare() {
+  mkdir -p build
+  cd build
+
+  cmake -DENABLE_TCMALLOC=ON -DENABLE_UNIT_TESTS=ON -DENABLE_SYSTEM_TESTS=ON \
+    -DENABLE_POSIX_RUNTIME=ON -DENABLE_KLEE_UCLIBC=ON \
+    -DKLEE_UCLIBC_PATH="/usr/share/klee-uclibc/usr" -DENABLE_SOLVER_Z3=ON \
+    -DENABLE_SOLVER_STP=OFF -DENABLE_SOLVER_METASMT=OFF \
+    -DCMAKE_INSTALL_PREFIX="/usr" -DCMAKE_INSTALL_LIBDIR="/usr/lib" \
+    -DCMAKE_BUILD_TYPE=Release -DGTEST_SRC_DIR="$srcdir/googletest/googletest" \
+    -DENABLE_UNIT_TESTS=ON -DENABLE_SYSTEM_TESTS=ON "$srcdir/$pkgname"
+}
+
+build() {
+  cd "$srcdir/build"
+
+  make -j$(nproc)
+}
+
+package() {
+	cd "$srcdir/build"
+
+	make DESTDIR="$pkgdir" install
+
+  install -Dm 644 "$srcdir/$pkgname/LICENSE.TXT" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+_pkgname=CMSScan
+pkgname=cmsscan
+pkgver=43.f060b4b
+pkgrel=2
+pkgdesc='CMS scanner to identify and find vulnerabilities for Wordpress, Drupal, Joomla, vBulletin.'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-recon'
+        'blackarch-fingerprint')
+url='https://github.com/ajinabraham/CMSScan'
+license=('GPL3')
+depends=('python' 'python-flask' 'python-requests' 'gunicorn'
+         'python-fake-useragent' 'droopescan' 'vbscan' 'joomscan' 'wpscan'
+         'python-flask-basicauth')
+makedepends=('python-setuptools' 'git')
+source=("git+https://github.com/ajinabraham/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $_pkgname
+
+  sed -i 's/USE_PREINSTALLED_TOOLS = False/USE_PREINSTALLED_TOOLS = True/g' \
+    plugins/scanners.py
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm -rf *.md LICENSE *.sh *.txt plugins/joomscan plugins/vbscan LICENSES
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec gunicorn --bind 127.0.0.1:7070 app:app --workers 3 --timeout 10000
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+

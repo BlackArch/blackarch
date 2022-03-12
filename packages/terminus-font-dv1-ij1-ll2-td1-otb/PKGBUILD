@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Thanks to the maintainers & contributors for allowing us to copy/modify their files.
+# Maintainer: Dan Elkouby <streetwalkermc@gmail.com>
+# Contributor: Christian Hesse <mail@eworm.de>
+# Contributor: lynix <lynix47@gmail.com>
+# Derived from 'dina-font-otb' by Ckat <ckat@teknik.io>
+
+pkgname=terminus-font-dv1-ij1-ll2-td1-otb
+_pkgname=terminus-font
+pkgver=4.48
+pkgrel=1
+pkgdesc='Monospace bitmap font (OTB version) with dv1 (cyrillic de & ve), ij1 (cyrillic i patch), ll2 (pass the il1I test) and td1 (centered ascii tilde) patches.'
+url='http://terminus-font.sourceforge.net/'
+arch=('any')
+license=('GPL2' 'custom:OFL')
+makedepends=('fontforge')
+depends=('fontconfig' 'xorg-font-utils')
+provides=('terminus-font-otb')
+conflicts=('terminus-font-otb' 'terminus-font-ll2-td1-otb')
+source=("https://downloads.sourceforge.net/project/$_pkgname/$_pkgname-$pkgver/$_pkgname-$pkgver.tar.gz"
+        'otbconvert.pe')
+sha256sums=('34799c8dd5cec7db8016b4a615820dfb43b395575afbb24fc17ee19c869c94af'
+            '431999be6be2630a9e8b4bcc5631b6bc727b795978b75cb4c874d9ce143e9703')
+
+prepare() {
+    cd "$_pkgname-$pkgver"
+    patch < alt/dv1.diff
+    patch < alt/ij1.diff
+    patch < alt/ll2.diff
+    patch < alt/td1.diff
+}
+
+build() {
+    cd "$_pkgname-$pkgver"
+    ../otbconvert.pe *.bdf
+}
+
+package() {
+    cd "$_pkgname-$pkgver"
+    for i in *.otb; do
+        install -D -m0644 $i "$pkgdir/usr/share/fonts/misc/$i"
+    done
+    install -D -m0644 'OFL.TXT' "$pkgdir/usr/share/licenses/${pkgname}/LICENSE"
+}

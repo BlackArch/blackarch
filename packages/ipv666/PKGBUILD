@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ipv666
+pkgver=182.ad45ae8
+pkgrel=2
+pkgdesc='Golang IPv6 address enumeration.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-networking')
+arch=('any')
+url='https://github.com/lavalamp-/ipv666'
+license=('BSD')
+makedepends=('git' 'go')
+source=("git+https://github.com/lavalamp-/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname-bin ./$pkgname
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname-bin "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

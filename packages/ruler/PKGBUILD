@@ -2,18 +2,16 @@
 # See COPYING for license details.
 
 pkgname=ruler
-pkgver=274.0201fe8
-pkgrel=1
+pkgver=301.1e5ee2d
+pkgrel=2
 groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation')
 pkgdesc='A tool to abuse Exchange services.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/sensepost/ruler'
-license=('CC0')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+license=('custom:unknown')
+makedepends=('git' 'go')
 source=("git+https://github.com/sensepost/$pkgname.git")
 sha512sums=('SKIP')
-_url="github.com/sensepost/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -21,29 +19,28 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin/"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  export GOPATH="$pkgdir/usr/share/$pkgname"
-
-  go get $_url
-
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm README.md LICENSE
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-export GOPATH=/usr/share/$pkgname
-exec go run /usr/share/$pkgname/$pkgname.go "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  cp -a templates utils "$pkgdir/usr/share/$pkgname/"
 }
 

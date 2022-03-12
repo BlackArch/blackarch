@@ -2,28 +2,36 @@
 # See COPYING for license details.
 
 pkgname=fierce
-pkgver=0.9.9
-pkgrel=6
-groups=('blackarch' 'blackarch-scanner')
-pkgdesc='A DNS scanner.'
+pkgver=134.99eca52
+pkgrel=2
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
+pkgdesc='A DNS reconnaissance tool for locating non-contiguous IP space.'
 arch=('any')
-url='http://ha.ckers.org/fierce/'
-license=('custom:unknown')
-depends=(perl perl-net-dns)
-source=('fierce.pl.txt'
-        'hosts.txt')
-#source=("http://ha.ckers.org/fierce/fierce.pl"
-#        "http://ha.ckers.org/fierce/hosts.txt")
-sha512sums=('6698c1e0be36a345263fa746a28ae3b297bd2507dc40a3c9b8c90a42196456023f27022bb2bdf6dcef9039daeaa6f31e938c5d10d9d1d88ade2921fc3b46aecc'
-            '45df5fc05a408801ff771b45a7fac79f701921e9f51c01aa80b0044804879003b22c75d7f97d9f1f55fe608987da950160572bc99239c2b847e35cc1da4cce9d')
+url='https://github.com/mschwager/fierce'
+license=('GPL3')
+depends=('python' 'python-dnspython')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/mschwager/$pkgname.git")
+sha512sums=('SKIP')
 
-prepare() {
-  # Conform to our install location.
-  sed -i 's|hosts\.txt|/etc/fierce/hosts.txt|' "$srcdir/fierce.pl.txt"
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
 }
 
 package() {
-  install -Dm 755 "$pkgname.pl.txt" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 hosts.txt "$pkgdir/etc/fierce/hosts.txt"
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=quickscope
+_pkgname=qu1cksc0pe
+pkgver=318.254ee42
+pkgrel=1
+pkgdesc='Statically analyze windows, linux, osx, executables and also APK files.'
+groups=('blackarch' 'blackarch-binary' 'blackarch-reversing')
+arch=('any')
+url='https://github.com/CYB3RMX/Qu1cksc0pe'
+license=('Apache')
+depends=('python-puremagic' 'androguard' 'apkid' 'python-prettytable'
+         'python-tqdm' 'python-colorama' 'python-oletools' 'python-spacy'
+         'python-pefile' 'quark-engine' 'pyaxmlparser' 'python-yara'
+         'python-capstone')
+makedepends=('git')
+source=("git+https://github.com/CYB3RMX/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+
+  rm LICENSE *.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/
+exec python $_pkgname.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

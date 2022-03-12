@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gg-images
+pkgver=35.b2dd863
+pkgrel=1
+pkgdesc='The application was created to allow anyone to easily download profile pictures from GG.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-social' 'blackarch-misc')
+url='https://codeberg.org/nanoory/gg_images'
+license=('GPL3')
+makedepends=('git' 'go' 'libxrandr' 'libxinerama' 'libxcursor' 'xorg-xinput'
+             'libglvnd')
+source=("$pkgname::git+https://codeberg.org/nanoory/gg_images.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname *.go
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "$pkgname" "$pkgdir/usr/bin/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+}
+

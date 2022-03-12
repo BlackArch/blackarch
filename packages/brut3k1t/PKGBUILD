@@ -2,20 +2,30 @@
 # See COPYING for license details.
 
 pkgname=brut3k1t
-pkgver=86.034906c
-pkgrel=1
+pkgver=104.793821f
+pkgrel=2
 groups=('blackarch' 'blackarch-cracker')
 arch=('any')
 pkgdesc='Brute-force attack that supports multiple protocols and services.'
 url='https://github.com/ex0dus-0x/brut3k1t'
 license=('MIT')
-depends=('python2' 'python2-pip' 'python2-selenium' 'python2-paramiko'
-         'python2-skpy' 'python2-mechanize' 'geckodriver' 'xmpppy'
-         'python2-cffi' 'python2-asn1crypto' 'python2-enum34' 'python2-six'
-         'python2-requests' 'python2-pycparser' 'python2-pyasn1')
+depends=('python' 'python-astroid' 'python-bcrypt' 'python-beautifulsoup4'
+         'python-cffi' 'python-cryptography' 'python-html5lib' 'python-isort'
+         'python-lazy-object-proxy' 'python-mccabe' 'python-mechanize'
+         'python-paramiko' 'python-pycparser' 'python-pylint' 'python-pynacl'
+         'python-selenium' 'python-six' 'python-soupsieve' 'python-toml'
+         'python-urllib3' 'python-webencodings' 'python-wrapt' 'python-appdirs'
+         'python-attrs' 'python-black' 'python-certifi' 'python-chardet'
+         'python-click' 'python-idna' 'python-mock' 'python-more-itertools'
+         'python-mypy' 'python-mypy_extensions' 'python-packaging'
+         'python-pathspec' 'python-pluggy' 'python-pyparsing' 'python-regex'
+         'python-requests' 'python-typed-ast' 'python-typing-extensions'
+         'python-wcwidth' 'python-wrapt')
 makedepends=('git')
-source=("git+https://github.com/ex0dus-0x/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/ex0dus-0x/$pkgname.git"
+        'requirements.txt.patch')
+sha512sums=('SKIP'
+            'fed6c150fdd68e925027919adb16f2c2179ee204b94039d03220853b8967bf368492f33009ced9515f9226c16b8d4eed5444e074385efba8c8abcad716197edf')
 
 pkgver() {
   cd $pkgname
@@ -23,25 +33,24 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd #patch -p1 < requirements.txt.patch
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm *.md
-
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 $pkgname "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  mv "$pkgdir/usr/bin/brute" "$pkgdir/usr/bin/$pkgname"
 }
 

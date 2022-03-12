@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=tempomail
+pkgver=25.3ca0fcf
+pkgrel=2
+groups=('blackarch' 'blackarch-misc')
+pkgdesc='Tool to create a temporary email address in 1 Second and receive emails. '
+arch=('x86_64' 'aarch64')
+url='https://github.com/kavishgr/tempomail'
+license=('MIT')
+makedepends=('git' 'go')
+source=("git+https://github.com/kavishgr/$pkgname.git"
+        'main.go.patch')
+sha512sums=('SKIP'
+            'b3f6c877b719bd20b655cc0fb6e8ad1f8c11edefe9f9f31ec78c988f9e5fe175701289d4040373d073a3d9a60db20046eb721655d31a0247b7658e5d597393ee')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  patch -Np0 -i "$srcdir/main.go.patch"
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+}
+

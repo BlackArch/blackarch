@@ -2,33 +2,38 @@
 # See COPYING for license details.
 
 pkgname=x3270
-pkgver=3.6ga8
+_pkgname=suite3270
+pkgver=4.0ga14
 pkgrel=1
-epoch=1
+epoch=2
 pkgdesc='An IBM 3270 terminal emulator for the X Window System.'
 arch=('x86_64' 'aarch64')
 url='http://x3270.bgp.nu/'
 license=('BSD' 'MIT')
 depends=('openssl' 'libxaw')
 makedepends=('imake' 'openssl' 'libx11' 'libxaw' 'libxt' 'xbitmaps'
-             'xorg-mkfontdir' 'xorg-bdftopcf')
+             'xorg-mkfontdir' 'xorg-bdftopcf' 'tcl')
 backup=('etc/x3270/ibm_hosts')
-source=("http://x3270.bgp.nu/download/03.06/suite3270-$pkgver-src.tgz")
-#source=("http://x3270.bgp.nu/download/03.06/suite3270-$pkgver-src.tgz")
-sha512sums=('88a00bec19ae7be92e5bc0edd6ae1e27bef7fbbf8c3f419efda3ba2b3a0cb5e72693916cd44d50166d5745ce0f9d8497641481cedbb0bb3149567b6f51b1a987')
+source=("http://x3270.bgp.nu/download/04.00/suite3270-$pkgver-src.tgz")
+sha512sums=('0c76946420bbc2a483ab321658350a5b3e1c03e66b65e99f1a8cb4d350e07eedd44f9f24671244f3c374f512e5d211304785b8e44ae125265ce8f71f0a9dcc65')
 install="$pkgname.install"
 
 build() {
-  cd "suite3270-${pkgver:0:3}"
+  cd "$_pkgname-${pkgver:0:3}"
 
-  ./configure --prefix=/usr --bindir=/usr/bin --sbindir=/usr/bin \
-    --sysconfdir=/etc --with-fontdir=/usr/share/fonts/3270
+  if [[ "$CARCH" == "aarch64" ]]; then
+    ./configure --prefix=/usr --bindir=/usr/bin --sbindir=/usr/bin \
+      --sysconfdir=/etc --with-fontdir=/usr/share/fonts/3270 --build=arm
+  else
+    ./configure --prefix=/usr --bindir=/usr/bin --sbindir=/usr/bin \
+      --sysconfdir=/etc --with-fontdir=/usr/share/fonts/3270
+  fi
 
   make
 }
 
 package() {
-  cd "suite3270-${pkgver:0:3}"
+  cd "$_pkgname-${pkgver:0:3}"
 
   install -dm 755 "$pkgdir/usr/share/fonts/3270/fonts.dir"
 

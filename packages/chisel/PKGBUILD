@@ -2,17 +2,16 @@
 # See COPYING for license details.
 
 pkgname=chisel
-pkgver=94.f3a8df2
-pkgrel=2
+pkgver=201.9e97ddf
+pkgrel=1
 pkgdesc='A fast TCP tunnel over HTTP.'
 groups=('blackarch' 'blackarch-tunnel' 'blackarch-proxy')
 arch=('x86_64' 'aarch64')
 url='https://github.com/jpillora/chisel'
 license=('MIT')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/jpillora/$pkgname.git")
 sha512sums=('SKIP')
-_url='github.com/jpillora/chisel'
 
 pkgver() {
   cd $pkgname
@@ -20,18 +19,17 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  export GOPATH="$srcdir"
-
-  go get -d -u $_url
-}
-
 build() {
   cd $pkgname
 
-  export GOPATH="$srcdir"
-
-  go build
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w -X github.com/jpillora/chisel/share.BuildVersion=$(git describe --abbrev=0 --tags)" \
+    -o $pkgname .
 }
 
 package() {

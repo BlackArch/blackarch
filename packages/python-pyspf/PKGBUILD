@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=pyspf
+pkgname=('python-pyspf' 'python2-pyspf')
+_pkgname=pyspf
+pkgver=2.0.14
+pkgrel=2
+pkgdesc='SPF (Sender Policy Framework) implemented in Python.'
+arch=('any')
+url='https://pypi.org/project/pyspf/'
+license=('PSF')
+makedepends=('python-setuptools' 'python2-setuptools')
+source=("https://files.pythonhosted.org/packages/source/p/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('ca801a899a80c18cd2c6bb8c125817c29898189805040cce8d29ace7a5aa34b43b9d10545150a1f39abd7bc49cd8da4fe753a04ac9b911e7bb9d77473753eeee')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-pyspf() {
+  depends=('python2' 'python2-dnspython')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  for s in "$pkgdir/usr/bin/"*; do
+    arrS=(${s//./ })
+    mv $s "${arrS[0]}-2"
+  done
+}
+
+package_python-pyspf() {
+  depends=('python' 'python-dnspython')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  for s in "$pkgdir/usr/bin/"*; do
+    arrS=(${s//./ })
+    mv $s "${arrS[0]}"
+  done
+}
+

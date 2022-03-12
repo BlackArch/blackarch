@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-qt4reactor
+pkgname=('python2-qt4reactor' 'python-qt4reactor')
+_pkgname=qt4reactor
+pkgver=1.6
+pkgrel=4
+pkgdesc='Twisted Qt Integration'
+arch=('any')
+url='https://pypi.org/project/qt4reactor/#files'
+license=('MIT')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/c7/7b/3433ca2a74fa31d7dd5f455ee6ff8ee772bef433c950e1e24c7f057c03a4/$_pkgname-$pkgver.tar.gz")
+sha512sums=('1de8a7243452aac9a76eae6668f6defd1fe34866946fcb022aaa077f9b3e2477f73d4ab0d558edcc7c8c2f9a880f6e937520a0107d5e7148b6d829b2d3084e22')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-qt4reactor() {
+  depends=('python2' 'python2-twistedx')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i "${i}2"
+  done
+}
+
+package_python-qt4reactor() {
+  depends=('python' 'python-twisted')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+}
+

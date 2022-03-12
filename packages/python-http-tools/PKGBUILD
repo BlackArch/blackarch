@@ -1,46 +1,32 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-http-tools
-pkgname=('python2-http-tools' 'python-http-tools')
+pkgname=python-http-tools
 _pkgname=http-tools
-pkgver=1.1.0
-pkgrel=1
+pkgver=2.1.0
+pkgrel=2
 pkgdesc='httptools helps you to capture, repeat and live intercept HTTP requests. It is built on top of [mitmproxy].'
 arch=('any')
 url='https://pypi.org/project/http-tools/#files'
 license=('GPL3')
-makedepends=('python2-setuptools' 'python-setuptools')
-source=("https://files.pythonhosted.org/packages/64/c6/09aec5b1435de0a15dd213d55a00167594d8e8dd0c257cefce66ea09332f/$_pkgname-$pkgver.tar.gz")
-sha512sums=('d032f627bb14154bc0a6a1a6cbc8bca9e4c1d80972e74bf7183f2f6e554149e6606113034c2e8676f7b354f6a6b1209bde2ebf54d8e4e3d0cec6821b88d15469')
+depends=('python' 'mitmproxy')
+makedepends=('python-setuptools')
+source=("https://files.pythonhosted.org/packages/8a/e6/5221300a2996adf4de3bc853eecd9eda10b98380a746c3d0631f74f53fd9/$_pkgname-$pkgver.tar.gz")
+sha512sums=('ddfc2456526c5f710a025e05bca471f88adf7aaf0af43445c896bfa0e8b40a2c67f0f10ed100785164b4212bcfecea502c06d60ef841a82a108bfbc7b0fcc37e')
 
 prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
+  cd "$_pkgname-$pkgver"
+
+  sed -i 's/>=6.0.0<=6.0.2//' setup.py
 }
 
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
+  cd "$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package_python2-http-tools() {
-  depends=('python2')
-
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
-
-  mv "$pkgdir/usr/bin/httptools" "$pkgdir/usr/bin/httptools2"
-}
-
-package_python-http-tools() {
-  depends=('python')
-
+package() {
   cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build

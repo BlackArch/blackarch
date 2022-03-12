@@ -2,33 +2,31 @@
 # See COPYING for license details.
 
 pkgname=bluepot
-pkgver=0.1
-pkgrel=4
+pkgver=0.2
+pkgrel=1
 groups=('blackarch' 'blackarch-bluetooth' 'blackarch-honeypot')
-pkgdesc="A Bluetooth Honeypot written in Java, it runs on Linux"
+pkgdesc='A Bluetooth Honeypot written in Java, it runs on Linux.'
 arch=('any')
-url="https://code.google.com/p/$pkgname/"
+url='https://github.com/andrewmichaelsmith/bluepot'
 license=('GPL3')
 depends=('java-environment' 'gksu')
-source=("https://github.com/andrewmichaelsmith/bluepot/raw/master/bin/$pkgname-$pkgver.tar.gz")
-#source=("https://bluepot.googlecode.com/files/$pkgname-$pkgver.tar.gz")
-sha512sums=('40109c7cd1c8612bce6d60dc8a1feb05a4f0520f58fa50b68d92ca2ec117c29f495e524a56e1e0e6e31cfe04796589792161faa5bd9ac081c6116b8b741cbad5')
-
-prepare() {
-  cd $pkgname
-
-  sed -i 's|BluePot.jar|/usr/share/bluepot/BluePot-0.1.jar|' run.sh
-
-  find . -name '.svn' -type d -exec rm -rf {} +
-}
+source=("https://github.com/andrewmichaelsmith/$pkgname/raw/master/bin/$pkgname-$pkgver.tar.gz")
+sha512sums=('cd4c5fc42cfbb27263b99ad50905844f4e550d03c47578f7435a669651ebaed5b954c7f7fd55db9495842e8adb3e6fe888a166dcb10c4ab94f33269dd02ac746')
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
 
-  install -Dm 755 run.sh "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 "$pkgname.jar" "$pkgdir/usr/share/$pkgname/$pkgname.jar"
+  #install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 
-  cp -a * "$pkgdir/usr/share/$pkgname/"
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/
+exec java -jar $pkgname.jar "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

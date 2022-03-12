@@ -1,0 +1,35 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=dfir-ntfs
+_pkgname=dfir_ntfs
+pkgver=1.1.11
+pkgrel=1
+pkgdesc='An NTFS parser for digital forensics & incident response.'
+arch=('any')
+groups=('blackarch' 'blackarch-forensic')
+url='https://github.com/msuhanov/dfir_ntfs'
+license=('GPL')
+depends=('python')
+makedepends=('python-setuptools')
+source=("https://github.com/msuhanov/$_pkgname/archive/$pkgver.zip")
+sha512sums=('f53119d47bd7cef67061e06a2325e66bc3437e8cfadd0ce0e24a14b8ad200aa70f281825d9ebb3af85eed48ea07d6d9969f1343e3bc5eeff856ef6a3a4c6b3e5')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" ReadMe ChangeLog License
+
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i "$(echo $i | tr -s '_' '-')"
+  done
+}
+

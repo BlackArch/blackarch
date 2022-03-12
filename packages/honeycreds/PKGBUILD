@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=honeycreds
+pkgver=26.eaeb401
+pkgrel=2
+pkgdesc='Network credential injection to detect responder and other network poisoners.'
+groups=('blackarch' 'blackarch-defensive')
+arch=('any')
+url='https://github.com/Ben0xA/HoneyCreds'
+license=('GPL3')
+depends=('python' 'python-smbprotocol' 'python-cffi' 'python-splunk-sdk')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/Ben0xA/HoneyCreds")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm -rf README.md LICENSE requirements.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

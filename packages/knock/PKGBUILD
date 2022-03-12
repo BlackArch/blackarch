@@ -2,16 +2,17 @@
 # See COPYING for license details.
 
 pkgname=knock
-pkgver=276.cecbbde
+pkgver=68.3044739
 pkgrel=1
-epoch=1
+epoch=2
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
 pkgdesc='Subdomain scanner.'
 arch=('any')
 url='https://github.com/guelfoweb/knock'
 license=('GPL3')
-depends=('python2' 'python2-dnspython')
-makedepends=('git' 'python2-setuptools')
+depends=('python' 'python-dnspython' 'python-colorama' 'python-beautifulsoup4'
+         'python-requests' 'python-networkx' 'python-matplotlib')
+makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/guelfoweb/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -21,16 +22,22 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/README.md" README.rst \
-    CHANGELOG.rst
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/README.md" README.md \
+    CHANGELOG.md
 
-  python2 setup.py install --root="$pkgdir" --optimize=1
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   mv "$pkgdir/usr/bin/knockpy" "$pkgdir/usr/bin/$pkgname"
 }

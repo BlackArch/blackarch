@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pdfwalker
+_gemname=pdfwalker
+pkgver=7.64c17f0
+pkgrel=3
+epoch=1
+groups=('blackarch' 'blackarch-misc')
+pkgdesc='Frontend to explore the internals of a PDF document with Origami'
+arch=('any')
+url='https://github.com/gdelugre/pdfwalker'
+license=('GPL3')
+depends=('ruby' 'ruby-gtk2' 'ruby-ruby-gtkhex' 'origami')
+makedepends=('git')
+options=(!emptydirs)
+source=("git+https://github.com/gdelugre/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  gem build "$pkgname.gemspec"
+}
+
+package() {
+  cd $pkgname
+
+  _gemdir="$(ruby -e'puts Gem.default_dir')"
+  _release=$(gem build $pkgname.gemspec | grep Version | cut -d' ' -f4)
+
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" "$_gemname-$_release.gem"
+
+  rm -f "$pkgdir/$_gemdir/cache/$_gemname-$_release.gem"
+  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
+  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_release/test"
+}
+

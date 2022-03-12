@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-asciistuff
+pkgname=('python2-asciistuff' 'python-asciistuff')
+_pkgname=asciistuff
+pkgver=1.2.2
+pkgrel=2
+pkgdesc='Library for producing ASCII arts from a text or an image.'
+arch=('any')
+url='https://pypi.org/project/asciistuff/#files'
+license=('AGPL3')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/1f/a9/f0892c7050fd5624bda13854993cfdd4b9208335200f05d559517376ab63/$_pkgname-$pkgver.tar.gz")
+sha512sums=('018f58cec66fb7e8caebb89f232cf3c5a16c2dfeae01940a9321f18d84448b08ddea78420a2ae0531fc253426f42672693443c5ebf955b5ac65efea21c8bac90')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-asciistuff() {
+  depends=('python2' 'python2-terminaltables' 'python2-termcolor'
+           'python2-pyfiglet' 'python2-cowpy')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
+}
+
+package_python-asciistuff() {
+  depends=('python' 'python-terminaltables' 'python-termcolor' 'python-cowpy'
+           'python-pyfiglet')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+}
+

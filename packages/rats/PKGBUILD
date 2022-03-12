@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=rats
+pkgver=6.4ba54ce
+pkgrel=1
+pkgdesc='A rough auditing tool for security in source code files.'
+groups=('blackarch' 'blackarch-code-audit')
+url='https://github.com/andrew-d/rough-auditing-tool-for-security'
+arch=('x86_64' 'aarch64')
+license=('GPL2')
+depends=('expat')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/andrew-d/rough-auditing-tool-for-security.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -ie 's/$(BINDIR)/$(DESTDIR)$(BINDIR)/g' Makefile.in
+  sed -ie 's/$(MANDIR)/$(DESTDIR)$(MANDIR)/g' Makefile.in
+  sed -ie 's/ $(LIBDIR)/ $(DESTDIR)$(LIBDIR)/g' Makefile.in
+  sed -ie 's/ $(SHAREDIR)/ $(DESTDIR)$(SHAREDIR)/g' Makefile.in
+}
+
+build() {
+  cd $pkgname
+
+  ./configure --prefix=/usr
+
+  make SHAREDIR="/usr/share/$pkgname"
+}
+
+package() {
+  cd $pkgname
+
+  make MANDIR="/usr/share/man" SHAREDIR="/usr/share/$pkgname" \
+    DESTDIR="$pkgdir" install
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README*
+}
+

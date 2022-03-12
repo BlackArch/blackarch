@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=retire
+_pkgname=retire.js
+pkgver=3.0.6.r6.g2c9e2c6
+pkgrel=1
+pkgdesc='Scanner detecting the use of JavaScript libraries with known vulnerabilities.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-code-audit')
+url='http://retirejs.github.io/retire.js/'
+license=('Apache')
+depends=('nodejs')
+makedepends=('npm' 'git')
+source=("git+https://github.com/RetireJS/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$_pkgname"
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd "$_pkgname"
+
+  _npmdir="$pkgdir/usr/lib/node_modules/"
+
+  install -dm 755 "$_npmdir"
+
+  cd "$_npmdir"
+
+  npm install --user root -g --prefix "$pkgdir/usr" "$pkgname@"
+  rm -rf "$_npmdir/root"
+
+  cd "$srcdir/$_pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" node/README.md
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

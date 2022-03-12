@@ -1,52 +1,31 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-hyper
-pkgname=('python2-hyper' 'python-hyper')
+pkgname=python-hyper
 _pkgname=hyper
 pkgver=0.7.0
-pkgrel=2
+pkgrel=5
 pkgdesc='HTTP/2 for Python.'
 arch=('any')
 url='https://pypi.org/project/hyper/#files'
 license=('MIT')
-makedepends=('python2-setuptools' 'python-setuptools')
+depends=('python' 'python-h2' 'python-hyperframe' 'python-rfc3986'
+         'python-brotlipy')
+makedepends=('python-setuptools')
 source=("https://files.pythonhosted.org/packages/af/f7/f60d8032f331994f29ce2d79fb5d7fe1e3c1355cac0078c070cf4feb3b52/$_pkgname-$pkgver.tar.gz")
 sha512sums=('dd0e439190f811af1b76508d27c421d6530c0a238cd72132ec1874cce6c655b1e1b168c45378c3f7ecc9a65fbba68c713a5c3c9c6e8b1169134882eca1c6f9eb')
 
-prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
-}
-
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
+  cd "$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package_python2-hyper() {
-  depends=('python2' 'python2-h2' 'python2-hyperframe' 'python2-rfc3986'
-           'python2-brotlipy')
-
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
-
-  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
-}
-
-package_python-hyper() {
-  depends=('python' 'python-h2' 'python-hyperframe' 'python-rfc3986'
-           'python-brotlipy')
-
+package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/$_pkgname-python"
 }
 

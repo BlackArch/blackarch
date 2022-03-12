@@ -1,23 +1,25 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
+#
 # Original Maintainer on AUR: zwindl
 
 pkgname=gdbgui
-pkgver=398.cd597bb
+pkgver=429.799d340
 pkgrel=1
+epoch=1
 pkgdesc='Browser-based gdb frontend using Flask and JavaScript to visually debug C, C++, Go, or Rust.'
 groups=('blackarch' 'blackarch-debugger' 'blackarch-binary')
 arch=('any')
 url='https://github.com/cs01/gdbgui'
 depends=('python' 'python-eventlet' 'python-flask' 'python-flask-socketio'
          'python-pygdbmi' 'python-pypugjs' 'python-enum-compat' 'python-gevent'
-         'python-pygments' 'python-flask-compress' 'gdb')
-makedepends=('git' 'python-setuptools')
+         'python-pygments' 'python-flask-compress' 'python-brotli' 'gdb')
+makedepends=('git' 'python-setuptools' 'yarn')
 license=('GPL3')
 source=("git+https://github.com/cs01/$pkgname.git"
         'setup.py.patch')
 sha512sums=('SKIP'
-            '860830875618146687f865c630008f5c9a00482447249c3cbe5998577da5c575368fccb10741ca90cb3e475dea0b2c65c7556bab15fde3b539a4906a855402ab')
+            '2bf3adfbd5b294898e88f0adcf4763973f1699009b3a4d4b93bc1624158f204cf069b0699a41688036b76e4571ac4b396b162f5e114cb929d913ba0fb171405a')
 install="$pkgname.install"
 
 pkgver() {
@@ -27,11 +29,15 @@ pkgver() {
 }
 
 prepare() {
-  patch -p1 < setup.py.patch
+  cd
+  #patch -p1 < setup.py.patch
 }
 
 build() {
   cd $pkgname
+
+  yarn install
+  yarn build
 
   python setup.py build
 }
@@ -43,7 +49,7 @@ package() {
 
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  find "$pkgdir" -type d -name 'tests' -exec rm -rf {} +
-  find "$pkgdir" -type d -name '__pycache__' -exec rm -rf {} +
+  find "$pkgdir" -type d -name tests -exec rm -rf {} +
+  find "$pkgdir" -type d -name __pycache__ -exec rm -rf {} +
 }
 

@@ -3,17 +3,16 @@
 
 pkgname=dcrawl
 pkgver=7.3273c35
-pkgrel=2
+pkgrel=3
 pkgdesc='Simple, but smart, multi-threaded web crawler for randomly gathering huge lists of unique domain names.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
 arch=('x86_64' 'aarch64')
 url='https://github.com/kgretzky/dcrawl'
 license=('MIT')
 depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/kgretzky/$pkgname.git")
 sha512sums=('SKIP')
-_url="github.com/kgretzky/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -24,18 +23,20 @@ pkgver() {
 build() {
   cd $pkgname
 
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
-    cd "src/$_url"
-
-  export GOPATH="$srcdir"
-
-  go get -d -t $_url
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname $pkgname.go
 }
 
 package() {
   cd $pkgname
-
-  GOPATH="$srcdir" go build -v $_url
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md

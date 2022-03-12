@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=jackdaw
+pkgver=395.5fd4c21
+pkgrel=2
+pkgdesc='Collect all information in your domain, show you graphs on how domain objects interact with each-other and how to exploit these interactions'
+arch=('any')
+groups=('blackarch' 'blackarch-recon' 'blackarch-windows')
+url='https://github.com/skelsec/jackdaw'
+license=('custom:unknown')
+depends=('python' 'python-aiosmb' 'python-msldap' 'python-sqlalchemy'
+         'python-tqdm' 'python-networkx' 'python-connexion'
+         'python-flask-sqlalchemy' 'python-websockets'
+         'python-swagger-ui-bundle' 'python-werkzeug' 'python-bidict'
+         'python-colorama' 'python-winacl' 'python-pypykatz')
+makedepends=('git')
+source=("git+https://github.com/skelsec/$pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm Makefile setup.py README.md MANIFEST.in
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

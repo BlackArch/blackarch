@@ -2,15 +2,15 @@
 # See COPYING for license details.
 
 pkgname=ducktoolkit
-pkgver=31.92969f6
-pkgrel=1
+pkgver=37.42da733
+pkgrel=2
 pkgdesc='Encoding Tools for Rubber Ducky.'
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-crypto')
 arch=('any')
 url='https://github.com/kevthehermit/DuckToolkit'
 license=('GPL3')
-depends=('python2')
-makedepends=('git' 'python2-setuptools')
+depends=('python')
+makedepends=('git' 'python-setuptools')
 source=("$pkgname::git+https://github.com/kevthehermit/DuckToolkit.git")
 sha512sums=('SKIP')
 
@@ -20,16 +20,22 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  sed -i 's|encoding="utf8)|encoding="utf8")|' "$pkgname/encoder.py"
+}
+
 build() {
   cd $pkgname
 
-  python2 setup.py build
+  python setup.py build
 }
 
 package() {
   cd $pkgname
 
-  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" \
     CHANGELOG.md README.md

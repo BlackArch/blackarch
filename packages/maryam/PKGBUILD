@@ -2,15 +2,16 @@
 # See COPYING for license details.
 
 pkgname=maryam
-pkgver=462.473f218
-pkgrel=1
+pkgver=715.1c1b2b3
+pkgrel=2
 epoch=2
 pkgdesc='Full-featured Web Identification framework written in Python.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp' 'blackarch-recon')
 arch=('any')
 url='https://github.com/saeeddhqan/Maryam'
 license=('MIT')
-depends=('python2' 'python2-argparse' 'python2-beautifulsoup4')
+depends=('python' 'python-requests' 'python-beautifulsoup4' 'python-lxml'
+         'python-cloudscraper' 'python-flask')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/saeeddhqan/Maryam.git")
 sha512sums=('SKIP')
@@ -21,25 +22,15 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm README.md LICENSE
-
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 $pkgname "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 

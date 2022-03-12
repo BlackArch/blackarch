@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python2-twistedx
+_pkgname=Twisted
+pkgver=20.3.0
+pkgrel=10
+pkgdesc='An asynchronous networking framework written in Python.'
+url='https://pypi.org/project/Twisted/#files'
+arch=('x86_64' 'aarch64')
+license=('MIT')
+depends=('python2' 'python2-automat' 'python2-hyperlink' 'python2-attrs'
+         'python2-pyhamcrest' 'python2-zope-interface' 'python2-incremental'
+         'python2-constantly')
+makedepends=('python2-setuptools')
+source=("https://files.pythonhosted.org/packages/4a/b4/4973c7ccb5be2ec0abc779b7d5f9d5f24b17b0349e23240cfc9dc3bd83cc/$_pkgname-$pkgver.tar.bz2"
+        '_setup.py.patch')
+sha512sums=('1b850e5fc21a3630ead4c2cc3622c16e78bb3be38ab11d021779b7ce3d3c30acc4e19d79c7791a5fce6c5c6e09c2baa349901dffe952de67dd98eec419846365'
+            '831b8638f5b3e3eb013b048c828f559d35654a9125ae94024c93ed60c3330cb7bcae55bb6a5f322451be6692991aa9884ab61032a24923c09a0e12e2453abb10')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  patch -p2 < ../_setup.py.patch
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i "${i}2"
+  done
+}
+

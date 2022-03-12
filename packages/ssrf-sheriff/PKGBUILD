@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ssrf-sheriff
+pkgver=2.f95d691
+pkgrel=2
+groups=('blackarch' 'blackarch-webapp' 'blackarch-proxy')
+pkgdesc='A simple SSRF-testing sheriff written in Go.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/teknogeek/ssrf-sheriff'
+license=('MIT')
+makedepends=('git' 'go')
+source=("git+https://github.com/teknogeek/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+
+  cp -a config templates "$pkgdir/usr/share/$pkgname"
+  mv "$pkgdir/usr/share/$pkgname/config/base.example.yaml" \
+    "$pkgdir/usr/share/$pkgname/config/base.yaml"
+}
+

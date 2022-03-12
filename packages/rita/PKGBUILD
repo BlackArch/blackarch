@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=rita
-pkgver=705.ece0923
+pkgver=795.334c4d3
 pkgrel=1
 pkgdesc='Real Intelligence Threat Analytics.'
 arch=('x86_64')
@@ -10,10 +10,9 @@ groups=('blackarch' 'blackarch-recon')
 url='https://github.com/activecm/rita'
 license=('GPL3')
 depends=('bro' 'mongodb')
-makedepends=('git' 'go-pie' 'dep')
+makedepends=('git' 'go')
 source=("git+https://github.com/activecm/$pkgname.git")
 sha512sums=('SKIP')
-_url='github.com/activecm'
 
 pkgver() {
   cd $pkgname
@@ -21,28 +20,27 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  export GOPATH="$srcdir/go"
-
-  mkdir -p "go/src/$_url"
-  ln -rTsf "$pkgname" "go/src/$_url/$pkgname"
-}
-
 build() {
-  export GOPATH="$srcdir/go"
+  cd $pkgname
 
-  cd "go/src/$_url/$pkgname"
-  make
+  VERSION=$(git describe --abbrev=0 --tags)
+  EXACT_VERSION=$(git describe --always --long --dirty --tags)
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w -X github.com/activecm/rita/config.Version=${VERSION} -X github.com/activecm/rita/config.ExactVersion=${EXACT_VERSION}" \
+    -o $pkgname .
 }
 
 package() {
-  cd "go/src/$_url/$pkgname"
+  cd $pkgname
 
-  install -dm 755 "$pkgdir/etc/$pkgname"
-  install -dm 755 "$pkgdir/var/lib/$pkgname/logs"
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 666 "etc/$pkgname.yaml" "$pkgdir/etc/$pkgname/config.yaml"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" docs/*
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
 }
 

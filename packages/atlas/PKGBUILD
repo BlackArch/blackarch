@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=atlas
+pkgver=7.77bd6c8
+pkgrel=3
+pkgdesc='Open source tool that can suggest sqlmap tampers to bypass WAF/IDS/IPS.'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer')
+url='https://github.com/m4ll0k/Atlas'
+license=('GPL3')
+depends=('python' 'python-humanfriendly')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/m4ll0k/Atlas.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm LICENSE README.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

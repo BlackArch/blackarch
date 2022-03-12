@@ -1,0 +1,66 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# fetch from AUR. slightly modified and adapted to our style.
+#
+# Old Maintainer: Jaroslav Lichtblau <svetlemodry@archlinux.org>
+# Old Contributor: Andrea Scarpino <andrea@archlinux.org>
+# Old Contributor: dtw <dibble.at.thewrecker.dot.net>
+# Old Contributor: shawnifoley http://bbs.archlinux.org/viewtopic.php?t=11492
+# Old Contributor: sebastien le guillerm <geekitus@tele2.fr>
+
+pkgname=wifi-radar
+pkgver=2.0.s10
+pkgrel=1
+pkgdesc='A PyGTK2 utility for managing WiFi profiles.'
+arch=('any')
+url='https://wifi-radar.tuxfamily.org/'
+license=('GPL')
+depends=('net-tools' 'pygtk' 'wireless_tools')
+optdepends=('polkit: needed if you launch wifi-radar from menu')
+source=("https://wifi-radar.tuxfamily.org/pub/$pkgname-$pkgver.tar.bz2"
+        'org.archlinux.pkexec.wifi-radar.policy'
+        "${pkgname}_polkit")
+sha512sums=('156866416ce433cc8858c001d48df6f87388884bc8d3a29ef5422c2d96589ec2d4fc64686e7a697d73707409cbb6966a9dfbb84e771d5311acff2a4a26386c6a'
+            'f06f8548dea2dbacecead600fcbab37fa305d4b009e3a44e37a958a369ed4b24f5a04f5a182677e554ded5fdb607852f6ce033149ad1e848ec162f3dac10e141'
+            '0e9b72201222d908db2768459dc4e236509d693e06901b52276cf55d441451577c1d80c6216642a821d9b4c49c210dc40c1c5cb7666e762e2096031ec1fdcf0e')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  # python2 fix
+  sed -i 's_^#!.*/usr/bin/python_#!/usr/bin/python2_' $pkgname
+
+  # Fix iwlist and iwconfig path
+   sed -i -e 's|/sbin/iwlist|/usr/bin/iwlist|' \
+     -i -e 's|/sbin/iwconfig|/usr/bin/iwconfig|' \
+     -i -e 's|/sbin/ifconfig|/usr/bin/ifconfig|' \
+     -i -e 's|/sbin/route|/usr/bin/route|' \
+     -i -e 's|/sbin/dhcpcd|/usr/bin/dhcpcd|' \
+     -i -e 's|/usr/sbin/wpa_supplicant|/usr/bin/wpa_supplicant|' $pkgname
+
+  # Modify desktop file
+  sed -i -e "s/Exec=gksudo -S wifi-radar/Exec=wifi-radar_polkit/" $pkgname.desktop
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir/usr" sysconfdir="$pkgdir/etc" \
+    sbindir="$pkgdir/usr/bin" install
+
+  install -Dm 644 "$srcdir/org.archlinux.pkexec.wifi-radar.policy" \
+    "$pkgdir/usr/share/polkit-1/actions/org.archlinux.pkexec.$pkgname.policy"
+  install -m 755 "$srcdir/${pkgname}_polkit" "$pkgdir/usr/bin/${pkgname}_polkit"
+
+  rmdir "$pkgdir/etc"
+
+  mv "$pkgdir/usr/bin/${pkgname}_polkit" "$pkgdir/usr/bin/$pkgname-polkit"
+}
+

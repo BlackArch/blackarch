@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=rupture
+pkgver=1383.131c61a
+pkgrel=2
+pkgdesc='A framework for BREACH and other compression-based crypto attacks.'
+groups=('blackarch' 'blackarch-crypto' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/decrypto-org/rupture'
+license=('MIT')
+depends=('python2' 'python2-netifaces' 'python2-beautifulsoup4' 'python2-django'
+         'python2-yaml' 'python2-coverage' 'python2-coveralls' 'python2-mock'
+         'python2-requests' 'python2-netifaces' 'python2-ipaddress'
+         'python2-pycodestyle' 'python2-django-nose' 'python2-tlslite-ng'
+         'scapy' 'bash' 'npm' 'bettercap')
+makedepends=('git')
+source=("git+https://github.com/decrypto-org/$pkgname.git")
+sha1sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i 's/tailf/tail -f/g' $pkgname
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bash $pkgname "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+

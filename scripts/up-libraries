@@ -2,7 +2,7 @@
 
 import sys
 
-__version__ = '0.1'
+__version__ = '0.2'
 
 __home__ = 'blackarch.org'
 
@@ -17,53 +17,49 @@ def get_current_version(name):
                 return str(line[7:].strip())  # pkgver=...
 
 
-# check arch community
-def arch_community_check(name):
-    temp = requests.get('https://www.archlinux.org/packages/community/x86_64/' + name + '/')
-    if temp.ok:
-        print('We can remove: ' + name)
-
-
 # update pkgbuild
 def update_pkgbuild(name, url, current_version, available_version):
     global to_release
 
-    old_url = url  # backup
-
-    url = url.replace('$pkgname', name).replace('$pkgver', available_version)
-    url = url.replace('${pkgname}', name).replace('${pkgver}', available_version)
-
-    url = re.sub('.*::', '', url)  # fix for foo::<url>.bar
-
-    req = requests.get(url)  # got file
-    sha512 = hashlib.sha512(req.content).hexdigest()  # calculate sha512
-
-    url = old_url  # restore
-
     with open('../packages/{name}/PKGBUILD'.format(name=name), 'r', encoding='utf-8') as file:
-        temp = file.read()
+            temp = file.read()
 
-    temp = re.sub(current_version, available_version, temp)  # version bump
+    if 'https://github.com' not in temp and 'git+https://' not in temp:
+        old_url = url  # backup
 
-    temp = re.sub('pkgrel=.*', 'pkgrel=1', temp)  # pkgrel=1
+        url = url.replace('$pkgname', name).replace('$pkgver', available_version)
+        url = url.replace('${pkgname}', name).replace('${pkgver}', available_version)
 
-    temp = re.sub('sha512sums=.*', ("sha512sums=('" + sha512 + "')"), temp)  # sha512 update
+        url = re.sub('.*::', '', url)  # fix for foo::<url>.bar
 
-    name_to_replace = '-'.join(name.split('-')[1:])
+        req = requests.get(url)  # got file
+        sha512 = hashlib.sha512(req.content).hexdigest()  # calculate sha512
 
-    url = url.replace(name_to_replace,'$_pkgname')
+        url = old_url  # restore
 
-    url = url.replace(available_version, '$pkgver')
+        temp = re.sub(current_version, available_version, temp)  # version bump
 
-    temp = re.sub('source=.*', ('source=("' + url + '")'), temp)  # source update
+        temp = re.sub('pkgrel=.*', 'pkgrel=1', temp)  # pkgrel=1
 
-    with open('../packages/{name}/PKGBUILD'.format(name=name), 'w', encoding='utf-8') as file:
-        file.write(temp)
+        temp = re.sub('sha512sums=.*', ("sha512sums=('" + sha512 + "')"), temp)  # sha512 update
 
-    to_release += (name + '\n')
-    print('Successfully updated {name} from {current_version} to {available_version}'.format(name=name,
+        name_to_replace = '-'.join(name.split('-')[1:])
+
+        url = url.replace(name_to_replace,'$_pkgname')
+
+        url = url.replace(available_version, '$pkgver')
+
+        temp = re.sub('source=.*', ('source=("' + url + '")'), temp)  # source update
+
+        with open('../packages/{name}/PKGBUILD'.format(name=name), 'w', encoding='utf-8') as file:
+            file.write(temp)
+
+        to_release += (name + '\n')
+        print('Successfully updated {name} from {current_version} to {available_version}'.format(name=name,
                                                                                              current_version=current_version,
                                                                                              available_version=available_version))
+    else:
+        print('Please, do manual update {name}'.format(name=name))
 
 
 # update python packages version
@@ -87,12 +83,10 @@ def python_packages_version_check(name):
                     if url[-3:] == 'zip' or url[-6:] == 'tar.gz':
                         update_pkgbuild(name, url, current_version, available_version)
                     else:
-                        print(
-                            'Please, do manual update [{name}] to {version}, because i cant find any *.tar.gz or *.zip archives'.format(
-                                name=name, version=available_version))
+                        print('Please, do manual update {name}'.format(name=name))
 
             except Exception as e:
-                print('Please, do manual update {name}, because this error occured: {e}'.format(name=name, e=e))
+                print('Please, do manual update {name}'.format(name=name))
 
 
 # update ruby packages version
@@ -124,11 +118,19 @@ def main(function, needed):
         'python-telethon', 'python-twilio', 'python-python-pushover',
         'python2-utils', 'python2-geoip', 'python2-smmap', 'python2-gitdb',
         'python-requests-html', 'python2-openpyxl', 'python-pycrtsh',
-        'python-pyric', 'python-mmbot',
+        'python-pyric', 'python-mmbot', 'python2-scikit-image', 'python-exiv2',
+        'python2-pytsk3', 'python2-pywavelets', 'python2-pyxml',
+        'python-spyonweb', 'python-pythreatgrid2', 'python-exscript',
+        'python-readchar', 'python-xgoogle', 'python-rpyc', 'python-pypermacc',
+        'python-pyv8', 'python-pype32', 'python-stix', 'python-slowaes',
+        'python-pdfminer3k', 'python-pypugjs', 'python-bacpypes',
+        'python-taxii2-client', 'python2-taxii2-client', 'python2-pyshark',
+        'python-can', 'python2-pdfminer', 'python2-blinker', 'python2-daemon',
+        'python2-itsdangerous', 'python2-subprocess32', 'python2-werkzeug',
+        'python2-py3270', 'python-coveralls', 'python-singlefile',
+        'python-arsenic', 'python-cx_oracle',
     ]
-
-    ruby_exclusions = ['ruby-unf', 'ruby-ctf-party',]
-
+    ruby_exclusions = []
 
     if needed == 'python':
         exclusions = python_exclusions
@@ -158,8 +160,6 @@ if __name__ == '__main__':
     except ModuleNotFoundError as e:
         print('Failure importing module: ' + str(e))
         sys.exit(1)
-
-    main(arch_community_check, '')  # start arch community check
 
     main(python_packages_version_check, 'python')  # start version updating python packages
 

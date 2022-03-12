@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: farawayer <farwayer@gmail.com>
+# Old Co-Maintainer: Bert Peters <bert@bertptrs.nl>
+
+_gemname=terminal-table
+pkgname="ruby-$_gemname"
+pkgver=3.0.1
+pkgrel=1
+pkgdesc='Simple, feature rich ascii table generation library.'
+arch=(any)
+url='https://github.com/tj/terminal-table'
+license=(MIT)
+depends=('ruby' 'ruby-unicode-display-width')
+options=(!emptydirs)
+source=(https://github.com/tj/terminal-table/archive/v${pkgver}.tar.gz)
+sha512sums=('fae7d19f92fc570ec0d23977a523f9381b14de6396d59c91d0e1e635de613876abeb3edfef9507955c93c29cb18ecf1dc717d7b227f118eb3b7e254835282251')
+
+prepare() {
+  cd "$_gemname-$pkgver"
+
+  sed -r 's|~>|>=|g' -i "$_gemname.gemspec" # don't give a fuck about rubys bla bla
+  sed 's|git ls-files -z|find -type f -print0 \|sed "s,\\\\./,,g"|' \
+    -i "$_gemname.gemspec"
+}
+
+build() {
+  cd "$_gemname-$pkgver"
+
+  gem build "$_gemname.gemspec"
+}
+
+package() {
+  cd "$_gemname-$pkgver"
+
+  _gemdir="$(ruby -e'puts Gem.default_dir')"
+
+  gem install --ignore-dependencies --no-user-install -i "$pkgdir/$_gemdir" \
+    -n "$pkgdir/usr/bin" "$_gemname-$pkgver.gem"
+
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem"
+}
+

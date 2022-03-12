@@ -1,35 +1,30 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
+#
 # Old Maintainer: Sergej Pupykin <arch+pub@sergej.pp.ru>
 
 pkgname=bluez-hciconfig
-pkgver=5.50
+_pkgname=bluez
+pkgver=5.63
 pkgrel=1
 pkgdesc='Deprecated hciconfig tool from bluez.'
 url='http://www.bluez.org/'
 arch=('x86_64' 'aarch64')
 license=('GPL2')
 depends=('bluez' 'bluez-utils' 'bluez-libs' 'bluez-tools')
-source=('hciconfig.1'
-        'hciconfig.c'
-        'textfile.c'
-        'textfile.h'
-        'csr.h'
-        'csr.c'
-        'util.h')
-sha512sums=('8d18845911f5353e067a28e670769c1eb14038f11d54be7476d0b779f01fc379a1a92d330872904e7f296360ce3aefd2509746e2df817cd7021f22e21b6dc0e3'
-            'bbbdeee7b6761ab7285a0a5250cb1a62bbd3a05f24d46baf92df8918e6f3fa837c0780c4bf5a8459bfff63bcb6638d8e4e1020edfc0189854cc0a4869faeac03'
-            '52e6fd27cf41cab2f261eadb2e2584b626c25dd6f4f821bb0fcb57b0f54d4e069a57f9606ca9819d8eeff668496e6dac351e5978640840710e5e6095facf3395'
-            '16932a1284862a973beb2af30a01846affc944a020727567627c827b1dd702074431ae668db5530b94e761ad7a80fed8f6719e5f0e3076ab4083bbc1f585b73a'
-            '6c51f1fe99558b6c3e0fa562b904286fef5692cd9462d320cade5bae34fef5dcd7023d2afac7c47343d22d72a07dce5713c9380613ac0f5c72990750409b342a'
-            'd350051cacde72a3ff0266309125162b7f494d89be1807eea9135e61f7a69cc949af645eba62a072f24fd82e6e8f8ff125594787e392cccf811930e809604d66'
-            'fbb59baa910a1269aa8edcf97a118a36ad47c5e929e2b88af47faa64b635621c97d07b4a100d2e64bdc754debdc411553dbfd70b44b9c0503b38a9619a7a542a')
+source=("https://www.kernel.org/pub/linux/bluetooth/bluez-$pkgver.tar.xz")
+sha512sums=('1b8ce7b1bd9611873c27a762a60df580edeefe5424e8733a2067b9afb1a47915f9319849bc1eeee148f5b1f33977b7975e05867e8dbdf73d33cd68e6b99ca75b')
 
 build() {
-  gcc hciconfig.c csr.c -lbluetooth -o hciconfig -DVERSION=\"$pkgver\"
+  cd "$_pkgname-$pkgver/tools"
+
+  gcc hciconfig.c parser/{csr,parser,lmp}.c ../src/textfile.c -lbluetooth -o \
+    hciconfig -DVERSION=\"$pkgver\" -I..
 }
 
 package() {
+  cd "$_pkgname-$pkgver/tools"
+
   install -Dm 755 hciconfig "$pkgdir/usr/bin/hciconfig"
   install -Dm 755 hciconfig.1 "$pkgdir/usr/share/man/man1/hciconfig.1"
 }

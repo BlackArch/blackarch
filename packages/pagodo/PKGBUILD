@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pagodo
+pkgver=108.68ff778
+pkgrel=1
+pkgdesc='Google dork script to collect potentially vulnerable web pages and applications on the Internet.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+url='https://github.com/opsdisk/pagodo'
+license=('GPL3')
+depends=('python' 'python-beautifulsoup4' 'python-google' 'python-numpy'
+         'python-requests')
+makedepends=('git')
+source=("git+https://github.com/opsdisk/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i 's/user_agents.txt/\/usr\/share\/pagodo\/user_agents.txt/g' pagodo.py
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 755 "$pkgname.py" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm pagodo.py requirements.txt \
+    README.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+}
+

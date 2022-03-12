@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=detectem
-pkgver=250.b1ecc35
-pkgrel=1
+pkgver=276.bc5f073
+_pyver=3.10
+pkgrel=4
 pkgdesc='Detect software and its version on websites.'
 groups=('blackarch' 'blackarch-fingerprint' 'blackarch-webapp'
         'blackarch-recon')
@@ -12,12 +13,12 @@ url='https://github.com/spectresearch/detectem'
 license=('MIT')
 depends=('python' 'python-requests' 'python-pytest' 'python-docker'
          'python-click' 'python-yaml' 'python-zope-interface' 'python-dukpy'
-         'python-parsel' 'python-click-log')
-makedepends=('git')
+         'python-parsel' 'python-click-log' 'python-environs')
+makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/spectresearch/$pkgname.git"
-        'requirements.txt.patch')
+        'base.txt.patch')
 sha512sums=('SKIP'
-            'a31b8609b6c5066e5ee911159651a0f5eead5ccb43d9766e6ee742279ddc86acbd11119f859ad96a784d5293bbaec76581d91faefd05a772642073ea83298c3a')
+            '8b2b465aa775c8734372bd96a7ddaba1bd8c263a605cd4c23ca8ab3417b496459a6372a3f7f2a7fabc3a0afaaaa9b300850df89db1a9f8acaeaca34b8a6456d8')
 
 pkgver() {
   cd $pkgname
@@ -26,7 +27,9 @@ pkgver() {
 }
 
 prepare() {
-  patch -p1 < requirements.txt.patch
+  cd "$pkgname/requirements"
+
+  patch -p0 < "$srcdir/base.txt.patch"
 }
 
 build() {
@@ -38,13 +41,14 @@ build() {
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1 \
-    --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md *.rst
   cp -a docs/* "$pkgdir/usr/share/doc/$pkgname/"
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   mv "$pkgdir/usr/bin/det" "$pkgdir/usr/bin/$pkgname"
+
+  rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/tests/"
 }
 

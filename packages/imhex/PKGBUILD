@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# AUR Maintainer: Alex Sarum <rum.274.4 at gmail dot com>
+
+pkgname=imhex
+pkgver=1.16.2.r9.g3da1b3f0
+pkgrel=1
+pkgdesc='A Hex Editor for Reverse Engineers, Programmers and people that value their eye sight when working at 3 AM.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/WerWolv/ImHex'
+license=('GPL2')
+depends=('glfw' 'glm' 'capstone' 'llvm-libs' 'llvm' 'nlohmann-json' 'python'
+         'file' 'gtk3' 'mbedtls' 'libssh2')
+makedepends=('git' 'cmake' 'freetype2' 'lld' 'gcc')
+source=("$pkgname::git+https://github.com/WerWolv/ImHex.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  git submodule update --init --recursive
+  cmake -B build -DCMAKE_INSTALL_PREFIX=/usr
+  make -C build
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "build/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 build/lib/libimhex/libimhex.so "$pkgdir/usr/lib/libimhex.so"
+  install -Dm 644 build/plugins/builtin/builtin.hexplug \
+    "$pkgdir/usr/share/$pkgname/builtin.hexplug"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+

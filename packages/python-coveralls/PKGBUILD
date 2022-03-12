@@ -1,26 +1,43 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=('python-coveralls' 'python2-coveralls')
+pkgbase=python-coveralls
+pkgname=('python2-coveralls' 'python-coveralls')
 _pkgname=coveralls
-pkgver=1.10.0
-pkgrel=1
+pkgver=2.1.2
+pkgrel=5
 pkgdesc='Show coverage stats online via coveralls.io.'
 arch=('any')
 url='https://github.com/coveralls-clients/coveralls-python'
 license=('MIT')
 makedepends=('python2-setuptools' 'python-setuptools')
-source=("https://files.pythonhosted.org/packages/75/89/4e069ce894e5151218c248a096315db6cc807dc83e2210e9860214b08ffc/$_pkgname-$pkgver.tar.gz")
-sha512sums=('b8d68e73cc18746388bfcd3a721178b431a77b97805c69d27db8161fe9a97038b04e78067fc06bf1d4f5cf541d21ca293d52deae458c2ee65c0648804eaace77')
+source=("https://files.pythonhosted.org/packages/d1/7a/a121aefa37d33afadaecde50146ef42733e9a218f4fcb94f86523739cee6/$_pkgname-$pkgver.tar.gz")
+sha512sums=('a908909a0117faa982d8305c79cde05ec0a7ecf873a45564f56f7daf6f954d2ddc59d9cc102b9baafe92d74790a41201f072f15a8119efe3e63ac5f9042735e9')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
 
 package_python2-coveralls() {
   depends=('python2' 'python2-coverage' 'python2-docopt' 'python2-requests')
 
-  cd "$_pkgname-$pkgver"
+  cd "$_pkgname-$pkgver-2"
 
-  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
-  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i "${i}2"
+  done
 }
 
 package_python-coveralls() {
@@ -28,6 +45,6 @@ package_python-coveralls() {
 
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 

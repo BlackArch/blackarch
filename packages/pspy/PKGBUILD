@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pspy
+pkgver=159.2312eed
+pkgrel=4
+pkgdesc='Monitor linux processes without root permissions.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-misc' 'blackarch-recon')
+url='https://github.com/DominicBreuker/pspy'
+license=('GPL3')
+makedepends=('git' 'go')
+source=("git+https://github.com/DominicBreuker/$pkgname.git")
+sha256sums=('SKIP')
+
+pkgver(){
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  VERSION=$(git describe --tags --always)
+  BUILD_SHA=$(git rev-parse HEAD)
+
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w -X 'main.version=${VERSION}' -X 'main.commit=${BUILD_SHA}'" \
+    -o $pkgname .
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 docker/Dockerfile.* -t "$pkgdir/usr/share/$pkgname/docker/"
+  install -Dm 644 docker/entrypoint-* -t "$pkgdir/usr/share/$pkgname/docker/"
+  install -Dm 644 docker/etc/cron.d/changepwds -t \
+    "$pkgdir/usr/share/$pkgname/docker/etc/crond.d/"
+  install -Dm 644 docker/root/scripts/password_reset.py -t \
+    "$pkgdir/usr/share/$pkgname/docker/root/scripts/"
+  install -Dm 644 docker/var/spool/cron/crontabs/root -t \
+    "$pkgdir/usr/share/$pkgname/docker/var/spool/cron/crontabs/"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+}
+

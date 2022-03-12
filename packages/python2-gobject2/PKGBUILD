@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
+# Contributor: Jan de Groot <jgc@archlinux.org>
+# BlackArch Maintainer: Eduard Tolosa (Edu4rdSHL) <edu4rdshl[at]blackarch.org>
+
+pkgname=python2-gobject2
+_pkgname=pygobject
+pkgver=2.28.7
+pkgrel=6
+pkgdesc='Legacy Python 2 bindings for GObject'
+url="https://wiki.gnome.org/Projects/PyGObject"
+arch=('x86_64' 'aarch64')
+license=('LGPL')
+depends=('glib2' 'python2')
+makedepends=('git')
+provides=("pygobject2-devel=$pkgver-$pkgrel")
+conflicts=('pygobject2-devel')
+replaces=('pygobject2-devel<=2.28.7-3')
+_commit=c9594b6a91e6ca2086fedec2ed8249e0a9c029fc  # tags/PYGOBJECT_2_28_7^0
+source=("git+https://gitlab.gnome.org/GNOME/pygobject.git#commit=$_commit")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  git describe --tags | sed 's/^PYGOBJECT_//;s/_/./g;s/-/+/g'
+}
+
+prepare() {
+  cd $_pkgname
+
+  find . \( -name '*.py' -o -name '*.py.in' \) -exec sed -i '1s|python$|&2|' {} +
+  autoreconf -fvi
+}
+
+build() (
+  cd $_pkgname
+
+  CPPFLAGS+=' -Wno-deprecated-declarations'
+
+  ./configure --prefix=/usr --disable-introspection PYTHON=/usr/bin/python2
+
+  sed -i 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+
+  make
+)
+
+package() {
+  cd $_pkgname
+
+  make DESTDIR="$pkgdir" install
+
+  rm -r "$pkgdir/usr/share/gtk-doc"
+}
+

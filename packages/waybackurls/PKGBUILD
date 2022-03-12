@@ -2,18 +2,18 @@
 # See COPYING for license details.
 
 pkgname=waybackurls
-pkgver=9.58bbafe
+pkgver=11.89da10c
 pkgrel=1
 pkgdesc='Fetch all the URLs that the Wayback Machine knows about for a domain.'
-arch=('x86_64')
+arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-recon')
 url='https://github.com/tomnomnom/waybackurls'
 license=('MIT')
-depends=('glibc')
-makedepends=('git' 'go-pie' 'wget')
-source=("git+https://github.com/tomnomnom/$pkgname.git")
-sha512sums=('SKIP')
-_url='github.com/tomnomnom/waybackurls'
+makedepends=('git' 'go')
+source=("git+https://github.com/tomnomnom/$pkgname.git"
+        'https://raw.githubusercontent.com/tomnomnom/gron/master/LICENSE')
+sha512sums=('SKIP'
+            '08f63749a84131c08a1174ed0604ce00e506d737ebdca616390c481de06c404460d5fab30bb7fc6e08c41bc76a3d949321272c5305580065534cbceb3207080c')
 
 pkgver() {
   cd $pkgname
@@ -21,29 +21,25 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
+build() {
   cd $pkgname
 
-  # TomNomNom asked me to pull the LICENSE from the gron repo until he updates waybackurls's one
-  wget -q https://raw.githubusercontent.com/tomnomnom/gron/master/LICENSE
-}
-
-build() {
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
-    cd "src/$_url"
-
-  GOPATH="$srcdir" go get -v -d $_url
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd $pkgname
 
-  GOPATH="$srcdir" go build -v $_url
-
-  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 "src/$_url/README.mkd" \
-    "$pkgdir/usr/share/doc/$pkgname/README.md"
-  install -Dm 644 "src/$_url/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 README.mkd "$pkgdir/usr/share/doc/$pkgname/README.md"
 }
 

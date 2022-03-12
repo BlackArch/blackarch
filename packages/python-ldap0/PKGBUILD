@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-ldap0
+_pkgname=ldap0
+pkgver=1.4.7
+_pyver=3.10
+pkgrel=1
+pkgdesc='Module package for implementing LDAP clients.'
+arch=('x86_64' 'aarch64')
+url='https://pypi.org/project/ldap0/#files'
+license=('Apache')
+depends=('python' 'python-pyasn1' 'python-pyasn1-modules' 'openldap')
+makedepends=('python-setuptools')
+source=("https://files.pythonhosted.org/packages/6e/d5/8ad90834fbaa98326fc43d55053abd87b86166e336ed447e071704c780b2/$_pkgname-$pkgver.tar.gz")
+sha512sums=('b61d0b5b8b41f51203a3b6bbc430d9ca3115e3af69d9588c5086933f1be95261048c09ebc35ba56cc4b58340acac41c887e7ef063f919ff30af48b91adda6970')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  sed -i 's|libs = ldap_r|libs = ldap|g' setup.cfg
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  chmod 644 \
+    "$pkgdir/usr/lib/python$_pyver/site-packages/ldap0-$pkgver-py$_pyver.egg-info/"*
+}
+

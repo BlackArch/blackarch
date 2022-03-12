@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=hashcheck
+pkgver=2.72b0c6e
+pkgrel=2
+pkgdesc='Search for leaked passwords while maintaining a high level of privacy using the k-anonymity method.'
+groups=('blackarch' 'blackarch-crypto' 'blackarch-social' 'blackarch-recon')
+arch=('any')
+url='https://github.com/Telefonica/HashCheck'
+license=('custom:unknown')
+depends=('python' 'python-requests')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/Telefonica/HashCheck.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm -rf README.md LICENSE requirements.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python passme.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

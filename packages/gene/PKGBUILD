@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gene
+pkgver=75.2a4214a
+pkgrel=1
+groups=('blackarch' 'blackarch-windows')
+pkgdesc='Signature Engine for Windows Event Logs.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/0xrawsec/gene'
+license=('GPL3')
+makedepends=('git' 'go')
+options=('!strip')
+source=("git+https://github.com/0xrawsec/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname/$pkgname
+
+  cat > "version.go" << EOF
+package main
+
+const(
+  version="$(git tag | tail -1 | sed 's/^v//')"
+  commitID="$(git rev-parse HEAD)"
+)
+EOF
+}
+
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./$pkgname
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname/$pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
+}
+

@@ -2,25 +2,28 @@
 # See COPYING for license details.
 
 pkgname=burpsuite
-pkgver=2020.1
-pkgrel=2
+pkgver=2022.2.1
+pkgrel=1
 epoch=1
-groups=('blackarch' 'blackarch-fuzzer' 'blackarch-proxy' 'blackarch-scanner'
-        'blackarch-webapp')
-pkgdesc='An integrated platform for attacking web applications (community edition).'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-proxy' 'blackarch-scanner'
+        'blackarch-fuzzer')
+pkgdesc='An integrated platform for attacking web applications (community edition) + SHELLING plugin.'
 arch=('any')
-url='http://portswigger.net/burp/'
-depends=('jdk8-openjdk' 'giflib')
-license=('custom')
-noextract=('burpsuite.jar')
+url='https://portswigger.net/burp/releases'
+license=('custom:unknown')
+depends=('java-runtime>=9' 'giflib' 'libxext' 'libxrender' 'libxtst')
+makedepends=('git')
+noextract=("$pkgname.jar")
 source=("$pkgname.jar::https://portswigger.net/burp/releases/download?product=community&version=$pkgver&type=jar"
         'LICENSE'
-        'burpsuite.desktop'
-        'icon64.png')
-sha512sums=('ed520b3131066e4a52f9893bc5b95767a5147519cf2a15a23a4bf1c5f405569f48628aca7fc87e794052212d2049ad1b0b573abfb95462e97554be5563ce0907'
+        "$pkgname.desktop"
+        'icon64.png'
+        'git+https://github.com/PortSwigger/command-injection-attacker.git')
+sha512sums=('53450b0f27501cd5b80461d126e09db0c3d16a41875892ba994f09d4080d3211401debd93d3e6eaa3f15509232844dae9ef3590348fbe08ffb9349ea59094158'
             '07f646ce79e4e259c8da4a16ecd9b0149f09cd047ab42bfb758dc1cd4871710866e4dae6cda572f96fb49d0b156e64dd7b0a78904d9d367d41136214de5488a2'
-            '87790fac549e165f93f4e1dcaff93484957f20e7530e8b51586a22f4db594f6bfae730e4748e809c9b127571d764b026432cdaf47c282469a4ab42b037245895'
-            '928083e0189ce50304c4b32f8f6ef56be79881090bffdaddb5e990a59186ed2596c03293255693d488a47519e6da4e969e74e9bfe22a0f6ca53491a4e0749575')
+            '292dcc47a625f69f0a235c8333e74eef437ec77095f731e97e5065261a7067a03f361375a10631828b42484f77b3e5d24ce71ceff174b0d6083f3a7abebe677c'
+            '928083e0189ce50304c4b32f8f6ef56be79881090bffdaddb5e990a59186ed2596c03293255693d488a47519e6da4e969e74e9bfe22a0f6ca53491a4e0749575'
+            'SKIP')
 
 package() {
   install -dm 755 "$pkgdir/usr/bin"
@@ -33,9 +36,13 @@ package() {
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-exec \$JAVA_HOME/bin/java -jar /usr/share/$pkgname/$pkgname.jar "\$@"
+exec \$JAVA_HOME/bin/java --illegal-access=permit -jar /usr/share/$pkgname/$pkgname.jar "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
+
+  # SHELLING plugin
+  cd command-injection-attacker
+  install -Dm 644 SHELLING.jar "$pkgdir/usr/share/$pkgname/SHELLING.jar"
 }
 

@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
+
+pkgname=wmd
+pkgver=30.32e249a
+pkgrel=3
+pkgdesc='Python framework for IT security tools.'
+groups=('blackarch' 'blackarch-automation')
+arch=('any')
+url='https://github.com/ThomasTJdev/WMD'
+license=('MIT')
+depends=('python' 'python-beautifulsoup4' 'python-flask' 'python-netifaces'
+         'python-lxml' 'python-requests' 'python-psutil' 'python-rarfile'
+         'python-dateutil' 'python-paramiko' 'python' 'scapy')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/ThomasTJdev/WMD.git")
+sha1sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python wmd.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+
+  mv "$pkgdir/usr/share/$pkgname/core/config.ini.default" \
+    "$pkgdir/usr/share/$pkgname/core/config.ini"
+}
+

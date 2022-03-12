@@ -2,6 +2,7 @@
 # See COPYING for license details.
 
 pkgname=python2-poppler
+_pkgname=pypoppler
 pkgver=0.12.1
 pkgrel=11
 pkgdesc='Python 2.x bindings for Poppler.'
@@ -9,7 +10,7 @@ arch=('x86_64' 'aarch64')
 url='https://launchpad.net/poppler-python'
 license=('GPL')
 depends=('pygtk' 'poppler-glib')
-source=("https://launchpad.net/poppler-python/trunk/development/+download/pypoppler-$pkgver.tar.gz"
+source=("https://launchpad.net/poppler-python/trunk/development/+download/$_pkgname-$pkgver.tar.gz"
         'pypoppler-0.12.1-poppler-0.16.0.patch'
         'python-poppler-0.12.1-poppler-0.39.0-changes.patch')
 sha512sums=('04055411adc19f6af499a7cba0d6c5abb51e0802dd28962f833da3da1caf6ff274ff67d082f9c47548dac7a4ceb1bccf9860cda71fe48b8b7df74c0132498d20'
@@ -17,7 +18,7 @@ sha512sums=('04055411adc19f6af499a7cba0d6c5abb51e0802dd28962f833da3da1caf6ff274f
             'ac38068df3db8dc92c981e9e7c5f7de8c2e4fb47a39977b9bbb8e735a686a2e64a750ccb27158cc97b060d3c878be300b750505094e9cdf3c7e465b2cdfbf39f')
 
 prepare() {
-  cd "pypoppler-$pkgver"
+  cd "$_pkgname-$pkgver"
 
   # poppler 0.16 compat
   patch -Np0 -i ../pypoppler-0.12.1-poppler-0.16.0.patch
@@ -30,16 +31,21 @@ prepare() {
 }
 
 build() {
-  cd "pypoppler-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var \
-    PYTHON=python2
+  if [[ "$CARCH" == "x86_64" ]]; then
+    ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var \
+      PYTHON=python2
+  else
+    ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var \
+      --build=arm PYTHON=python2
+  fi
 
   make
 }
 
 package() {
-  cd "pypoppler-$pkgver"
+  cd "$_pkgname-$pkgver"
 
   make DESTDIR="$pkgdir" install
 }

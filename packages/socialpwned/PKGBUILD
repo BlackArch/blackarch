@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=socialpwned
+pkgver=v2.0.0.r2.gc7845c3
+pkgrel=1
+pkgdesc='OSINT tool that allows to get the emails, from a target, published in social networks.'
+groups=('blackarch' 'blackarch-social' 'blackarch-recon')
+arch=('any')
+url='https://github.com/MrTuxx/SocialPwned'
+license=('GPL3')
+depends=('python' 'python-moviepy' 'python-requests-toolbelt' 'python-pysocks'
+         'python-requests' 'scrapy' 'python-geopy' 'python-httpx' 'python-bs4'
+         'python-selenium-wire' 'python-selenium' 'python-imagehash' 'twint'
+         'python-pillow' 'python-dateutil' 'python-colorama' 'python-wayback'
+         'python-chromedriver-autoinstaller' 'python-beautifultable'
+         'python-termcolor')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/MrTuxx/SocialPwned.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md requirements.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

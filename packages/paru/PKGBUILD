@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# AUR Maintainer: Morgan <morganamilo@archlinux.org>
+
+pkgname=paru
+pkgver=1.7.3
+pkgrel=1
+pkgdesc='Feature packed AUR helper.'
+url='https://github.com/morganamilo/paru'
+arch=('x86_64' 'aarch64')
+license=('GPL3')
+depends=('git' 'pacman')
+makedepends=('rust' 'cargo')
+optdepends=('asp: downloading repo pkgbuilds' 'bat: colored pkgbuild printing'
+            'devtools: build in chroot')
+backup=("etc/$pkgname.conf")
+source=("https://github.com/Morganamilo/$pkgname/archive/v$pkgver.tar.gz")
+sha512sums=('4968ca76ff95039bfc51a56d194a70b81ce98fb8bbe95a5a398e7824a8ce9982a2b2a628d6de225cd3472845a85f83443b2a4f097702db40f303a1d443988409')
+
+build () {
+  cd "$pkgname-$pkgver"
+
+  if pacman -T pacman-git > /dev/null; then
+    _features+="git,"
+  fi
+
+  if [[ $(rustc -V) == *"nightly"* ]]; then
+    _features+="backtrace,"
+  fi
+
+  if [[ $CARCH != x86_64 ]]; then
+    export CARGO_PROFILE_RELEASE_LTO=off
+  fi
+
+  cargo build --locked --features "${_features:-}" --release --target-dir target
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -Dm 755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 "$pkgname.conf" "$pkgdir/etc/$pkgname.conf"
+
+  install -Dm 644 "man/$pkgname.8" "$pkgdir/usr/share/man/man8/$pkgname.8"
+  install -Dm 644 "man/$pkgname.conf.5" \
+    "$pkgdir/usr/share/man/man5/$pkgname.conf.5"
+
+  install -Dm 644 completions/bash \
+    "$pkgdir/usr/share/bash-completion/completions/$pkgname.bash"
+  install -Dm 644 completions/fish \
+  "$pkgdir/usr/share/fish/vendor_completions.d/$pkgname.fish"
+  install -Dm 644 completions/zsh \
+    "$pkgdir/usr/share/zsh/site-functions/_${pkgname}"
+}
+

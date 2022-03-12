@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD was from AUR.
+# Old Maintainer: Aaron McDaniel (mcd1992) <'aur' at the domain 'fgthou.se'>
+
+pkgname=libvmi
+pkgver=1440.c461e20
+pkgrel=2
+epoch=1
+pkgdesc='A virtual machine introspection library.'
+url='https://github.com/libvmi/libvmi'
+arch=('x86_64' 'aarch64')
+license=('LGPL')
+depends=('json-c')
+makedepends=('git' 'cmake' 'glib2' 'libvirt')
+source=("git+https://github.com/$pkgname/$pkgname.git")
+sha512sums=('SKIP')
+
+prepare() {
+  cd $pkgname
+
+  sed 's|"Build Xen driver" ON|"Build Xen driver" OFF|g' \
+    -i CMakeLists.txt
+  sed 's|0x00000007|0x00000006|g' -i "$pkgname/events.h"
+}
+
+build() {
+  cd $pkgname
+
+  mkdir -p build
+  cd build
+
+  cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+  make
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  install -dm 755 "$pkgdir/usr/include/$pkgname/"
+  cp -a --no-preserve=ownership "$pkgname/"*.h "$pkgdir/usr/include/$pkgname/"
+
+  cd build
+  make DESTDIR="$pkgdir" install
+}
+

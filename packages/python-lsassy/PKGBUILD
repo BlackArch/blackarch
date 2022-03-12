@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-lsassy
+_pkgname=lsassy
+_pyver=3.10
+pkgver=v3.1.1.r0.gf72eeb9
+pkgrel=1
+pkgdesc='Python library to remotely extract credentials on a set of hosts.'
+arch=('any')
+url='https://github.com/Hackndo/lsassy'
+license=('MIT')
+depends=('python' 'impacket' 'python-netaddr' 'python-pypykatz')
+makedepends=('python-setuptools' 'git')
+options=(!emptydirs)
+source=("git+https://github.com/Hackndo/$_pkgname")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $_pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd "$_pkgname"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/tests"
+}
+

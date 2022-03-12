@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=netripper
-pkgver=75.03b3b13
+pkgver=79.683ef1b
 pkgrel=1
 pkgdesc='Smart traffic sniffing for penetration testers.'
 groups=('blackarch' 'blackarch-windows')
@@ -21,28 +21,35 @@ pkgver() {
 }
 
 package() {
-  jobId=$(curl https://ci.appveyor.com/api/projects/NytroRST/netripper | sed 's|.*jobId":"\([^"]*\)".*|\1|gi')
+  jobId=$(curl https://ci.appveyor.com/api/projects/NytroRST/netripper |
+    sed 's|.*jobId":"\([^"]*\)".*|\1|gi')
   baseUrl="https://ci.appveyor.com/api/buildjobs/${jobId}/artifacts/"
+  msfDir="$pkgdir/opt/metasploit/modules/post/windows/gather/$pkgname/"
+
+  install -dm 755 "$msfDir"
+  install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
+  install -dm 755 "$pkgdir/opt/$pkgname/windows/archive"
 
   curl -L -o './DLL.x86.dll' "${baseUrl}x86%2FDLL.x86.dll"
   curl -L -o './DLL.x64.dll' "${baseUrl}x64%2FDLL.x64.dll"
   curl -L -o './NetRipper.x86.exe' "${baseUrl}x86%2FNetRipper.x86.exe"
   curl -L -o './NetRipper.x64.exe' "${baseUrl}x64%2FNetRipper.x64.exe"
 
-  msfDir="${pkgdir}/opt/metasploit/modules/post/windows/gather/netripper/"
-  install -dm 755 "${pkgdir}/usr/share/windows/netripper"
-  cp './DLL.x86.dll' "${pkgdir}/opt/netripper/windows/archive/DLL.x86.dll"
-  cp './DLL.x64.dll' "${pkgdir}/opt/netripper/windows/archive/DLL.x64.dll"
-  cp './NetRipper.x86.exe' "${pkgdir}/usr/share/windows/netripper/NetRipper.x86.exe"
-  cp './NetRipper.x64.exe' "${pkgdir}/usr/share/windows/netripper/NetRipper.x64.exe"
-  cp './NetRipper/PowerShell/Invoke-NetRipper.ps1' "${pkgdir}/usr/share/windows/netripper/"
+  cp ./DLL.x86.dll "$pkgdir/opt/$pkgname/windows/archive/"
+  cp ./DLL.x64.dll "$pkgdir/opt/$pkgname/windows/archive/"
+  cp ./NetRipper.x86.exe \
+    "$pkgdir/usr/share/windows/$pkgname/NetRipper.x86.exe"
+  cp ./NetRipper.x64.exe \
+    "$pkgdir/usr/share/windows/$pkgname/NetRipper.x64.exe"
+  cp "$pkgname/PowerShell/Invoke-NetRipper.ps1" \
+    "$pkgdir/usr/share/windows/$pkgname/"
 
   # Metasploit
-  install -dm 755 "${msfDir}"
-  cp './NetRipper/Metasploit/netripper.rb' "${msfDir}"
-  cp "${pkgdir}/usr/share/windows/netripper/DLL.x64.dll" "${msfDir}/DLL.x64.dll"
-  cp "${pkgdir}/usr/share/windows/netripper/DLL.x86.dll" "${msfDir}/DLL.x86.dll"
+  cp "$pkgname/Metasploit/netripper.rb" $msfDir
+  cp ./DLL.x64.dll $msfDir
+  cp ./DLL.x86.dll $msfDir
 
-  install -Dm 644 "./NetRipper/LICENSE.TXT" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 "$pkgname/LICENSE.TXT" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

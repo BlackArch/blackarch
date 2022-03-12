@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=eyeballer
+pkgver=137.d1d5182
+pkgrel=2
+pkgdesc='Convolutional neural network for analyzing pentest screenshots.'
+arch=('any')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/BishopFox/eyeballer'
+license=('GPL3')
+depends=('python' 'python-augmentor' 'python-click' 'python-matplotlib'
+         'python-numpy' 'python-pandas' 'python-pillow' 'python-scikit-learn'
+         'python-tensorflow' 'python-jinja' 'python-progressbar')
+makedepends=('git' 'unzip' 'wget')
+source=("git+https://github.com/BishopFox/$pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" $pkgname.py
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  cp -a --no-preserve=ownership docs/ "$pkgdir/usr/share/doc/$pkgname/"
+
+  rm -r docs/ *.md LICENSE requirements*
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

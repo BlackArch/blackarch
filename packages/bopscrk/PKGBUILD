@@ -2,15 +2,15 @@
 # See COPYING for license details.
 
 pkgname=bopscrk
-pkgver=28.f1b2aef
-pkgrel=1
+pkgver=72.34fb3fd
+pkgrel=3
 pkgdesc='Tool to generate smart wordlists, eg. based on lyrics.'
 arch=('any')
 groups=('blackarch' 'blackarch-automation' 'blackarch-cracker')
 url='https://github.com/R3nt0n/bopscrk'
 license=('GPL3')
-depends=('python2' 'python2-requests' 'python2-beautifulsoup4')
-makedepends=('git' 'python2-setuptools')
+depends=('python' 'python-requests' 'python-beautifulsoup4')
+makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/R3nt0n/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -20,24 +20,17 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd "$pkgname"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-
-  rm -rf *.md *.txt img LICENSE
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  mv "$pkgdir/usr/bin/${pkgname}.py" "$pkgdir/usr/bin/$pkgname"
 }
 

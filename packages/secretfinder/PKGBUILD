@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=secretfinder
+pkgver=14.a0283cb
+pkgrel=2
+epoch=1
+pkgdesc='A python script to find sensitive data (apikeys, accesstoken, jwt,..) in javascript files.'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-recon')
+url='https://github.com/m4ll0k/SecretFinder'
+license=('GPL3')
+depends=('python' 'python-requests' 'python-requests-file' 'python-argparse'
+         'python-jsbeautifier' 'python-lxml')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/m4ll0k/SecretFinder.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  rm README.md requirements.txt LICENSE
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python SecretFinder.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

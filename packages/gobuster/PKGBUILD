@@ -2,19 +2,17 @@
 # See COPYING for license details.
 
 pkgname=gobuster
-pkgver=292.aa41e04
-pkgrel=2
-epoch=1
+pkgver=334.f7bc132
+pkgrel=1
+epoch=2
 pkgdesc='Directory/file & DNS busting tool written in Go.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/OJ/gobuster'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
-license=('APACHE')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+license=('Apache')
+makedepends=('git' 'go')
 source=("git+https://github.com/OJ/$pkgname.git")
 sha512sums=('SKIP')
-_url='github.com/OJ/gobuster'
 
 pkgver() {
   cd $pkgname
@@ -22,25 +20,24 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  cd $pkgname
-
-  git switch v3.1-working
-}
-
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t .
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
   cd $pkgname
 
-  GOPATH="$srcdir" go build -v .
-
-  install -Dm 755 gobuster "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md THANKS
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

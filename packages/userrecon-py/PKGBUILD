@@ -2,16 +2,17 @@
 # See COPYING for license details.
 
 pkgname=userrecon-py
-pkgver=27.0916684
-pkgrel=2
+pkgver=15.eebd422
+pkgrel=3
+epoch=1
 pkgdesc='Recognition usernames in 187 social networks.'
 groups=('blackarch' 'blackarch-social' 'blackarch-recon')
 arch=('any')
-url='https://github.com/decoxviii/userrecon-py'
+url='https://github.com/lucmski/userrecon-py'
 license=('MIT')
 depends=('python' 'python-aiohttp' 'python-colorama')
 makedepends=('git')
-source=("git+https://github.com/decoxviii/$pkgname.git")
+source=("git+https://github.com/lucmski/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
@@ -20,18 +21,25 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-build() {
-  cd $pkgname
-
-  python setup.py build
-}
-
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr --skip-build
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm LICENSE *.txt *.py *.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/bin
+exec python $pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

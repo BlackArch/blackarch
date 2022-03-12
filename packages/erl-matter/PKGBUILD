@@ -1,0 +1,59 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=erl-matter
+pkgver=46.a983e94
+pkgrel=1
+pkgdesc='Tool to exploit epmd related services such as rabbitmq, ejabberd and couchdb by bruteforcing the cookie and gaining RCE afterwards.'
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-cracker')
+arch=('x86_64' 'aarch64')
+url='https://github.com/gteissier/erl-matter'
+license=('custom:unknown')
+depends=('glibc' 'python')
+makedepends=('git')
+source=("git+https://github.com/gteissier/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  make all
+}
+
+package() {
+  cd $pkgname
+
+  tools='bruteforce-erldp complete-cookie crack-prng'
+  ptools='bin-seeds dictionary-erldp erldp-proxy shell-erldp
+  sweep-default-cookie'
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf README.md LICENSE *{c,o,h} Makefile
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+for t in $tools ; do
+  cat > "$pkgdir/usr/bin/$t" << EOF
+exec /usr/share/$pkgname/$t "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/$t"
+done
+for p in $ptools ; do
+  cat > "$pkgdir/usr/bin/$p" << EOF
+exec /usr/share/$pkgname/${p}.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/$p"
+done
+}
+

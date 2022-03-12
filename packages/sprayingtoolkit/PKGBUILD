@@ -1,0 +1,68 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sprayingtoolkit
+_pkgname=SprayingToolkit
+pkgver=58.68f295d
+pkgrel=3
+pkgdesc='Scripts to make password spraying attacks against Lync/S4B & OWA a lot quicker, less painful and more efficient.'
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+arch=('any')
+url="https://github.com/byt3bl33d3r/$_pkgname"
+license=('GPL3')
+depends=('python' 'python-virtualenv')
+makedepends=('git')
+source=("git+https://github.com/byt3bl33d3r/$_pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE Pipfile Pipfile.lock
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname-atomizer" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+source venv/bin/activate
+exec python atomizer.py "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/$pkgname-vaporizer" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+source venv/bin/activate
+exec mitmdump -s vaporizer.py "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/$pkgname-aerosol" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+source venv/bin/activate
+exec mitmdump -s aerosol.py "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/$pkgname-spindrift" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+source venv/bin/activate
+exec python spindrift.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname-"*
+
+}

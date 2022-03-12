@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=mqtt-pwn
+pkgver=43.40368e5
+pkgrel=2
+pkgdesc='A one-stop-shop for IoT Broker penetration-testing and security assessment operations.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+arch=('any')
+url='https://github.com/akamai-threat-research/mqtt-pwn'
+license=('GPL3')
+depends=('python' 'python-blessings' 'python-peewee' 'python-pygments'
+         'python-shodan' 'python-cmd2' 'python-paho-mqtt' 'python-prettytable')
+makedepends=('git')
+source=("git+https://github.com/akamai-threat-research/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst
+
+  rm README.rst LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python run.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

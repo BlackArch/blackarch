@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gsa
+pkgver=21.4.4
+pkgrel=1
+pkgdesc='Greenbone Security Assistant.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/greenbone/gsa'
+license=('GPL')
+depends=('gvm-libs>21.4' 'libgcrypt' 'gnutls' 'postgresql' 'libxml2'
+         'libmicrohttpd' 'openvas-scanner' 'ospd-openvas')
+makedepends=('cmake' 'doxygen' 'xmltoman' 'nodejs' 'npm')
+source=("https://github.com/greenbone/gsa/archive/v$pkgver.tar.gz")
+sha512sums=('5a7b45132a049adf608ccd8988d69a415290cc57d6e7537835a78e19aafb5dfdf204197576f69277726587efaccce189c1ccab55c43e5a0a7855c538b3bc4b67')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  cmake -DCMAKE_BUILD_TYPE=Release -DSBINDIR=/usr/bin \
+    -DCMAKE_INSTALL_PREFIX=/usr -DSYSCONFDIR=/etc -DLOCALSTATEDIR=/var .
+
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  rm -rf "$pkgdir/lib"
+
+  install -d "$pkgdir/usr/lib/systemd/system"
+
+  install -m 644 "$srcdir/$pkgname-$pkgver/gsad/config/gsad.service" \
+    "$pkgdir/usr/lib/systemd/system"
+
+  #Fix systemd unit file missing directive yet
+  sed -ri '11i RuntimeDirectory=gvm' \
+    "$pkgdir/usr/lib/systemd/system/gsad.service"
+}
+

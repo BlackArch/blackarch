@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=plasma-disasm
+_pkgname=plasma
+pkgver=922.ec7df9b
+pkgrel=3
+groups=('blackarch' 'blackarch-disassembler' 'blackarch-binary'
+        'blackarch-debugger')
+pkgdesc='An interactive disassembler for x86/ARM/MIPS. It can generates indented pseudo-code with colored syntax.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/joelpx/plasma'
+license=('GPL3')
+depends=('python' 'python-capstone' 'python-pyelftools' 'python-pefile'
+         'python-msgpack' 'python-pefile' 'python-pyqt4' 'python-nose')
+makedepends=('git' 'python-setuptools' 'python-nose' 'python-pip')
+source=("$pkgname::git+https://github.com/joelpx/$_pkgname.git"
+        'setup.py.patch')
+sha512sums=('SKIP'
+            '2e20f77ed97d17da5f68a61f3308f03f1a24817f7cba2b0e4f915b55f2bc1fecea107209c06b863f69653f6e01f510656593d15a8812f0b19a691303af5dc4c9')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  patch -p0 < "$srcdir/setup.py.patch"
+
+  find . -type f -exec sed -i 's|/bin/python3|/usr/bin/env python3|' {} +
+
+  sed -i 's/msgpack-python>=0.4.6/msgpack/' requirements.txt
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python setup.py build_ext --inplace
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md LICENSE
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/$pkgname"
+}
+

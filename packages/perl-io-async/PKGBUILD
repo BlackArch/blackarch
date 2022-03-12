@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+#
+# This PKGBUILD was extracted from AUR.
+# Creator: Jakob Nixdorf <flocke@shadowice.org>
+# Changes by: petruknisme
+
+pkgname=perl-io-async
+_pkgname=IO-Async
+pkgver=0.78
+pkgrel=1
+pkgdesc='Asynchronous event-driven programming.'
+arch=('any')
+url='https://metacpan.org/release/IO-Async'
+license=('GPL' 'PerlArtistic')
+depends=('perl>=5.10.0' 'perl-future' 'perl-struct-dumb')
+makedepends=('perl-test-fatal' 'perl-test-identity' 'perl-test-refcount')
+options=('!emptydirs' 'purge')
+source=("https://cpan.metacpan.org/authors/id/P/PE/PEVANS/$_pkgname-$pkgver.tar.gz")
+sha512sums=('da3a9ed058000fe254ddcf1d97648278674135c52f7201d200db5c63f7401db297d93932b5b40fb6be79bbe0935e51e6963869563d9467ace63286546c9d2362')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB="" PERL_AUTOINSTALL=--skipdeps \
+    PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'" \
+    PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+    MODULEBUILDRC=/dev/null
+
+    #/usr/bin/perl Makefile.PL
+
+    #make
+    /usr/bin/perl Build.PL INSTALLDIRS=vendor && ./Build && ./Build
+  )
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  ./Build install
+
+  find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}
+

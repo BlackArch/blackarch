@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ffm
+pkgver=59.2afb61a
+pkgrel=2
+pkgdesc='A hacking harness that you can use during the post-exploitation phase of a red-teaming engagement.'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation')
+url='https://github.com/JusticeRage/FFM'
+license=('custom:unkown')
+depends=('python' 'python-tqdm')
+makedepends=('git')
+source=("git+https://github.com/JusticeRage/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin/"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd "/usr/share/$pkgname"
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

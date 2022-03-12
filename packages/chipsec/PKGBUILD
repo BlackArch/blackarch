@@ -2,37 +2,45 @@
 # See COPYING for license details.
 
 pkgname=chipsec
-pkgver=1.4.6.r0.gfc9914b
+pkgver=1378.d27a5ddf
 pkgrel=1
-epoch=3
+epoch=4
 pkgdesc='Platform Security Assessment Framework.'
 groups=('blackarch' 'blackarch-hardware' 'blackarch-binary' 'blackarch-forensic'
         'blackarch-scanner' 'blackarch-fuzzer')
-arch=('x86_64' 'armv8h')
+arch=('x86_64' 'aarch64')
 url='https://github.com/chipsec/chipsec'
 license=('GPL2')
-depends=('dkms' 'libelf' 'linux-headers' 'nasm' 'python2' 'python2-lxml')
-makedepends=('git' 'python2-setuptools')
-source=("git+https://github.com/chipsec/$pkgname.git")
-sha512sums=('SKIP')
-
+depends=('dkms' 'libelf' 'linux-headers' 'nasm' 'python' 'python-lxml')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/chipsec/$pkgname.git"
+        'Makefile.patch')
+sha512sums=('SKIP'
+            'b3bd500b37871e8c0c9132613fd9254014c5288b24d7e88acacc695dbb3ff2d384c72186536e2fe5225c31b438f5d08fad991503c9335021cf03c3ed8c29e85f'
+           )
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd "$pkgname/drivers/linux"
+
+  #patch -Np0 < "$srcdir/Makefile.patch"
 }
 
 build() {
   cd $pkgname
 
-  python2 setup.py build
+  python setup.py build
 }
 
 package() {
   cd $pkgname
 
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build --skip-driver
+  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build \
+    --skip-driver
 
   install -Dm 644 drivers/linux/dkms.conf \
     "$pkgdir/usr/src/$pkgname-$pkgver/dkms.conf"
@@ -43,6 +51,10 @@ package() {
     chipsec-manual.pdf
   install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE COPYING
 
-  rm -rf "$pkgdir/usr/chipsec-manual.pdf"
+  rm -f "$pkgdir/usr/chipsec-manual.pdf"
+
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i "$(echo $i | tr -s '_' '-')"
+  done
 }
 

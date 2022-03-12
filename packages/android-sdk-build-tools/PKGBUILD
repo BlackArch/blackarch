@@ -1,36 +1,41 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
-
+#
 # Contributor: xgdgsc <xgdgsc @t gmail dot com>
 
-pkgname=android-sdk-build-tools
-_ver=29.0.2
-pkgver=r29.0.2
-pkgrel=1
-pkgdesc='Build-Tools for Google Android SDK (aapt, aidl, dexdump, dx, llvm-rs-cc)'
-arch=('x86_64' 'aarch64')
-url='http://developer.android.com/sdk/index.html'
-license=('custom:unknown')
-depends_i686=('gcc-libs' 'zlib')
-depends_x86_64=('lib32-gcc-libs' 'lib32-zlib')
+_android=android-11
 _sdk=android-sdk
+pkgname=android-sdk-build-tools
+pkgver=r32
+pkgrel=1
+pkgdesc='Build-Tools for Google Android SDK (aapt, aidl, dexdump, dx, llvm-rs-cc).'
+arch=('x86_64' 'aarch64')
+url='https://developer.android.com/studio/releases/build-tools'
+license=('custom:unknown')
+depends=('zlib')
 source=("https://dl-ssl.google.com/android/repository/build-tools_$pkgver-linux.zip")
-sha512sums=('61d17c3e21f51e6c7589b688eaa87e93862f189ec33e0df64413fae510d6602178348ef9833cb00f5b1071cf5baf306b4a25d9b9f8520a3e722ad0f9451e0942')
-_android=android-8.1.0
+sha512sums=('effdb12758877bbceaa9efb638798cc7c018f3d9e48632a509445bbf5f684d287984f0657d832c6d78c4434d6425dccbc1cda08c0e63aa749c03ec996809eba9')
 options=('!strip')
 
 package() {
   cd $pkgdir
 
-  install -Dm 644 "$srcdir/$_android/NOTICE.txt" \
-    "usr/share/licenses/$pkgname/NOTICE.txt"
-
   ver=$(cat "$srcdir/$_android/source.properties" |
   grep ^Pkg.Revision=|sed 's/Pkg.Revision=\([0-9.]*\).*/\1/')
 
-  install -dm 755 opt/$_sdk/build-tools/$ver
-  cp -r "$srcdir/$_android/"* "$pkgdir/opt/$_sdk/build-tools/$ver"
-
+  install -dm 755 "opt/$_sdk/build-tools/$ver"
+  install -dm 755 "usr/bin"
+  install -Dm 644 "$srcdir/$_android/NOTICE.txt" \
+    "usr/share/licenses/$pkgname/NOTICE.txt"
+  cp -r "$srcdir/$_android/"* "opt/$_sdk/build-tools/$ver"
   chmod +Xr -R "$pkgdir/opt/$_sdk/build-tools/$ver"
+
+  binaries=("aapt" "aapt2" "aidl" "apksigner" "bcc_compat" "d8" "dexdump" "dx" \
+    "llvm-rs-cc" "mainDexClasses" "split-select" "zipalign")
+
+  for f in "${binaries[@]}"
+  do
+    ln -s "/opt/$_sdk/build-tools/$ver/$f" "usr/bin/$f"
+  done
 }
 

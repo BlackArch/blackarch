@@ -1,0 +1,71 @@
+From 9a3422e1a6cf519e3fedce396784be2ef48dc7f9 Mon Sep 17 00:00:00 2001
+From: Mark Vieira <portugee@gmail.com>
+Date: Fri, 10 Dec 2021 15:51:38 -0800
+Subject: [PATCH] Patch log4j JAR to remove JndiLookup class (#81629)
+
+
+diff --git a/distribution/build.gradle b/distribution/build.gradle
+index feab67bfbf8..76549a83d0b 100644
+--- a/distribution/build.gradle
++++ b/distribution/build.gradle
+@@ -275,6 +275,10 @@ configure(subprojects.findAll { ['archives', 'packages'].contains(it.name) }) {
+         }
+       }
+     }
++    all {
++      resolutionStrategy.dependencySubstitution {
++        substitute module("org.apache.logging.log4j:log4j-core") using project(":libs:elasticsearch-log4j") because "patched to remove JndiLookup clas"}
++    }
+   }
+ 
+   dependencies {
+diff --git a/libs/build.gradle b/libs/build.gradle
+index 0614199b97b..952985f5aa5 100644
+--- a/libs/build.gradle
++++ b/libs/build.gradle
+@@ -6,7 +6,7 @@
+  * Side Public License, v 1.
+  */
+ 
+-subprojects {
++configure(subprojects - project('elasticsearch-log4j')) {
+   /*
+    * All subprojects are java projects using Elasticsearch's standard build
+    * tools.
+diff --git a/libs/log4j/build.gradle b/libs/log4j/build.gradle
+new file mode 100644
+index 00000000000..917a9f454a1
+--- /dev/null
++++ b/libs/log4j/build.gradle
+@@ -0,0 +1,28 @@
++plugins {
++  id 'base'
++  id 'elasticsearch.repositories'
++}
++
++configurations {
++  log4j {
++    transitive = false
++  }
++}
++
++dependencies {
++  log4j "org.apache.logging.log4j:log4j-core:${versions.log4j}"
++}
++
++// Strip out JndiLookup class to avoid any possibility of exploitation of CVE-2021-44228
++// See: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-44228
++// See: https://issues.apache.org/jira/browse/LOG4J2-3201
++def patchLog4j = tasks.register('patchLog4j', Zip) {
++  archiveExtension = 'jar'
++  from({ zipTree(configurations.log4j.singleFile) }) {
++    exclude '**/JndiLookup.class'
++  }
++}
++
++artifacts {
++  'default'(patchLog4j)
++}
+-- 
+2.34.1
+

@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=intelplot
+pkgver=12.4dd9fc0
+pkgrel=1
+pkgdesc='OSINT Tool to Mark Points on Offline Map.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/itsmehacker/IntelPlot'
+license=('MIT')
+depends=('php')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/itsmehacker/IntelPlot.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  rm *.md LICENSE
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+if [ -z "\$@" ]; then
+    echo "Usage: $pkgname <PORT>"
+    exit 1
+fi
+
+cd /usr/share/$pkgname
+exec php -S 127.0.0.1:\$@
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

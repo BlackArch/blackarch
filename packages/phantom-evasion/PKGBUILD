@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=phantom-evasion
+pkgver=103.2cd0673
+pkgrel=2
+pkgdesc='Antivirus evasion tool written in python.'
+groups=('blackarch' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/oddcod3/Phantom-Evasion'
+license=('GPL3')
+depends=('python' 'gcc-multilib' 'mingw-w64-binutils' 'metasploit'
+         'mingw-w64-gcc' 'dex2jar' 'sign' 'python-pyopenssl')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/oddcod3/Phantom-Evasion.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm LICENSE README.md
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python3 "$pkgname.py" "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

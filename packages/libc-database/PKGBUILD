@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=libc-database
+pkgver=45.69815cd
+pkgrel=1
+pkgdesc='Database of libc offsets to simplify exploitation.'
+groups=('blackarch' 'blackarch-reversing' 'blackarch-exploitation')
+arch=('any')
+url='https://github.com/niklasb/libc-database'
+license=('custom:unknown')
+makedepends=('git' 'wget')
+source=("git+https://github.com/niklasb/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  ./get
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  _tools="add download dump find get identify"
+  for tool in $_tools; do
+    cat > "$pkgdir/usr/bin/libc-$tool" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ./$tool "\$@"
+EOF
+    chmod 755 "$pkgdir/usr/bin/libc-$tool"
+  done
+}
+

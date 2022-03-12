@@ -1,0 +1,55 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=hellraiser
+pkgver=275.5d56cf7
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+pkgdesc='Vulnerability Scanner.'
+arch=('any')
+url='https://github.com/m0nad/HellRaiser'
+license=('custom:unknown')
+options=('!strip')
+depends=('ruby2.7' 'ruby-bundler' 'ruby-pkg-config' 'libxslt' 'redis' 'nmap'
+         'ruby-foreman' 'ruby-rake' 'nodejs')
+makedepends=('git' 'make')
+source=("$pkgname::git+https://github.com/m0nad/HellRaiser.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i "s/2.7.2/2.7.3/g" Gemfile
+  #sed -i "s/bundle/\/opt\/ruby2.7\/bin\/bundle-2.7/g" Procfile
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname/"
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec foreman start "\$@"
+EOF
+
+  rm "$pkgdir/usr/share/$pkgname/Gemfile.lock"
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

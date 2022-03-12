@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=x-rsa
+pkgver=163.f39358f
+pkgrel=3
+pkgdesc='Contains a many of attack types in RSA such as Hasted, Common Modulus, Chinese Remainder Theorem.'
+groups=('blackarch' 'blackarch-crypto')
+arch=('any')
+url='https://github.com/X-Vector/X-RSA'
+license=('GPL3')
+depends=('gmp' 'libmpc' 'mpfr' 'python' 'python-pycryptodome'
+         'python-gmpy2' 'python-sympy' 'python-requests' 'python-future')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/X-Vector/X-RSA.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm LICENSE README.md requirement.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/
+exec python3 Attack.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

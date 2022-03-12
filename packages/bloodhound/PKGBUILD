@@ -1,78 +1,62 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-_npmname=BloodHound
 pkgname=bloodhound
-pkgver=703.303f8fe
+pkgver=1316.5ac7a21
 pkgrel=1
 pkgdesc='Six Degrees of Domain Admin'
 groups=('blackarch' 'blackarch-recon' 'blackarch-windows')
 arch=('x86_64' 'aarch64')
 url='https://github.com/BloodHoundAD/BloodHound'
 license=('GPL3')
-depends=('nodejs' 'neo4j-community' 'alsa-lib' 'gtk2' 'libxss' 'gconf' 'nss'
-         'libxtst')
-makedepends=('git' 'nodejs-electron-packager' 'npm')
+depends=('nodejs-lts-gallium' 'neo4j-community' 'alsa-lib' 'gtk3' 'libxss' 'nss'
+         'gconf' 'libxtst' 'jre11-openjdk-headless')
+makedepends=('git' 'nodejs-electron-packager' 'npm' 'unzip')
 optdepends=('python: for some scripts' 'powershell: for PowerShell ingestion')
-source=('git+https://github.com/BloodHoundAD/BloodHound.git'
-        'singlearch.patch')
+source=("$pkgname::git+https://github.com/BloodHoundAD/BloodHound.git")
 options=(!strip)
-sha512sums=('SKIP'
-            'def465fd091d4c62b1ba6c829062fc9f9bcd90e9c262a0ec057348eca777bc70c71323e818829c838cf3b36d2ce79795b1e6b6dc37f2a91665e40c486724c039')
-if [ "$CARCH" = "x86_64" ]
-then
-	_npmcmd='linuxbuild_64'
-	_arch='x64'
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+if [ "$CARCH" = "x86_64" ]; then
   _path='BloodHound-linux-x64'
-elif [ "$CARCH" = "armv7h" ]
-then
-  _npmcmd='linuxbuild_arm'
-  _arch='armv7l'
-  _path='BloodHound-linux-armv7l'
-elif [ "$CARCH" = 'aarch64' ]
-then
-  _npmcmd='linuxbuild_arm'
-  _arch='armv7l'
+else
   _path='BloodHound-linux-armv7l'
 fi
 
 pkgver() {
-  cd "$_npmname"
+  cd "$pkgname"
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  cd "$_npmname"
-
-  patch -Np2 -i ../singlearch.patch
-}
-
 build() {
-  cd "$_npmname"
+  cd "$pkgname"
 
   npm install
-  npm run $_npmcmd
+  npm run build
 }
 
 package() {
-  cd "$_npmname"
+  cd "$pkgname"
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE*.md
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 
-  rm *.md
+  cp -a --no-preserve=ownership docs/ "$pkgdir/usr/share/doc/$pkgname/"
 
-  cp -a *.js *.json *.sh *.html *.yml src $_path *.graphdb dist \
-    "$pkgdir/usr/share/$pkgname"
+  rm -r *.md docs/
+
+  cp -a --no-preserve=ownership $_path Collectors/ \
+    dist/ src/ *.js *.json *.html "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname/$_path
-exec ./BloodHound "\$@"
+echo "To start neo4j: systemctl start neo4j"
+exec ./BloodHound --no-sandbox "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"

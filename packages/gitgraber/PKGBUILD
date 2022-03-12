@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gitgraber
+pkgver=67.72e5850
+pkgrel=5
+pkgdesc='Monitor GitHub to search and find sensitive data in real time for different online services.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/hisxo/gitGraber'
+license=('GPL3')
+depends=('python' 'python-requests' 'python-argcomplete'
+         'python-python-crontab' 'python-termcolor')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/hisxo/gitGraber.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+
+  rm COPYING README.md requirements.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python gitGraber.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

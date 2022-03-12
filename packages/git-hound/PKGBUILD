@@ -2,17 +2,16 @@
 # See COPYING for license details.
 
 pkgname=git-hound
-pkgver=63.c08cb1f
+pkgver=123.41500b1
 pkgrel=1
 pkgdesc='Pinpoints exposed API keys on GitHub. A batch-catching, pattern-matching, patch-attacking secret snatcher.'
 groups=('blackarch' 'blackarch-recon' 'blackarch-social')
-arch=('any')
+arch=('x86_64' 'aarch64')
 url='https://github.com/tillson/git-hound'
 license=('MIT')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/tillson/$pkgname.git")
 sha512sums=('SKIP')
-_url="github.com/tillson/$pkgname"
 
 pkgver() {
   cd $pkgname
@@ -21,22 +20,24 @@ pkgver() {
 }
 
 build() {
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
-    cd "src/$_url"
+  cd $pkgname
 
-  GOPATH="$srcdir" go get -v -d -t $_url
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-  GOPATH="$srcdir" go build -v $_url
+  cd $pkgname
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "src/$_url/"*.md
-  install -Dm 644 "src/$_url/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  install -Dm 644 "src/$_url/config.example.yml" \
-    "$pkgdir/usr/share/$pkgname/config.yml"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 config.example.yml "$pkgdir/usr/share/$pkgname/config.yml"
 }
 

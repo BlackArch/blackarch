@@ -44,12 +44,27 @@ remote_irc_notify() {
 		s=s
 	fi
 
+	discord_notify() {
+		webhook_file="/etc/discord_webhook"
+		webhook_url="$(cat ${webhook_file})"
+
+    x="$(echo ${1} | sed 's/\x02//g')"
+    curl "${webhook_url}" \
+      -s \
+			-X 'POST' \
+			-H 'Content-Type: application/json' \
+      -d "{\"username\": \"Bitch Talker\", \"embeds\": [{\"description\": \"${x}\", \"color\": 15258703}]}"
+	}
+
 	url_encode() {
 		xxd -plain | tr -d '\n' | sed 's/\(..\)/%\1/g'
 	}
 
 	send_payload() {
 		curl -s "$hook_url" -d "payload=$(printf %s "$1" | url_encode)"
+
+		# discord webhook only
+		discord_notify "${1}"
 	}
 
 	# TODO: group packages by name
@@ -74,3 +89,4 @@ remote_irc_notify() {
 }
 
 ssh -l "$user" "$site" "$(declare -f remote_irc_notify); remote_irc_notify ${notify_list[@]}"
+

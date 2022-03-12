@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=hiddeneye-legacy
+pkgver=RC1.r226.g7a3deaf
+pkgrel=2
+pkgdesc='Modern Phishing Tool With Advanced Functionality.'
+arch=('any')
+groups=('blackarch' 'blackarch-social')
+url='https://github.com/DarkSecDevelopers/HiddenEye-Legacy'
+license=('GPL3')
+depends=('python' 'python-certifi' 'python-chardet' 'python-future'
+         'python-idna' 'python-pyngrok' 'python-yaml' 'python-requests'
+         'python-urllib3' 'python-pgrep' 'python-kill')
+makedepends=('git')
+source=("git+https://github.com/DarkSecDevelopers/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin/"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+
+  rm *.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd "/usr/share/$pkgname"
+exec python HiddenEye.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

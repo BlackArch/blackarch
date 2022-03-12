@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# NOTE: currently we fool around and use the pre-built binary version of this
+# tool since building from sources fails atm. this will be changed as soon as
+# upstream fixed this issue. but we want to use the git-tag version (that's why
+# we go with vcs packaging style here.) - remove this NOTE as soon as we built
+# sucessfully from source.
+
+pkgname=phoneinfoga
+pkgver=v2.3.9.r0.g04c0f0b
+_pkgver=$(echo $pkgver | cut -d '.' -f 1-3)
+pkgrel=1
+pkgdesc='Information gathering & OSINT framework for phone numbers.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-social' 'blackarch-mobile')
+url='https://github.com/sundowndev/PhoneInfoga'
+license=('GPL3')
+depends=('glibc')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/sundowndev/PhoneInfoga.git")
+md5sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+	git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+  cd $pkgname
+
+  if [[ $CARCH == 'x86_64' ]]; then
+    _carch=$CARCH
+  else
+    _carch=arm64
+  fi
+
+  curl -LOs \
+    https://github.com/sundowndev/phoneinfoga/releases/download/$_pkgver/PhoneInfoga_Linux_${_carch}.tar.gz
+
+  tar xfz PhoneInfoga_Linux_*.tar.gz
+  rm -rf PhoneInfoga_Linux_*.tar.gz
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" docs/*.md *.md
+}
+

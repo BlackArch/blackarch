@@ -3,31 +3,37 @@
 
 pkgname=obfs4proxy
 pkgver=0.0.11
-pkgrel=2
+pkgrel=3
 pkgdesc='A pluggable transport proxy written in Go.'
 groups=('blackarch' 'blackarch-proxy' 'blackarch-networking')
 arch=('x86_64' 'aarch64')
-url='https://gitweb.torproject.org/pluggable-transports/obfs4.git'
+url='https://gitlab.com/yawning/obfs4'
 license=('BSD')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 optdepends=('tor')
-source=("git+https://git.torproject.org/pluggable-transports/obfs4.git#tag=obfs4proxy-$pkgver")
-sha512sums=('SKIP')
+source=("$pkgname::https://gitlab.com/yawning/obfs4/-/archive/obfs4proxy-$pkgver/obfs4-obfs4proxy-$pkgver.tar.gz")
+sha512sums=('3eb50bc8067802f8260e0926999a659919e55cb34247f443f66a4852c9ceceacae361602a57ad1fd28a84e4ed54f3800c3258e67266eb23d45b1d09e31c5d869')
 
 build() {
-  cd "obfs4/$pkgname"
+  cd obfs4-$pkgname-$pkgver
 
-  GOPATH="$srcdir" go get -d
-  GOPATH="$srcdir" go build -o $pkgname
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname-bin ./$pkgname
 }
 
 package() {
-  cd obfs4
+  cd obfs4-$pkgname-$pkgver
 
-  install -Dm 755 "$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 $pkgname-bin "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 "doc/$pkgname.1" "$pkgdir/usr/share/man/man1/$pkgname.1"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/ChangeLog" ChangeLog
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/ChangeLog" ChangeLog \
+    doc/obfs4-spec.txt
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

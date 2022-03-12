@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=dnsrecon
-pkgver=0.9.0
-pkgrel=2
+pkgver=1.0.0
+_pyver=3.10
+pkgrel=3
 epoch=2
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='Python script for enumeration of hosts, subdomains and emails from a given domain using google.'
@@ -11,7 +12,7 @@ url='https://github.com/darkoperator/dnsrecon'
 license=('custom')
 arch=('any')
 depends=('python' 'python-netaddr' 'python-dnspython' 'python-lxml')
-makedepends=('git')
+makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/darkoperator/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -21,24 +22,17 @@ pkgver() {
   grep -m1 __version "$pkgname.py" | cut -d '=' -f 2 | sed "s/'//g" | tr -d ' '
 }
 
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-
-  rm README.md
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python3 $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/tests"
 }
 

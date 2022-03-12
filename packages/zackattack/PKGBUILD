@@ -3,14 +3,14 @@
 
 pkgname=zackattack
 pkgver=5.1f96c14
-pkgrel=5
+pkgrel=7
 pkgdesc='A new tool set to do NTLM Authentication relaying unlike any other tool currently out there.'
 groups=('blackarch' 'blackarch-networking' 'blackarch-scanner'
         'blackarch-cracker')
 arch=('any')
 url='https://github.com/urbanesec/ZackAttack/'
 license=('custom:unknown')
-depends=('ruby1.8' 'ruby1.8-sqlite3')
+depends=('ruby' 'ruby-sqlite3' 'ruby-webrick')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/urbanesec/ZackAttack.git")
 sha512sums=('SKIP')
@@ -19,6 +19,12 @@ pkgver() {
   cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i "s|'sqlite3', '1.3.6'|'sqlite3'|g" lib/zfdb.rb
 }
 
 package() {
@@ -37,7 +43,7 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec ruby-1.8 $pkgname.rb "\$@"
+exec ruby $pkgname.rb "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"

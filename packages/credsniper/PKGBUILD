@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=credsniper
+pkgver=21.f52461b
+pkgrel=3
+pkgdesc='Phishing framework written with the Python micro-framework Flask and Jinja2 templating which supports capturing 2FA tokens.'
+arch=('any')
+groups=('blackarch' 'blackarch-social')
+url='https://github.com/ustayready/CredSniper'
+license=('Apache')
+depends=('gnupg' 'python' 'python-flask' 'python-mechanicalsoup'
+         'python-pyopenssl')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/ustayready/CredSniper.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/certs"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md install.sh
+  cp -a --no-preserve=ownership screenshots/ "$pkgdir/usr/share/doc/$pkgname/"
+
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  rm -r screenshots/ *.md LICENSE *.sh *.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

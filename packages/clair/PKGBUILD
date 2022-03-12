@@ -2,25 +2,58 @@
 # See COPYING for license details.
 
 pkgname=clair
-pkgver=2.1.2
+pkgver=1492.6d2dfbea
 pkgrel=1
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='Vulnerability Static Analysis for Containers.'
 arch=('x86_64' 'aarch64')
+url='https://github.com/quay/clair'
 license=('APACHE')
-depends=('glibc')
-makedepends=('git' 'go-pie')
-url='https://github.com/coreos/clair'
-source=("https://github.com/coreos/$pkgname/archive/v$pkgver.tar.gz")
-sha512sums=('6c30f46aea19b2a9ca0bb4aa2b62d60c17d1888cdd963cd152550957bc7cc3d92e71703f9e4e12ce78c4e531ae0ecabee6c5bc47102a08ed70b7d5ae15225b05')
+depends=('glibc' 'rpm-tools')
+makedepends=('git' 'go')
+source=("git+https://github.com/quay/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/$pkgname
+
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o clairctl ./cmd/clairctl
+}
+
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
-  GOPATH="$srcdir" go install -v "github.com/coreos/$pkgname/cmd/$pkgname"
+  install -dm 755 "$pkgdir/etc/clair"
 
-  install -Dm 755 "$srcdir/bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 clairctl "$pkgdir/usr/bin/clairctl"
+  install -Dm 644 -t "$pkgdir/etc/clair/" *.yaml *.yaml.sample
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md NOTICE
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -r --no-preserve=ownership Documentation/* "$pkgdir/usr/share/doc/$pkgname/"
+  cp "$pkgdir/etc/clair/config.yaml.sample" "$pkgdir/etc/clair/config.yaml"
 }
 

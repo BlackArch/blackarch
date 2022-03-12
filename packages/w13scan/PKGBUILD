@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=w13scan
-pkgver=308.3eaa184
+pkgver=419.24484ae
 pkgrel=1
 pkgdesc='Passive Security Scanner.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
@@ -10,9 +10,10 @@ arch=('any')
 url='https://github.com/boy-hack/w13scan'
 license=('GPL2')
 depends=('python' 'python-asn1crypto' 'python-certifi' 'python-cffi'
-         'python-chardet' 'python-colorama' 'python-cryptography'
+         'python-chardet' 'python-colorama' 'python-cryptography' 'python-cowpy'
          'python-idna' 'python-pycparser' 'python-pyopenssl' 'python-requests'
-         'python-six' 'python-tld' 'python-urllib3')
+         'python-six' 'python-tld' 'python-urllib3' 'python-cssselect'
+         'python-lxml' 'python-pyjsparser' 'python-pysocks')
 makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/boy-hack/$pkgname.git")
 sha512sums=('SKIP')
@@ -23,26 +24,26 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  cd $pkgname
-
-  sed -i 's/==.*//g' requirements.txt
-}
-
-build() {
-  cd $pkgname
-
-  python setup.py build
-}
-
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md doc/* \
+    CONTRIBUTORS.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm README.md LICENSE
+  rm *.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/W13SCAN
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

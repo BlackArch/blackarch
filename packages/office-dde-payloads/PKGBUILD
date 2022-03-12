@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=office-dde-payloads
+pkgver=34.53291f9
+pkgrel=2
+pkgdesc='Collection of scripts and templates to generate Office documents embedded with the DDE, macro-less command execution technique.'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation')
+url='https://github.com/0xdeadbeefJERKY/Office-DDE-Payloads'
+license=('MIT')
+depends=('python' 'python-future' 'python-lxml')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/0xdeadbeefJERKY/Office-DDE-Payloads")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE.md \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm *.md *.txt
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/${pkgname}-excel" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python ddeexcel.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-excel"
+
+  cat > "$pkgdir/usr/bin/${pkgname}-word" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python ddeword.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-word"
+}
+

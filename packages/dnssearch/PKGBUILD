@@ -3,17 +3,15 @@
 
 pkgname=dnssearch
 pkgver=20.e4ea439
-pkgrel=3
+pkgrel=4
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='A subdomain enumeration tool.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/evilsocket/dnssearch'
 license=('GPL3')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/evilsocket/$pkgname.git")
 sha512sums=('SKIP')
-_url='github.com/evilsocket/dnssearch'
 
 pkgver() {
   cd $pkgname
@@ -24,26 +22,23 @@ pkgver() {
 build() {
   cd $pkgname
 
-  GOPATH="$srcdir" go get $_url
-  GOPATH="$srcdir" go build -o $pkgname main.go
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin/"
-
-  install -Dm 755 $pkgname "$pkgdir/usr/share/$pkgname/$pkgname"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" names.txt Dockerfile
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-./$pkgname "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

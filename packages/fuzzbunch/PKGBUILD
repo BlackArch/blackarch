@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=fuzzbunch
+pkgver=32.2b76c22
+pkgrel=1
+pkgdesc='NSA Exploit framework'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-exploitation')
+url='https://github.com/mdiazcl/fuzzbunch-debian'
+license=('custom:unknown')
+depends=('wine' 'winetricks')
+makedepends=('git')
+install='fuzzbunch.install'
+source=("git+https://github.com/mdiazcl/$pkgname-debian.git"
+        'fuzzbunch.desktop'
+        'fuzzbunch.install'
+        'path.reg')
+sha512sums=('SKIP'
+            'accb3a0e3201197799bfaaec5e87d3edb993d5baeb9fc61fee588b60843c9ed26ba5ebf0e1110be53ab667ab4e9b73e2b0a062248499a9c3a1dc23d04ee3a769'
+            '3a1199e709840e13b2696313c0b2c1ab4da4f99b31b179bcd2cf9b9543b87203225a088423bc7eea85f6f592137e6fd759227213230b89f6d01e98640e7b3db8'
+            '392092bedaa348964d68a68bf21756052d81666fdadc3c3488923ee69ac4a4cb3385174ae068170b4f568964ca1c9983fb6fce6abb6de0529b2a8160b3dd017b')
+
+pkgver() {
+  cd "$pkgname-debian"
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/.wine-fuzzbunch/drive_c/"
+
+  cp path.reg "$pkgdir/usr/share/$pkgname/.wine-fuzzbunch/path.reg"
+  cp -a "$pkgname-debian" "$pkgdir/usr/share/$pkgname/.wine-fuzzbunch/drive_c"
+
+  find "$pkgdir"/usr/share -type f -exec chmod 644 "{}" \;
+  find "$pkgdir"/usr/share -type d -exec chmod 755 "{}" \;
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+export WINEPREFIX=/usr/share/$pkgname/.wine-fuzzbunch
+cd /usr/share/$pkgname/.wine-fuzzbunch/drive_c/fuzzbunch-debian/windows
+echo "run: python fb.py"
+exec wine cmd.exe
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+
+  # menu entry
+  install -Dm644 "${srcdir}/${pkgname}.desktop" "${pkgdir}/usr/share/applications/${pkgname}.desktop"
+}
+

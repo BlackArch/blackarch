@@ -3,7 +3,7 @@
 
 pkgname=dizzy
 pkgver=2.0
-pkgrel=3
+pkgrel=6
 groups=('blackarch' 'blackarch-fuzzer' 'blackarch-networking')
 pkgdesc='A Python based fuzzing framework with many features.'
 arch=('any')
@@ -14,19 +14,30 @@ makedepends=('python-setuptools')
 source=("https://c0decafe.de/tools/$pkgname-$pkgver.tar.gz")
 sha512sums=('687cb05f59d0c05f23c4d09e27a6f15733ae229b78f4f8d24dfc56b398a1935dadac05949337cd1748d87c6b45d3f4b52043ba1df8a517f8be932f9f606242c0')
 
-build() {
+prepare() {
   cd "$pkgname-$pkgver"
 
-  python setup.py build
+  #sed -i "s|~/.local/share/dizzy|/usr/share/dizzy|g" dizzy/config.py
 }
 
 package() {
   cd "$pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 
-  mv "$pkgdir/usr/bin/dizzy_cmd" "$pkgdir/usr/bin/$pkgname"
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python dizzy_cmd "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Jan Alexander Steffens (heftig) <jan.steffens@gmail.com>
+# Old Contributor: Ionut Biru <ibiru@archlinux.org>
+
+pkgname=python2-gobject
+_pkgname=pygobject
+pkgver=3.34.0
+pkgrel=1
+epoch=1
+pkgdesc='Python2 Bindings for GLib/GObject/GIO/GTK+.'
+url='https://wiki.gnome.org/Projects/PyGObject'
+arch=('x86_64' 'aarch64')
+license=('LGPL')
+depends=('gobject-introspection-runtime')
+makedepends=('git' 'python2-cairo' 'gobject-introspection' 'meson')
+optdepends=('cairo: Cairo bindings')
+_commit=fae47858d24e9fbd6745c094db0064c5506de5cb  # tags/3.34.0^0
+source=("git+https://gitlab.gnome.org/GNOME/pygobject.git#commit=$_commit")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  git describe --tags | sed 's/-/+/g'
+}
+
+build() {
+  arch-meson $_pkgname build-python2 -D python=/usr/bin/python2
+  ninja -C build-python2
+}
+
+package() {
+  DESTDIR="$pkgdir" meson install -C build-python2
+
+  python2 -m compileall -d /usr/lib "$pkgdir/usr/lib"
+  python2 -O -m compileall -d /usr/lib "$pkgdir/usr/lib"
+
+  rm -r "$pkgdir"/usr/{include,lib/pkgconfig}
+}
+

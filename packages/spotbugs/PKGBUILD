@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=spotbugs
+pkgver=16722.f927e732a
+pkgrel=1
+pkgdesc='A tool for static analysis to look for bugs in Java code.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-code-audit')
+url='https://github.com/spotbugs/spotbugs'
+license=('LGPL')
+depends=('java-environment=11')
+makedepends=('git')
+source=("git+https://github.com/spotbugs/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  ./gradlew build
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 644 "$pkgname/build/libs/$pkgname.jar" \
+    "$pkgdir/usr/share/$pkgname/lib/$pkgname.jar"
+  cp -R --no-preserve=ownership "$pkgname/.libs/"* \
+    "$pkgdir/usr/share/$pkgname/lib"
+  cp -R --no-preserve=ownership "$pkgname/plugin" \
+    "$pkgdir/usr/share/$pkgname"
+  cp -R --no-preserve=ownership "$pkgname/src" \
+    "$pkgdir/usr/share/$pkgname"
+  cp -R --no-preserve=ownership "$pkgname/build/bin" \
+  "$pkgdir/usr/share/$pkgname"
+
+  ln -s "/usr/share/$pkgname/bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
+}
+

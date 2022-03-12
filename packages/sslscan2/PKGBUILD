@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sslscan2
+_pkgname=sslscan
+pkgver=627.3fed87f
+pkgrel=1
+pkgdesc='Tests SSL/TLS enabled services to discover supported cipher suites.'
+groups=('blackarch' 'blackarch-scanner')
+arch=('x86_64' 'aarch64')
+url='https://github.com/rbsec/sslscan'
+license=('MIT')
+depends=('glibc')
+makedepends=('git')
+source=("git+https://github.com/rbsec/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $_pkgname
+
+  make static
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 755 $_pkgname "$pkgdir/usr/bin/$pkgname"
+  cp -a docker_test tools "$pkgdir/usr/share/$pkgname/"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" Changelog INSTALL TODO \
+    README.md
+  install -Dm 644 "$_pkgname.1" "$pkgdir/usr/share/man/man1/$pkgname.1"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

@@ -2,41 +2,31 @@
 # See COPYING for license details.
 
 pkgname=websploit
-pkgver=3.0.0
-pkgrel=4
-groups=('blackarch' 'blackarch-exploitation' 'blackarch-fuzzer' 'blackarch-scanner' 'blackarch-social')
+pkgver=4.0.4
+pkgrel=5
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-fuzzer'
+        'blackarch-scanner' 'blackarch-social')
 pkgdesc='An Open Source Project For, Social Engineering Works, Scan, Crawler & Analysis Web, Automatic Exploiter, Support Network Attacks'
 arch=('any')
-url='http://code.google.com/p/websploit/'
+url='https://github.com/websploit/websploit'
 license=('GPL3')
-source=("http://downloads.sourceforge.net/project/websploit/WebSploit%20Framework%20V.$pkgver/WebSploit-Framework-$pkgver.tar.gz")
-depends=('python2' 'python2-scapy')
-sha512sums=('ab76ec5aa52a9f335f8007e7aa8844bf3712660a193d7d0e0f30d3f431d3678f1bb917448d66f5a0c701df0d096b4a43016778f495ca17724b1df4aa517bee82')
+source=("https://github.com/websploit/websploit/archive/$pkgver.tar.gz")
+depends=('python' 'python-requests' 'python-scapy')
+makedepends=('python-setuptools' 'python-pip' 'python-wheel')
+sha512sums=('5e5b229932a07be306d58bfb2a6547b464b7582e475b245796cf96412f3da77a7218e1048830c85609113bb753151e72fce8202e06dbf9715bd7729153628641')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  python setup.py build
+}
 
 package() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/websploit"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
-  tar xzf wsf-`echo $pkgver | tr -d '.'`.tar.gz
-
-  cd "$srcdir/$pkgname/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.txt
-  install -Dm 644 COPYING.GPL "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  cp -a * "$pkgdir/usr/share/websploit"
-
-  # Fix incompetence.
-  find "$pkgdir" -name '*~' -delete
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 $pkgname "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

@@ -1,0 +1,55 @@
+# Configuration reference: https://go.nzyme.org/configuration-reference
+# More details about bandits and trackers: https://go.nzyme.org/bandits-and-trackers
+
+# General nzyme configuration.
+general: {
+  role: TRACKER
+
+  # The ID or name of this nzyme tracker. Must be unique and contain only alphanumeric characters, underscores and dashes.
+  id: nzyme-tracker-01
+
+  # Path to directory that nzyme will use to store some temporary information. (must be writable)
+  data_directory: /usr/share/nzyme
+
+  # HIDs (human interface device) to run. Default is LogHID. The documentation lists all available HIDs.
+  hids: [ LOG ]
+}
+
+# Please consult the nzyme documentation to find out supported tracker devices.
+uplink_device {
+  type: SX126X_LORA
+  parameters: {
+    # Set the encryption key to your own 32 character string of letters and numbers.
+    # Must be the same on all trackers and nzyme nodes or communication will fail.
+    encryption_key: ep1aeNu2Iesoh3oxeiphae2gietati5i
+
+    # Will usually be /dev/ttyUSB0 except if you have multiple devices connected.
+    # You can find out by looking at `dmesg` after plugging it in.
+    serial_port: /dev/ttyUSB0
+  }
+}
+
+# 802.11/Wifi adapters that are designated to read traffic.
+# These interfaces will be used to track bandits.
+802_11_monitors: [
+  {
+    # The 802.11/WiFi adapter name. (from `ifconfig` or `ip link`)
+    device: wlx00c0ca971201
+
+    # WiFi interface and 802.11 channels allowed to use. The nzyme leader decides which channels to tune into.
+    # Consider local legal requirements and regulations.
+    # See also: https://en.wikipedia.org/wiki/List_of_WLAN_channels
+    channels: [1,2,3,4,5,6,7,8,9,10,11]
+
+    # There is no way for nzyme to configure your wifi interface directly. We are using direct operating system commands to
+    # configure the adapter. Examples for Linux are in the documentation.
+    channel_hop_command: "sudo /sbin/iwconfig {interface} channel {channel}"
+
+    # Channel hop interval in seconds. Leave at default if you don't know what this is.
+    channel_hop_interval: 1
+
+    # Skip the automatic monitor mode configuration of this interface. Only enable this if for some reason libpcap can't
+    # properly configure this interface into monitor mode. In that case, you can try to set it manually instead.
+    skip_enable_monitor: false
+  }
+]

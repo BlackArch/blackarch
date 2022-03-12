@@ -1,28 +1,103 @@
-#!/bin/sh
-#
-# check for outdated mirrors
+#!/bin/python3
 
-if [ $# != 1 ]
-then
-  echo 'usage: check-mirror <mirrorlist>'
-  exit 1
-else
-  mirror_list="${1}"
-fi
+import requests
+from concurrent.futures import ThreadPoolExecutor
 
-file='lastupdate'
-urls=$(cut -d '|' -f 2 $mirror_list | egrep -v 'ftpes|blackarch.org' |
-  cut -d '$' -f 1)
-epoch=$(curl -sm 10 --connect-timeout 5 https://blackarch.org/blackarch/$file)
 
-echo "epoch: $epoch"
-for url in $urls
-do
-  mirror_epoch=$(curl -ks --connect-timeout 5 -m 10 "${url}${file}" | head -1)
+BASE_URL='https://www.blackarch.org/blackarch/blackarch/lastupdate'
+MIRROR_LIST='https://raw.githubusercontent.com/BlackArch/blackarch/master/mirror/mirror.lst'
+THX = 25
+TIMEOUT = 10
 
-  if [ "$epoch" != "$mirror_epoch" ]
-  then
-    echo "outdated or broken mirror: $url ($mirror_epoch)"
-  fi
-done
+states = {
+  'isync':      [],
+  'osync':      [],
+  'wrong':      [],
+  'down':       [],
+  'isync_num':  0,
+  'osync_num':  0,
+  'wrong_num':  0,
+  'down_num':   0,
+  'iperc_num':  0,
+}
+
+
+def check(url, name, lastupdate):
+  global states
+
+  try:
+    r = requests.get(url, stream=True, timeout=TIMEOUT)
+    repo_statuscode = r.status_code
+    repo_lastupdate = r.text
+
+    if repo_lastupdate < lastupdate:
+      states['osync'].append(f'{name} -> {url}')
+      states['osync_num'] = states['osync_num'] + 1
+    elif repo_lastupdate > lastupdate:
+      states['wrong'].append(f'{name} -> {url}')
+      states['wrong_num'] = states['wrong_num'] + 1
+    else:
+      states['isync'].append(f'{name} -> {url}')
+      states['isync_num'] = states['isync_num'] + 1
+  except:
+    states['down'].append(f'{name} -> {url}')
+    states['down_num'] = states['down_num'] + 1
+
+  return
+
+
+def print_stats(total):
+  global states
+
+  print('[IN SYNC]\n')
+  for i in states['isync']:
+    print(i)
+  print('\n[OUT OF SYNC]\n')
+  for i in states['osync']:
+    print(i)
+  print('\n[WRONG]\n')
+  for i in states['wrong']:
+    print(i)
+  print('\n[DOWN]\n')
+  for i in states['down']:
+    print(i)
+
+  states['iperc_num'] = round((states['isync_num'] / total) * 100)
+  print()
+  print('=' * 80)
+  print(f'''
+in sync:      {states['isync_num']} ({states['iperc_num']}%)
+out of sync:  {states['osync_num']}
+down:         {states['down_num']}
+wrong:        {states['wrong_num']}
+total:        {total}
+  ''')
+
+  return
+
+def main():
+  sess = requests.Session()
+  mirrorlist = sess.get(MIRROR_LIST)
+  lastupdate = sess.get(BASE_URL).text
+
+  print('[+] checking mirror sites, please wait...\n')
+  with ThreadPoolExecutor(THX) as exe:
+    for num, line in enumerate(mirrorlist.iter_lines()):
+      try:
+        country, url, name = str(line).split('|')
+        name = name.strip('\'')
+        url = url.replace('$repo/os/$arch', 'lastupdate').rstrip('/')
+      except:
+        print(f'[-] Error: {line}.')
+
+      exe.submit(check, url, name, lastupdate)
+
+  num += 1
+  print_stats(num)
+
+  return
+
+
+if __name__ == '__main__':
+  main()
 

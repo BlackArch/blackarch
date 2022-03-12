@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=empire
-pkgver=1930.701fab9
+pkgver=2591.d60f36d1
 pkgrel=1
 epoch=2
 pkgdesc='A PowerShell and Python post-exploitation agent.'
@@ -15,15 +15,19 @@ depends=('python' 'python-urllib3' 'python-requests' 'python-iptools'
          'python-zlib_wrapper' 'python-netifaces' 'python-m2crypto'
          'python-jinja' 'python-cryptography' 'python-pefile' 'python-xlutils'
          'python-pyminifier' 'python-pycryptodome' 'python-simplejson'
-         'python-xlrd' 'python-xlwt' 'java-environment')
+         'python-xlrd' 'python-xlwt' 'python-bcrypt' 'java-environment'
+         'python-flask-socketio' 'python-setuptools' 'pyinstaller' 'python-jq'
+         'python-pycryptodomex' 'python-pyparsing' 'python-sqlalchemy'
+         'python-pyaml' 'python-prompt_toolkit' 'python-sqlalchemy-utc'
+         'python-pymysql' 'python-poetry' 'python-docopt' 'python-humanize'
+         'python-pydantic' 'python-socketio' 'python-terminaltables')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/BC-SECURITY/Empire.git"
-        'https://files.pythonhosted.org/packages/40/d0/8efd61531f338a89b4efa48fcf1972d870d2b67a7aea9dcf70783c8464dc/pyOpenSSL-19.0.0.tar.gz'
+        'https://files.pythonhosted.org/packages/0d/1d/6cc4bd4e79f78be6640fab268555a11af48474fac9df187c3361a1d1d2f0/pyOpenSSL-19.1.0.tar.gz'
         'setup_database.py.patch')
 sha512sums=('SKIP'
-            'a7e12bf5be725ccebd1223d567a9b9e8bd35f79cbf3a0409108fa6f00e10ab137dd6876369e9dede02b2abc7d700786cc905532ca5c31b6e246f6df8b24e2818'
+            '4acd96f287d72eb11bd812697d28cd6eb6a96a4653248b65f967187830a6b17cc1254775a18a3405469f3d45abdae6f02d165f2f35f035f3174c2826fba82916'
             '9ffc3dc5d6a1dfd5b71cd22a0878a0231958938cb939e5fda5467c301fb4837ff96a299c2cbf2b2cc232fd8dd340c9086130e1067870c8c4272d7cc05e3954b4')
-install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
@@ -32,11 +36,10 @@ pkgver() {
 }
 
 prepare() {
-  #patch -p1  < "$srcdir/setup_database.py.patch"
-
   cd $pkgname
-  # temp dirty fix
-  cp -r "$srcdir/pyOpenSSL-19.0.0/src/OpenSSL" OpenSSL
+
+  # need by empire
+  cp -r "$srcdir/pyOpenSSL-19.1.0/src/OpenSSL" OpenSSL
 }
 
 package() {
@@ -52,12 +55,20 @@ package() {
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname-server" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python $pkgname "\$@"
+exec python empire.py server "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  chmod +x "$pkgdir/usr/bin/$pkgname-server"
+
+  cat > "$pkgdir/usr/bin/$pkgname-client" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python empire.py client "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-client"
 }
 

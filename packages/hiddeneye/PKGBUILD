@@ -2,14 +2,15 @@
 # See COPYING for license details.
 
 pkgname=hiddeneye
-pkgver=805.48baeb6
-pkgrel=1
+pkgver=1228.7a3deaf
+pkgrel=3
 pkgdesc='Modern phishing tool with advanced functionality.'
 arch=('any')
 groups=('blackarch' 'blackarch-social')
 url='https://github.com/DarkSecDevelopers/HiddenEye'
 license=('MIT')
-depends=('php' 'python-wget')
+depends=('python' 'python-requests' 'python-pyngrok' 'python-future'
+         'python-yaml' 'php' 'python-pgrep')
 makedepends=('git')
 replaces=('hidden-eye')
 source=("$pkgname::git+https://github.com/DarkSecDevelopers/HiddenEye.git")
@@ -21,6 +22,13 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  sed -i 's|open("LICENSE"|open("/usr/share/licenses/hiddeneye/LICENSE"|g' \
+    controllers/EULA_controller.py
+}
+
 package() {
   cd $pkgname
 
@@ -28,9 +36,9 @@ package() {
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/LICENSE" LICENSE
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm LICENSE *.md requirements.txt
+  rm *.md requirements.txt LICENSE
 
   cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
 

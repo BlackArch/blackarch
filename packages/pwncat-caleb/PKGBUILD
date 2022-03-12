@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pwncat-caleb
+_pkgname=pwncat
+pkgver=v0.5.4.r9.g5b8c846
+pkgrel=1
+pkgdesc='A post-exploitation platform.'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation')
+url='https://github.com/calebstewart/pwncat'
+license=('custom:unknown')
+depends=('python' 'python-netifaces' 'python-packaging' 'python-pycryptodome'
+         'python-requests' 'python-rich' 'python-rapidjson' 'python-zodb'
+         'python-zodburi' 'python-jinja' 'python-paramiko'
+         'python-prompt_toolkit')
+makedepends=('git' 'python-setuptools' 'poetry')
+source=("git+https://github.com/calebstewart/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $_pkgname
+
+  poetry build
+  cd dist
+  mkdir -p pwncat_dir
+  tar zxvf $_pkgname-*.tar.gz -C pwncat_dir
+}
+
+package() {
+  cd "$_pkgname/dist/${_pkgname}_dir/$_pkgname-cs-0.5.1"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1
+
+  cd "$srcdir/$_pkgname"
+
+  #install -Dm 755 "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  find docs -type f -iname '*.rst' -exec install -Dm 644 -t \
+    "$pkgdir/usr/share/doc/$pkgname/" {} \;
+
+  rm -rf "$pkgdir/usr/bin/$_pwncat" "$pkgdir/usr/bin/pc"
+}
+

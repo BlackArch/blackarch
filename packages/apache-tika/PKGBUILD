@@ -2,34 +2,45 @@
 # See COPYING for license details.
 
 pkgname=apache-tika
-_pkgname=tika-server
-pkgver=1.23
+_srvname=tika-server
+_appname=tika-app
+pkgver=1.28.1
 pkgrel=1
 pkgdesc='Toolkit for detecting and extracting metadata and structured text content.'
 arch=('any')
 license=('Apache')
 url='https://tika.apache.org/download.html'
 depends=('java-environment' 'bash')
-noextract=("tika-server-$pkgver.jar")
-source=("http://central.maven.org/maven2/org/apache/tika/$_pkgname/$pkgver/$_pkgname-$pkgver.jar"
-        'apache-tika.service')
-sha512sums=('4e1b8418aed496eb1ee5bf32921580e855672ab701bffdd642261ac27ae011913f36fdd70b725adef4dec55a53fa04cf0f3b8a3b45e15026dd76c8d312b62291'
-            'e46522bfcc86ada8776c4f12cf645a81c34492b1c86e9bd1258d7fa248fb8fed9c2bd57e5971c5c9a4687f35626f872f63920649279cfaba5498a55c3331bcf5')
+source=("https://www.apache.org/dyn/closer.lua/tika/$pkgver/$_srvname-$pkgver.jar"
+        "https://www.apache.org/dyn/closer.lua/tika/$pkgver/$_appname-$pkgver.jar"
+        "$pkgname.service")
+noextract=("$_srvname-$pkgver.jar" "$_appname-$pkgver.jar")
+sha512sums=('2515a5c5da3aad6bfecde4cace9e3fe6953088dd658953d6fc421f372fc8d646996d797207b750de13d8d915b2cc2fb87020086f41a8a3b99f06582ba88e7578'
+            '6707cd94ca3bcc9f7b95ef283f2ee4a8886fc35b0d3192af64c428a59d9e978d8190b3ee56301589cba34bbc4fa6b3109e1b10f433520cce8fa2a349cf90d72d'
+            '7eb7ce2a2ed76ad197e247689484cf1e241f26b8cbe41e4663f42d98a22f6df5505a3df9e491e70ee3d059db4ea960ab58ca12c5593f69f97a575e46dcc2fcbf')
 
 package() {
   install -dm 755 "$pkgdir/usr/bin"
 
-  install -Dm 755 "$_pkgname-$pkgver.jar" \
-    "$pkgdir/usr/share/java/$pkgname/$_pkgname-$pkgver.jar"
+  install -Dm 755 -t "$pkgdir/usr/share/java/$pkgname/" \
+    "$_srvname-$pkgver.jar" "$_appname-$pkgver.jar"
   install -Dm 644 "$pkgname.service" \
     "$pkgdir/usr/lib/systemd/system/$pkgname.service"
 
-  cat > "$pkgdir/usr/bin/tika" << EOF
+  cat > "$pkgdir/usr/bin/tika-server" << EOF
 #!/bin/sh
 "$JAVA_HOME/bin/java" -jar \
-  "/usr/share/java/$pkgname/$_pkgname-$pkgver.jar" "\$@"
+  "/usr/share/java/$pkgname/$_srvname-$pkgver.jar" "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/tika"
+  chmod +x "$pkgdir/usr/bin/tika-server"
+
+  cat > "$pkgdir/usr/bin/tika-app" << EOF
+#!/bin/sh
+"$JAVA_HOME/bin/java" -jar \
+  "/usr/share/java/$pkgname/$_appname-$pkgver.jar" "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/tika-app"
 }
 

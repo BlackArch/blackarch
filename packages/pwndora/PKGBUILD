@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pwndora
+pkgver=227.c53c134
+pkgrel=1
+pkgdesc='Massive IPv4 scanner, find and analyze internet-connected devices in minutes, create your own IoT search engine at home.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+arch=('any')
+url='https://github.com/alechilczenko/pwndora'
+license=('Apache')
+depends=('python' 'python-loguru' 'python-requests' 'python-pycountry'
+         'python-pymongo' 'python-pyfiglet' 'python-colorama' 'python-geoip2'
+         'python-beautifulsoup4' 'webtech')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/alechilczenko/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm README.md requirements.txt LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/scanner
+exec python CLI.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

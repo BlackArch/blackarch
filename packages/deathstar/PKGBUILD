@@ -2,14 +2,17 @@
 # See COPYING for license details.
 
 pkgname=deathstar
-pkgver=51.86f9cda
-pkgrel=1
+pkgver=59.f10fdbf
+pkgrel=2
 pkgdesc='Automate getting Domain Admin using Empire.'
 groups=('blackarch' 'blackarch-automation' 'blackarch-exploitation')
 arch=('any')
 url='https://github.com/byt3bl33d3r/DeathStar'
 license=('GPL3')
-depends=('python' 'python-requests' 'python-termcolor' 'python-pyopenssl')
+depends=('python' 'python-certifi' 'python-colorama' 'python-commonmark'
+         'python-h11' 'python-httpcore' 'python-httpx' 'python-idna'
+         'python-pygments' 'python-rfc3986' 'python-rich' 'python-sniffio'
+         'python-typing-extensions')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/byt3bl33d3r/DeathStar.git")
 sha512sums=('SKIP')
@@ -20,11 +23,29 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd $pkgname
+
+  # lame and unnecessary packaging style (probably bored)... we hack around here
+  sed -i 's|from deathstar.|from |g' "$pkgname/$pkgname.py"
+}
+
 package() {
   cd $pkgname
 
-  install -Dm 755 DeathStar.py "$pkgdir/usr/bin/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a "$pkgname/"* "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

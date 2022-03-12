@@ -2,16 +2,16 @@
 # See COPYING for license details.
 
 pkgname=neo4j-community
-pkgver=3.5.14
+pkgver=4.4.4
 pkgrel=1
-pkgdesc='A fully transactional graph database implemented in Java'
+pkgdesc='A fully transactional graph database implemented in Java.'
 arch=('any')
-url='http://neo4j.org/'
+url='https://neo4j.org/'
 license=('custom')
-depends=('java-runtime-headless>=8')
+makedepends=('patch')
+depends=('jre11-openjdk-headless')
 conflicts=('neo4j-enterprise')
-backup=('etc/neo4j/neo4j-wrapper.conf'
-        'etc/neo4j/neo4j.conf')
+backup=('etc/neo4j/neo4j.conf')
 options=(!strip)
 install='neo4j.install'
 source=("http://dist.neo4j.org/$pkgname-$pkgver-unix.tar.gz"
@@ -19,13 +19,16 @@ source=("http://dist.neo4j.org/$pkgname-$pkgver-unix.tar.gz"
         'neo4j.conf'
         'neo4j.install'
         'neo4j.service'
-        'neo4j-tmpfile.conf')
-sha512sums=('6b277b88930c1679328c145e3c7978ce5880dc02974a59d3802eda7e4dd519553ac0411dbaa3aa602a21f49dc32f1577bc38e24d87b7194bfe382b4c58711ed4'
-            '3e2ad8bba304a05ce6132f47f8d1823f4314a755c8c9b701fc2a5c460d5eaf47f5e15d84eb850236454a2e3f52fd16f00a56ff243035321732707e3e0d417027'
-            '2e04f99f51c3d13197ab520002346236f49c8de543dc0a54fd10076e5a14d00abbbcebe843b6a71c6e544e3004f8dcef9f303d304be5c338cc3f339e19cec26a'
+        'neo4j-tmpfile.conf'
+        'neo4j-sysuser.conf')
+sha512sums=('92ea66fd15ac495aec36c0542d5ab3e525a2c385f41bc910859d90bad5b860010bfc82e4d8b0554febccfd515e5f053458063ed627573732e56e2594a76337d9'
+            '58a825817f3453162106fd27a0eb9b4d74129700de4d8284ba0f8cb24351d5c80c7e2f6225e28ecbd99307d1c73a46e6e082e45d08ccd1a173b2b376ac7bd495'
+            'a80c547ee7f04c03502ee2a375b989195aabe6616ef9fc0be68bf865d4d6ee83915b97984e4cf2ec8ea43b1599e1423b2c443689d95e03f8df643347e1478e0b'
             '90388a53a53fba56a5fce51680f74a26108203ab2ee4cfa3652f4dc1baa4f898283c00d4448ef9077b3f9ab6274cd087101b8325163d63a8adadcb3a93d1713e'
-            '8f95947a370bcc843a7877b96ff4b07c2c5f4ea67a96f5958321a83677554f1b2fa7e72edbfe3bb3990d0a24baf60b782c3b69c95ba52c22ff43db1a66fd0cf9'
-            '86c6233d7bc6575a4af1e9756173871da8b62b8aaa25e0550ae21d9cec5b96fbc48f397d6d87bb12f440c7407aa5fc82db64e72e6bc0b35fc7d4593db0902bd9')
+            'a831855c4297417baadf6138dd7740087931f094de5dd43640c3e5d35d29c6d3c2efafc3b94cd36c53f70beadc50073a5695587be595f50da8340d2e35977b25'
+            '86c6233d7bc6575a4af1e9756173871da8b62b8aaa25e0550ae21d9cec5b96fbc48f397d6d87bb12f440c7407aa5fc82db64e72e6bc0b35fc7d4593db0902bd9'
+            'b82b8936629ccdb10a5a57ab94c38fe287e6affd1eaf9e1098e3d76b84e7583d29446a38fb6d9046bb78807d3468aaf042d81b879d346702affe2382e0ed61a9')
+
 prepare() {
   cd "$pkgname-$pkgver"
 
@@ -55,11 +58,11 @@ package() {
   [[ $(ls -A logs/* 2>/dev/null) ]] && cp -r logs/* "$pkgdir/$LOG_DIR"
 
   # Copy JARs in lib and plugins
-  LIB_DIR=usr/share/java/neo4j/lib
+  LIB_DIR=usr/share/neo4j/lib
   install -dm 755 "$pkgdir/$LIB_DIR"
   [[ $(ls -A lib/* 2>/dev/null) ]] && cp -r lib/* "$pkgdir/$LIB_DIR"
 
-  PLUGINS_DIR=usr/share/java/neo4j/plugins
+  PLUGINS_DIR=usr/share/neo4j/plugins
   install -dm 755 "$pkgdir/$PLUGINS_DIR"
   [[ $(ls -A plugins/* 2>/dev/null) ]] && cp -r plugins/* "$pkgdir/$PLUGINS_DIR"
 
@@ -92,5 +95,7 @@ package() {
   # Runtime files
   install -Dm 644 "$srcdir/neo4j-tmpfile.conf" \
     "$pkgdir"/usr/lib/tmpfiles.d/neo4j.conf
+  install -Dm 644 "$srcdir/neo4j-sysuser.conf" \
+    "$pkgdir"/usr/lib/sysusers.d/neo4j.conf
 }
 

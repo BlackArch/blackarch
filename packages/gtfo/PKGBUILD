@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gtfo
+pkgver=16.2296edf
+pkgrel=3
+pkgdesc='Search gtfobins and lolbas files from your terminal.'
+arch=('any')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/mzfr/gtfo'
+license=('GPL3')
+depends=('python' 'python-pyaml' 'python-requests' 'python-beautifulsoup4'
+         'python-lxml' 'python-requests-cache' 'python-tabulate'
+         'python-pyfiglet')
+makedepends=('git')
+source=("git+https://github.com/mzfr/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" Readme.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a --no-preserve=ownership Images/ "$pkgdir/usr/share/doc/$pkgname/"
+
+  rm -r *.md LICENSE *.txt Images/
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

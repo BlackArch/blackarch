@@ -2,15 +2,15 @@
 # See COPYING for license details.
 
 pkgname=intensio-obfuscator
-pkgver=228.7c26b65
-pkgrel=1
+pkgver=280.f66a22b
+pkgrel=3
 pkgdesc='Obfuscate a python code 2 and 3.'
 arch=('any')
 groups=('blackarch' 'blackarch-misc')
 url='https://github.com/Hnfull/Intensio-Obfuscator'
 license=('MIT')
 depends=('python' 'python-tqdm' 'python-colorama' 'python-progress')
-makedepends=('git')
+makedepends=('git' 'python-setuptools')
 source=("$pkgname::git+https://github.com/Hnfull/Intensio-Obfuscator.git")
 sha512sums=('SKIP')
 
@@ -20,24 +20,21 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-package() {
+build() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE.txt
 
   cp -a --no-preserve=ownership docs/ "$pkgdir/usr/share/doc/$pkgname/"
-  cp -a --no-preserve=ownership intensio/* "$pkgdir/usr/share/$pkgname/"
 
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python3 intensio_obfuscator.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  mv "$pkgdir/usr/bin/intensio_obfuscator" "$pkgdir/usr/bin/$pkgname"
 }
 

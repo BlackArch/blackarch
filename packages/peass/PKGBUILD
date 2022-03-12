@@ -1,0 +1,61 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=peass
+pkgver=1300.a89f235
+pkgrel=1
+pkgdesc='Privilege Escalation Awesome Scripts SUITE (with colors).'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner')
+url='https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite'
+license=('MIT')
+depends=('bash')
+makedepends=('git')
+optdepends=('fping' 'nmap' 'ping' 'gnu-netcat')
+source=("$pkgname::git+https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/linPEAS/" \
+    linPEAS/README.md
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/winPEAS/" \
+    winPEAS/README.md
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/winPEAS/winPEASbat/" \
+    winPEAS/winPEASbat/README.md
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/winPEAS/winPEASexe/" \
+    winPEAS/winPEASexe/README.md
+
+  cp -a --no-preserve=ownership linPEAS/images/ \
+    "$pkgdir/usr/share/doc/$pkgname/linPEAS/"
+  cp -a --no-preserve=ownership winPEAS/winPEASexe/images/ \
+    "$pkgdir/usr/share/doc/$pkgname/winPEAS/winPEASexe/"
+
+  rm -rf linPEAS/{README.md,images} winPEAS/winPEASbat/README.md
+
+  rm -rf winPEAS/winPEASexe/winPEAS/binaries/{x64,x86}/Release/{de/,es/,fr/,it/,pl/,ru/,zh-CN/,*.config,*.pdb}
+
+  cp -a --no-preserve=ownership linPEAS/ "$pkgdir/usr/share/$pkgname/"
+  cp -a --no-preserve=ownership winPEAS/winPEASexe/binaries/{x64,x86}/ \
+    "$pkgdir/usr/share/windows/$pkgname/"
+
+  ln -sf /usr/share/peass/linPEAS/linpeas.sh "$pkgdir/usr/bin/linpeas"
+}
+

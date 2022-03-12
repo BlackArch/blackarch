@@ -1,0 +1,104 @@
+# Maintainer: Stephan Springer <buzo+arch@Lini.de>
+# Contributor: Felix Yan <felixonmars@archlinux.org>
+# Contributor: Andrea Scarpino <andrea@archlinux.org>
+# Contributor: Douglas Soares de Andrade <douglas@archlinux.org>
+# Contributor: riai <riai@bigfoot.com> Ben <ben@benmazer.net>
+
+pkgbase=pyqt4
+pkgname=('pyqt4-common' 'python-pyqt4' 'python2-pyqt4')
+pkgver=4.12.3
+pkgrel=11
+arch=('x86_64')
+url='http://www.riverbankcomputing.com/software/pyqt/intro'
+license=('GPL')
+makedepends=('sip4' 'python-sip-pyqt4' 'python2-sip-pyqt4' 'dbus-python'
+             'phonon-qt4' 'mesa' 'python2-opengl')
+source=("http://downloads.sourceforge.net/pyqt/PyQt4_gpl_x11-${pkgver}.tar.gz")
+sha256sums=('a00f5abef240a7b5852b7924fa5fdf5174569525dc076cd368a566619e56d472')
+
+prepare() {
+  sed -i -e "/'PyQt4\.sip', '-f', sip_flags/s/'-f', //" PyQt4_gpl_x11-${pkgver}/configure-ng.py
+  cp -a PyQt4_gpl_x11-${pkgver}{,-py2}
+}
+
+build() {
+  cd PyQt4_gpl_x11-${pkgver}
+  python configure-ng.py \
+    --confirm-license \
+    --no-sip-files \
+    --qsci-api \
+    -q /usr/bin/qmake-qt4
+
+  # Thanks Gerardo for the rpath fix
+  find -name 'Makefile' | xargs sed -i 's|-Wl,-rpath,/usr/lib||g;s|-Wl,-rpath,.* ||g'
+  make
+
+  ### Python2 version ###
+  cd ../PyQt4_gpl_x11-${pkgver}-py2
+  python2 configure-ng.py \
+    --confirm-license \
+    --no-sip-files \
+    --qsci-api \
+    -q /usr/bin/qmake-qt4
+
+  # Thanks Gerardo for the rpath fix
+  find -name 'Makefile' | xargs sed -i 's|-Wl,-rpath,/usr/lib||g;s|-Wl,-rpath,.* ||g'
+  make
+}
+
+package_pyqt4-common() {
+  pkgdesc="Common PyQt files shared between python-pyqt4 and python2-pyqt4"
+  depends=('qt4')
+  replaces=('pyqt-common')
+  conflicts=('pyqt-common')
+  provides=("pyqt-common=${pkgver}")
+
+  cd PyQt4_gpl_x11-${pkgver}
+  make -C pyrcc INSTALL_ROOT="${pkgdir}" install
+  make -C pylupdate INSTALL_ROOT="${pkgdir}" install
+
+  install -Dm644 PyQt4.api "${pkgdir}"/usr/share/qt4/qsci/api/python/PyQt4.api
+
+  install -d "${pkgdir}"/usr/share/sip/PyQt4
+  cp -r sip/* "${pkgdir}"/usr/share/sip/PyQt4
+}
+
+package_python-pyqt4() {
+  pkgdesc="A set of Python 3.x bindings for the Qt toolkit"
+  depends=('sip' 'python-sip-pyqt4' 'dbus-python' 'pyqt4-common')
+  optdepends=('phonon-qt4: enable audio and video in PyQt applications')
+  replaces=('pyqt')
+  conflicts=('pyqt')
+  provides=("pyqt=${pkgver}")
+
+  cd PyQt4_gpl_x11-${pkgver}
+  # INSTALL_ROOT is needed for the QtDesigner module, the other Makefiles use DESTDIR
+  make DESTDIR="${pkgdir}" INSTALL_ROOT="${pkgdir}" install
+
+  # Provided by pyqt-common
+  rm "${pkgdir}"/usr/bin/{pylupdate4,pyrcc4}
+  rm "${pkgdir}"/usr/share/qt4/qsci/api/python/PyQt4.api
+}
+
+package_python2-pyqt4() {
+  pkgdesc="A set of Python 2.x bindings for the Qt toolkit"
+  depends=('sip' 'python2-sip-pyqt4' 'dbus-python' 'pyqt4-common')
+  optdepends=('phonon-qt4: enable audio and video in PyQt applications'
+              'python2-opengl: enable OpenGL 3D graphics in PyQt applications')
+  replaces=('python2-pyqt')
+  conflicts=('python2-pyqt')
+  provides=("python2-pyqt=${pkgver}")
+
+  cd PyQt4_gpl_x11-${pkgver}-py2
+  # INSTALL_ROOT is needed for the QtDesigner module, the other Makefiles use DESTDIR
+  make DESTDIR="${pkgdir}" INSTALL_ROOT="${pkgdir}" install
+
+  # Fix conflicts with python-pyqt4
+  mv "${pkgdir}"/usr/bin/{,python2-}pyuic4
+
+  # Provided by python-pyqt4
+  rm "${pkgdir}"/usr/bin/{pylupdate4,pyrcc4}
+  rm "${pkgdir}"/usr/lib/qt4/plugins/designer/libpyqt4.so
+  rm "${pkgdir}"/usr/share/qt4/qsci/api/python/PyQt4.api
+}
+

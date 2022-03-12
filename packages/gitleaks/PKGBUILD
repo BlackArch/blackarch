@@ -2,15 +2,14 @@
 # See COPYING for license details.
 
 pkgname=gitleaks
-pkgver=519.d8ddb96
+pkgver=766.c3b799e
 pkgrel=1
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='Audit Git repos for secrets and keys.'
 url='https://github.com/zricethezav/gitleaks'
 arch=('x86_64' 'aarch64')
 license=('GPL3')
-depends=('glibc')
-makedepends=('go-pie' 'git')
+makedepends=('go' 'git')
 source=("git+https://github.com/zricethezav/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -23,9 +22,14 @@ pkgver() {
 build() {
   cd $pkgname
 
-  export GOPATH="$srcdir"
-
-  go build -v
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {

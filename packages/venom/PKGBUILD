@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=venom
+pkgver=135.2b84e68
+pkgrel=2
+pkgdesc='A Multi-hop Proxy for Penetration Testers.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-proxy')
+url='https://github.com/Dliv3/Venom'
+license=('MIT')
+makedepends=('git' 'go')
+source=("$pkgname::git+https://github.com/Dliv3/Venom.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOFLAGS="-trimpath -buildmode=pie -mod=readonly -modcacherw"
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    $GOFLAGS \
+    -ldflags "-s -w" \
+    -o $pkgname-admin ./admin
+
+  GOPATH="$srcdir" go build \
+    $GOFLAGS \
+    -ldflags "-s -w" \
+    -o $pkgname-agent ./agent
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname-admin $pkgname-agent -t "$pkgdir/usr/bin"
+  install -Dm 755 scripts/*.py "$pkgdir/usr/share/$pkgname/release/scripts"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
+}
+

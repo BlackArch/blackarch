@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=marshalsec
+pkgver=10.2dc4018
+pkgrel=1
+pkgdesc='Java Unmarshaller Security - Turning your data into code execution.'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation')
+url='https://github.com/mbechler/marshalsec/'
+license=('MIT')
+depends=('java-runtime')
+makedepends=('maven' 'git')
+source=("git+https://github.com/mbechler/$pkgname.git")
+sha512sums=('SKIP')
+
+build() {
+  cd $pkgname
+
+  mvn clean package -DskipTests
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "$pkgname.pdf" *.md
+
+  cp -a target "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec java -cp /usr/share/$pkgname/target/$pkgname-0.0.3-SNAPSHOT-all.jar "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

@@ -2,16 +2,16 @@
 # See COPYING for license details.
 
 pkgname=aquatone
-pkgver=120.854a5d5
-pkgrel=2
+pkgver=141.a93f53e
+pkgrel=1
 pkgdesc='A Tool for Domain Flyovers.'
 groups=('blackarch' 'blackarch-recon')
 arch=('x86_64' 'aarch64')
-url='https://github.com/michenriksen/aquatone'
+url='https://github.com/shelld3v/aquatone'
 license=('MIT')
 depends=('chromium')
 makedepends=('git' 'go-pie')
-source=("git+https://github.com/michenriksen/$pkgname.git")
+source=("git+https://github.com/shelld3v/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
@@ -20,36 +20,23 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  mkdir -p "gopath/src/github.com/michenriksen"
-
-  ln -rTsf $pkgname "gopath/src/github.com/michenriksen/$pkgname"
-
-  export GOPATH="$srcdir/gopath"
-
-  cd "$GOPATH/src/github.com/michenriksen/$pkgname"
-
-  go get -d ./...
-}
-
 build() {
-  export GOPATH="$srcdir/gopath"
+  cd $pkgname
 
-  cd "$GOPATH/src/github.com/michenriksen/$pkgname"
-
-  go install -v ./...
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-  export GOPATH="$srcdir/gopath"
-
-  cd "$GOPATH/bin"
+  cd $pkgname
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
-
-  cd "$srcdir/$pkgname"
-
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
-  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=stoq
+pkgver=769.8bfc78b
+pkgrel=1
+groups=('blackarch' 'blackarch-code-audit')
+pkgdesc='An open source framework for enterprise level automated analysis.'
+arch=('any')
+url='https://github.com/PUNCH-Cyber/stoq'
+license=('Apache')
+depends=('python' 'python-beautifulsoup4' 'python-json-logger'
+         'python-requests')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/PUNCH-Cyber/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md docs/*.rst
+  cp -a docs/{community,dev} "$pkgdir/usr/share/doc/$pkgname/"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

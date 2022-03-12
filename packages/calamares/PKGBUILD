@@ -1,0 +1,59 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+#
+# This PKGBUILD was extracted from Manjaro Linux and adapted to our style
+#
+# Old Maintainer: Philip Müller <philm[at]manjaro[dot]org>
+
+pkgname=calamares
+pkgver=3.2.52
+pkgrel=1
+pkgdesc='Distribution-independent installer framework.'
+url='https://github.com/calamares/calamares'
+arch=('x86_64' 'aarch64')
+license=('LGPL')
+depends=('kconfig' 'kcoreaddons' 'kiconthemes' 'ki18n' 'kio' 'solid' 'yaml-cpp'
+         'kpmcore' 'mkinitcpio-openswap' 'boost-libs' 'ckbcomp' 'hwinfo'
+         'qt5-svg' 'polkit-qt5' 'gtk-update-icon-cache' 'plasma-framework'
+         'qt5-xmlpatterns' 'squashfs-tools' 'libpwquality' 'appstream-qt' 'icu')
+makedepends=('extra-cmake-modules' 'qt5-tools' 'qt5-translations' 'git' 'boost')
+backup=('usr/share/calamares/modules/bootloader.conf'
+        'usr/share/calamares/modules/displaymanager.conf'
+        'usr/share/calamares/modules/initcpio.conf'
+        'usr/share/calamares/modules/unpackfs.conf')
+source=("https://github.com/calamares/$pkgname/archive/v$pkgver.tar.gz")
+sha512sums=('41d20bc249cd5894c05d6516c75ac39c57876f0a880e993230b3c38347f31164872c97d8ebfc1ef69a9c8ccb1e6a0ce9c3bed5fcaa8addf3b6a38db9003721b5')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  sed -i -e 's/"Install configuration files" OFF/"Install configuration files" ON/' CMakeLists.txt
+  _ver="$(cat CMakeLists.txt | grep -m3 -e "  VERSION" |
+  grep -o "[[:digit:]]*" | xargs | sed s'/ /./g')"
+  printf 'Version: %s-%s' "$_ver" "$pkgrel"
+  sed -i -e "s|\${CALAMARES_VERSION_MAJOR}.\${CALAMARES_VERSION_MINOR}.\${CALAMARES_VERSION_PATCH}|${_ver}-${pkgrel}|g" CMakeLists.txt
+  sed -i -e "s|CALAMARES_VERSION_RC 1|CALAMARES_VERSION_RC 0|g" CMakeLists.txt
+  sed -i -e "s|TryExec=calamares|TryExec=pkexec /usr/bin/calamares|g" calamares.desktop
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  mkdir -p build && cd build
+
+  cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_INSTALL_LIBDIR=lib -DWITH_PYTHONQT:BOOL=ON \
+    -DBoost_NO_BOOST_CMAKE=ON \
+    -DSKIP_MODULES="tracking webview interactiveterminal initramfs \
+      initramfscfg dracut dracutlukscfg dummyprocess dummypython dummycpp \
+      dummypythonqt services-openrc"
+
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver/build"
+
+  make DESTDIR="$pkgdir" install
+}
+
+sha512sums=('24f154a453c72fc2b75d35e0b37eb4c840034abceb09d40b613a07fab11068d40a83ce586b89ac7a1a03fee9ccb46f01428a0e94e2f683037d4282808ab85836')

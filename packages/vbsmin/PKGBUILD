@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=vbsmin
+pkgver=v1.1.0.r1.geaae97b
+pkgrel=1
+groups=('blackarch' 'blackarch-packer' 'blackarch-automation')
+pkgdesc='VBScript minifier.'
+arch=('any')
+url='https://noraj.github.io/vbsmin/'
+license=('MIT')
+depends=('ruby' 'ruby-paint' 'ruby-docopt')
+makedepends=('git')
+options=(!emptydirs)
+source=("git+https://github.com/noraj/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  gem build "$pkgname.gemspec"
+}
+
+package() {
+  cd $pkgname
+
+  _gemdir="$(ruby -e'puts Gem.default_dir')"
+  _release=$(gem build $pkgname.gemspec | grep Version | cut -d' ' -f4)
+
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" "$pkgname-$_release.gem"
+
+  rm -rf "$pkgdir/$_gemdir/cache/$pkgname-$_release.gem"
+  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
+
+  install -Dm 644 "$pkgdir/$_gemdir/gems/$pkgname-$_release/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

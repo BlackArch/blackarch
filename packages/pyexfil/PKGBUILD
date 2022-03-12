@@ -2,17 +2,22 @@
 # See COPYING for license details.
 
 pkgname=pyexfil
-pkgver=77.347f345
-pkgrel=1
+pkgver=84.0297b46
+pkgrel=2
 groups=('blackarch' 'blackarch-networking')
 pkgdesc='A couple of beta stage tools for data exfiltration.'
 arch=('any')
 url='https://github.com/ytisf/PyExfil'
 license=('MIT')
-depends=('python2' 'impacket' 'python2-requests')
-makedepends=('git' 'python2-setuptools')
-source=("$pkgname::git+https://github.com/ytisf/PyExfil.git")
-sha512sums=('SKIP')
+depends=('python' 'impacket' 'python-requests' 'python-progressbar'
+         'python-numpy' 'python-pillow' 'python-pytube3' 'python-pycryptodome'
+         'python-pycryptodomex' 'python-qrcode' 'python-base58' 'python-librosa'
+         'python-luhn' 'python-names' 'python-faker')
+makedepends=('git' 'python-setuptools')
+source=("$pkgname::git+https://github.com/ytisf/PyExfil.git"
+        '__init__.py.patch')
+sha512sums=('SKIP'
+            'c5fcd35f6e8b2c2ab1c3726979cb6eb1f90fb009dd6bc12f32589cfc633dc667f18d0b4bee061c86998bd16ae7b689de98ca4039397b5fd79e84690f933b6290')
 
 pkgver() {
   cd $pkgname
@@ -20,10 +25,14 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  patch -p1 < __init__.py.patch
+}
+
 build() {
   cd $pkgname
 
-  python2 setup.py build
+  python setup.py build
 }
 
 package() {
@@ -31,10 +40,9 @@ package() {
 
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  python2 setup.py install --root="$pkgdir" --optimize=1 --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md \
     DOCUMENTATION.md
-  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

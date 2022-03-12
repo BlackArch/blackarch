@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=qrgen
+pkgver=37.82a015b
+pkgrel=3
+pkgdesc='Simple script for generating Malformed QRCodes.'
+groups=('blackarch' 'blackarch-misc')
+arch=('any')
+url='https://github.com/h0nus/QRGen'
+license=('custom:unknown')
+depends=('python' 'python-pillow' 'python-qrcode')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/h0nus/QRGen.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm README.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

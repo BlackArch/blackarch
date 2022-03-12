@@ -1,0 +1,114 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Justin Kromlinger <hashworks@archlinux.org>
+# Old Contributor: Massimiliano Torromeo <massimiliano.torromeo@gmail.com>
+# Old Contributor: Marcello "mererghost" Rocha <https://github.com/mereghost>
+# Refactored by Blaž "Speed" Hrastnik <https://github.com/archSeer>
+
+pkgname=elasticsearch
+pkgver=7.10.2
+pkgrel=3
+pkgdesc='Distributed RESTful search engine built on top of Lucene.'
+arch=('x86_64' 'aarch64')
+url='https://www.elastic.co/products/elasticsearch/'
+license=('Apache')
+depends=('java-runtime-headless<=16' 'systemd' 'libxml2')
+makedepends=('java-environment=11')
+source=("$pkgname-$pkgver.tar.gz"::"https://github.com/elastic/elasticsearch/archive/v$pkgver.tar.gz"
+         elasticsearch.service
+         elasticsearch@.service
+         elasticsearch-keystore.service
+         elasticsearch-keystore@.service
+         elasticsearch-sysctl.conf
+         elasticsearch-user.conf
+         elasticsearch-tmpfile.conf
+         elasticsearch.default
+         remove-systemd-distribution-check.patch
+         patch-log4j-JAR-to-remove-JndiLookup-class-81629.patch
+)
+sha512sums=('225cb08d89364e9867ff6a98a04a60ea3d3e39f6869bb52c91dd119774f9fdf7d13881d19a1371f34c17dd1e22e9a10674a867eba777289164b45e29a5c65b6d'
+            '8280cfd911c1762a1cba67a72bf01c593dbcec00ab02b5f7ca2ef05dbcbae835f2d0e20f3143b0f601e233708e7a60148a1b2087aaff0e0b239361ca4792409f'
+            '712974b708f54b631d635601e7dff037a2fff0cd927cd09b27974fdb9232c1e495d70232afad5eaa4d2876665e099f880c23f914ed602700ef1962b5f137879f'
+            '87ff9026db8883dab2b1c5dcf7ead2700de6aa37000631d153fb61cccf7ab42edbd5eeac4e320e9d6aa2aadbe76f2c6386efb1aefde6f02aef95680f6ffafd0b'
+            '337c7c4c0f37430523b9a89e716051f1a05abbc71c3109dbf201bcf1b6839a88b5edb2c6498937552e8e92255e143ea344e55478543ff1c4623ed14ea04e7af1'
+            '4926e63ed247f9ced0674a55d01fdf7708b468a5f4b1bdb246f60c4e80d4980f21c811b952340d3e8d1c1dde77af87e062c1b66ec6818f90fb128a713c349050'
+            '1c1b3dfe28cd2f9026fdfa373bc59be35cf281bf22fcab12150ddded40b1355268078b9197559c4bdb9665177924fe95786028386baec90dede53264506383fd'
+            '78833e1e3c78c67b239c668f7d70e0fcd1078885918854d0ecbf9ae7589fb834d3dd8f781d37678d150a6d7203da3b7aee4b7c97cd581cd955de58601ed17391'
+            '4ef74026f82b6f0cb6cec9b992cd3f9b145083da39a37b7d8da01824c44054c72644ee0fe6d92f0329496f0fce97b7b913bca1402ef922b6cceccc360e35c5b1'
+            'fbb7ceb812fe3ba5997b22f614ddfc5988be8b6c41d591f64daf15096d7b4ef3bdb27a89faee5c94dedb624c813f80bb3d2e4af80f910e80c909b81bf3eda0af'
+            'e68563dd4d11793c97545716e64704329328c96f6003880be921cee2050e758e34bbdccb139bfafe6bf6eae009b88ef23e1faea03f4fee416c1a2c06741badb9')
+
+backup=('etc/elasticsearch/elasticsearch.yml'
+        'etc/elasticsearch/log4j2.properties'
+        'etc/elasticsearch/jvm.options'
+        'etc/default/elasticsearch')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -Np1 -i "$srcdir/remove-systemd-distribution-check.patch"
+  patch -Np1 -i "$srcdir/patch-log4j-JAR-to-remove-JndiLookup-class-81629.patch"
+  sed -i 's|${versions.log4j}|2.11.1|' libs/log4j/build.gradle
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  export PATH=/usr/lib/jvm/java-11-openjdk/bin:$PATH
+  export GRADLE_OPTS="-Dbuild.snapshot=false -Dlicense.key=x-pack/plugin/core/snapshot.key"
+  ./gradlew :distribution:buildSystemdModule
+  ./gradlew :distribution:archives:linux-tar:build
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -dm 755 "$pkgdir"/{usr/share,var/lib,var/log}/elasticsearch
+  install -dm 755 "$pkgdir"/usr/bin
+
+  tar xf distribution/archives/linux-tar/build/distributions/elasticsearch-$pkgver-*linux-x86_64.tar.gz \
+    --strip 1 -C "$pkgdir/usr/share/elasticsearch"
+  rm -r "$pkgdir/usr/share/elasticsearch/"{jdk,logs}
+
+  install -dm 755 "$pkgdir/etc"
+  mv "$pkgdir/usr/share/elasticsearch/config" "$pkgdir/etc/elasticsearch"
+  chmod 2750 "$pkgdir/etc/elasticsearch"
+
+  for bin in "$pkgdir/usr/share/elasticsearch/bin/"*; do
+    ln -sT /usr/share/elasticsearch/bin/$(basename $bin) \
+      "$pkgdir/usr/bin/"$(basename $bin)
+  done
+
+  ln -s /etc/elasticsearch "$pkgdir/usr/share/elasticsearch/config"
+  ln -s /var/log/elasticsearch "$pkgdir/usr/share/elasticsearch/logs"
+  ln -s /var/lib/elasticsearch "$pkgdir/usr/share/elasticsearch/data"
+
+  install -Dm 644 "$srcdir/elasticsearch.service" \
+    "$pkgdir/usr/lib/systemd/system/elasticsearch.service"
+  install -Dm 644 "$srcdir/elasticsearch@.service" \
+    "$pkgdir/usr/lib/systemd/system/elasticsearch@.service"
+  install -Dm 644 "$srcdir/elasticsearch-keystore.service" \
+    "$pkgdir/usr/lib/systemd/system/elasticsearch-keystore.service"
+  install -Dm 644 "$srcdir/elasticsearch-keystore@.service" \
+    "$pkgdir/usr/lib/systemd/system/elasticsearch-keystore@.service"
+  install -Dm 644 "$srcdir/elasticsearch-user.conf" \
+    "$pkgdir/usr/lib/sysusers.d/elasticsearch.conf"
+  install -Dm 644 "$srcdir/elasticsearch-tmpfile.conf" \
+    "$pkgdir/usr/lib/tmpfiles.d/elasticsearch.conf"
+  install -Dm 644 "$srcdir/elasticsearch-sysctl.conf" \
+  "$pkgdir/usr/lib/sysctl.d/elasticsearch.conf"
+  install -Dm 644 "$srcdir/elasticsearch.default" \
+    "$pkgdir/etc/default/elasticsearch"
+
+  cp -r distribution/build/outputs/systemd/modules/systemd \
+    "$pkgdir/usr/share/elasticsearch/modules/"
+
+  sed -i '2iJAVA_HOME=/usr/lib/jvm/default-runtime' \
+    "$pkgdir/usr/share/elasticsearch/bin/elasticsearch-env"
+  sed -i 's/ES_BUNDLED_JDK=true/ES_BUNDLED_JDK=false/g' \
+    "$pkgdir/usr/share/elasticsearch/bin/elasticsearch-env"
+
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

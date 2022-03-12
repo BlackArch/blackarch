@@ -2,21 +2,21 @@
 # See COPYING for license details.
 
 pkgname=artillery
-pkgver=352.bdc2386
-pkgrel=1
+pkgver=357.805a5d8
+pkgrel=3
 epoch=1
 groups=('blackarch' 'blackarch-defensive' 'blackarch-honeypot')
 pkgdesc='A combination of a honeypot, file-system monitoring, system hardening, and overall health of a server to create a comprehensive way to secure a system.'
 arch=('any')
 url='https://www.trustedsec.com/downloads/artillery/'
 license=('BSD')
-depends=('python2' 'python2-yaml')
+depends=('python' 'python-yaml')
 makedepends=('git')
 options=('!emptydirs')
 source=("git+https://github.com/BinaryDefense/$pkgname.git"
         'artillery.service')
 sha512sums=('SKIP'
-            'c815236556097b36c21d91025d48326d96d0f33b8d511a8daac6a3e79bed97de2946ef208027ca1d2e0426f65ce4a67a59137c13facda08c05ccc4def723f399')
+            '13cac51ee7660f4605c1e4d1c4ae1988b221512fd68218bcde39539d584b986578a81180a8221b32438945e3136cf96d90dee2667b21c7174c3cc5b60559011c')
 
 pkgver() {
   cd $pkgname
@@ -29,7 +29,7 @@ prepare() {
 
   sed -i "s|/var|$pkgdir/var|g" setup.py
   sed -i "s|/etc|$pkgdir/etc|g" setup.py
-  sed -i "s|/var/artillery|/usr/share/artillery|g" artillery.py \
+  sed -i "s|/var/artillery|$pkgdir/usr/share/artillery|g" artillery.py \
     src/ssh_monitor.py src/monitor.py restart_server.py src/core.py \
     src/email_handler.py src/ftp_monitor.py src/monitor.py src/startup_artillery
   sed -i "s|/var/log/apache|/var/log/httpd|g" src/apache_monitor.py
@@ -41,7 +41,7 @@ package() {
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  python2 setup.py <<< $'y\nn\nn'
+  python setup.py <<< $'y\nn\nn'
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" readme/*
   install -Dm 644 readme/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
@@ -56,9 +56,23 @@ if test \$EUID != 0 ; then
   echo 'Must be run as root.'
   exit 1
 fi
-exec python2 /usr/share/$pkgname/$pkgname.py "\$@"
+exec python /usr/share/$pkgname/$pkgname.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
+
+  # clean-up
+  sed -i "s|$pkgdir/var|/var|g" setup.py
+  sed -i "s|$pkgdir/etc|/etc|g" setup.py
+  sed -i "s|$pkgdir/usr/share/artillery|/usr/share/artillery|g" \
+    "$pkgdir/usr/share/artillery/artillery.py" \
+    "$pkgdir/usr/share/artillery/src/ssh_monitor.py" \
+    "$pkgdir/usr/share/artillery/src/monitor.py" \
+    "$pkgdir/usr/share/artillery/restart_server.py" \
+    "$pkgdir/usr/share/artillery/src/core.py" \
+    "$pkgdir/usr/share/artillery/src/email_handler.py" \
+    "$pkgdir/usr/share/artillery/src/ftp_monitor.py" \
+    "$pkgdir/usr/share/artillery/src/monitor.py" \
+    "$pkgdir/usr/share/artillery/src/startup_artillery"
 }
 

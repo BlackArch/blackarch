@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ridrelay
+pkgver=34.f2fa99c
+pkgrel=1
+pkgdesc='Enumerate usernames on a domain where you have no creds by using SMB Relay with low priv.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon' 'blackarch-spoof' 'blackarch-networking')
+url='https://github.com/skorov/ridrelay'
+license=('GPL3')
+depends=('python' 'impacket')
+makedepends=('git')
+source=("git+https://github.com/skorov/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" *.py
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

@@ -1,0 +1,65 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Old Contributor: Lex Black <autumn-wind at web dot de>
+# Old Contributor: TingPing <tingping@tingping.se>
+# Old Contributor: Guillaume Horel <guillaume.horel@gmail.com>
+
+pkgbase=brotli06
+pkgname=('brotli06' 'brotli06-testdata')
+_pkgname=brotli
+pkgver=0.6.0
+pkgrel=3
+pkgdesc='Brotli compression library - legacy 0.6.x version'
+arch=('x86_64' 'aarch64')
+license=('MIT')
+url='https://github.com/google/brotli'
+depends=('gcc-libs')
+makedepends=('cmake' 'python' 'python2')
+source=("$_pkgname-$pkgver.tar.gz::https://github.com/google/brotli/archive/v$pkgver.tar.gz")
+sha512sums=('36caa277790efeb5bff0fdc090cdcf00fd9995c4e81a60ed31d36af2e13848ec1afe5d84e6926eebbee013525191e9404e112cb7fbede16097221c5bc3dfb5d5')
+
+prepare() {
+  mkdir -p build
+}
+
+build() {
+  cd build
+
+  cmake "../$_pkgname-$pkgver" -DCMAKE_INSTALL_PREFIX="/usr" \
+    -DCMAKE_INSTALL_LIBDIR="/usr/lib/$pkgbase"
+
+  make
+}
+
+package_brotli06() {
+  cd build
+
+  install -dm 755 "$pkgdir/usr/include/$pkgbase"
+
+  make DESTDIR="$pkgdir" install
+
+  mv "$pkgdir/usr/include/$_pkgname" "$pkgdir/usr/include/brotli06/"
+
+  for _so in libbrotlicommon libbrotlidec libbrotlienc; do
+    mv "$pkgdir/usr/lib/$pkgbase/$_so.so.$pkgver" "$pkgdir/usr/lib/"
+    ln -sf "../$_so.so.$pkgver" "$pkgdir/usr/lib/$pkgbase/$_so.so"
+  done
+
+  mv "$pkgdir"/usr/bin/bro{,-0.6}
+
+  sed -e 's|/include$|/include/brotli06|' -i \
+    "$pkgdir/usr/lib/$pkgbase/pkgconfig/"*.pc
+}
+
+package_brotli06-testdata() {
+  depends=()
+
+  cd "$_pkgname-$pkgver"
+
+  install -dm 755 "$pkgdir/usr/share/$pkgbase"
+
+  cp -a tests/testdata "$pkgdir/usr/share/$pkgbase/"
+}
+

@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=patator
-pkgver=168.a92c06f
+pkgver=212.b5ed210
 pkgrel=1
 epoch=1
 groups=('blackarch' 'blackarch-cracker')
@@ -10,12 +10,13 @@ pkgdesc='A multi-purpose bruteforcer.'
 arch=('any')
 url='https://github.com/lanjelot/patator'
 license=('GPL2')
-depends=('python2' 'python2-paramiko' 'python2-pycurl' 'openldap' 'impacket'
-         'mysql-python' 'python2-psycopg2' 'python2-pycryptodome' 'python2-pydns'
-         'python2-pysnmp' 'python2-ipy' 'java-environment' 'unzip'
-         'python2-ajpy' 'python2-cx_oracle' 'ike-scan')
+depends=('python' 'python-paramiko' 'python-pycurl' 'python-dnspython'
+         'mysql-python' 'python-psycopg2' 'python-pycryptodome' 'python-pysnmp'
+         'python-ipy' 'python-pyopenssl' 'python-ajpy' 'python-cx_oracle'
+         'python-pyasn1' 'impacket' 'java-environment' 'unzip' 'ike-scan'
+         'openldap')
 makedepends=('git')
-source=('git+https://github.com/lanjelot/patator.git')
+source=("git+https://github.com/lanjelot/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
@@ -24,10 +25,19 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -Dm 755 "$pkgname.py" "$pkgdir/usr/bin/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  mv "$pkgdir/usr/bin/$pkgname.py" "$pkgdir/usr/bin/$pkgname"
 }
 

@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Old Maintainer for py2: Levente Polyak <anthraxx[at]archlinux[dot]org>
+# Old Contributor for py2: Sirat18 <aur@sirat18.de>
+# Old Contributor for py2: Paolo Giangrandi <peoro.noob@gmail.com>
+
+pkgname=python2-impacket
+_pkgname=impacket
+pkgver=0.9.21
+pkgrel=1
+pkgdesc='Collection of classes for working with network protocols'
+url='https://github.com/CoreSecurity/impacket'
+arch=('any')
+license=('Apache')
+depends=('python2' 'python2-pycryptodome' 'python2-pycryptodomex'
+         'python2-pyasn1' 'python2-pcapy' 'python2-pyopenssl' 'python2-six'
+         'python2-ldap3' 'python2-flask')
+makedepends=('python2-setuptools')
+source=("https://github.com/CoreSecurity/$_pkgname/archive/${_pkgname}_${pkgver//./_}.tar.gz")
+sha512sums=('9602019461cc07c2fc1e1a7baf40da0558a6cea4f6086e3c4ee16562cf0298c099c88f32ff7842ba403fc1560ccf29c1b3e9671cddcacb3ff6473d95dc11df2a')
+
+build() {
+  cd "${_pkgname}-${_pkgname}_${pkgver//./_}"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "${_pkgname}-${_pkgname}_${pkgver//./_}"
+
+  pVERSION="$(python2 -c 'import sys; print("{}.{}".format(sys.version_info.major, sys.version_info.minor))')"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 ChangeLog -t "$pkgdir/usr/share/doc/$pkgname/"
+
+  mv "$pkgdir/usr/share/doc/$_pkgname/"* "$pkgdir/usr/share/doc/$pkgname/"
+
+  rm -rf "$pkgdir/usr/share/doc/$_pkgname"
+
+  ln -s "/usr/lib/python${pVERSION}/site-packages/impacket/examples" \
+    "$pkgdir/usr/share/doc/$pkgname/examples"
+
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i "${i}2"
+  done
+}
+

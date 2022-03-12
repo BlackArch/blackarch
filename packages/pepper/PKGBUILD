@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pepper
+pkgver=18.9dfcade
+pkgrel=1
+pkgdesc='An open source script to perform malware static analysis on Portable Executable.'
+arch=('any')
+groups=('blackarch' 'blackarch-malware' 'blackarch-reversing'
+        'blackarch-binary')
+url='https://github.com/Th3Hurrican3/PEpper'
+license=('custom:unknown')
+depends=('python' 'python-pefile' 'python-yara' 'python-requests'
+         'python-magic' 'lief' 'yara')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/Th3Hurrican3/PEpper.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  # install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  rm requirements.txt README.md # LICENSE
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

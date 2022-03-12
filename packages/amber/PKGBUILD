@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname=amber
-pkgver=245.c6cae74
-pkgrel=2
+pkgver=254.a331b34
+pkgrel=3
 groups=('blackarch' 'blackarch-binary' 'blackarch-packer' 'blackarch-windows')
 pkgdesc='Reflective PE packer.'
 arch=('x86_64' 'aarch64')
@@ -11,11 +11,10 @@ url='https://github.com/EgeBalci/Amber'
 license=('custom:unknown')
 depends=('nasm' 'mingw-w64-binutils' 'mingw-w64-crt' 'mingw-w64-gcc'
          'mingw-w64-headers' 'mingw-w64-headers-bootstrap'
-         'mingw-w64-winpthreads' 'gcc-multilib')
-makedepends=('git' 'go-pie')
+         'mingw-w64-winpthreads' 'gcc-multilib' 'keystone')
+makedepends=('git' 'go')
 source=("$pkgname::git+https://github.com/EgeBalci/Amber.git")
 sha512sums=('SKIP')
-_url='github.com/EgeBalci/Amber'
 
 pkgver() {
   cd $pkgname
@@ -26,32 +25,23 @@ pkgver() {
 build() {
   cd $pkgname
 
-  mkdir -p "src/$_url" && rm -rf "src/$_url" && mv $pkgname "src/$_url" &&
-    cd "src/$_url"
-
-  GOPATH="$srcdir" go get -v -d -t $_url
-
-  #GOPATH="$srcdir/Amber/lib" go build -ldflags "-s -w" handler.go
-  #cd src
-  #GOPATH="$srcdir/Amber/lib" go build -ldflags "-s -w" -o ../amber
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
   cd $pkgname
 
-  GOPATH="$srcdir" go build -v $_url
-
-  install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md PAPER.pdf
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm README.md PAPER.pdf LICENSE
-
-  cp -a * "$pkgdir/usr/share/$pkgname"
-
-  ln -s "/usr/share/amber/Amber" "$pkgdir/usr/bin/$pkgname"
-  #ln -s "/usr/share/amber/handler" "$pkgdir/usr/bin/amber-handler"
 }
 

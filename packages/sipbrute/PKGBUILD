@@ -3,14 +3,13 @@
 
 pkgname=sipbrute
 pkgver=11.5be2fdd
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-voip' 'blackarch-cracker')
 pkgdesc='A utility to perform dictionary attacks against the VoIP SIP Register hash.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/packetassailant/sipbrute'
 license=('MIT')
-depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/packetassailant/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -21,20 +20,24 @@ pkgver() {
 }
 
 build() {
-  mkdir -p "src/$url" && rm -rf "src/$url" && mv $pkgname "src/$url" &&
-    cd "src/$url"
+  cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t $url
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd $pkgname
 
-  GOPATH="$srcdir" go build -v $url
-
-  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "src/$url/README.md"
-  install -Dm 644 "src/$url/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
 }
 

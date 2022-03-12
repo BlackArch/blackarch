@@ -2,15 +2,16 @@
 # See COPYING for license details.
 
 pkgname=domain-stats
-pkgver=28.033375f
-pkgrel=1
+pkgver=165.1cf05bf
+pkgrel=2
 pkgdesc='A web API to deliver domain information from whois and alexa.'
 groups=('blackarch' 'blackarch-recon')
 arch=('any')
 url='https://github.com/MarkBaggett/domain_stats'
 license=('custom:unknown')
-depends=('python2' 'python2-python-whois' 'python2-argparse')
-makedepends=('git')
+depends=('python' 'python-requests' 'python-yaml' 'python-rdap' 'python-munge'
+         'python-dateutil' 'python-publicsuffixlist')
+makedepends=('git' 'python-setuptools')
 source=("$pkgname::git+https://github.com/MarkBaggett/domain_stats.git")
 sha512sums=('SKIP')
 
@@ -20,24 +21,21 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 
-  rm README.md
-
-  cp -a * "$pkgdir/usr/share/$pkgname"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 domain_stats.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  #mv "$pkgdir/usr/bin/domain_stats" "$pkgdir/usr/bin/$pkgname"
+  #mv "$pkgdir/usr/bin/domain_stats_db_admin" \
+  #  "$pkgdir/usr/bin/$pkgname-db-admin"
 }
 

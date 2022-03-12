@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=thedorkbox
+pkgver=7.43852d3
+pkgrel=2
+pkgdesc='Comprehensive collection of Google Dorks & OSINT techniques to find Confidential Data.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/cybersafeblr/thedorkbox'
+license=('GPL3')
+depends=('php')
+makedepends=('git')
+source=("git+https://github.com/cybersafeblr/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md credits.txt
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  rm *.md *.txt LICENSE
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+if [ -z "\$@" ]; then
+    echo "Usage: $pkgname [PORT]"
+    exit 1
+fi
+
+cd /usr/share/$pkgname
+exec php -S 127.0.0.1:\$@
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

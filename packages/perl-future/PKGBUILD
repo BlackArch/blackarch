@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+#
+# This PKGBUILD was extracted from AUR.
+# Creator: Anton Leontiev <scileont /at/ gmail.com>
+# Changes by: petruknisme
+
+pkgname=perl-future
+_pkgname=Future
+pkgver=0.47
+pkgrel=1
+pkgdesc='Perl module to deal with operation awaiting completion.'
+arch=('any')
+url='https://metacpan.org/release/Future'
+license=('GPL' 'PerlArtistic')
+makedepends=('perl-module-build>=0.4004')
+checkdepends=('perl-test-fatal' 'perl-test-identity' 'perl-test-refcount')
+depends=('perl>=5.15.8' 'perl-test-fatal')
+options=('!emptydirs')
+source=("https://cpan.metacpan.org/authors/id/P/PE/PEVANS/$_pkgname-$pkgver.tar.gz")
+sha512sums=('d3cdd7409be0768ac0787945746e1ea217f02e84bc04b6309c532451a9193fbdc005b3c4de37d31751e6a806649d08028c93c3bfd24df6d6d2c2bf042b01d814')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB="" PERL_AUTOINSTALL=--skipdeps \
+    PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'" \
+    PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+    MODULEBUILDRC=/dev/null
+
+    /usr/bin/perl Build.PL INSTALLDIRS=vendor && ./Build
+  )
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  ./Build install
+
+  find "$pkgdir" -type f -name 'perllocal.pod' -delete;
+  find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}
+

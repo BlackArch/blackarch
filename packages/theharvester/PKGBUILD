@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=theharvester
-pkgver=1229.57cd908
+pkgver=2730.cd858b0
 pkgrel=1
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='Python tool for gathering e-mail accounts and subdomain names from different public sources (search engines, pgp key servers).'
@@ -13,7 +13,11 @@ depends=('python' 'python-requests' 'python-shodan' 'python-texttable'
          'python-beautifulsoup4' 'python-plotly' 'python-pytest' 'python-yaml'
          'python-censys' 'python-grequests' 'flake8' 'python-dnspython'
          'python-mypy_extensions' 'python-netaddr' 'python-aiodns'
-         'python-retrying')
+         'python-retrying' 'python-aiohttp' 'python-aiosqlite' 'python-uvloop'
+         'python-gevent' 'python-lxml' 'python-aiomultiprocess' 'python-orjson'
+         'python-typing_extensions' 'python-zope-event' 'python-starlette'
+         'python-slowapi' 'python-certifi' 'python-pyppeteer' 'python-fastapi'
+         'python-aiofiles' 'python-uvicorn' 'python-ujson')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/laramies/theHarvester.git")
 sha512sums=('SKIP')
@@ -40,12 +44,29 @@ build() {
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr --skip-build
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 api-keys.yaml "$pkgdir/usr/share/$pkgname/api-keys.yaml"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" COPYING LICENSES
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md README/*.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" README/COPYING \
+    README/LICENSES
 
   mv "$pkgdir/usr/bin/theHarvester" "$pkgdir/usr/bin/$pkgname"
+
+  #rm -rf README*
+
+  #cp -a * "$pkgdir/usr/share/$pkgname/"
+  #mv "$pkgdir/usr/bin/theHarvester" "$pkgdir/usr/bin/$pkgname"
+
+#  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+#cd /usr/share/$pkgname
+#exec python theHarvester.py "\$@"
+#EOF
+
+#  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

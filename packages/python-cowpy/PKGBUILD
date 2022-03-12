@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=python-cowpy
+pkgname=('python2-cowpy' 'python-cowpy')
+_pkgname=cowpy
+pkgver=1.1.4
+_pyver=3.10
+pkgrel=1
+pkgdesc='A cowsay clone for python in one file.'
+arch=('any')
+url='https://pypi.org/project/cowpy/#files'
+license=('custom:unknown')
+makedepends=('python2-setuptools' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/a9/31/081ff3835834cbc34db838019ee32e394027867c43d907de0d03f0ba36ad/$_pkgname-$pkgver.tar.gz")
+sha512sums=('13874886a25e88daaaa07bb35598eab3f27c6ba9dc5724168e91a2404c5d2c9057d05b43969d9458218fe4f7bf89c93fdd779cb9f2e923ca9dc2f14b50d0c7c2')
+
+prepare() {
+  cp -a "$_pkgname-$pkgver"{,-2}
+}
+
+build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
+  cd "$srcdir/$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package_python2-cowpy() {
+  depends=('python2')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+
+  for i in "$pkgdir/usr/bin/"* ; do
+    mv $i "${i}2"
+  done
+
+  chmod 644 \
+    "$pkgdir/usr/lib/python2.7/site-packages/cowpy-1.1.4-py2.7.egg-info/"*
+}
+
+package_python-cowpy() {
+  depends=('python')
+
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+
+  chmod 644 \
+    "$pkgdir/usr/lib/python$_pyver/site-packages/cowpy-1.1.4-py$_pyver.egg-info/"*
+}
+

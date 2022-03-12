@@ -2,29 +2,36 @@
 # See COPYING for license details.
 
 pkgname=crackmapexec
-pkgver=450.3f2d39a
-pkgrel=2
-groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation')
+pkgver=772.b4c17c0
+_pyver=3.10
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation' 'blackarch-windows')
 pkgdesc='A swiss army knife for pentesting Windows/Active Directory environments.'
 arch=('any')
 url='https://github.com/byt3bl33d3r/CrackMapExec'
 license=('custom:unknown')
-depends=('python2' 'impacket' 'python2-gevent' 'python2-netaddr' 'python2-bs4'
-         'python2-pyopenssl' 'python2-pycryptodome' 'python2-pyasn1'
-         'python2-msgpack' 'python2-termcolor' 'python2-requests'
-         'python2-beautifulsoup4' 'python2-pylnk' 'python2-paramiko'
-         'python2-pywerview' 'python2-pcapy' 'python2-splinter' 'python2-idna'
-         'python2-cryptography' 'python2-cffi' 'python2-selenium'
-         'python2-pynacl' 'python2-terminaltables' 'python2-greenlet'
-         'python2-enum34' 'python2-bcrypt' 'python2-certifi' 'python2-chardet'
-         'python2-xmltodict' 'python2-ipaddress' 'python2-ntlm-auth'
-         'python2-pycparser' 'python2-requests-ntlm' 'python2-six'
-         'python2-urllib3' 'python2-asn1crypto' 'python2-pycryptodomex')
-makedepends=('git' 'python2-setuptools')
+depends=('impacket' 'python' 'python-aiowinreg' 'python-asn1crypto'
+        'python-asysocks' 'python-bcrypt' 'python-beautifulsoup4' 'python-bs4'
+        'python-certifi' 'python-cffi' 'python-chardet' 'python-click'
+        'python-cryptography' 'python-dnspython' 'python-flask' 'python-future'
+        'python-greenlet' 'python-idna' 'python-itsdangerous' 'python-jinja'
+        'python-ldap3' 'ldapdomaindump' 'python-lsassy'
+        'python-markupsafe' 'python-minidump' 'python-minikerberos'
+        'python-msgpack' 'python-msldap' 'python-netaddr' 'python-ntlm-auth'
+        'python-paramiko' 'python-prompt_toolkit' 'python-pyasn1'
+        'python-pycparser' 'python-pycryptodomex' 'python-pylnk3'
+        'python-pynacl' 'python-pyopenssl' 'python-pypsrp' 'python-pypykatz'
+        'python-pyspnego' 'python-pytz' 'python-requests-ntlm' 'python-six'
+        'python-soupsieve' 'python-termcolor' 'python-terminaltables'
+        'python-tqdm' 'python-urllib3' 'python-wcwidth' 'python-werkzeug'
+        'python-winacl' 'python-winsspi' 'python-xmltodict' 'python-zope-event'
+        'python-zope-interface' 'python-pywerview' 'python-gevent'
+        'python-neo4j-driver' 'python-aiosmb' 'python-aioconsole')
+makedepends=('git' 'python-setuptools' 'python-poetry')
 source=("$pkgname::git+https://github.com/byt3bl33d3r/CrackMapExec.git"
         'setup.py.patch')
 sha512sums=('SKIP'
-            '976fc439e88affd0618cb4da4ac48dc6e26f3239c13fdd8bf8229389be8faab89ef49de0b8159405086861feb1706d3277c9ee8c19ad458a9da86104e1abad0a')
+            '9eda3d42be1881e396e9f117a9fd85312530069c376dc1e6ae5f6e7d3a95d35e20ee0ff4bfaecd978aa07a1af1b7d18df2f897719f0d3e18645a89bb861ccd17')
 
 pkgver() {
   cd $pkgname
@@ -35,35 +42,28 @@ pkgver() {
 prepare() {
   cd $pkgname
 
+  make clean
   git submodule init && git submodule update --recursive
-
-  sed -i '/msgpack/d' requirements.txt
-
-  cd $srcdir
-
-  patch -p1 < setup.py.patch
 }
 
 build() {
   cd $pkgname
 
-  python2 setup.py build
+  poetry build
+  cd dist
+  mkdir -p cme_dir
+  tar zxvf $pkgname-*.tar.gz -C cme_dir
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname/dist/cme_dir/$pkgname"-*
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  #patch < "$srcdir/setup.py.patch"
+  python setup.py install --root="$pkgdir" -O1
 
-  python2 setup.py install --root="$pkgdir" --prefix=/usr --optimize=1 \
-    --skip-build
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  find . -name '*.py' |
-    xargs sed -i -e 's|/usr/bin/env python|/usr/bin/env python2|' \
-    -e 's|/usr/bin/python|/usr/bin/python2|'
+  install -dm 755 \
+    "$pkgdir/usr/lib/python$_pyver/site-packages/cme/thirdparty/pywerview/"
+  touch \
+    "$pkgdir/usr/lib/python$_pyver/site-packages/cme/thirdparty/pywerview/.default"
 }
 

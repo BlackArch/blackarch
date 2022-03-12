@@ -2,32 +2,38 @@
 # See COPYING for license details.
 
 pkgname=gcrypt
-_pkgname=GCrypt
-pkgver=3.2
+pkgver=29.baef57a
 pkgrel=1
 epoch=1
 pkgdesc='Simple, secure and performance file encryption tool written in C'
 groups=('blackarch' 'blackarch-crypto')
 arch=('x86_64' 'aarch64')
-url='https://github.com/GasparVardanyan/GCrypt'
-license=('custom:unknown')
-depends=('glibc')
-makedepends=('gcc')
-source=("https://github.com/GasparVardanyan/$_pkgname/archive/v$pkgver.tar.gz")
-sha512sums=('26e32f76233e891c4d08021b92d9e4b707cbbf48fad261116a31b3e8447315050bd68e49b5ef3d6dea30467361c364438ffcf33f8351510760184dc59f920269')
+url='https://gitlab.com/GasparVardanyan/gcrypt'
+license=('MIT')
+depends=('glibc' 'libbsd')
+makedepends=('git')
+source=("git+https://gitlab.com/GasparVardanyan/gcrypt")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
 
 build() {
-  cd "$_pkgname-$pkgver"
+  cd $pkgname
 
   gcc -o $pkgname *.c -std=c18 -pedantic -pedantic-errors -Wall -O \
     -fstack-protector-all -fPIE -fPIC \
-    -D_FORTIFY_SOURCE=2 -Wl,-z,now -Wl,-z,-relro
+    -D_FORTIFY_SOURCE=2 -Wl,-z,now -Wl,-z,-relro -lbsd
 }
 
 package() {
-  cd "$_pkgname-$pkgver"
+  cd $pkgname
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

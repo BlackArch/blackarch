@@ -1,6 +1,33 @@
---- CMakeLists.txt.old	2018-10-29 08:21:23.775886981 +0000
-+++ CMakeLists.txt	2018-10-29 08:24:14.657951994 +0000
-@@ -65,12 +65,12 @@
+--- src/fastnetmon/src/CMakeLists.txt	2020-03-14 22:36:07.153333289 +0100
++++ CMakeLists.txt	2020-03-14 22:10:41.883333324 +0100
+@@ -7,7 +7,7 @@
+ 
+ # set(ENABLE_GOBGP_SUPPORT "yes")
+ 
+-# We should set compiler before project() call 
++# We should set compiler before project() call
+ if (ENABLE_BUILD_IN_CPP_11_CUSTOM_ENVIRONMENT)
+     # We use custom compiler too
+     set(CMAKE_C_COMPILER "/opt/gcc520/bin/gcc")
+@@ -39,7 +39,7 @@
+     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11")
+ endif()
+ 
+-# cmake -DENABLE_BUILD_IN_CPP_11_CUSTOM_ENVIRONMENT=ON .. 
++# cmake -DENABLE_BUILD_IN_CPP_11_CUSTOM_ENVIRONMENT=ON ..
+ if (ENABLE_BUILD_IN_CPP_11_CUSTOM_ENVIRONMENT)
+     set(BOOST_INCLUDEDIR "/opt/boost_1_58_0")
+     set(BOOST_LIBRARYDIR "/opt/boost_1_58_0/stage/lib/")
+@@ -53,7 +53,7 @@
+ 
+     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};/opt/gcc520/lib64;/opt/boost_1_58_0/stage/lib")
+ endif()
+- 
++
+ # Specify full RPATH for build tree
+ SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+ 
+@@ -65,23 +65,23 @@
  
  message(STATUS "C++ compilation flags: ${CMAKE_CXX_FLAGS_RELEASE}")
  
@@ -19,7 +46,56 @@
  
  set(FASTNETMON_PROFILER OFF)
  
-@@ -142,9 +142,9 @@
+ set(FASTNETMON_PROFILE_FLAGS "-g -pg")
+ 
+-if (NOT CMAKE_BUILD_TYPE) 
++if (NOT CMAKE_BUILD_TYPE)
+     message(STATUS "Setting build type to Release as none was specified.")
+     set(CMAKE_BUILD_TYPE Release)
+ endif()
+ 
+-if (FASTNETMON_PROFILER) 
++if (FASTNETMON_PROFILER)
+     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FASTNETMON_PROFILE_FLAGS}")
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FASTNETMON_PROFILE_FLAGS}")
+     set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${FASTNETMON_PROFILE_FLAGS}")
+@@ -89,7 +89,7 @@
+ 
+ execute_process(COMMAND sh -c ". /etc/os-release; echo $ID" OUTPUT_VARIABLE OS_ID ERROR_QUIET)
+ 
+-### Executables definition 
++### Executables definition
+ 
+ # Main tool
+ add_executable(fastnetmon fastnetmon.cpp)
+@@ -104,8 +104,8 @@
+ # You could enable it using: cmake .. -DUSE_NEW_ATOMIC_BUILTINS=ON
+ if (USE_NEW_ATOMIC_BUILTINS)
+     message(STATUS "Will use new memory model aware atomic builtins")
+-    add_definitions(-DUSE_NEW_ATOMIC_BUILTINS) 
+-endif() 
++    add_definitions(-DUSE_NEW_ATOMIC_BUILTINS)
++endif()
+ 
+ CHECK_CXX_SOURCE_COMPILES("
+ #include <cstdint>
+@@ -124,13 +124,13 @@
+ endif()
+ 
+ # With this flag we can disable PF_RING build via console: cmake .. -DDISABLE_PF_RING_SUPPORT=ON
+-if (NOT DISABLE_PF_RING_SUPPORT) 
++if (NOT DISABLE_PF_RING_SUPPORT)
+     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+         message(STATUS "You are running Linux and we can build PF_RING support")
+         set (ENABLE_PFRING_SUPPORT ON)
+     else()
+         message(WARNING "You are running not an Linux and we can't build PF_RING support")
+-    endif() 
++    endif()
+ endif()
+ 
+ option(ENABLE_NETMAP_SUPPORT "Enable Netmap support" ON)
+@@ -142,24 +142,24 @@
  
  if (ENABLE_PFRING_SUPPORT)
      # Set path to manually compiled PF_RING
@@ -31,7 +107,9 @@
  
      if (NOT PFRING_LIBRARIES)
          message(FATAL_ERROR "Could not find PF_RING")
-@@ -153,13 +153,13 @@
+     endif()
+-    
++
      link_directories("${PFRING_CUSTOM_INSTALL_PATH}/lib")
      add_definitions(-DPF_RING)
  
@@ -47,24 +125,108 @@
 +    #    # Enable ZC support
 +    #    add_definitions(-DPF_RING_ZC)
 +    #else()
-+    #    message(WARNING "We can't find PF_RING ZC header pfring_zc.h in folder /opt/pf_ring/include. Will not compile ZC support") 
++    #    message(WARNING "We can't find PF_RING ZC header pfring_zc.h in folder /opt/pf_ring/include. Will not compile ZC support")
 +    #endif()
  
      include_directories(${PFRING_INCLUDE_DIRS})
  
-@@ -233,9 +233,9 @@
+@@ -186,7 +186,7 @@
  
-     add_library(fast_dpi STATIC fast_dpi.cpp)
+ # -DENABLE_SNABBSWITCH_SUPPORT=ON ..
+ # Please also comment out line: set(ENABLE_LUA_SUPPORT yes) if you want SnabbSwitch support
+-if (ENABLE_SNABBSWITCH_SUPPORT) 
++if (ENABLE_SNABBSWITCH_SUPPORT)
+     add_definitions(-DSNABB_SWITCH)
+     add_library(snabbswitch_plugin STATIC snabbswitch_plugin/snabbswitch_collector.cpp)
  
+@@ -196,16 +196,16 @@
+ 
+ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+     execute_process(COMMAND uname -r OUTPUT_VARIABLE LINUX_KERNEL_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+-    
++
+     # Extract major version number from Linux Kernel Version
+     string(REGEX MATCH "^[0-9]+\\.[0-9]+" KERNEL_VERSION_MATCHES ${LINUX_KERNEL_VERSION})
+-    
++
+     # For tests
+     # set(KERNEL_VERSION_MATCHES "2.6.32")
+ 
+     # We need 3.7 or more recent kernel here because older kernels are buggy
+     # VERSION_GREATER comparator available from cmake 2.6.2
+-    if (${KERNEL_VERSION_MATCHES} VERSION_GREATER "3.7") 
++    if (${KERNEL_VERSION_MATCHES} VERSION_GREATER "3.7")
+         message(STATUS "You are running Linux with enough recent kernel and we can build AF_PACKET support")
+         set (ENABLE_AFPACKET_SUPPORT ON)
+     else()
+@@ -215,57 +215,57 @@
+ 
+ # -DENABLE_AFPACKET_SUPPORT=ON ..
+ if (ENABLE_AFPACKET_SUPPORT)
+-   add_definitions(-DFASTNETMON_ENABLE_AFPACKET) 
++   add_definitions(-DFASTNETMON_ENABLE_AFPACKET)
+    add_library(afpacket_plugin STATIC afpacket_plugin/afpacket_collector.cpp)
+    target_link_libraries(afpacket_plugin unified_parser)
+ endif()
+ 
+ # sFLOW plugin
+-add_library(sflow_plugin STATIC sflow_plugin/sflow_collector.cpp) 
++add_library(sflow_plugin STATIC sflow_plugin/sflow_collector.cpp)
+ 
+ # netflow plugin
+ add_library(netflow_plugin STATIC netflow_plugin/netflow_collector.cpp)
+ target_link_libraries(netflow_plugin ipfix_rfc)
+ 
+-option(ENABLE_DPI_SUPPORT "Enable Deep Packet Inspection support" ON)
+-if (ENABLE_DPI_SUPPORT) 
+-    message(STATUS "We will enable nDPI support")
+-
+-    add_library(fast_dpi STATIC fast_dpi.cpp)
+-
 -    set(NDPI_INCLUDE_DIRS "/opt/ndpi/include/libndpi-1.7.1")
-+    set(NDPI_INCLUDE_DIRS "/usr/include")
- 
+-
 -    find_library(NDPI_LIBRARIES NAMES ndpi PATHS "/opt/ndpi/lib" NO_DEFAULT_PATH)
-+    find_library(NDPI_LIBRARIES NAMES ndpi PATHS "/usr/lib" NO_DEFAULT_PATH)
+-
+-    if (NOT NDPI_LIBRARIES)
+-        message(FATAL_ERROR "Could not find nDPI library")
+-    endif()
+-
+-    link_directories("/opt/ndpi/lib")
+-    include_directories(${NDPI_INCLUDE_DIRS})
+-
+-    add_definitions(-DENABLE_DPI)
+-
+-    target_link_libraries(fast_dpi ${NDPI_LIBRARIES})
+-endif()
++# option(ENABLE_DPI_SUPPORT "Enable Deep Packet Inspection support" ON)
++# if (ENABLE_DPI_SUPPORT)
++#     message(STATUS "We will enable nDPI support")
++#
++#     add_library(fast_dpi STATIC fast_dpi.cpp)
++#
++#     set(NDPI_INCLUDE_DIRS "/usr/include")
++#
++#     find_library(NDPI_LIBRARIES NAMES ndpi PATHS "/usr/lib" NO_DEFAULT_PATH)
++#
++#     if (NOT NDPI_LIBRARIES)
++#         message(FATAL_ERROR "Could not find nDPI library")
++#     endif()
++#
++#     link_directories("/usr/lib")
++#     include_directories(${NDPI_INCLUDE_DIRS})
++#
++#     add_definitions(-DENABLE_DPI)
++#
++#     target_link_libraries(fast_dpi ${NDPI_LIBRARIES})
++# endif()
  
-     if (NOT NDPI_LIBRARIES)
-         message(FATAL_ERROR "Could not find nDPI library")
-@@ -258,7 +258,7 @@
+ # We do not enable it by default, it's testing feature
+ # If you want it please build with:
+-# cmake -DENABLE_LUA_SUPPORT=ON .. 
++# cmake -DENABLE_LUA_SUPPORT=ON ..
+ option(ENABLE_LUA_SUPPORT "Enable Lua support" ON)
+ if (ENABLE_LUA_SUPPORT)
+     message(STATUS "We will enable LuaJIT support")
  
      add_definitions(-DENABLE_LUA_HOOKS)
  
@@ -73,3 +235,169 @@
  
      link_directories("${LUAJIT_CUSTOM_INSTALL_PATH}/lib")
      include_directories("${LUAJIT_CUSTOM_INSTALL_PATH}/include")
+ 
+     find_library(LUAJIT_LIBRARY_PATH NAMES luajit-5.1 PATHS "${LUAJIT_CUSTOM_INSTALL_PATH}/lib" NO_DEFAULT_PATH)
+ 
+-    if (NOT LUAJIT_LIBRARY_PATH) 
++    if (NOT LUAJIT_LIBRARY_PATH)
+         message(FATAL_ERROR "Could not find luajit library")
+     endif()
+ 
+@@ -280,7 +280,7 @@
+ 
+ find_package(Threads)
+ 
+-if (ENABLE_PFRING_SUPPORT) 
++if (ENABLE_PFRING_SUPPORT)
+     add_library(pfring_plugin STATIC pfring_plugin/pfring_collector.cpp)
+     target_link_libraries(pfring_plugin ${PFRING_LIBRARIES})
+     target_link_libraries(pfring_plugin numa)
+@@ -303,7 +303,7 @@
+ 
+     if (GOBGP_INCLUDES_FOLDER AND GOBGP_LIBRARY_PATH)
+         message(STATUS "We found libgobgp and will link it: ${GOBGP_INCLUDES_FOLDER} ${GOBGP_LIBRARY_PATH}")
+-    
++
+         ### We do not link with it in compilation time because it broke daemonization code and pope
+         ### So we use runtime dynamic linking
+         ### target_link_libraries(gobgp_action ${GOBGP_LIBRARY_PATH})
+@@ -316,7 +316,7 @@
+     find_path(GRPC_INCLUDES_FOLDER NAMES grpc/grpc.h PATHS "${GRPC_CUSTOM_INSTALL_PATH}/include" NO_DEFAULT_PATH)
+     find_library(GRPC_LIBRARY_GRPC_PATH NAMES grpc PATHS "${GRPC_CUSTOM_INSTALL_PATH}/lib" NO_DEFAULT_PATH)
+     find_library(GRPC_LIBRARY_GPR_PATH NAMES gpr PATHS "${GRPC_CUSTOM_INSTALL_PATH}/lib" NO_DEFAULT_PATH)
+-    find_library(GRPC_LIBRARY_GRPC_CPP_UNSECURE_PATH NAMES grpc++_unsecure PATHS "${GRPC_CUSTOM_INSTALL_PATH}/lib" NO_DEFAULT_PATH) 
++    find_library(GRPC_LIBRARY_GRPC_CPP_UNSECURE_PATH NAMES grpc++_unsecure PATHS "${GRPC_CUSTOM_INSTALL_PATH}/lib" NO_DEFAULT_PATH)
+ 
+     if (GRPC_INCLUDES_FOLDER AND GRPC_LIBRARY_GRPC_PATH AND GRPC_LIBRARY_GPR_PATH AND GRPC_LIBRARY_GRPC_CPP_UNSECURE_PATH)
+         include_directories(${GRPC_INCLUDES_FOLDER})
+@@ -329,11 +329,11 @@
+ 
+     find_path(PROTOCOL_BUFFERS_INCLUDE_FOLDER NAMES "google/protobuf/stubs/common.h" PATHS "${PROTOCOL_BUFFERS_CUSTOM_INSTALL_PATH}/include")
+ 
+-    find_library(PROTOCOL_BUFFERS_LIBRARY_PATH NAMES protobuf PATHS "${PROTOCOL_BUFFERS_CUSTOM_INSTALL_PATH}/lib") 
++    find_library(PROTOCOL_BUFFERS_LIBRARY_PATH NAMES protobuf PATHS "${PROTOCOL_BUFFERS_CUSTOM_INSTALL_PATH}/lib")
+ 
+     if (PROTOCOL_BUFFERS_INCLUDE_FOLDER AND PROTOCOL_BUFFERS_LIBRARY_PATH)
+-        include_directories(${PROTOCOL_BUFFERS_INCLUDE_FOLDER}) 
+-        target_link_libraries(gobgp_action ${PROTOCOL_BUFFERS_LIBRARY_PATH}) 
++        include_directories(${PROTOCOL_BUFFERS_INCLUDE_FOLDER})
++        target_link_libraries(gobgp_action ${PROTOCOL_BUFFERS_LIBRARY_PATH})
+     else()
+         message(FATAL_ERROR "Could not find protocol buffers")
+     endif()
+@@ -368,13 +368,13 @@
+     target_link_libraries(gobgp_action gobgp_api_client_grpc_pb_cc)
+ 
+     # FastNetMon API
+-    add_definitions(-DFASTNETMON_API)    
++    add_definitions(-DFASTNETMON_API)
+ 
+     execute_process(COMMAND ${PROTOC_BINARY} -I ${PROJECT_BINARY_DIR}/.. --grpc_out=${PROJECT_BINARY_DIR}/.. --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN} ${PROJECT_BINARY_DIR}/../fastnetmon.proto ERROR_VARIABLE PROTOC_STDERR RESULT_VARIABLE PROTOC_RETURN_CODE OUTPUT_STRIP_TRAILING_WHITESPACE)
+ 
+     message(STATUS "Protoc return code: ${PROTOC_RETURN_CODE} std err: ${PROTOC_STDERR}")
+ 
+-    execute_process(COMMAND ${PROTOC_BINARY} -I  ${PROJECT_BINARY_DIR}/.. --cpp_out=${PROJECT_BINARY_DIR}/.. ${PROJECT_BINARY_DIR}/../fastnetmon.proto ERROR_VARIABLE PROTOC_STDERR RESULT_VARIABLE PROTOC_RETURN_CODE OUTPUT_STRIP_TRAILING_WHITESPACE) 
++    execute_process(COMMAND ${PROTOC_BINARY} -I  ${PROJECT_BINARY_DIR}/.. --cpp_out=${PROJECT_BINARY_DIR}/.. ${PROJECT_BINARY_DIR}/../fastnetmon.proto ERROR_VARIABLE PROTOC_STDERR RESULT_VARIABLE PROTOC_RETURN_CODE OUTPUT_STRIP_TRAILING_WHITESPACE)
+ 
+     message(STATUS "Protoc return code: ${PROTOC_RETURN_CODE} std err: ${PROTOC_STDERR}")
+ 
+@@ -388,14 +388,14 @@
+     target_link_libraries(fastnetmon_api_client ${GRPC_LIBRARY_GRPC_PATH})
+     target_link_libraries(fastnetmon_api_client fastnetmon_grpc_pb_cc)
+     target_link_libraries(fastnetmon_api_client fastnetmon_pb_cc)
+-    target_link_libraries(fastnetmon_api_client ${PROTOCOL_BUFFERS_LIBRARY_PATH}) 
++    target_link_libraries(fastnetmon_api_client ${PROTOCOL_BUFFERS_LIBRARY_PATH})
+ 
+     target_link_libraries(fastnetmon ${GRPC_LIBRARY_GPR_PATH})
+     target_link_libraries(fastnetmon ${GRPC_LIBRARY_GRPC_CPP_UNSECURE_PATH})
+     target_link_libraries(fastnetmon ${GRPC_LIBRARY_GRPC_PATH})
+     target_link_libraries(fastnetmon fastnetmon_grpc_pb_cc)
+     target_link_libraries(fastnetmon fastnetmon_pb_cc)
+-    target_link_libraries(fastnetmon ${PROTOCOL_BUFFERS_LIBRARY_PATH}) 
++    target_link_libraries(fastnetmon ${PROTOCOL_BUFFERS_LIBRARY_PATH})
+ endif()
+ 
+ # example plugin
+@@ -432,7 +432,7 @@
+ # Try to find ncurses librreary
+ find_package(Curses REQUIRED)
+ 
+-if(CURSES_FOUND) 
++if(CURSES_FOUND)
+     include_directories(${CURSES_INCLUDE_DIRS})
+     target_link_libraries(fastnetmon_client ${CURSES_LIBRARIES})
+ endif()
+@@ -445,7 +445,7 @@
+ # Try to find hiredis library path
+ find_library(HIREDIS_LIBRARY_PATH NAMES hiredis PATHS "${HIREDIS_CUSTOM_INSTALL_PATH}/lib" NO_DEFAULT_PATH)
+ 
+-if (HIREDIS_INCLUDES_FOLDER AND HIREDIS_LIBRARY_PATH) 
++if (HIREDIS_INCLUDES_FOLDER AND HIREDIS_LIBRARY_PATH)
+     message(STATUS "We found hiredis library and will build Redis support ${HIREDIS_INCLUDES_FOLDER} ${HIREDIS_LIBRARY_PATH}")
+ 
+     add_definitions(-DREDIS)
+@@ -482,12 +482,12 @@
+ 
+ #find_library(LIBPCAP_LIBRARY_PATH NAMES pcap PATHS "${LIBPCAP_CUSTOM_INSTALL_PATH}/lib" NO_DEFAULT_PATH)
+ 
+-#if (LIBPCAP_INCLUDES_FOLDER AND LIBPCAP_LIBRARY_PATH) 
++#if (LIBPCAP_INCLUDES_FOLDER AND LIBPCAP_LIBRARY_PATH)
+ #    message(STATUS "We found pcap library ${LIBPCAP_LIBRARY_PATH}")
+ 
+ #    include_directories(${LIBPCAP_INCLUDES_FOLDER})
+ #else()
+-#    message(FATAL_ERROR "We can't find pcap library")    
++#    message(FATAL_ERROR "We can't find pcap library")
+ #endif()
+ 
+ ### Look for log4cpp
+@@ -511,7 +511,7 @@
+ find_library(JSONC_LIBRARY_PATH NAMES json-c PATHS "${JSONC_CUSTOM_INSTALL_PATH}/lib" NO_DEFAULT_PATH)
+ 
+ if (JSONC_INCLUDES_FOLDER AND JSONC_LIBRARY_PATH)
+-    include_directories(${JSONC_INCLUDES_FOLDER}) 
++    include_directories(${JSONC_INCLUDES_FOLDER})
+     message(STATUS "We have found json-c library correctly: ${JSONC_LIBRARY_PATH}")
+ else()
+     message(FATAL_ERROR "We can't find json-c library! Can't build project")
+@@ -528,7 +528,7 @@
+ target_link_libraries(fastnetmon ${CMAKE_THREAD_LIBS_INIT})
+ 
+ if (ENABLE_LUA_SUPPORT)
+-    target_link_libraries(fast_library ${LUAJIT_LIBRARY_PATH}) 
++    target_link_libraries(fast_library ${LUAJIT_LIBRARY_PATH})
+     target_link_libraries(fastnetmon ${LUAJIT_LIBRARY_PATH})
+ endif()
+ 
+@@ -572,11 +572,11 @@
+ if (BUILD_PLUGIN_RUNNER)
+     add_executable(fastnetmon_plugin_runner plugin_runner.cpp)
+ 
+-    if (ENABLE_SNABBSWITCH_SUPPORT) 
++    if (ENABLE_SNABBSWITCH_SUPPORT)
+         target_link_libraries(fastnetmon_plugin_runner snabbswitch_plugin)
+     endif()
+ 
+-    if (ENABLE_AFPACKET_SUPPORT) 
++    if (ENABLE_AFPACKET_SUPPORT)
+         target_link_libraries(fastnetmon_plugin_runner afpacket_plugin)
+     endif()
+ 
+@@ -609,7 +609,7 @@
+ 
+     target_link_libraries(fastnetmon_pcap_reader fast_library)
+     target_link_libraries(fastnetmon_pcap_reader ${LOG4CPP_LIBRARY_PATH})
+-    target_link_libraries(fastnetmon_pcap_reader netflow_plugin)   
++    target_link_libraries(fastnetmon_pcap_reader netflow_plugin)
+     target_link_libraries(fastnetmon_pcap_reader sflow_plugin)
+ 
+     if (ENABLE_NETMAP_SUPPORT)
+@@ -622,7 +622,7 @@
+ endif()
+ 
+ # cmake -DBUILD_TESTS=ON ..
+-if (BUILD_TESTS) 
++if (BUILD_TESTS)
+     add_executable(fastnetmon_tests fastnetmon_tests.cpp)
+     target_link_libraries(fastnetmon_tests fast_library)
+     target_link_libraries(fastnetmon_tests ${CMAKE_THREAD_LIBS_INIT})

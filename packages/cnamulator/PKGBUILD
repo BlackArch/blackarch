@@ -3,14 +3,14 @@
 
 pkgname=cnamulator
 pkgver=5.4667c68
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-mobile' 'blackarch-recon')
 pkgdesc='A phone CNAM lookup utility using the OpenCNAM API.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/packetassailant/cnamulator'
 license=('MIT')
 depends=('glibc')
-makedepends=('git' 'go-pie')
+makedepends=('git' 'go')
 source=("git+https://github.com/packetassailant/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -21,20 +21,21 @@ pkgver() {
 }
 
 build() {
-  mkdir -p "src/$url" && rm -rf "src/$url" && mv $pkgname "src/$url" &&
-    cd "src/$url"
+  cd $pkgname
 
-  GOPATH="$srcdir" go get -d -t $url
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname $pkgname.go
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd $pkgname
 
-  GOPATH="$srcdir" go build -v $url
-
-  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" "src/$url/README.md"
-  install -Dm 644 "src/$url/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 }
 

@@ -1,89 +1,124 @@
-# Maintainer: Florian Pritz <bluewind@xinu.at>
-# Contributor: lilydjwg <lilydjwg@gmail.com>
-# Contributor: Matthias Maennich <arch@maennich.net>
-# Contributor: Massimiliano Torromeo <massimiliano.torromeo@gmail.com>
-# Contributor: Jan-Erik Meyer-Luetgens <nyan at meyer-luetgens dot de>
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Andrew Sun <adsun701 at gmail dot com>
+# Old Contributor: Florian Pritz <bluewind at xinu dot at>
+# Old Contributor: lilydjwg <lilydjwg at gmail dot com>
+# Old Contributor: Matthias Maennich <arch at maennich dot net>
+# Old Contributor: Massimiliano Torromeo <massimiliano dot torromeo at gmail dot com>
+# Old Contributor: Jan-Erik Meyer-Luetgens <nyan at meyer-luetgens dot de>
+
 pkgbase=python-pyside
-pkgname=python-pyside-common
+pkgname=('python-pyside-common' 'python2-pyside' 'python-pyside')
 _pkgrealname=pyside
 pkgver=1.2.4
-pkgrel=11
-arch=('x86_64' 'aarch64')
-license=(LGPL)
-url="https://wiki.qt.io/PySide"
 _qtver=4.8
-makedepends=(python python2 python-setuptools python2-setuptools python-shiboken python2-shiboken phonon-qt4 cmake)
+_pyver=3.10
+pkgrel=13
+arch=('x86_64' 'aarch64')
+license=('LGPL')
+url='https://wiki.qt.io/PySide'
+makedepends=('python-setuptools' 'python2-setuptools' 'python-shiboken' 'cmake'
+             'python2-shiboken' 'phonon-qt4')
 source=("pypi-$pkgbase-$pkgver.tar.gz::https://pypi.python.org/packages/source/P/PySide/PySide-$pkgver.tar.gz")
-sha256sums=('1421bc1bf612c396070de9e1ffe227c07c1f3129278bc7d30c754b5146be2433')
+sha512sums=('17debaf9bb5b1ede27fa767dcde044b42c0b3d287596572233218aadd1ed4f861ac4dd0538cf2a75e1c31a07190b8292eb9ad25c2d6aba187a46206d7fd3e618')
 
-build(){
-  cd PySide-$pkgver/sources/pyside
+build() {
+  cd "$srcdir/PySide-$pkgver/sources/pyside"
 
-  install -dm 755 build_py3
+  mkdir -p build_py3
   cd build_py3
+  export PYTHON_INCLUDE_DIRS="/usr/include/python${_pyver}"
+  export PYTHON_LIBRARIES="/usr/lib/libpython${_pyver}.so"
   cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TESTS=OFF \
-    -DQT_PHONON_INCLUDE_DIR=/usr/include/qt4/phonon \
-    -DQT_QMAKE_EXECUTABLE=qmake-qt4
-  make
-
-  cd ..
-  install -dm 755 build_py2
-  cd build_py2
-  cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TESTS=OFF \
+    -DUSE_PYTHON=ON \
+    -DPYTHON_LIBRARIES="/usr/lib/libpython${_pyver}.so" \
+    -DPYTHON_EXECUTABLE="/usr/bin/python${_pyver}" \
     -DQT_PHONON_INCLUDE_DIR=/usr/include/qt4/phonon \
     -DQT_QMAKE_EXECUTABLE=qmake-qt4 \
+    -DUSE_PYTHON_VERSION=3 -DPYTHON_EXECUTABLE=/usr/bin/python3 \
+    -DPYTHON3_INCLUDE_DIR="/usr/include/python${_pyver}" \
+    -DPYTHON3_LIBRARY="/usr/lib/python${_pyver}" \
+    -DPYTHON_INCLUDE_DIR="/usr/include/python${_pyver}" \
+    -DPYTHON_PACKAGES="/usr/lib/python${_pyver}/site-packages" \
+    -DPYTHON_LIBRARY="/usr/lib/python${_pyver}"
+
+  make -j1
+
+  cd ..
+  mkdir -p build_py2
+  cd build_py2
+  export PYTHON_INCLUDE_DIRS="/usr/include/python2.7"
+  export PYTHON_LIBRARIES="/usr/lib/libpython2.7.so"
+  _ver2=$(python2 -c "import platform; print(platform.python_version())")
+  cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TESTS=OFF \
+    -DPYTHON_LIBRARIES=/usr/lib/libpython2.7.so \
+    -DPYTHON_EXECUTABLE=/usr/bin/python2.7 \
+    -DQT_PHONON_INCLUDE_DIR=/usr/include/qt4/phonon \
+    -DQT_QMAKE_EXECUTABLE=qmake-qt4 \
+    -DPYTHON_INCLUDE_DIR=/usr/include/python2.7 \
+    -DPYTHON_LIBRARY=/usr/lib/python2.7 \
+    -DPYTHON_PACKAGES=/usr/lib/python2.7/site-packages \
     -DPYTHON_SUFFIX=-python2.7
-  make
+
+  make -j1
 }
 
 package_python-pyside-common(){
-  depends=(python)
   pkgdesc="Provides LGPL Qt bindings for Python and related tools for binding generation (Common Files)"
     # cmake will use Python 3 version by default
-  cd PySide-$pkgver/sources/pyside/build_py3
+  cd "PySide-$pkgver/sources/pyside/build_py3"
+
   make DESTDIR="$pkgdir" install
 
-  rm -rf "$pkgdir"/usr/lib/pkgconfig
+  rm -rf "$pkgdir/usr/lib/pkgconfig"
   rm -rf "$pkgdir"/usr/lib/python* "$pkgdir"/usr/lib/libpyside.*
   rm "$pkgdir"/usr/lib/cmake/PySide-$pkgver/PySideConfig*python*.cmake
 }
 
 package_python-pyside(){
-  depends=(python python-shiboken python-pyside-common)
+  depends=(python-shiboken python-pyside-common)
   pkgdesc="Provides LGPL Qt bindings for Python and related tools for binding generation (Python 3 version)"
   optdepends=('phonon-qt4: for PySide.phonon')
 
-  cd PySide-$pkgver/sources/pyside/build_py3
+  cd "PySide-$pkgver/sources/pyside/build_py3"
+
   make DESTDIR="$pkgdir" install
 
-  cp -r "$srcdir/PySide-$pkgver/pyside_package/PySide.egg-info"
-    "$pkgdir/usr/lib/python3.8/site-packages/pyside-$pkgver-py3.8.egg-info"
+  _ver3=$(python -c "import platform; print(platform.python_version())")
+
+  cp -r "$srcdir/PySide-$pkgver/pyside_package/PySide.egg-info" \
+    "$pkgdir/usr/lib/python$_pyver/site-packages/pyside-$pkgver-py$_pyver.egg-info"
   mv "$pkgdir"/usr/lib/pkgconfig/pyside.pc \
     "$pkgdir"/usr/lib/pkgconfig/pyside-py3.pc
 
-  rm -rf "$pkgdir"/usr/include
-  rm -rf "$pkgdir"/usr/share
-  rm "$pkgdir"/usr/lib/cmake/PySide-$pkgver/PySideConfig.cmake
-  rm "$pkgdir"/usr/lib/cmake/PySide-$pkgver/PySideConfigVersion.cmake
+  rm -rf "$pkgdir/usr/include"
+  rm -rf "$pkgdir/usr/share"
+  rm "$pkgdir/usr/lib/cmake/PySide-$pkgver/PySideConfig.cmake"
+  rm "$pkgdir/usr/lib/cmake/PySide-$pkgver/PySideConfigVersion.cmake"
 }
 
 package_python2-pyside(){
-  depends=(python2 python2-shiboken python-pyside-common)
+  depends=(python2-shiboken python-pyside-common)
   pkgdesc="Provides LGPL Qt bindings for Python and related tools for binding generation (Python 2 version)"
   optdepends=('phonon-qt4: for PySide.phonon')
 
-  cd "PySide-$pkgver/sources/pyside/build_py2"
+  cd "$srcdir/PySide-$pkgver/sources/pyside/build_py2"
+
   make DESTDIR="$pkgdir" install
 
+  _ver2=$(python2 -c "import platform; print(platform.python_version())")
+
   cp -r "$srcdir/PySide-$pkgver/pyside_package/PySide.egg-info" \
-    "$pkgdir/usr/lib/python2.7/site-packages/pyside-$pkgver-py2.7.egg-info"
+    "$pkgdir/usr/lib/python${_ver2%.*}/site-packages/pyside-$pkgver-py${_ver2%.*}.egg-info"
   mv "$pkgdir"/usr/lib/pkgconfig/pyside.pc \
     "$pkgdir"/usr/lib/pkgconfig/pyside-py2.pc
 
   sed -i 's#^Requires: shiboken$#Requires: shiboken-py2#' "$pkgdir"/usr/lib/pkgconfig/pyside-py2.pc
 
-  rm -rf "$pkgdir"/usr/include
-  rm -rf "$pkgdir"/usr/share
-  rm "$pkgdir"/usr/lib/cmake/PySide-$pkgver/PySideConfig.cmake
-  rm "$pkgdir"/usr/lib/cmake/PySide-$pkgver/PySideConfigVersion.cmake
+  rm -rf "$pkgdir/usr/include"
+  rm -rf "$pkgdir/usr/share"
+  rm "$pkgdir/usr/lib/cmake/PySide-$pkgver/PySideConfig.cmake"
+  rm "$pkgdir/usr/lib/cmake/PySide-$pkgver/PySideConfigVersion.cmake"
 }
+

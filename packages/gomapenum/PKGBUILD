@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gomapenum
+pkgver=v1.0.4.r11.gf228c00
+pkgrel=1
+pkgdesc='User enumeration and password bruteforce on Azure, ADFS, OWA, O365, Teams and gather emails on Linkedin.'
+groups=('blackarch' 'blackarch-cracker' 'blackarch-recon' 'blackarch-social'
+        'blackarch-windows')
+arch=('x86_64' 'aarch64')
+url='https://github.com/nodauf/GoMapEnum'
+license=('GPL3')
+depends=('glibc')
+makedepends=('git' 'go')
+source=("$pkgname::git+https://github.com/nodauf/GoMapEnum.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+
+  cd src/
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "src/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+

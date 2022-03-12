@@ -1,0 +1,58 @@
+# Contributor: Camille Moncelier <pix@devlife.org>
+# Update: henning mueller <henning@orgizm.net>
+
+pkgname=thcrut
+pkgver=1.2.5
+pkgrel=1
+pkgdesc='Network discovery and OS Fingerprinting tool.'
+groups=('blackarch' 'blackarch-fingerprint' 'blackarch-recon'
+        'blackarch-scanner')
+arch=('x86_64' 'aarch64')
+url='https://github.com/vanhauser-thc/THC-Archive/'
+license=('custom:unknown')
+depends=('libpcap' 'pcre')
+source=("https://github.com/vanhauser-thc/THC-Archive/raw/master/Tools/$pkgname-$pkgver.tar.gz"
+        'http://www.insecure.org/nmap/data/nmap-os-fingerprints'
+        'default.h.patch'
+        'discover_main.c.patch')
+#'http://freeworld.thc.org/thc-rut/thcrut-os-fingerprints')
+sha512sums=('cbef051f0e668e57e13cd3435c109c01aac66a31d5c7a6a1b60a7767fb740d50489c9caefeb8a188d803d5ee3a22e5b7cedf425462a9424ace2dbc2dfe0dda39'
+            '850cf8340ccc7b1db405473dda1c54d5a089128916c1345f4b14350b0f9196e4dc01c4e95b911385156eb1e83e0445f079f5e5bcb5ea6d87849a33ec59df94ae'
+            '6ef3633ba6c2b5fa9542d7ed61c05f01afb8e89f5c4a84e8b922fbba40df865acb79b9f3bde1c1ba7ec7dfcde4a84217f444bb323be68387743dd3a90fab4baf'
+            'ca188b8dadfd147c46cf9fd1f18b65339c81f8f7f0eb7b518afbe80062ee9cbc740b9b3e6f61cde59b32728cbade5dc17fdb3161901141bb774a66fec80f0717')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -p2 < ../default.h.patch
+  patch -p2 < ../discover_main.c.patch
+}
+
+build() {
+	cd "$pkgname-$pkgver"
+
+  if [[ $CARCH == "aarch64" ]]; then
+    ./configure --prefix=/usr --host="$CARCH"
+  else
+    ./configure --prefix=/usr
+  fi
+
+  sed -i 's/#define size_t unsigned//g' config.h
+  sed -i 's/#define gid_t int//g' config.h
+  sed -i 's/#define uid_t int//g' config.h
+  sed -i 's/#define pid_t int//g' config.h
+
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 "$srcdir/nmap-os-fingerprints" \
+    "$pkgdir/usr/share/thcrut/nmap-os-fingerprints"
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
