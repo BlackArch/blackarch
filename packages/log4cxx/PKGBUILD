@@ -3,40 +3,30 @@
 
 pkgname=log4cxx
 _pkgname=apache-log4cxx
-pkgver=0.11.0
+pkgver=0.12.1
 pkgrel=1
 pkgdesc='A C++ port of Log4j.'
 url='http://logging.apache.org/log4cxx'
 arch=('x86_64' 'aarch64')
 license=('Apache')
-depends=('apr-util' 'libxml2')
-source=("http://archive.apache.org/dist/logging/$pkgname/$pkgver/$_pkgname-$pkgver.tar.gz"
-        "log4cxx-$pkgver-missing_includes.patch")
-sha512sums=('f8aa37c9c094e7a4d6ca92dff13c032f69f1e078c51ea55e284fcb931c13256b08950af3ea6eaf7a12282240f6073e9acab19bfe217f88dbd62a5d2360f3fbdd'
-            'd9ad50e059e415d26858a3c59779e4a96f7940ce4b977f3550a2e044e60ac241b21c8c3bc723407ab8c2f503dd3f118fe25762c5954b2be6d1bc7b5c34b64ebf')
-
-prepare() {
-  cd "$_pkgname-$pkgver"
-
-  automake --add-missing
-  #patch -p1 < "$startdir/$pkgname-$pkgver-missing_includes.patch"
-}
+depends=('apr-util' 'libxml2' 'zip' 'boost' 'boost-libs')
+makedepends=('cmake')
+source=("http://archive.apache.org/dist/logging/$pkgname/$pkgver/$_pkgname-$pkgver.tar.gz")
+sha512sums=('807058734cebf7c92e99484313becbc6be63e48bd930889c733318bb78dfec498b66aaa12255ed30879abb005b32e2b965f9dd87ec50d0421ca067f3f66280d9')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  if [[ "$CARCH" == "i686" || "$CARCH" == "x86_64" ]];
-  then
-    ./configure --prefix=/usr --disable-static
-  else
-    ./configure --prefix=/usr --build=arm --disable-static
-  fi
-
+  mkdir -p build
+  cd build
+  cmake -DCMAKE_INSTALL_PREFIX=/usr ../
   make
 }
 
 package() {
   cd "$_pkgname-$pkgver"
+
+  cd build
 
   make DESTDIR="$pkgdir" install
 }
