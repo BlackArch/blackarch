@@ -13,8 +13,10 @@ arch=('any')
 url='https://github.com/novnc/noVNC'
 license=('custom:unknown')
 depends=('bash' 'websockify' 'python-numpy')
-source=("$pkgname-$pkgver.tar.gz::https://github.com/noVNC/$_pkgname/archive/v$pkgver.tar.gz")
-sha512sums=('2c9eb019bd9c86a0ffb716eba06e8f05bc522c37561e0acc7f88a66188c617ebc54f4cc9220897c241280ba2ed5919a2050a94eeb3da2c030bde43af0bd92c51')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/noVNC/$_pkgname/archive/v$pkgver.tar.gz"
+        "$pkgname.service")
+sha512sums=('2c9eb019bd9c86a0ffb716eba06e8f05bc522c37561e0acc7f88a66188c617ebc54f4cc9220897c241280ba2ed5919a2050a94eeb3da2c030bde43af0bd92c51'
+            '5dce6fb71dcdeab9ebe3986ebad431d01bb01860cb9960b1e70af84b2beba2330738cd9aa37ab9e025ee8263cba7475d484d5c6d55d4b3750d27aff37c7aef41')
 
 prepare() {
   cd "$_pkgname-$pkgver"
@@ -22,7 +24,7 @@ prepare() {
   sed \
     -e 's#\(share\)#\1/webapps#g' \
     -e '2 i WEBSOCKIFY=/usr/bin/websockify' \
-    -i utils/launch.sh
+    -i utils/novnc_proxy
 }
 
 package() {
@@ -31,10 +33,14 @@ package() {
   install -dm 644 "$pkgdir/usr/share/doc/$pkgname"
   install -dm 755 "$pkgdir/usr/share/webapps/$pkgname"
 
-  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 "utils/${pkgname}_proxy" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 "$srcdir/$pkgname.service" \
+    "$pkgdir/usr/lib/systemd/system/$pkgname.service"
+
+  # license foo
   install -Dm 644 vendor/pako/LICENSE \
     "$pkgdir/usr/share/licenses/$pkgname/LICENSE.MIT"
-  install -Dm 755 utils/launch.sh "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   ( cd docs; find . -name 'LICENSE*' -type f -exec cp -a {} \
     "$pkgdir/usr/share/licenses/$pkgname/{}" \; )
