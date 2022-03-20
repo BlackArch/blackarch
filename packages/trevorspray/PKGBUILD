@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=trevorspray
+pkgver=108.a9d765b
+pkgrel=1
+pkgdesc='A modular password sprayer with threading, clever proxying, loot modules, and more!'
+groups=('blackarch' 'blackarch-cracker')
+arch=('any')
+url='https://github.com/blacklanternsecurity/TREVORspray'
+license=('GPL3')
+depends=('python' 'python-virtualenv')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/blacklanternsecurity/TREVORspray.git"
+        'requirements.txt.patch')
+install="$pkgname.install"
+sha512sums=('SKIP'
+            '9661c32e9d75776ea1ef5aec1ce037842530d4d39ee87c2bdbcf6b8b85a0e49793b736c6f71d6a938664c2a38ea3faa248bbb1e36bd0af671830313e757c0066')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  patch -p0 < ../requirements.txt.patch
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm *.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+source venv/bin/activate
+exec python $pkgname/cli.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
