@@ -1,0 +1,55 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=emp3r0r
+pkgver=v1.10.4
+pkgrel=1
+pkgdesc='Linux post-exploitation framework made by linux user.'
+arch=('x86_64')
+groups=('blackarch')
+url='https://github.com/jm33-m0/emp3r0r'
+license=('MIT')
+depends=('tmux' 'bash')
+makedepends=('git' 'go')
+source=("git+https://github.com/jm33-m0/emp3r0r.git")
+sha512sums=('SKIP')
+
+pkgver() {
+    cd $pkgname
+
+    git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build_cmd() {
+    cd core &&
+        go mod tidy &&
+        cd "cmd/$1" &&
+        CGO_ENABLED=0 go build -o "../../../$2" -ldflags='-s -w -v'
+}
+
+build() {
+    cd $pkgname
+    (build_cmd 'cc' emp3r0r-cc) &&
+        (build_cmd 'cat' emp3r0r-cat) &&
+        (build_cmd 'agent' stub.exe) &&
+        (build_cmd 'packer_stub' packer_stub.exe) &&
+        (GOOS=windows build_cmd 'agent' stub-win.exe)
+}
+
+package() {
+    cd $pkgname
+
+    mkdir -p "$pkgdir/usr/lib/$pkgname/build"
+    install -Dm 755 emp3r0r-cc "$pkgdir/usr/lib/$pkgname"
+    install -Dm 755 emp3r0r-cat "$pkgdir/usr/lib/$pkgname"
+    install -Dm 755 ./*.exe "$pkgdir/usr/lib/$pkgname/build"
+    install -Dm 755 "./core/$pkgname" "$pkgdir/usr/bin/$pkgname"
+    install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+    # Only install license if required according to
+    # https://wiki.archlinux.org/index.php/PKGBUILD#license
+    install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+    # extra files
+    cp -r ./core/tmux "$pkgdir/usr/lib/$pkgname"
+    cp -r ./core/modules "$pkgdir/usr/lib/$pkgname"
+}
