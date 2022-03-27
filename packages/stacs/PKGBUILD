@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=stacs
+pkgver=0.4.5.r0.g1993d5a
+pkgrel=1
+pkgdesc='Static Token And Credential Scanner.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-misc')
+url='https://github.com/stacscan/stacs'
+license=('BSD')
+depends=('python' 'python-click' 'python-pydantic' 'python-yara'
+         'python-libarchive')
+makedepends=('git' 'python-setuptools' 'python-pip')
+source=("git+https://github.com/stacscan/$pkgname.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/docs/$pkgname/" README.md CODEOWNERS
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
