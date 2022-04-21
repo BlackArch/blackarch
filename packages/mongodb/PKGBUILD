@@ -1,38 +1,44 @@
-# Maintainer: JustKidding <jk@vin.ovh>
-# Maintainer: James P. Harvey <jamespharvey20 at gmail dot com>
-# Maintainer: Christoph Bayer <chrbayer@criby.de>
-# Contributor: Felix Yan <felixonmars@archlinux.org>
-# Contributor: Sven-Hendrik Haase <sh@lutzhaase.com>
-# Contributor: Thomas Dziedzic < gostrc at gmail >
-# Contributor: Mathias Stearn <mathias@10gen.com>
-# Contributor: Alec Thomas
-# Contributor: Fredy García <frealgagu at gmail dot com>
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# from AUR - adapted to our styles.
+#
+# Old Maintainer: JustKidding <jk@vin.ovh>
+# Old Maintainer: James P. Harvey <jamespharvey20 at gmail dot com>
+# Old Maintainer: Christoph Bayer <chrbayer@criby.de>
+# Old Contributor: Felix Yan <felixonmars@archlinux.org>
+# OId Contributor: Sven-Hendrik Haase <sh@lutzhaase.com>
+# Old Contributor: Thomas Dziedzic < gostrc at gmail >
+# Old Contributor: Mathias Stearn <mathias@10gen.com>
+# Old Contributor: Alec Thomas
+# Old Contributor: Fredy García <frealgagu at gmail dot com>
 
 pkgname=mongodb
 # #.<odd number>.# releases are unstable development/testing
-pkgver=5.0.6
-pkgrel=2
-pkgdesc="A high-performance, open source, schema-free document-oriented database"
-arch=("x86_64")
-url="https://www.mongodb.com/"
-license=("custom:SSPL")
-depends=('curl' 'libstemmer' 'snappy' 'gperftools' 'boost-libs' 'pcre' 'yaml-cpp')
-makedepends=('scons' 'python-psutil' 'python-setuptools' 'python-regex' 'python-cheetah3' 'python-yaml' 'python-requests' 'boost')
+pkgver=5.0.7
+pkgrel=1
+pkgdesc='A high-performance, open source, schema-free document-oriented database.'
+arch=('x86_64' 'aarch64')
+url='https://www.mongodb.com/try/download/community'
+license=('custom:SSPL')
+depends=('curl' 'libstemmer' 'snappy' 'gperftools' 'boost-libs' 'pcre'
+         'yaml-cpp')
+makedepends=('scons' 'python-psutil' 'python-setuptools' 'python-regex'
+             'python-cheetah3' 'python-yaml' 'python-requests' 'boost')
 optdepends=('mongodb-tools: mongoimport, mongodump, mongotop, etc')
-checkdepends=("python-pymongo")
 backup=("etc/mongodb.conf")
-source=(https://fastdl.mongodb.org/src/mongodb-src-r$pkgver.tar.gz
-        mongodb.sysusers
-        mongodb.tmpfiles
-        mongodb-5.0.2-skip-no-exceptions.patch
-        mongodb-5.0.2-no-compass.patch
-        mongodb-4.4.1-boost.patch)
-sha256sums=('9d514eef9093d383120aebe4469c8118a39f390afcd8cd9af2399076b27abb52'
-            '3757d548cfb0e697f59b9104f39a344bb3d15f802608085f838cb2495c065795'
-            'b7d18726225cd447e353007f896ff7e4cbedb2f641077bce70ab9d292e8f8d39'
-            '5b81ebc3ed68b307df76277aca3226feee33a00d8bb396206bdc7a8a1f58f3e4'
-            '41b75d19ed7c4671225f08589e317295b7abee934b876859c8777916272f3052'
-            'd3bc20d0cb4b8662b5326b8a3f2215281df5aed57550fa13de465e05e2044c25')
+source=("https://fastdl.mongodb.org/src/$pkgname-src-r$pkgver.tar.gz"
+        'mongodb.sysusers'
+        'mongodb.tmpfiles'
+        'mongodb-5.0.2-skip-no-exceptions.patch'
+        'mongodb-5.0.2-no-compass.patch'
+        'mongodb-4.4.1-boost.patch')
+sha512sums=('cc8d65973e4204724ce2e6da7edb9f9922dd6e0e686904dcce715d93065a7f19521f5790c9fb86b78476a0425dad47155257f93238cd26db7abd395daf4bd410'
+            '36a2c4336d6aeeec303dd0aec2c554db826d479efcb95269f75e2150ad752516c3f25c50f8e25b90384dea65b5b5b72a15ab17d5da35f6f92f20cc65af02f61b'
+            '41b711a623b034b66e146487fab948608111af48aff2b4f1b171b64b531fa6a1b36de8b348ff543fdd9c3ac34a1a20fae9b23cdb124abda93f89ce011a7921ef'
+            '6750b5d8427616b290d285959c0c43a28409349ae7b52153d524590a8a38c26c283acc25b82410853b5c87a4c74927cf5844580778d1ef4378cd1b035844dc97'
+            '07fe714a4256c13449e1e764c88d5051773aa9397228085a8d581cde91477dff2c3dc70ba801eb559af76ff19abf205d32c9510606a9bb26cebb33f68822e607'
+            '504ec9a4e41f5e1c1a069d64e0958b260a3a8506d17638e62ddf6f1cd873b835f33a588b779e4851d63351faef4be1e0f4720e86f389128d062909b58fdb9aa2')
 
 _scons_args=(
   --use-system-pcre # wait for pcre 8.44+ https://jira.mongodb.org/browse/SERVER-40836 and https://jira.mongodb.org/browse/SERVER-42990
@@ -55,7 +61,7 @@ _scons_args=(
 )
 
 prepare() {
-  cd "${srcdir}/${pkgname}-src-r${pkgver}"
+  cd "$pkgname-src-r$pkgver"
 
   # Keep historical Arch dbPath
   sed -i 's|dbPath: /var/lib/mongo|dbPath: /var/lib/mongodb|' rpm/mongod.conf
@@ -72,12 +78,14 @@ prepare() {
   sed -i '/EnvironmentFile=-\/etc\/sysconfig\/mongod/d' rpm/mongod.service
 
   # Make systemd wait as long as it takes for MongoDB to start
-  # If MongoDB needs a long time to start, prevent systemd from restarting it every 90 seconds
+  # If MongoDB needs a long time to start, prevent systemd from restarting it
+  # every 90 seconds
   # See: https://jira.mongodb.org/browse/SERVER-38086
   sed -i 's/\[Service]/[Service]\nTimeoutStartSec=infinity/' rpm/mongod.service
 
   # Prevent building using debug symbols, since binaries will be stripped anyway
-  # Reduces makepkg -- which fully runs check() -- build size from 259GB to 2.3GB, and time by at least 37%
+  # Reduces makepkg -- which fully runs check() -- build size from 259GB to
+  # 2.3GB, and time by at least 37%
   # See: https://jira.mongodb.org/browse/SERVER-44038
   sed -i '/"-ggdb" if not env.TargetOSIs/d' SConstruct
 
@@ -88,34 +96,37 @@ prepare() {
 }
 
 build() {
-  cd "${srcdir}/${pkgname}-src-r${pkgver}"
+  cd "$pkgname-src-r$pkgver"
 
   export SCONSFLAGS="$MAKEFLAGS"
   scons install-core "${_scons_args[@]}"
 }
 
 package() {
-  cd "${srcdir}/${pkgname}-src-r${pkgver}"
+  cd "$pkgname-src-r$pkgver"
 
   scons PREFIX=/usr DESTDIR="$pkgdir" install-core "${_scons_args[@]}"
 
   # Keep historical Arch conf file name
-  install -Dm644 "rpm/mongod.conf" "${pkgdir}/etc/${pkgname}.conf"
+  install -Dm 644 rpm/mongod.conf "$pkgdir/etc/$pkgname.conf"
 
   # Keep historical Arch service name
-  install -Dm644 "rpm/mongod.service" "${pkgdir}/usr/lib/systemd/system/${pkgname}.service"
+  install -Dm 644 rpm/mongod.service \
+    "$pkgdir/usr/lib/systemd/system/$pkgname.service"
 
   # Install manpages
-  install -Dm644 "debian/mongo.1" "${pkgdir}/usr/share/man/man1/mongo.1"
-  install -Dm644 "debian/mongod.1" "${pkgdir}/usr/share/man/man1/mongod.1"
-  install -Dm644 "debian/mongos.1" "${pkgdir}/usr/share/man/man1/mongos.1"
+  install -Dm 644 debian/mongo.1 "$pkgdir/usr/share/man/man1/mongo.1"
+  install -Dm 644 debian/mongod.1 "$pkgdir/usr/share/man/man1/mongod.1"
+  install -Dm 644 debian/mongos.1 "$pkgdir/usr/share/man/man1/mongos.1"
 
-  install -Dm644 "${srcdir}/${pkgname}.sysusers" "${pkgdir}/usr/lib/sysusers.d/${pkgname}.conf"
-  install -Dm644 "${srcdir}/${pkgname}.tmpfiles" "${pkgdir}/usr/lib/tmpfiles.d/${pkgname}.conf"
+  install -Dm 644 "$srcdir/$pkgname.sysusers" \
+    "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
+  install -Dm 644 "$srcdir/$pkgname.tmpfiles" \
+    "$pkgdir/usr/lib/tmpfiles.d/$pkgname.conf"
 
   # move licenses
-  mkdir -p $pkgdir/usr/share/licenses/$pkgname
-  mv $pkgdir/usr/{LICENSE-Community.txt,MPL-2,README,THIRD-PARTY-NOTICES} $pkgdir/usr/share/licenses/$pkgname
+  mkdir -p "$pkgdir/usr/share/licenses/$pkgname"
+  mv "$pkgdir/usr/"{LICENSE-Community.txt,MPL-2,README,THIRD-PARTY-NOTICES} \
+    "$pkgdir/usr/share/licenses/$pkgname"
 }
-# vim:set ts=2 sw=2 et:
 
