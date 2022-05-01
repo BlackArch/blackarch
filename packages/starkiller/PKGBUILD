@@ -1,0 +1,59 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=Starkiller
+_author=BC-SECURITY
+pkgver=1.10.0
+pkgrel=1
+pkgdesc='A frontend for PowerShell Empire.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-backdoor'
+        'blackarch-binary')
+url='https://github.com/BC-SECURITY/Starkiller'
+license=('MIT')
+depends=('nodejs')
+makedepends=('git' 'yarn' 'npm')
+source=("git@https://github.com/$_author/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  yarn install
+  yarn electron:build:lin
+  npm install -g electron-icon-builder
+  yarn electron:generate-icons
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *
+  install -dm 755 "$pkgdir/usr/lib/node_modules/$pkgname"
+
+  cp - \
+   {public,build,tests,src} \
+     "$pkgdir/usr/lib/node_modules/$pkgname/"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md \
+    CONTRIBUTING.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  rm -rf docs *.md LICENSE
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec node ./$pkgname.js "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
