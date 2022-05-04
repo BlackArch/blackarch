@@ -2,42 +2,29 @@
 # See COPYING for license details.
 
 pkgname=s3scanner
-pkgver=419.6a67603
+_pkgname=S3Scanner
+pkgver=2.0.2
 pkgrel=1
 pkgdesc='Scan for open S3 buckets and dump.'
-groups=('blackarch' 'blackarch-scanner')
 arch=('any')
-url='https://github.com/sa7mon/S3Scanner'
+groups=('blackarch' 'blackarch-scanner')
+url='https://pypi.org/project/S3Scanner/'
 license=('MIT')
-depends=('python' 'aws-cli' 'python-pytest-xdist' 'python-boto3' 'python-sh')
-makedepends=('git' 'python-pip')
-source=("$pkgname::git+https://github.com/sa7mon/S3Scanner.git")
-sha512sums=('SKIP')
+depends=('python' 'python-boto3')
+makedepends=('python-setuptools')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/7c/28/20af6edde8edee3e44cbaeaab0cbe0fb1dd64d9f613bd1f68b678cee944b/$_pkgname-$pkgver.tar.gz")
+sha512sums=('830e88ef4309f2cb6af78a0c00c7c94189f356444e53291ae04edd20e14b2528ff60bc68ace823791811a6724edcc85f8ac3a04a99fce89740d0a0f6caf45d04')
 
-pkgver() {
-  cd $pkgname
+build() {
+  cd "$_pkgname-$pkgver"
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  python -m pip install .
 }
 
 package() {
-  cd $pkgname
+  cd "$_pkgname-$pkgver"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-
-  rm README.md
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python -m S3Scanner
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  python -m pip install . --root="$pkgdir" --prefix=/usr
 }
 
