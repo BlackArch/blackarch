@@ -3,7 +3,7 @@
 
 pkgname=git-dumper
 pkgver=56.32d47a2
-pkgrel=1
+pkgrel=2
 pkgdesc='A tool to dump a git repository from a website.'
 arch=('any')
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
@@ -11,27 +11,33 @@ url='https://github.com/arthaud/git-dumper'
 license=('MIT')
 depends=('python' 'python-beautifulsoup4' 'python-dulwich' 'python-pysocks'
          'python-requests')
-makedepends=('git' 'python-setuptools')
+makedepends=('git' 'python-build' 'python-pip')
 source=("git+https://github.com/arthaud/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
-
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 build() {
   cd $pkgname
-
-  python setup.py build
+  /usr/bin/pyproject-build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $pkgname
-
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-
+  pip install --verbose \
+              --disable-pip-version-check \
+              --no-warn-script-location \
+              --ignore-installed \
+              --no-compile \
+              --no-deps \
+              --root="$pkgdir" \
+              --prefix=/usr \
+              --no-index \
+              --find-links="file://$startdir/dist" \
+              "$pkgname"
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
