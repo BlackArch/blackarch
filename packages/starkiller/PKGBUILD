@@ -1,9 +1,8 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=Starkiller
-_author=BC-SECURITY
-pkgver=1.10.0
+pkgname=starkiller
+pkgver=v1.10.0.r0.g16d4e2f
 pkgrel=1
 pkgdesc='A frontend for PowerShell Empire.'
 arch=('x86_64')
@@ -13,41 +12,35 @@ url='https://github.com/BC-SECURITY/Starkiller'
 license=('MIT')
 depends=('nodejs')
 makedepends=('git' 'yarn' 'npm')
-source=("git@https://github.com/$_author/$pkgname.git")
+options=(!strip)
+source=("git@https://github.com/BC-SECURITY/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
-build() {
-  cd $pkgname
-
-  yarn install
-  yarn electron:serve
-  yarn electron:build:lin
-  npm install -g electron-icon-builder
-  yarn electron:generate-icons
+  # if tag exists, use this
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *
-  install -dm 755 "$pkgdir/usr/lib/node_modules/$pkgname"
+  _npmdir="$pkgdir/usr/lib/node_modules/"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md \
-    CONTRIBUTING.md
+  install -dm 755 "$_npmdir"
 
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec ./starkiller-1.0.0.AppImage –no-sandbox "\$@"
-EOF
+  cd "$_npmdir"
 
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  npm install --user root -g --prefix "$pkgdir/usr" "$pkgname@"
+
+  cd "$srcdir/$pkgname"
+
+  # Only install license if required according to
+  # https://wiki.archlinux.org/index.php/PKGBUILD#license
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" doc/* *.md
+
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
