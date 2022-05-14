@@ -16,7 +16,7 @@ license=('LGPL')
 depends=('gobject-introspection-runtime')
 makedepends=('git' 'python2-cairo' 'gobject-introspection' 'meson' 'cmake')
 optdepends=('cairo: Cairo bindings')
-_commit=fae47858d24e9fbd6745c094db0064c5506de5cb  # tags/3.34.0^0
+_commit=fae47858d24e9fbd6745c094db0064c5506de5cb # tags/3.34.0^0
 source=("git+https://gitlab.gnome.org/GNOME/pygobject.git#commit=$_commit")
 sha512sums=('SKIP')
 
@@ -27,16 +27,24 @@ pkgver() {
 }
 
 build() {
-  arch-meson $_pkgname build-python2 -D python=/usr/bin/python2
-  ninja -C build-python2
+  cd $_pkgname
+
+  python2 setup.py build
+
+  #arch-meson $_pkgname build-python2 -D python=/usr/bin/python2
+  #ninja -C build-python2
 }
 
 package() {
-  DESTDIR="$pkgdir" meson install -C build-python2
+  cd $_pkgname
+
+  #DESTDIR="$pkgdir" meson install -C build-python2
+
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   python2 -m compileall -d /usr/lib "$pkgdir/usr/lib"
   python2 -O -m compileall -d /usr/lib "$pkgdir/usr/lib"
 
-  rm -r "$pkgdir"/usr/{include,lib/pkgconfig}
+  rm -rf "$pkgdir"/usr/{include,lib/pkgconfig}
 }
 
