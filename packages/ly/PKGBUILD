@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ly
+pkgver=89.cc5a50f
+pkgrel=1
+pkgdesc='lightweight TUI (ncurses-like) display manager for Linux and BSD.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/fairyglade/ly'
+license=('DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE V2')
+makedepends=('git' 'gcc' 'make')
+source=("git+https://github.com/fairyglade/$pkgname.git")
+sha512sums=('SKIP')
+_pkgname=_ly
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  mv $pkgname $_pkgname
+
+  git clone --recurse-submodules https://github.com/nullgemm/ly.git 
+}
+
+build() {
+  cd $pkgname
+
+  make
+}
+
+package() {
+  cd $pkgname
+
+  make DESTDIR="$pkgdir" install
+
+  cd "$srcdir/$_pkgname"
+  echo $(pwd)
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 license.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
