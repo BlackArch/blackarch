@@ -18,54 +18,66 @@ conflicts=(wxpython)
 replaces=(wxpython)
 provides=("wxpython=$pkgver")
 source=("https://downloads.sourceforge.net/wxpython/wxPython-src-$pkgver.tar.bz2"
-        "fix-plot.patch")
+        'fix-plot.patch'
+        '_core_wrap.cpp.patch'
+        '_gdi_wrap.cpp.patch'
+        '_windows_wrap.cpp.patch'
+        '_controls_wrap.cpp.patch')
 sha512sums=('a3798e89ff19344253aac7d771971e519f7fa9723e82bd97e98f16fd7f1572e513170b02295b872dae0b1ae3fa95efc4ef34d078045b839694b4fdad3a27c9e4'
-            '6b4d235bbc67be66ae32c45b9ae8d2fd1aa6513d8625e1fa8af8f8399183ab598bd34ccd65158e113e8b99b86f3fd566e264d9bdeb681e68d634de17be29c473')
+            '6b4d235bbc67be66ae32c45b9ae8d2fd1aa6513d8625e1fa8af8f8399183ab598bd34ccd65158e113e8b99b86f3fd566e264d9bdeb681e68d634de17be29c473'
+            '77fdf40dcbda6e4cf5c859af2930e79aad0c924c5b585f0341ec5f4a5826cd28ebf08303346d55a0e9bd300666fb8b7781fafb1bbcd0a0ca34d7f067fd46e1a4'
+            '52f09410051c992e7256213501a9568cb8ab316fc36233ba8d6d8ee51b76d8bd4983b8a7a7c859f674851b8a87d5a49e647ee4614ef48b01d37bb543b9ace08f'
+            '7eed8d5f9e97cab959475e8f7c226d8b62777bf5993762ec455ab74b3cb771e72c80dd6c4860f15d7275a6348f8dd6d19a22165d8d5bfeccdec858df5a155875'
+            'fb1f41028bdfb1157f85372230f52fe922cc9e4bb7ef37b36b30b438d784fccf0b8a9ec4197cd84fd6195c43669f70e076348a399314a95cbac3eddf05375436')
 
 prepare() {
-    find . -type f -exec sed -i 's/env python/env python2/' {} \;
+  find . -type f -exec sed -i 's/env python/env python2/' {} \;
 
-    cd "$_pkgname-src-$pkgver/$_pkgname"
-    # Fix plot library (FS#42807)
-    patch -Np1 -i ../../fix-plot.patch
+  cd "$_pkgname-src-$pkgver/$_pkgname"
+  # Fix plot library (FS#42807)
+  patch -Np1 -i ../../fix-plot.patch
+
+  patch -Np3 -i ../../_gdi_wrap.cpp.patch
+  patch -Np3 -i ../../_core_wrap.cpp.patch
+  patch -Np3 -i ../../_windows_wrap.cpp.patch
+  patch -Np3 -i ../../_controls_wrap.cpp.patch
 }
 
 build() {
-    cd "$_pkgname-src-$pkgver"
+  cd "$_pkgname-src-$pkgver"
 
-    ./configure \
-        --prefix=/usr \
-        --libdir=/usr/lib \
-        --includedir=/usr/include \
-        --with-gtk=3 \
-        --with-opengl \
-        --enable-unicode \
-        --enable-graphics_ctx \
-        --disable-precomp-headers \
-        --with-regex=sys \
-        --with-libpng=sys \
-        --with-libxpm=sys \
-        --with-libjpeg=sys \
-        --with-libtiff=sys \
-        --with-wx-config=/usr/bin/wx-config-gtk3
+  ./configure \
+    --prefix=/usr \
+    --libdir=/usr/lib \
+    --includedir=/usr/include \
+    --with-gtk=3 \
+    --with-opengl \
+    --enable-unicode \
+    --enable-graphics_ctx \
+    --disable-precomp-headers \
+    --with-regex=sys \
+    --with-libpng=sys \
+    --with-libxpm=sys \
+    --with-libjpeg=sys \
+    --with-libtiff=sys \
+    --with-wx-config=/usr/bin/wx-config-gtk3
 
-    cd $_pkgname
+  cd $_pkgname
 
-    python2 setup.py WX_CONFIG=/usr/bin/wx-config-gtk3 \
-      WXPORT=gtk3 UNICODE=1 build
+  python2 setup.py WX_CONFIG=/usr/bin/wx-config-gtk3 WXPORT=gtk3 UNICODE=1 build
 }
 
 package() {
-    cd "$_pkgname-src-$pkgver/$_pkgname"
+  cd "$_pkgname-src-$pkgver/$_pkgname"
 
-    python2 setup.py WX_CONFIG=/usr/bin/wx-config-gtk3 WXPORT=gtk3 UNICODE=1 \
-      install --root="$pkgdir" -O1
+  python2 setup.py WX_CONFIG=/usr/bin/wx-config-gtk3 WXPORT=gtk3 UNICODE=1 \
+    install --root="$pkgdir" -O1
 
-    for file in "$pkgdir"/usr/bin/*; do
-      mv "${file}" "${file}2";
-    done
+  for file in "$pkgdir"/usr/bin/*; do
+    mv "${file}" "${file}2";
+  done
 
-    install -Dm 644 ../docs/licence.txt \
-      "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 ../docs/licence.txt \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
