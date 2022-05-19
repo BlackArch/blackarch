@@ -1,0 +1,71 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# $Id: PKGBUILD 314848 2018-04-07 14:39:43Z bgyorgy $
+# Old Maintainer: Eric Bélanger <eric@archlinux.org>
+
+pkgname=python2-wxpython3
+_pkgname=wxPython
+pkgver=3.0.2.0
+pkgrel=4
+pkgdesc='Classic wxWidgets GUI toolkit for Python.'
+arch=('x86_64' 'aarch64')
+license=('custom:wxWindows')
+url="https://www.wxpython.org"
+depends=('wxgtk3' 'python2')
+makedepends=('mesa' 'glu')
+conflicts=(wxpython)
+replaces=(wxpython)
+provides=("wxpython=$pkgver")
+source=("https://downloads.sourceforge.net/wxpython/wxPython-src-$pkgver.tar.bz2"
+        "fix-plot.patch")
+sha512sums=('a3798e89ff19344253aac7d771971e519f7fa9723e82bd97e98f16fd7f1572e513170b02295b872dae0b1ae3fa95efc4ef34d078045b839694b4fdad3a27c9e4'
+            '6b4d235bbc67be66ae32c45b9ae8d2fd1aa6513d8625e1fa8af8f8399183ab598bd34ccd65158e113e8b99b86f3fd566e264d9bdeb681e68d634de17be29c473')
+
+prepare() {
+    find . -type f -exec sed -i 's/env python/env python2/' {} \;
+
+    cd "$_pkgname-src-$pkgver/$_pkgname"
+    # Fix plot library (FS#42807)
+    patch -Np1 -i ../../fix-plot.patch
+}
+
+build() {
+    cd "$_pkgname-src-$pkgver"
+
+    ./configure \
+        --prefix=/usr \
+        --libdir=/usr/lib \
+        --includedir=/usr/include \
+        --with-gtk=3 \
+        --with-opengl \
+        --enable-unicode \
+        --enable-graphics_ctx \
+        --disable-precomp-headers \
+        --with-regex=sys \
+        --with-libpng=sys \
+        --with-libxpm=sys \
+        --with-libjpeg=sys \
+        --with-libtiff=sys \
+        --with-wx-config=/usr/bin/wx-config-gtk3
+
+    cd $_pkgname
+
+    python2 setup.py WX_CONFIG=/usr/bin/wx-config-gtk3 \
+      WXPORT=gtk3 UNICODE=1 build
+}
+
+package() {
+    cd "$_pkgname-src-$pkgver/$_pkgname"
+
+    python2 setup.py WX_CONFIG=/usr/bin/wx-config-gtk3 WXPORT=gtk3 UNICODE=1 \
+      install --root="$pkgdir" -O1
+
+    for file in "$pkgdir"/usr/bin/*; do
+      mv "${file}" "${file}2";
+    done
+
+    install -Dm 644 ../docs/licence.txt \
+      "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
