@@ -1,0 +1,60 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=kubesploit
+pkgver=83.662381a
+pkgrel=1
+pkgdesc='cross-platform post-exploitation HTTP/2 Command & Control server.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation')
+url='https://github.com/cyberark/kubesploit'
+license=('GPL3')
+depends=('wget')
+makedepends=('git')
+source=("git+https://github.com/cyberark/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+
+}
+
+build() {
+  cd $pkgname
+
+  wget -c 'https://go.dev/dl/go1.14.linux-amd64.tar.gz' \
+    -O go1.14.linux-amd64.tar.gz
+  echo 08df79b46b0adf498ea9f320a0f23d6ec59e9003660b4c9c1ce8e5e2c6f823ca go1.14.linux-amd64.tar.gz \
+    | sha256sum -c
+  tar -zxf go1.14.linux-amd64.tar.gz
+
+  export GOPATH=${PWD}/go/bin
+  export PATH=$GOPATH:$PATH
+
+  go build -o $pkgname-agent cmd/merlinagent/main.go
+  go build -o $pkgname-server cmd/merlinserver/main.go
+
+}
+
+package() {
+  cd $pkgname
+
+  # agent
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/agent" NOTICES.txt
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/agent" $pkgname-agent
+
+  # server
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/server/" kubesploit.yara
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/server/" config.yaml
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/server/" $pkgname-server
+
+  mkdir -p "$pkgdir/usr/share/$pkgname/server/data"
+  cp -rp data/* "$pkgdir/usr/share/$pkgname/server/data/"
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+}
+
