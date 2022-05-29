@@ -4,13 +4,13 @@
 pkgname=kubesploit
 pkgver=83.662381a
 pkgrel=1
-pkgdesc='cross-platform post-exploitation HTTP/2 Command & Control server.'
+pkgdesc='Cross-platform post-exploitation HTTP/2 Command & Control server.'
 arch=('x86_64')
 groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation')
 url='https://github.com/cyberark/kubesploit'
 license=('GPL3')
-depends=('wget')
-makedepends=('git')
+depends=('glibc')
+makedepends=('git' 'wget')
 source=("git+https://github.com/cyberark/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -26,35 +26,51 @@ build() {
 
   wget -c 'https://go.dev/dl/go1.14.linux-amd64.tar.gz' \
     -O go1.14.linux-amd64.tar.gz
-  echo 08df79b46b0adf498ea9f320a0f23d6ec59e9003660b4c9c1ce8e5e2c6f823ca go1.14.linux-amd64.tar.gz \
-    | sha256sum -c
+
+  echo 08df79b46b0adf498ea9f320a0f23d6ec59e9003660b4c9c1ce8e5e2c6f823ca \
+    go1.14.linux-amd64.tar.gz | sha256sum -c
+
   tar -zxf go1.14.linux-amd64.tar.gz
 
   export GOPATH=${PWD}/go/bin
   export PATH=$GOPATH:$PATH
 
-  go build -o $pkgname-agent cmd/merlinagent/main.go
-  go build -o $pkgname-server cmd/merlinserver/main.go
-
+  go build -o "$pkgname-agent" cmd/merlinagent/main.go
+  go build -o "$pkgname-server" cmd/merlinserver/main.go
 }
 
 package() {
   cd $pkgname
 
+  install -dm 755 "$pkgdir/usr/bin"
+
   # agent
   install -dm 755 "$pkgdir/usr/share/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/$pkgname/agent" NOTICES.txt
-  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/agent" $pkgname-agent
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/agent" "$pkgname-agent"
 
   # server
   install -Dm 644 -t "$pkgdir/usr/share/$pkgname/server/" kubesploit.yara
   install -Dm 644 -t "$pkgdir/usr/share/$pkgname/server/" config.yaml
-  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/server/" $pkgname-server
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/server/" "$pkgname-server"
 
   mkdir -p "$pkgdir/usr/share/$pkgname/server/data"
   cp -rp data/* "$pkgdir/usr/share/$pkgname/server/data/"
 
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  cat > "$pkgdir/usr/bin/$pkgname-agent" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/agent
+exec ./$pkgname-agent "\$@"
+EOF
 
+  chmod +x "$pkgdir/usr/bin/$pkgname-agent"
+
+  cat > "$pkgdir/usr/bin/$pkgname-server" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname/server
+exec ./$pkgname-server "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-server"
 }
 
