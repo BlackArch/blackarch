@@ -3,15 +3,15 @@
 
 pkgbase=ivre
 pkgname=('ivre' 'ivre-web' 'ivre-docs' 'python-ivre')
-pkgver=0.9.17.dev233
+pkgver=0.9.18.dev10
 pkgrel=1
 groups=('blackarch' 'blackarch-recon' 'blackarch-networking')
 pkgdesc='Network recon framework based on Nmap, Masscan, Zeek (Bro), Argus, Netflow,...'
 arch=('any')
 url='https://ivre.rocks/'
 license=('GPL3')
-makedepends=('git' 'python2-setuptools' 'python-setuptools')
-source=("git+https://github.com/cea-sec/$pkgname.git")
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/ivre/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
@@ -75,7 +75,7 @@ package_ivre-web() {
 
   cd $pkgbase
 
-  python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1
 
   rm -rf "$pkgdir/usr/bin" "$pkgdir/usr/lib" "$pkgdir/usr/share/doc" \
     "$pkgdir/usr/share/ivre/bro" "$pkgdir/usr/share/ivre/data" \
@@ -94,7 +94,16 @@ package_ivre-web() {
     "$pkgdir/usr/share/ivre/zeek/passiverecon2db-ignore.example" \
     "$pkgdir/usr/share/ivre/zeek/ivre/arp/__load__.zeek" \
     "$pkgdir/usr/share/ivre/zeek/ivre/passiverecon/hassh.zeek" \
-    "$pkgdir/usr/share/ivre/zeek/ivre/passiverecon/ntlm.zeek"
+    "$pkgdir/usr/share/ivre/zeek/ivre/passiverecon/ntlm.zeek" \
+    "$pkgdir/usr/share/ivre/patches/dokuwiki/backlinks.patch" \
+    "$pkgdir/usr/share/ivre/patches/nmap/rtsp-url-brute.patch" \
+    "$pkgdir/usr/share/ivre/patches/nmap/scripts/http-screenshot.nse" \
+    "$pkgdir/usr/share/ivre/patches/nmap/scripts/mainframe-banner.nse" \
+    "$pkgdir/usr/share/ivre/patches/nmap/scripts/mainframe-screenshot.nse" \
+    "$pkgdir/usr/share/ivre/patches/nmap/scripts/rtsp-screenshot.nse" \
+    "$pkgdir/usr/share/ivre/patches/nmap/scripts/vnc-screenshot.nse" \
+    "$pkgdir/usr/share/ivre/patches/nmap/scripts/x11-screenshot.nse" \
+    "$pkgdir/usr/share/ivre/patches/p0f/p0f.fp.patch"
 }
 
 package_python-ivre() {
@@ -115,7 +124,11 @@ package_python-ivre() {
 
   cd $pkgbase
 
-  python setup.py install --root="$pkgdir" --prefix=/usr --optimize=1
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1
+  echo -en "-blackarch-$pkgrel" >> \
+    "$pkgdir/usr/lib/"python*"/site-packages/ivre/VERSION"
+  sed -ri 's#(VERSION = .*)(['\''"])$#\1-blackarch-'"$pkgrel"'\2#' \
+    "$pkgdir/usr/lib/"python*"/site-packages/ivre/__init__.py"
 
   rm -r "$pkgdir/usr/bin" "$pkgdir/usr/share" "$pkgdir/etc/bash_completion.d"
 
