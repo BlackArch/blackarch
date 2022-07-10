@@ -16,11 +16,22 @@ sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
+
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
   cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
+
   cp -a * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+python -m http.server --directory /usr/share/$pkgname/page "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
