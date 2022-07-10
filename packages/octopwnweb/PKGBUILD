@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=octopwnweb
+pkgver=14.e0f83ee
+pkgrel=1
+pkgdesc='Internal pentest framework running in your browser via WebAssembly, powerd by Pyodide'
+arch=('any')
+groups=('blackarch' 'blackarch-automation')
+url="https://github.com/skelsec/octopwnweb"
+license=('custom:unknown')
+depends=('python-wsnet')
+makedepends=('git')
+source=("git+https://github.com/skelsec/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  cp -a * "$pkgdir/usr/share/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+python -m http.server --directory /usr/share/$pkgname/page "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}

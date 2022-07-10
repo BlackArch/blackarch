@@ -1,0 +1,131 @@
+From 25bcbf15615b64e095da75e934ea4d254998ec24 Mon Sep 17 00:00:00 2001
+From: Robin Dunn <robin@alldunn.com>
+Date: Wed, 11 Mar 2015 14:37:20 -0700
+Subject: [PATCH] We need to use wx.CursorFromImage on Classic
+
+---
+ wx/lib/plot.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/wx/lib/plot.py b/wx/lib/plot.py
+index 94696c56b7..e166645863 100644
+--- a/wx/lib/plot.py
++++ b/wx/lib/plot.py
+@@ -595,9 +595,9 @@ def __init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition,
+ 
+         # set curser as cross-hairs
+         self.canvas.SetCursor(wx.CROSS_CURSOR)
+-        self.HandCursor = wx.Cursor(Hand.GetImage())
+-        self.GrabHandCursor = wx.Cursor(GrabHand.GetImage())
+-        self.MagCursor = wx.Cursor(MagPlus.GetImage())
++        self.HandCursor = wx.CursorFromImage(Hand.GetImage())
++        self.GrabHandCursor = wx.CursorFromImage(GrabHand.GetImage())
++        self.MagCursor = wx.CursorFromImage(MagPlus.GetImage())
+ 
+         # Things for printing
+         self._print_data = None
+From 30bc07d80ae1c81d70b4de2daac62ecd7996d703 Mon Sep 17 00:00:00 2001
+From: Robin Dunn <robin@alldunn.com>
+Date: Wed, 25 Mar 2015 15:34:49 -0700
+Subject: [PATCH] Revert some more Phoenix-only changes.
+
+---
+ wx/lib/plot.py | 25 +++++++++++++------------
+ 1 file changed, 13 insertions(+), 12 deletions(-)
+
+diff --git a/wx/lib/plot.py b/wx/lib/plot.py
+index e166645863..102c35cc84 100644
+--- a/wx/lib/plot.py
++++ b/wx/lib/plot.py
+@@ -237,7 +237,7 @@ def __init__(self, points, **attr):
+         :keyword `attr`: keyword attributes, default to:
+ 
+          ==========================  ================================
+-         'colour'= 'black'           wx.Pen Colour any wx.Colour
++         'colour'= 'black'           wx.Pen Colour any wx.NamedColour
+          'width'= 1                  Pen width
+          'style'= wx.PENSTYLE_SOLID  wx.Pen style
+          'legend'= ''                Line Legend to display
+@@ -251,7 +251,7 @@ def draw(self, dc, printerScale, coord=None):
+         width = self.attributes['width'] * printerScale * self._pointSize[0]
+         style = self.attributes['style']
+         if not isinstance(colour, wx.Colour):
+-            colour = wx.Colour(colour)
++            colour = wx.NamedColour(colour)
+         pen = wx.Pen(colour, width, style)
+         pen.SetCap(wx.CAP_BUTT)
+         dc.SetPen(pen)
+@@ -287,7 +287,7 @@ def __init__(self, points, **attr):
+         :keyword `attr`: keyword attributes, default to:
+ 
+          ==========================  ================================
+-         'colour'= 'black'           wx.Pen Colour any wx.Colour
++         'colour'= 'black'           wx.Pen Colour any wx.NamedColour
+          'width'= 1                  Pen width
+          'style'= wx.PENSTYLE_SOLID  wx.Pen style
+          'legend'= ''                Line Legend to display
+@@ -301,7 +301,7 @@ def draw(self, dc, printerScale, coord=None):
+         width = self.attributes['width'] * printerScale * self._pointSize[0]
+         style = self.attributes['style']
+         if not isinstance(colour, wx.Colour):
+-            colour = wx.Colour(colour)
++            colour = wx.NamedColour(colour)
+         pen = wx.Pen(colour, width, style)
+         pen.SetCap(wx.CAP_ROUND)
+         dc.SetPen(pen)
+@@ -334,10 +334,10 @@ def __init__(self, points, **attr):
+         :keyword `attr`: keyword attributes, default to:
+ 
+          ================================ ================================
+-         'colour'= 'black'                wx.Pen Colour any wx.Colour
++         'colour'= 'black'                wx.Pen Colour any wx.NamedColour
+          'width'= 1                       Pen width
+          'size'= 2                        Marker size
+-         'fillcolour'= same as colour     wx.Brush Colour any wx.Colour
++         'fillcolour'= same as colour     wx.Brush Colour any wx.NamedColour
+          'fillstyle'= wx.BRUSHSTYLE_SOLID wx.Brush fill style (use wx.BRUSHSTYLE_TRANSPARENT for no fill)
+          'style'= wx.FONTFAMILY_SOLID     wx.Pen style
+          'marker'= 'circle'               Marker shape
+@@ -365,10 +365,10 @@ def draw(self, dc, printerScale, coord=None):
+         marker = self.attributes['marker']
+ 
+         if colour and not isinstance(colour, wx.Colour):
+-            colour = wx.Colour(colour)
++            colour = wx.NamedColour(colour)
+         if fillcolour and not isinstance(fillcolour, wx.Colour):
+-            fillcolour = wx.Colour(fillcolour)
+-
++            fillcolour = wx.NamedColour(fillcolour)
++            
+         dc.SetPen(wx.Pen(colour, width))
+         if fillcolour:
+             dc.SetBrush(wx.Brush(fillcolour, fillstyle))
+@@ -681,8 +681,9 @@ def SetGridColour(self, colour):
+         if isinstance(colour, wx.Colour):
+             self._gridColour = colour
+         else:
+-            self._gridColour = wx.Colour(colour)
++            self._gridColour = wx.NamedColour(colour)
+ 
++        
+     # SaveFile
+     def SaveFile(self, fileName=''):
+         """Saves the file to the type specified in the extension. If no file
+@@ -1513,7 +1514,7 @@ def OnSize(self, event):
+         # Make new offscreen bitmap: this bitmap will always have the
+         # current drawing in it, so it can be used to save the image to
+         # a file, or whatever.
+-        self._Buffer = wx.Bitmap(Size.width, Size.height)
++        self._Buffer = wx.EmptyBitmap(Size.width, Size.height)
+         self._setSize()
+ 
+         self.last_PointLabel = None  # reset pointLabel
+@@ -1578,7 +1579,7 @@ def _drawPointLabel(self, mDataDict):
+         width = self._Buffer.GetWidth()
+         height = self._Buffer.GetHeight()
+         if sys.platform != "darwin":
+-            tmp_Buffer = wx.Bitmap(width, height)
++            tmp_Buffer = wx.EmptyBitmap(width,height)
+             dcs = wx.MemoryDC()
+             dcs.SelectObject(tmp_Buffer)
+             dcs.Clear()
