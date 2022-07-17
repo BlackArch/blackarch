@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ligolo-ng
+pkgver=v0.4.r0.g96636ff
+pkgrel=1
+pkgdesc='An advanced, yet simple, tunneling tool that uses a TUN interface.'
+arch=('any')
+groups=('blackarch' 'blackarch-tunnel' 'blackarch-networking')
+url="https://github.com/nicocha30/ligolo-ng/releases"
+license=('GPL3')
+depends=()
+makedepends=('git' 'go')
+source=("git+https://github.com/nicocha30/$pkgname.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o agent \
+    cmd/agent/main.go
+
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o proxy \
+    cmd/proxy/main.go
+
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 proxy "$pkgdir/opt/$pkgname/agent"
+  install -Dm 755 agent "$pkgdir/opt/$pkgname/proxy"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+
