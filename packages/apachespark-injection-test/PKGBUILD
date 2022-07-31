@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=apachespark-injection-test
+pkgver=??? #can someone guide me on how y'all come up with these versions?
+pkgrel=1
+pkgdesc='Simple tests for CVE-2022-33891 (Apache Spark code injection)'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer' 'blackarch-scanner')
+url='https://github.com/cyberqueen-meg/apachespark-injection-test'
+license=('MIT')
+depends=('python' 'python-requests' 'python-colorama')
+makedepends=('git')
+source=("git+https://github.com/cyberqueen-meg/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE README.d
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python bypass.py "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
