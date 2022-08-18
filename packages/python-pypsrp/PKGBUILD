@@ -10,19 +10,33 @@ pkgdesc='PowerShell Remoting Protocol for Python.'
 arch=('x86_64')
 url='https://github.com/jborean93/pypsrp'
 license=('MIT')
-depends=('python' 'krb5' 'python-cryptography' 'python-ntlm-auth'
-         'python-six' 'python-requests')
-makedepends=('python-setuptools' 'git' 'python-pip' 'python-wheel')
-optdepends=('python-requests-credssp: credssp')
+depends=('python' 'python-cryptography' 'python-pyspnego' 'python-requests'
+         'python-requests-credssp' 'python-gssapi' 'krb5')
+makedepends=('python-build' 'python-pip')
 options=(!emptydirs)
-source=("git+https://github.com/jborean93/$_pkgname")
-sha512sums=('SKIP')
-install="$_pkgname.install"
+source=("https://github.com/jborean93/$_pkgname/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('86d8e7b1f1081b1db2e209a6c0c11ccbe4667a7e20937513c25ab46a1194096c4ec125a1de5432a515d50ac8b893821e7b738064021632a6c9b93cb5c51f97fb')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
 
 package() {
-  cd $_pkgname
+  cd "$_pkgname-$pkgver"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/doc/$pkgname/LICENSE"
+  pip install --verbose \
+              --disable-pip-version-check \
+              --no-warn-script-location \
+              --ignore-installed \
+              --no-compile \
+              --no-deps \
+              --root="$pkgdir" \
+              --prefix=/usr \
+              --no-index \
+              --find-links="file://$startdir/dist" \
+              "$pkgname"
 }
+
 
