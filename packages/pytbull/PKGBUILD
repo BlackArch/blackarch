@@ -2,21 +2,23 @@
 # See COPYING for license details.
 
 pkgname=pytbull
-pkgver=2.1
-pkgrel=2
+pkgver=19.3d82a54
+pkgrel=1
 groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer')
-pkgdesc='A python based flexible IDS/IPS testing framework shipped with more than 300 tests.'
+pkgdesc='Next generation of pytbull, IDS/IPS testing framework.'
 arch=('any')
-url='http://pytbull.sourceforge.net/'
-license=('GPL2')
-depends=('python2' 'python2-scapy' 'python2-feedparser' 'python2-cherrypy')
-source=("https://downloads.sourceforge.net/project/$pkgname/$pkgname-$pkgver.tar.bz2")
-sha512sums=('5ac642ded4f772299966950d7255bc67562f95fa92c7b58321623aae6efc3655abddbc94211f11098a53d5544ef3e172fb73634df3a449e97c1d7f6dd5789430')
+url='https://github.com/netrunn3r/pytbull-ng'
+license=('GPL3')
+depends=('python' 'python-feedparser' 'python-cherrypy' 'python-m2crypto'
+         'python-paramiko' 'python-requests' 'python-scapy')
+makedepends=('git')
+source=("git+https://github.com/netrunn3r/$pkgname.git")
+sha512sums=('SKIP')
 
-prepare() {
+pkgver() {
   cd $pkgname
 
-  sed -i 's/self.checkNewVersionAvailable()/False/' $pkgname
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
@@ -24,17 +26,17 @@ package() {
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
-  install -dm 755 "$pkgdir/usr/share/doc"
 
-  install -Dm 644 docs/COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 
-  cp -a docs "$pkgdir/usr/share/doc/$pkgname/"
+  rm -rf *.md requirements.txt
+
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname
-python2 $pkgname "\$@"
+cd /usr/share/$pkgname/source
+python pytbull "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
