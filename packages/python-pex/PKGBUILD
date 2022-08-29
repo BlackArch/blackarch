@@ -1,0 +1,33 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-pex
+_pkgname=pex
+pkgver=2.1.104
+pkgrel=1
+arch=('any')
+pkgdesc='The PEX packaging toolchain.'
+url='https://pypi.org/project/pex/#files'
+license=('Apache')
+depends=('python')
+makedepends=('git' 'python-build' 'python-installer' 'python-flit-core'
+             'python-sphinx')
+source=("https://files.pythonhosted.org/packages/5f/9b/ad7d3b551b7d819329bfe1460a27d7740287fd7d022680a9f6a1262bd7e6/$_pkgname-$pkgver.tar.gz")
+sha512sums=('afab0b0c8dc7b19ead7921fffb8842e4bcb8d2223a8e57ca3901ddad7a035794f163a86b5a4d2a90510e8a3fe8f4e59e191f0395c9c9ecccedd84d3d87cfbf0a')
+
+build() {
+	cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --skip-dependency-check --no-isolation
+
+  make -C docs man
+}
+
+package() {
+	cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+
+  install -Dm 644 docs/_build/man/pex.1 -t "$pkgdir/usr/share/man/man1/"
+}
+
