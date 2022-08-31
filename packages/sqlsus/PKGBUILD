@@ -3,9 +3,9 @@
 
 pkgname=sqlsus
 pkgver=0.7.2
-pkgrel=10
+pkgrel=9
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-webapp')
-pkgdesc="An open source MySQL injection and takeover tool, written in perl"
+pkgdesc='An open source MySQL injection and takeover tool.'
 arch=('any')
 url='http://sqlsus.sourceforge.net/'
 license=('GPL2')
@@ -13,17 +13,32 @@ depends=('perl' 'perl-libwww' 'perl-dbd-sqlite' 'perl-www-mechanize'
          'perl-lwp-protocol-https' 'perl-switch' 'perl-html-linkextractor')
 optdepends=('perl-lwp-protocol-socks: SOCKS proxy support'
             'perl-term-readline-gnu: better readline support with AddHistory')
-source=("http://downloads.sourceforge.net/sourceforge/$pkgname/$pkgname-$pkgver.tgz"
-        'sqlsus')
-sha512sums=('58e2c6e47b409f7f2001c7a0d2932310e8f49bcc2bba998b6cb29fa04ff01ab9d0448cadc5539df63fbe20f9c2bd3c079c1c479ec3806e5c71561f7b5bd97ac2'
-            '5cf3313dc339664a40865c7f73496175fcc8c65aae986ba9409da01992aa7beb5b35f98f2a14d7960a54a07f4dce451258357e308ea73f584157747cb88f3406')
+source=("http://downloads.sourceforge.net/sourceforge/$pkgname/$pkgname-$pkgver.tgz")
+sha512sums=('58e2c6e47b409f7f2001c7a0d2932310e8f49bcc2bba998b6cb29fa04ff01ab9d0448cadc5539df63fbe20f9c2bd3c079c1c479ec3806e5c71561f7b5bd97ac2')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  sed -i 's|defined @history|@history|g' $pkgname
+}
 
 package() {
   cd "$pkgname-$pkgver"
 
-  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" CHANGELOG README
 
-  cp --no-preserve=ownership -a * "$pkgdir/usr/share/$pkgname/"
+  rm -rf CHANGELOG README LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec perl $pkgname "\$@"
+EOF
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

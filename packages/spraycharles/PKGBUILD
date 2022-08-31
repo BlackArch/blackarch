@@ -3,7 +3,7 @@
 
 pkgname=spraycharles
 pkgver=198.041a598
-pkgrel=1
+pkgrel=2
 pkgdesc='Low and slow password spraying tool, designed to spray on an interval over a long period of time.'
 groups=('blackarch' 'blackarch-cracker')
 arch=('any')
@@ -12,7 +12,7 @@ license=('BSD')
 depends=('python' 'impacket' 'python-numpy' 'python-requests' 'python-texttable'
          'python-requests-ntlm' 'python-pymsteams' 'python-click-config-file'
          'python-rich' 'python-discord-webhook' 'python-notifiers')
-makedepends=('git')
+makedepends=('git' 'python-poetry')
 source=("git+https://github.com/Tw1sm/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -22,22 +22,34 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-package() {
+build() {
   cd $pkgname
+
+  #poetry build
+  #cd dist
+  #mkdir -p s_dir
+  #tar zxvf "$pkgname-*.tar.gz" -C s_dir
+}
+
+package() {
+  #cd "$pkgname/dist/s_dir/$pkgname"-*
+  cd $pkgname
+
+  #python setup.py install --root="$pkgdir" --prefix=/usr -O1
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm README.md LICENSE .gitignore
+  rm *.md LICENSE .gitignore
 
   cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname
+cd /usr/share/$pkgname/$pkgname
 exec python $pkgname.py "\$@"
 EOF
 
