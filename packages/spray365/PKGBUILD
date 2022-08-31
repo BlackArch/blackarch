@@ -3,13 +3,14 @@
 
 pkgname=spray365
 pkgver=42.58fd193
-pkgrel=1
+pkgrel=2
 pkgdesc='Makes spraying Microsoft accounts (Office 365 / Azure AD) easy through its customizable two-step password spraying approach.'
 groups=('blackarch' 'blackarch-cracker' 'blackarch-recon' 'blackarch-windows')
 arch=('any')
 url='https://github.com/MarkoH17/Spray365'
 license=('MIT')
-depends=('python' 'python-colorama' 'python-urllib3' 'python-msal')
+depends=('python' 'python-colorama' 'python-urllib3' 'python-msal'
+         'python-click' 'python-click-option-group')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/MarkoH17/Spray365.git")
 sha512sums=('SKIP')
@@ -29,8 +30,22 @@ prepare() {
 package() {
   cd $pkgname
 
-  install -Dm 755 "$pkgname.py" "$pkgdir/usr/bin/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf README.md LICENSE requirements.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
