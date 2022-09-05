@@ -2,39 +2,41 @@
 # See COPYING for license details.
 
 pkgname=ospd-openvas
-pkgver=21.4.3
+pkgver=22.4.0
 pkgrel=1
 pkgdesc='OSP Server for openvas.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/greenbone/ospd-openvas'
 license=('GPL')
-depends=('python-redis' 'python-psutil' 'python-packaging' 'openvas-scanner')
+depends=('python-redis' 'python-psutil' 'python-packaging' 'openvas-scanner'
+         'python-ospd' 'python-paho-mqtt' 'python-gnupg')
 provides=('python-ospd-openvas')
 conflicts=('python-ospd-openvas')
-makedepends=('python-setuptools')
-source=("https://github.com/greenbone/ospd-openvas/archive/v$pkgver.tar.gz")
-sha512sums=('2403c20b6062c02ce8d907fb01f92195506cd26a1b51835cd3d3bdf73b6bd871995a27a24c15c609635dcc1792ec2bab3be4f0d57f0992e6c37be474c0669945')
-
-prepare() {
-  # Patch for usr/local/bin folder
-  sed -ri "s/\/usr\/local\/bin\/ospd-openvas/\/usr\/bin\/ospd-openvas/" \
-    "$pkgname-$pkgver/config/ospd-openvas.service"
-}
+makedepends=('python-setuptools' 'python-poetry' 'python-installer')
+source=("https://github.com/greenbone/ospd-openvas/archive/v$pkgver.tar.gz"
+        "$pkgname"
+        "$pkgname.service")
+sha512sums=('9ceaca7843c406361aeaa6c15386c150c449c08586382f95074cf346a4ebf7dd57ee97cda2784758845d03852488989ad18963eba0f01c4bb190fafa3480df9b'
+            '3461820543ac6bc0cd50026023a6271e015123366fc44ce66ead1221d52c9e534063881f3b46a50a6e43ec9caff697376c35f1ce2cd22944e7b58f02070a78a8'
+            'ddaa5ad183265df4a89661acde7f0c8a5d1fd4c0748e3ca2dd267d3e7e05e6975a62023833bdd048ab97076c9ec839e7ad2fd463ef16b246e5813e328956b50e')
+backup=("etc/default/$pkgname")
 
 build() {
   cd "$pkgname-$pkgver"
+
+  poetry build
 }
 
 package() {
   cd "$pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-
-  install -d "$pkgdir/etc/gvm/"
-  install -m 644 "$srcdir/$pkgname-$pkgver/config/ospd-openvas.conf" \
-    "$pkgdir/etc/gvm"
+  install -d "$pkgdir/etc/default"
   install -d "$pkgdir/usr/lib/systemd/system"
-  install -m 644 "$srcdir/$pkgname-$pkgver/config/ospd-openvas.service" \
-    "$pkgdir/usr/lib/systemd/system"
+
+  PYTHONPYCACHEPREFIX="${PWD}/.cache/cpython/" python -m installer \
+    -d "$pkgdir" dist/*.whl
+
+  install -m 644 "$srcdir/$pkgname" "$pkgdir/etc/default"
+  install -m 644 "$srcdir/$pkgname.service" "$pkgdir/usr/lib/systemd/system"
 }
 
