@@ -49,7 +49,8 @@ def update_pkgbuild(name, url, current_version, available_version):
 
         url = url.replace(available_version, '$pkgver')
 
-        temp = re.sub('source=.*', ('source=("' + url + '")'), temp)  # source update
+        if 'python' not in name:
+            temp = re.sub('source=.*', ('source=("' + url + '")'), temp)  # source update
 
         with open('../packages/{name}/PKGBUILD'.format(name=name), 'w', encoding='utf-8') as file:
             file.write(temp)
@@ -80,7 +81,7 @@ def python_packages_version_check(name):
                 if available_version != current_version:
                     url = str(data.get('releases')[available_version][-1]['url'])
 
-                    if url[-3:] == 'zip' or url[-6:] == 'tar.gz':
+                    if url[-3:] == 'zip' or url[-6:] == 'tar.gz': # not tar.bz2; whl
                         update_pkgbuild(name, url, current_version, available_version)
                     else:
                         print('Please, do manual update {name}'.format(name=name))
