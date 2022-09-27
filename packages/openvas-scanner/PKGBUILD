@@ -4,62 +4,42 @@
 pkgname=openvas-scanner
 pkgver=22.4.0
 pkgrel=2
-pkgdesc='The OpenVAS scanning Daemon.'
-groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-fuzzer'
-        'blackarch-exploitation')
-arch=('x86_64' 'aarch64')
-url='https://github.com/greenbone/openvas-scanner/'
+pkgdesc='Vulnerability scanning Daemon.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-scanner')
+url='https://github.com/greenbone/'
 license=('GPL')
-depends=('gvm-libs' 'redis' 'rsync' 'json-glib' 'gvmd')
-conflicts=('openvas')
-makedepends=('cmake' 'doxygen')
-install="$pkgname.install"
-source=("https://github.com/greenbone/$pkgname/archive/v$pkgver.tar.gz"
-        "greenbone-nvt-sync.service"
-        "greenbone-nvt-sync.timer"
-        "$pkgname.install"
-      )
-sha512sums=('9fa712eedc20ebefafeb4050a1baa7c6016924bd4dc5c22b623d87040c01fce092153ff94185e5ebb3a22a675a2be82c7938fb92514f14d4e981767330c24014'
-            '1ef913c24721533b0f779047532de63d195e8498885b90972a7bbbfb734444c0f7cbdcc52c437b2ce773881d45eadfcec03fcd00886e02962cb06d318d0c7c96'
-            '2df63297cd9bd1cfb7b774152b1791ff946a1a410e563e54212652d847063b3c22b5362cd287b1bd73684be1fbd66464a2f8bb79b92cd086ba58e9a801d675ec'
-            'a7a743ab2899187cf4dd71c605ed3acb722f19d5e3077858f3a6b3199b384de3d59c05c2c5d6cf0ce2df7ab1de99f058de6ff8c931b6fd33a8fbccf8d3afd82c')
-
-prepare() {
-  cd "$pkgname-$pkgver"
-
-  sed -i '/-Werror/d' CMakeLists.txt
-}
+depends=('gvm-libs' 'redis' 'rsync' 'json-glib' 'libbsd')
+makedepends=('git' 'cmake' 'doxygen')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/greenbone/openvas-scanner/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('9fa712eedc20ebefafeb4050a1baa7c6016924bd4dc5c22b623d87040c01fce092153ff94185e5ebb3a22a675a2be82c7938fb92514f14d4e981767330c24014')
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd "${pkgname}-${pkgver}"
 
-  cmake \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DSBINDIR=/usr/bin \
-    -DLIBDIR=/usr/lib \
-    -DCMAKE_INSTALL_PREFIX=/usr \
+  export INSTALL_PREFIX=/usr/local
+  export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+
+  cmake "-DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     -DSYSCONFDIR=/etc \
     -DLOCALSTATEDIR=/var \
-    -DOPENVAS_FEED_LOCK_PATH=/run/gvm/feed-update.lock \
-    -DOPENVAS_NVT_DIR=/var/lib/openvas \
-    --debug-output \
-    .
+    -DOPENVAS_FEED_LOCK_PATH=/var/lib/openvas/feed-update.lock \
+    -DOPENVAS_RUN_DIR=/run/ospd
+    --debug-out ."
 
-  make
+  make "-j$(nproc)"
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd "${pkgname}-${pkgver}"
+
+  install -d "$pkgdir/etc/redis"
+  install -d "$pkgdir/etc/openvas"
+  install -m 644 $srcdir/${pkgname}-${pkgver}/config/redis-openvas.conf $pkgdir/etc/redis/
+  echo "db_address = /run/redis-openvas/redis.sock" | tee -a "$pkgdir/etc/openvas/openvas.conf"
 
   make DESTDIR="$pkgdir" install
-
-  cp "$srcdir/$pkgname-$pkgver/config/redis-openvas.conf" "$pkgdir/etc/openvas"
-
-  install -m 755 -d "$pkgdir/usr/lib/systemd/system"
-
-  install -m 644 "$srcdir/greenbone-nvt-sync.service" \
-    "$pkgdir/usr/lib/systemd/system"
-  install -m 644 "$srcdir/greenbone-nvt-sync.timer" \
-    "$pkgdir/usr/lib/systemd/system"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 }
 
