@@ -1,0 +1,33 @@
+post_install() {
+  set -e
+  cd /usr/lib/systemd/system/
+
+  cat << EOF > notus-scanner.service
+[Unit]
+Description=Notus Scanner
+Documentation=https://github.com/greenbone/notus-scanner
+After=mosquitto.service
+Wants=mosquitto.service
+ConditionKernelCommandLine=!recovery
+
+[Service]
+Type=forking
+User=gvm
+RuntimeDirectory=notus-scanner
+RuntimeDirectoryMode=2775
+PIDFile=/run/notus-scanner/notus-scanner.pid
+ExecStart=/usr/bin/notus-scanner --products-directory /var/lib/notus/products --log-file /var/log/gvm/notus-scanner.log
+SuccessExitStatus=SIGKILL
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+}
+
+post_upgrade() {
+  post_install "$@"
+}
+
