@@ -4,46 +4,36 @@
 pkgname=gvm-libs
 pkgver=22.4.0
 pkgrel=2
-pkgdesc='greenbone-vulnerability-manager libraries.'
-arch=('x86_64' 'aarch64')
-url='https://github.com/greenbone/gvm-libs'
+pkgdesc='This is the libraries module for the Greenbone Community Edition.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-scanner')
+url='https://github.com/greenbone/'
 license=('GPL')
-depends=('gnutls' 'libpcap' 'gpgme' 'libssh' 'glib2' 'libldap' 'hiredis' 'sudo'
-         'libnet' 'paho-mqtt-c' 'zlib' 'libgcrypt' 'util-linux-libs' 'libxml2')
-makedepends=('cmake' 'doxygen' 'graphviz')
-source=("https://github.com/greenbone/gvm-libs/archive/v$pkgver.tar.gz")
+depends=('libnet' 'libssh' 'hiredis' 'paho-mqtt-c'
+  'doxygen')
+makedepends=('git' 'cmake')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/greenbone/gvm-libs/archive/refs/tags/v$pkgver.tar.gz")
 sha512sums=('607625a955720b37679c76053bbbaeb99e06832488a90e052c0315900f9cadc34616f2db3f8408d116354d80d30c71618e3c1bf51dcc7f5a80ddeb17b55ab850')
-replaces=('openvas-libraries')
-
-prepare() {
-  cd "$pkgname-$pkgver"
-
-  sed -i '/-Werror/d' CMakeLists.txt
-}
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd "${pkgname}-${pkgver}"
 
-  #LDFLAGS+=" -Wl,--no-as-needed"
+  export INSTALL_PREFIX=/usr/local
+  export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
-  cmake \
-    -DCMAKE_BUILD_TYPE=None \
-    -DCMAKE_INSTALL_PREFIX=/usr \
-    -DLIBDIR=/usr/lib \
+  cmake "-DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     -DSYSCONFDIR=/etc \
     -DLOCALSTATEDIR=/var \
-    -B build \
-    -S "$pkgname-$pkgver" \
-    .
+    --debug-output ."
 
-  make -C build
+  make "-j$(nproc)"
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd "${pkgname}-${pkgver}"
 
-  make DESTDIR="$pkgdir" -C build install
-
-  rm -rf "$pkgdir/run"
+  make DESTDIR="$pkgdir" install
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 }
 
