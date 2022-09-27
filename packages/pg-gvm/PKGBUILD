@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pg-gvm
+pkgver=22.4.0
+pkgrel=2
+pkgdesc='is a PostgreSQL server extension that adds several functions used by gvmd.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-scanner')
+url='https://github.com/greenbone/'
+license=('GPL')
+depends=('gvm-libs' 'libical' 'postgresql')
+makedepends=('git' 'cmake')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/greenbone/pg-gvm/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('d3ccfc28c960f5103dddac45d00a88a783d9e95ad90852320a84ac5f5c46987c556e4db5c0beedae1957d440ebbc1a43801a50840dd4c3d745c9a4565706d930')
+
+build() {
+  cd "${pkgname}-${pkgver}"
+
+  export INSTALL_PREFIX=/usr/local
+  export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+
+  cmake "-DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    --debug-out ."
+
+  make "-j$(nproc)"
+}
+
+package() {
+  cd "${pkgname}-${pkgver}"
+
+  make DESTDIR="$pkgdir" install
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+}
+
