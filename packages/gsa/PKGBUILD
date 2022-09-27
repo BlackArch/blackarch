@@ -2,41 +2,36 @@
 # See COPYING for license details.
 
 pkgname=gsa
-pkgver=22.4
-pkgrel=3
-pkgdesc='Greenbone Security Assistant.'
-arch=('x86_64' 'aarch64')
-url='https://github.com/greenbone/gsa'
+pkgver=22.4.0
+pkgrel=2
+pkgdesc='The Greenbone Security Assistant.'
+arch=('x86_64')
+groups=('blackarch' 'blakcarch-scanner')
+url='https://github.com/greenbone/'
 license=('GPL')
-depends=('gvm-libs' 'libgcrypt' 'gnutls' 'postgresql' 'libxml2' 'libmicrohttpd'
-         'openvas-scanner' 'ospd-openvas')
-makedepends=('yarn' 'doxygen' 'xmltoman' 'nodejs' 'npm')
-source=("https://github.com/greenbone/gsa/archive/v$pkgver.tar.gz"
-        "${pkgname}d"
-        "${pkgname}d.service")
-sha512sums=('8e680a7e5b0785a9dd871d56199dae8f4f3b124b6500c08274a2329edf9973ad3841e951dd348aa2c18effbf9d065e9a8ac0f39bde2f6a393e9ca4541ead2f99'
-            '27542d6e194d8fe4ef37364f387293d69f4c7002f2b380b8a21ae995122531ccbce6ca689f0768c463252d33cf0b1735343cbe61eac51947fbec0e05a45e1d1b'
-            '6c65e3ea08b427cd1773c346b054b7b1a3e95d06d6d4070603e97f92b59f9dd465e94992cd6b5927192bc9b859c1268d1cda8d92d4067264389a7a0a578b9d30')
-backup=("etc/default/$pkgname")
+depends=('nodejs')
+makedepends=('yarn' 'nodejs' 'npm')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/greenbone/gsa/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('e404c4f281c11c7565e9f697cb67e0ed123b2da7a8c4ecea0c83fa10120489c64a1cf1e17c52da4909738136b1ffc0aaad18db040a67c43134e836a140852399')
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd "${pkgname}-${pkgver}"
 
   rm -rf build
-  yarn
-  yarn build
+
+  export NODE_OPTIONS=--max-old-space-size=2048
+  yarn && yarn build
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd "${pkgname}-${pkgver}"
 
-  install -d "$pkgdir/usr/lib/systemd/system"
-  install -d "$pkgdir/usr/share/gvm/${pkgname}d/web"
-  install -d "$pkgdir/etc/default"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -dm 755 "$pkgdir/usr/local/share/gvm/gsad/web"
 
-  cp -a build/* "$pkgdir/usr/share/gvm/${pkgname}d/web/"
+  rm -rf docs *.md LICENSE
 
-  install -m 644 "$srcdir/${pkgname}d" "$pkgdir/etc/default"
-  install -m 644 "$srcdir/${pkgname}d.service" "$pkgdir/usr/lib/systemd/system"
+  cp -r build/* "$pkgdir/usr/local/share/gvm/gsad/web/"
 }
 
