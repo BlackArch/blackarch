@@ -2,83 +2,47 @@
 # See COPYING for license details.
 
 pkgname=gvmd
-pkgver=22.4
+pkgver=22.4.0
 pkgrel=2
-pkgdesc='OpenVAS / Greenbone vulnerability manager.'
-arch=('x86_64' 'aarch64')
-url='https://github.com/greenbone/gvmd/'
+pkgdesc='The Greenbone Vulnerability Manager is the central management service between security scanners and the user clients.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-scanner')
+url='https://github.com/greenbone/'
 license=('GPL')
-depends=('gvm-libs' 'libical' 'python3' 'sqlite3' 'postgresql' 'gnutls' 'sudo'
-         'postgresql' 'libxslt' 'libbsd')
-makedepends=('cmake' 'doxygen' 'xmltoman' 'libxslt')
-source=("https://github.com/greenbone/gvmd/archive/v$pkgver.tar.gz"
-        "$pkgname"
-        "$pkgname.install"
-        "$pkgname.service"
-        'greenbone-certdata-sync.timer'
-        'greenbone-feed-sync.timer'
-        'greenbone-scapdata-sync.timer'
-        'greenbone-certdata-sync.service'
-        'greenbone-feed-sync.service'
-        'greenbone-scapdata-sync.service')
-sha512sums=('467652223f0136c9c386622b734f96317ca00cdbec2bb2de4b1c382086e1422b3490c1d883e864d26c183562042ea2b57a3e491cf0df53b60e0b16537b2ac0d2'
-            'fee7f0cbc0795d8269aba7df64adb0dfa8765faacba152f4f4b43cb3140b97c3d18fbcfb0abb0ec7b773fba45d725e00aa9b16ddc272cc4423aa99793c1aa931'
-            'b57434d05d3191e460a15ae0e54c3a56f229ffabc3d1b13f395805eb8259ea225379cedaf1554938dd3e442801cd39149707a49ea589c7ca249ff6ffd2340c43'
-            'b2f914995939c573f057789c76631896c6545913299e4071526d269efa40f935eb6408e74db9b014c9ff2f3d42770c9196e7fcadb0f7eb02fdf0f2530cbb09de'
-            '4d259ff625d29b10040ab1ff7cb472b3dee2355c8ef01275754c5c08779e0de3d5ae1cbb157239fd17d663644b43a642fe15c2d8e13cde037e52ad6a4e2e0afd'
-            'e1be40755530f9793c91c47db3bc1fb65266dcea2d1ba5e3ba1de97a93572bc52a18dc182f9c4d11fc4586f714663447917d70321e32c20bbe35765f999141d2'
-            '224bb41d298083755a77151038403b678bc66b9184b9b960ce4a380f8774ec7794e2f967eb48efd158a9ac7006b4a46a1f84267b50eef3e85ced5193a278a451'
-            '0e61d540bbe7d4a88d080e0b213f6c472d9b1b5bf122780dec9e2644fe15bae9a9938432fdcfde73ed9d280dd319dd4796acb83ea8135aab3fe981a00b612504'
-            'de1cc454f5bdf402368ca06680b542b3c10edd6e0e126be955fd3af140c0bb722b1664a9b3ac72bf10fae54c85142bf58f5becde767a27e102c19abe78216b0a'
-            'd90a42e8f2f77b05432f61ead247e8d4144569ae622159a45f0541469daa4447fa667ef6af42fa0117c957ab2a9afee425fef7bdc3532c8f89021e074c590052')
-replaces=('openvas-manager')
+depends=('gvm-libs' 'python' 'gnutls' 'libbsd' 'libical' 'postgresql'
+  'rsync' 'gpgme')
+makedepends=('git' 'cmake')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/greenbone/gvmd/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('b28ad93842cb408ebbd85e9cc924c87fd27cc7c1f2f92cde5c8623b1782bcfe795227f31b5f80db7b56ea450670223c4c9c63df298f32b7d5cc633a76be32549')
 install="$pkgname.install"
-backup=("etc/default/$pkgname")
-
-prepare() {
-  # Patch for libpq-fe.h search folder
-  sed -ri "s/include <postgresql\/libpq-fe.h>/include <libpq-fe.h>/" \
-    "$pkgname-$pkgver/src/sql_pg.c"
-}
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd "${pkgname}-${pkgver}"
 
-  cmake \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DSBINDIR=/usr/bin \
-    -DCMAKE_INSTALL_PREFIX=/usr \
-    -DSYSCONFDIR=/etc \
+  export INSTALL_PREFIX=/usr/local
+  export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+
+  sed -i 's/#include <postgresql\/libpq-fe.h>/#include <libpq-fe.h>/' ./src/sql_pg.c
+
+  cmake "-DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     -DLOCALSTATEDIR=/var \
-    -DGVM_FEED_LOCK_PATH=/run/gvm/feed-update.lock \
-    -DGVM_RUN_DIR=/run/gvm \
-    .
+    -DSYSCONFDIR=/etc \
+    -DGVM_DATA_DIR=/var \
+    -DGVMD_RUN_DIR=/run/gvmd \
+    -DOPENVAS_DEFAULT_SOCKET=/run/ospd/ospd-openvas.sock \
+    -DGVM_FEED_LOCK_PATH=/var/lib/gvm/feed-update.lock \
+    -DSYSTEMD_SERVICE_DIR=/usr/lib/systemd/system \
+    -DLOGROTATE_DIR=/etc/logrotate.d \
+    --debug-out ."
 
-  make
+  make "-j$(nproc)"
 }
 
 package() {
-  cd "$pkgname-$pkgver"
-
-  install -dm 755 "$pkgdir/etc/default"
-  install -dm 755 "$pkgdir/usr/lib/systemd/system"
-  install -dm 755 "$pkgdir/var/lib/gvm/$pkgname"
+  cd "${pkgname}-${pkgver}"
 
   make DESTDIR="$pkgdir" install
-
-  install -d "$pkgdir/usr/lib/systemd/system"
-  install -m 644 "$srcdir/$pkgname-$pkgver/config/$pkgname.service" \
-    "$pkgdir/usr/lib/systemd/system"
-  install -m 644 "$srcdir/$pkgname" "$pkgdir/etc/default"
-  install -m 644 -t "$pkgdir/usr/lib/systemd/system" \
-    "$srcdir/greenbone-certdata-sync.timer" \
-    "$srcdir/greenbone-scapdata-sync.timer" \
-    "$srcdir/greenbone-feed-sync.timer" \
-    "$srcdir/greenbone-certdata-sync.service" \
-    "$srcdir/greenbone-scapdata-sync.service" \
-    "$srcdir/greenbone-feed-sync.service" \
-    "$srcdir/$pkgname.service"
-
-  rm -rf "$pkgdir/lib"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 }
 
