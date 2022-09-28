@@ -9,17 +9,16 @@ arch=('x86_64')
 groups=('blackarch' 'blackarch-scanner')
 url='https://github.com/greenbone/'
 license=('GPL')
-depends=('gvm-libs' 'python' 'gnutls' 'libbsd' 'libical' 'postgresql'
+depends=('gvm-libs' 'glib2' 'python' 'gnutls' 'libbsd' 'libical' 'postgresql'
   'rsync' 'gpgme')
 makedepends=('git' 'cmake')
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/greenbone/gvmd/archive/refs/tags/v$pkgver.tar.gz")
 sha512sums=('b28ad93842cb408ebbd85e9cc924c87fd27cc7c1f2f92cde5c8623b1782bcfe795227f31b5f80db7b56ea450670223c4c9c63df298f32b7d5cc633a76be32549')
-install="$pkgname.install"
 
 build() {
   cd "${pkgname}-${pkgver}"
 
-  export INSTALL_PREFIX=/usr/local
+  export INSTALL_PREFIX=/usr
   export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
   sed -i 's/#include <postgresql\/libpq-fe.h>/#include <libpq-fe.h>/' ./src/sql_pg.c
@@ -43,6 +42,12 @@ package() {
   cd "${pkgname}-${pkgver}"
 
   make DESTDIR="$pkgdir" install
+
+  install -dm 755 "$pkgdir/usr/lib/systemd/system"
+  install -m 644 "$pkgdir/lib/systemd/system/gvmd.service" "$pkgdir/usr/lib/systemd/system/"
+
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  rm -fR "$pkgdir/lib"
 }
 
