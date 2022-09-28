@@ -13,12 +13,11 @@ depends=('gvm-libs' 'libmicrohttpd' 'libxml2' 'gnutls' 'glib2')
 makedepends=('git' 'cmake')
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/greenbone/gsad/archive/refs/tags/v$pkgver.tar.gz")
 sha512sums=('0a68d0978e9c88ab562c30a04f879651214d13165793b1dd7f97baa5d0d94260dc7862149cf9742105f99193f07000277c4fe8ec330f0947f748743e9368fae8')
-install="$pkgname.install"
 
 build() {
   cd "${pkgname}-${pkgver}"
 
-  export INSTALL_PREFIX=/usr/local
+  export INSTALL_PREFIX=/usr
   export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
   cmake "-DCMAKE_BUILD_TYPE=Release \
@@ -37,6 +36,12 @@ package() {
   cd "${pkgname}-${pkgver}"
 
   make DESTDIR="$pkgdir" install
+
+  install -dm 755 "$pkgdir/usr/lib/systemd/system"
+  install -m 644 "$pkgdir/lib/systemd/system/gsad.service" "$pkgdir/usr/lib/systemd/system/"
+
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  rm -fR "$pkgdir/lib"
 }
 
