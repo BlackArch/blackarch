@@ -28,6 +28,7 @@ build() {
     -DLOCALSTATEDIR=/var \
     -DOPENVAS_FEED_LOCK_PATH=/var/lib/openvas/feed-update.lock \
     -DOPENVAS_RUN_DIR=/run/ospd
+    -DCMAKE_SKIP_INSTALL_RPATH=YES \
     --debug-out ."
 
   make "-j$(nproc)"
@@ -38,10 +39,13 @@ package() {
 
   install -d "$pkgdir/etc/redis"
   install -d "$pkgdir/etc/openvas"
+  install -d "$pkgdir/run/redis-openvas"
   install -m 644 $srcdir/${pkgname}-${pkgver}/config/redis-openvas.conf $pkgdir/etc/redis/
   echo "db_address = /run/redis-openvas/redis.sock" | tee -a "$pkgdir/etc/openvas/openvas.conf"
 
   make DESTDIR="$pkgdir" install
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-}
 
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  rm -fR "$pkgdir/usr/local/share/man"
+}
