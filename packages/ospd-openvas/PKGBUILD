@@ -30,7 +30,10 @@ package() {
   install -d "$pkgdir/etc/gvm"
   install -dm 2775 "$pkgdir/run/ospd"
   install -d "$pkgdir/usr/lib/systemd/system"
-  install -m 644 $srcdir/${pkgname}-${pkgver}/config/ospd-openvas.conf $pkgdir/etc/gvm
-  install -m 644 $srcdir/${pkgname}-${pkgver}/config/ospd-openvas.service $pkgdir/usr/lib/systemd/system
-}
 
+  install -m 644 "$srcdir/${pkgname}-${pkgver}/config/ospd-openvas.conf" "$pkgdir/etc/gvm"
+  install -m 644 "$srcdir/${pkgname}-${pkgver}/config/ospd-openvas.service" "$pkgdir/usr/lib/systemd/system"
+
+  cp -r "$srcdir/${pkgname}-${pkgver}/docs/example-ospd-logging.conf" "$pkgdir/etc/gvm/ospd-logging.conf"
+  sed -i 's/^ExecStart=\/usr\/bin\/ospd-openvas --config \/etc\/gvm\/ospd-openvas.conf --log-config \/etc\/gvm\/ospd-logging.conf/ExecStart=\/usr\/bin\/ospd-openvas --unix-socket \/run\/ospd\/ospd-openvas.sock --pid-file \/run\/ospd\/ospd-openvas.pid --log-file \/var\/log\/gvm\/ospd-openvas.log --lock-file-dir \/var\/lib\/openvas --socket-mode 0o770 --mqtt-broker-address localhost --mqtt-broker-port 1883 --notus-feed-dir \/var\/lib\/notus\/advisories/' "$pkgdir/usr/lib/systemd/system/ospd-openvas.service"
+}
