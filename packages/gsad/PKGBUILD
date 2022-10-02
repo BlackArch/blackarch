@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gsad
+pkgver=22.4.0
+pkgrel=2
+pkgdesc='The web server gsad is written in the C programming language.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-scanner')
+url='https://github.com/greenbone/'
+license=('GPL')
+depends=('gvm-libs' 'libmicrohttpd' 'libxml2' 'gnutls' 'glib2')
+makedepends=('git' 'cmake')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/greenbone/gsad/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('0a68d0978e9c88ab562c30a04f879651214d13165793b1dd7f97baa5d0d94260dc7862149cf9742105f99193f07000277c4fe8ec330f0947f748743e9368fae8')
+
+build() {
+  cd "${pkgname}-${pkgver}"
+
+  export INSTALL_PREFIX=/usr
+  export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+
+  cmake "-DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+  -DSYSCONFDIR=/etc \
+  -DLOCALSTATEDIR=/var \
+  -DGVMD_RUN_DIR=/run/gvmd \
+  -DGSAD_RUN_DIR=/run/gsad \
+  -DLOGROTATE_DIR=/etc/logrotate.d \
+  -DCMAKE_SKIP_INSTALL_RPATH=YES \
+  --debug-out ."
+
+  make "-j$(nproc)"
+}
+
+package() {
+  cd "${pkgname}-${pkgver}"
+
+  make DESTDIR="$pkgdir" install
+
+  install -dm 755 "$pkgdir/usr/lib/systemd/system"
+  install -m 644 "$pkgdir/lib/systemd/system/gsad.service" "$pkgdir/usr/lib/systemd/system/"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  rm -fR "$pkgdir/usr/local/share/man"
+  rm -fR "$pkgdir/lib"
+}
