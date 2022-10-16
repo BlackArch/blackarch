@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=donpapi
+_pkgname=DonPAPI
+pkgver=v1.0.0.r45.gf724f82
+pkgrel=1
+pkgdesc='Dumping revelant information on compromised targets without AV detection with DPAPI.'
+arch=('any')
+groups=('blackarch' 'blackarch-windows' 'blackarch-exploitation')
+url='https://github.com/login-securite/DonPAPI'
+license=('custom:unknown')
+depends=('python' 'impacket' 'python-pyasn' 'python-lnkparse3' 'python-wheel'
+         'python-m2crypto' 'python-pycryptodome' 'python-setuptools')
+makedepends=('git')
+source=("git+https://github.com/login-securite/DonPAPI.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  rm -rf res/ *.md .gitignore *.txt *.toml
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+python ./$_pkgname.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
