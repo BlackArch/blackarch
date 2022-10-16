@@ -11,8 +11,8 @@ groups=('blackarch' 'blackarch-windows' 'blackarch-exploitation')
 url='https://github.com/login-securite/DonPAPI'
 license=('custom:unknown')
 depends=('python' 'impacket' 'python-pyasn' 'python-lnkparse3' 'python-wheel'
-         'python-m2crypto' 'python-pycryptodome')
-makedepends=('python-build' 'python-pip' 'git')
+         'python-m2crypto' 'python-pycryptodome' 'python-setuptools')
+makedepends=('git')
 source=("git+https://github.com/login-securite/DonPAPI.git")
 sha512sums=('SKIP')
 
@@ -22,25 +22,24 @@ pkgver() {
   git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
-build() {
-  cd $_pkgname
-
-  python -m build --wheel --outdir="$startdir/dist"
-}
-
 package() {
   cd $_pkgname
 
-  pip install --verbose \
-              --disable-pip-version-check \
-              --no-warn-script-location \
-              --ignore-installed \
-              --no-compile \
-              --no-deps \
-              --root="$pkgdir" \
-              --prefix=/usr \
-              --no-index \
-              --find-links="file://$startdir/dist" \
-              "$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  rm -rf res/ *.md .gitignore *.txt *.toml
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+python ./$_pkgname.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
