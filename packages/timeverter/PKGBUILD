@@ -1,0 +1,31 @@
+pkgname=timeverter
+pkgver=83.24b715e
+pkgrel=1
+pkgdesc='Bruteforce time-based tokens and to convert several time domains.'
+groups=('blackarch' 'blackarch-cracker')
+arch=('any')
+url='https://github.com/D3vil0p3r/timeverter'
+license=('GPL3')
+depends=('python')
+makedepends=('git')
+source=("git+https://github.com/D3vil0p3r/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  mkdir -p "$pkgdir/usr/share/$pkgname/src"
+  mkdir -p "$pkgdir/usr/bin"
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" "${srcdir}/$pkgname/$pkgname.py"
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/src/" "${srcdir}/$pkgname/src/core.py" "${srcdir}/$pkgname/src/parser.py" "${srcdir}/$pkgname/src/printer.py" "${srcdir}/$pkgname/src/time.py" "${srcdir}/$pkgname/src/util.py"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec /usr/share/$pkgname/$pkgname.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
