@@ -4,27 +4,36 @@
 pkgname=python-arsenic
 _pkgname=arsenic
 pkgver=21.8
-pkgrel=1
+pkgrel=2
 pkgdesc='Async WebDriver implementation for asyncio and asyncio-compatible frameworks.'
 arch=('any')
 groups=('blackarch' 'blackarch-automation' 'blackarch-webapp')
 url='https://github.com/HDE/arsenic/releases'
 license=('Apache')
-depends=('python' 'python-attrs' 'python-structlog' 'python-aiohttp'
-         'geckodriver')
+depends=('python' 'python-pip' 'python-build' 'python-attrs' 'python-structlog'
+         'python-aiohttp' 'geckodriver')
 makedepends=('python-setuptools')
-source=("https://github.com/HDE/$_pkgname/archive/$pkgver.tar.gz")
-sha512sums=('aac14e48ced88eaaab7ee9d85fb41da03ae28a02da1fdc203e7a7371f1f9450b30132cd09df7dedb5e46ee2609c2f8bcf2b70b7db8b573ad3ca360ca1f460566')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('55fd0e6f9acf1f578d990146b81f7f91d8c58aa68601840346c80cf7c535d5412a983c1cf0ee355383f80f6b667ef7a63b22dae8192b51e85541258a143ab366')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+  pip install --verbose \
+              --disable-pip-version-check \
+              --no-warn-script-location \
+              --ignore-installed \
+              --no-compile \
+              --no-deps \
+              --root="$pkgdir" \
+              --prefix=/usr \
+              --no-index \
+              --find-links="file://$startdir/dist" \
+              "$_pkgname"
 }
-
