@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=semgrep
+pkgver=0.118.0
+_pyver=3.10
+pkgrel=1
+pkgdesc='Lightweight static analysis for many languages.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-code-audit')
+url='https://pypi.org/project/semgrep/#files'
+license=('LGPL')
+depends=('python' 'python-attrs' 'python-boltons' 'python-colorama' 'python-click'
+         'python-click-option-group' 'python-glom' 'python-requests' 'python-ruamel-yaml'
+         'python-tqdm' 'python-packaging' 'python-jsonschema' 'python-wcmatch'
+         'python-peewee' 'python-defusedxml' 'python-urllib3' 'python-typing_extensions'
+         'python-lsp-jsonrpc' 'python-tomli')
+makedepends=('python-setuptools')
+replaces=('python-semgrep')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz"
+        "https://github.com/returntocorp/$pkgname/releases/download/v$pkgver/$pkgname-v$pkgver-ubuntu-16.04.tgz")
+sha512sums=('eca01d899365092d3f6b80313f047a2d491c8e2afbac2b4e5da0e8271f59ead5c062cc6d2e7323d9e8a5ba5dbbb7fece2d3d74cb6238f6721b2a37dd29c83421'
+            '689d4393b5309a1efb739e22f8b64f3fa3a8c7d9cfa46f2c7d671d556d49afea4434f6dfa8794cbfe7861aa72b438fc6748f3b13fe83111f185c0b4595741e03')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  export SEMGREP_CORE_BIN="$srcdir/semgrep-files/semgrep-core"
+  export SPACEGREP_BIN="$srcdir/semgrep-files/spacegrep"
+
+  python setup.py build
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/tests"
+
+  # default is enough for now
+  #strip "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/spacegrep"
+  strip "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/semgrep-core"
+  chmod +x "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/semgrep-core"
+}
+
