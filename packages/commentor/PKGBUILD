@@ -1,8 +1,11 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
 pkgname=commentor
 pkgver=19.d81a660
 pkgrel=1
 pkgdesc='Extract all comments from the specified URL resource.'
-groups=('blackarch' 'blackarch-code-audit')
+groups=('blackarch' 'blackarch-misc')
 arch=('any')
 url='https://github.com/D3vil0p3r/comMENTOR'
 license=('GPL3')
@@ -10,20 +13,25 @@ depends=('curl' 'tidy' 'xmlstarlet')
 makedepends=('git')
 source=("git+https://github.com/D3vil0p3r/$pkgname.git")
 sha512sums=('SKIP')
+
 pkgver() {
   cd $pkgname
+  
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
 package() {
-  mkdir -p "${pkgdir}/usr/share/$pkgname"
-  mkdir -p "${pkgdir}/usr/bin"
-  install -Dm 755 -t "${pkgdir}/usr/share/$pkgname/" "${srcdir}/$pkgname/c_cleanup" "${srcdir}/$pkgname/c_decorate" "${srcdir}/$pkgname/c_filter" "${srcdir}/$pkgname/$pkgname"
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  cd ${srcdir}/$pkgname
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" "c_cleanup" "c_decorate" "c_filter" "$pkgname"
 
   cat > "${pkgdir}/usr/bin/$pkgname" << EOF
 #!/bin/sh
 exec /usr/share/$pkgname/$pkgname "\$@"
 EOF
 
-  chmod a+x "${pkgdir}/usr/bin/$pkgname"
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
