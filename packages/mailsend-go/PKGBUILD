@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=mailsend-go
+pkgver=108.cb4c77b
+pkgrel=1
+groups=('blackarch' 'blackarch-spoof' 'blackarch-misc')
+pkgdesc='A multi-platform command line tool to send mail via SMTP protocol.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/muquit/mailsend-go'
+license=('MIT')
+depends=('glibc')
+makedepends=('git' 'go')
+source=("git+https://github.com/muquit/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md docs/*
+
+  cp -a files "$pkgdir/usr/share/$pkgname/"
+}
+
