@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=wkhtmltopdf
+pkgver=0.12.6
+pkgrel=2
+pkgdesc='Command line tools to render HTML into PDF and various image formats.'
+arch=('x86_64' 'aarch64')
+url='https://wkhtmltopdf.org/'
+license=('LGPL3')
+depends=('qt5-webkit' 'qt5-svg' 'qt5-xmlpatterns')
+makedepends=('git')
+optdepends=('xorg-server: wkhtmltopdf needs X or Xvfb to operate')
+source=("git+https://github.com/wkhtmltopdf/wkhtmltopdf.git#tag=$pkgver")
+sha512sums=('SKIP')
+
+build() {
+  cd $pkgname
+
+  qmake-qt5 wkhtmltopdf.pro
+
+  make
+}
+
+package() {
+  cd $pkgname
+
+  make INSTALL_ROOT="$pkgdir/usr" install
+
+  install -d "$pkgdir/usr/share/man/man1"
+  LD_LIBRARY_PATH=bin ./bin/wkhtmltopdf --manpage \
+    > "$pkgdir/usr/share/man/man1/wkhtmltopdf.1"
+  LD_LIBRARY_PATH=bin ./bin/wkhtmltoimage --manpage \
+    > "$pkgdir/usr/share/man/man1/wkhtmltoimage.1"
+}
+
