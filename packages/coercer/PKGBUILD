@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=coercer
+pkgver=1.6
+pkgrel=1
+pkgdesc='Coerce a Windows server to authenticate on an arbitrary machine through 9 methods.'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-networking' 'blackarch-windows')
+url='https://github.com/p0dalirius/Coercer'
+license=('GPL2')
+depends=('python' 'impacket')
+makedepends=('python-build' 'python-pip')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz")
+sha512sums=('d8eda3c4f7249dd756b84fa18ce83eccf0fa880ae1d81e4de89220437c9dac4407075f7692070ead34150551f6fddeb0fa3ed561b3ae70550ae1e0cf93349b68')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  pip install --verbose \
+              --disable-pip-version-check \
+              --no-warn-script-location \
+              --ignore-installed \
+              --no-compile \
+              --no-deps \
+              --root="$pkgdir" \
+              --prefix=/usr \
+              --no-index \
+              --find-links="file://$startdir/dist" \
+              "$pkgname"
+}
+
