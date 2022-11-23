@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Old Maintainer: Antonio Rojas <arojas@archlinux.org>
+# Old Contributor: Andrea Scarpino <andrea@archlinux.org>
+
+pkgname=qt5-webkit
+_pkgver=5.212.0-alpha4
+_basever=5.15.3
+pkgver=${_pkgver/-/}
+pkgrel=19
+arch=('x86_64' 'aarch64')
+url='https://github.com/qtwebkit/qtwebkit'
+license=('GPL3' 'LGPL3' 'FDL' 'custom')
+pkgdesc='Classes for a WebKit2 based implementation and a new QML API'
+source=("https://github.com/qtwebkit/qtwebkit/releases/download/qtwebkit-$_pkgver/qtwebkit-$_pkgver.tar.xz"
+         icu68.patch
+         glib-2.68.patch
+         qt5-webkit-python-3.9.patch::"https://github.com/qtwebkit/qtwebkit/commit/78360c01.patch"
+         qt5-webkit-bison-3.7.patch::"https://github.com/qtwebkit/qtwebkit/commit/d92b11fe.patch")
+depends=('qt5-location' 'qt5-sensors' 'qt5-webchannel' 'libwebp' 'libxslt'
+         'libxcomposite' 'gst-plugins-base' 'hyphen' 'woff2')
+makedepends=('cmake' 'ruby' 'gperf' 'python' 'qt5-doc' 'qt5-tools')
+optdepends=('gst-plugins-good: Webm codec support')
+sha512sums=('33f11270bd030599beff9c1983a6c5ff2d61f407cc8a6825f7f405d46f9184c720fc7f60c7359f08f828db96a2170092875066a0d5c0a21ff09bc48a2603fbf6'
+            'c4714b40d9b516698490cc3f587f7fefe8097545a2310e144be1dfa39549ad056bf7bd67f5f89334e54c3a9bb95136876a62d0a392991a872030c4dff0d7c820'
+            'f8a49e24023431ac37cff2b5bdf6f88d632021eb777668404956a4c6e4f8744f256205093dc5077325a33ec2a050b6e159dcf5d8cf3c1dda7d26ec0b37db95c3'
+            'e4d4d4abfb8f2e9913c2f5cb7b3a73d5c613a8e8ced66ae1a7789faaa83a2bdf89ff29955d7e9b7bd7a0935ca2ddcad796cf371882e2bb38b4e69c1d528cfe75'
+            'd90e3bd03090d468f6d73bcee949593a9266de8c5d29f2879c53efa757e7be449db16eb7a563c6279ed2554e549f2dc6321a40cf855d6290e5bdded8f18a90e4')
+options=(!lto)
+
+prepare() {
+  cd "qtwebkit-$_pkgver"
+
+  patch -p0 -i ../icu68.patch # Fix build with ICU 68.x
+  patch -p1 -i ../glib-2.68.patch # https://github.com/qtwebkit/qtwebkit/issues/1057
+  patch -p1 -i ../qt5-webkit-python-3.9.patch # Fix build with python 3.9
+  patch -p1 -i ../qt5-webkit-bison-3.7.patch # Fix build with bison 3.7
+}
+
+build() {
+  cmake -B build -S qtwebkit-$_pkgver \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_CXX_FLAGS="${CXXFLAGS} -DNDEBUG" \
+    -DPORT=Qt \
+    -DENABLE_TOOLS=OFF
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+
+  install -d "$pkgdir"/usr/share/licenses
+  ln -s /usr/share/licenses/qt5-base "$pkgdir/usr/share/licenses/$pkgname"
+}
+

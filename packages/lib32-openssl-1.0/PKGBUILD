@@ -1,0 +1,71 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+#See COPYING for license details.
+#
+# Old Maintainer: Maxime Gauduin <alucryd@archlinux.org>
+# Old Contributor: Pierre Schmitz <pierre@archlinux.de>
+# Old Contributor: Llewelyn Trahaearn <woefulderelict@gmail.com>
+
+pkgname=lib32-openssl-1.0
+_pkgname=openssl
+_ver=1.0.2u
+pkgver=${_ver/[a-z]/.${_ver//[0-9.]/}}
+pkgrel=3
+pkgdesc='The Open Source toolkit for Secure Sockets Layer and Transport Layer Security.'
+arch=('x86_64' 'aarch64')
+url='https://www.openssl.org/'
+license=('custom:BSD')
+depends=('lib32-glibc' 'openssl-1.0')
+makedepends=('lib32-gcc-libs' 'lib32-glibc')
+source=("https://www.openssl.org/source/$_pkgname-${_ver}.tar.gz"
+        'no-rpath.patch'
+        'ssl3-test-failure.patch'
+        'openssl-1.0-versioned-symbols.patch')
+sha512sums=('c455bb309e20e2c2d47fdc5619c734d107d5c8c38c1409903ce979acc120b0d5fa0312917c0aa0d630e402d092a703d4249643f36078e8528a3cafc9dac6ab32'
+            '12128424c8ce01564af6fadf2860e192186b7fbbc1faeef018d0b8125eed5983b6825229c3515dea00757e63682cf9d39787dd28751686e645a9a8c91e4e5eb9'
+            '3fc56a5f5863ad19852132c1ec3ba6e80565341548d5507ec5b7b9f61183a96ab57786c46b828a9069d0ac3b10d4941eaecc176301c5f0d1e8a5adfd83c23ccc'
+            '16e3fb61fb679a2d33e2fde44b287d957efa9ecf07c87a679b98a4b469ff1e02a4a9e7ebd02a43627accb6f4c0155063920683ec401bdd513ced8a6fd5422813')
+
+prepare() {
+  cd "$_pkgname-$_ver"
+
+  patch -Np0 -i ../no-rpath.patch
+  patch -Np1 -i ../ssl3-test-failure.patch
+  patch -Np1 -i ../openssl-1.0-versioned-symbols.patch
+}
+
+build() {
+  cd "$_pkgname-$_ver"
+
+  export CC='gcc -m32'
+  export CXX='g++ -m32'
+  export PKG_CONFIG_PATH='/usr/lib32/pkgconfig'
+
+  ./Configure \
+    --prefix='/usr' \
+    --libdir='lib32/openssl-1.0' \
+    --openssldir='/etc/ssl' \
+    shared no-ssl3-method linux-elf \
+    "-Wa,--noexecstack ${CPPFLAGS} ${CFLAGS} ${LDFLAGS}"
+
+  make MAKEDEPPROG="${CC}" depend
+  make
+}
+
+package() {
+  cd "$_pkgname-$_ver"
+
+  make INSTALL_PREFIX="${pkgdir}" install_sw
+  rm -rf "${pkgdir}"/{etc,usr/{include,bin}}
+
+  mv "${pkgdir}"/usr/lib32/{openssl-1.0/,}libcrypto.so.1.0.0
+  mv "${pkgdir}"/usr/lib32/{openssl-1.0/,}libssl.so.1.0.0
+  ln -sf ../libssl.so.1.0.0 "${pkgdir}"/usr/lib32/openssl-1.0/libssl.so
+  ln -sf ../libcrypto.so.1.0.0 "${pkgdir}"/usr/lib32/openssl-1.0/libcrypto.so
+
+  sed -e 's|/include$|/include/openssl-1.0|' -i \
+    "${pkgdir}"/usr/lib32/openssl-1.0/pkgconfig/*.pc
+
+  install -dm 755 "$pkgdir/usr/share/licenses"
+  ln -s openssl-1.0 "${pkgdir}"/usr/share/licenses/lib32-openssl-1.0
+}
+

@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=haka
-pkgver=0.3.0
+pkgver=v0.3.0.r222.g37ae3090
 pkgrel=1
 groups=('blackarch' 'blackarch-networking' 'blackarch-sniffer')
 pkgdesc='A collection of tool that allows capturing TCP/IP packets and filtering them based on Lua policy files.'
@@ -10,22 +10,32 @@ arch=('x86_64' 'aarch64')
 url='https://github.com/haka-security/haka'
 license=('Mozilla2')
 depends=('libpcap' 'wireshark-cli' 'rsync' 'gawk' 'libedit' 'pcre' 'ncurses'
-         'lua')
+         'lua' 'libnetfilter_queue')
 makedepends=('cmake' 'swig' 'iniparser')
-source=("http://github.com/haka-security/$pkgname/releases/download/v$pkgver/${pkgname}_${pkgver}_source.tar.gz")
-sha512sums=('8c2c219b8e89710289e300c1fd8ad9b6a95562efc77966bee7ddf343d73b108d6ebf3f7ff73963ca66954bdc0719c08eef127e58ffa42469ae47cf95e817e720')
+source=("git+https://github.com/haka-security/$pkgname")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
 
 prepare() {
-  cd "${pkgname}_${pkgver}_source"
+  cd $pkgname
 
   sed -i 's|${CMAKE_INSTALL_PREFIX}/sbin|${CMAKE_INSTALL_PREFIX}/bin|' \
     CMakeLists.txt
   sed -i 's|-Wall -Werror|-Wall -Werror -lm|' CMakeLists.txt
   sed -i 's|-D_FORTIFY_SOURCE=2|-D_FORTIFY_SOURCE=2 -lm|' CMakeLists.txt
+
+  git submodule init
+  git submodule update
+
 }
 
 build() {
-  cd "${pkgname}_${pkgver}_source"
+  cd $pkgname
 
   mkdir -p make
 
@@ -37,7 +47,7 @@ build() {
 }
 
 package() {
-  cd "${pkgname}_${pkgver}_source"
+  cd $pkgname
 
   cd make
 
