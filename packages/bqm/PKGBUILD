@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=bqm
+_gemname=$pkgname
+pkgver=v1.1.0.r0.g790edeb
+pkgrel=1
+pkgdesc='Download BloudHound query lists, deduplicate entries and merge them in one file.'
+arch=('any')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/Acceis/bqm'
+license=('MIT')
+depends=('ruby')
+makedepends=('git')
+options=(!emptydirs)
+source=("git+https://github.com/Acceis/$_gemname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_gemname
+
+  git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $_gemname
+
+  gem build $_gemname.gemspec
+}
+
+package() {
+  cd $_gemname
+
+  _gemdir="$(ruby -e'puts Gem.default_dir')"
+  _release=$(gem build $_gemname.gemspec | grep Version | cut -d' ' -f4)
+
+  gem install --ignore-dependencies --no-user-install --no-document --no-wrapper \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" "$_gemname-$_release.gem"
+
+  rm -rf "$pkgdir/$_gemdir/cache/$_gemname-$_release.gem"
+  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
+
+  install -Dm 644 "$pkgdir/$_gemdir/gems/$_gemname-$_release/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
