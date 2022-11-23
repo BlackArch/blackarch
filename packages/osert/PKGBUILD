@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=osert
+_pkgname=OSCP-Exam-Report-Template-Markdown
+pkgver=70.4eea11c
+_eisvogelver=2.0.0
+pkgrel=1
+pkgdesc="Markdown Templates for Offensive Security exam reports."
+arch=('any')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/noraj/OSCP-Exam-Report-Template-Markdown'
+license=('MIT')
+depends=('ruby' 'p7zip' 'pandoc' 'texlive-core' 'texlive-fontsextra' 'texlive-latexextra')
+makedepends=('git' 'unzip')
+source=("git+https://github.com/noraj/$_pkgname.git"
+        "https://raw.githubusercontent.com/Wandmalfarbe/pandoc-latex-template/v$_eisvogelver/eisvogel.tex")
+sha512sums=('SKIP'
+            '5ecb7ce110802bae76463faf523497e7de2715f7867b76d736e944f29fbac7ce161d8d482ede9c6ba40394307b8ef85c1337c901ce846e82703311d6f497ee76')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/share/pandoc/data/templates/"
+  
+  install -Dm 644 ../eisvogel.tex "$pkgdir/usr/share/pandoc/data/templates/eisvogel.latex"
+
+  cp -a 'src' "$pkgdir/usr/share/$pkgname/"
+  install -Dm 755 "$pkgname.rb" "$pkgdir/usr/bin/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
