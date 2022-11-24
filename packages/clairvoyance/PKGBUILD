@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=clairvoyance
+pkgver=2.0.1
+pkgrel=1
+pkgdesc='Obtain GraphQL API Schema even if the introspection is not enabled.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-webapp')
+url='https://github.com/nikitastupin/clairvoyance'
+license=('Apache')
+depends=('python' 'python-asyncio' 'python-aiohttp')
+makedepends=('python-build' 'python-pip')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz")
+sha256sums=('7aacd6c166c3bf3b9ffecd411c6e40b14a38f2482c83b3268f6351698e1cf44c')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  pip install --verbose \
+              --disable-pip-version-check \
+              --no-warn-script-location \
+              --ignore-installed \
+              --no-compile \
+              --no-deps \
+              --root="$pkgdir" \
+              --prefix=/usr \
+              --no-index \
+              --find-links="file://$startdir/dist" \
+              "$pkgname"
+}
+
