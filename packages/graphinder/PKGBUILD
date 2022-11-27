@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=graphinder
+pkgver=1.11.5
+pyver=3.10
+pkgrel=1
+pkgdesc='GraphQL endpoints finder using subdomain enumeration, scripts analysis and bruteforce.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner' 'blackarch-webapp')
+url='https://github.com/Escape-Technologies/graphinder'
+license=('MIT')
+depends=('python' 'python-requests' 'python-beautifulsoup4' 'python-aiohttp')
+makedepends=('python-build' 'python-pip')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz")
+sha512sums=('f59fdc7170f35307f06e5fb5d0c9d88638a21491d47c2ff0eadeeecf4fe7aadad0351d45e96a7d005f4b70f49bb721953175b058b040e357c935405ddb7179f9')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$pkgname"
+
+  rm "$pkgdir/usr/lib/python$_pyver/site-packages/LICENSE"
+}
+
