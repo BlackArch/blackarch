@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=osintgram
+pkgver=348.50d44fd
+pkgrel=1
+pkgdesc='OSINT tool on Instagram. It offers an interactive shell to perform analysis on Instagram account of any users by its nickname.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/Datalux/Osintgram'
+license=('GPL3')
+depends=()
+makedepends=('git' 'python')
+source=("git+https://github.com/Datalux/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  python -m venv venv
+  source venv/bin/activate
+  pip install -r requirements.txt
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md doc/*.md
+
+  rm -rf LICENSE *.md doc/*.md .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/main.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
