@@ -1,30 +1,34 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-# This file is based on the AUR package by Paramjit Singh <contact at paramjit dot org>
-
-pkgname=playwright
-pkgver=1.27.0
+pkgname=python-playwright
+_pkgname=playwright-python
+pkgver=v1.29.0.r4.g2d0df8e
 pkgrel=1
-pkgdesc="Node.js library to automate Chromium, Firefox and WebKit with a single API"
+pkgdesc='Python version of the Playwright testing and automation library.'
 arch=('any')
-url="https://playwright.dev"
+url='https://github.com/Microsoft/playwright-python'
 license=('Apache')
-depends=('nodejs')
-makedepends=('npm')
-source=("$pkgname-$pkgver.tar.gz::https://registry.npmjs.org/$pkgname/-/$pkgname-$pkgver.tgz")
-noextract=("$pkgname-$pkgver.tar.gz")
-sha512sums=('17ed3ed110f4dcb4be29d34030ca7adce073bbe3706182dde76a4a2dccee4a54ec5796ff48b914a0d8527f30c59e01053ae44bda09342e57c65b798a894064eb')
+depends=('mypy' 'python' 'python-auditwheel' 'python-autobahn' 'python-black' 'python-flake8' 'python-flaky' 'python-greenlet' 'python-objgraph' 'python-pillow' 'python-pixelmatch' 'python-pre-commit' 'python-pyee' 'python-pyopenssl' 'python-pytest' 'python-pytest-asyncio' 'python-pytest-cov' 'python-pytest-repeat' 'python-pytest-timeout' 'python-pytest-xdist' 'python-requests' 'python-service-identity' 'python-twine' 'python-twisted' 'python-types-pyopenssl')
+makedepends=('python-setuptools' 'python-wheel')
+options=(!emptydirs)
+source=("git+https://github.com/Microsoft/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd "$_pkgname"
+
+  python setup.py build
+}
 
 package() {
-  local NPM_FLAGS=(--no-audit --no-fund --no-update-notifier)
-  npm install \
-    --global \
-     --prefix "$pkgdir/usr" \
-     "${NPM_FLAGS[@]}" \
-    "$pkgname-$pkgver.tar.gz"
+  cd "$_pkgname"
 
-  # npm gives ownership of ALL FILES to build user
-  # https://bugs.archlinux.org/task/63396
-  chown -R root:root "$pkgdir"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
