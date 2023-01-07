@@ -10,7 +10,7 @@ arch=('any')
 url='https://github.com/cole/aiosmtplib'
 license=('MIT')
 depends=('python')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('SKIP')
@@ -18,14 +18,25 @@ sha512sums=('SKIP')
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-  
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$_pkgname"
+
   # workaround https://github.com/cole/aiosmtplib/issues/195
   rm -rf "$pkgdir/usr/lib/python3.10/site-packages/tests"
 }
