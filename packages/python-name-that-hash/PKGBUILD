@@ -1,33 +1,42 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-# This PKGBUILD was originally extracted from AUR.
-# AUR Maintainer: amadejpapez <amadej.papez@gmail.com>
+# This file is based on the AUR package by amadejpapez <amadej.papez@gmail.com>
 
 pkgname=python-name-that-hash
-_pkgname=Name-That-Hash
+_pkgname=name_that_hash
 pkgver=1.11.0
 pkgrel=6
 pkgdesc="The Modern Hash Identification System."
 arch=("any")
 url="https://github.com/HashPals/Name-That-Hash"
 license=("GPL3")
-depends=("python" "python-click" "python-rich")
-makedepends=("python-installer" "python-poetry-core" "python-wheel")
-https://files.pythonhosted.org/packages/py2.py3/${_pkgname::1}/$_pkgname/${_pkgname//-/_}-$pkgver-py2.py3-none-any.whl
-sha256sums=("59682a35714235d958e723d658c0874abb81edf77ceb9d81d7e6416bc2af3b84")
+depends=('python' 'python-click' 'python-rich')
+makedepends=('python-build' 'python-installer' 'python-pip' 'python-poetry-core' 'python-wheel')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('SKIP')
 
+build() {
+  cd "$_pkgname-$pkgver"
 
-# NOTE: for now install directly via wheel as I was getting the
-# 		ModuleNotFoundError: No module named 'name_that_hash'
-#       error after installation and cannot look into it right now
-
-# build() {
-# 	cd $_pkgname-$pkgver
-# 	python -m build --wheel --skip-dependency-check --no-isolation
-# }
+  python -m build --wheel --outdir="$startdir/dist"
+}
 
 package() {
-	python -m installer --destdir="$pkgdir" *.whl
-	# install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$_pkgname"
+
 }
