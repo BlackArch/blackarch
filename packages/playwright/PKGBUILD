@@ -1,9 +1,6 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-# This PKGBUILD was originally extracted from AUR.
-# AUR Maintainer: Aloxaf <aloxafx@gmail.com>
-
 pkgname=python-playwright
 _pkgname=${pkgname#python-}
 pkgver=v1.29.0.r4.g2d0df8e
@@ -12,26 +9,31 @@ pkgdesc='Python version of the Playwright testing and automation library.'
 arch=('any')
 url='https://github.com/Microsoft/playwright-python'
 license=('Apache')
-depends=('mypy' 'python' 'python-auditwheel' 'python-autobahn' 'python-black' 'python-flake8' 'python-flaky' 'python-greenlet' 'python-objgraph' 'python-pillow' 'python-pixelmatch' 'python-pre-commit' 'python-pyee' 'python-pyopenssl' 'python-pytest' 'python-pytest-asyncio' 'python-pytest-cov' 'python-pytest-repeat' 'python-pytest-timeout' 'python-pytest-xdist' 'python-requests' 'python-service-identity' 'python-twine' 'python-twisted' 'python-types-pyopenssl')
+depends=('flake8' 'mypy' 'python' 'python-auditwheel' 'python-autobahn' 'python-black' 'python-flaky' 'python-greenlet' 'python-objgraph' 'python-pillow' 'python-pixelmatch' 'python-pre-commit' 'python-pyee' 'python-pyopenssl' 'python-pytest' 'python-pytest-asyncio' 'python-pytest-cov' 'python-pytest-repeat' 'python-pytest-timeout' 'python-pytest-xdist' 'python-requests' 'python-service-identity' 'python-twine' 'python-twisted' 'python-types-pyopenssl')
 makedepends=('python-setuptools' 'python-wheel')
 options=(!emptydirs)
-source=("git+https://github.com/Microsoft/$_pkgname.git")
+source=("git+https://github.com/Microsoft/$_pkgname-python.git")
 sha512sums=('SKIP')
 
-pkgver() {
-  cd $_pkgname
-
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
-}
-
 build() {
-  cd "$_pkgname"
+  cd "$_pkgname-python"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "$_pkgname"
+  cd "$_pkgname-python"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$_pkgname"
 }
