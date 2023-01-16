@@ -1,30 +1,40 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-yara-dex
+pkgname=python-yara-python-dex
 #_gitpkgname=yara-python
 _pkgname=yara-python-dex
-pkgver=1.0.3
+pkgver=1.0.3.r0.g8e2df94
 pkgrel=1
 pkgdesc='The Python interface for YARA.'
 arch=('any')
-url='https://github.com/MobSF/yara-python-dex'
+url='https://github.com/MobSF/yara-python-dex/releases'
 license=('Apache')
-makedepends=('python-setuptools' 'glibc' 'python' 'yara')
+makedepends=('git' 'python-setuptools' 'glibc' 'python' 'yara')
 provides=('python-yara')
 conflicts=('python-yara' 'python-yara-rednaga')
 options=(!emptydirs)
-source=("https://github.com/MobSF/${_pkgname}/archive/refs/tags/${pkgver}.tar.gz")
-sha256sums=('5fc09406b00b8df4976fedda213fbc78b76d92c46b3df379f5dcd4b0b46164fd')
+source=("git+https://github.com/MobSF/${_pkgname}.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+ cd $_pkgname
+ git submodule update --init --recursive
+}
 
 build() {
-  cd "$_pkgname-${pkgver}"
+  cd "$_pkgname"
 
   python setup.py build
 }
 
 package() {
-  cd "$_pkgname-${pkgver}"
+  cd "$_pkgname"
 
   python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
