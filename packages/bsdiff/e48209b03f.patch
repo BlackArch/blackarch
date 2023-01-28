@@ -1,0 +1,119 @@
+@@ -27,7 +27,10 @@
+ #include <sys/cdefs.h>
+ __FBSDID("$FreeBSD$");
+ 
++#include <assert.h>
+ #include <bzlib.h>
++#include <limits.h>
++#include <stdint.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <string.h>
+@@ -63,8 +66,8 @@
+ 	BZFILE * cpfbz2, * dpfbz2, * epfbz2;
+ 	int cbz2err, dbz2err, ebz2err;
+ 	int fd;
+-	ssize_t oldsize,newsize;
+-	ssize_t bzctrllen,bzdatalen;
++	off_t oldsize,newsize;
++	off_t bzctrllen,bzdatalen;
+ 	u_char header[32],buf[8];
+ 	u_char *old, *new;
+ 	off_t oldpos,newpos;
+@@ -72,6 +75,8 @@
+ 	off_t lenread;
+ 	off_t i;
+ 
++	assert(OFF_MAX >= INT64_MAX);
++
+ 	if(argc!=4) errx(1,"usage: %s oldfile newfile patchfile\n",argv[0]);
+ 
+ 	/* Open patch file */
+@@ -107,8 +112,10 @@
+ 	bzctrllen=offtin(header+8);
+ 	bzdatalen=offtin(header+16);
+ 	newsize=offtin(header+24);
+-	if((bzctrllen<0) || (bzdatalen<0) || (newsize<0))
+-		errx(1,"Corrupt patch\n");
++	if((bzctrllen<0) || (bzctrllen>OFF_MAX-32) ||
++		(bzdatalen<0) || (bzctrllen+32>OFF_MAX-bzdatalen) ||
++		(newsize<=0) || (newsize>SSIZE_MAX))
++			errx(1,"Corrupt patch\n");
+ 
+ 	/* Close patch file and re-open it via libbzip2 at the right places */
+ 	if (fclose(f))
+@@ -136,12 +143,13 @@
+ 		errx(1, "BZ2_bzReadOpen, bz2err = %d", ebz2err);
+ 
+ 	if(((fd=open(argv[1],O_RDONLY|O_BINARY,0))<0) ||
+-		((oldsize=lseek(fd,0,SEEK_END))==-1) ||
+-		((old=malloc(oldsize+1))==NULL) ||
++		((oldsize=lseek(fd,0,SEEK_END))<=0) ||
++		(oldsize>SSIZE_MAX) ||
++		((old=malloc(oldsize))==NULL) ||
+ 		(lseek(fd,0,SEEK_SET)!=0) ||
+ 		(read(fd,old,oldsize)!=oldsize) ||
+ 		(close(fd)==-1)) err(1,"%s",argv[1]);
+-	if((new=malloc(newsize+1))==NULL) err(1,NULL);
++	if((new=malloc(newsize))==NULL) err(1,NULL);
+ 
+ 	oldpos=0;newpos=0;
+ 	while(newpos<newsize) {
+@@ -152,18 +160,23 @@
+ 			    (cbz2err != BZ_STREAM_END)))
+ 				errx(1, "Corrupt patch\n");
+ 			ctrl[i]=offtin(buf);
+-		};
++		}
+ 
+ 		/* Sanity-check */
+-		if(newpos+ctrl[0]>newsize)
+-			errx(1,"Corrupt patch\n");
++		if((ctrl[0]<0) || (ctrl[0]>INT_MAX) ||
++			(newpos>OFF_MAX-ctrl[0]) || (newpos+ctrl[0]>newsize))
++				errx(1,"Corrupt patch\n");
+ 
+-		/* Read diff string */
++		/* Read diff string - 4th arg converted to int */
+ 		lenread = BZ2_bzRead(&dbz2err, dpfbz2, new + newpos, ctrl[0]);
+ 		if ((lenread < ctrl[0]) ||
+ 		    ((dbz2err != BZ_OK) && (dbz2err != BZ_STREAM_END)))
+ 			errx(1, "Corrupt patch\n");
+ 
++		/* Sanity-check */
++		if(oldpos>OFF_MAX-ctrl[0])
++			errx(1,"Corrupt patch\n");
++
+ 		/* Add old data to diff string */
+ 		for(i=0;i<ctrl[0];i++)
+ 			if((oldpos+i>=0) && (oldpos+i<oldsize))
+@@ -174,19 +187,25 @@
+ 		oldpos+=ctrl[0];
+ 
+ 		/* Sanity-check */
+-		if(newpos+ctrl[1]>newsize)
+-			errx(1,"Corrupt patch\n");
++		if((ctrl[1]<0) || (ctrl[1]>INT_MAX) ||
++			(newpos>OFF_MAX-ctrl[1]) || (newpos+ctrl[1]>newsize))
++				errx(1,"Corrupt patch\n");
+ 
+-		/* Read extra string */
++		/* Read extra string - 4th arg converted to int */
+ 		lenread = BZ2_bzRead(&ebz2err, epfbz2, new + newpos, ctrl[1]);
+ 		if ((lenread < ctrl[1]) ||
+ 		    ((ebz2err != BZ_OK) && (ebz2err != BZ_STREAM_END)))
+ 			errx(1, "Corrupt patch\n");
+ 
++		/* Sanity-check */
++		if((ctrl[2]<0) ?
++			(oldpos<OFF_MIN-ctrl[2]) : (oldpos>OFF_MAX-ctrl[2]))
++				errx(1,"Corrupt patch\n");
++
+ 		/* Adjust pointers */
+ 		newpos+=ctrl[1];
+ 		oldpos+=ctrl[2];
+-	};
++	}
+ 
+ 	/* Clean up the bzip2 reads */
+ 	BZ2_bzReadClose(&cbz2err, cpfbz2);
