@@ -17,7 +17,7 @@ _pkgname=mongodb
 pkgver=6.0.4
 pkgrel=1
 pkgdesc="A high-performance, open source, schema-free document-oriented database"
-arch=('x86_64')
+arch=("x86_64")
 url="https://www.mongodb.com/"
 license=("Apache" "custom:SSPL1")
 depends=('libstemmer' 'snappy' 'boost-libs' 'pcre' 'yaml-cpp' 'curl')
@@ -25,6 +25,7 @@ makedepends=('python-psutil' 'python-setuptools' 'python-regex' 'python-cheetah3
 optdepends=('mongodb-tools: mongoimport, mongodump, mongotop, etc'
             'mongosh-bin: interactive shell to connect with MongoDB')
 backup=("etc/mongodb.conf")
+provides=(mongodb="$pkgver")
 source=(https://fastdl.mongodb.org/src/mongodb-src-r$pkgver.tar.gz
         mongodb.sysusers
         mongodb.tmpfiles
@@ -33,27 +34,33 @@ source=(https://fastdl.mongodb.org/src/mongodb-src-r$pkgver.tar.gz
         mongodb-5.0.2-skip-reqs-check.patch
         mongodb-6.0.0-boost-1.79.patch
         mongodb-6.0.2-sconstruct-changes.patch
-        mongodb-6.0.0-gcc12.patch)
+        mongodb-6.0.0-gcc12.patch
+        mongodb-4.4.10-boost-1.81.patch)
 sha512sums=('4dc1551c5b4c55b3a6f4c84b3521048955dac1715b91bea4b7d18b14cd848fc5b3fc347c34430d28bd037e33f37b40e2d050ec93b50590eb058748de5fdc59c0'
             '36a2c4336d6aeeec303dd0aec2c554db826d479efcb95269f75e2150ad752516c3f25c50f8e25b90384dea65b5b5b72a15ab17d5da35f6f92f20cc65af02f61b'
             '41b711a623b034b66e146487fab948608111af48aff2b4f1b171b64b531fa6a1b36de8b348ff543fdd9c3ac34a1a20fae9b23cdb124abda93f89ce011a7921ef'
-            'eaf11e6cbc6421f9151a557d5f95875311d8e40bfd8a81873119b8386a0258e1a7d7764fff2b66af2abefd450ceda4e9cb7f3021cb2e7e0b52b255918c49ba9d'
+            '10b099b09650119e075a4c6e926cc3538f7227df772af6b8eeeb33726fed41f2010f85fa6906b866705602b84a5baff92c557ef27ba1d4a6c862c40fcc4e7bbe'
             '07fe714a4256c13449e1e764c88d5051773aa9397228085a8d581cde91477dff2c3dc70ba801eb559af76ff19abf205d32c9510606a9bb26cebb33f68822e607'
             '29d4ff6de3a89c39ed0e3c54aa1e17fc3466ceb69dfbcfc62109ea2666ca98458b7b23ac82e4b5c9be77d5d82c69d5b213670b3a3367b13c3b8cab06cfacf4c2'
             '26cd0e8acba40f5a23506794c578e7c84b32bb14f707010883e4bad4edc03b36d13cc37678bdc364499b8032b47ab2c3989068500da8b978b25c184b59083090'
             '108d837443359046dc6e63cf68fcb97428c798ea0d0eb4f3ea494f70dfaa4fc7a731bb5d5a7feb21795926e28d7547751ed14a7dfc6dac945ef88cf54bff4257'
-            'f2782f44a4f5a128da101c301222f955751c39a662352ce1f923985078454a7b51871fd49a820761dfc5f809a8fcdaa01d0210826484b20db9e7d6a4a29f3159')
+            'f2782f44a4f5a128da101c301222f955751c39a662352ce1f923985078454a7b51871fd49a820761dfc5f809a8fcdaa01d0210826484b20db9e7d6a4a29f3159'
+            '62f4802a26398ffb17ac289d9e9de4044b753ece694785d3462f406391abdcfd16ff281959b4e4fb6751cc9247da7a4c55e8fa48eb90fd681eed724fedcb03e9')
 
 _scons_args=(
-  --use-system-pcre # wait for pcre 8.44+ https://jira.mongodb.org/browse/SERVER-40836 and https://jira.mongodb.org/browse/SERVER-42990
+  CC="${CC:-gcc}"
+  CXX="${CXX:-g++}"
+  AR="${AR:-ar}"
+
+  --use-system-pcre
   --use-system-snappy
-  --use-system-yaml # https://jira.mongodb.org/browse/SERVER-43980
+  --use-system-yaml
   --use-system-zlib
   --use-system-stemmer
   --use-sasl-client
   --ssl
   --disable-warnings-as-errors
-  --use-system-boost    # Doesn't compile
+  --use-system-boost
   --use-system-zstd
   --runtime-hardening=off
 )
@@ -130,7 +137,7 @@ build() {
   fi
 
   export SCONSFLAGS="$MAKEFLAGS"
-  ./buildscripts/scons.py install-devcore "${_scons_args[@]}"
+  ./buildscripts/scons.py "${_scons_args[@]}" install-devcore
 }
 
 package() {
@@ -160,3 +167,4 @@ package() {
   install -D LICENSE-Community.txt "$pkgdir/usr/share/licenses/mongodb/LICENSE"
 }
 # vim:set ts=2 sw=2 et:
+
