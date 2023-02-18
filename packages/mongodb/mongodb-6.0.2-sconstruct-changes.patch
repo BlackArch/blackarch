@@ -1,0 +1,93 @@
+diff --git a/SConstruct b/SConstruct
+index 8367691..9061849 100644
+--- a/SConstruct
++++ b/SConstruct
+@@ -2441,7 +2441,6 @@ if env.TargetOSIs('posix'):
+ 
+     # -Winvalid-pch Warn if a precompiled header (see Precompiled Headers) is found in the search path but can't be used.
+     env.Append( CCFLAGS=["-fasynchronous-unwind-tables",
+-                         "-ggdb" if not env.TargetOSIs('emscripten') else "-g",
+                          "-Wall",
+                          "-Wsign-compare",
+                          "-Wno-unknown-pragmas",
+@@ -2497,6 +2496,8 @@ if env.TargetOSIs('posix'):
+ 
+     # env.Append( " -Wconversion" ) TODO: this doesn't really work yet
+     env.Append( CXXFLAGS=["-Woverloaded-virtual"] )
++    env.Append( CXXFLAGS=os.environ['CXXFLAGS'] )
++    env.Append( LINKFLAGS=os.environ['LDFLAGS'] )
+ 
+     # On OS X, clang doesn't want the pthread flag at link time, or it
+     # issues warnings which make it impossible for us to declare link
+@@ -2549,7 +2550,7 @@ if env.TargetOSIs('posix'):
+         )
+ 
+     #make scons colorgcc friendly
+-    for key in ('HOME', 'TERM'):
++    for key in ('HOME', 'TERM', 'PATH'):
+         try:
+             env['ENV'][key] = os.environ[key]
+         except KeyError:
+@@ -2968,43 +2969,6 @@ def doConfigure(myenv):
+         myenv.AddMethod(
+             functools.partial(var_func, var=var, func=CheckFlag), f"Check{var}Supported")
+ 
+-    if myenv.ToolchainIs('gcc', 'clang'):
+-        # This tells clang/gcc to use the gold linker if it is available - we prefer the gold linker
+-        # because it is much faster. Don't use it if the user has already configured another linker
+-        # selection manually.
+-        if any(flag.startswith('-fuse-ld=') for flag in env['LINKFLAGS']):
+-            myenv.FatalError(f"Use the '--linker' option instead of modifying the LINKFLAGS directly.")
+-
+-        linker_ld = get_option('linker')
+-        if linker_ld == 'auto':
+-            # lld has problems with separate debug info on some platforms. See:
+-            # - https://bugzilla.mozilla.org/show_bug.cgi?id=1485556
+-            # - https://bugzilla.mozilla.org/show_bug.cgi?id=1485556
+-            #
+-            # lld also apparently has problems with symbol resolution
+-            # in some esoteric configurations that apply for us when
+-            # using --link-model=dynamic mode, so disable lld there
+-            # too. See:
+-            # - https://bugs.llvm.org/show_bug.cgi?id=46676
+-            #
+-            # We should revisit all of these issues the next time we upgrade our clang minimum.
+-            if get_option('separate-debug') == 'off' and get_option('link-model') != 'dynamic':
+-                if not myenv.AddToLINKFLAGSIfSupported('-fuse-ld=lld'):
+-                    myenv.AddToLINKFLAGSIfSupported('-fuse-ld=gold')
+-            else:
+-                myenv.AddToLINKFLAGSIfSupported('-fuse-ld=gold')
+-        elif link_model.startswith("dynamic") and linker_ld == 'bfd':
+-            # BFD is not supported due to issues with it causing warnings from some of
+-            # the third party libraries that mongodb is linked with:
+-            # https://jira.mongodb.org/browse/SERVER-49465
+-            myenv.FatalError(f"Linker {linker_ld} is not supported with dynamic link model builds.")
+-        else:
+-            if not myenv.AddToLINKFLAGSIfSupported(f'-fuse-ld={linker_ld}'):
+-                myenv.FatalError(f"Linker {linker_ld} could not be configured.")
+-
+-        if has_option('gcov') and myenv.AddToCCFLAGSIfSupported('-fprofile-update=single'):
+-            myenv.AppendUnique(LINKFLAGS=['-fprofile-update=single'])
+-
+     detectCompiler = Configure(myenv, help=False, custom_tests = {
+         'CheckForCXXLink': CheckForCXXLink,
+     })
+@@ -4344,17 +4308,11 @@ def doConfigure(myenv):
+             "BOOST_LOG_NO_SHORTHAND_NAMES",
+             "BOOST_LOG_USE_NATIVE_SYSLOG",
+             "BOOST_LOG_WITHOUT_THREAD_ATTR",
++            "BOOST_LOG_DYN_LINK",
+             "ABSL_FORCE_ALIGNED_ACCESS",
+         ]
+     )
+ 
+-    if link_model.startswith("dynamic") and not link_model == 'dynamic-sdk':
+-        conf.env.AppendUnique(
+-            CPPDEFINES=[
+-                "BOOST_LOG_DYN_LINK",
+-            ]
+-    )
+-
+     if use_system_version_of_library("boost"):
+         if not conf.CheckCXXHeader( "boost/filesystem/operations.hpp" ):
+             myenv.ConfError("can't find boost headers")
