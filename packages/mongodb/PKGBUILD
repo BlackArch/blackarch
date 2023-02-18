@@ -14,8 +14,6 @@
 # Contributor: Fredy García <frealgagu at gmail dot com>
 
 pkgname=mongodb
-_pkgname=mongodb
-# #.<odd number>.# releases are unstable development/testing
 pkgver=6.0.4
 pkgrel=1
 pkgdesc='A high-performance, open source, schema-free document-oriented database.'
@@ -24,12 +22,13 @@ url='https://www.mongodb.com/'
 license=('Apache' 'custom:SSPL1')
 depends=('libstemmer' 'snappy' 'boost-libs' 'pcre' 'yaml-cpp' 'curl')
 makedepends=('python-psutil' 'python-setuptools' 'python-regex' 'boost'
-             'python-cheetah3' 'python-yaml' 'python-requests' 'python-pymongo')
+             'python-cheetah3' 'python-yaml' 'python-requests' 'python-pymongo'
+             'boost-libs')
 optdepends=('mongodb-tools: mongoimport, mongodump, mongotop, etc'
             'mongosh-bin: interactive shell to connect with MongoDB')
 backup=("etc/mongodb.conf")
 provides=($pkgname=$pkgver)
-source=("https://fastdl.mongodb.org/src/mongodb-src-r$pkgver.tar.gz"
+source=("https://fastdl.mongodb.org/src/$pkgname-src-r$pkgver.tar.gz"
         "$pkgname.sysusers"
         "$pkgname.tmpfiles"
         "$pkgname-4.4.1-gcc11.patch"
@@ -95,7 +94,7 @@ filter-flags() {
 }
 
 prepare() {
-  cd "$_pkgname-src-r$pkgver"
+  cd "$pkgname-src-r$pkgver"
 
   # Keep historical Arch dbPath
   sed -i 's|dbPath: /var/lib/mongo|dbPath: /var/lib/mongodb|' rpm/mongod.conf
@@ -132,7 +131,7 @@ prepare() {
 }
 
 build() {
-  cd "$_pkgname-src-r$pkgver"
+  cd "$pkgname-src-r$pkgver"
 
   if check_option debug n; then
     filter-flags '-m*'
@@ -144,7 +143,7 @@ build() {
 }
 
 package() {
-  cd "$_pkgname-src-r$pkgver"
+  cd "$pkgname-src-r$pkgver"
 
   # Install binaries
   install -D build/install/bin/mongo "$pkgdir/usr/bin/mongo"
@@ -152,11 +151,11 @@ package() {
   install -D build/install/bin/mongos "$pkgdir/usr/bin/mongos"
 
   # Keep historical Arch conf file name
-  install -Dm 644 "rpm/mongod.conf" "$pkgdir/etc/$_pkgname.conf"
+  install -Dm 644 "rpm/mongod.conf" "$pkgdir/etc/$pkgname.conf"
 
   # Keep historical Arch service name
   install -Dm 644 "rpm/mongod.service" \
-    "$pkgdir/usr/lib/systemd/system/$_pkgname.service"
+    "$pkgdir/usr/lib/systemd/system/$pkgname.service"
 
   # Install manpages
   #install -Dm 644 "debian/mongo.1" "$pkgdir/usr/share/man/man1/mongo.1"
@@ -164,10 +163,10 @@ package() {
   install -Dm 644 "debian/mongos.1" "$pkgdir/usr/share/man/man1/mongos.1"
 
   # Install systemd files
-  install -Dm 644 "$_pkgname.sysusers" \
-    "$pkgdir/usr/lib/sysusers.d/$_pkgname.conf"
-  install -Dm 644 "$_pkgname.tmpfiles" \
-    "$pkgdir/usr/lib/tmpfiles.d/$_pkgname.conf"
+  install -Dm 644 "$pkgname.sysusers" \
+    "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
+  install -Dm 644 "$pkgname.tmpfiles" \
+    "$pkgdir/usr/lib/tmpfiles.d/$pkgname.conf"
 
   # Install license
   install -D LICENSE-Community.txt \
