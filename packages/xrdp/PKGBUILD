@@ -1,19 +1,19 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 #
-# AUR contributors / lame backdoorers:
-# Maintainer: Brian Bidulock <bidulock@openss7.org>
-# Contributo: Jianhui Z <jianhui@outlook.com>
-# Contributo: Tau Tsao <realturner at gmail.com>
-# Contributor: Tomasz Zok <tomasz.zok [at] gmail.com>
-# Contributor: techryda <techryda at silentdome dot com>
-# Contributor: Mathias R. <pu154r@overlinux.org>
-# Contributor: Alan Beale <the.mrabz@gmail.com>
+# Old AUR contributors / lame backdoorers:
+# Old Maintainer: Brian Bidulock <bidulock@openss7.org>
+# Old Contributo: Jianhui Z <jianhui@outlook.com>
+# Old Contributo: Tau Tsao <realturner at gmail.com>
+# Old Contributor: Tomasz Zok <tomasz.zok [at] gmail.com>
+# Old Contributor: techryda <techryda at silentdome dot com>
+# Old Contributor: Mathias R. <pu154r@overlinux.org>
+# Old Contributor: Alan Beale <the.mrabz@gmail.com>
 
 pkgname=xrdp
 pkgver=0.9.21.1
 pkgrel=1
-pkgdesc='An open source remote desktop protocol (RDP) server'
+pkgdesc='An open source remote desktop protocol (RDP) server.'
 url='https://github.com/neutrinolabs/xrdp'
 arch=('x86_64' 'aarch64')
 license=('Apache')
@@ -22,57 +22,62 @@ depends=('libxrandr' 'fuse' 'libfdk-aac' 'ffmpeg' 'imlib2')
 checkdepends=('check')
 optdepends=('tigervnc' 'tightvnc' 'realvnc-vnc-server')
 backup=('etc/xrdp/sesman.ini'
-	'etc/xrdp/xrdp.ini'
-	'etc/xrdp/cert.pem'
-	'etc/xrdp/key.pem'
-	'etc/xrdp/startwm.sh')
-install="${pkgname}.install"
-source=("https://github.com/neutrinolabs/xrdp/releases/download/v${pkgver}/xrdp-${pkgver}.tar.gz"
-	"arch-config.diff")
-sha256sums=('7c6c42dce7d3201efe4481e0d388e00094bf8f15224ddad9e47b402a672e08e3'
-            '1ea3b860870786e52c7ae0dc83c533ada7e6ef8a33f7bcf4889228337ea3dc15')
+        'etc/xrdp/xrdp.ini'
+        'etc/xrdp/cert.pem'
+        'etc/xrdp/key.pem'
+        'etc/xrdp/startwm.sh')
+install="$pkgname.install"
+source=("https://github.com/neutrinolabs/xrdp/releases/download/v$pkgver/xrdp-$pkgver.tar.gz"
+        'arch-config.diff')
+sha512sums=('2288feee1114d9db634d50f21159de8fd66eddbd312ac15f917ebd42306249ac0ac3c32bbe6a483c9a078589f5fe03f7a14c228598952cf1ed8166b9e5062329'
+            'e740ab0ec56329a0a2ea67ade463965acfd00360a09dc215d7353e020ab9d029b420acf510e9d9b764ac4a553d87403690b3ab19def9b543ae1a210850f3747a')
 
 prepare() {
-  cd "${pkgname}-${pkgver}"
+  cd "$pkgname-$pkgver"
+
   patch -Np2 -b -z .orig <../arch-config.diff
+
   ./bootstrap
 }
 
 build() {
-  cd "${pkgname}-${pkgver}"
-  ./configure --prefix=/usr \
-              --sysconfdir=/etc \
-              --localstatedir=/var \
-              --sbindir=/usr/bin \
-              --with-systemdsystemunitdir=/usr/lib/systemd/system \
-              --enable-jpeg \
-              --enable-tjpeg \
-              --enable-fuse \
-	      --enable-fdkaac \
-	      --enable-opus \
-	      --enable-rfxcodec \
-	      --enable-mp3lame \
-	      --enable-pixman \
-	      --enable-painter \
-	      --enable-vsock \
-	      --enable-ipv6 \
-	      --enable-pam-config=arch \
-	      --enable-rdpsndaudin \
-	      --with-imlib2
+  cd "$pkgname-$pkgver"
+
+  ./configure \
+    --prefix=/usr \
+    --sysconfdir=/etc \
+    --localstatedir=/var \
+    --sbindir=/usr/bin \
+    --with-systemdsystemunitdir=/usr/lib/systemd/system \
+    --enable-jpeg \
+    --enable-tjpeg \
+    --enable-fuse \
+    --enable-fdkaac \
+    --enable-opus \
+	  --enable-rfxcodec \
+	  --enable-mp3lame \
+	  --enable-pixman \
+	  --enable-painter \
+	  --enable-vsock \
+	  --enable-ipv6 \
+	  --enable-pam-config=arch \
+	  --enable-rdpsndaudin \
+	  --with-imlib2
+
   # Fight unused direct deps
-  sed -i -e "s| -shared | $LDFLAGS\0 |g" -e "s|    if test \"\$export_dynamic\" = yes && test -n \"\$export_dynamic_flag_spec\"; then|      func_append compile_command \" $LDFLAGS\"\n      func_append finalize_command \" $LDFLAGS\"\n\0|" libtool
+  sed -i -e "s| -shared | $LDFLAGS\0 |g" \
+    -e "s|    if test \"\$export_dynamic\" = yes && test -n \"\$export_dynamic_flag_spec\"; then|      func_append compile_command \" $LDFLAGS\"\n      func_append finalize_command \" $LDFLAGS\"\n\0|" libtool
+
   make
 }
 
-check () {
-  cd "${pkgname}-${pkgver}"
-  make check
-}
-
 package() {
-  cd "${pkgname}-${pkgver}"
+  cd "$pkgname-$pkgver"
+
   make DESTDIR="$pkgdir" install
-  rm -f "$pkgdir"/etc/xrdp/rsakeys.ini
-  install -Dm644 COPYING "$pkgdir"/usr/share/licenses/$pkgname/COPYING
+
+  rm -f "$pkgdir/etc/xrdp/rsakeys.ini"
+
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
