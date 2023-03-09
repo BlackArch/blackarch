@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=cpp2il
+pkgver=2022.0.7.r11.gdc9dcd9
+pkgrel=1
+epoch=1
+pkgdesc="A tool to reverse unity's IL2PP toolchain"
+arch=('x86_64')
+groups=('blackarch' 'blackarch-binary' 'blackarch-reversing')
+url='https://github.com/SamboyCoding/Cpp2IL'
+license=('MIT')
+depends=('dotnet-runtime-6.0')
+makedepends=('dotnet-host')
+source=("$pkgname::git+https://github.com/SamboyCoding/Cpp2IL.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+check() {
+  cd $pkgname
+  dotnet build
+  dotnet test -v=n --no-build
+}
+
+build() {
+  cd $pkgname
+
+  dotnet restore
+  dotnet build /p:Configuration=Release --no-restore
+  pushd ./Cpp2IL || exit 1
+  # It's build name named "ubuntu" but it is suitable for all linux distributions, as long as it is x86_64
+  dotnet publish /p:Configuration=Release /p:TargetFramework=net6.0 --no-restore -r ubuntu-x64
+  popd || exit 1
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec /usr/share/$pkgname/Cpp2IL "\$@"
+EOF
+  chmod 755 "$pkgdir/usr/bin/$pkgname"
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  cp -a --no-preserve=ownership ./Cpp2IL/bin/Release/net6.0/ubuntu-x64/* "$pkgdir/usr/share/$pkgname/"
+}
+
