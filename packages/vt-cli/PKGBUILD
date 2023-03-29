@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# took this one from AUR and adjusted to our style
+# Original Maintainer: ml <>
+
+pkgname=vt-cli
+pkgver=0.13.0
+pkgrel=1
+pkgdesc='VirusTotal Command Line Interface.'
+groups=('blackarch' 'blackarch-malware')
+arch=('x86_64' 'aarch64')
+url='https://github.com/VirusTotal/vt-cli'
+license=('Apache')
+depends=('glibc')
+makedepends=('go')
+source=("https://github.com/VirusTotal/vt-cli/archive/$pkgver/$pkgname-$pkgver.tar.gz")
+sha512sums=('3bbf5f57f86997932cd7a1d2d8b2c90c4cb0ae673de29bb5b94dc5d94eaa8d9833fc99a8e121446021a323d078be825a3cc8327e8f7a12b6579e9df2f89ffc59')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  export CGO_ENABLED=1
+  export CGO_LDFLAGS="$LDFLAGS"
+  export CGO_CFLAGS="$CFLAGS"
+  export CGO_CPPFLAGS="$CPPFLAGS"
+  export CGO_CXXFLAGS="$CXXFLAGS"
+  export GOFLAGS='-buildmode=pie -trimpath -modcacherw'
+  go build -o build/vt -ldflags \
+    "-linkmode=external -X github.com/VirusTotal/vt-cli/cmd.Version=$pkgver" \
+    ./vt
+
+  build/vt completion bash >vt.bash
+  build/vt completion zsh >vt.zsh
+  build/vt completion fish >vt.fish
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -Dm 755 build/vt -t "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" doc/*
+  install -Dm 644 vt.bash "$pkgdir/usr/share/bash-completion/completions/vt"
+  install -Dm 644 vt.zsh "$pkgdir/usr/share/zsh/site-functions/_vt"
+  install -Dm 644 vt.fish \
+    "$pkgdir/usr/share/fish/vendor_completions.d/$pkgname.fish"
+}
+
