@@ -1,27 +1,30 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
+# This file is originally from https://github.com/archlinux/svntogit-packages/tree/packages/glibc/trunk.
 
-# Maintainer: Giancarlo Razzolini <grazzolini@archlinux.org>
-# Maintainer: Frederik Schwan <freswa at archlinux dot org>
-# Contributor: Bartłomiej Piotrowski <bpiotrowski@archlinux.org>
-# Contributor: Allan McRae <allan@archlinux.org>
+# BlackArch Start
+# Original Maintainer: Giancarlo Razzolini <grazzolini@archlinux.org>
+# Original Maintainer: Frederik Schwan <freswa at archlinux dot org>
+# Original Contributor: Bartłomiej Piotrowski <bpiotrowski@archlinux.org>
+# Original Contributor: Allan McRae <allan@archlinux.org>
+# BlackArch ENd
 
 # toolchain build order: linux-api-headers->glibc->binutils->gcc->glibc->binutils->gcc
 # NOTE: valgrind requires rebuilt with each major glibc version
 
 pkgbase=glibc
-pkgname=(glibc-dbg lib32-glibc-dbg)
+pkgname=(glibc-dbg lib32-glibc-dbg) # BlackArch
 pkgver=2.37
-provides=('glibc=2.37' 'lib32-glibc=2.37')
-replaces=(glibc lib32-glibc)
 _commit=a704fd9a133bfb10510e18702f48a6a9c88dbbd5
 pkgrel=2
 arch=(x86_64)
 url='https://www.gnu.org/software/libc'
 license=(GPL LGPL)
 makedepends=(git gd lib32-gcc-libs python)
+# BlackArch Start
 options=(staticlibs !lto debug)
 groups=('blackarch' 'blackarch-reversing')
+# BlackArch End
 
 source=(git+https://sourceware.org/git/glibc.git#commit=${_commit}
         locale.gen.txt
@@ -73,7 +76,7 @@ build() {
       --disable-crypt
       --disable-profile
       --disable-werror
-      --enable-debug=yes
+      --enable-debug=yes # BlackArch
   )
 
   cd "${srcdir}"/glibc-build
@@ -167,7 +170,7 @@ check() {
   make -O check
 }
 
-package_glibc-dbg() {
+package_glibc-dbg() { # BlackArch
   pkgdesc='GNU C Library'
   depends=('linux-api-headers>=4.10' tzdata filesystem)
   optdepends=('gd: for memusagestat'
@@ -176,6 +179,11 @@ package_glibc-dbg() {
   backup=(etc/gai.conf
           etc/locale.gen
           etc/nscd.conf)
+  
+  # BlackArch Start
+  provides=("glibc=$pkgver")
+  replaces=(glibc)
+  # BlackArch End
 
   make -C glibc-build install_root="${pkgdir}" install
   rm -f "${pkgdir}"/etc/ld.so.cache
@@ -215,10 +223,15 @@ package_glibc-dbg() {
   install -Dm644 "${srcdir}"/sdt-config.h "${pkgdir}"/usr/include/sys/sdt-config.h
 }
 
-package_lib32-glibc-dbg() {
+package_lib32-glibc-dbg() { # BlackArch
   pkgdesc='GNU C Library (32-bit)'
   depends=("glibc=$pkgver")
   options+=('!emptydirs')
+
+  # BlackArch Start
+  provides=("lib32-glibc=$pkgver")
+  replaces=("lib32-glibc")
+  # BlackArch End
 
   cd lib32-glibc-build
 
