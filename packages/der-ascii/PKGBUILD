@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=der-ascii
+pkgver=84.031bca8
+pkgrel=1
+pkgdesc='A reversible DER and BER pretty-printer.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/google/der-ascii'
+license=('Apache')
+depends=()
+makedepends=('git' 'go')
+source=("git+https://github.com/google/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o ascii2der ./cmd/ascii2der
+  
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o der2ascii ./cmd/der2ascii
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 ascii2der "$pkgdir/usr/bin/ascii2der"
+  install -Dm 755 der2ascii "$pkgdir/usr/bin/der2ascii"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
