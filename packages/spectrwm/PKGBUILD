@@ -1,0 +1,72 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Took this from AUR. Adjusted to our styles, etc.
+#
+# Old Maintainer: Kyle Keen <keenerd@gmail.com>
+# Old Contributor: Christoph Zeiler <archNOSPAM_at_moonblade.dot.org>
+
+pkgname=spectrwm
+pkgver=3.4.1
+_ghver=3_4_1
+pkgrel=4
+pkgdesc='A minimalistic automatic tiling window manager that tries to stay out of the way.'
+arch=('x86_64' 'aarch64')
+url="https://github.com/conformal/spectrwm/releases"
+license=('custom:ISC')
+depends=('dmenu' 'xcb-util' 'xcb-util-wm' 'xcb-util-keysyms' 'libxrandr'
+         'libxft' 'libxcursor' 'terminus-font')
+replaces=('scrotwm')
+makedepends=('libxt')
+optdepends=('scrot: screenshots'
+            'xlockmore: great screenlocker')
+backup=("etc/$pkgname.conf")
+source=("https://github.com/conformal/spectrwm/archive/SPECTRWM_${_ghver}.tar.gz"
+        'LICENSE'
+        'baraction.sh' \
+        "$pkgname-no-preload")
+sha512sums=('c030ef30bd11bbdfce3d4a1daf51f0c1358821ba95ebdc4cdb32d3944c8ce03c'
+            '1bf0c43ca1063b16f6ab784d251319081579a786f99bb86d9f6828b14abb2263'
+            '2cc2ca7105ddb3575bbdf4184d974afab8b475aab0af113242188288d7ba4504'
+            '22db9725551197ad1d19f9b5b2ee7c6d7a0f8bcedca982225b27071e0c4bbb26')
+install="$pkgname.install"
+
+prepare() {
+  cd "$pkgname-SPECTRWM_$_ghver"
+
+  sed -i 's|\"/usr/local/lib/libswmhack.so\"|\"libswmhack.so\"|' spectrwm.c
+  sed -i 's/verbose_layout = false;/verbose_layout = true;/' spectrwm.c
+  sed -i 's/# modkey = Mod1/modkey = Mod4/' spectrwm.conf
+}
+
+build() {
+  cd "$pkgname-SPECTRWM_$_ghver/linux"
+
+  make PREFIX=/usr
+}
+
+package() {
+  cd "$pkgname-SPECTRWM_$_ghver"
+
+  cd linux
+  make PREFIX=/usr DESTDIR="$pkgdir" install
+  install -Dm 644 "$pkgname.desktop" \
+    "$pkgdir/usr/share/xsessions/spectrwm.desktop"
+
+  cd ..
+  install -Dm 644 "$pkgname.conf" "$pkgdir/etc/$pkgname.conf"
+  install -Dm 755 screenshot.sh "$pkgdir/usr/share/$pkgname/screenshot.sh"
+
+  mkdir -p "$pkgdir/etc/$pkgname"
+  cp spectrwm_*.conf "$pkgdir/etc/$pkgname/"
+
+  cd $srcdir
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 755 baraction.sh "$pkgdir/usr/share/spectrwm/baraction.sh"
+  install -Dm 755 spectrwm-no-preload "$pkgdir/usr/bin/spectrwm-no-preload"
+
+  # fix this for real in the makefile
+  rm "$pkgdir/usr/bin/scrotwm"
+  ln -s "/usr/bin/$pkgname" "$pkgdir/usr/bin/scrotwm"
+}
+
