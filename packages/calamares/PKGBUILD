@@ -7,6 +7,7 @@
 pkgname=calamares
 pkgver=3.2.61
 pkgrel=1
+epoch=3
 pkgdesc='Distribution-independent installer framework.'
 url='https://github.com/calamares/calamares'
 arch=('x86_64' 'aarch64')
@@ -14,7 +15,8 @@ license=('LGPL')
 depends=('kconfig' 'kcoreaddons' 'kiconthemes' 'ki18n' 'kio' 'solid' 'yaml-cpp'
          'kpmcore' 'mkinitcpio-openswap' 'boost-libs' 'ckbcomp' 'hwinfo'
          'qt5-svg' 'polkit-qt5' 'gtk-update-icon-cache' 'plasma-framework'
-         'qt5-xmlpatterns' 'squashfs-tools' 'libpwquality' 'appstream-qt' 'icu')
+         'qt5-xmlpatterns' 'squashfs-tools' 'libpwquality' 'appstream-qt' 'icu'
+         'efibootmgr')
 makedepends=('extra-cmake-modules' 'qt5-tools' 'qt5-translations' 'git' 'boost')
 backup=('usr/share/calamares/modules/bootloader.conf'
         'usr/share/calamares/modules/displaymanager.conf'
@@ -26,13 +28,13 @@ sha512sums=('54ff30fc04c4b1f4ae6ddb0df5dd8255e08e1e24a69754361d2adc7207de2fafcce
 prepare() {
   cd "$pkgname-$pkgver"
 
-  sed -i -e 's/"Install configuration files" OFF/"Install configuration files" ON/' CMakeLists.txt
-  _ver="$(cat CMakeLists.txt | grep -m3 -e "  VERSION" |
-  grep -o "[[:digit:]]*" | xargs | sed s'/ /./g')"
-  printf 'Version: %s-%s' "$_ver" "$pkgrel"
-  sed -i -e "s|\${CALAMARES_VERSION_MAJOR}.\${CALAMARES_VERSION_MINOR}.\${CALAMARES_VERSION_PATCH}|${_ver}-${pkgrel}|g" CMakeLists.txt
+  sed -i -e \
+    's/"Install configuration files" OFF/"Install configuration files" ON/' \
+    CMakeLists.txt
+  sed -i -e \
+    "s|\${CALAMARES_VERSION_MAJOR}.\${CALAMARES_VERSION_MINOR}.\${CALAMARES_VERSION_PATCH}|${_ver}-${pkgrel}|g" \
+    CMakeLists.txt
   sed -i -e "s|CALAMARES_VERSION_RC 1|CALAMARES_VERSION_RC 0|g" CMakeLists.txt
-  sed -i -e "s|TryExec=calamares|TryExec=pkexec /usr/bin/calamares|g" calamares.desktop
 }
 
 build() {
@@ -40,12 +42,19 @@ build() {
 
   mkdir -p build && cd build
 
-  cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
-    -DCMAKE_INSTALL_LIBDIR=lib -DWITH_PYTHONQT:BOOL=ON \
-    -DBoost_NO_BOOST_CMAKE=ON \
-    -DSKIP_MODULES="tracking webview interactiveterminal initramfs \
-      initramfscfg dracut dracutlukscfg dummyprocess dummypython dummycpp \
-      dummypythonqt services-openrc"
+  cmake .. \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=/usr \
+  -DCMAKE_INSTALL_LIBDIR=lib \
+  -DWITH_PYTHONQT=OFF \
+  -DWITH_KF5DBus=OFF \
+  -DBoost_NO_BOOST_CMAKE=ON \
+  -DWEBVIEW_FORCE_WEBKIT=OFF \
+  -DSKIP_MODULES="webview tracking interactiveterminal initramfs \
+  initramfscfg dracut dracutlukscfg \
+  dummyprocess dummypython dummycpp \
+  dummypythonqt services-openrc \
+  keyboardq localeq welcomeq"
 
   make
 }
