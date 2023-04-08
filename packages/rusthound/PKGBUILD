@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=rusthound
+pkgver=53.f79ea96
+pkgrel=1
+pkgdesc='Active Directory data collector for BloodHound.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-recon' 'blackarch-windows')
+url='https://github.com/OPENCYBER-FR/RustHound'
+license=('MIT')
+depends=()
+makedepends=('git' 'cargo' 'clang' 'krb5')
+source=("git+https://github.com/OPENCYBER-FR/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  # no lokcfile provided https://github.com/OPENCYBER-FR/RustHound/issues/14
+  cargo build --release # --locked
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
