@@ -1,7 +1,8 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-pysctp
+pkgbase=python-pysctp
+pkgname=('python2-pysctp' 'python-pysctp')
 _pkgname=pysctp
 pkgver=0.7.2
 pkgrel=2
@@ -9,8 +10,8 @@ pkgdesc='A python module for the SCTP protocol stack and library.'
 arch=('any')
 url='https://pypi.org/project/pysctp/#files'
 license=('LGPL')
-depends=('python' 'lksctp-tools')
-makedepends=('python-setuptools')
+makedepends=('python2-setuptools' 'python-setuptools'
+             'lksctp-tools')
 optdepends=('linux-headers' 'linux-lts-headers' 'linux-hardened-headers' 'linux-rt-headers' 'linux-rt-lts-headers' 'linux-zen-headers')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('854906d309da7c8465c06e99ba8b812991d8bd65544623f9d9ce85bd512851dcaca676279e446db739d4eb7d4de95caed5eb06b21407256eea26e1804a784411')
@@ -20,12 +21,28 @@ prepare() {
 }
 
 build() {
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py build
+
   cd "$srcdir/$_pkgname-$pkgver"
 
   python setup.py build
 }
 
-package() {
+package_python2-pysctp() {
+  depends=('python2' 'lksctp-tools' 'linux-headers')
+
+  cd "$_pkgname-$pkgver-2"
+
+  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+
+  rm -rf "$pkgdir/usr/_sctp.h"
+}
+
+package_python-pysctp() {
+  depends=('python' 'lksctp-tools' 'linux-headers')
+
   cd "$_pkgname-$pkgver"
 
   python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
