@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=shosubgo
+pkgver=2.0.r19.g6e8d48c
+pkgrel=1
+pkgdesc='Small tool to Grab subdomains using Shodan API.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/incogbyte/shosubgo'
+license=('custom:unknown')
+depends=()
+makedepends=('git' 'go')
+source=("git+https://github.com/incogbyte/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
