@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=kh2hc
+_gemname=$pkgname
+pkgver=0.0.1.r0.g7d62c18
+pkgrel=1
+pkgdesc='Convert OpenSSH known_hosts file hashed with HashKnownHosts to hashes crackable by Hashcat.'
+arch=('any')
+groups=('blackarch' 'blackarch-crypto' 'blackarch-misc')
+url='https://github.com/noraj/kh2hc'
+license=('MIT')
+depends=('ruby' 'ruby-docopt' 'ctf-party')
+makedepends=('git')
+options=(!emptydirs)
+source=("git+https://github.com/noraj/$_gemname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_gemname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $_gemname
+
+  gem build $_gemname.gemspec
+}
+
+package() {
+  cd $_gemname
+
+  _gemdir="$(ruby -e'puts Gem.default_dir')"
+  _release=$(gem build $_gemname.gemspec | grep Version | cut -d' ' -f4)
+
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" "$_gemname-$_release.gem"
+
+  rm "$pkgdir/$_gemdir/cache/$_gemname-$_release.gem"
+
+  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
+
+  install -Dm 644 "$pkgdir/$_gemdir/gems/$_gemname-$_release/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
