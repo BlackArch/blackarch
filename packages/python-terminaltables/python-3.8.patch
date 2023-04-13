@@ -1,0 +1,26 @@
+From dcd9ba5c1c35d986fabe1b3a529cf15d08875a33 Mon Sep 17 00:00:00 2001
+From: Carl Suster <carl@contraflo.ws>
+Date: Tue, 12 Nov 2019 14:19:23 +1100
+Subject: [PATCH] Write bytes to underluing buffer of stdout
+
+This was adapted from an example in the python docs and solves test failures seen on the CI. We need to write to the underlying buffer object of the stream, but in case `sys.stdout` was replaced with a file-like object without a buffer there's a fallback to direct writing.
+---
+ terminaltables/terminal_io.py | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/terminaltables/terminal_io.py b/terminaltables/terminal_io.py
+index 8b8c10d..005da1b 100644
+--- a/terminaltables/terminal_io.py
++++ b/terminaltables/terminal_io.py
+@@ -94,5 +94,10 @@ def set_terminal_title(title, kernel32=None):
+             return kernel32.SetConsoleTitleW(title) != 0
+ 
+     # Linux/OSX.
+-    sys.stdout.write(b'\033]0;' + title_bytes + b'\007')
++    set_title = b'\033]0;' + title_bytes + b'\007'
++    if hasattr(sys.stdout, 'buffer'):
++        sys.stdout.buffer.write(set_title)
++    else:
++        text = set_title.decode(sys.stdout.encoding, 'strict')
++        sys.stdout.write(text)
+     return True
