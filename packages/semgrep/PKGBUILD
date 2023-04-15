@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=semgrep
-pkgver=0.118.0
+pkgver=1.17.1
 _pyver=3.10
+_py=cp37.cp38.cp39.py37.py38.py39
 pkgrel=1
 pkgdesc='Lightweight static analysis for many languages.'
 arch=('x86_64')
@@ -14,33 +15,38 @@ depends=('python' 'python-attrs' 'python-boltons' 'python-colorama' 'python-clic
          'python-click-option-group' 'python-glom' 'python-requests' 'python-ruamel-yaml'
          'python-tqdm' 'python-packaging' 'python-jsonschema' 'python-wcmatch'
          'python-peewee' 'python-defusedxml' 'python-urllib3' 'python-typing_extensions'
-         'python-lsp-jsonrpc' 'python-tomli')
-makedepends=('python-setuptools')
+         'python-lsp-jsonrpc' 'python-tomli' 'python-rich')
+makedepends=('python-build' 'python-pip' 'python-wheel')
 replaces=('python-semgrep')
 source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz"
-        "https://github.com/returntocorp/$pkgname/releases/download/v$pkgver/$pkgname-v$pkgver-ubuntu-16.04.tgz")
-sha512sums=('eca01d899365092d3f6b80313f047a2d491c8e2afbac2b4e5da0e8271f59ead5c062cc6d2e7323d9e8a5ba5dbbb7fece2d3d74cb6238f6721b2a37dd29c83421'
-            '689d4393b5309a1efb739e22f8b64f3fa3a8c7d9cfa46f2c7d671d556d49afea4434f6dfa8794cbfe7861aa72b438fc6748f3b13fe83111f185c0b4595741e03')
+        "https://files.pythonhosted.org/packages/$_py/${pkgname::1}/$pkgname/${pkgname//-/_}-$pkgver-$_py-none-any.whl")
+sha512sums=('15aa15eccf4fe1c7b25a02bc83c77a5c3506098e318a2e4686dd6096e52a5c5b03a15ac98d13c8269be9b88f6e36da74cd5b0b7c757a725b37910b1a4fcdb623'
+            'c0c77339603efddeb2d97ecdd926c7284a1976daf1efd2bff12f5e4de81575c5b9385d3d1b7a289780b0f25cbeddbc8bac832cb7a09845aae8c77c893a3ac5ba')
 
 build() {
   cd "$pkgname-$pkgver"
 
-  export SEMGREP_CORE_BIN="$srcdir/semgrep-files/semgrep-core"
-  export SPACEGREP_BIN="$srcdir/semgrep-files/spacegrep"
+  export SEMGREP_CORE_BIN="$srcdir/$pkgname-$pkgver.data/purelib/semgrep/bin/semgrep-core"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$pkgname"
 
-  rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/tests"
-
-  # default is enough for now
-  #strip "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/spacegrep"
   strip "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/semgrep-core"
-  chmod +x "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/semgrep-core"
 }
 
