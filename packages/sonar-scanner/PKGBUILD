@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# This PKGBUILD was extracted from AUR and adapted to our style.
+# AUR Maintainer: Marcell Meszaros < marcell.meszaros AT runbox.eu >
+# AUR Contributor: max-k <max-kATpostDOTcom>
+
+pkgname=sonar-scanner
+pkgver=4.8.0.2856
+pkgrel=1
+pkgdesc='Generic CLI tool to launch project analysis on SonarQube servers.'
+groups=('blackarch' 'blackarch-code-audit')
+arch=('any')
+url='https://docs.sonarqube.org/latest/analysis/scan/sonarscanner/'
+license=('LGPL3')
+depends=('java-runtime' 'sh')
+backup=("opt/$pkgname/conf/$pkgname.properties")
+source=("https://binaries.sonarsource.com/Distribution/$pkgname-cli/$pkgname-cli-$pkgver.zip")
+sha512sums=('b2c94c5c8bde1092c332421f8988fe7d709b09b6644f43c9af2a5a28d90f91656a8cda5cd7f920981225c602f00653e3ddd1ac5dba750da44d784e5736ea790d')
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  rm bin/*.bat
+
+  cp -rT . "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+export SONAR_SCANNER_HOME="/usr/share/$pkgname"
+exec /usr/share/$pkgname/bin/$pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
