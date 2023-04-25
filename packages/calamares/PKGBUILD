@@ -1,11 +1,12 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 #
 # This PKGBUILD was extracted from Manjaro Linux and adapted to our style
+# and later reworked to match https://github.com/arch-linux-calamares-installer/alci-pkgbuild/blob/master/calamares/alci-calamares/calamares-3.3.0.230321-04/PKGBUILD
 #
 # Old Maintainer: Philip Müller <philm[at]manjaro[dot]org>
 
 pkgname=calamares
-pkgver=3.2.61
+pkgver=3.3.0.23.0321
 pkgrel=1
 epoch=3
 pkgdesc='Distribution-independent installer framework.'
@@ -16,21 +17,20 @@ depends=('kconfig' 'kcoreaddons' 'kiconthemes' 'ki18n' 'kio' 'solid' 'yaml-cpp'
          'kpmcore' 'mkinitcpio-openswap' 'boost-libs' 'ckbcomp' 'hwinfo'
          'qt5-svg' 'polkit-qt5' 'gtk-update-icon-cache' 'plasma-framework'
          'qt5-xmlpatterns' 'squashfs-tools' 'libpwquality' 'appstream-qt' 'icu'
-         'efibootmgr')
-makedepends=('extra-cmake-modules' 'qt5-tools' 'qt5-translations' 'git' 'boost')
+         'efibootmgr' 'kdbusaddons' 'python')
+makedepends=('extra-cmake-modules' 'qt5-tools' 'qt5-translations' 'git' 'boost'
+             'kparts' 'kdbusaddons' 'python')
 backup=('usr/share/calamares/modules/bootloader.conf'
         'usr/share/calamares/modules/displaymanager.conf'
         'usr/share/calamares/modules/initcpio.conf'
         'usr/share/calamares/modules/unpackfs.conf')
-source=("https://github.com/calamares/$pkgname/archive/v$pkgver.tar.gz")
-sha512sums=('54ff30fc04c4b1f4ae6ddb0df5dd8255e08e1e24a69754361d2adc7207de2fafcce7f7d3988d15588e9a006b7afe48a5ba74bf1cc5cc19fc31ac17fa1a4e17f1')
+source=($pkgname::git+https://github.com/calamares/calamares#commit=4f2ab85)
+sha512sums=('SKIP')
 
 prepare() {
-  cd "$pkgname-$pkgver"
+  cd "$pkgname"
 
-  sed -i -e \
-    's/"Install configuration files" OFF/"Install configuration files" ON/' \
-    CMakeLists.txt
+  _ver="$(cat CMakeLists.txt | grep -m3 -e "  VERSION" | grep -o "[[:digit:]]*" | xargs | sed s'/ /./g')"
   sed -i -e \
     "s|\${CALAMARES_VERSION_MAJOR}.\${CALAMARES_VERSION_MINOR}.\${CALAMARES_VERSION_PATCH}|${_ver}-${pkgrel}|g" \
     CMakeLists.txt
@@ -38,7 +38,7 @@ prepare() {
 }
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd "$pkgname"
 
   mkdir -p build && cd build
 
@@ -60,7 +60,7 @@ build() {
 }
 
 package() {
-  cd "$pkgname-$pkgver/build"
+  cd "$pkgname/build"
 
   make DESTDIR="$pkgdir" install
 }
