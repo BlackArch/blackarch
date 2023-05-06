@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=passgan
+pkgver=28.0bcec94
+pkgrel=1
+groups=('blackarch' 'blackarch-cracker')
+pkgdesc='A Deep Learning Approach for Password Guessing.'
+url='https://github.com/D3vil0p3r/PassGAN'
+arch=('any')
+license=('MIT')
+depends=('python' 'python-matplotlib' 'python-numpy' 'python-tensorflow')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/D3vil0p3r/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
+
+  cp -a --no-preserve=ownership PersistenceSniper/* "$pkgdir/usr/share/windows/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf *.md LICENSE *.sh
+
+  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+
+exec python /usr/share/$pkgname/$pkgname.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
