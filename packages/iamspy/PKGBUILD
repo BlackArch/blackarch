@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=IAMspy
+pkgver=33.9b0173b
+pkgrel=1
+pkgdesc='a library that utilises the Z3 prover to attempt to answer questions about AWS IAM.'
+arch=('any')
+groups=('blackarch' 'backarch-recon')
+url='https://github.com/WithSecureLabs/IAMSpy'
+license=('Apache')
+depends=('python' 'python-z3-solver' 'python-pydantic' 'python-typer' 'python-dateutil')
+makedepends=('git' 'python-build' 'python-pip')
+source=("git+https://github.com/WithSecureLabs/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo "$(git rev-list --count HEAD).$(git rev-parse --short HEAD)"
+}
+
+build() {
+  cd "$pkgname"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$pkgname"
+
+  rm -rf LICENSE *.md
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  cp -a tests/ *.json.example "$pkgdir/usr/share/$pkgname/"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$pkgname"
+}
+
