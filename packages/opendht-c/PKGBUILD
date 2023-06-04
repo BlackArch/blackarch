@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=opendht-c
+pkgver=v2.5.4.r0.g27978f3b
+pkgrel=1
+epoch=1
+pkgdesc="C++17 Distributed Hash Table implementation."
+arch=('any')
+url='https://github.com/savoirfairelinux/opendht'
+license=('GPL3')
+depends=('argon2' 'asio' 'gnutls' 'jsoncpp' 'nettle' 'readline')
+makedepends=('cmake' 'cython' 'fmt' 'git' 'http-parser' 'msgpack-cxx' 'python' 'python-setuptools' 'restinio' 'samurai')
+checkdepends=('cppunit-dev')
+provides=('opendht')
+conflicts=('opendht')
+source=("git+https://github.com/savoirfairelinux/${pkgname%-c}.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "${pkgname%-c}"
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+  cd "${srcdir}/${pkgname%-*}"
+
+  install -d build
+}
+
+build() {
+  cd "${srcdir}/${pkgname%-c}/build"
+
+  cmake .. \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DOPENDHT_C=ON \
+		-DOPENDHT_TOOLS=ON \
+		-DOPENDHT_PYTHON=ON \
+		-DOPENDHT_HTTP=ON \
+		-DOPENDHT_PUSH_NOTIFICATIONS=ON \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)" \
+		$CMAKE_CROSSOPTS .
+  make
+}
+
+package() {
+  cd "${srcdir}/${pkgname%-c}/build"
+
+  make DESTDIR="${pkgdir}" install
+  install -D -m644 ../README.md "${pkgdir}/usr/share/doc/opendht/README.md"
+}
+
