@@ -6,27 +6,35 @@
 # Maintainer: Maciej Dems <macdems@gmail.com>
 
 pkgname=python-sphinxcontrib-napoleon
-_module=sphinxcontrib-napoleon
+_pkgname=sphinxcontrib-napoleon
 pkgver=0.7
-pkgrel=3
+pkgrel=1
 pkgdesc='Sphinx "napoleon" extension.'
 arch=('any')
-url="https://sphinxcontrib-napoleon.readthedocs.io"
+url='https://pypi.org/project/sphinxcontrib-napoleon/#files'
 license=('BSD')
 depends=('python' 'python-pockets')
 makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${_module::1}/$_module/$_module-$pkgver.tar.gz" "python310.patch")
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+        'python310.patch')
 sha512sums=('000fc00b21148ed38b3f0beed5163e232f50642369641a940fd77b30c3c426d799144b3e1c7fbc4dd86b5b1f526656b56be7d77239d4cd3a14dd93178c0e13f8'
             '29cd03a9061155d93f1d985db86f6cb98adb9c7196249cef3478ff9b459a85876c03b6add6cd6c8ecd77f996d5b556b368599e196302493d8640a95a58b86667')
 
 prepare() {
-    cd "${srcdir}/${_module}-${pkgver}"
-    
-    patch --forward --strip=1 --input="${srcdir}/python310.patch"
+  cd "$_pkgname-$pkgver"
+
+  patch -p1 < "$srcdir/python310.patch"
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py build
 }
 
 package() {
-    cd "${srcdir}/${_module}-${pkgver}"
+  cd "$_pkgname-$pkgver"
 
-    python setup.py install --root="${pkgdir}" --optimize=1
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
+
