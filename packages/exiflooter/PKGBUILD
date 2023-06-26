@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=exiflooter
+pkgver=33.a92e697
+pkgrel=1
+pkgdesc='Find geolocation on all image urls and directories also integrates with OpenStreetMap.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-forensic')
+url='https://github.com/aydinnyunus/exifLooter'
+license=('Apache')
+depends=('perl-image-exiftool')
+makedepends=('git' 'go')
+source=("git+https://github.com/aydinnyunus/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+

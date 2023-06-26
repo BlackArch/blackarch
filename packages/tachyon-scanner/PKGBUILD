@@ -3,7 +3,7 @@
 
 pkgname=tachyon-scanner
 pkgver=461.6a0900e
-pkgrel=1
+pkgrel=5
 pkgdesc='Fast Multi-Threaded Web Discovery Tool.'
 groups=('blackarch' 'blackarch-scanner')
 arch=('any')
@@ -13,14 +13,23 @@ depends=('python' 'python-urllib3' 'python-easyinject' 'python-click'
          'python-hammertime-http')
 makedepends=('git' 'python-setuptools' 'python-pip')
 source=("$pkgname::git+https://github.com/delvelabs/tachyon.git"
-        'setup.py.patch')
+        'setup.py.patch'
+        'requirements.txt.patch')
 sha512sums=('SKIP'
-            '69bd28b6fee7b1cda943a25cb83ddff6c32afbf63292da0f14c807c3fa14b6a19a76f3cc824d01bbbe3792b8e199865413c23d592462b98d1e51d5eff3f3cd02')
+            '6a6c443ef2aca174b55bcea03b921a9bea2d86571b0a2744da0247017a9c21f59cfd32a8582eb45cc77acc56a3650875eb98cd4893bb19d6de1253c3e5651986'
+            '23d33e761bce2961b44c9f5cf594839e9d024c02924e4913239ecc3f61371d2564c573b29657f9744eb4c9cf488936eeea14f1373cb690df782758f1b5c140c5')
 
 pkgver() {
   cd $pkgname
 
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  patch -p0 < ../requirements.txt.patch
+  patch -p0 < ../setup.py.patch
 }
 
 build() {
@@ -37,6 +46,6 @@ package() {
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG \
     THANKS
 
-  #mv "$pkgdir/usr/bin/tachyon.py" "$pkgdir/usr/bin/tachyon-scanner"
+  mv "$pkgdir/usr/bin/tachyon" "$pkgdir/usr/bin/tachyon-scanner"
 }
 

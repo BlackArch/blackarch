@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=evil-winrm
-pkgver=v3.4.r0.g381b126
+pkgver=v3.5.r0.g7514b05
 pkgrel=1
 epoch=1
 pkgdesc='The ultimate WinRM shell for hacking/pentesting.'
@@ -10,7 +10,8 @@ arch=('any')
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-backdoor')
 url='https://github.com/Hackplayers/evil-winrm'
 license=('LGPL3')
-depends=('ruby' 'ruby-bundler' 'libxslt' 'ruby-rexml')
+# git required because it's used in gemspec and we bundle exec in the wrapper
+depends=('ruby' 'ruby-bundler' 'libxslt' 'ruby-rexml' 'git' 'openssl')
 makedepends=('git')
 source=("git+https://github.com/Hackplayers/$pkgname.git")
 sha512sums=('SKIP')
@@ -20,13 +21,6 @@ pkgver() {
   cd $pkgname
 
   git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
-}
-
-prepare() {
-  cd $pkgname
-
-  # tmp fix https://github.com/BlackArch/blackarch/issues/3102
-  echo "gem 'rexml'" >> Gemfile
 }
 
 package() {
@@ -42,11 +36,18 @@ package() {
   rm -r *.md resources/ .github/ LICENSE
 
   cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+  # git used in gemspec so we need .git/ for bundle exec
+  cp -a --no-preserve=ownership .git "$pkgdir/usr/share/$pkgname/"
+
+  # workaround https://github.com/WinRb/WinRM/issues/340
+  cp /etc/ssl/openssl.cnf "$pkgdir/usr/share/$pkgname/"
+  sed -zi "s/\[provider_sect\]\ndefault = default_sect/\[provider_sect\]\ndefault = default_sect\nlegacy = legacy_sect/" "$pkgdir/usr/share/$pkgname/openssl.cnf"
+  sed -zi "s/\[default_sect\]\n# activate = 1/\[default_sect\]\nactivate = 1\n\[legacy_sect\]\nactivate = 1/" "$pkgdir/usr/share/$pkgname/openssl.cnf"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec bundle exec $pkgname.rb "\$@"
+OPENSSL_CONF=/usr/share/$pkgname/openssl.cnf exec bundle exec $pkgname.rb "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"

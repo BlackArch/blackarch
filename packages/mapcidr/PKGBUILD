@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=mapcidr
+pkgver=v1.1.2.r0.g2fc6ec5
+pkgrel=1
+pkgdesc='Utility program to perform multiple operations for a given subnet/CIDR ranges.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-misc' 'blackarch-networking')
+url='https://github.com/projectdiscovery/mapcidr'
+license=('MIT')
+depends=()
+makedepends=('git' 'go')
+source=("git+https://github.com/projectdiscovery/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/$pkgname
+
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE.MD "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

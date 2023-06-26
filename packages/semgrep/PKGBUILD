@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=semgrep
+pkgver=1.22.0
+_pyver=3.11
+_py=cp37.cp38.cp39.py37.py38.py39
+pkgrel=3
+pkgdesc='Lightweight static analysis for many languages.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-code-audit')
+url='https://pypi.org/project/semgrep/#files'
+license=('LGPL')
+depends=('python' 'python-attrs' 'python-boltons' 'python-colorama'
+         'python-click' 'python-click-option-group' 'python-glom'
+         'python-requests' 'python-ruamel-yaml' 'python-tqdm' 'python-packaging'
+         'python-jsonschema' 'python-wcmatch' 'python-peewee'
+         'python-defusedxml' 'python-urllib3' 'python-typing_extensions'
+         'python-lsp-jsonrpc' 'python-tomli' 'python-rich')
+makedepends=('python-build' 'python-pip' 'python-wheel')
+replaces=('python-semgrep')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz"
+        "https://files.pythonhosted.org/packages/$_py/${pkgname::1}/$pkgname/${pkgname//-/_}-$pkgver-$_py-none-any.whl")
+sha512sums=('fd7004a80cd80b6d461a8b3660ac8c3a48b97585ad4d9ff00798f7fbb11488de1362f79773e874936014b722314d0adcc501982e0c64f24fa7f53dd81edb5e83'
+            '1decc14ffe3cd703140f7ef987d4b89db311a4f8f53cec62debce23fb7d4ec1e4effa41d80f83f5927c7f11da1d2d96552945872e57247a812eff65dfeb09a05')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  export SEMGREP_CORE_BIN="$srcdir/$pkgname-$pkgver.data/purelib/semgrep/bin/semgrep-core"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$pkgname"
+
+  strip "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/semgrep-core"
+}
+

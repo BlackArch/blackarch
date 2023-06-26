@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-forkedsimhash-py
+_pkgname=forkedsimhash-py
+pkgver=0.4.2
+_pyver=3.11
+pkgrel=4
+pkgdesc='Near-Duplicate Detection with Simhash.'
+url='https://pypi.org/project/forkedsimhash-py/#files'
+arch=('x86_64' 'aarch64')
+license=('custom:unknown')
+depends=('python')
+makedepends=('python-setuptools')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('7a82a9e29cc245927d48c53455a10d22f1f9fe4f90309cb9524e8c727263e3c0412ae5b6f09fa572d458f44382de07a445ac82d119179c59266ab44113d89d3f')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  sed -i 's|ext_files.append("simhash/simhash.pyx")||g' setup.py
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/simhash/"{__init__.py,__pycache__}
+}
+

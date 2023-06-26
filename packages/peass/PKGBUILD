@@ -2,23 +2,59 @@
 # See COPYING for license details.
 
 pkgname=peass
-pkgver=1332.fa0f2e1
+pkgver=20230525.7a8f7e06.r0.g78c932f
+_pkgver=20221225
 pkgrel=1
 pkgdesc='Privilege Escalation Awesome Scripts SUITE (with colors).'
 arch=('any')
 groups=('blackarch' 'blackarch-scanner')
-url='https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite'
+url='https://github.com/carlospolop/PEASS-ng'
 license=('MIT')
 depends=('bash')
-makedepends=('git')
-optdepends=('fping' 'nmap' 'ping' 'gnu-netcat')
-source=("$pkgname::git+https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite.git")
+makedepends=('git' 'python-requests' 'python-yaml' 'wget')
+optdepends=('fping' 'nmap' 'ping' 'openbsd-netcat')
+source=("$pkgname::git+https://github.com/carlospolop/PEASS-ng.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  # build linpeas.sh and linpeas_fat.sh
+  cd linPEAS
+  python3 -m builder.linpeas_builder
+
+  # build linpeas binaries
+  # requires to package sh2bin
+  # like in https://github.com/carlospolop/PEASS-ng/blob/e29c9e88d5dc5c33682fd2aeb36f3cae60d3fa21/.github/workflows/CI-master_tests.yml#L178-L190
+  # in the meantime use pre-built binaries
+  github_baseurl="https://github.com/carlospolop/PEASS-ng/releases/download/$_pkgver"
+  declare -a \
+    lin_bins=("linpeas_darwin_amd64" "linpeas_darwin_arm64" "linpeas_linux_386"
+              "linpeas_linux_amd64" "linpeas_linux_arm" "linpeas_linux_arm64")
+  for bin in "${lin_bins[@]}"; do
+    wget "$github_baseurl/$bin"
+  done
+
+  # build winPEAS.exe
+  # mono-msbuild won't build it
+  # it requires a windows host as in https://github.com/carlospolop/PEASS-ng/blob/e29c9e88d5dc5c33682fd2aeb36f3cae60d3fa21/.github/workflows/CI-master_tests.yml#L38-L56
+  # so download pre-built binaries instead
+  cd ../winPEAS/winPEASexe/binaries/
+  declare -a \
+    win_bins=("winPEASany.exe" "winPEASany_ofs.exe" "winPEASx64.exe"
+              "winPEASx64_ofs.exe" "winPEASx86.exe" "winPEASx86_ofs.exe")
+  for bin in "${win_bins[@]}"; do
+    wget "$github_baseurl/$bin"
+  done
+
+  # build winPEAS.bat
+  # winPEAS.bat is already built and included in the repo
 }
 
 package() {
@@ -48,14 +84,18 @@ package() {
   cp -a --no-preserve=ownership winPEAS/winPEASexe/images/ \
     "$pkgdir/usr/share/doc/$pkgname/winPEAS/winPEASexe/"
 
-  rm -rf linPEAS/{README.md,images} winPEAS/winPEASbat/README.md
+  rm -rf linPEAS/{*.md,images,builder} winPEAS/*.md winPEAS/winPEASexe/*.md \
+    winPEAS/winPEASbat/*.md
 
-  rm -rf winPEAS/winPEASexe/winPEAS/binaries/{x64,x86}/Release/{de/,es/,fr/,it/,pl/,ru/,zh-CN/,*.config,*.pdb}
+  rm -rf winPEAS/winPEASexe/binaries/{x64,x86,Release,'Obfuscated Releases'}
 
   cp -a --no-preserve=ownership linPEAS/ "$pkgdir/usr/share/$pkgname/"
-  cp -a --no-preserve=ownership winPEAS/winPEASexe/binaries/{x64,x86}/ \
+  cp -aT --no-preserve=ownership winPEAS/winPEASexe/binaries/ \
+    "$pkgdir/usr/share/windows/$pkgname/"
+  cp -a --no-preserve=ownership winPEAS/winPEASbat/winPEAS.bat \
     "$pkgdir/usr/share/windows/$pkgname/"
 
   ln -sf /usr/share/peass/linPEAS/linpeas.sh "$pkgdir/usr/bin/linpeas"
+  ln -sf /usr/share/peass/linPEAS/linpeas_fat.sh "$pkgdir/usr/bin/linpeas_fat"
 }
 

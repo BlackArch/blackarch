@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=shellz
+_pkgname=shells
+pkgver=161.0ed068f
+pkgrel=4
+pkgdesc='A script for generating common revshells fast and easy.'
+arch=('any')
+groups=('blackarch' 'blackarch-automation')
+url='https://github.com/4ndr34z/shells'
+license=('GPL3')
+depends=('bash' 'openbsd-netcat' 'ngrok' 'rlwrap' 'python-pip' 'jq'
+         'python-updog')
+makedepends=('git')
+source=("git+https://github.com/4ndr34z/$_pkgname.git")
+sha512sums=('SKIP')
+
+prepare() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 755 -t "$pkgdir/usr/share/$pkgname" shells.sh install.sh
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+    cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ./$_pkgname.sh "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

@@ -1,0 +1,61 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Sergej Pupykin <pupykin.s+arch@gmail.com>
+
+pkgname=bsdiff
+pkgver=4.3
+pkgrel=13
+pkgdesc='Tools for building and applying patches to binary files.'
+groups=('blackarch' 'blackarch-binary' 'blackarch-reversing')
+url='https://www.daemonology.net/bsdiff/'
+license=('BSD')
+arch=('x86_64' 'aarch64')
+depends=('bzip2')
+#source=("https://www.daemonology.net/bsdiff/bsdiff-$pkgver.tar.gz"
+source=("https://distfiles.macports.org/bsdiff/bsdiff-$pkgver.tar.gz"
+        'Makefile.patch'
+        'https://security.freebsd.org/patches/SA-16:25/bspatch.patch'
+        'https://github.com/freebsd/freebsd/commit/d0260bc283.patch'
+        'https://github.com/freebsd/freebsd/commit/59381119a4.patch'
+        'e48209b03f.patch'
+        '6e40d93.patch.b64::https://android-review.googlesource.com/changes/platform%2Fexternal%2Fbsdiff~961238/revisions/6/patch?download')
+sha512sums=('bde46b393b74bcc9f05532ea4d45b12c104c4f182fdd49d4176aad5f02a2b357f435819f13a5a7ddefe27df0ca82980f06fad764094014a6d068622263e319c3'
+            '09afc54b7ad073269fe401c201f240cd0c2909260944ffa5fd4bb229c3403ea6786078f44a8d023be063a6340b915ea7e2347785ee1923ea342b40a4c108c147'
+            'f2a0210e582076bac93faa3a226cd9301b6d0245938d6c5a17e1aa275401934d7848bcb908f63a689f5e36f961dfbf1d0a0b5717ff54f67a76b5d1908ae39703'
+            '798b709609e074080e2529af4f1b96187ede522276d6d9798167bc9cfe0a26db2dec247ff679a5934e01768f32bb3214a9dd31e8fa4de34f61dc13091d5936ab'
+            '3edb79393663c55b7ef75a2eca426389f33e119bdcc3580e64e0760c35c2e1747e143d269dd9be013d1e05751ae5146b7e2021c715e9afe2fd487141587b4f6c'
+            '3246c424bf3bc65afe754350234cd598f6a7a5c658b267e20a1ce55995b7e9316100f8125a392ee7033730b9e1c7b94faad28d262630f189f3716cb20bd78fb9'
+            '8e53dc90cf5083a2f44cbad16c4835d8a9afbe4536cef50167db21913d6c43b6f0978ae1b25bd263e1e4d9a2875c698c59255706db0984e6aaf832476f55a969')
+
+# todo: get patches to apply cleanly
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -p0 < ../Makefile.patch
+  patch -p3 < ../bspatch.patch
+  #patch -p4 < ../d0260bc283.patch
+  #patch -p4 < ../59381119a4.patch
+  base64 -d ../6e40d93.patch.b64 > ../6e40d93.patch
+  sed -i 's|bspatch.cc|bspatch.c|g' ../6e40d93.patch
+  #patch -p1 < ../6e40d93.patch
+  #patch bspatch.c ../e48209b03f.patch
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make PREFIX="$pkgdir/usr" install
+
+  install -d "$pkgdir/usr/share/licenses/$pkgname"
+
+  head -n 26 bsdiff.c >"$pkgdir/usr/share/licenses/$pkgname/license"
+}
+

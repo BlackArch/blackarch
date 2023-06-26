@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=uncover
+pkgver=v1.0.4.r0.ga3800a0
+pkgrel=1
+pkgdesc='Discover exposed hosts on the internet using multiple search engines.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/projectdiscovery/uncover'
+license=('MIT')
+depends=()
+makedepends=('git' 'go')
+source=("git+https://github.com/projectdiscovery/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/$pkgname
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname/$pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

@@ -4,7 +4,7 @@
 # AUR Maintainer: Alex Sarum <rum.274.4 at gmail dot com>
 
 pkgname=imhex
-pkgver=1.18.2.r36.gb1b33b2a
+pkgver=1.29.0.r29.g95076069
 pkgrel=1
 pkgdesc='A Hex Editor for Reverse Engineers, Programmers and people that value their eye sight when working at 3 AM.'
 arch=('x86_64')
@@ -12,8 +12,9 @@ groups=('blackarch' 'blackarch-misc')
 url='https://github.com/WerWolv/ImHex'
 license=('GPL2')
 depends=('glfw' 'glm' 'capstone' 'llvm-libs' 'llvm' 'nlohmann-json' 'python'
-         'file' 'gtk3' 'mbedtls' 'libssh2')
-makedepends=('git' 'cmake' 'freetype2' 'lld')
+         'file' 'gtk3' 'mbedtls' 'libssh2' 'curl' 'dbus' 'freetype2' 'yara'
+         'hicolor-icon-theme' 'xdg-desktop-portal-gtk' 'fmt')
+makedepends=('git' 'cmake' 'freetype2' 'llvm' 'lld'  'librsvg')
 source=("$pkgname::git+https://github.com/WerWolv/ImHex.git")
 sha256sums=('SKIP')
 
@@ -27,7 +28,16 @@ build() {
   cd $pkgname
 
   git submodule update --init --recursive
-  cmake -B build -DCMAKE_INSTALL_PREFIX=/usr
+  cmake -B build -Wno-dev \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_SKIP_RPATH=ON \
+    -DUSE_SYSTEM_LLVM=ON \
+    -DUSE_SYSTEM_YARA=ON \
+    -DUSE_SYSTEM_FMT=ON \
+    -DUSE_SYSTEM_CURL=ON \
+    -DUSE_SYSTEM_NLOHMANN_JSON=ON \
+    -DUSE_SYSTEM_CAPSTONE=OFF
   make -C build
 }
 
@@ -36,7 +46,7 @@ package() {
 
   install -Dm 755 "build/$pkgname" "$pkgdir/usr/bin/$pkgname"
   install -Dm 755 build/lib/libimhex/libimhex.so "$pkgdir/usr/lib/libimhex.so"
-  install -Dm 644 build/plugins/builtin/builtin.hexplug \
+  install -Dm 644 build/plugins/builtin.hexplug \
     "$pkgdir/usr/share/$pkgname/builtin.hexplug"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 }

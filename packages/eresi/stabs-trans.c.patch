@@ -1,0 +1,325 @@
+--- src/eresi/libedfmt/stabs-trans.c	2023-03-26 19:10:27.946666680 +0200
++++ stabs-trans.c	2023-03-26 19:11:13.616666674 +0200
+@@ -10,7 +10,7 @@
+ #include "libedfmt.h"
+ 
+ /**
+- * Translation from stabs representation into uniform format 
++ * Translation from stabs representation into uniform format
+ * @file libedfmt/stabs-trans.c
+  */
+ 
+@@ -23,15 +23,15 @@
+ hash_t types_added;
+ 
+ /**
+- * Optimize stack allocation by setting a global pointer for string things 
++ * Optimize stack allocation by setting a global pointer for string things
+  */
+-char buf[BUFSIZ];
++char buff[BUFSIZ];
+ 
+ /**
+- * Advanced iterating of a structure element 
++ * Advanced iterating of a structure element
+  * @param type type input
+  * @param main_type (0 = resolve way, 1 = main way)
+- * @return generated uniform type 
++ * @return generated uniform type
+  */
+ static edfmttype_t     	*edfmt_stabs_transform_type_adv(edfmtstabstype_t *type, u_char main_type)
+ {
+@@ -43,10 +43,10 @@
+   int			addtype = 1;
+   u_char		wasclink = 0;
+ 
+-  PROFILER_IN(__FILE__, __FUNCTION__, __LINE__); 
++  PROFILER_IN(__FILE__, __FUNCTION__, __LINE__);
+ 
+   if (!type)
+-    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__, 
++    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__,
+ 		      "Invalid parameters", NULL);
+ 
+   /* Do we already have a type for this entry ? */
+@@ -73,8 +73,8 @@
+       /* If we didn't have any name, we generate it */
+       if (!str)
+ 	{
+-	  snprintf(buf, BUFSIZ - 1, "s_(%d)", rand() % 99999);
+-	  str = buf;
++	  snprintf(buff, BUFSIZ - 1, "s_(%d)", rand() % 99999);
++	  str = buff;
+ 	}
+ 
+       if (type->type == STABS_TYPE_STRUCT)
+@@ -87,7 +87,7 @@
+ 	  etype = edfmt_add_type_union(str,
+ 				       (int) type->u.struct_union.size);
+ 	}
+-      
++
+       /* Add the new type to avoid infinite loop */
+       if (etype)
+ 	{
+@@ -103,7 +103,7 @@
+ 	    {
+ 	      stype = edfmt_stabs_transform_type_adv(attr->type, 0);
+ 
+-	      ftype = edfmt_add_type_attr(etype, attr->name, 
++	      ftype = edfmt_add_type_attr(etype, attr->name,
+ 					  attr->start, attr->size, stype);
+ 	    }
+ 	}
+@@ -119,13 +119,13 @@
+       if (str == NULL)
+ 	{
+ 	  /* Generate an array type */
+-	  snprintf(buf, BUFSIZ - 1, "%s[%ld]", stype->name, type->u.arr.high+1);
+-	  str = buf;	  
++	  snprintf(buff, BUFSIZ - 1, "%s[%ld]", stype->name, type->u.arr.high+1);
++	  str = buff;
+ 	}
+ 
+-      etype = edfmt_add_type_array(str, 
++      etype = edfmt_add_type_array(str,
+ 				   type->u.arr.high,
+-				   stype);      
++				   stype);
+       break;
+     case STABS_TYPE_VOID:
+       etype = edfmt_add_type_void(type->data->name);
+@@ -156,17 +156,17 @@
+ 
+ 	  if (!stype)
+ 	    break;
+-	  
++
+ 	  switch(type->type)
+ 	    {
+ 	    case STABS_TYPE_CONST:
+-	      snprintf(buf, BUFSIZ - 1, "(const:%s)", stype->name);
+-	      str = buf;
++	      snprintf(buff, BUFSIZ - 1, "(const:%s)", stype->name);
++	      str = buff;
+ 	      break;
+ 	    case STABS_TYPE_FUNC:
+-	      snprintf(buf, BUFSIZ - 1, "(func:%s)()", stype->name);
++	      snprintf(buff, BUFSIZ - 1, "(func:%s)()", stype->name);
+ 	      stype->size = sizeof(void *);
+-	      str = buf;
++	      str = buff;
+ 	      break;
+ 	    case STABS_TYPE_PTR:
+ 	      stype->size = sizeof(void *);
+@@ -176,17 +176,17 @@
+ 		{
+ 		  if (wasclink)
+ 		    {
+-		      snprintf(buf, BUFSIZ - 1, "%s", stype->name);
+-		      str = buf;
++		      snprintf(buff, BUFSIZ - 1, "%s", stype->name);
++		      str = buff;
+ 		    }
+ 		  else
+ 		    {
+-		      snprintf(buf, BUFSIZ - 1, "*%s", stype->name);
+-		      str = buf;
++		      snprintf(buff, BUFSIZ - 1, "*%s", stype->name);
++		      str = buff;
+ 		    }
+ 		}
+ 	    }
+-	  
++
+ 	  if (type->type == STABS_TYPE_LINK)
+ 	    etype = edfmt_add_type_link(str, stype);
+ 	  else
+@@ -198,18 +198,18 @@
+       /* Not yet */
+       break;
+     }
+-  
++
+   if (etype && addtype)
+     {
+       type->transtype = etype;
+       HASH_ADDX(&types_added, type->cnum, etype);
+     }
+-  
++
+   PROFILER_ROUT(__FILE__, __FUNCTION__, __LINE__, etype);
+ }
+ 
+ /**
+- * This function iterate from normal way 
++ * This function iterate from normal way
+  * @param type_list input stabs type list
+  * @see edfmt_stabs_transform_type_adv
+  */
+@@ -217,10 +217,10 @@
+ {
+   edfmtstabstype_t	*type;
+ 
+-  PROFILER_IN(__FILE__, __FUNCTION__, __LINE__); 
++  PROFILER_IN(__FILE__, __FUNCTION__, __LINE__);
+ 
+   if (!type_list)
+-    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__, 
++    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__,
+ 		      "Invalid parameter", -1);
+ 
+   for (type = type_list; type != NULL; type = type->next)
+@@ -230,7 +230,7 @@
+ }
+ 
+ /**
+- * Transform a variable 
++ * Transform a variable
+  * @param var_list input stabs variable list
+  */
+ static int		edfmt_stabs_transform_var(edfmtstabsdata_t *var_list)
+@@ -238,10 +238,10 @@
+   edfmttype_t 		*stype;
+   edfmtstabsdata_t 	*var;
+ 
+-  PROFILER_IN(__FILE__, __FUNCTION__, __LINE__); 
++  PROFILER_IN(__FILE__, __FUNCTION__, __LINE__);
+ 
+   if (!var_list)
+-    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__, 
++    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__,
+ 		      "Invalid parameter", -1);
+ 
+   for (var = var_list; var != NULL; var = var->next)
+@@ -264,7 +264,7 @@
+ }
+ 
+ /**
+- * Transform a function 
++ * Transform a function
+  * @param func_list input stabs function list
+  */
+ static int		edfmt_stabs_transform_func(edfmtstabsfunc_t *func_list)
+@@ -274,10 +274,10 @@
+   edfmtfunc_t		*uni_func;
+   u_int			index;
+ 
+-  PROFILER_IN(__FILE__, __FUNCTION__, __LINE__); 
++  PROFILER_IN(__FILE__, __FUNCTION__, __LINE__);
+ 
+   if (!func_list)
+-    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__, 
++    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__,
+ 		      "Invalid parameter", -1);
+ 
+   /* Stabs function is a simple linked list without any child */
+@@ -286,12 +286,12 @@
+       if (!func->data || !func->rettype)
+ 	continue;
+ 
+-      uni_func = edfmt_add_func(func->data->name, func->rettype->transtype, 
++      uni_func = edfmt_add_func(func->data->name, func->rettype->transtype,
+ 				func->s_addr, func->e_addr, 0);
+ 
+       if (!uni_func)
+ 	continue;
+-      
++
+       /* We add each argument using uni_func pointer */
+       for (index = 0; index < STABS_MAX_ARGUMENTS && func->args[index]; index++)
+ 	{
+@@ -303,7 +303,7 @@
+ 	  switch(arg_func->scope)
+ 	    {
+ 	    case STABS_SCOPE_ARG:
+-	      edfmt_add_arg(uni_func, arg_func->name, 0, arg_func->u.stackpos, 
++	      edfmt_add_arg(uni_func, arg_func->name, 0, arg_func->u.stackpos,
+ 			    arg_func->type->transtype);
+ 	      break;
+ 	    }
+@@ -314,11 +314,11 @@
+ }
+ 
+ /**
+- * Organize the whole transformation of the stabs format 
++ * Organize the whole transformation of the stabs format
+  * @param sfile tranform this file list
+  * @param parent parent file
+  */
+-static int		edfmt_stabs_transform_adv(edfmtstabsfile_t *sfile, 
++static int		edfmt_stabs_transform_adv(edfmtstabsfile_t *sfile,
+ 						  edfmtfile_t *parent)
+ {
+   edfmtfile_t		*mparent;
+@@ -328,7 +328,7 @@
+   PROFILER_IN(__FILE__, __FUNCTION__, __LINE__);
+ 
+   if (!sfile)
+-    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__, 
++    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__,
+ 		      "Invalid parameter", -1);
+ 
+   if (types_added.ent == NULL)
+@@ -338,7 +338,7 @@
+   for (tfile = sfile; tfile != NULL; tfile = tfile->next)
+     {
+       snprintf(name, EDFMT_NAME_SIZE - 1,
+-	       "%s%s%s", 
++	       "%s%s%s",
+ 	       tfile->path ? tfile->path : "",
+ 	       tfile->path && tfile->file ? \
+ 	         (tfile->path[strlen(tfile->path)-1] == '/' ? "" : "/") : "",
+@@ -351,7 +351,7 @@
+ 
+       if (tfile->vars)
+ 	edfmt_stabs_transform_var(tfile->vars);
+-      
++
+       if (tfile->inc)
+ 	edfmt_stabs_transform_adv(tfile->inc, mparent);
+ 
+@@ -365,7 +365,7 @@
+ }
+ 
+ /**
+- * Transform stabs informations - Entry point 
++ * Transform stabs informations - Entry point
+  * @param file file to transform from stabs to uniform format
+  * @see edfmt_stabs_transform_adv
+  */
+@@ -377,20 +377,20 @@
+   PROFILER_IN(__FILE__, __FUNCTION__, __LINE__);
+ 
+   if (!file)
+-    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__, 
+-		      "Invalid parameters", -1); 
++    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__,
++		      "Invalid parameters", -1);
+ 
+   tinfo = (edfmtstabsinfo_t *) file->debug_format.stabs;
+ 
+   if (tinfo == NULL)
+-    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__, 
+-		      "No debug information for stabs", -1); 
++    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__,
++		      "No debug information for stabs", -1);
+ 
+   tfile = (edfmtstabsfile_t *) tinfo->file;
+ 
+   if (tfile == NULL)
+-    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__, 
+-		      "No file information for stabs", -1); 
++    PROFILER_ERR(__FILE__, __FUNCTION__, __LINE__,
++		      "No file information for stabs", -1);
+ 
+   /* Init api */
+   edfmt_add_init(file);
+@@ -399,6 +399,6 @@
+ 
+   /* Reset api */
+   edfmt_add_end();
+-  
++
+   PROFILER_ROUT(__FILE__, __FUNCTION__, __LINE__, 0);
+ }

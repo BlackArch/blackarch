@@ -3,28 +3,45 @@
 
 pkgname=python-arsenic
 _pkgname=arsenic
-pkgver=19.1
-pkgrel=4
+pkgver=21.8
+pkgrel=3
 pkgdesc='Async WebDriver implementation for asyncio and asyncio-compatible frameworks.'
 arch=('any')
 groups=('blackarch' 'blackarch-automation' 'blackarch-webapp')
 url='https://github.com/HDE/arsenic/releases'
 license=('Apache')
-depends=('python' 'python-attrs' 'python-structlog' 'python-aiohttp'
-         'geckodriver')
+depends=('python' 'python-pip' 'python-build' 'python-attrs' 'python-structlog'
+         'python-aiohttp' 'geckodriver')
 makedepends=('python-setuptools')
-source=("https://github.com/HDE/$_pkgname/archive/$pkgver.tar.gz")
-sha512sums=('f991827bbcd84cc8ad28b0eb80ae77354e67db6b70338eeef25d1cabf7117f4914d242b0c85ea6167640f0df77843199c95d2e28fe6747d94376faaaa699c0e8')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('55fd0e6f9acf1f578d990146b81f7f91d8c58aa68601840346c80cf7c535d5412a983c1cf0ee355383f80f6b667ef7a63b22dae8192b51e85541258a143ab366')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  sed -i 's|structlog = "^20.1.0"|structlog = ">=22.1.0"|g' pyproject.toml
+}
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --no-compile \
+    --ignore-installed \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

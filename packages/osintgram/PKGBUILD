@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=osintgram
+pkgver=1.3.r5.g50d44fd
+pkgrel=2
+pkgdesc='OSINT tool offering an interactive shell to perform analysis on Instagram account of any users by its nickname.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/Datalux/Osintgram'
+license=('GPL3')
+depends=('python' 'python-instagram-private-api' 'python-requests'
+         'python-requests-toolbelt' 'python-geopy' 'python-gnureadline'
+         'python-prettytable')
+makedepends=('git')
+source=("git+https://github.com/Datalux/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md doc/*.md
+
+  rm -rf LICENSE *.md doc/ .gitignore Makefile Dockerfile docker-compose.yml \
+    docker_reqs.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python main.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+

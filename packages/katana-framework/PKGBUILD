@@ -1,0 +1,58 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=katana-framework
+_pkgname=KatanaFramework
+pkgver=1.0.0.1
+pkgrel=2
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-dos' 'blackarch-cracker'
+        'blackarch-scanner' 'blackarch-recon')
+pkgdesc='A framework that seekss to unite general auditing tools, which are general pentesting tools (Network,Web,Desktop and others).'
+arch=('any')
+url='https://github.com/PowerScript/KatanaFramework'
+license=('GPL3')
+depends=('python2' 'python2-lxml' 'aircrack-ng' 'nmap' 'ettercap'
+         'python2-isc_dhcp_leases' 'hostapd' 'xterm' 'python2-scapy'
+         'python2-dnslib' 'python2-ipy' 'python2-setuptools'
+         'python2-beautifulsoup4' 'python2-future')
+makedepends=('git')
+replaces=('katana')
+source=("git+https://github.com/PowerScript/$_pkgname")
+sha512sums=('SKIP')
+
+package() {
+  cd $_pkgname
+
+  _tools='ktf.console ktf.run ktf.ktf ktf.linker ktf.run ktf.update'
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 doc/man/ktf.console "$pkgdir/usr/share/man/man1/ktf.console"
+  install -Dm 644 doc/man/ktf.tool "$pkgdir/usr/share/man/man1/ktf-tool"
+  rm -rf doc/man/ doc/logos
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" doc/*
+
+  rm -rf doc/ COPYING.GPL LICENCE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  for i in $_tools
+  do
+    cat > "$pkgdir/usr/bin/$pkgname-$(echo $i | tr -d '.')" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python2 $i "\$@"
+EOF
+    chmod +x "$pkgdir/usr/bin/$pkgname-$( echo $i | tr -d '.')"
+  done
+
+  cat > "$pkgdir/usr/bin/$pkgname-ktf.gui" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec java -jar ktf.gui.jar "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname-ktf.gui"
+}
+

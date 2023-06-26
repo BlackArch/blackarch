@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=zsteg
+pkgver=v0.2.13.r1.gc8d2508
+pkgrel=1
+pkgdesc='Detect stegano-hidden data in PNG and BMP.'
+arch=('any')
+groups=('blackarch' 'blackarch-stego' 'blackarch-anti-forensic')
+url='https://github.com/zed-0xff/zsteg'
+license=('MIT')
+depends=('ruby' 'ruby-iostruct' 'ruby-prime' 'ruby-zpng')
+makedepends=('git')
+options=(!emptydirs)
+source=("git+https://github.com/zed-0xff/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  gem build $pkgname.gemspec
+}
+
+package() {
+  cd $pkgname
+
+  _gemdir="$(ruby -e'puts Gem.default_dir')"
+  _release=$(gem build $pkgname.gemspec | grep Version | cut -d' ' -f4)
+
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" "$pkgname-$_release.gem"
+
+  rm "$pkgdir/$_gemdir/cache/$pkgname-$_release.gem"
+
+  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
+}
+

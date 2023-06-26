@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=libdb
+_pkgname=db
+pkgver=5.3.28
+pkgrel=1
+pkgdesc='Berkley DB.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/berkeleydb/libdb/releases'
+license=('custom:unknown' 'BSD' 'CDDL')
+depends=('glibc')
+makedepends=('libtool')
+source=("https://github.com/berkeleydb/$pkgname/releases/download/v$pkgver/$_pkgname-$pkgver.tar.gz")
+sha256sums=('e0a992d740709892e81f9d93f06daf305cf73fb81b545afe72478043172c3628')
+
+prepare() {
+  cd "$_pkgname-$pkgver/build_unix"
+
+  ../dist/configure \
+    --prefix=/usr \
+    --enable-shared \
+    --enable-static
+}
+
+build() {
+  cd "$_pkgname-$pkgver/build_unix"
+
+  make
+}
+
+package() {
+  cd "$_pkgname-$pkgver/build_unix"
+
+  install -dm 755 "$pkgdir/usr/share/doc/libdb"
+
+  make DESTDIR="$pkgdir" install
+  libtool --finish "$pkgdir/usr/lib"
+
+  cd ..
+
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
+
+  mv "$pkgdir/usr/docs" "$pkgdir/usr/share/doc/libdb"
+}
+

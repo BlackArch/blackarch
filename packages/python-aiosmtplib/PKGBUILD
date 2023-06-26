@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-aiosmtplib
+_pkgname=${pkgname#python-}
+pkgver=2.0.1
+pkgrel=3
+pkgdesc='Asynchronous SMTP client for use with asyncio.'
+arch=('any')
+url='https://github.com/cole/aiosmtplib'
+license=('MIT')
+depends=('python')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('9ce83c05eddce68bece42b74682ab1f5fece7b276304c9a1c28a3b5a16947f90ed9a89c380ea0ca67bd608aa8d5c8f531dd7e86d9a1dcbceb32fca4450e5c083')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$_pkgname"
+}
+

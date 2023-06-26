@@ -3,7 +3,8 @@
 
 pkgname=spraycharles
 pkgver=198.041a598
-pkgrel=1
+_pyver=3.11
+pkgrel=5
 pkgdesc='Low and slow password spraying tool, designed to spray on an interval over a long period of time.'
 groups=('blackarch' 'blackarch-cracker')
 arch=('any')
@@ -12,7 +13,7 @@ license=('BSD')
 depends=('python' 'impacket' 'python-numpy' 'python-requests' 'python-texttable'
          'python-requests-ntlm' 'python-pymsteams' 'python-click-config-file'
          'python-rich' 'python-discord-webhook' 'python-notifiers')
-makedepends=('git')
+makedepends=('git' 'python-pip' 'python-build')
 source=("git+https://github.com/Tw1sm/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -22,25 +23,35 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/share/doc/$pkgname/"
+  install -dm 755 "$pkgdir/usr/share/licenses/$pkgname/"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$pkgname"
 
-  rm README.md LICENSE .gitignore
+  mv "$pkgdir/usr/lib/python$_pyver/site-packages/CHANGELOG.md" \
+    "$pkgdir/usr/share/doc/$pkgname/CHANGELOG.md"
 
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  mv "$pkgdir/usr/lib/python$_pyver/site-packages/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

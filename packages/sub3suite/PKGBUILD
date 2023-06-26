@@ -1,0 +1,69 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sub3suite
+pkgver=v0.0.4.r8.gb5bfa2a
+pkgrel=1
+pkgdesc='A free, open source, cross platform Intelligence Gathering tool.'
+groups=('blackarch' 'blackarch-recon')
+arch=('x86_64' 'aarch64')
+url='https://github.com/3nock/sub3suite'
+license=('GPL3')
+depends=('qt5-base')
+makedepends=('git' 'make' 'qtcreator')
+source=("git+https://github.com/3nock/$pkgname.git"
+        "git+https://github.com/google/gumbo-parser.git"
+        "git+https://github.com/google/breakpad.git")
+sha512sums=('SKIP'
+            'SKIP'
+            'SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare(){
+  cd $pkgname
+
+  git submodule init
+  git config submodule.sub3suite/include/gumbo-parser.url "$srcdir/gumbo-parser"
+  git config submodule.sub3suite/include/breakpad.url "$srcdir/breakpad"
+  git -c protocol.file.allow=always submodule update
+
+  cp -a "$pkgname/include/strings.h" "$pkgname/include/gumbo-parser/src/"
+  sed -i 's/#include <strings.h>/#include "strings.h"/g' \
+    "$pkgname/include/gumbo-parser/src/"{attribute.c,parser.c,string_buffer.c,string_piece.c,utf8.c,util.c,vector.c}
+
+  install -dm 755 "$pkgname/include/breakpad/src/third_party/lss"
+#  cp -a "$pkgname/include/linux_syscall_support.h" \
+#    "$pkgname/include/breakpad/src/third_party/lss/"
+}
+
+build() {
+  cd $pkgname
+
+  mkdir -p build && cd build
+  qmake CONFIG+=release "../$pkgname/$pkgname.pro"
+  make
+}
+
+package() {
+  cd $pkgname/build
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  make INSTALL_ROOT="$pkgdir" install
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" ../*.md
+
+    cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /opt/$pkgname/bin
+exec ./$pkgname "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+

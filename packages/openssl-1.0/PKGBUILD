@@ -1,0 +1,98 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Allen Zhong <moeallenz@gmail.com>
+# Old Maintainer: Yishen Miao <mys721tx@gmail.com>
+# Old Contributor: Pierre Schmitz <pierre@archlinux.de>
+
+pkgname=openssl-1.0
+#pkgname=${_pkgname}-chacha20
+_ver=1.0.2u
+pkgver=${_ver/[a-z]/.${_ver//[0-9.]/}}
+#pkgver=$_ver
+pkgrel=2
+pkgdesc='The Open Source toolkit for Secure Sockets Layer and Transport Layer Security with Chacha20 cipher.'
+arch=('x86_64' 'aarch64')
+url='https://www.openssl.org'
+license=('custom:BSD')
+depends=('perl')
+optdepends=('ca-certificates')
+options=('!makeflags')
+backup=('etc/ssl/openssl.cnf')
+conflicts=('openssl-1.0')
+provides=("openssl-1.0=$pkgver")
+source=("https://www.openssl.org/source/openssl-${_ver}.tar.gz"
+        'no-rpath.patch'
+        'ssl3-test-failure.patch'
+        'openssl-1.0-versioned-symbols.patch'
+        'openssl__chacha20_poly1305_draft_and_rfc_ossl102j.patch')
+sha512sums=('c455bb309e20e2c2d47fdc5619c734d107d5c8c38c1409903ce979acc120b0d5fa0312917c0aa0d630e402d092a703d4249643f36078e8528a3cafc9dac6ab32'
+            '12128424c8ce01564af6fadf2860e192186b7fbbc1faeef018d0b8125eed5983b6825229c3515dea00757e63682cf9d39787dd28751686e645a9a8c91e4e5eb9'
+            '3fc56a5f5863ad19852132c1ec3ba6e80565341548d5507ec5b7b9f61183a96ab57786c46b828a9069d0ac3b10d4941eaecc176301c5f0d1e8a5adfd83c23ccc'
+            '4c04168e98a77a7e0ce65b5b55220c82e3a262b3d6f6949ba13d158a4f62cc322a244aced92ca2b4c9a535d9b4ac28cc6a21b7e1796a53df1126d4d34e16d7c0'
+            'c479f194a777e13af567436a5a4534f2968d8e4bb3efcbe2e360ca026fac6be220069cce045680729d491cb58b45695f073d6e9f7324c81dbdf99e42867d2814')
+
+prepare() {
+  cd "openssl-$_ver"
+
+  # Cloudflare patch
+  # https://github.com/cloudflare/sslconfig/blob/master/patches/openssl__chacha20_poly1305_draft_and_rfc_ossl102j.patch
+  patch -p1 -i "$srcdir/openssl__chacha20_poly1305_draft_and_rfc_ossl102j.patch"
+
+  # remove rpath: http://bugs.archlinux.org/task/14367
+  patch -p0 -i "$srcdir/no-rpath.patch"
+
+  # disable a test that fails when ssl3 is disabled
+  patch -p1 -i "$srcdir/ssl3-test-failure.patch"
+
+  # add symbol versioning to prevent conflicts with openssl 1.1 symbols (Debian)
+  patch -p1 -i "$srcdir/openssl-1.0-versioned-symbols.patch"
+}
+
+build() {
+  cd "openssl-$_ver"
+
+  export CC=gcc
+  export CXX=g++
+  if [ "${CARCH}" == 'x86_64' ]; then
+    openssltarget='linux-x86_64'
+    optflags='enable-ec_nistp_64_gcc_128'
+  elif [ "${CARCH}" == 'i686' ]; then
+    openssltarget='linux-elf'
+    optflags=''
+  fi
+
+  # mark stack as non-executable: http://bugs.archlinux.org/task/12434
+  ./Configure --prefix=/usr --openssldir=/etc/ssl --libdir=lib/openssl-1.0 \
+    shared no-ssl3-method ${optflags} \
+    "${openssltarget}" \
+    "-Wa,--noexecstack ${CPPFLAGS} ${CFLAGS} ${LDFLAGS}"
+
+  make depend
+  make
+}
+
+package() {
+  cd "openssl-$_ver"
+
+  make INSTALL_PREFIX="$pkgdir" install_sw
+
+  # Move some files around
+  install -m 755 -d "$pkgdir/usr/include/openssl-1.0"
+
+  mv "$pkgdir/usr/include/openssl" "$pkgdir/usr/include/openssl-1.0/"
+  mv "$pkgdir/usr/lib/openssl-1.0/libcrypto.so.1.0.0" "$pkgdir/usr/lib/"
+  mv "$pkgdir/usr/lib/openssl-1.0/libssl.so.1.0.0" "$pkgdir/usr/lib/"
+  ln -sf ../libssl.so.1.0.0 "$pkgdir/usr/lib/openssl-1.0/libssl.so"
+  ln -sf ../libcrypto.so.1.0.0 "$pkgdir/usr/lib/openssl-1.0/libcrypto.so"
+  mv "$pkgdir/usr/bin/openssl" "$pkgdir/usr/bin/openssl-1.0"
+
+  # Update includedir in .pc files
+  sed -e 's|/include$|/include/openssl-1.0|' \
+    -i "$pkgdir"/usr/lib/openssl-1.0/pkgconfig/*.pc
+
+  rm -rf "$pkgdir"/{etc,usr/bin/c_rehash}
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

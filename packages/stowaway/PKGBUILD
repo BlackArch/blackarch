@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=stowaway
+pkgver=v2.1.r4.gfe90f32
+pkgrel=1
+pkgdesc='A Multi-hop proxy tool for security researchers and pentesters.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-proxy' 'blackarch-exploitation')
+url='https://github.com/ph4ntonn/Stowaway'
+license=('MIT')
+makedepends=('go' 'git')
+source=("git+https://github.com/ph4ntonn/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  for bin in agent admin; do
+    GOPATH="$srcdir" go mod download
+    GOPATH="$srcdir" go build \
+      -trimpath \
+      -buildmode=pie \
+      -mod=readonly \
+      -modcacherw \
+      -ldflags "-s -w" \
+      -o $pkgname-$bin "$bin/$bin.go"
+  done
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "$pkgname-admin" "$pkgdir/usr/bin/$pkgname-admin"
+  install -Dm 755 "$pkgname-agent" "$pkgdir/usr/bin/$pkgname-agent"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
