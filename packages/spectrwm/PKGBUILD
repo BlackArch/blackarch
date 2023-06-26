@@ -7,9 +7,8 @@
 # Old Contributor: Christoph Zeiler <archNOSPAM_at_moonblade.dot.org>
 
 pkgname=spectrwm
-pkgver=3.4.1
-_ghver=3_4_1
-pkgrel=4
+pkgver=3.4.1.r49.g06e3733
+pkgrel=1
 pkgdesc='A minimalistic automatic tiling window manager that tries to stay out of the way.'
 arch=('x86_64' 'aarch64')
 url="https://github.com/conformal/spectrwm/releases"
@@ -17,22 +16,28 @@ license=('custom:ISC')
 depends=('dmenu' 'xcb-util' 'xcb-util-wm' 'xcb-util-keysyms' 'libxrandr'
          'libxft' 'libxcursor' 'terminus-font')
 replaces=('scrotwm')
-makedepends=('libxt')
+makedepends=('git' 'libxt')
 optdepends=('scrot: screenshots'
             'xlockmore: great screenlocker')
 backup=("etc/$pkgname.conf")
-source=("https://github.com/conformal/spectrwm/archive/SPECTRWM_${_ghver}.tar.gz"
+source=("git+https://github.com/conformal/$pkgname.git"
         'LICENSE'
         'baraction.sh' \
         "$pkgname-no-preload")
-sha512sums=('94d468833124b51fa12b29b173126f10f27dd551d599459e4bea589721b3df6f1f0af0ea67326ed3ad462e1203d3bbcb82032ff83abfa0943ec45afd29dedaa6'
+sha512sums=('SKIP'
             '3c5b14b0d5def44fb89e23c8e87a3bcf316a1613ffdd4dc0a2c94e9bf58628b7a109be1dd1f1b7224b29eb1814b86ffc2e1c3ce53159a19644e9be77c1d48bb7'
             '82e15b2c5dbeef5741f6c8f9149067a1aff9d971b949deff091446418f1f2722ff1eb2b9897b9e38424a8a929bfaa5c23f3136facc4946ecd17f657a9c10149a'
             '051029932b194ade5eaf4d9c2f6ac594d46ce33bff347cac083ef833efac80a8a85ad9eae57419c32f9f87e566a59289c5aa02e33ded9fd26dd889eb08ec5db5')
 install="$pkgname.install"
 
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed -E 's/^[^0-9]*//;s/([^-]*-g)/r\1/;s/[-_]/./g'
+}
+
 prepare() {
-  cd "$pkgname-SPECTRWM_$_ghver"
+  cd $pkgname
 
   sed -i 's|\"/usr/local/lib/libswmhack.so\"|\"libswmhack.so\"|' spectrwm.c
   sed -i 's/verbose_layout = false;/verbose_layout = true;/' spectrwm.c
@@ -40,13 +45,13 @@ prepare() {
 }
 
 build() {
-  cd "$pkgname-SPECTRWM_$_ghver/linux"
+  cd "$pkgname/linux"
 
   make PREFIX=/usr
 }
 
 package() {
-  cd "$pkgname-SPECTRWM_$_ghver"
+  cd $pkgname
 
   cd linux
   make PREFIX=/usr DESTDIR="$pkgdir" install
