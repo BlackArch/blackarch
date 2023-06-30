@@ -3,8 +3,8 @@
 
 pkgname=bqm
 _gemname=$pkgname
-pkgver=v1.4.0.r2.g6632c1a
-pkgrel=2
+pkgver=v1.4.0.r3.g92040b7
+pkgrel=1
 pkgdesc='Download BloudHound query lists, deduplicate entries and merge them in one file.'
 arch=('any')
 groups=('blackarch' 'blackarch-misc')
@@ -31,22 +31,20 @@ build() {
 package() {
   cd $_gemname
 
-  _gemdir="$(ruby -e'puts Gem.default_dir')"
-  _gemver=3.0.0
+  _gemhome="$(gem env home)"
   _release=$(gem build $_gemname.gemspec | grep Version | cut -d' ' -f4)
 
   gem install --ignore-dependencies --no-user-install --no-document \
-    --no-wrapper -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" \
+    --no-wrapper -i "$pkgdir/$_gemhome" -n "$pkgdir/usr/bin" \
     "$_gemname-$_release.gem"
 
   rm "$pkgdir/usr/bin/$pkgname"
-  ln -s "/usr/lib/ruby/gems/$_gemver/gems/bqm-$_release/bin/$pkgname" \
-    "$pkgdir/usr/bin/$pkgname"
+  ln -s "$_gemhome/gems/bqm-$_release/bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
 
-  rm -rf "$pkgdir/$_gemdir/cache/$_gemname-$_release.gem"
-  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
+  rm -rf "$pkgdir/$_gemhome/cache/$_gemname-$_release.gem"
+  find "$pkgdir/$_gemhome/extensions/" -name *.so -delete
 
-  install -Dm 644 "$pkgdir/$_gemdir/gems/$_gemname-$_release/LICENSE" \
+  install -Dm 644 "$pkgdir/$_gemhome/gems/$_gemname-$_release/LICENSE" \
     "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
