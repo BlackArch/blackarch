@@ -1,0 +1,232 @@
+From 16270bf2f945eea4c430000d372c30c877523b20 Mon Sep 17 00:00:00 2001
+From: Neil Schemenauer <nas-github@arctrix.com>
+Date: Mon, 22 Jul 2019 12:54:25 -0700
+Subject: [PATCH] bpo-36044: Reduce number of unit tests run for PGO build
+ (GH-14702)
+
+Reduce the number of unit tests run for the PGO generation task.  This
+speeds up the task by a factor of about 15x.  Running the full unit test
+suite is slow.  This change may result in a slightly less optimized build
+since not as many code branches will be executed.  If you are willing to
+wait for the much slower build, the old behavior can be restored using
+'./configure [..] PROFILE_TASK="-m test --pgo-extended"'.  We make no
+guarantees as to which PGO task set produces a faster build.  Users who
+care should run their own relevant benchmarks as results can depend on
+the environment, workload, and compiler tool chain.
+(cherry picked from commit 4e16a4a3112161a5c6981c0588142d4a4673a934)
+
+Co-authored-by: Neil Schemenauer <nas-github@arctrix.com>
+---
+ Lib/test/libregrtest/cmdline.py               |  6 ++-
+ Lib/test/libregrtest/main.py                  |  4 ++
+ Lib/test/libregrtest/pgo.py                   | 52 +++++++++++++++++++
+ Makefile.pre.in                               |  7 +--
+ .../2019-07-11-01-28-24.bpo-36044.gIgfiJ.rst  |  9 ++++
+ configure                                     | 14 +++++
+ configure.ac                                  |  8 +++
+ 7 files changed, 96 insertions(+), 4 deletions(-)
+ create mode 100644 Lib/test/libregrtest/pgo.py
+ create mode 100644 Misc/NEWS.d/next/Build/2019-07-11-01-28-24.bpo-36044.gIgfiJ.rst
+
+diff --git a/Lib/test/libregrtest/cmdline.py b/Lib/test/libregrtest/cmdline.py
+index 9f1bf6800824a..c8fedc7ad329b 100644
+--- a/Lib/test/libregrtest/cmdline.py
++++ b/Lib/test/libregrtest/cmdline.py
+@@ -264,7 +264,9 @@ def _create_parser():
+                        help='only write the name of test cases that will be run'
+                             ' , don\'t execute them')
+     group.add_argument('-P', '--pgo', dest='pgo', action='store_true',
+-                       help='enable Profile Guided Optimization training')
++                       help='enable Profile Guided Optimization (PGO) training')
++    group.add_argument('--pgo-extended', action='store_true',
++                       help='enable extended PGO training (slower training)')
+     group.add_argument('--fail-env-changed', action='store_true',
+                        help='if a test file alters the environment, mark '
+                             'the test as failed')
+@@ -344,6 +346,8 @@ def _parse_args(args, **kwargs):
+         parser.error("-G/--failfast needs either -v or -W")
+     if ns.pgo and (ns.verbose or ns.verbose2 or ns.verbose3):
+         parser.error("--pgo/-v don't go together!")
++    if ns.pgo_extended:
++        ns.pgo = True  # pgo_extended implies pgo
+ 
+     if ns.nowindows:
+         print("Warning: the --nowindows (-n) option is deprecated. "
+diff --git a/Lib/test/libregrtest/main.py b/Lib/test/libregrtest/main.py
+index e2274254fdb89..78b6790685c9d 100644
+--- a/Lib/test/libregrtest/main.py
++++ b/Lib/test/libregrtest/main.py
+@@ -17,6 +17,7 @@
+     INTERRUPTED, CHILD_ERROR, TEST_DID_NOT_RUN,
+     PROGRESS_MIN_TIME, format_test_result, is_failed)
+ from test.libregrtest.setup import setup_tests
++from test.libregrtest.pgo import setup_pgo_tests
+ from test.libregrtest.utils import removepy, count, format_duration, printlist
+ from test import support
+ 
+@@ -214,6 +215,9 @@ def find_tests(self, tests):
+ 
+         removepy(self.tests)
+ 
++        # add default PGO tests if no tests are specified
++        setup_pgo_tests(self.ns)
++
+         stdtests = STDTESTS[:]
+         nottests = NOTTESTS.copy()
+         if self.ns.exclude:
+diff --git a/Lib/test/libregrtest/pgo.py b/Lib/test/libregrtest/pgo.py
+new file mode 100644
+index 0000000000000..327f19374c3ff
+--- /dev/null
++++ b/Lib/test/libregrtest/pgo.py
+@@ -0,0 +1,52 @@
++# Set of tests run by default if --pgo is specified.  The tests below were
++# chosen based on the following criteria: either they exercise a commonly used
++# C extension module or type, or they run some relatively typical Python code.
++# Long running tests should be avoided because the PGO instrumented executable
++# runs slowly.
++PGO_TESTS = [
++    'test_array',
++    'test_base64',
++    'test_binascii',
++    'test_binop',
++    'test_bisect',
++    'test_bytes',
++    'test_cmath',
++    'test_codecs',
++    'test_collections',
++    'test_complex',
++    'test_dataclasses',
++    'test_datetime',
++    'test_decimal',
++    'test_difflib',
++    'test_embed',
++    'test_float',
++    'test_fstring',
++    'test_functools',
++    'test_generators',
++    'test_hashlib',
++    'test_heapq',
++    'test_int',
++    'test_itertools',
++    'test_json',
++    'test_long',
++    'test_math',
++    'test_memoryview',
++    'test_operator',
++    'test_ordered_dict',
++    'test_pickle',
++    'test_pprint',
++    'test_re',
++    'test_set',
++    'test_statistics',
++    'test_struct',
++    'test_tabnanny',
++    'test_time',
++    'test_unicode',
++    'test_xml_etree',
++    'test_xml_etree_c',
++]
++
++def setup_pgo_tests(ns):
++    if not ns.args and not ns.pgo_extended:
++        # run default set of tests for PGO training
++        ns.args = PGO_TESTS[:]
+diff --git a/Makefile.pre.in b/Makefile.pre.in
+index 88abb563600d8..6a9f4b52704d2 100644
+--- a/Makefile.pre.in
++++ b/Makefile.pre.in
+@@ -255,9 +255,10 @@ TCLTK_INCLUDES=	@TCLTK_INCLUDES@
+ TCLTK_LIBS=	@TCLTK_LIBS@
+ 
+ # The task to run while instrumented when building the profile-opt target.
+-# We exclude unittests with -x that take a rediculious amount of time to
+-# run in the instrumented training build or do not provide much value.
+-PROFILE_TASK=-m test.regrtest --pgo
++# To speed up profile generation, we don't run the full unit test suite
++# by default. The default is "-m test --pgo". To run more tests, use
++# PROFILE_TASK="-m test --pgo-extended"
++PROFILE_TASK=	@PROFILE_TASK@
+ 
+ # report files for gcov / lcov coverage report
+ COVERAGE_INFO=	$(abs_builddir)/coverage.info
+diff --git a/Misc/NEWS.d/next/Build/2019-07-11-01-28-24.bpo-36044.gIgfiJ.rst b/Misc/NEWS.d/next/Build/2019-07-11-01-28-24.bpo-36044.gIgfiJ.rst
+new file mode 100644
+index 0000000000000..177c4cb6d17c7
+--- /dev/null
++++ b/Misc/NEWS.d/next/Build/2019-07-11-01-28-24.bpo-36044.gIgfiJ.rst
+@@ -0,0 +1,9 @@
++Reduce the number of unit tests run for the PGO generation task.  This
++speeds up the task by a factor of about 15x.  Running the full unit test
++suite is slow.  This change may result in a slightly less optimized build
++since not as many code branches will be executed.  If you are willing to
++wait for the much slower build, the old behavior can be restored using
++'./configure [..] PROFILE_TASK="-m test --pgo-extended"'.  We make no
++guarantees as to which PGO task set produces a faster build.  Users who
++care should run their own relevant benchmarks as results can depend on
++the environment, workload, and compiler tool chain.
+diff --git a/configure b/configure
+index 6e7f277bace9b..cb5f130d38e05 100755
+--- a/configure
++++ b/configure
+@@ -686,6 +686,7 @@ target_vendor
+ target_cpu
+ target
+ LLVM_AR
++PROFILE_TASK
+ DEF_MAKE_RULE
+ DEF_MAKE_ALL_RULE
+ ABIFLAGS
+@@ -856,6 +857,7 @@ LDFLAGS
+ LIBS
+ CPPFLAGS
+ CPP
++PROFILE_TASK
+ PKG_CONFIG
+ PKG_CONFIG_PATH
+ PKG_CONFIG_LIBDIR'
+@@ -1559,6 +1561,8 @@ Some influential environment variables:
+   CPPFLAGS    (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if
+               you have headers in a nonstandard directory <include dir>
+   CPP         C preprocessor
++  PROFILE_TASK
++              Python args for PGO generation task
+   PKG_CONFIG  path to pkg-config utility
+   PKG_CONFIG_PATH
+               directories to add to pkg-config's search path
+@@ -6426,6 +6430,16 @@ else
+   DEF_MAKE_RULE="all"
+ fi
+ 
++
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking PROFILE_TASK" >&5
++$as_echo_n "checking PROFILE_TASK... " >&6; }
++if test -z "$PROFILE_TASK"
++then
++	PROFILE_TASK='-m test --pgo'
++fi
++{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $PROFILE_TASK" >&5
++$as_echo "$PROFILE_TASK" >&6; }
++
+ # Make llvm-relatec checks work on systems where llvm tools are not installed with their
+ # normal names in the default $PATH (ie: Ubuntu).  They exist under the
+ # non-suffixed name in their versioned llvm directory.
+diff --git a/configure.ac b/configure.ac
+index 324ce0bd99a9c..b31ed242f1a81 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1293,6 +1293,14 @@ else
+   DEF_MAKE_RULE="all"
+ fi
+ 
++AC_ARG_VAR(PROFILE_TASK, Python args for PGO generation task)
++AC_MSG_CHECKING(PROFILE_TASK)
++if test -z "$PROFILE_TASK"
++then
++	PROFILE_TASK='-m test --pgo'
++fi
++AC_MSG_RESULT($PROFILE_TASK)
++
+ # Make llvm-relatec checks work on systems where llvm tools are not installed with their
+ # normal names in the default $PATH (ie: Ubuntu).  They exist under the
+ # non-suffixed name in their versioned llvm directory.

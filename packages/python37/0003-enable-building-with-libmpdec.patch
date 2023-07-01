@@ -1,0 +1,30 @@
+From 16eea45fbd3b7c3d1b222b7eb7a5d7ee427f70bd Mon Sep 17 00:00:00 2001
+From: Felix Yan <felixonmars@archlinux.org>
+Date: Thu, 16 Jul 2020 04:22:23 +0800
+Subject: [PATCH] [3.8] bpo-41302: Support system libmpdec 2.5 for Python 3.8
+ (GH-21488)
+
+Define UNUSED only when mpdecimal.h doesn't define it. This would support
+building with system libmpdec 2.5 while retaining compatibility with system
+libmpdec 2.4 or the vendored copy.
+
+Tested to build fine with either system libmpdec or the vendored one.
+---
+diff --git a/Modules/_decimal/_decimal.c b/Modules/_decimal/_decimal.c
+index df7c6e254bcf2..eb1f1a01feeca 100644
+--- a/Modules/_decimal/_decimal.c
++++ b/Modules/_decimal/_decimal.c
+@@ -58,6 +58,13 @@
+ 
+ #define BOUNDS_CHECK(x, MIN, MAX) x = (x < MIN || MAX < x) ? MAX : x
+ 
++#ifndef UNUSED
++#if defined(__GNUC__) && !defined(__INTEL_COMPILER)
++  #define UNUSED __attribute__((unused))
++#else
++  #define UNUSED
++#endif
++#endif
+ 
+ /* _Py_DEC_MINALLOC >= MPD_MINALLOC */
+ #define _Py_DEC_MINALLOC 4

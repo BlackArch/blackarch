@@ -1,1 +1,117 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
 
+# This package has been retrieved from AUR
+# Maintainer: Yoan Blanc <yoan@dosimple.ch>
+# Contributor: Whyme Lyu <callme5long@gmail.com>
+# Contributor: Carlo De Pieri <depieri.carlo@gmail.com>
+# Contributor: Tobias Kunze <r@rixx.de>
+# Contributor: Angel Velasquez <angvp@archlinux.org>
+# Contributor: Felix Yan <felixonmars@archlinux.org>
+# Contributor: Stéphane Gaudreault <stephane@archlinux.org>
+# Contributor: Allan McRae <allan@archlinux.org>
+# Contributor: Jason Chu <jason@archlinux.org>
+
+pkgname=python37
+pkgver=3.7.17
+pkgrel=1
+_pybasever=${pkgver%.*}
+_pymajver=3
+pkgdesc="Major release 3.7 of the Python high-level programming language"
+arch=('x86_64')
+license=('custom')
+url="https://www.python.org/"
+provides=("python=$pkgver")
+depends=('expat' 'bzip2' 'gdbm' 'openssl' 'libffi' 'zlib' 'libnsl' 'libxcrypt')
+makedepends=('tk' 'sqlite' 'bluez-libs' 'mpdecimal')
+optdepends=('sqlite'
+            'mpdecimal: for decimal'
+            'xz: for lzma'
+            'tk: for tkinter')
+source=("https://www.python.org/ftp/python/${pkgver%rc*}/Python-${pkgver}.tar.xz"{,.asc}
+        dont-make-libpython-readonly.patch
+        0002-smaller-pgo-test-suite.patch
+        0003-enable-building-with-libmpdec.patch
+        0004-mpdecimal-2.5.1.patch
+        )
+sha512sums=('86ba1c953e7b4bce70445d1616cc0d428b50937f6a874811584df8bf23c3e2ba3e5d48dec00e629a47f4216f3ca50dc5389cd485fbc315f51000d8750403b5f0'
+            'SKIP'
+            '2ef96708d5b13ae2a3d2cc62c87b4780e60ecfce914e190564492def3a11d5e56977659f41c7f9d12266e58050c766bce4e2b5d50b708eb792794fa8357920c4'
+            '10db463924402b6f1d9631424397495e8be0419bc7f9ca6cd7325216433b2dfe512b6f6669626ff05a8e05a6013613660abee59fcb86e5483558b014687bfaa1'
+            '991540591e2e024d02f2a6f85a98b43ee0e270d223c66572f2d700b32d89c8afa4faa61d45d41998e108c7b1633da20f7f43b37b2d846364431ebdab921dff17'
+            '58f683cbfdc6aa84c03d068c1bc2f1d8d2c17ba4f7b632c14ab1d529d8332e767354266c3815e239427497fff1a42ec2a37739ea312d24cb76a69dcf1c98c0ad')
+validpgpkeys=('0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D')  # Ned Deily (Python release signing key) <nad@python.org>
+
+prepare() {
+  cd Python-${pkgver}
+
+  # FS#45809
+  patch -p1 -i ../dont-make-libpython-readonly.patch
+
+  # Backport https://bugs.python.org/issue36044 to 3.7
+  patch -p1 -i ../0002-smaller-pgo-test-suite.patch
+
+  # Backport https://bugs.python.org/issue41302 to 3.7
+  patch -p1 -i ../0003-enable-building-with-libmpdec.patch
+
+  # From Python38 AUR,
+  # https://bugs.python.org/issue41369
+  patch -p1 -i ../0004-mpdecimal-2.5.1.patch
+
+  # FS#23997
+  sed -i -e "s|^#.* /usr/local/bin/python|#!/usr/bin/python|" Lib/cgi.py
+
+  # Speed up LTO
+  sed -i -e "s|-flto |-flto=4 |g" configure configure.ac
+
+  # Ensure that we are using the system copy of various libraries (expat, libffi, and libmpdec),
+  # rather than copies shipped in the tarball
+  rm -r Modules/expat
+  rm -r Modules/_ctypes/{darwin,libffi}*
+  rm -r Modules/_decimal/libmpdec
+}
+
+build() {
+  cd Python-${pkgver}
+
+  CFLAGS=-DOPENSSL_NO_SSL2 ./configure --prefix=/usr \
+              --enable-shared \
+              --with-computed-gotos \
+              --enable-optimizations \
+              --with-lto \
+              --enable-ipv6 \
+              --with-system-expat \
+              --with-dbmliborder=gdbm:ndbm \
+              --with-system-ffi \
+              --with-system-libmpdec \
+              --enable-loadable-sqlite-extensions \
+              --without-ensurepip
+
+  make
+}
+
+package() {
+  cd Python-${pkgver}
+
+  # altinstall: /usr/bin/pythonX.Y but not /usr/bin/python or /usr/bin/pythonX
+  make DESTDIR="${pkgdir}" altinstall maninstall
+
+  # Avoid conflicts with the main 'python' package.
+  rm "${pkgdir}/usr/lib/libpython${_pymajver}.so"
+  rm -f "${pkgdir}/usr/share/man/man1/python${_pymajver}.1"
+
+  # Add missing pkgconfig stuff
+  ln -s "python${_pybasever}m-config" "${pkgdir}/usr/bin/python${_pybasever}-config"
+
+  # Clean-up reference to build directory
+  sed -i "s|$srcdir/Python-${pkgver}:||" \
+    "$pkgdir/usr/lib/python${_pybasever}/config-${_pybasever}m-${CARCH}-linux-gnu/Makefile"
+
+  # some useful "stuff" FS#46146
+  install -dm755 "${pkgdir}"/usr/lib/python${_pybasever}/Tools/{i18n,scripts}
+  install -m755 Tools/i18n/{msgfmt,pygettext}.py "${pkgdir}"/usr/lib/python${_pybasever}/Tools/i18n/
+  install -m755 Tools/scripts/{README,*py} "${pkgdir}"/usr/lib/python${_pybasever}/Tools/scripts/
+
+  # License
+  install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}

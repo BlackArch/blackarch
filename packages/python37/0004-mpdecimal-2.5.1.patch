@@ -1,0 +1,45 @@
+From dd436be488bdca2123d12d1e148d85cb6f98be5f Mon Sep 17 00:00:00 2001
+From: Stefan Krah <skrah@bytereef.org>
+Date: Sun, 10 Jan 2021 16:35:48 +0100
+Subject: [PATCH] Portability fixes.
+
+---
+ Modules/_decimal/_decimal.c | 4 ++--
+ setup.py                    | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/Modules/_decimal/_decimal.c b/Modules/_decimal/_decimal.c
+index 664d45a90481d..bbd540bc376e2 100644
+--- a/Modules/_decimal/_decimal.c
++++ b/Modules/_decimal/_decimal.c
+@@ -3295,7 +3295,7 @@ dec_format(PyObject *dec, PyObject *args)
+     }
+     else {
+         size_t n = strlen(spec.dot);
+-        if (n > 1 || (n == 1 && !isascii((uchar)spec.dot[0]))) {
++        if (n > 1 || (n == 1 && !isascii((unsigned char)spec.dot[0]))) {
+             /* fix locale dependent non-ascii characters */
+             dot = dotsep_as_utf8(spec.dot);
+             if (dot == NULL) {
+@@ -3304,7 +3304,7 @@ dec_format(PyObject *dec, PyObject *args)
+             spec.dot = PyBytes_AS_STRING(dot);
+         }
+         n = strlen(spec.sep);
+-        if (n > 1 || (n == 1 && !isascii((uchar)spec.sep[0]))) {
++        if (n > 1 || (n == 1 && !isascii((unsigned char)spec.sep[0]))) {
+             /* fix locale dependent non-ascii characters */
+             sep = dotsep_as_utf8(spec.sep);
+             if (sep == NULL) {
+diff --git a/setup.py b/setup.py
+index ddc0bd067d4e4..c547a68664e8c 100644
+--- a/setup.py
++++ b/setup.py
+@@ -2199,7 +2199,7 @@ def detect_decimal(self):
+         undef_macros = []
+         if '--with-system-libmpdec' in sysconfig.get_config_var("CONFIG_ARGS"):
+             include_dirs = []
+-            libraries = [':libmpdec.so.2']
++            libraries = ['mpdec']
+             sources = ['_decimal/_decimal.c']
+             depends = ['_decimal/docstrings.h']
+         else:
