@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-cipheydists
+_pkgname=${pkgname#python-}
+pkgver=0.3.35
+pkgrel=1
+pkgdesc='Distributions for frequency analysis.'
+arch=('any')
+url='https://github.com/Ciphey/CipheyDists'
+license=('custom:unlicense')
+depends=('python')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('c67005bbf98cd8047649b897436e63f4f2d48621ca424c32691d4c42b6f66432a214bea5d0297749c795a30a705436c936bb5156daddd02fa1633bda6951070c')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$_pkgname"
+}
