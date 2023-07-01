@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-cipheycore
+_pkgname=${pkgname#python-}
+pkgver=v0.3.2.r2.g63cc5fa
+pkgrel=1
+pkgdesc='Some cryptanalysis tidbits written in a proper language.'
+arch=('any')
+url='https://github.com/Ciphey/CipheyCore'
+license=('MIT')
+depends=('python')
+makedepends=('boost' 'cmake' 'gcc' 'git' 'make' 'python-poetry' 'swig')
+source=("git+https://github.com/Ciphey/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+    cd $_pkgname
+
+    # https://github.com/Ciphey/CipheyCore/pull/22
+    sed -i "4i #include <utility>" src/ciphers/xor_single.cpp
+}
+
+build() {
+  cd $_pkgname
+
+  mkdir -p build
+  cd build
+  cmake .. -DCMAKE_BUILD_TYPE=Release -DCIPHEY_CORE_TEST=OFF
+  cmake --build . -t ciphey_core
+  cmake --build . -t ciphey_core_py --config Release
+  poetry build
+}
+
+package() {
+  cd $_pkgname
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$srcdir/$_pkgname/build/dist" \
+    "$_pkgname"
+}
