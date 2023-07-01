@@ -9,20 +9,29 @@ pkgdesc='Small library to parse TLS records.'
 arch=('x86_64' 'aarch64')
 url='https://pypi.python.org/pypi/tls-parser/'
 license=('custom:unknown')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/tls_parser-$pkgver.tar.gz")
 sha512sums=('693d18f0f3baaa8bf122f0166a9041cfe816772930dcfb73cfc1e16b0cedef2cfd19623d91a6d9e745bfcc1d2cbfb001a031d8c0d6fe1dd46319c3469ba60812')
 
 build() {
-  cd "$srcdir/tls_parser-$pkgver"
+  cd "$srcdir/$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package_python-tls-parser() {
-  cd "tls_parser-$pkgver"
-
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  cd "$_pkgname-$pkgver"
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$_pkgname"
 }
 
