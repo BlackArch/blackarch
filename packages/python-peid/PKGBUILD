@@ -21,14 +21,25 @@ pkgver() {
 }
 
 build() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
-  pip wheel .
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd $pkgname
-  pip install "./$_pyname-$pkgver-py3-none-$arch.whl" --root $pkgdir
-  install -Dm 644 LICENSE -t "${pkgdir}/usr/share/licenses/${pkgname}"
+  cd "$pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$pkgname"
 }
 
