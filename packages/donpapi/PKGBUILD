@@ -3,16 +3,16 @@
 
 pkgname=donpapi
 _pkgname=DonPAPI
-pkgver=v1.0.0.r55.ge248a12
-pkgrel=2
+pkgver=v1.0.0.r61.gfb87978
+pkgrel=1
 pkgdesc='Dumping revelant information on compromised targets without AV detection with DPAPI.'
 arch=('any')
 groups=('blackarch' 'blackarch-windows' 'blackarch-exploitation')
 url='https://github.com/login-securite/DonPAPI'
 license=('custom:unknown')
 depends=('python' 'impacket' 'python-pyasn' 'python-lnkparse3' 'python-wheel'
-         'python-m2crypto' 'python-pycryptodome' 'python-setuptools')
-makedepends=('git')
+         'python-m2crypto' 'python-pycryptodome' 'swig')
+makedepends=('git' 'python-build' 'python-pip')
 source=("git+https://github.com/login-securite/DonPAPI.git")
 sha512sums=('SKIP')
 
@@ -22,24 +22,28 @@ pkgver() {
   git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
+build() {
+  cd $_pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
 package() {
   cd $_pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$pkgname"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-
-  rm -rf res/ *.md .gitignore *.txt *.toml
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-python ./$_pkgname.py "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
+  mv $pkgdir/usr/bin/$_pkgname $pkgdir/usr/bin/$pkgname
 }
 
