@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sentrypeer
+pkgver=v3.0.0.r14.g02173c8
+pkgrel=1
+pkgdesc='Protect SIP Servers from bad actors.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-defensive')
+url='https://github.com/SentryPeer/SentryPeer'
+license=('GPL')
+depends=('curl' 'opendht-c' 'jansson' 'libmicrohttpd' 'libosip2' 'pcre2' 'sqlite' 'uuid')
+makedepends=('autoconf-archive' 'cmocka' 'git')
+source=("git+https://github.com/SentryPeer/$pkgname")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+  cd "$pkgname"
+
+  ./bootstrap.sh
+  ./configure --prefix=/usr
+}
+
+build() {
+  cd "$pkgname"
+
+  make
+  make check
+}
+
+package() {
+  cd "$pkgname"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+}
+
