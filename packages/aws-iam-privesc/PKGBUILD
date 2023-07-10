@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=aws-iam-privesc
+_pkgname=aws_iam_privesc
+pkgver=11.2983efd
+pkgrel=1
+pkgdesc='AWS IAM policy scanner that helps determine where privilege escalation can be achieved.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon'
+        'blackarch-exploitation' 'blackarch-automation')
+url='https://github.com/cyberqueenmeg/aws_iam_privesc'
+license=('custom:unknown')
+depends=('python' 'python-requests' 'python-pycryptodome' 'python-termcolor'
+         'python-boto3' 'python-botocore' 'aws-cli')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/cyberqueenmeg/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i '1i\#!/usr/bin/env python' aws_escalate.py
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 aws_escalate.py "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+

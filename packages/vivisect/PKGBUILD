@@ -2,36 +2,36 @@
 # See COPYING for license details.
 
 pkgname=vivisect
-pkgver=1705.d3b3d869
+pkgver=v1.1.1.r9.g10ac9732
 _pyver=3.11
-pkgrel=3
-epoch=2
+pkgrel=1
+epoch=3
 groups=('blackarch' 'blackarch-debugger' 'blackarch-disassembler'
         'blackarch-reversing')
 pkgdesc='A Python based static analysis and reverse engineering framework.'
 arch=('any')
-url='http://visi.kenshoto.com/'
+url='https://github.com/vivisect/vivisect'
 license=('BSD')
 depends=('python' 'python-pyasn1' 'python-pyasn1-modules' 'python-cxxfilt'
          'python-msgpack' 'python-pycparser' 'python-pyqt5'
          'python-pyqt5-webengine')
 makedepends=('git' 'python-setuptools')
-source=("git+https://github.com/$pkgname/$pkgname.git"
-        'setup.py.patch')
+source=("git+https://github.com/$pkgname/$pkgname.git")
 options=('!emptydirs')
-sha512sums=('SKIP'
-            '2fd84fb57eb2d3769ed41a939622efb9cf10a2d35ed4c5df8ea86e532efea79455521e0d2641d7d000670937109842b0214bb51d0e0031664f802f8f8c43477c')
-
-pkgver() {
-  cd $pkgname
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
+sha512sums=('SKIP')
 
 prepare() {
   cd $pkgname
 
-  patch -p0 < ../setup.py.patch
+  sed -i 's/==/>=/' setup.py
+  # https://github.com/vivisect/vivisect/issues/623
+  sed -i 's/cxxfilt>=0.2.1,<0.3.0/cxxfilt>=0.2.1/' setup.py
+}
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
 build() {
