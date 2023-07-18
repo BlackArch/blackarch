@@ -3,14 +3,16 @@
 
 pkgbase=python-pyexifinfo
 pkgname=('python2-pyexifinfo' 'python-pyexifinfo')
+_pkgname=pyexifinfo
 pkgver=0.4.0
 pkgrel=5
 pkgdesc='Simple Metadata extraction using Exiftool.'
 arch=('any')
 url='https://pypi.org/project/pyexifinfo/#files'
-makedepends=('python2-setuptools' 'python-setuptools')
+makedepends=('python2-setuptools' 'python-build' 'python-pip')
+options=(!emptydirs)
 license=('GPL3')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/pyexifinfo-$pkgver.tar.gz"
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
         'setup.py.patch')
 sha512sums=('7b190a15966f28f993a34ae2a5b82f9ec4905b516c2c41c6069238943b82fa4ccccae9a0a7fc475f88ddc800c124ef33ea13de12c82fb637fe4fa5e5409011d0'
             '238c1432330dc669888dd5d18661ab82230214d510c344fe420833fd2fb3e4104ad5ecccf36a61989466f43aadf0a56299673f06fbe222daacf950a7ac22c5b9')
@@ -18,32 +20,43 @@ sha512sums=('7b190a15966f28f993a34ae2a5b82f9ec4905b516c2c41c6069238943b82fa4cccc
 prepare() {
   patch -p1 < setup.py.patch
 
-  cp -a "pyexifinfo-$pkgver"{,-py2}
+  cp -a "$_pkgname-$pkgver"{,-py2}
 }
 
 build() {
-  cd "pyexifinfo-$pkgver-py2"
+  cd "$_pkgname-$pkgver-py2"
 
   python2 setup.py build
 
-  cd "$srcdir/pyexifinfo-$pkgver"
+  cd "$srcdir/$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package_python2-pyexifinfo() {
-  depends=('exiv2')
+  depends=('exiv2' 'perl-image-exiftool')
 
-  cd "pyexifinfo-$pkgver-py2"
+  cd "$_pkgname-$pkgver-py2"
 
   python2 setup.py install --root="$pkgdir" --optimize=1 --skip-build
 }
 
 package_python-pyexifinfo() {
-  depends=('exiv2')
+  depends=('exiv2' 'perl-image-exiftool')
 
-  cd "pyexifinfo-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --optimize=1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$_pkgname"
 }
 
