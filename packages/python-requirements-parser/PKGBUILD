@@ -1,32 +1,40 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-requirements-parser
-pkgname=('python2-requirements-parser' 'python-requirements-parser')
+pkgname=python-requirements-parser
+_pkgname=requirements-parser
 pkgver=0.5.0
-pkgrel=2
+pkgrel=3
 pkgdesc='A Pip requirements file parser.'
 arch=('any')
 url='https://pypi.org/project/requirements-parser'
 license=('BSD')
-makedepends=('python2-setuptools' 'python-setuptools')
+makedepends=('python-build' 'python-pip')
+depends=('python' 'python-setuptools')
 options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('a3bed4f26efb738cf09933770d11ccbe0c2d2b64936865979a8071b3478f26fb6f9780459d316eb5aa907eecf089b0e92fb1bb945b108b9ef71fee74b564a763')
 
-package_python2-requirements-parser() {
-  depends=('python2')
+build() {
+  cd "$_pkgname-$pkgver"
 
-  cd "requirements-parser-$pkgver"
-
-  python2 setup.py install --root="$pkgdir" --optimize=1
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
-package_python-requirements-parser() {
-  depends=('python')
+package() {
+  cd "$_pkgname-$pkgver"
 
-  cd "requirements-parser-$pkgver"
-
-  python setup.py install --root="$pkgdir" --optimize=1
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$_pkgname"
 }
 
