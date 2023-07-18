@@ -1,47 +1,41 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-user-agent
-pkgname=('python2-user-agent' 'python-user-agent')
+pkgname=python-user-agent
+_pkgname=user_agent
 pkgver=0.1.10
-pkgrel=2
+pkgrel=3
 pkgdesc='User-Agent generator.'
 arch=('any')
 url='https://pypi.org/project/user_agent/#files'
 license=('MIT')
-makedepends=('python2-setuptools' 'python-setuptools')
+makedepends=('python-build' 'python-pip')
+depends=('python-six')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/user_agent-$pkgver.tar.gz")
 sha512sums=('44331d2cbec7779c9370032c91027c634ab86cb886fdf631708d0a7457d23410910b51a6466b535dc5a14e4b55ddf15246b0e0d6cf3cc824b5162906bdad17a4')
 
-prepare() {
-  cp -a "user_agent-$pkgver" "user_agent2-$pkgver"
-}
-
 build() {
-  cd "user_agent2-$pkgver"
 
-  python2 setup.py build
+  cd "$_pkgname-$pkgver"
 
-  cd "$srcdir/user_agent-$pkgver"
-
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
-package_python2-user-agent() {
-  depends=('python2-six')
+package() {
 
-  cd "user_agent2-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
-}
-
-package_python-user-agent() {
-  depends=('python-six')
-
-  cd "user_agent-$pkgver"
-
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$_pkgname"
 }
 
