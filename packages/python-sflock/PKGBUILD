@@ -2,16 +2,17 @@
 # See COPYING for license details.
 
 pkgbase=python-sflock
-pkgname=('python2-sflock' 'python-sflock')
+pkgname=('python-sflock' 'python2-sflock')
+_pkgname=SFlock
 pkgver=0.3.10
-pkgrel=8
+pkgrel=9
 pkgdesc='Sample staging and detonation utility.'
 arch=('any')
 url='https://pypi.org/project/SFlock/#files'
 license=('MIT')
-makedepends=('python2-setuptools' 'python-setuptools')
+makedepends=('python2-setuptools' 'python-build' 'python-pip')
 options=(!emptydirs)
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/SFlock-0.3.10.tar.gz"
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-0.3.10.tar.gz"
         'setup.py.patch')
 sha512sums=('055b60a23103c1662cfd62aef37a2c2bfbfc0cc2fa5982736bd58b8e4a4fb73f5450b11c3e3ef3802871e3ce11b75a1b03f309ae17191ce407b2fd6c89e24111'
             '1901f8c691b0634a459effb21b899d6eb9499afdf972daac2056fc6ec784e4f1849d2218f41bac2d235a09521d2871e0ce32c1365502a31fcbafe855b24ab687')
@@ -19,15 +20,15 @@ sha512sums=('055b60a23103c1662cfd62aef37a2c2bfbfc0cc2fa5982736bd58b8e4a4fb73f545
 prepare() {
   patch -p1 < setup.py.patch
 
-  cp -a "SFlock-$pkgver" "SFlock2-$pkgver"
+  cp -a "$_pkgname-$pkgver" "${_pkgname}2-$pkgver"
 }
 
 build() {
-  cd "SFlock-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 
-  cd "$srcdir/SFlock2-$pkgver"
+  cd "$srcdir/${_pkgname}2-$pkgver"
 
   python2 setup.py build
 }
@@ -36,7 +37,7 @@ package_python2-sflock() {
   depends=('python2' 'python2-click' 'python2-olefile' 'python2-python-magic'
            'python2-cryptography' 'peepdf')
 
-  cd "SFlock2-$pkgver"
+  cd "${_pkgname}2-$pkgver"
 
   python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
     --skip-build
@@ -48,9 +49,19 @@ package_python-sflock() {
   depends=('python' 'python-click' 'python-olefile' 'python-python-magic'
            'python-cryptography' 'peepdf')
 
-  cd "SFlock-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$_pkgname"
 }
 
