@@ -2,53 +2,38 @@
 # See COPYING for license details.
 
 pkgname=trevorspray
-pkgver=115.cbf72e6
+pkgver=2.0.9
 pkgrel=1
 pkgdesc='A modular password sprayer with threading, clever proxying, loot modules, and more!'
-groups=('blackarch' 'blackarch-cracker')
 arch=('any')
+groups=('blackarch' 'blackarch-cracker')
 url='https://github.com/blacklanternsecurity/TREVORspray'
 license=('GPL3')
-depends=('python' 'python-virtualenv')
-makedepends=('git')
-source=("$pkgname::git+https://github.com/blacklanternsecurity/TREVORspray.git"
-        'requirements.txt.patch')
-install="$pkgname.install"
-sha512sums=('SKIP'
-            '9661c32e9d75776ea1ef5aec1ce037842530d4d39ee87c2bdbcf6b8b85a0e49793b736c6f71d6a938664c2a38ea3faa248bbb1e36bd0af671830313e757c0066')
+depends=('trevorproxy' 'python-pysocks' 'python-tldextract'
+         'python-beautifulsoup4' 'python-exchangelib' )
+makedepends=('python-build' 'python-pip')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz")
+sha512sums=('735d0d5046f9fa0610a9bc55b4cec2019abdf575880a9b8c8f147aab12bd4dd49bd4483cedb9cb6bc642e6551a5c58c54ea9c24abd9d314777c5e7748c7e2db4')
 
-pkgver() {
-  cd $pkgname
+build() {
+  cd "$pkgname-$pkgver"
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
-prepare() {
-  cd $pkgname
-
-  patch -p0 < ../requirements.txt.patch
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm *.md LICENSE
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-source venv/bin/activate
-exec python $pkgname/cli.py "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$pkgname"
 }
-
