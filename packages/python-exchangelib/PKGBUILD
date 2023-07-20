@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-exchangelib
+_pkgname=${pkgname#python-}
+pkgver=5.0.3
+pkgrel=1
+pkgdesc='Exchange Web Services client library.'
+arch=('any')
+url='https://github.com/ecederstrand/exchangelib'
+license=('BSD')
+depends=('python-cached-property' 'python-dnspython' 'python-oauthlib'
+         'python-defusedxml' 'python-isodate' 'python-lxml' 'python-pygments'
+         'python-pytzdata' 'python-tzlocal' 'python-requests-ntlm'
+         'python-requests-oauthlib')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('17a79458fdeb7828ad5b1c32f0dba5d842b4ad9aec0bf795ac54dbbfa5a1eae04c430d047ac67195df72713354d600af921840e7246c7559c946f4e6fc52695d')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$_pkgname"
+
+  cd $srcdir/"$_pkgname-$pkgver"
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
