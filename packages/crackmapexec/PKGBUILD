@@ -2,38 +2,21 @@
 # See COPYING for license details.
 
 pkgname=crackmapexec
-pkgver=v5.4.0.r31.gf884fcd
 _pyver=3.11
-pkgrel=1
+pkgver=v5.4.0.r31.gf884fcd
+pkgrel=2
 epoch=3
 groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation'
         'blackarch-windows')
 pkgdesc='A swiss army knife for pentesting Windows/Active Directory environments.'
 arch=('any')
-url='https://github.com/mpgn/CrackMapExec'
+url='https://github.com/Porchetta-Industries/CrackMapExec'
 license=('BSD')
-depends=('python' 'python-requests' 'python-beautifulsoup4' 'python-lsassy'
-         'python-termcolor' 'python-msgpack' 'python-neo4j-driver' 'impacket'
-         'python-pylnk3' 'python-pypsrp' 'python-paramiko' 'python-dsinternals'
-         'python-xmltodict' 'python-terminaltables' 'python-aioconsole'
-         'python-pywerview' 'python-pyspnego' 'ldapdomaindump' 'python-aardwolf'
-         'python-setuptools' 'python-masky' 'python-pyparsing' 'python-asyauth'
-         'python-minikerberos' 'python-pypykatz' 'bloodhound-python'
-         'python-sqlalchemy' 'python-aiosqlite' 'python-pyasn1-modules'
-         'python-python-libnmap' 'python-rich')
-         # dploot
-makedepends=('git' 'python-build' 'python-pip')
-#source=("$pkgname::git+https://github.com/mpgn/CrackMapExec.git")
-source=("$pkgname::git+https://github.com/Porchetta-Industries/CrackMapExec")
+depends=('python' 'python-poetry')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/Porchetta-Industries/CrackMapExec.git")
 sha512sums=('SKIP')
-
-prepare() {
-  cd $pkgname
-
-  make clean
-
-  git submodule init && git submodule update --recursive
-}
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
@@ -41,26 +24,43 @@ pkgver() {
   git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
-build() {
-  cd $pkgname
-
-  python -m build --wheel --outdir="$startdir/dist"
-}
-
 package() {
   cd $pkgname
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    "$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE .github .git* .dockerignore Dockerfile Makefile *.nix
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+poetry config cache-dir "/usr/share/$pkgname"
+poetry env use /usr/share/$pkgname/virtualenvs/*/bin/python$_pyver \\
+  --directory /usr/share/crackmapexec
+poetry run --directory "/usr/share/$pkgname" $pkgname "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/cme" << EOF
+#!/bin/sh
+poetry config cache-dir "/usr/share/$pkgname"
+poetry env use /usr/share/$pkgname/virtualenvs/*/bin/python$_pyver \\
+  --directory /usr/share/crackmapexec
+poetry run --directory "/usr/share/$pkgname" cme "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/cmedb" << EOF
+#!/bin/sh
+poetry config cache-dir "/usr/share/$pkgname"
+poetry env use /usr/share/$pkgname/virtualenvs/*/bin/python$_pyver \\
+  --directory /usr/share/crackmapexec
+poetry run --directory "/usr/share/$pkgname" cmedb "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname" "$pkgdir/usr/bin/cme" \
+    "$pkgdir/usr/bin/cmedb"
 }
 
