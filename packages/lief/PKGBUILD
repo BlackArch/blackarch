@@ -3,35 +3,40 @@
 
 pkgname=lief
 _pkgname=LIEF
-pkgver=0.12.1
-pkgrel=2
+pkgver=0.13.2
+pkgrel=1
 pkgdesc='Library to Instrument Executable Formats.'
 groups=('blackarch' 'blackarch-disassembler' 'blackarch-reversing')
 arch=('x86_64' 'aarch64')
 url='https://github.com/lief-project/LIEF/'
 license=('Apache')
 depends=('python')
-makedepends=('python-setuptools' 'cmake')
+makedepends=('python-setuptools' 'cmake' 'python-build' 'python-installer'
+             'python-wheel' 'ninja')
 source=("https://github.com/lief-project/LIEF/archive/$pkgver.tar.gz")
-sha512sums=('833a04ece5ff7365717aee3408a2d522756319e43cf4ff795047021c46b48d5d525c2a56cdafd04259ddfcf6888972d19655924f999460ce05f52a32ac7e8bca')
+sha512sums=('a8dce9cce9c68d93ec5d78cf9f67eb32dc11d4498c9903f61e34d48683905cdf8040630b390fdaefb66fd18213cdc81682b4acb24ce43fb7fe89202492f71660')
 
 prepare() {
   cd "$_pkgname-$pkgver"
 
   # tmp dirty fix! we need to change this asap
   sed -i 's|version   = "0.0.0"|version   = "0.10.1"|' setup.py
+
+  # fix for https://github.com/lief-project/LIEF/issues/918
+  sed -i '1 i\#include <cstdint>' include/LIEF/DEX/Field.hpp
 }
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+	PYTHONPATH="$PWD" python -m build api/python --wheel --no-isolation
+
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+	PYTHONHASHSEED=0 python -m installer --destdir="$pkgdir" api/python/dist/*.whl
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md AUTHORS \
     CHANGELOG
