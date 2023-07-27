@@ -2,9 +2,9 @@
 # See COPYING for license details.
 
 pkgname=androguard
-pkgver=2204.bd85695d
+pkgver=3.3.5
 pkgrel=1
-epoch=2
+epoch=3
 groups=('blackarch' 'blackarch-binary' 'blackarch-disassembler'
         'blackarch-malware')
 pkgdesc='Reverse engineering, Malware and goodware analysis of Android applications and more.'
@@ -22,39 +22,22 @@ optdepends=('python-pyperclip: GUI'
             'python-sphinx: docs'
             'python-sphinx_rtd_theme: docs'
             'python-pydot: graphing')
-source=("git+https://github.com/$pkgname/$pkgname.git")
-sha512sums=('SKIP')
-
-pkgver() {
-  cd $pkgname
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
+source=("https://github.com/androguard/androguard/archive/v$pkgver.tar.gz")
+sha512sums=('a818b6772f7637abb2f27efe817becf25f92696cf7f7479368f3eeafe80dd30a92b6db274037a704c62ce9332e7151bb859c50ccf7f60a6d8720d5771812e982')
 
 build() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
   python setup.py build
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
-  install -dm 755 "$pkgdir/usr/bin"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
-  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
-  install -Dm 644 LICENCE-2.0 "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  python setup.py install --root="$pkgdir" --optimize=1 --skip-build
-
-#  for bin in "$pkgdir/usr/bin/"* ; do
-#    pkg="$(echo $bin | awk -F/ '{print $NF}')"
-#    if [[ "$pkg" != "androguard" ]] && [[ "$pkg" != "androapkid" ]] &&
-#      [[ "$pkg" != "androarsc" ]] && [[ "$pkg" != "androaxml" ]] &&
-#      [[ "$pkg" != "androcg" ]] && [[ "$pkg" != "androdd" ]] &&
-#      [[ "$pkg" != "androdis" ]]; then
-#      mv $bin `echo $bin | sed 's/.py//'`
-#    fi
-#  done
+  for i in "$pkgdir/usr/bin/"*.py ; do
+    mv $i "$(echo $i | sed 's|.py||g')"
+  done
 }
 
