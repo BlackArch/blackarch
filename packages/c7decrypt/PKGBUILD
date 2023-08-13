@@ -1,0 +1,30 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=c7decrypt
+pkgver=0.3.3
+pkgrel=1
+pkgdesc='Cisco password type-7 encryptor and decryptor.'
+arch=('any')
+groups=('blackarch' 'blackarch-crypto')
+url='https://github.com/claudijd/c7decrypt'
+license=('custom:unknown')
+depends=('ruby')
+source=("https://rubygems.org/downloads/$pkgname-$pkgver.gem")
+noextract=("$pkgname-$pkgver.gem")
+sha512sums=('35e2edab274bd8122d3c65397b4c68ae8218316515fde2bf5e862227e951f8fc4e7966ebfb05bdf1e66b413b8dce206c4e582943b8ec8a6ecc48d419c6b92626')
+
+package() {
+  _gemhome="$(gem env home)"
+
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemhome" -n "$pkgdir/usr/bin" "$pkgname-$pkgver.gem"
+
+  rm "$pkgdir/$_gemhome/cache/$pkgname-$pkgver.gem"
+  rm "$pkgdir/$_gemhome/gems/$pkgname-$pkgver/"{.gitignore,.rspec,.travis.yml,CONTRIBUTING.md,Rakefile}
+
+  find "$pkgdir/$_gemhome/extensions/" -name *.so -delete
+
+  install -Dm 644 "$pkgdir/$_gemhome/gems/$pkgname-$pkgver/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
