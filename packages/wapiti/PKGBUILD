@@ -2,8 +2,10 @@
 # See COPYING for license details.
 
 pkgname=wapiti
-pkgver=3.1.6.r0.g550ffd9
-pkgrel=3
+_pkgname=wapiti3
+pkgver=3.1.8.r8.ge076399f
+_pkgver=3.1.8
+pkgrel=1
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
 pkgdesc='A vulnerability scanner for web applications.'
 url='https://github.com/wapiti-scanner/wapiti'
@@ -30,21 +32,32 @@ pkgver() {
 prepare() {
   cd $pkgname
 
-  sed -ri 's/==/>=/g' setup.py
+  #sed -ri 's/==/>=/g' setup.py
 }
 
 build() {
   cd $pkgname
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst INSTALL.md \
+	install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst INSTALL.md \
     VERSION doc/AUTHORS doc/ChangeLog* doc/*.md doc/*.txt doc/*.html doc/*.ico
 }
 
