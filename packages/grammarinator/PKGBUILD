@@ -3,7 +3,7 @@
 
 pkgname=grammarinator
 pkgver=254.da9ef71
-pkgrel=2
+pkgrel=1
 pkgdesc='A random test generator / fuzzer that creates test cases according to an input ANTLR v4 grammar.'
 groups=('blackarch' 'blackarch-fuzzer' 'blackarch-misc')
 arch=('any')
@@ -11,9 +11,9 @@ url='https://github.com/renatahodovan/grammarinator'
 license=('MIT')
 depends=('python' 'autopep8' 'python-antlerinator' 'python-jinja'
          'python-antlr4')
-makedepends=('git' 'python-setuptools' 'python-poetry')
+makedepends=('git' 'python-pip' 'python-wheel' 'python-build'
+             'java-environment')
 source=("git+https://github.com/renatahodovan/$pkgname.git")
-#source=("git+https://github.com/renatahodovan/$pkgname.git#commit=7dace5450b7136d641d065f649b406a22ef4d7f7")
 sha512sums=('SKIP')
 
 pkgver() {
@@ -22,27 +22,28 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
-prepare() {
-  cd $pkgname
-
-  #sed -i 's|antlerinator==4.9|antlerinator|g' setup.py
-}
-
 build() {
   cd $pkgname
 
-  poetry build
-  cd dist
-  mkdir -p gram_dir
-  tar zxvf "$pkgname-*.tar.gz" -C gram_dir/
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "$pkgname/dist/gram_dir/$pkgname"-*
+  cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 
-  cd "$srcdir/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst RELNOTES.rst
   install -Dm 644 LICENSE.rst "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

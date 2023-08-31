@@ -2,16 +2,17 @@
 # See COPYING for license details.
 
 pkgname=sniff-probe-req
+_pkgname=probequest
 pkgver=401.ecbeb0b
 _pyver=3.11
-pkgrel=2
+pkgrel=1
 pkgdesc='Wi-Fi Probe Requests Sniffer.'
 groups=('blackarch' 'blackarch-wireless' 'blackarch-sniffer')
 arch=('any')
 url='https://github.com/SkypLabs/sniff-probe-req'
 license=('GPL3')
 depends=('python' 'python-argparse' 'python-netaddr' 'python-scapy')
-makedepends=('git' 'python-setuptools')
+makedepends=('git' 'python-pip' 'python-build' 'python-wheel')
 source=("git+https://github.com/SkypLabs/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -24,13 +25,24 @@ pkgver() {
 build() {
   cd $pkgname
 
-  python3 setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $pkgname
 
-  python3 setup.py install --root="$pkgdir" --prefix=/usr --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst docs/*.rst
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"

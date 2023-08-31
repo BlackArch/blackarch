@@ -4,7 +4,7 @@
 pkgname=tell-me-your-secrets
 pkgver=v2.4.2.r2.g873a4c9
 _pyver=3.11
-pkgrel=2
+pkgrel=1
 epoch=1
 pkgdesc='Find secrets on any machine from over 120 Different Signatures.'
 arch=('any')
@@ -12,7 +12,7 @@ groups=('blackarch' 'blackarch-code-audit' 'blackarch-forensic')
 url='https://github.com/valayDave/tell-me-your-secrets'
 license=('MIT')
 depends=('python' 'python-gitignore-parser' 'python-pandas' 'python-yaml')
-makedepends=('git' 'python-setuptools')
+makedepends=('git' 'python-pip' 'python-build' 'python-wheel')
 source=("git+https://github.com/valayDave/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -25,15 +25,26 @@ pkgver() {
 build() {
   cd $pkgname
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 
-  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/test"
 }

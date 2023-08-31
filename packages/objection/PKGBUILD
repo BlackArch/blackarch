@@ -4,7 +4,7 @@
 pkgname=objection
 pkgver=1.11.0
 _pyver=3.11
-pkgrel=7
+pkgrel=5
 pkgdesc='Instrumented Mobile Pentest Framework.'
 groups=('blackarch' 'blackarch-mobile' 'blackarch-reversing' 'blackarch-binary')
 arch=('any')
@@ -14,20 +14,31 @@ depends=('python' 'python-frida' 'python-frida-tools' 'python-prompt_toolkit'
          'python-click' 'python-tabulate' 'python-requests' 'python-flask'
          'python-delegator.py' 'python-pexpect' 'python-litecli' 'python-semver'
          'python-sqlparse')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$pkgname-$pkgver.tar.gz")
+makedepends=('python-pip' 'python-build' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz")
 sha512sums=('40b2feb140c9d33898c649a640b525d683adf823ca6ef9a7845a89055f40db753b4d91442cbb0e48c4cfe6913ca36ee9ec3fc78b9001539752b3c8a0bacc90c4')
 
 build() {
   cd "$pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 
   rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/tests"
 }
