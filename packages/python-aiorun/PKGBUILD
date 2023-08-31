@@ -4,7 +4,7 @@
 pkgname=python-aiorun
 _pkgname=aiorun
 pkgver=2023.7.2
-pkgrel=2
+pkgrel=1
 pkgdesc='Boilerplate for asyncio applications.'
 arch=('any')
 url='https://pypi.org/project/aiorun/#files'
@@ -17,12 +17,23 @@ sha512sums=('fa6bcec2202941c26afd9f04a92ab21ab610067f95011f357d9da3e442fac53d917
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

@@ -4,13 +4,13 @@
 pkgname=python-egcd
 _pkgname=egcd
 pkgver=0.5.0
-pkgrel=2
+pkgrel=1
 pkgdesc='Easy-to-import Python module with a basic, efficient, native implementation of the extended Euclidean algorithm.'
 arch=('any')
 url='https://pypi.org/project/egcd/'
 license=('MIT')
 depends=('python')
-makedepends=('python-setuptools')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('1b02d21c5c7e4c602223b17e3eb451d5cc60fd7f010641f543558018e290a615bfc037cabb37b2b1b1db09b479b7e99de9ff100c9ff9de029276ea0db1d140fc')
@@ -18,12 +18,23 @@ sha512sums=('1b02d21c5c7e4c602223b17e3eb451d5cc60fd7f010641f543558018e290a615bfc
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

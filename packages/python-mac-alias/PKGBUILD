@@ -1,48 +1,39 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-mac-alias
-pkgname=('python-mac-alias' 'python2-mac-alias')
+pkgname=python-mac-alias
 _pkgname=mac_alias
 pkgver=2.2.2
-pkgrel=3
+pkgrel=1
 pkgdesc='Generate or read binary Alias and Bookmark records from Python code.'
 arch=('any')
 url='https://pypi.org/project/mac_alias/2.2.2/#files'
 license=('MIT')
-makedepends=('python2-setuptools' 'python-setuptools')
+depends=('python')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/mac_alias-$pkgver.tar.gz")
 sha512sums=('33fc6b3149c1d27e39adf285dfacc637abafe01b53eb8a5a2b9fba882bccd85e2799b2c05a581a2ae805f37de63e839d525cbcd7f78b8c0ada2bfc50f8c7efea')
 
-prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
-}
-
 build() {
-  cd "$_pkgname-$pkgver-2"
+  cd "$_pkgname-$pkgver"
 
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
-
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
-package_python2-mac-alias() {
-  depends=('python2')
+package() {
+  cd "$_pkgname-$pkgver"
 
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
-}
-
-package_python-mac-alias() {
-  depends=('python')
-
-  cd "$_pkgname-$pkgver-2"
-
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

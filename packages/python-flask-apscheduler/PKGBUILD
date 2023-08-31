@@ -1,54 +1,39 @@
 # This file is part of BlackArch Linux ( https://blackarch.org )
 # See COPYING for license details.
 
-pkgbase=python-flask-apscheduler
-pkgname=('python2-flask-apscheduler' 'python-flask-apscheduler')
+pkgname=python-flask-apscheduler
 _pkgname=Flask-APScheduler
 pkgver=1.12.4
-pkgrel=3
+pkgrel=1
 pkgdesc='Adds APScheduler support to Flask.'
 arch=('any')
 url='https://pypi.org/project/Flask-apscheduler/#files'
-makedepends=('python2-setuptools' 'python-setuptools')
+depends=('python' 'python-flask' 'python-dateutil' 'python-apscheduler')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 license=('Apache')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/Flask-APScheduler-$pkgver.tar.gz")
 sha512sums=('28e3278cf281bf3d342647915243bac0204b0084628583adef51ab27e874754d1f6f72508cb0b6d6a4395cfa7da75162367b3b98250bc01845dbbfec4f8652aa')
 
-prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
-}
-
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
-
-  python setup.py build
-}
-
-package_python2-flask-apscheduler() {
-  depends=('python2' 'python2-flask' 'python2-dateutil' 'python2-apscheduler')
-
-  install -dm 755 "$pkgdir/usr/share/licenses/${pkgname[0]}"
-
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
-
-  mv "$pkgdir/usr/LICENSE" "$pkgdir/usr/share/licenses/${pkgname[0]}"
-}
-
-package_python-flask-apscheduler() {
-  depends=('python' 'python-flask' 'python-dateutil' 'python-apscheduler')
-
-  install -dm 755 "$pkgdir/usr/share/licenses/${pkgname[1]}"
-
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+  python -m build --wheel --outdir="$startdir/dist"
+}
 
-  mv "$pkgdir/usr/LICENSE" "$pkgdir/usr/share/licenses/${pkgname[1]}"
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

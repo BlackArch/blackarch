@@ -1,50 +1,40 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-esprima
-pkgname=('python2-esprima' 'python-esprima')
+pkgname=python-esprima
+_pkgname=esprima
 pkgver=4.0.1
-pkgrel=6
+pkgrel=5
 pkgdesc='ECMAScript parsing infrastructure for multipurpose analysis in Python.'
 arch=('any')
 url='https://pypi.org/project/esprima/#files'
 license=('BSD')
-makedepends=('python2-setuptools' 'python-setuptools')
+depends=('python')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/esprima-$pkgver.tar.gz")
 sha512sums=('c7e21739ef75c5e8e75ecbe8b8f63ca26e9fbf58fc5753c86913c4ee65a8be9b07b2192c1db035bc3ed375c6f7a6b3fd9ae13a53ec38dcf542e65b40b2ec5b2c')
 
-prepare() {
-  cp -a "esprima-$pkgver" "esprima2-$pkgver"
-}
-
 build() {
-  cd "esprima-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
-
-  cd "$srcdir/esprima2-$pkgver"
-
-  python2 setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
-package_python2-esprima() {
-  depends=('python')
+package() {
+  cd "$_pkgname-$pkgver"
 
-  cd "esprima2-$pkgver"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
-
-  mv "$pkgdir/usr/bin/esprima" "$pkgdir/usr/bin/esprima2"
-}
-
-package_python-esprima() {
-  depends=('python')
-
-  cd "esprima-$pkgver"
-
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
