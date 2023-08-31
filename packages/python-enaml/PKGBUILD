@@ -4,26 +4,37 @@
 pkgname=python-enaml
 _pkgname=enaml
 pkgver=0.16.1
-pkgrel=2
+pkgrel=1
 pkgdesc='Declarative DSL for building rich user interfaces in Python.'
 arch=('x86_64' 'aarch64')
 url='https://pypi.org/project/enaml/#files'
 license=('BSD')
 depends=('python' 'python-ply' 'python-kiwisolver' 'python-atom'
          'python-qtpy')
-makedepends=('python-setuptools' 'python-pip' 'python-wheel')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('656a0a12fc30d845cfd76f0a05c4daaad0e5c538f8cc801b24813a427416715b927cd77b533ca260060f2de9afb0789ae2b75f01db18c78a485f437c9751993a')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
-package_python-enaml() {
+package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

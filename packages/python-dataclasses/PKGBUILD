@@ -4,25 +4,36 @@
 pkgname=python-dataclasses
 _pkgname=dataclasses
 pkgver=0.8
-pkgrel=4
+pkgrel=3
 pkgdesc='A backport of the dataclasses module for Python 3.6'
 arch=('any')
 url='https://pypi.org/project/dataclasses/#files'
 license=('Apache')
 depends=('python')
-makedepends=('python-setuptools')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('81b27dd10077084ca82b0a3cbbcee428a5c5cb2e6ade5de46a39731507c2d6f93f9038b704e6555c850044683516a0d130b95a14c91881d04b0bd2c496ca8d6a')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

@@ -2,27 +2,44 @@
 # See COPYING for license details.
 
 pkgname=python-booby-ng
+_pkgname=booby-ng
 pkgver=0.8.4
-pkgrel=7
+pkgrel=6
 pkgdesc='Data modeling and validation Python library.'
 url='https://pypi.org/project/booby-ng/#files'
 arch=('any')
-license=('Apache2')
+license=('Apache')
 depends=('python')
-makedepends=('python-setuptools')
-source=("https://pypi.python.org/packages/87/5f/011f54140a02509bb23f506c8dd8816dc8e6c162ae82130c94c4c3cd9011/booby-ng-$pkgver.tar.gz")
+makedepends=('python-pip' 'python-wheel' 'python-build')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('2d512c2e9fb4de56c42a4182a5e74aa790d05bff31270c46880b5b0263128595381ef1c341ccf333e0d0c1ce9b35f3da6b2b3459ad4e1d52cd9913d670aa7ca2')
 
-build() {
-  cd "booby-ng-$pkgver"
+prepare() {
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  sed -i 's|use_2to3=True,||g' setup.py
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "booby-ng-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

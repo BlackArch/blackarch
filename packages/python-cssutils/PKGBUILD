@@ -1,44 +1,40 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-# Contributor: Giovanni Scafora <giovanni@archlinux.org>
-# Contributor: Simon Sapin <simon dot sapin at exyr dot org>
-# Contributor: Michal Marek <reqamst at gmail dot com>
-# Contributor: Rick W. Chena <stuffcorpse@archlinux.us>
-# Contributor: Andrea Fagiani <andfagiani _at_ gmail dot com>
 
 pkgname=python-cssutils
 _pkgname=cssutils
 pkgver=2.7.1
-pkgrel=2
+pkgrel=1
 pkgdesc='A CSS Cascading Style Sheets library for Python.'
 arch=('any')
 url='http://cthedot.de/cssutils/'
 license=('LGPL3')
 depends=('python')
-makedepends=('python-setuptools' 'python-wheel' 'python-pip')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('719b1b0866dd51e9b464659d861caa5eadfb1821b902824064fbf7843b6a2f5cfceb33f1deb2b7aa5dfc3306c94e8e86441aa014ec0c5bf133d5b1c13463b2db')
-
-prepare() {
-  cd "$_pkgname-$pkgver"
-
-  # don't pin old versions of testrunner
-  sed -i "/tests_require/{s/pbr < 1\.7\.0/pbr/;s/'mock',//}" setup.py
-  #sed -i 's/import mock/from unittest import mock/' src/cssutils/tests/*.py
-}
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  #2to3 --no-diffs -nw src
-
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

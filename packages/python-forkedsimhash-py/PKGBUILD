@@ -5,13 +5,13 @@ pkgname=python-forkedsimhash-py
 _pkgname=forkedsimhash-py
 pkgver=0.4.2
 _pyver=3.11
-pkgrel=5
+pkgrel=3
 pkgdesc='Near-Duplicate Detection with Simhash.'
 url='https://pypi.org/project/forkedsimhash-py/#files'
 arch=('x86_64' 'aarch64')
 license=('custom:unknown')
 depends=('python')
-makedepends=('python-setuptools')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('7a82a9e29cc245927d48c53455a10d22f1f9fe4f90309cb9524e8c727263e3c0412ae5b6f09fa572d458f44382de07a445ac82d119179c59266ab44113d89d3f')
 
@@ -24,13 +24,24 @@ prepare() {
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 
   rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/simhash/"{__init__.py,__pycache__}
 }

@@ -2,28 +2,40 @@
 # See COPYING for license details.
 
 pkgname=python-ipgetter
-pkgver=0.7
-pkgrel=7
+_pkgname=ipgetter2
+pkgver=1.1.10
+pkgrel=1
 pkgdesc='Utility to fetch your external IP address.'
 url='https://pypi.org/project/ipgetter/#files'
-depends=('python')
-license=('WTFPL')
 arch=('any')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/ipgetter-$pkgver.tar.gz"
+license=('Apache')
+depends=('python' 'python-click' 'python-requests' 'python-chardet')
+makedepends=('python-pip' 'python-build' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.zip"
 	      'LICENSE')
-sha512sums=('ccdb36a8cd976f19ba5afabd62de090236eb7a8df63a64822d36bf09b15bb1df4e234723c49ce84800e6fc21f4b3b6373f0d689ad93cec192eb0865fe03ea6bd'
+sha512sums=('e13fd40fd02feaf3d3052f8d538851c67fb9700f52408bbabd67bba6b3ac4195f9b2ce4c2e0b32efc671b1a2712622c620bd4b122e9afdee91bb08f9e60e8e1b'
             '2c9e4db534550a6073d70ca09f44ffabab6a1c078e8663558ba8958dedd90f291ccd81b0a78e1dc21a5fd0cc9a1d2107a74e84ecdb23795b291326abd3d5c498')
 
 build() {
-  cd "ipgetter-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "ipgetter-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
