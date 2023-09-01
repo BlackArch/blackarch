@@ -1,43 +1,39 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-optparse-pretty
-pkgname=('python2-optparse-pretty' 'python-optparse-pretty')
+pkgname=python-optparse-pretty
+_pkgname=optparse-pretty
 pkgver=0.1.1
 pkgrel=6
 pkgdesc='A more compact help formatter for optparse.'
 arch=('any')
 url='https://pypi.org/project/optparse-pretty/#files'
 license=('BSD')
-makedepends=('python2-setuptools' 'python-setuptools')
+depends=('python')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/optparse-pretty-$pkgver.tar.gz")
 sha512sums=('2342109e9e258842803d2e6d3e8ad0a4082bd9bec9260ce4049328c0f0326cd79dc256e19765a91bf6d62cefcb3891b43682ef7fcbe928b4457bb6d7f5436cbe')
 
-prepare() {
-  cp -a "optparse-pretty-$pkgver" "optparse-pretty2-$pkgver"
-}
-
 build() {
-  cd "optparse-pretty2-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python2 setup.py build
-
-  cd "$srcdir/optparse-pretty-$pkgver"
-
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
-package_python2-optparse-pretty() {
-  cd "optparse-pretty2-$pkgver"
+package() {
+  cd "$_pkgname-$pkgver"
 
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
-}
-
-package_python-optparse-pretty() {
-  cd "optparse-pretty-$pkgver"
-
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

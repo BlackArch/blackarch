@@ -4,28 +4,39 @@
 pkgname=python-pathlib
 _pkgname=pathlib
 pkgver=1.0.1
-pkgrel=4
+_pyver=3.11
+pkgrel=3
 pkgdesc='Python library that offers a set of classes to handle filesystem paths.'
 arch=('any')
 url='https://pypi.org/project/pathlib/'
 license=('MIT')
 depends=('python')
-makedepends=('python-setuptools')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('d85e45dfcc85ce75a7e7b609163dc8c75c688f279c1833510185f280af5501e473376dc09bddc6a804d1fcc3177a939db85af37b7b8d5b183b9bc2b85b3b0f8b')
-_pyver='3.9'
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 
-  rm -rf "$pkgdir/usr/lib/python${_pyver}/site-packages/__pycache__"
+  rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/__pycache__"
 }
 
