@@ -2,35 +2,42 @@
 # See COPYING for license details.
 
 pkgname=trufflehog
-pkgver=2264.07702ea0
+pkgver=v3.54.2.r0.g2e4b17d3
 pkgrel=1
+epoch=1
 pkgdesc='Searches through git repositories for high entropy strings, digging deep into commit history.'
 groups=('blackarch' 'blackarch-code-audit' 'blackarch-recon')
-arch=('any')
+arch=('x86_64' 'aarch64')
 url='https://github.com/dxa4481/truffleHog'
 license=('GPL2')
-depends=('python' 'python-gitpython' 'python-trufflehogregexes')
-makedepends=('git' 'python-setuptools')
+depends=('glibc')
+makedepends=('git' 'go')
 source=("git+https://github.com/dxa4481/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
 build() {
   cd $pkgname
 
-  python setup.py build
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
 }
 
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 }
 
