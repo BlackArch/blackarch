@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=yawast
-pkgver=1072.5e9e7a3
-pkgrel=8
+pkgver=0.11.0
+pkgrel=1
+epoch=1
 pkgdesc='The YAWAST Antecedent Web Application Security Toolkit.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
 arch=('any')
@@ -23,34 +24,31 @@ depends=('python' 'python-asn1crypto' 'python-attrs' 'python-beautifulsoup4'
          'python-ordered-set' 'python-orderedmultidict' 'python-pip-shims'
          'python-plette' 'python-tomlkit' 'python-zipp'
          'python-requirementslib')
-makedepends=('git' 'python-setuptools')
-source=("git+https://github.com/adamcaudill/$pkgname.git"
-        'requirements.txt.patch')
-sha512sums=('SKIP'
-            'a53ec0fff5e911dba2ffe0360904f0ce1a5634edecda80bd432863f31082f6ad0e2da587eba97f7be1e51da35a54451291ffd2301e65204776442bda59099cb1')
-
-pkgver() {
-  cd $pkgname
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
+makedepends=('python-setuptools' 'python-requirementslib')
+#source=("git+https://github.com/adamcaudill/$pkgname.git"
+source=("https://files.pythonhosted.org/packages/d3/f6/8082e949efa4e8f4139599f4c9773cdfed6d18c1e08f4f731e6cc95fbf9a/yawast-0.11.0.tar.gz"
+        'setup.py.patch')
+sha512sums=('a03c8621cef543cd2c6635f595cae9eed8e458eb25b941ddc4c506143f32cf19f7ae73da926fa59f832c63bcf5c0d53b9363b213d1a40abcae29fa14f678939e'
+            'acabc5def734bab6bfe60834f1c762c26c1496f3f20dfd822bba31c26d56917353004a27a6779c6bf55f2ce44e4cc9e4680210d65a49a956f67b9e7c88fe8ea6')
 
 prepare() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
-  patch -p0 < "$srcdir/requirements.txt.patch"
+  patch -p0 < ../setup.py.patch
+
+  touch Pipfile
 }
 
 build() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
   python setup.py build
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
