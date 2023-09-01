@@ -5,26 +5,37 @@ pkgname=python-normality
 _pkgname=normality
 _pyver=3.11
 pkgver=2.4.0
-pkgrel=4
+pkgrel=1
 pkgdesc='Micro-library to normalize text strings.'
 arch=('any')
 url='https://pypi.org/project/normality/#files'
 license=('MIT')
 depends=('python' 'python-six' 'python-chardet' 'python-pyicu' 'python-banal')
-makedepends=('python-setuptools')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('025dc03fac23549cbb4287833d6ce13bf3a7a3d6d4a3407315c67c440e91e00f19390588fb85953e099efc3c8fc1039140680388e38edfd7a52cdd3644c8c689')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 
   rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/tests"
 }

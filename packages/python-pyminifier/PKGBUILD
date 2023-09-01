@@ -4,25 +4,44 @@
 pkgname=python-pyminifier
 _pkgname=pyminifier
 pkgver=2.1
-pkgrel=8
+pkgrel=7
 pkgdesc='Python code minifier, obfuscator, and compressor.'
 arch=('any')
 url='https://pypi.org/project/pyminifier/#files'
 license=('GPL3')
 depends=('python')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('d9335b27acb11bf5c9fbd3bac173ee5cf6e66be9f2c879b1f0c059a84dfb845765e69775f2efe7fd0453d6d1916a0dcd1fcab3f4850076bbcf558561853f771c')
+makedepends=('python-pip' 'python-build' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+        'setup.py.patch')
+sha512sums=('d9335b27acb11bf5c9fbd3bac173ee5cf6e66be9f2c879b1f0c059a84dfb845765e69775f2efe7fd0453d6d1916a0dcd1fcab3f4850076bbcf558561853f771c'
+            '20642fe330eb69d993b0a5ff12920c8556cf3ef2a3eaff125605cf1d0c5f2b5dc3882959fceb00fe511eb4a468d1496188255f3cbc2d3520ba24b40cd580acd2')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  patch -p0 < ../setup.py.patch
+}
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

@@ -2,26 +2,39 @@
 # See COPYING for license details.
 
 pkgname=python-python-cli-ui
+_pkgname=python-cli-ui
 pkgver=0.7.5
-pkgrel=6
+pkgrel=5
 pkgdesc='Build nice user interfaces in the terminal.'
 url='http://github.com/TankerApp/python-cli-ui'
 arch=('any')
 license=('MIT')
 depends=('python' 'python-colorama' 'python-unidecode' 'python-tabulate')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/python-cli-ui-0.7.5.tar.gz")
+makedepends=('python-pip' 'python-build' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('a7c11ab26b800c213dffafb9ec15cc4dc34999518ff0c8288425dba46b5d76c1d75f6d91e40686740f2263419f41986cc5dcceedd40f64d0e0d53aa2476fe619')
 
 build() {
-  cd "python-cli-ui-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "python-cli-ui-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --optimize=1
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
+
 
