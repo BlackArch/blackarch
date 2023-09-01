@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=python-veryprettytable
+_pkgname=veryprettytable
 pkgver=0.8.1
-pkgrel=7
+pkgrel=6
 pkgdesc='A simple Python library for easily displaying tabular data in a visually appealing ASCII table format.'
 url='https://pypi.org/project/veryprettytable/#files'
 arch=('any')
@@ -14,15 +15,25 @@ source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname
 sha512sums=('ebdf031da50bc7e0894ea8bd1df34102ee04e11176d755c5ee04143d21af17cd40cb85b28e1bfb3a29d08d1e63d2841d4ed3a67960f76b0efe68a42e30a3dbf5')
 
 build() {
-  cd "veryprettytable-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "veryprettytable-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

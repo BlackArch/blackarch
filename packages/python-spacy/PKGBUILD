@@ -4,7 +4,7 @@
 pkgname=python-spacy
 _pkgname=spacy
 pkgver=3.6.1
-pkgrel=2
+pkgrel=1
 pkgdesc='Industrial-strength Natural Language Processing (NLP) in Python.'
 arch=('x86_64' 'aarch64')
 url='https://pypi.org/project/spacy/#files'
@@ -13,19 +13,30 @@ depends=('python-catalogue' 'python-cymem' 'python-jinja' 'python-murmurhash'
          'python-numpy' 'python-pathlib' 'python-plac' 'python-preshed'
          'python-regex' 'python-requests' 'python-srsly' 'python-thinc'
          'python-tqdm' 'python-typer' 'python-ujson' 'python-wasabi')
-makedepends=('python-pip' 'python-wheel' 'cython' 'python-setuptools')
+makedepends=('python-pip' 'python-build' 'python-wheel' 'cython')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('d3f609ab1192a2186153fba119a1882eb50a33bf1860d960f5fe42de8f80e9376fe2a619a533ac5ccf47c5b1c2c27a2e5a2052967c7173c13636392994560d7e')
 
 build() {
-	cd "$_pkgname-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-	python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-	cd "$_pkgname-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-	python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

@@ -1,0 +1,50 @@
+From a9c9e69ed89b481b7361d9aa4c1acbbd50e13e22 Mon Sep 17 00:00:00 2001
+From: LingMan <LingMan@users.noreply.github.com>
+Date: Wed, 10 May 2023 20:53:10 +0200
+Subject: [PATCH] Fix compilation against Python 3.11+
+
+With Python 3.11 the internal structure of PyFrameObject (AKA struct _frame) has been removed from
+the public API.
+De jure it was always an opaque struct but now there have also been de facto changes.
+
+From the sip side the change is simply to call the official PyFrame_GetBack API, but PyFrameObject
+is returned as part of sip's API. Callers of `sip_api_get_frame` may thus need additional fixes if
+they rely on PyFrameObject's internal structure.
+
+This change contains a fallback implementation of PyFrame_GetBack for Python 3.8 and older
+(including 2.7) as documented here:
+https://docs.python.org/3/whatsnew/3.11.html#whatsnew311-c-api-porting
+---
+ siplib/siplib.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/siplib/siplib.c b/siplib/siplib.c
+index db52b68..b234a0b 100644
+--- a/siplib/siplib.c
++++ b/siplib/siplib.c
+@@ -13737,6 +13737,13 @@ static int sip_api_is_user_type(const sipWrapperType *wt)
+     return wt->wt_user_type;
+ }
+ 
++#if PY_VERSION_HEX < 0x030900B1
++static inline PyFrameObject* PyFrame_GetBack(PyFrameObject *frame)
++{
++    Py_XINCREF(frame->f_back);
++    return frame->f_back;
++}
++#endif
+ 
+ /*
+  * Return a frame from the execution stack.
+@@ -13747,7 +13754,7 @@ static struct _frame *sip_api_get_frame(int depth)
+ 
+     while (frame != NULL && depth > 0)
+     {
+-        frame = frame->f_back;
++        frame = PyFrame_GetBack(frame);
+         --depth;
+     }
+ 
+-- 
+2.40.1
+

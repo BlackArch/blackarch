@@ -5,7 +5,25 @@
  # CMAKE_FIND_FRAMEWORKS(Python)
 
 -FOREACH(_CURRENT_VERSION 3.4 3.3 3.2 3.1 3.0)
-+FOREACH(_CURRENT_VERSION 3.9 3.8 3.7 3.6 3.5 3.4 3.3 3.2 3.1 3.0)
++FOREACH(_CURRENT_VERSION 3.7 3.6 3.5 3.4 3.3 3.2 3.1 3.0)
    IF(_CURRENT_VERSION GREATER 3.1)
        SET(_32FLAGS "m" "u" "mu" "dm" "du" "dmu" "")
    ELSE()
+--- a/libshiboken/sbkenum.cpp 2021-02-09 14:52:17.062065563 ->
++++ b/libshiboken/sbkenum.cpp 2021-02-09 14:52:59.965800766 ->
+@@ -527,9 +527,15 @@
+ {
+     PyTypeObject* type = reinterpret_cast<PyTypeObject*>(new SbkEnumType);
+     ::memset(type, 0, sizeof(SbkEnumType));
++    #ifdef IS_PY3K
++    Py_SET_TYPE(type, &SbkEnumType_Type);
++    #else
+     Py_TYPE(type) = &SbkEnumType_Type;
++    #endif
+     type->tp_basicsize = sizeof(SbkEnumObject);
++    #ifndef IS_PY3K
+     type->tp_print = &SbkEnumObject_print;
++    #endif
+     type->tp_repr = &SbkEnumObject_repr;
+     type->tp_str = &SbkEnumObject_repr;
+     type->tp_flags = Py_TPFLAGS_DEFAULT|Py_TPFLAGS_CHECKTYPES;

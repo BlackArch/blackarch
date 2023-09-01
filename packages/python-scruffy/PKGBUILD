@@ -2,28 +2,39 @@
 # See COPYING for license details.
 
 pkgname=python-scruffy
+_pkgname=scruffy
 pkgver=0.3
-pkgrel=9
+pkgrel=8
 epoch=1
 pkgdesc='A framework for taking care of a bunch of boilerplate in Python apps.'
 url='https://pypi.org/project/scruffy/#files'
 arch=('any')
 license=('MIT')
 depends=('python' 'python-yaml' 'python-six' 'graphviz' 'plotutils')
-makedepends=('python-setuptools' 'graphviz' 'plotutils')
+makedepends=('python-pip' 'python-build' 'python-wheel' 'graphviz' 'plotutils')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/scruffy-$pkgver.tar.gz")
 sha512sums=('7f3f955bddc0fe295147aca98391bc0159b469a719e44891f89592321af2f0e3eaf44bdd2ff43dd749440e7f7fa5587f3b8ff2828d7ac23bf066820e00446317')
 
 build() {
-  cd "scruffy-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "scruffy-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
