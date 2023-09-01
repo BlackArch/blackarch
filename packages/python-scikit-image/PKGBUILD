@@ -2,9 +2,9 @@
 # See COPYING for license details.
 
 pkgname=python-scikit-image
-_pkgname=scikit-image
+_pkgname=scikit_image
 pkgver=0.21.0
-pkgrel=2
+pkgrel=1
 pkgdesc='Image processing routines for SciPy.'
 arch=('x86_64' 'aarch64')
 url='https://pypi.org/project/scikit-image/#files'
@@ -12,19 +12,30 @@ license=('BSD')
 depends=('python' 'python-numpy' 'python-scipy' 'python-matplotlib'
          'python-numpy' 'python-networkx' 'python-pillow' 'python-imageio'
          'python-pywavelets')
-makedepends=('python-setuptools' 'python-pip' 'python-wheel' 'python-numpy')
+makedepends=('python-pip' 'python-build' 'python-wheel' 'python-numpy')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('3be52c341e68c951440885a810f3a2b52cafa1243701c192e3e9ade6bd248e7036ee5ea9ca26dbd754e3d9938ead7862e13e0155164c878a0de164c58a567bae')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

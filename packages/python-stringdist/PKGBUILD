@@ -2,27 +2,38 @@
 # See COPYING for license details.
 
 pkgname=python-stringdist
+_pkgname=StringDist
 pkgver=1.0.9
-pkgrel=6
+pkgrel=5
 pkgdesc='Several functions for calculating string distances.'
 arch=('any')
 url='https://pypi.org/project/StringDist/#files'
 license=('MIT')
 depends=('python')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/StringDist-1.0.9.tar.gz")
+makedepends=('python-pip' 'python-build' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('8220409586c96590728a2706948d4c169cc84724c1dd74e98923362e433191201bb407c3efb43160de9227a21b68e16eea90f49e47e7ea32f2a08a34622561d7')
 
 build() {
-  cd "StringDist-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "StringDist-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

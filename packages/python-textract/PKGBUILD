@@ -4,7 +4,7 @@
 pkgname=python-textract
 _pkgname=textract
 pkgver=1.6.5
-pkgrel=3
+pkgrel=2
 pkgdesc='Extract text from any document. no muss. no fuss.'
 url='https://pypi.org/project/textract/#files'
 arch=('any')
@@ -12,19 +12,38 @@ license=('MIT')
 depends=('python' 'python-argcomplete' 'python-beautifulsoup4' 'python-chardet'
          'python-docx2txt' 'python-ebooklib' 'python-python-pptx' 'python-six'
          'python-speechrecognition' 'python-xlrd')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('409b0f9a2c0560b7e49ce0bb004bdd16e4590d05db66cc99d9cdfb761a2f13248aa70bd55bdd280fae5401f0162e2d7f464f8e871e85f51de527687f0c9b2412')
+makedepends=('python-pip' 'python-build' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+        'setup.py.patch')
+sha512sums=('409b0f9a2c0560b7e49ce0bb004bdd16e4590d05db66cc99d9cdfb761a2f13248aa70bd55bdd280fae5401f0162e2d7f464f8e871e85f51de527687f0c9b2412'
+            '8c9552f82ae70033e015c7244f78035b460e244c91f56346c32b4aa8ec01dfeb1294a8e670437cd607930d1db0a955003fd2977e7d434d20c8c7c4889d56f6e9')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  patch -p0 < ../setup.py.patch
+}
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

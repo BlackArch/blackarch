@@ -2,27 +2,38 @@
 # See COPYING for license details.
 
 pkgname=python-spoofmac
+_pkgname=SpoofMAC
 pkgver=2.1.1
-pkgrel=7
+pkgrel=6
 pkgdesc='Easily spoof your MAC address in OS X, Windows & Linux.'
 url='https://pypi.org/project/SpoofMC/#files'
 arch=('any')
 license=('MIT')
 depends=('python')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/SpoofMAC-$pkgver.tar.gz")
+makedepends=('python-pip' 'python-build' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('c283b0e65e6d8521180f8bf08f98048a53811f100416091232c1f5b75d944e084624c7244d6df1c73c5e1ba0f214e6518b7e930a8f9fb19dedcff5950655425e')
 
 build() {
-  cd "SpoofMAC-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "SpoofMAC-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

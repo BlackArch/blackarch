@@ -2,27 +2,38 @@
 # See COPYING for license details.
 
 pkgname=python-wireless
+_pkgname=wireless
 pkgver=0.3.3
-pkgrel=6
+pkgrel=5
 pkgdesc='A dead simple, cross-platform Python library to connect to wireless networks.'
 url='https://pypi.org/project/wireless/#files'
 arch=('any')
 license=('Apache')
 depends=('python')
-makedepends=('python-setuptools')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/wireless-0.3.3.tar.gz")
 sha512sums=('e5f89052dd7f649e92fd2a3ec2657bfc8f891310570572b23eb9fb8e83358f9ea48fdc249e5dc1031393dbb3c37689fa71b186e5097da558525e2526437f742a')
 
 build() {
-  cd "wireless-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "wireless-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
