@@ -1,0 +1,48 @@
+From eed66bc10c5ec5e650de8b03dc1ee0b373f01a00 Mon Sep 17 00:00:00 2001
+From: LingMan <LingMan@users.noreply.github.com>
+Date: Thu, 11 May 2023 02:59:27 +0200
+Subject: [PATCH] Fix compilation against Python 3.11+
+
+With Python 3.11 the internal structure of PyFrameObject (AKA struct _frame) has been removed from
+the public API.
+De jure it was always an opaque struct but now there have also been de facto changes.
+
+The fix is to simply call the official PyFrame_GetBack API.
+
+This change contains a fallback implementation of PyFrame_GetBack for Python 3.8 and older
+(including 2.7) as documented here:
+https://docs.python.org/3/whatsnew/3.11.html#whatsnew311-c-api-porting
+---
+ qpy/QtCore/qpycore_classinfo.cpp | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/qpy/QtCore/qpycore_classinfo.cpp b/qpy/QtCore/qpycore_classinfo.cpp
+index a626df3..60de2b7 100644
+--- a/qpy/QtCore/qpycore_classinfo.cpp
++++ b/qpy/QtCore/qpycore_classinfo.cpp
+@@ -25,6 +25,13 @@
+ 
+ #include "qpycore_classinfo.h"
+ 
++#if PY_VERSION_HEX < 0x030900B1
++static inline PyFrameObject* PyFrame_GetBack(PyFrameObject *frame)
++{
++    Py_XINCREF(frame->f_back);
++    return frame->f_back;
++}
++#endif
+ 
+ static QMultiHash<const PyFrameObject *, ClassInfo> class_info_hash;
+ 
+@@ -36,7 +43,7 @@ PyObject *qpycore_ClassInfo(const char *name, const char *value)
+ 
+     // We need the frame we were called from, not the current one.
+     if (frame)
+-        frame = frame->f_back;
++        frame = PyFrame_GetBack(frame);
+ 
+     if (!frame)
+     {
+-- 
+2.40.1
+

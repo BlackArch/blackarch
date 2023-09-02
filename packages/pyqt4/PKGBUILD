@@ -1,4 +1,4 @@
-# Maintainer: Stephan Springer <buzo+arch@Lini.de>
+# Contributor: Stephan Springer <buzo+arch@Lini.de>
 # Contributor: Felix Yan <felixonmars@archlinux.org>
 # Contributor: Andrea Scarpino <andrea@archlinux.org>
 # Contributor: Douglas Soares de Andrade <douglas@archlinux.org>
@@ -8,16 +8,23 @@ pkgbase=pyqt4
 pkgname=('pyqt4-common' 'python-pyqt4' 'python2-pyqt4')
 pkgver=4.12.3
 pkgrel=12
-arch=('x86_64')
-url='http://www.riverbankcomputing.com/software/pyqt/intro'
+arch=('x86_64' 'aarch64')
+url='https://riverbankcomputing.com/software/pyqt/intro'
 license=('GPL')
-makedepends=('sip4' 'python-sip-pyqt4' 'python2-sip-pyqt4' 'dbus-python'
-             'phonon-qt4' 'mesa' 'python2-opengl')
-source=("http://downloads.sourceforge.net/pyqt/PyQt4_gpl_x11-${pkgver}.tar.gz")
-sha256sums=('a00f5abef240a7b5852b7924fa5fdf5174569525dc076cd368a566619e56d472')
+makedepends=('sip4' 'python-sip-pyqt4' 'python2-sip-pyqt4' 'python-dbus' 'phonon-qt4'
+             'mesa' 'python2-opengl' 'python2-dbus')
+source=("https://downloads.sourceforge.net/project/pyqt/PyQt4/PyQt-${pkgver}/PyQt4_gpl_x11-${pkgver}.tar.gz"
+        '0001-Fix-compilation-against-Python-3.11.patch')
+sha256sums=('a00f5abef240a7b5852b7924fa5fdf5174569525dc076cd368a566619e56d472'
+            'ae6f13d26d8f94f30eb48058300a5b3d7fa9e7060a9f808abad61f25ba35ebe9')
 
 prepare() {
   sed -i -e "/'PyQt4\.sip', '-f', sip_flags/s/'-f', //" PyQt4_gpl_x11-${pkgver}/configure-ng.py
+
+  cd PyQt4_gpl_x11-${pkgver}
+  patch --strip=1 --input=../0001-Fix-compilation-against-Python-3.11.patch
+
+  cd ..
   cp -a PyQt4_gpl_x11-${pkgver}{,-py2}
 }
 
@@ -65,7 +72,7 @@ package_pyqt4-common() {
 
 package_python-pyqt4() {
   pkgdesc="A set of Python 3.x bindings for the Qt toolkit"
-  depends=('sip' 'python-sip-pyqt4' 'dbus-python' 'pyqt4-common')
+  depends=('python-sip-pyqt4' 'python-dbus' 'pyqt4-common')
   optdepends=('phonon-qt4: enable audio and video in PyQt applications')
   replaces=('pyqt')
   conflicts=('pyqt')
@@ -82,7 +89,7 @@ package_python-pyqt4() {
 
 package_python2-pyqt4() {
   pkgdesc="A set of Python 2.x bindings for the Qt toolkit"
-  depends=('sip' 'python2-sip-pyqt4' 'dbus-python' 'pyqt4-common')
+  depends=('python2-sip-pyqt4' 'python2-dbus' 'pyqt4-common')
   optdepends=('phonon-qt4: enable audio and video in PyQt applications'
               'python2-opengl: enable OpenGL 3D graphics in PyQt applications')
   replaces=('python2-pyqt')
@@ -101,4 +108,3 @@ package_python2-pyqt4() {
   rm "${pkgdir}"/usr/lib/qt4/plugins/designer/libpyqt4.so
   rm "${pkgdir}"/usr/share/qt4/qsci/api/python/PyQt4.api
 }
-
