@@ -1,0 +1,65 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=netexec
+_pyver=3.11
+pkgver=v1.0.0.r0.g72e42e9
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation'
+        'blackarch-windows')
+pkgdesc='A Windows / Active Directory environments pentest tool.'
+arch=('any')
+url='https://netexec.wiki/'
+license=('BSD')
+depends=('python' 'python-poetry')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/Pennyw0rth/NetExec.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE .github .git* .dockerignore Dockerfile Makefile *.nix
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+poetry config cache-dir "/usr/share/$pkgname"
+poetry env use /usr/share/$pkgname/virtualenvs/*/bin/python$_pyver \\
+  --directory /usr/share/netexec
+poetry run --directory "/usr/share/$pkgname" $pkgname "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/nxc" << EOF
+#!/bin/sh
+poetry config cache-dir "/usr/share/$pkgname"
+poetry env use /usr/share/$pkgname/virtualenvs/*/bin/python$_pyver \\
+  --directory /usr/share/netexec
+poetry run --directory "/usr/share/$pkgname" nxc "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/nxcdb" << EOF
+#!/bin/sh
+poetry config cache-dir "/usr/share/$pkgname"
+poetry env use /usr/share/$pkgname/virtualenvs/*/bin/python$_pyver \\
+  --directory /usr/share/netexec
+poetry run --directory "/usr/share/$pkgname" nxcdb "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname" "$pkgdir/usr/bin/nxc" \
+    "$pkgdir/usr/bin/nxcdb"
+}
+
