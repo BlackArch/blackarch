@@ -3,7 +3,7 @@
 
 pkgname=stegdetect
 pkgver=20.28a4f07
-pkgrel=1
+pkgrel=2
 pkgdesc='An automated tool for detecting steganographic content in images.'
 groups=('blackarch' 'blackarch-stego' 'blackarch-defensive'
         'blackarch-forensic')
@@ -12,8 +12,12 @@ url='https://github.com/redNixon/stegdetect'
 license=('BSD')
 depends=('gdk-pixbuf2')
 makedepends=('git' 'automake')
-source=("git+https://github.com/redNixon/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/redNixon/$pkgname.git"
+        "rules.ini"
+        "0001-tree-wide-rename-progname-to-avoid-conflicts.patch")
+sha512sums=('SKIP'
+            '8a7e13c7c5b44d731c7e9e904bef221ce8c248a426a64de797196cafb0c3a5950967a064cf281ec998e7c28f3b82adfb7f329a2c1e160c466d00b60df54428fe'
+            '11223fad5640304d99ab057510f8d99feb0e560c5a7c66eca1900d781f80fcd415cc25802e4f5d3f6908494db37dcfdf6513f7f9ca3abe41d408645f31f6a7ca')
 
 pkgver() {
   cd $pkgname
@@ -21,8 +25,14 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  patch -d "${pkgname}" -Np1 -i "${srcdir}/0001-tree-wide-rename-progname-to-avoid-conflicts.patch"
+}
+
 build() {
   cd $pkgname
+
+  autoreconf -f -i # regen new confs
 
   if [ $CARCH = "x86_64" ]
   then
@@ -36,6 +46,8 @@ build() {
 
 package() {
   cd $pkgname
+
+  install -Dm 644 "$srcdir/rules.ini" "$pkgdir/usr/share/stegbreak/rules.ini"
 
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
