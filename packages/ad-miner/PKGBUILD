@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ad-miner
+_pkgname_dir=AD_Miner
+_pkgname_cmd=AD-miner
+_pyver=3.11
+pkgver=v0.2.1.r7.g585ad72
+pkgrel=1
+groups=('blackarch' 'blackarch-recon' 'blackarch-windows')
+pkgdesc='TODO'
+arch=('any')
+url='https://github.com/Mazars-Tech/AD_Miner'
+license=('GPL3')
+depends=('python' 'python-poetry')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/Mazars-Tech/$_pkgname_dir.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  rm -rf LICENSE .github .git* CONTRIBUTING.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+poetry config cache-dir "/usr/share/$pkgname"
+poetry env use /usr/share/$pkgname/.venv/bin/python$_pyver \\
+  --directory /usr/share/$pkgname
+poetry run --directory "/usr/share/$pkgname" $_pkgname_cmd "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
