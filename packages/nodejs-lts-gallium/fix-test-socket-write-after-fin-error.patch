@@ -1,0 +1,40 @@
+From 1c0fb51e475ae0a86a4ea5394d5ec94930379646 Mon Sep 17 00:00:00 2001
+From: Luigi Pinca <luigipinca@gmail.com>
+Date: Tue, 12 Jul 2022 22:11:10 +0200
+Subject: [PATCH] test: fix test-socket-write-after-fin-error
+
+The `'error'` event is not emitted because the socket is already
+destroyed when `socket.write()` is called. Use the `socket.write()`
+callback instead.
+---
+ test/parallel/test-socket-write-after-fin-error.js | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/test/parallel/test-socket-write-after-fin-error.js b/test/parallel/test-socket-write-after-fin-error.js
+index 64c8143abebb..0e3b99abac75 100644
+--- a/test/parallel/test-socket-write-after-fin-error.js
++++ b/test/parallel/test-socket-write-after-fin-error.js
+@@ -16,10 +16,7 @@ let gotServerError = false;
+ 
+ const server = net.createServer(function(sock) {
+   sock.setEncoding('utf8');
+-  sock.on('error', function(er) {
+-    console.error(`${er.code}: ${er.message}`);
+-    gotServerError = er;
+-  });
++  sock.on('error', function() {});
+ 
+   sock.on('data', function(c) {
+     serverData += c;
+@@ -27,7 +24,10 @@ const server = net.createServer(function(sock) {
+   sock.on('end', function() {
+     gotServerEnd = true;
+     setImmediate(() => {
+-      sock.write(serverData);
++      sock.write(serverData, function(er) {
++        console.error(`${er.code}: ${er.message}`);
++        gotServerError = er;
++      });
+       sock.end();
+     });
+   });
