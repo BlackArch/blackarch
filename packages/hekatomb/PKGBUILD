@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=hekatomb
+pkgver=1.5
+pkgrel=1
+pkgdesc='Extract and decrypt all credentials from all domain computers using DPAPI.'
+arch=('any')
+groups=('blackarch' 'blackarch-windows' 'blackarch-exploitation')
+url='https://github.com/Processus-Thief/HEKATOMB'
+license=('GPL3')
+depends=('python' 'impacket' 'python-dnspython' 'python-pycryptodomex' 'python-ldap3' 'python-chardet')
+makedepends=('python-build' 'python-pip')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz")
+sha512sums=('02d2e94fee4f9ecac62aa3a4d6dfd6c21ee39ee28251682a9fbeb0a63a67952878a32be0f1b95577b1411627462289dfd11fdb1dc9c716869fb7a95430142717')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
