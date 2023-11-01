@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=smbmap
-pkgver=161.334022a
+pkgver=163.2c48008
 pkgrel=1
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
 pkgdesc='A handy SMB enumeration tool.'
@@ -11,7 +11,7 @@ url='https://github.com/ShawnDEvans/smbmap'
 license=('GPL3')
 depends=('python' 'impacket' 'python-pycryptodomex' 'python-pyasn1'
          'python-termcolor')
-makedepends=('git')
+makedepends=('python-build' 'python-pip' 'git')
 source=("git+https://github.com/ShawnDEvans/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -21,14 +21,26 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 755 "$pkgname.py" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" psutils/*
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 }
 
