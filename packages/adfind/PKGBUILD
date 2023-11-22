@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=adfind
-pkgver=v1.0.0
+pkgver=v1.0.2.r1.gee408bd
 pkgrel=1
 pkgdesc='Simple admin panel finder for php,js,cgi,asp and aspx admin panels.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-recon')
@@ -16,14 +16,29 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git describe --abbrev=0 --tags)
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  # If you encounter the error: go mod download: no modules specified (see 'go help mod download')
+  # while building, then uncomment the following lines:
+  # GOPATH="$srcdir" go mod init go.mod
+  # GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/adfind/main.go
 }
 
 package() {
   cd $pkgname
   
-  git checkout tags/$pkgver
-  go build -o $pkgname ./cmd/adfind/main.go
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -d wordlists/ "${pkgdir}/usr/share/${pkgname}/wordlists"
   install -Dm 644 wordlists/* "$pkgdir/usr/share/${pkgname}/wordlists/"
