@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=goop-dump
+_pkgname=goop
+pkgver=69.a02feed
+pkgrel=1
+pkgdesc='Tool to dump a git repository from a website, focused on as-complete-as-possible dumps and handling weird edge-cases.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+url='https://github.com/nyancrimew/goop'
+license=('MIT')
+depends=()
+makedepends=('git' 'go')
+source=("git+https://github.com/nyancrimew/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $_pkgname
+
+  # If you encounter the error: go mod download: no modules specified (see 'go help mod download')
+  # while building, then uncomment the following lines:
+  # GOPATH="$srcdir" go mod init go.mod
+  # GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd $_pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
