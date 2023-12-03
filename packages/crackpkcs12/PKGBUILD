@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=crackpkcs12
+pkgver=0.2.10.11.c7dedb1
+pkgrel=1
+pkgdesc='A multithreaded program to crack PKCS#12 files (p12 and pfx extensions).'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-cracker' 'blackarch-crypto')
+url='https://github.com/crackpkcs12/crackpkcs12'
+license=('GPL3')
+depends=()
+makedepends=('git')
+source=("git+https://github.com/$pkgname/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  tool_ver=$(grep VERSION= configure.in | cut -d = -f 2)
+  git_ver=$(echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD))
+  echo "$tool_ver.$git_ver"
+}
+
+prepare() {
+  cd $pkgname
+
+  ./configure --prefix=/usr
+}
+
+build() {
+  cd $pkgname
+
+  make
+}
+
+package() {
+  cd $pkgname
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+
