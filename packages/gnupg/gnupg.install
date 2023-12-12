@@ -1,0 +1,17 @@
+post_install() {
+  # run dirmngr once to create /root/.gnupg
+  # https://bugs.archlinux.org/task/47371
+  # https://bugs.archlinux.org/task/42798
+  dirmngr </dev/null &>/dev/null
+}
+
+post_upgrade() {
+  local unit
+
+  if (( $(vercmp "$2" '2.2.37-1') < 0)); then
+    for unit in {dirmngr,gpg-agent{,-{browser,extra,ssh}}}.socket; do
+      rm -f "/etc/systemd/user/sockets.target.wants/$unit"
+    done
+    printf "NOTE: GnuPG's systemd sockets are now enabled in the vendor location /usr/lib/systemd/user/!\n"
+  fi
+}
