@@ -2,9 +2,9 @@
 # See COPYING for license details.
 
 pkgname=semgrep
-pkgver=1.46.0
+pkgver=1.55.2
 _pyver=3.11
-_py=cp37.cp38.cp39.cp310.cp311.py37.py38.py39.py310.py311
+_py=cp38.cp39.cp310.cp311.py37.py38.py39.py310.py311
 pkgrel=1
 pkgdesc='Lightweight static analysis for many languages.'
 arch=('x86_64')
@@ -16,13 +16,13 @@ depends=('python' 'python-attrs' 'python-boltons' 'python-colorama'
          'python-requests' 'python-ruamel-yaml' 'python-tqdm' 'python-packaging'
          'python-jsonschema' 'python-wcmatch' 'python-peewee'
          'python-defusedxml' 'python-urllib3' 'python-typing_extensions'
-         'python-lsp-jsonrpc' 'python-tomli' 'python-rich')
+         'python-lsp-jsonrpc' 'python-tomli' 'python-rich' 'python-exceptiongroup')
 makedepends=('python-build' 'python-pip' 'python-wheel')
 replaces=('python-semgrep')
 source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz"
         "https://files.pythonhosted.org/packages/$_py/${pkgname::1}/$pkgname/${pkgname//-/_}-$pkgver-$_py-none-any.whl")
-sha512sums=('a8d8d9603fb771301222fa4bfec16a2607f703ddbbe638e060184f4defc82388279602f48e6c4fd114cda68ef11c36ca6667ee2fdfb5fa1cabdd8d593c432a03'
-            '04d2abf298757f6e4279960944c742092bb42664e96cc5edbc4582c5bfa6b4b0d01f47b6836ec0616288d8f3cf70aa3f9998434aff10b15c294504b1c32361dd')
+sha512sums=('fd3ff2fc846de44dfbab04530d07a513673f08114b6c79269f5277bd3724adecc8a68060f6c3375f9dbe14dca69b94706d5943ebb7bf13892e4e66ed9b2ab8b4'
+            'f33dc6369717c190ffe1170ff85b5a6494e1d86e99f992e2c4ed53cca5047e29f604e081a656df2233ca1155a55eb4c4dfc80a2827d6aea8d2562cdab52836a1')
 
 build() {
   cd "$pkgname-$pkgver"
@@ -52,5 +52,9 @@ package() {
     "$srcdir/$pkgname-$pkgver.data/purelib/semgrep/bin/semgrep-core" \
     "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/semgrep-core"
   strip "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/semgrep-core"
+
+  # semgrep sg binary conflicts with shadow sg binary
+  # https://github.com/semgrep/semgrep/issues/9571
+  mv "$pkgdir/usr/bin/sg" "$pkgdir/usr/bin/semgrep-sg"
 }
 
