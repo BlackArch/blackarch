@@ -2,56 +2,52 @@
 # See COPYING for license details.
 
 pkgname=sippts
-pkgver=510.cfdf7b7
+pkgver=v3.3.r60.gcfdf7b7
 pkgrel=1
+epoch=1
 pkgdesc='Set of tools to audit SIP based VoIP Systems.'
 groups=('blackarch' 'blackarch-voip')
 arch=('any')
 url='https://github.com/Pepelux/sippts'
 license=('custom:unknown')
-depends=('perl' 'perl-dbi' 'perl-io-socket' 'perl-netaddr-ip' 'perl-net-pcap'
-         'perl-io-socket-timeout' 'perl-string-hexconvert'
-         'perl-perlio-via-timeout')
-makedepends=('git')
+depends=('python' 'python-netifaces' 'python-ipy' 'python-pyshark'
+         'python-scapy' 'python-arpspoof' 'python-websocket-client' 'python-rel'
+         'python-pyradamsa')
+makedepends=('git' 'python-pip' 'python-build' 'python-wheel')
 source=("git+https://github.com/Pepelux/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" readme.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm readme.md
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  for i in *.pl; do
-    if [ "$i" = "sipcrack.pl" ]
-    then
-      cat > "$pkgdir/usr/bin/"`echo $i | sed 's/.pl//'`"-sippts" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec perl $i "\$@"
-EOF
-      chmod +x "$pkgdir/usr/bin/"`echo $i | sed 's/.pl//'`"-sippts"
-    else
-      cat > "$pkgdir/usr/bin/"`echo $i | sed 's/.pl//'` << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec perl $i "\$@"
-EOF
-      chmod +x "$pkgdir/usr/bin/"`echo $i | sed 's/.pl//'`
-    fi
-  done
+  mv "$pkgdir/usr/bin/arpspoof" "$pkgdir/usr/bin/$pkgname-arpspoof"
 }
 
