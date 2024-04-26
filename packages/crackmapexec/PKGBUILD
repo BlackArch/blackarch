@@ -1,67 +1,53 @@
-# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
-# See COPYING for license details.
+# Maintainer: Paul Taylor <bao7uo at gmail dot com>
+# Contributer: GI_Jack <GI_Jack@hackermail.com>
+# Contributer: ArchStrike <team@archstrike.org>
 
 pkgname=crackmapexec
-_pyver=3.11
-pkgver=v6.0.1.r198.gda472cb
-pkgrel=1
-epoch=3
+_pkgname=CrackMapExec
+pkgver=5.4.0
+_pkgver=5.4.0
+pkgrel=2
 groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation'
         'blackarch-windows')
-pkgdesc='A swiss army knife for pentesting Windows/Active Directory environments.'
+pkgdesc='A swiss army knife for pentesting Windows/Active Directory environments'
 arch=('any')
-url='https://github.com/Porchetta-Industries/CrackMapExec'
-license=('BSD')
-depends=('python' 'python-poetry')
-makedepends=('git')
-#source=("$pkgname::git+https://github.com/Porchetta-Industries/CrackMapExec.git")
-source=("$pkgname::git+https://github.com/mpgn/CrackMapExec.git")
-sha512sums=('SKIP')
-install="$pkgname.install"
+url='https://github.com/byt3bl33d3r/CrackMapExec'
+license=('GPL3')
+depends=('impacket' 'python' 'python-aardwolf' 'python-aiowinreg'
+	 'python-asn1crypto' 'python-asysocks' 'python-bcrypt'
+	 'python-beautifulsoup4' 'python-bs4' 'python-certifi' 'python-cffi'
+	 'python-chardet' 'python-click' 'python-cryptography'
+	 'python-dnspython' 'python-flask' 'python-future' 'python-greenlet'
+	 'python-idna' 'python-itsdangerous' 'python-jinja' 'python-ldap3'
+	 'python-ldapdomaindump' 'python-lsassy' 'python-markupsafe'
+	 'python-minidump' 'python-minikerberos' 'python-msgpack'
+	 'python-msldap' 'python-netaddr' 'python-ntlm-auth' 'python-paramiko'
+	 'python-prompt_toolkit' 'python-pyasn1' 'python-pycparser'
+	 'python-pycryptodomex' 'python-pylnk303' 'python-pynacl'
+	 'python-pyopenssl' 'python-pypsrp' 'python-pypykatz' 'python-pyspnego'
+	 'python-pytz' 'python-requests-ntlm' 'python-six' 'python-soupsieve'
+	 'python-termcolor' 'python-terminaltables' 'python-tqdm'
+	 'python-urllib3' 'python-wcwidth' 'python-werkzeug' 'python-winacl'
+	 'python-winsspi' 'python-xmltodict' 'python-zope-event'
+	 'python-zope-interface' 'python-pywerview' 'python-gevent'
+	 'python-neo4j' 'python-aioconsole')
 
-pkgver() {
-  cd $pkgname
+makedepends=('python-build' 'python-installer' 'python-poetry')
+source=("${url}/archive/v${_pkgver}.tar.gz")
+sha512sums=('36be587970c988080fc44c6c86d446eda7594ce02b4bfb4a7c2864d885bfd999b202afdf4051d53af132f27abe1f2558a077af3322ad34427ae61bd279604358')
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+build() {
+  cd $_pkgname-$_pkgver
+  poetry build
+  #python -m build --wheel --no-isolation
+  #cd dist
+  #tar zxvf "${pkgname}-${_pkgver}.tar.gz"
 }
 
 package() {
-  cd $pkgname
-
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm -rf LICENSE .github .git* .dockerignore Dockerfile Makefile *.nix
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-poetry config cache-dir "/usr/share/$pkgname"
-poetry env use /usr/share/$pkgname/virtualenvs/*/bin/python$_pyver \\
-  --directory /usr/share/crackmapexec
-poetry run --directory "/usr/share/$pkgname" $pkgname "\$@"
-EOF
-
-  cat > "$pkgdir/usr/bin/cme" << EOF
-#!/bin/sh
-poetry config cache-dir "/usr/share/$pkgname"
-poetry env use /usr/share/$pkgname/virtualenvs/*/bin/python$_pyver \\
-  --directory /usr/share/crackmapexec
-poetry run --directory "/usr/share/$pkgname" cme "\$@"
-EOF
-
-  cat > "$pkgdir/usr/bin/cmedb" << EOF
-#!/bin/sh
-poetry config cache-dir "/usr/share/$pkgname"
-poetry env use /usr/share/$pkgname/virtualenvs/*/bin/python$_pyver \\
-  --directory /usr/share/crackmapexec
-poetry run --directory "/usr/share/$pkgname" cmedb "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname" "$pkgdir/usr/bin/cme" \
-    "$pkgdir/usr/bin/cmedb"
+  cd "${_pkgname}-${_pkgver}/"
+  python -m installer --destdir="$pkgdir" dist/*.whl
+ 
+  # Install the license
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
-
