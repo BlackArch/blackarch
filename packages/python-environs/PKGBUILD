@@ -10,19 +10,30 @@ arch=('any')
 url='https://pypi.org/project/environs/#files'
 license=('MIT')
 depends=('python' 'python-marshmallow' 'python-dotenv')
-makedepends=('python2-setuptools' 'python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('c902ea50287fb82d040ce47e5a17571542ccb7b7aea2104a0d4b5393ce5b0f68e66b4a3abf4cd282bc0c49f26f2da18a0d7368a1ea998fb309917540f6872b0d')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

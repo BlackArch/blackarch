@@ -10,20 +10,32 @@ arch=('any')
 url='https://pypi.org/project/pyngrok/#files'
 license=('MIT')
 depends=('python' 'ngrok')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('90eedaf9f011bfd62e8ef88239aa0ec0fbd7c0f280d872409ef5d1c3c438b802b13c1d357694fea4f5b7f63e253c1ddc8985f8e3006bf63c6008f007521acd16')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+
   mv "$pkgdir/usr/bin/ngrok" "$pkgdir/usr/bin/pyngrok"
 }
 

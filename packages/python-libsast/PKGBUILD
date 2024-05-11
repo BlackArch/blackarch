@@ -10,25 +10,30 @@ arch=('any')
 url='https://pypi.org/project/libsast/#files'
 license=('LGPL')
 depends=('python' 'python-requests' 'python-yaml' 'python-pyaml' 'semgrep')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('66c7580b413c92120e27f0c96c9483008ae18fafe16b733ad3c44adfa89e91264f10c3595425bc70339b399aa5ab847b3dd924ffae8e1323b2e62e8c47d564b2')
-
-prepare() {
-  cd "$_pkgname-$pkgver"
-
-  sed -i 's|semgrep==0.80.0|semgrep|g' setup.py
-}
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
