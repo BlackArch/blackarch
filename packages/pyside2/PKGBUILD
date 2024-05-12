@@ -6,11 +6,11 @@ pkgname=(shiboken2 python-shiboken2 pyside2 pyside2-tools)
 _qtver=5.15.13
 _clangver=17.0.6
 pkgver=${_qtver/-/}
-pkgrel=2
+pkgrel=3
 arch=('x86_64' 'aarch64')
 url='https://www.qt.io'
-license=('LGPL')
-makedepends=(cmake python-setuptools llvm clang=$_clangver
+license=(LGPL)
+makedepends=(cmake python-setuptools python-wheel llvm clang=$_clangver
              qt5-multimedia qt5-tools qt5-sensors qt5-charts qt5-webengine qt5-datavis3d
              qt5-websockets qt5-speech qt5-3d qt5-svg qt5-script qt5-scxml qt5-x11extras
              qt5-quickcontrols2 qt5-serialport qt5-remoteobjects qt5-xmlpatterns)
@@ -32,6 +32,18 @@ optdepends=('qt5-svg: QtSvg bindings'
 _pkgfqn=pyside-setup-opensource-src-$_qtver
 source=(https://download.qt.io/official_releases/QtForPython/pyside2/PySide2-$pkgver-src/${_pkgfqn}.tar.xz)
 sha512sums=('559e1d474e382ec835cdf2bc69eb27113fdb920a96a63ab0ee022c2a9d2141e5919afd566cb82701e4d2130b142aa59fcbfd60db34823a4f03b879eee5d9e3a8')
+
+prepare(){
+  cd "$srcdir/$_pkgfqn"
+
+  # https://github.com/python/cpython/issues/118777
+  sed '/PyObject \*dict = type->tp_dict;/a\    if (dict == NULL) dict = PyType_GetDict(type);' -i sources/shiboken2/libshiboken/signature/signature_helper.cpp
+
+  # https://github.com/arch4edu/arch4edu/issues/268
+  sed '/typing.TypeVar.__repr__ = _typevar__repr__/d' -i sources/pyside2/PySide2/support/generate_pyi.py
+
+  sed '/check_allowed_python_version()/d' -i setup.py
+}
 
 build() {
   cmake -B build -S $_pkgfqn \
