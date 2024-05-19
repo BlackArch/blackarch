@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-apscheduler
+_pkgname=${pkgname#python-}
+pkgver=3.10.0
+_commit=a2247473fb0f664ce02f6fb0c584a003df1e952b
+pkgrel=3
+pkgdesc="In-process task scheduler with Cron-like capabilities"
+url="https://github.com/agronholm/apscheduler"
+license=('MIT')
+arch=('any')
+depends=('python-setuptools' 'python-six' 'python-pytz' 'python-tzlocal')
+makedepends=('git' 'python-build' 'python-pip')
+# python-kazoo, python-pymongo removed due to lack of running service
+source=("git+https://github.com/agronholm/apscheduler.git#commit=$_commit")
+sha512sums=('SKIP')
+
+build() {
+  cd $_pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd $_pkgname
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+
