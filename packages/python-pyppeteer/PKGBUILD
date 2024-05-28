@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-pyppeteer
+_pkgname=${pkgname#python-}
+pkgver=2.0.0
+pkgrel=3
+pkgdesc='Headless chrome/chromium automation library.'
+arch=('any')
+url='https://github.com/pyppeteer/pyppeteer'
+license=('MIT')
+depends=('python-appdirs' 'python-certifi' 'python-pyee' 'python-tqdm'
+         'python-urllib3' 'python-websockets')
+makedepends=('python-build' 'python-installer' 'python-poetry-core')
+source=("https://github.com/pyppeteer/pyppeteer/archive/$pkgver/$_pkgname-$pkgver.tar.gz"
+        '0001-importlib-metadata-unused.patch')
+sha512sums=('8d349b159200dd655fa16900a60c66a811f6b00a8c2a88d243dbf20760a118afc4e3c5427478b2e72ea0c6419ef0ad2fade3692d430cc24ecb4157b693dff51a'
+            '2bbe3b548baf6aaa25a951b90f0326638d01389983a7229ab34bf586e2f80d989bf3dd30fb23cd271d58ce8e5863560f035f5ce08437afe2f81994c99629229c')
+
+prepare() {
+  cd $_pkgname-$pkgver
+
+  patch --forward --strip=1 --input=../0001-importlib-metadata-unused.patch
+
+  # Remove include list https://github.com/pypa/wheel/issues/92
+  sed -i '/^include/,/]/d' pyproject.toml
+}
+
+build() {
+  cd $_pkgname-$pkgver
+
+  python -m build --wheel --skip-dependency-check --no-isolation
+}
+
+package() {
+  cd $_pkgname-$pkgver
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+
