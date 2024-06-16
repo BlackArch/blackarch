@@ -6,12 +6,11 @@ pkgver=394.4efb5f3
 pkgrel=1
 pkgdesc='Brute-Forcing from Nmap output - Automatically attempts default creds on found services.'
 groups=('blackarch' 'blackarch-automation' 'blackarch-cracker')
-arch=('any')
+arch=('x86_64' 'aarch64')
 url='https://github.com/x90skysn3k/brutespray'
 license=('MIT')
-depends=('python' 'python-argparse' 'python-lxml' 'python-argcomplete'
-         'medusa')
-makedepends=('git')
+depends=()
+makedepends=('git' 'go')
 source=("git+https://github.com/x90skysn3k/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -21,25 +20,26 @@ pkgver() {
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
+  install -Dm 755 "$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
-
-  rm README.md LICENSE.md
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  # Only install license if required according to
+  # https://wiki.archlinux.org/index.php/PKGBUILD#license
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
