@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Antonio Rojas <arojas@archlinux.org>
+# Old Contributor: Sergej Pupykin <pupykin.s+arch@gmail.com>
+# Old Contributor: Igor Scabini <furester @ gmail.com>
+
+pkgname=cython0
+_pkgname=cython
+pkgver=0.29.37.1
+pkgrel=1
+pkgdesc='C-Extensions for Python (legacy version).'
+arch=('x86_64' 'aarch64')
+url='https://cython.org'
+license=('Apache')
+depends=('python')
+conflicts=('cython')
+provides=('cython')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+source=("https://github.com/cython/cython/archive/$pkgver/$pkgname-$pkgver.tar.gz")
+sha512sums=('6038499f13914b8a1957eee4d04e0499f448c89c3d519320e5218bf518aacb7d345f3c48614839222eaee016edf549b719520500b0088d28163635a74d35f3c6')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+
+  for f in cygdb cython cythonize; do
+    mv "$pkgdir"/usr/bin/$f "$pkgdir"/usr/bin/${f}3
+    ln -s ${f}3 "$pkgdir"/usr/bin/$f
+  done
+}
+
