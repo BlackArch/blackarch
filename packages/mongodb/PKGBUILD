@@ -1,13 +1,11 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 #
-# from AUR - adjusted to out styles.
-#
-# shellcheck disable=SC2034,SC2154,SC2164
+# from AUR - adjusted to our styles
 #
 # Maintainer: JustKidding <jk@vin.ovh>
-# Maintainer: James P. Harvey <jamespharvey20 at gmail dot com>
-# Maintainer: Christoph Bayer <chrbayer@criby.de>
+# Contributor: James P. Harvey <jamespharvey20 at gmail dot com>
+# Contributor: Christoph Bayer <chrbayer@criby.de>
 # Contributor: Felix Yan <felixonmars@archlinux.org>
 # Contributor: Sven-Hendrik Haase <sh@lutzhaase.com>
 # Contributor: Thomas Dziedzic < gostrc at gmail >
@@ -16,34 +14,37 @@
 # Contributor: Fredy García <frealgagu at gmail dot com>
 
 pkgname=mongodb
-pkgver=6.0.15
+pkgver=7.0.11
 pkgrel=1
 pkgdesc='A high-performance, open source, schema-free document-oriented database.'
 arch=('x86_64' 'aarch64')
-url='https://www.mongodb.com/'
-license=('SSPL-1.0')
+url="https://www.mongodb.com/"
+license=("SSPL-1.0")
 depends=('libstemmer' 'snappy' 'boost-libs' 'pcre2' 'yaml-cpp' 'gperftools'
-         'libunwind')
-makedepends=('python-psutil' 'python-setuptools' 'python-regex'
-             'python-cheetah3' 'python-yaml' 'python-requests' 'python-pymongo'
-             'boost' 'mongo-c-driver')
+         'libunwind' 'curl' 'zstd' 'zlib' 'libsasl' 'openssl' 'glibc' 'libldap'
+         'gcc-libs' 'krb5')
+makedepends=('python-psutil' 'python-setuptools' 'python-regex' 'python-yaml'
+             'python-cheetah3' 'python-requests' 'python-pymongo' 'boost'
+             'mongo-c-driver')
 optdepends=('mongodb-tools: mongoimport, mongodump, mongotop, etc'
             'mongosh: interactive shell to connect with MongoDB')
 backup=("etc/$pkgname.conf")
 provides=(mongodb="$pkgver")
 options=(!debug)
-source=("https://fastdl.mongodb.org/src/$pkgname-src-r$pkgver.tar.gz"
+source=("https://github.com/mongodb/mongo/archive/refs/tags/r$pkgver.tar.gz"
         "$pkgname.sysusers"
         "$pkgname.tmpfiles"
         "$pkgname-5.0.2-skip-reqs-check.patch"
         "$pkgname-5.0.2-no-compass.patch"
-        "$pkgname-7.0.2-sconstruct.patch")
-sha512sums=('1cc648e0f08928d592113d1fa9c91f8acd435d6704714b397e01d71acab25e310f7e62baf9f0b8327f4e17ad380bffea4223d3e628316d0c0779ffc8a35c5c55'
+        "$pkgname-7.0.2-sconstruct.patch"
+        "$pkgname-4.4.29-no-enterprise.patch")
+sha512sums=('30c3dfa886b9510d99d3d7ad77ef203c750fb10bd7c833535fd299a80fe980728327bbe49091bea71b612c2fbe9162c349d0c3069c33600cb424394d169ee6d0'
             '36a2c4336d6aeeec303dd0aec2c554db826d479efcb95269f75e2150ad752516c3f25c50f8e25b90384dea65b5b5b72a15ab17d5da35f6f92f20cc65af02f61b'
             '41b711a623b034b66e146487fab948608111af48aff2b4f1b171b64b531fa6a1b36de8b348ff543fdd9c3ac34a1a20fae9b23cdb124abda93f89ce011a7921ef'
             '29d4ff6de3a89c39ed0e3c54aa1e17fc3466ceb69dfbcfc62109ea2666ca98458b7b23ac82e4b5c9be77d5d82c69d5b213670b3a3367b13c3b8cab06cfacf4c2'
             '07fe714a4256c13449e1e764c88d5051773aa9397228085a8d581cde91477dff2c3dc70ba801eb559af76ff19abf205d32c9510606a9bb26cebb33f68822e607'
-            '8650bd07392dd33c8746669126753b18357d23dc46d3af799875ba0b080258341cb3cefb2ac8c40e0592d99c69eae39793a3379d52aa5eef0b22318bef79ad10')
+            '8650bd07392dd33c8746669126753b18357d23dc46d3af799875ba0b080258341cb3cefb2ac8c40e0592d99c69eae39793a3379d52aa5eef0b22318bef79ad10'
+            '6e84db876022c21c1fcff8c9f88d4ff7375ebb8b37ab0dd445d1697484a1344098bfbffd82b3da7f2f8c2f926c4f403f2ffce9d67ef46b894f3a9f0b981aba10')
 sha512sums_aarch64=('a9ab48048c0ec72720d7a8039273401b1fbd760447e118e440fe665eda8cf6c0a0bd6ebed2a977313216360d5a3b5d382fa2a27183693813a13d1d23c765e88b')
 source_aarch64=(extrapatch-sconstruct.patch)
 
@@ -52,6 +53,7 @@ _scons_args=(
   CXX="${CXX:-g++}"
   AR="${AR:-ar}"
   MONGO_DISTMOD=arch
+  MONGO_VERSION="$pkgver"
 
   --use-system-boost
   --use-system-pcre2
@@ -98,7 +100,7 @@ filter-flags() {
 }
 
 prepare() {
-  cd "$pkgname-src-r$pkgver"
+  cd "mongo-r${pkgver}"
 
   # Keep historical Arch dbPath
   sed -i 's|dbPath: /var/lib/mongo|dbPath: /var/lib/mongodb|' rpm/mongod.conf
@@ -116,8 +118,7 @@ prepare() {
 
   # Make systemd wait as long as it takes for MongoDB to start
   # If MongoDB needs a long time to start, prevent systemd from restarting it
-  # every 90 seconds
-  # See: https://jira.mongodb.org/browse/SERVER-38086
+  # every 90 seconds - See: https://jira.mongodb.org/browse/SERVER-38086
   sed -i 's/\[Service]/[Service]\nTimeoutStartSec=infinity/' rpm/mongod.service
 
   if check_option debug y; then
@@ -136,7 +137,7 @@ prepare() {
 }
 
 build() {
-  cd "$pkgname-src-r$pkgver"
+  cd "mongo-r${pkgver}"
 
   if check_option debug n; then
     filter-flags '-m*'
@@ -148,7 +149,7 @@ build() {
 }
 
 package() {
-  cd "$pkgname-src-r$pkgver"
+  cd "mongo-r${pkgver}"
 
   # Install binaries
   install -D build/install/bin/mongo "$pkgdir/usr/bin/mongo"
@@ -156,24 +157,24 @@ package() {
   install -D build/install/bin/mongos "$pkgdir/usr/bin/mongos"
 
   # Keep historical Arch conf file name
-  install -Dm 644 rpm/mongod.conf "$pkgdir/etc/$pkgname.conf"
+  install -Dm 644 "rpm/$pkgname.conf" "$pkgdir/etc/$pkgname.conf"
 
   # Keep historical Arch service name
-  install -Dm 644 rpm/mongod.service \
+  install -Dm 644 "rpm/mongod.service" \
     "$pkgdir/usr/lib/systemd/system/$pkgname.service"
 
   # Install manpages
-  #install -Dm644 "debian/mongo.1" "${pkgdir}/usr/share/man/man1/mongo.1"
-  install -Dm 644 debian/mongod.1 "$pkgdir/usr/share/man/man1/mongod.1"
-  install -Dm 644 debian/mongos.1 "$pkgdir/usr/share/man/man1/mongos.1"
+  #install -Dm 644 "debian/mongo.1" "$pkgdir/usr/share/man/man1/mongo.1"
+  install -Dm 644 "debian/mongod.1" "$pkgdir/usr/share/man/man1/mongod.1"
+  install -Dm 644 "debian/mongos.1" "$pkgdir/usr/share/man/man1/mongos.1"
 
   # Install systemd files
   install -Dm 644 "$srcdir/$pkgname.sysusers" \
-    "$pkgdir/usr/lib/sysusers.d/$pkgname}.conf"
+    "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
   install -Dm 644 "$srcdir/$pkgname.tmpfiles" \
-    "$pkgdir/usr/lib/tmpfiles.d/$pkgname}.conf"
+    "$pkgdir/usr/lib/tmpfiles.d/$pkgname.conf"
 
   # Install license
-  install -D LICENSE-Community.txt "$pkgdir/usr/share/licenses/mongodb/LICENSE"
+  install -D LICENSE-Community.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
