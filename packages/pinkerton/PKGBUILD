@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pinkerton
+pkgver=1.6.r19.g3195a4a
+pkgrel=2
+pkgdesc='JavaScript file crawler and secret finder.'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+url='https://github.com/oppsec/Pinkerton'
+license=('MIT')
+depends=('python' 'openssl' 'python-rich' 'python-requests'
+         'python-jsbeautifier')
+makedepends=('git')
+source=("git+https://github.com/oppsec/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE *.md .gitignore .dockerignore Dockerfile *.txt
+
+  cp -a *.py src/ "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python /usr/share/$pkgname/main.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}

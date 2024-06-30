@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=smap-scanner
+_pkgname=smap
+pkgver=0.1.12.r1.g90dfe74
+pkgrel=1
+pkgdesc='Passive port scanner built with shodan free API.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+url='https://github.com/s0md3v/Smap'
+license=('AGPL3')
+depends=()
+makedepends=('git' 'go')
+source=("git+https://github.com/s0md3v/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $_pkgname/cmd/$_pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd $_pkgname
+
+  install -Dm 755 cmd/$_pkgname/$pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+

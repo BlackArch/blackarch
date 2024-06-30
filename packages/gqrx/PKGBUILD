@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Kyle Keen <keenerd@gmail.com>
+# Old Contributor: Dominik Heidler <dheidler@gmail.com>
+
+pkgname=gqrx
+pkgver=2.17.5
+pkgrel=1
+pkgdesc='Interactive SDR receiver waterfall for many devices.'
+groups=('blackarch' 'blackarch-radio' 'blackarch-wireless')
+arch=('x86_64' 'aarch64')
+url='http://gqrx.dk/'
+license=('GPL3')
+depends=('gcc-libs' 'glibc' 'hicolor-icon-theme' 'libvolk' 'qt6-base' 'qt6-svg')
+makedepends=('boost' 'cmake' 'gnuradio' 'gnuradio-osmosdr' 'libpulse')
+source=("https://github.com/gqrx-sdr/$pkgname/archive/v$pkgver/$pkgname-v$pkgver.tar.gz")
+sha512sums=('40cf87329b2b8da5bcd7ded62551601a7b45ee0f791d1fa6f872a1fdf03b61e24a26f85c2d304c6d4ccd9a1b4b7aad7da94b488b539026aa93757669eece9bad')
+
+build() {
+  local cmake_options=(
+    -B build
+    -D CMAKE_BUILD_TYPE=None
+    -D CMAKE_INSTALL_PREFIX=/usr
+    -S $pkgname-$pkgver
+    -W no-dev
+  )
+
+  cmake "${cmake_options[@]}"
+  cmake --build build --verbose
+}
+
+package() {
+  depends+=(
+    gnuradio libgnuradio-{analog,blocks,digital,fft,filter,network,pmt,runtime}.so
+    gnuradio-osmosdr libgnuradio-osmosdr.so
+    libpulse libpulse.so libpulse-simple.so
+  )
+
+  DESTDIR="$pkgdir" cmake --install build
+}
+

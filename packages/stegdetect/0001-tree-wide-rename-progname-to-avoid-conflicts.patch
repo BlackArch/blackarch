@@ -1,0 +1,146 @@
+From 0ebf68ba435dc060acd475c1eeb6132635b29055 Mon Sep 17 00:00:00 2001
+From: Mole Shang <135e2@135e2.dev>
+Date: Thu, 5 Oct 2023 13:23:38 +0800
+Subject: [PATCH] tree-wide: rename `progname` to avoid conflicts
+
+Ian Darwin's libfile (in subdir /file) uses the `progname` symbol
+as an alias to argv[0], so even we are using it as a library, newer ld would
+complain about `progname` redefination at linking stage.
+Rather than modifying third party projects, it's better to patch our
+legacy `stegdetect` source code. :)
+
+* Patch modified from https://github.com/frankwxu/digital-forensics-lab/tree/7a846e371608bd45b3cebef4e7fcb4dd5e4f8e20/Illegal_Possession_Images/tools
+
+Signed-off-by: Mole Shang <135e2@135e2.dev>
+Co-authored-by: Frank Xu <frank.w.xu@gmail.com>
+---
+ stegbreak.c   | 6 +++---
+ stegcompare.c | 6 +++---
+ stegdeimage.c | 6 +++---
+ stegdetect.c  | 6 +++---
+ 4 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/stegbreak.c b/stegbreak.c
+index 4b0bd59..107b2c1 100644
+--- a/stegbreak.c
++++ b/stegbreak.c
+@@ -62,7 +62,7 @@
+ #define FLAG_DOJSTEG	0x0004
+ 
+ char *rules_name;
+-char *progname;
++char *prog_name;
+ char *wordlist = "/usr/share/dict/words";
+ 
+ int convert = 0;
+@@ -117,7 +117,7 @@ usage(void)
+ {
+ 	fprintf(stderr,
+ 		"Usage: %s [-V] [-r <rules>] [-f <wordlist>] [-t <schemes>] file.jpg ...\n",
+-		progname);
++		prog_name);
+ }
+ 
+ void
+@@ -470,7 +470,7 @@ main(int argc, char *argv[])
+ 	int ch;
+ 
+ 	rules_name = RULES_NAME;
+-	progname = argv[0];
++	prog_name = argv[0];
+ 
+ 	scans = FLAG_DOJPHIDE;
+ 
+diff --git a/stegcompare.c b/stegcompare.c
+index 6e8a9d7..dd99c78 100644
+--- a/stegcompare.c
++++ b/stegcompare.c
+@@ -47,7 +47,7 @@
+ 
+ #define VERSION "0.1"
+ 
+-char *progname;
++char *prog_name;
+ 
+ #define FLAG_DOOUTGUESS	0x0001
+ #define FLAG_DOJPHIDE	0x0002
+@@ -58,7 +58,7 @@ int scans = FLAG_DOJPHIDE;
+ void
+ usage(void)
+ {
+-	fprintf(stderr,	"Usage: %s orig.jpg modified.jpg\n", progname);
++	fprintf(stderr,	"Usage: %s orig.jpg modified.jpg\n", prog_name);
+ }
+ 
+ int hist[257];
+@@ -242,7 +242,7 @@ main(int argc, char *argv[])
+ 	extern int optind;
+ 	int i, ch;
+ 
+-	progname = argv[0];
++	prog_name = argv[0];
+ 
+ 	/* read command line arguments */
+ 	while ((ch = getopt(argc, argv, "Vht:")) != -1)
+diff --git a/stegdeimage.c b/stegdeimage.c
+index 42ec551..f63b473 100644
+--- a/stegdeimage.c
++++ b/stegdeimage.c
+@@ -47,12 +47,12 @@
+ 
+ #define VERSION "0.1"
+ 
+-char *progname;
++char *prog_name;
+ 
+ void
+ usage(void)
+ {
+-	fprintf(stderr,	"Usage: %s orig.jpg deimages.jpg\n", progname);
++	fprintf(stderr,	"Usage: %s orig.jpg deimages.jpg\n", prog_name);
+ }
+ 
+ void
+@@ -153,7 +153,7 @@ main(int argc, char *argv[])
+ 	extern int optind;
+ 	char ch;
+ 
+-	progname = argv[0];
++	prog_name = argv[0];
+ 
+ 	/* read command line arguments */
+ 	while ((ch = getopt(argc, argv, "V")) != -1)
+diff --git a/stegdetect.c b/stegdetect.c
+index d787bcc..b80e641 100644
+--- a/stegdetect.c
++++ b/stegdetect.c
+@@ -73,7 +73,7 @@
+ float chi2cdf(float chi, int dgf);
+ double detect_f5(char *);
+ 
+-char *progname;
++char *prog_name;
+ 
+ float DCThist[257];
+ float scale = 1;		/* Sensitivity scaling */
+@@ -1088,7 +1088,7 @@ usage(void)
+ 	fprintf(stderr,
+ 	    "Usage: %s [-nqV] [-s <float>] [-d <num>] [-t <tests>] [-C <num>]\n"
+ 	    "\t [file.jpg ...]\n",
+-		progname);
++		prog_name);
+ }
+ 
+ char *
+@@ -1407,7 +1407,7 @@ main(int argc, char *argv[])
+ 	extern int optind;
+ 	int ch;
+ 
+-	progname = argv[0];
++	prog_name = argv[0];
+ 
+ 	scans = FLAG_DOOUTGUESS | FLAG_DOJPHIDE | FLAG_DOJSTEG | FLAG_DOINVIS |
+ 	    FLAG_DOF5 | FLAG_DOAPPEND;
+-- 
+2.42.0
+

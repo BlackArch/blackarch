@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=certsync
+pkgver=0.1.4
+pkgrel=2
+pkgdesc='Dump NTDS remotely without DRSUAPI: using golden certificate and UnPAC the hash.'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-windows')
+url='https://github.com/zblurx/certsync'
+license=('MIT')
+depends=('python' 'python-tqdm' 'certipy')
+makedepends=('python-build' 'python-pip')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz")
+sha512sums=('295e7f9d454b90d3aa3adda5173738a4a0d49ed31e439d826b6c3114b2713266b572dcba8dea24505752ba94942d5fbdc76fcc42878b0001a024b54cce9320db')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
+

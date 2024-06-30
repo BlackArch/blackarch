@@ -2,28 +2,44 @@
 # See COPYING for license details.
 
 pkgname=adfind
-pkgver=31.9808cb7
+pkgver=v1.0.3.r0.g3a6a055
 pkgrel=1
+epoch=1
 pkgdesc='Simple admin panel finder for php,js,cgi,asp and aspx admin panels.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-recon')
-arch=('any')
+arch=('x86_64' 'aarch64')
 url='https://github.com/sahakkhotsanyan/adfind'
 license=('custom:unknown')
-depends=('php' 'curl' 'git')
-makedepends=('git')
+makedepends=('git' 'go')
 source=("git+https://github.com/sahakkhotsanyan/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/adfind/main.go
 }
 
 package() {
   cd $pkgname
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -d wordlists/ "$pkgdir/usr/share/$pkgname/wordlists"
+  install -Dm 644 wordlists/* "$pkgdir/usr/share/$pkgname/wordlists/"
+  install -Dm 644 config.yaml "$pkgdir/usr/share/$pkgname/config.yaml"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 }
 

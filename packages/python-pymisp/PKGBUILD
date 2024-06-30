@@ -1,33 +1,44 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-pymisp
-pkgname=('python-pymisp')
+pkgname=python-pymisp
 _pkgname=pymisp
-pkgver=2.4.169.2
-pkgrel=2
+pkgver=2.4.193
+_pyver=3.12
+pkgrel=1
 pkgdesc='Python API for MISP.'
 arch=('any')
 url='https://pypi.org/project/pymisp/#files'
 license=('BSD')
-makedepends=('python-setuptools')
+depends=('python' 'python-six' 'python-dateutil' 'python-jsonschema'
+         'python-requests' 'python-deprecated')
+makedepends=('python-pip' 'python-build' 'python-wheel')
+optdepends=('python-virustotal-api: VirusTotal support')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('21676891eb80db7ffc21b5cd7eb2acfaf95229640271bea13d7ed080688e10193efc878a4551a3aa517e6e6c280f1efe7847ad0769fd76e8a60db2579dcd4bf0')
+sha512sums=('94f0223e5b05467bd3ca6b865c5a5705a3b0bb856575df8b181bb8bd42afcfb20de90ab308ce80c765b12c9768f15a657023c7bf5b8a9b883c2a283b75fcb371')
 
 build() {
-  cd "$srcdir/$_pkgname-$pkgver"
-
-  python setup.py build
-}
-
-package_python-pymisp() {
-  depends=('python' 'python-six' 'python-dateutil' 'python-jsonschema'
-           'python-requests' 'python-deprecated')
-  optdepends=('python-virustotal-api: VirusTotal support')
-
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+
+  rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/"{README.md,CHANGELOG.txt}
 }
 

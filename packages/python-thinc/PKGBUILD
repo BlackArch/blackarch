@@ -3,8 +3,8 @@
 
 pkgname=python-thinc
 _pkgname=thinc
-pkgver=8.1.9
-pkgrel=2
+pkgver=9.0.0
+pkgrel=1
 pkgdesc='Practical Machine Learning for NLP.'
 arch=('x86_64' 'aarch64')
 url='https://pypi.org/project/thinc/'
@@ -13,19 +13,30 @@ depends=('python' 'python-cymem' 'python-blis' 'python-catalogue'
          'python-hypothesis' 'python-mock' 'python-murmurhash' 'python-numpy'
          'python-pathlib' 'python-plac' 'python-preshed' 'python-pydantic'
          'python-six' 'python-srsly' 'python-tqdm' 'python-wasabi')
-makedepends=('python-setuptools' 'python-pip' 'python-wheel')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('fad35e82d53712d0aedee71452735e0318535ec02e83b9dd41cb3efb07891262d5c35a5cfa944bccf49ab2affb21ed82feec262855e52d0bc8bd33fcc215da93')
+sha512sums=('4b465ff7d161f669ec39c8952662b42e249b0eb99382e2a28dd3dca754a0c31bb925ee197bb3fce0a35f4083ac7af3faa952d548cbc14539763228ca215931a8')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

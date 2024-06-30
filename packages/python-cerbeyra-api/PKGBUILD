@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-cerbeyra-api
+_pkgname=${pkgname#python-}
+pkgver=1.1b1
+pkgrel=2
+pkgdesc='High level interface for interacting with Cerbeyra APIs and retrieving cyber-threat information from them.'
+arch=('any')
+url='https://cerbeyra.com/'
+license=('MIT')
+depends=('python-openpyxl' 'python-requests')
+makedepends=('python-build' 'python-pip' 'python-wheel')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('fd0f1505f79bbbcc25de52d390d93847de069b51d3cba41fdfbd74ec47b13bdb3d88c23b6f3b63e016fd132e642f924b6e98979372067a5cf20899993bbe96c9')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

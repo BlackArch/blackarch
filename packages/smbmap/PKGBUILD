@@ -2,33 +2,46 @@
 # See COPYING for license details.
 
 pkgname=smbmap
-pkgver=159.cecf743
+pkgver=v1.10.4.r4.gf5f3862
 pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
 pkgdesc='A handy SMB enumeration tool.'
 arch=('any')
 url='https://github.com/ShawnDEvans/smbmap'
 license=('GPL3')
-depends=('python' 'impacket' 'python-pycryptodomex' 'python-pyasn1'
-         'python-termcolor')
-makedepends=('git')
+depends=('python' 'impacket' 'python-pyasn1' 'python-pycryptodomex'
+         'python-configupdater' 'python-termcolor')
+makedepends=('python-build' 'python-pip' 'git')
 source=("git+https://github.com/ShawnDEvans/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 755 "$pkgname.py" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" psutils/*
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 }
 

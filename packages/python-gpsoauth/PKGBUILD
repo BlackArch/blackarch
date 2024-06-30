@@ -3,26 +3,37 @@
 
 pkgname=python-gpsoauth
 _pkgname=gpsoauth
-pkgver=1.0.2
-pkgrel=2
+pkgver=1.1.1
+pkgrel=1
 pkgdesc='A python client library for Google Play Services OAuth.'
 arch=('any')
 url='https://pypi.org/project/gpsoauth/#files'
 license=('MIT')
 depends=('python' 'python-requests' 'python-pycryptodomex')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('ee8ed3b5a2939d26fd252c71fa0203adf52be07a80cf402a5eba7975e35cbe560cc7204fa9fcfa88b10d9a398c9dc5f569a254d2d7e5468d0e60c66fb487d825')
+sha512sums=('fd259f53758bbb886d7c030a6ea8ebe3f62e9369c7abb780f686e66d373e395e311a30e108cc3c30de3090bdcaa66a3b84fb154d0b5c3f7596fa6535018401cf')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+	  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

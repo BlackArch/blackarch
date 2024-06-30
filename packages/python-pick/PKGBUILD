@@ -3,26 +3,37 @@
 
 pkgname=python-pick
 _pkgname=pick
-pkgver=2.2.0
-pkgrel=2
+pkgver=2.3.2
+pkgrel=1
 pkgdesc='Create curses based interactive selection list in the terminal.'
 arch=('any')
 url='https://pypi.org/project/pick/#files'
 license=('MIT')
 depends=('python')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('12db9898d29383a90985ff2b647dd2dac7bfc1421dd155c766550cd5f6b33e3ca8c842877886ce97ce9b5247910252c14cf41fb3f3a1c9c7e57128f7813ca2b4')
+sha512sums=('d8ce23d827aa7bd17b953d9005af8ff5e6144520657db42657e6048ac49cd7600ab2628c1f634ccd21c93ca8d02e13b242fd174af8cc25543646f11ac6787515')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

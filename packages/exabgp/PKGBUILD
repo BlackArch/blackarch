@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=exabgp
-pkgver=5054.0fd5b588
+pkgver=5168.9bcad4b4
 pkgrel=1
 groups=('blackarch' 'blackarch-networking' 'blackarch-defensive')
 pkgdesc='The BGP swiss army knife of networking.'
@@ -10,7 +10,7 @@ arch=('any')
 url='https://github.com/Exa-Networks/exabgp'
 license=('custom:unknown')
 depends=('python' 'python-ipaddr' 'python-nose' 'python-psutil')
-makedepends=('git' 'python-setuptools')
+makedepends=('git' 'python-pip' 'python-build' 'python-wheel')
 backup=('etc/exabgp.conf')
 source=("git+https://github.com/Exa-Networks/$pkgname.git"
         "$pkgname.service")
@@ -26,13 +26,24 @@ pkgver() {
 build() {
   cd $pkgname
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 
   install -Dm 644 "$srcdir/$pkgname.service" \
     "$pkgdir/usr/lib/systemd/system/$pkgname.service"

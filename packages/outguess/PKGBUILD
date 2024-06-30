@@ -2,29 +2,31 @@
 # See COPYING for license details.
 
 pkgname=outguess
-pkgver=0.2
+pkgver=0.4
 pkgrel=1
-groups=('blackarch' 'blackarch-crypto' 'blackarch-misc')
 pkgdesc='A universal steganographic tool.'
+groups=('blackarch' 'blackarch-crypto' 'blackarch-misc')
 arch=('x86_64' 'aarch64')
-url='http://www.outguess.org/'
-license=('GPL')
-source=("http://ftp.mirrorservice.org/sites/ftp.wiretapped.net/pub/security/steganography/$pkgname/$pkgname-$pkgver.tar.gz")
-sha512sums=('2901e2e8f6495f1483897bfde2a84b658335aa733f3ad16959e6b906dec8675c72f5468a0f60b14d231ff64b7768be2cf06be6bbd833286f07a632a9ca45a1e6')
+url="https://github.com/resurrecting-open-source-projects/outguess"
+license=('BSD')
+depends=('bash')
+source=("$url/archive/refs/tags/$pkgver.tar.gz")
+sha512sums=('9ed932ca6badd870242f1af7667f0e9cf910de8dddac8bf71534c05ae2056bc46f78ef5fedf1faf448cb16e8b410e19c63f68b93a4f24cd419f42857780e54c7')
 
 build() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
-  ./configure --prefix=/usr
-
+  ./autogen.sh
+  ./configure --prefix=/usr --mandir=/usr/share/man --with-generic-jconfig
   make
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
-  install -dm 755 "$pkgdir/usr/"{bin,man/man1}
+  make DESTDIR="$pkgdir" install
 
-  make prefix="$pkgdir/usr" install
+  install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname/"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md ChangeLog
 }
 

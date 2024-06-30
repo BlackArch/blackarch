@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Levente Polyak <anthraxx[at]archlinux[dot]org>
+
+pkgname=python-flask-security
+_pkgname=flask-security
+pkgver=3.0.0
+pkgrel=9
+pkgdesc='Quick and simple security for Flask applications'
+url='https://github.com/mattupstate/flask-security'
+arch=('any')
+license=('MIT')
+depends=('python' 'python-flask' 'python-flask-login' 'python-flask-mail'
+         'python-flask-principal' 'python-flask-wtf' 'python-flask-babelex'
+         'python-itsdangerous' 'python-passlib' 'python-email-validator')
+makedepends=('python-flask' 'python-flask-login' 'python-flask-mail'
+             'python-flask-principal' 'python-flask-wtf' 'python-flask-babelex'
+             'python-itsdangerous' 'python-passlib'
+             'python-sphinx' 'python-setuptools' 'python-pytest-runner')
+source=("https://github.com/mattupstate/flask-security/archive/$pkgver.tar.gz")
+sha512sums=('1176c154e3a4d4326fc64c6d4b986150db17b51b23003ef069596333777afd5857bc33391c46c771144422f610d669ceb96f4b5a1880b9ea374a488d6cb093f6')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  sed -e 's/ --translations//' \
+      -e 's/ --pep8//' \
+      -e 's/ --flakes//' \
+      -i pytest.ini
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py build
+  sphinx-build -b text docs docs/_build/text
+  sphinx-build -b man docs docs/_build/man
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" -O1 --skip-build
+
+  install -Dm 644 README.rst CHANGES -t "$pkgdir/usr/share/doc/$pkgname"
+  install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname"
+  install -Dm 644 docs/_build/text/*.txt -t "$pkgdir/usr/share/doc/$pkgname"
+  install -Dm 644 docs/_build/man/flask-security.1 \
+    "$pkgdir/usr/share/man/man1/${pkgname}.1"
+}
+

@@ -8,35 +8,40 @@
 # Contributor: Guillaume ALAUX <guillaume@archlinux.org>
 
 pkgname=swt
-pkgver=4.22
+pkgver=4.31
 pkgrel=1
-_date=202111241800
+_date=202402290520
 pkgdesc='An open source widget toolkit for Java.'
 arch=('x86_64')
 url='https://www.eclipse.org/swt/'
 license=('EPL')
-depends=('java-runtime>=8' 'libxtst')
-makedepends=('ant' 'glu' 'gtk3' 'gtk4' 'jdk8-openjdk' 'pkgconfig' 'unzip'
-             'webkit2gtk')
+depends=('java-runtime>=17' 'libxtst')
+makedepends=('ant' 'glu' 'gtk3' 'gtk4' 'pkgconfig' 'unzip' 'webkit2gtk')
 optdepends=('glu' 'gtk3' 'gtk4')
 _archive="$pkgname-$pkgver-gtk-linux-$arch.zip"
 source=("https://download.eclipse.org/eclipse/downloads/drops4/R-$pkgver-$_date/$_archive"
         'build-swt.xml')
 noextract=("$_archive")
-sha512sums=('cfe56e30d5ec3d9e56e9721a415522edd075456fd37140e35238b75b09e80209417ca9aa46fdc4f797b5e37c4646c6029a9efa8267ce038cc78242015ce9e9a5'
-            '18660eb15b09d70cf0a8b567ea55e4de1c20d9d463908e4d4bb1eba0139a0ba4c9af63e825cc36c286701eca604d4a1f239fa676de5a48ddad7ef9b2c368e543')
+sha512sums=('da61610ce00fc46893ec3ee6d5d7ed5cc59312002c6946a3748cff1a776af75bad0026512b412ef1622ca0bee124764ed8ee7f5f87364cff945b296feb86e74b'
+            '4fb681c8ff716fc7223331bae98b8c8c2ae1d7f7a9738b210f4ca673f0995b9f0463c97b40d84a2db6b4d3f8f583cb3baa05c4694e796b0e1e32e831fdda3116')
 
 prepare() {
   unzip -oq "$_archive" -d "$pkgname-$pkgver"
+
+  cd "$pkgname-$pkgver"
+
+  unzip -oq src.zip
+
+  sed -i 's/-fPIC/& -Wno-error=deprecated-declarations/' library/build.sh
 }
 
 build() {
   cd "$pkgname-$pkgver"
 
-  unzip -oq src.zip
   cp $srcdir/build-swt.xml .
 
-  export JAVA_HOME=/usr/lib/jvm/java-8-openjdk
+  export JAVA_HOME=/usr/lib/jvm/$(archlinux-java get)
+  export SWT_JAVA_HOME=${JAVA_HOME}
 
   ant -f build-swt.xml compile
   ant -f build-swt.xml jar
@@ -51,6 +56,6 @@ package() {
 
   # Shared objects
   install -d "$pkgdir/usr/lib"
-  OUTPUT_DIR="$pkgdir/usr/lib" ./build.sh -gtk-all install
+  OUTPUT_DIR="$pkgdir/usr/lib" ./library/build.sh -gtk-all install
 }
 
