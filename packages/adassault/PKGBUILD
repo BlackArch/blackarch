@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=adassault
+pkgver=0.0.3.r1.g791a622
+pkgrel=1
+groups=('blackarch' 'blackarch-network')
+pkgdesc='An Active Directory environments pentest tool complementary to existing ones like NetExec.'
+arch=('any')
+license=('MIT')
+makedepends=('git' 'ruby-bundler')
+depends=('ruby')
+url='https://noraj.github.io/ADAssault/'
+source=("git+https://github.com/noraj/$pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md docs/**/*.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf docs/ *.md LICENSE
+
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ruby bin/$pkgname "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/ada" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ruby bin/ada "\$@"
+EOF
+
+  chmod +x "$pkgdir"/usr/bin/*
+}
