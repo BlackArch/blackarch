@@ -21,6 +21,15 @@ pkgver() {
   git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
+prepare() {
+  cd $pkgname
+
+  # bundle tries to solve conflicts and compatibilities issue even for EXCLUDED gems (e.g. --without)
+  # commonmarker dev dependencies that we won't install requires Ruby 3.1+ and current Ruby in AL is 3.0 (yes very outdated)
+  # so we have to remove the dev dependencies from the Gemfile else we won't be able to install without error
+  sed -i '/group :development/,/end/d' Gemfile
+}
+
 package() {
   cd $pkgname
 
@@ -38,13 +47,13 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec ruby bin/$pkgname "\$@"
+exec bundle exec ruby bin/$pkgname "\$@"
 EOF
 
   cat > "$pkgdir/usr/bin/ada" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec ruby bin/ada "\$@"
+exec bundle exec ruby bin/ada "\$@"
 EOF
 
   chmod +x "$pkgdir"/usr/bin/*
