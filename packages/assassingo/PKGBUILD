@@ -1,0 +1,60 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=assassingo
+pkgver=168.d110d36
+pkgrel=1
+pkgdesc='Web pentest framework for information gathering and vulnerability scanning.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
+url='https://github.com/AmyangXYZ/AssassinGo'
+license=('MIT')
+depends=()
+makedepends=('git' 'go')
+source=("git+https://github.com/AmyangXYZ/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+prepare() {
+  cd $pkgname
+
+  # fix dependencies rename https://github.com/AmyangXYZ/AssassinGo/pull/17
+  sed -i 's/sweetygo/sgo/g' web/{run,router,controller}.go
+  sed -i 's/whois-go/whois/g' gatherer/whois.go
+  sed -i 's/whois-parser-go/whois-parser/g' gatherer/whois.go
+  # fix relative import https://github.com/AmyangXYZ/AssassinGo/pull/18
+  sed -i 's/\.\/web/web/g' main.go
+  sed -i 's/\.\.\///g' assassin/assassin.go attacker/*.go gatherer/*.go poc/*.go utils/*.go seeker/*.go web/*.go
+}
+
+build() {
+  cd $pkgname
+
+  # If you encounter the error: go mod download: no modules specified (see 'go help mod download')
+  # while building, then uncomment the following lines:
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  # issue with dependency pinning https://github.com/AmyangXYZ/AssassinGo/issues/19
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
