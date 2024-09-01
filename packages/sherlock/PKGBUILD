@@ -2,46 +2,41 @@
 # See COPYING for license details.
 
 pkgname=sherlock
-pkgver=2467.f7075e1
+_pypi_name=sherlock-project
+_pypi_archive=sherlock_project
+pkgver=0.15.0
 pkgrel=1
 pkgdesc='Find usernames across social networks.'
 groups=('blackarch' 'blackarch-social' 'blackarch-recon')
 arch=('any')
 url='https://github.com/sherlock-project/sherlock'
 license=('MIT')
-depends=('python' 'python-beautifulsoup4' 'python-certifi' 'python-chardet'
-         'python-colorama' 'python-idna' 'python-lxml' 'python-pysocks'
-         'python-requests' 'python-requests-futures' 'python-soupsieve'
-         'python-stem' 'python-torrequest' 'python-urllib3' 'python-pandas')
-makedepends=('git')
-source=("git+https://github.com/sherlock-project/$pkgname.git")
-sha512sums=('SKIP')
+depends=('python' 'python-certifi' 'python-colorama' 'python-pysocks'
+         'python-requests' 'python-requests-futures' 'python-stem'
+          'python-torrequest' 'python-pandas' 'python-openpyxl')
+makedepends=('python-build' 'python-pip')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$_pypi_name/$_pypi_archive-$pkgver.tar.gz")
+sha512sums=('b5f7f403cf403bc6b3af90fa34fe7cd4558f45800de84071370dd9e62e779e51a318a91943e894d92d3227a104c348beac9b7e3d2e1bb6ac07f063687ef4756a')
 
-pkgver() {
-  cd $pkgname
+build() {
+  cd "$_pypi_archive-$pkgver"
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd $pkgname
+  cd "$_pypi_archive-$pkgver"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm README.md LICENSE CONTRIBUTING.md CODE_OF_CONDUCT.md requirements.txt
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname/$pkgname
-exec python $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pypi_name
 }
-
