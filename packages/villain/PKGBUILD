@@ -15,16 +15,17 @@ source=("$pkgname::git+https://github.com/t3l3machus/Villain.git")
 sha512sums=('SKIP')
 
 pkgver() {
-  cd $pkgname
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  cd "$pkgname"
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null | sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
   cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 
   install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
