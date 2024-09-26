@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=villain
+pkgver=v2.2.0.r7.g58a8c02
+pkgrel=1
+pkgdesc='C2 framework that can handle multiple TCP socket & HoaxShell-based reverse shells, enhance their functionality with additional features and share them among connected sibling servers.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-networking')
+url='https://github.com/t3l3machus/Villain'
+license=('CCBY-NC-ND-4.0')
+depends=('python' 'python-netifaces' 'python-pycryptodome' 'python-pyperclip' 'python-requests' 'python-gnureadline')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/t3l3machus/Villain.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$pkgname"
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null | sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf *.md .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/Villain.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
