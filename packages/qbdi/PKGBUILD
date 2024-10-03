@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=qbdi
+_pkgname=QBDI
+pkgver=v0.11.0.r26.g6f841fb
+pkgrel=1
+pkgdesc='A Dynamic Binary Instrumentation framework based on LLVM.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-binary')
+url='https://github.com/QBDI/QBDI'
+license=('Apache-2.0')
+depends=()
+makedepends=('cmake' 'gcc')
+source=("git+https://github.com/QBDI/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm755 build
+  cd build
+  cmake .. \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_CROSSCOMPILING=FALSE \
+      -DQBDI_PLATFORM=linux \
+      -DQBDI_ARCH=X86_64
+  make
+
+  make DESTDIR=$pkgname install
+}
