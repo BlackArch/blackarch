@@ -2,46 +2,52 @@
 # See COPYING for license details.
 
 pkgname=vmcloak
-pkgver=912.13853ff
-pkgrel=2
+pkgver=955.fae1f29
+pkgrel=1
 epoch=2
 pkgdesc='Automated Virtual Machine Generation and Cloaking for Cuckoo Sandbox.'
-groups=('blackarch-malware')
-url='https://github.com/jbremer/vmcloak'
+groups=('blackarch' 'blackarch-malware')
+url='https://github.com/Cryss76/vmcloak'
 arch=('any')
 license=('GPL3')
-depends=('python2' 'python2-sphinx' 'python-setuptools' 'python2-lockfile'
-         'python2-requests' 'python2-alembic' 'python2-sqlalchemy'
-         'python2-yaml' 'python2-pytest' 'python2-pefile' 'python2-jinja'
-         'python2-pyaml' 'python2-click' 'virtualbox' 'lshw' 'dmidecode'
+depends=('python' 'python-sphinx' 'python-sphinx_rtd_theme' 'python-lockfile'
+         'python-requests' 'python-alembic' 'python-sqlalchemy'
+         'python-pefile' 'python-jinja' 'python-psutil'
+         'python-pyaml' 'python-click' 'virtualbox' 'lshw' 'dmidecode'
          'cdrtools')
-makedepends=('git' 'python2-setuptools')
-source=("$pkgname::git+https://github.com/jbremer/$pkgname.git"
+makedepends=('git' 'python-setuptools')
+source=("$pkgname::git+https://github.com/Cryss76/$pkgname.git"
         'setup.py.patch')
 sha512sums=('SKIP'
-            'ac4bf47e6ddf166add9bc55e05328cab32700b7a0c99ffc67986144c13638a13ccb7be9c26912d1a18bd2d3715ab6d52e065372618254c9edc592c47fff8e32f')
+            'c58638afaad704f7b504fa62bf9427c481f6397857e4fe87f70d11c753664dc1fe1b3f2a6056ab35f266a2b8f7f4c7afd9803e47e99effcf7875eadd3f50bfc2')
 
 pkgver() {
-  cd $pkgname
+  cd $_pkgbase
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
-  patch -p1 < setup.py.patch
+  cd $pkgname
+
+  patch -p1 < ../setup.py.patch
 }
 
 build() {
   cd $pkgname
 
-  python2 setup.py build
+  python setup.py build
 }
 
 package() {
   cd $pkgname
 
-  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 docs/LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
-
