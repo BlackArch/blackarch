@@ -1,0 +1,52 @@
+# Credits BlackArch ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ntlmv1-multi
+pkgver=78.2e6d4f1
+pkgrel=1
+pkgdesc='NTLMv1 Multitool.'
+arch=('any')
+groups=('blackarch' 'blackarch-cracker')
+url='https://github.com/evilmog/ntlmv1-multi'
+license=('MIT')
+depends=('python')
+makedepends=('git')
+source=("git+https://github.com/evilmog/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgbase
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  rm -rf *.md .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/ntlmv1" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/ntlmv1.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/ntlmv1"
+
+  cat > "$pkgdir/usr/bin/ntlm-to-des" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/ntlm-to-des.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/ntlm-to-des"
+}
+
