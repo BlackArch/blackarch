@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD from AUR.
+# Old Maintainer: Giovanni Harting <539@idlegandalf.com>
+
+pkgname=wmbusmeters
+pkgver=1.17.1
+pkgrel=1
+pkgdesc='Read the wired or wireless mbus protocol to acquire utility meter readings'
+arch=(x86_64)
+groups=('blackarch' 'blackarch-radio' 'blackarch-wireless')
+url='https://github.com/wmbusmeters/wmbusmeters'
+license=(GPL3)
+depends=('glibc' 'gcc-libs' 'libxml2' 'rtl-sdr')
+optdepends=('rtl-wmbus: read wmbusmeters from rtl-sdr recievers')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/$pkgver.tar.gz"
+        $pkgname.{service,sysusers,tmpfiles})
+sha512sums=('e8b5ac335017ad50a6e0fdf8a5fd36d844e575a5011ee3afa3ba7730b175b733a44d41dd527840b9528450fd4cec0834aea219d29c8b0d34a290c7ecbcd82a25'
+            '828f496b4b8b01c84084796e0d638d8ec46b25fef3c7a6a6dc2408e849a7120de204835a1def6abbb223e597e70832a7553edea612a3ef75660babfa58ee3c5f'
+            '88b1b96814d7376c7cb66d0c8ccdd7f48083553c0e97fbb9f332d6784f32d64d65c65fb3f6d9e1c1d85c6c5fda9b9bb6458ff00af7217b1f8e9a110cd06172c4'
+            '903d16cf20696e6bce1cf3aad58c8ab33bf8d4a3f39e4ce4bd4bd166dbc0e1112356e58383f74e40eed6e16dad019a9b8ae7b0ac944eece4dea4447a982ee62a')
+
+build() {
+  cd $pkgname-$pkgver
+  make STRIP=true COMMIT_HASH=$pkgrel TAG=$pkgver BRANCH="master" CHANGES="nochanges"
+}
+
+package() {
+  cd $pkgname-$pkgver
+
+  make STRIP=true COMMIT_HASH=$pkgrel TAG=$pkgver BRANCH="master" CHANGES="nochanges" DESTDIR="$pkgdir" EXTRA_INSTALL_OPTIONS="--no-adduser" install
+
+  # fix lib
+  mv "$pkgdir"/lib "$pkgdir"/usr/lib
+
+  # fix /usr/sbin
+  mv "$pkgdir"/usr/sbin/* "$pkgdir"/usr/bin/
+  rmdir "$pkgdir"/usr/sbin
+
+  # journald
+  rm -r "$pkgdir"/etc/logrotate.d "$pkgdir"/var/log
+
+  # remove systemd file, since we do not use wmbus user
+  rm "$pkgdir"/usr/lib/systemd/system/wmbusmeters.service
+
+  # install our own systemd service/tmpfiles/sysusers
+  install -Dm644 ../$pkgname.tmpfiles "$pkgdir"/usr/lib/tmpfiles.d/$pkgname.conf
+  install -Dm644 ../$pkgname.sysusers "$pkgdir"/usr/lib/sysusers.d/$pkgname.conf
+  install -Dm644 ../$pkgname.service -t "$pkgdir"/usr/lib/systemd/system/
+}
+
