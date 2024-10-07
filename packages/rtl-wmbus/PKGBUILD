@@ -1,0 +1,35 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=rtl-wmbus
+pkgver=d2be82c.r25.g34684e6
+pkgrel=1
+pkgdesc='Software defined receiver for wireless M-Bus with RTL-SDR.'
+groups=('blackarch' 'blackarch-radio' 'blackarch-wireless')
+arch=('x86_64' 'aarch64')
+url='https://github.com/xaelsouth/rtl-wmbus'
+license=('custom:xael.south@yandex.com')
+depends=('rtl-sdr')
+makedepends=('git' 'gcc')
+source=("$pkgname::git+https://github.com/xaelsouth/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  make DESTDIR="$pkgdir" release
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+
