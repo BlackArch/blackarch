@@ -2,45 +2,52 @@
 # See COPYING for license details.
 
 pkgname=vmcloak
-pkgver=912.13853ff
-pkgrel=2
-epoch=2
+pkgver=0.4.8.r29.gdc9e513
+pkgrel=1
+epoch=3
 pkgdesc='Automated Virtual Machine Generation and Cloaking for Cuckoo Sandbox.'
-groups=('blackarch-malware')
+groups=('blackarch' 'blackarch-malware')
 url='https://github.com/jbremer/vmcloak'
 arch=('any')
 license=('GPL3')
-depends=('python2' 'python2-sphinx' 'python-setuptools' 'python2-lockfile'
-         'python2-requests' 'python2-alembic' 'python2-sqlalchemy'
-         'python2-yaml' 'python2-pytest' 'python2-pefile' 'python2-jinja'
-         'python2-pyaml' 'python2-click' 'virtualbox' 'lshw' 'dmidecode'
-         'cdrtools')
-makedepends=('git' 'python2-setuptools')
+depends=('python' 'python-sphinx' 'python-lockfile'
+         'python-requests' 'python-alembic' 'python-sqlalchemy'
+         'python-yaml' 'python-pefile' 'python-jinja'
+         'python-pyaml' 'python-click' 'python-psutil'
+         'lshw' 'dmidecode' 'cdrtools'  'qemu-full')
+makedepends=('git' 'python-setuptools' 'python-pytest')
 source=("$pkgname::git+https://github.com/jbremer/$pkgname.git"
         'setup.py.patch')
 sha512sums=('SKIP'
-            'ac4bf47e6ddf166add9bc55e05328cab32700b7a0c99ffc67986144c13638a13ccb7be9c26912d1a18bd2d3715ab6d52e065372618254c9edc592c47fff8e32f')
+            '679b6c4a0bd114c7d6eed9a2a9bb67a6d3084e3c42b3de2e2f34751500f8e4317a7c2afdc0003a66fd015a25acbbb5113882a550f2692aae8900a868acbff056')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
-  patch -p1 < setup.py.patch
+  cd $pkgname
+
+  patch -p1 < ../setup.py.patch
 }
 
 build() {
   cd $pkgname
 
-  python2 setup.py build
+  python setup.py build
 }
 
 package() {
   cd $pkgname
 
-  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 docs/LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
