@@ -1,0 +1,87 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD from AUR.
+# Old Maintainer: Echo J. <aidas957 at gmail dot com>
+# Old Contributor: Viktor Drobot (aka dviktor) linux776 [at] gmail [dot] com
+# shellcheck shell=bash disable=SC2034,SC2164
+
+pkgname=sdrsharp
+pkgver=1.0.0.1457
+pkgrel=5
+pkgdesc="The most popular SDR program"
+arch=(i686 x86_64)
+groups=('blackarch' 'blackarch-radio')
+url="https://airspy.com"
+license=(LicenseRef-SDRSharp) # It's basically identical to MS-RSL (which may not be suitable for binaries)
+depends=('alsa-lib' 'bash' 'hicolor-icon-theme' 'mono' 'portaudio' 'rtl-sdr')
+makedepends=('icoutils' 'unzip')
+_sdrsharp="${pkgname}-${pkgver}"
+source=("${_sdrsharp}.zip::https://www.iz3mez.it/software/SDRSharp/SDRSharp_v${pkgver:(-4)}.zip"
+        "sdrsharp_wrapper"
+        "${pkgname}.desktop"
+        "adsbspy.desktop"
+        "airspycalibrate.desktop"
+        "astrospy.desktop"
+        "spectrumspy.desktop")
+noextract=("${_sdrsharp}.zip")
+sha512sums=('8319dbb13d07cd0b2199aa381146c9a70eb8ca00e48373013135f6204fe513ec222830d427c25d7c570083402de0cfcbe29d9cf69927c532a5e45a26cc279606'
+            '1b166b9ab5bf7b91be03d93c5ce621f49c7b8ec4e1775e03d758dd65eb9863b4232233226685390cd253db63ef756fe67bdc03ebec9dd998dda1ee1f9e9dab43'
+            '188c8611c59c6c0a8666f3e7601036e915dee70b15c6ec41fef66a8ab35b22f056cd45e1455848c395a77485d128eedccd37a7c786001190a66d09626f62ef16'
+            '81108093640aba8cda04140710dda6b0073b3a49f3610ddf7df0e2dde9689e18e86adcce074338ec00f16e6bf2db8fd0a25af69578d877a2ed0963e6557eb2db'
+            'b94e6c02fd4e8d6ba3af6fca359e7a89f15b760bffbc392eff483ea44c1ac6699c3c96bf4e4731497234d4c010cd2853a2b03ff209e3f6c89e26b18a502577ed'
+            '85787ccf6b0fb68c98f624a4096f4919f894ae76f7dc49bc9d8076fae5bb8eae10c4153aacfcb121cb034573aa2c3f834db086e19e230671f3b831a6c3c4e0a1'
+            '2e86a0e3e987fabf4b3d95eb320e28f079ac566a4d00ac084c1a0ffab080b808776e892fc7fe9c54205e247f3e2f29bc08201d2e113859e5c58a32632519f746')
+install="${pkgname}.install"
+
+prepare() {
+  echo "Extracting SDRSharp archive..."
+  unzip -q -o ${_sdrsharp}.zip -d ${_sdrsharp}
+  cd ${_sdrsharp}
+
+  rm httpget.exe install-rtlsdr.bat unzip.exe
+}
+
+build() {
+  mkdir build || true
+
+  # compile and optimize executables
+  mono --aot --optimize=all ${_sdrsharp}/*.exe
+  mv ${_sdrsharp}/*.exe.so build
+}
+
+package() {
+  # install stuff
+  install -Dm644 "${srcdir}"/${_sdrsharp}/* -t "${pkgdir}"/opt/${pkgname}
+  install -Dm644 "${srcdir}"/build/*.exe.so "${pkgdir}"/opt/${pkgname} || true
+
+  cd "${pkgdir}"/opt/${pkgname}
+
+  # link libraries
+  ln -s /usr/lib/librtlsdr.so librtlsdr.dll
+  ln -s /usr/lib/libportaudio.so libportaudio.so
+
+  # extract/install the icons
+  for app in AirspyCalibrate AstroSpy SDRSharp SpectrumSpy; do
+    wrestool -x -t14 ${app}.exe | icotool -x -w 64 -o - - | install -Dm644 \
+      /dev/stdin "${pkgdir}"/usr/share/icons/hicolor/64x64/apps/${app}.png
+  done
+  wrestool -x -t14 ADSBSpy.exe | icotool -x -w 48 -o - - | install -Dm644 \
+    /dev/stdin "${pkgdir}"/usr/share/icons/hicolor/48x48/apps/ADSBSpy.png
+
+  # install the config files
+  install -Dm644 *.exe.config -t "${pkgdir}"/usr/share/${pkgname}
+
+  # install wrapper stuff/desktop entries
+  install -Dm755 "${srcdir}"/sdrsharp_wrapper -t "${pkgdir}"/usr/bin
+  for app in ADSBSpy AirspyCalibrate AstroSpy SDRSharp SpectrumSpy; do
+    [ ${app} = ADSBSpy ] || ln -sf /tmp/${app}.exe.config "${pkgdir}"/opt/${pkgname}/${app}.exe.config
+    ln -s sdrsharp_wrapper "${pkgdir}"/usr/bin/${app}
+    ln -s ${app} "${pkgdir}"/usr/bin/${app,,}
+  done
+  install -Dm644 "${srcdir}"/*.desktop -t "${pkgdir}"/usr/share/applications
+
+  # install license
+  install -Dm644 LICENSE.txt "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE.txt
+}
+
