@@ -1,0 +1,155 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD from AUR.
+# Old Maintainer:  dreieck (https://aur.archlinux.org/account/dreieck)
+
+pkgname='rtl-433'
+_pkgname='rtl_433'
+pkgver=23.11+165.r3557.20241006.8fa97e2a
+pkgrel=1
+pkgdesc="A generic software defined radio data receiver, mainly for the 433.92 MHz, 868 MHz (SRD), 315 MHz, 345 MHz, and 915 MHz ISM bands."
+arch=(
+  'i686'
+  'x86_64'
+)
+groups=('blackarch' 'blackarch-radio' 'blackarch-wireless')
+url="https://github.com/merbanan/rtl_433"
+license=('GPL2')
+depends=(
+  'glibc'
+  'libusb'
+  'openssl'
+  'soapysdr'
+  'rtl-sdr'
+)
+makedepends=(
+  'cmake'
+  # 'doxygen'     # Would only be needed to build source code documentation.
+  # 'texlive-bin' # Would only be needed to build source code documentation.
+  'git'
+)
+backup=(
+  'usr/etc/rtl_433/adlm_fprf.conf'
+  'usr/etc/rtl_433/atc-technology_lmt-430.conf'
+  'usr/etc/rtl_433/CAME-TOP432.conf'
+  'usr/etc/rtl_433/car_fob.conf'
+  'usr/etc/rtl_433/chungear_bcf-0019x2.conf'
+  'usr/etc/rtl_433/ContinentalRemote.conf'
+  'usr/etc/rtl_433/dooya_curtain.conf'
+  'usr/etc/rtl_433/DrivewayAlarm_I8-W1901.conf'
+  'usr/etc/rtl_433/DrivewayAlert.conf'
+  'usr/etc/rtl_433/elro_ab440r.conf'
+  'usr/etc/rtl_433/energy_count_3000.conf'
+  'usr/etc/rtl_433/EV1527-4Button-Universal-Remote.conf'
+  'usr/etc/rtl_433/EV1527-DDS-Sgooway.conf'
+  'usr/etc/rtl_433/EV1527-PIR-Sgooway.conf'
+  'usr/etc/rtl_433/fan-11t.conf'
+  'usr/etc/rtl_433/FAN-53T.conf'
+  'usr/etc/rtl_433/friedlandevo.conf'
+  'usr/etc/rtl_433/ge_smartremote_plus.conf'
+  'usr/etc/rtl_433/GhostControls.conf'
+  'usr/etc/rtl_433/heatilator.conf'
+  'usr/etc/rtl_433/HeatmiserPRT-W.conf'
+  'usr/etc/rtl_433/honeywell-fan.conf'
+  'usr/etc/rtl_433/LeakDetector.conf'
+  'usr/etc/rtl_433/led-light-remote.conf'
+  'usr/etc/rtl_433/MightyMule-FM231.conf'
+  'usr/etc/rtl_433/MondeoRemote.conf'
+  'usr/etc/rtl_433/PHOX.conf'
+  'usr/etc/rtl_433/pir-ef4.conf'
+  'usr/etc/rtl_433/Reolink-doorbell.conf'
+  'usr/etc/rtl_433/rtl_433.example.conf'
+  'usr/etc/rtl_433/SalusRT300RF.conf'
+  'usr/etc/rtl_433/silverline_doorbell.conf'
+  'usr/etc/rtl_433/Skylink_HA-434TL.conf'
+  'usr/etc/rtl_433/SMC5326-Remote.conf'
+  'usr/etc/rtl_433/sonoff_rm433.conf'
+  'usr/etc/rtl_433/steffen_switch.conf'
+  'usr/etc/rtl_433/SWETUP-garage-opener.conf'
+  'usr/etc/rtl_433/tesla_charge-port-opener.conf'
+  'usr/etc/rtl_433/tyreguard400.conf'
+  'usr/etc/rtl_433/valeo_car_key.conf'
+  'usr/etc/rtl_433/verisure_alarm.conf'
+  'usr/etc/rtl_433/xmas-tree-remote-2APJZ-CW002.conf'
+)
+source=(
+  "${_pkgname}::git+${url}.git"     # Official upstream source
+  'doxygen-no-warn-as-error.patch'  # Otherwise build fails with `devices/srsmith_pool_srs_2c_tx.c:1: error: explicit link request to 'SRS' could not be resolved (warning treated as error, aborting now)` (as of 2024-02-07).
+)
+sha512sums=('SKIP'
+            '7430b9efd209ffdf3b97da37b5d074aaa1067567687e6c09595e0ad7444cf13e250ce5d6db3bc6873434d5a1f8e82e71ed7896a27a9dd27d765ecd6d7821a765')
+
+prepare() {
+  mkdir -p "${srcdir}/build"
+
+  cd "${srcdir}/${_pkgname}"
+
+  for _patch in "${srcdir}/doxygen-no-warn-as-error.patch"; do
+    printf '%s\n' "      > Applying patch '${_patch}' ..."
+    patch -Np1 --follow-symlinks -i "${_patch}"
+  done
+
+  git log > git.log
+}
+
+pkgver() {
+  cd "${srcdir}/${_pkgname}"
+
+  _ver="$(git describe --tags --exclude=nightly | sed 's|^[vV]||' | sed 's|-g[0-9a-fA-F]*$||' | tr '-' '+')"
+  _rev="$(git rev-list --count HEAD)"
+  _date="$(git log -1 --date=format:"%Y%m%d" --format="%ad")"
+  _hash="$(git rev-parse --short HEAD)"
+
+  if [ -z "${_ver}" ]; then
+    error "Version could not be determined."
+    return 1
+  else
+    printf '%s' "${_ver}.r${_rev}.${_date}.${_hash}"
+  fi
+}
+
+build() {
+  cd "${srcdir}"
+
+  # -DBUILD_DOCUMENTATION=ON builds only source code documentation.
+  cmake -S "${_pkgname}" -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_INSTALL_BINDIR=/usr/bin \
+    -DCMAKE_INSTALL_SBINDIR=/usr/bin \
+    -DCMAKE_INSTALL_SYSCONFDIR=etc \
+    -DBUILD_DOCUMENTATION=OFF \
+    -DBUILD_TESTING=ON \
+    -DBUILD_TESTING_ANALYZER=OFF \
+    -DENABLE_IPV6=ON \
+    -DENABLE_OPENSSL=ON \
+    -DENABLE_RTLSDR=ON \
+    -DENABLE_SOAPYSDR=ON \
+    -DENABLE_THREADS=ON
+
+  make -C build
+}
+
+check() {
+  cd "${srcdir}"
+
+  make -C build test
+}
+
+package() {
+  cd "${srcdir}"
+
+  make -C build DESTDIR="${pkgdir}" install
+
+  ### Only if -DBUILD_DOCUMENTATION=ON.
+  # install -Dvm755 "${pkgdir}/usr/share/doc/${_pkgname}/dev"
+  # cp -av 'doc/html' "${pkgdir}/usr/share/doc/${_pkgname}/dev"/
+
+  cd "${srcdir}/${_pkgname}"
+
+  install -Dvm644 -t "${pkgdir}/usr/share/doc/${_pkgname}"      'git.log' 'AUTHORS' 'CHANGELOG.md' 'README.md'
+  install -Dvm644 -t "${pkgdir}/usr/share/licenses/${pkgname}"  'COPYING'
+  ln -svr "${pkgdir}/usr/share/licenses/${pkgname}/COPYING"     "${pkgdir}/usr/share/doc/${_pkgname}/COPYING"
+}
+
