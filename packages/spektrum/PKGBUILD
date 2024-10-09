@@ -1,0 +1,43 @@
+# Credits BlackArch ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=spektrum
+pkgver=2.1.0
+pkgrel=1
+pkgdesc='rtl-sdr spectrum analyzer.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-radio')
+url='https://github.com/pavels/spektrum'
+license=('BSD-3')
+depends=('libusb')
+makedepends=()
+source=("https://github.com/pavels/spektrum/releases/download/$pkgver/$pkgname-linux64.tar.gz")
+sha512sums=('49ad6599f7af3e4af182f65d4064642092b4efe87c1595f1174febda83bd221f95d61c12cd2836b722257a0bd00d914139753b5e13a7f72c1ac128c14791c2fc')
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/etc/modprobe.d"
+  install -dm 755 "$pkgdir/etc/udev/rules.d"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/etc/modprobe.d/rtl-sdr.conf" << EOF
+blacklist dvb_usb_rtl28xxu
+EOF
+
+  cat > "$pkgdir/etc/udev/rules.d/20.rtlsdr.rules" << EOF
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="2838", GROUP="adm", MODE="0666"
+EOF
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bash $pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
