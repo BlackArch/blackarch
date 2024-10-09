@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=adexplorersnapshot
+_pkgname=ADExplorerSnapshot.py
+pkgver=75.d9c1d41
+pkgrel=1
+pkgdesc='AD Explorer snapshot parser.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/c3c/ADExplorerSnapshot.py'
+license=('MIT')
+depends=('python' 'bloodhound-python' 'certipy' 'python-frozendict' 'python-pwntools' 'python-dissect.cstruct')
+makedepends=('python-build' 'python-pip')
+source=("git+https://github.com/c3c/$_pkgname")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $_pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd $_pkgname
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/$pkgname"
+}
+
