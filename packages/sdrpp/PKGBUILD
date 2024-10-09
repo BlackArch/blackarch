@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD from AUR.
+# Old Maintainer: Alexandre Rouma <whatsthetgeek@gmail.com>
+# Old Maintainer: éclairevoyant
+# Old Contributor: Marin Atanasov Nikolov <dnaeon@gmail.com>
+
+pkgname=sdrpp
+pkgver=nightly.r214.g08f3a7d
+pkgrel=1
+pkgdesc="The bloat-free SDR receiver"
+arch=(x86_64)
+groups=('blackarch' 'blackarch-radio' 'blackarch-wireless')
+url="https://www.sdrpp.org/"
+license=(GPL3)
+depends=('fftw' 'glew' 'glfw' 'libvolk')
+_plugindeps=('airspy' 'airspyhf' 'bladerf' 'codec2' 'hackrf' 'libad9361' 'libiio' 'libsdrplay' 'limesuite' 'rtaudio' 'rtl-sdr' 'portaudio' 'soapysdr')
+makedepends=('cmake' 'git' "${_plugindeps[@]}")
+optdepends=("${_plugindeps[@]}")
+source=("$pkgname::git+https://github.com/AlexandreRouma/SDRPlusPlus.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+	cmake -B build -S $pkgname \
+		-DOPT_BUILD_BLADERF_SOURCE=ON \
+		-DOPT_BUILD_LIMESDR_SOURCE=ON \
+		-DOPT_BUILD_SDRPLAY_SOURCE=ON \
+		-DOPT_BUILD_NEW_PORTAUDIO_SINK=ON \
+		-DOPT_BUILD_M17_DECODER=ON
+	make -C build
+}
+
+package() {
+	make -C build DESTDIR="$pkgdir" install
+}
+

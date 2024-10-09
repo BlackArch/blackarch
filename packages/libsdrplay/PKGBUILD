@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD from AUR.
+# Old Maintainer: Evgeniy Dombek <edombek@yandex.ru>
+# Old Maintainer: Dan McCurry <dan.mc at protonmail dot com>
+# Old Maintainer: Ethan Best <ethan at totalsecond dot com>
+# with special thanks to deadlte for version 3.07.1
+
+pkgname=libsdrplay
+pkgver=3.15.2
+pkgrel=2
+pkgdesc="Modules for the SDRplay receiver"
+arch=('aarch64' 'x86_64')
+url="http://www.sdrplay.com"
+license=('custom:EULA')
+depends=('libusb')
+source=("http://www.sdrplay.com/software/SDRplay_RSP_API-Linux-${pkgver}.run"
+		"sdrplay.service"
+		"66-sdrplay.rules")
+sha512sums=('6ded10a6be6455f60666a527809faa2d06474c1513649e4a844d6af3dff4f655b3560b37ce7abde143ce6400fd4a762e4159cbae78040523d138496da9ad85ec'
+            '6b1bc2ac44390444ee046ac3e4a1864da6ba303f41f132d9992e889a3c956fe7b603b719b60e00778ae54801baab91bbf93fff78f5cdc504354f955766cc46d0'
+            '3e78324adc0c7c0cd6c834622663a4868bd4dc482da9bda6d5cfa8bbebbfc12fd83e7754ff770a8c20aa6ca3dc769f3cc82826c0f9965215b361bb0e64ee9e4a')
+
+prepare() {
+	msg2 "Extracting makeself archive..."
+	sh SDRplay_RSP_API-Linux-${pkgver}.run --tar xf
+}
+
+package() {
+	CARCH_=$CARCH
+    case ${CARCH} in
+     x86_64) CARCH_="amd64" ;;
+     aarch64)   CARCH_="arm64" ;;
+    esac
+	
+	msg2 "Getting API version..."
+	_apivers=$(sed -n 's/^VERS="\(.*\)"/\1/p' install_lib.sh)
+	msg2 "API version: ${_apivers}"
+
+	# These commands are equivalent to the scripts used in the supplied
+	# run file
+	install -D -m644 sdrplay_license.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	install -D -m644 "${CARCH_}/libsdrplay_api.so.${_apivers}" 		"${pkgdir}/usr/lib/libsdrplay_api.so.${_apivers}"
+	install -D -m755 "${CARCH_}/sdrplay_apiService" "${pkgdir}/usr/bin/sdrplay_apiService"
+	install -D -m644 "sdrplay.service" "${pkgdir}/etc/systemd/system/sdrplay.service"
+
+	(cd inc && find . -type f -exec install -D -m644 "{}" "${pkgdir}/usr/include/{}" \;)
+		
+	install -D -m644 66-sdrplay.rules "${pkgdir}/etc/udev/rules.d/66-sdrplay.rules"
+
+	cd "${pkgdir}/usr/lib"
+	ln -s libsdrplay_api.so.${_apivers} libsdrplay_api.so.2
+	ln -s libsdrplay_api.so.${_apivers} libsdrplay_api.so
+}
+

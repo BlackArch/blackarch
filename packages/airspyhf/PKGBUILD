@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD from AUR.
+# Old Maintainer: Konrad Beckmann <konrad.beckmann@gmail.com>
+
+pkgname=airspyhf
+pkgver=1.6.8.r36.g39f06a4
+pkgrel=1
+pkgdesc="Host code for AirspyHF+ SDR."
+arch=('i686' 'x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-radio' 'blackarch-wireless')
+url="http://www.airspy.com"
+license=('BSD')
+depends=('libusb')
+makedepends=('git' 'cmake')
+source=("git+https://github.com/airspy/airspyhf"
+        "52-airspyhf.rules")
+sha512sums=('SKIP'
+            '9b10bd19efe9862be88e0040f40c72ecd3582e90eebbc189cae230de591e9dc45f5c4d7ab6609ef5d419be6045323c8b5fb7bfabe13916568be2d777939ea381')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  mkdir -p build
+  cd build
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr -Wno-dev ../
+  make
+}
+
+package() {
+  install -Dm644 "52-airspyhf.rules" "$pkgdir/usr/lib/udev/rules.d/52-airspyhf.rules"
+  cd "$pkgname/build"
+  make DESTDIR="$pkgdir" install
+}
+
