@@ -4,42 +4,46 @@
 # NOTE: initially ripped from AUR, but we changed a lot here (style).
 
 pkgname=hostapd-wpe
-_pkgname=hostapd
-pkgver=2.9.1
-_pkgver=2.9
-pkgrel=3
+_pkgname=hostap
+pkgver=2.11.1
+_pkgver=2.11
+pkgrel=1
 groups=('blackarch' 'blackarch-wireless')
 pkgdesc='Modified hostapd to facilitate AP impersonation attacks.'
-arch=('x86_64' 'aarch64')
+arch=('x86_64' 'i686')
 url='https://w1.fi/hostapd/'
 license=('BSD')
-depends=('openssl-1.0' 'libnl' 'sqlite')
-source=("https://w1.fi/releases/$_pkgname-$_pkgver.tar.gz"
-        "https://patches.aircrack-ng.org/wpe/hostapd-wpe/$pkgname.patch")
-#        "https://raw.githubusercontent.com/aircrack-ng/aircrack-ng/master/patches/wpe/hostapd-wpe/$pkgname.patch")
+depends=('glibc' 'openssl-1.0' 'libnl' 'sqlite')
+source=("git+https://w1.fi/$_pkgname.git?signed#tag=${_pkgname}_${_pkgver//./_}"
+        "0001_adj-wpe.patch"
+        "https://raw.githubusercontent.com/aircrack-ng/aircrack-ng/master/patches/wpe/${pkgname}/${_pkgname}d-${_pkgver}-wpe.patch")
 install="$pkgname.install"
-sha512sums=('66c729380152db18b64520bda55dfa00af3b0264f97b5de100b81a46e2593571626c4bdcf900f0988ea2131e30bc8788f75d8489dd1f57e37fd56e8098e48a9c'
-            'c1ef9f6b9b3d3d04fa98fb9568acc45a5c52a00411a5ebbbf3a80835cc27f6cdc5003343f37964fbac2c7c1fefffdf999d620f0e39797c0c37030090735526a5')
+sha512sums=('de2ba10af60bc88f0f900fe4a90681d9f08318bf12f88227881f6c4f2c4c628b89515a5425242048b8867b1791f5613fbfa1c3adeecf345aeb4093cac5eb62e4'
+            '30cb5301c0ee90ae8e1dd9f17b27e0b6ee253919251bb8cc6da3b340e632607915f30952e17e9e4cf9adc3ee062354e4b7bd55ddddc82753050dcba7ef9cd646'
+            'c46fbd8a10045d8df09f28b37992c32b9f34604d380ff47a0158ef3afcf9b406f8788ddd8e5e1cc2478f4800de2417504d756b11ccf9628046dd8a150e1fd44c')
+validpgpkeys=(EC4AA0A991A5F2464582D52D2B6EF432EFC895FA) # Jouni Malinen <j@w1.fi>
 
 prepare() {
-  cd "$_pkgname-$_pkgver"
+  # Adjust aircrack-ng patch as it doesn't cleanly apply
+  patch -Np1 --follow-symlinks -i ./0001_adj-wpe.patch
 
-  patch -p1 -i "$srcdir/$pkgname.patch"
+  # Apply aircrack-ng patch
+  patch -Np1 -d $_pkgname -i ../${_pkgname}d-${_pkgver}-wpe.patch
 }
 
 build() {
-  cd "$_pkgname-$_pkgver/$_pkgname"
+  cd "$_pkgname/${_pkgname}d"
 
   make
 }
 
 package() {
-  cd "$_pkgname-$_pkgver/$_pkgname"
+  cd "$_pkgname/${_pkgname}d"
 
   make DESTDIR="$pkgdir" install
   make DESTDIR="$pkgdir" wpe
 
-  install -Dm 644  "$srcdir/$_pkgname-$_pkgver/COPYING" \
+  install -Dm 644  "$srcdir/$_pkgname/COPYING" \
     "$pkgdir/usr/share/licenses/$pkgname/COPYING"
 
   mv "$pkgdir/usr/local/bin" "$pkgdir/usr/bin"
