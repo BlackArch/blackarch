@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD from AUR.
+# Old Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Old Contributor: Andrea Scarpino <andrea@archlinux.org>
+
+pkgname=qt5-serialbus
+_basever=5.15.15
+pkgver=5.15.15
+pkgrel=1
+pkgdesc='Qt module for general purpose serial bus access.'
+_commit=77dae896b13e36969fefdfa25d711e455d58597b
+arch=('x86_64')
+url='https://www.qt.io'
+license=('GPL3' 'LGPL3' 'FDL' 'custom')
+depends=('qt5-serialport')
+makedepends=('git')
+_pkgfqn=${pkgname/5-/}
+source=(kde-$_pkgfqn::git+https://invent.kde.org/qt/qt/$_pkgfqn#commit=$_commit)
+sha512sums=('c98f8fed6096dd7a2450b6dc2dddc893baee41d62d5aa878d4616d5524903deb2fc17498c070c798da7fe19c181c182cf0d9456449d49ddf5bbb425095f063a5')
+
+pkgver() {
+  cd kde-$_pkgfqn
+  
+  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit` | sed -e 's|+kde+r0||'
+}
+
+prepare() {
+  mkdir -p build
+}
+
+build() {
+  cd build
+
+  qmake ../kde-$_pkgfqn
+  make
+}
+
+package() {
+  cd build
+  
+  make INSTALL_ROOT="$pkgdir" install
+
+  # Drop QMAKE_PRL_BUILD_DIR because reference the build dir
+  find "$pkgdir/usr/lib" -type f -name '*.prl' \
+    -exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;
+
+  install -d "$pkgdir"/usr/share/licenses
+  ln -s /usr/share/licenses/qt5-base "$pkgdir/usr/share/licenses/$pkgname"
+}
+
