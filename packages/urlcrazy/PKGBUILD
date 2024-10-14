@@ -2,27 +2,44 @@
 # See COPYING for license details.
 
 pkgname=urlcrazy
-pkgver=0.7.3
+pkgver=v0.7.3.r0.g93e910c
 pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-webapp')
 pkgdesc='Generate and test domain typos and variations to detect and perform typo squatting, URL hijacking, phishing, and corporate espionage.'
 arch=('any')
 url='http://www.morningstarsecurity.com/research/urlcrazy'
 license=('custom')
-depends=('ruby')
+depends=('ruby' 'ruby-bundler')
 makedepends=('git')
 source=("git+https://github.com/urbanadventurer/$pkgname.git")
 sha256sums=('SKIP')
+install="$pkgname.install"
 
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
 
 package() {
-  install -d "$pkgdir/usr/bin"
-  ln -s "/usr/share/$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  cd $pkgname
 
-  install -d "$pkgdir/usr/share/$pkgname"
-  cp -a "$pkgname"/. "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -d "$pkgdir/usr/share/doc/$pkgname"
-  ln -s "/usr/share/$pkgname/README" "$pkgdir/usr/share/doc/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+
+  rm -rf *.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bundle exec ruby $pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
