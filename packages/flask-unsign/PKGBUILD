@@ -2,27 +2,38 @@
 # See COPYING for license details.
 
 pkgname=flask-unsign
-pkgver=1.2.0
-pkgrel=2
-pkgdesc='Decode, encode and brute-force Flask session cookie.'
+pkgver=v1.2.0.r2.ge934573
+pkgrel=1
+pkgdesc='Command line tool to fetch, decode, brute-force and craft session cookies of a Flask application by guessing secret keys.'
 arch=('any')
-groups=('blackarch' 'blackarch-webapp')
+groups=('blackarch' 'blackarch-cracker' 'blackarch-webapp')
 url='https://github.com/Paradoxis/Flask-Unsign'
 license=('MIT')
-depends=('python' 'python-flask' 'python-requests' 'python-itsdangerous'
-         'python-markupsafe' 'python-werkzeug')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz")
-sha512sums=('ee44e60ae09c61a93ffca41a890964ee660c36037a04e71a1da36c87121d6414b90db10e42f220db259ba083e7dd1a03687f534b0e2c528f2f09209acef73e23')
+depends=('python' 'python-flask' 'python-requests' 'python-itsdangerous' 'python-markupsafe' 'python-werkzeug')
+makedepends=('git' 'python-setuptools')
+options=(!emptydirs)
+source=("$pkgname::git+https://github.com/Paradoxis/Flask-Unsign.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   python setup.py build
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }

@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=badsecrets
+pkgver=506.6041225
+pkgrel=1
+pkgdesc='A library for detecting known secrets across many web frameworks.'
+arch=('any')
+groups=('blackarch' 'blackarch-crypto' 'blackarch-webapp')
+url='https://github.com/blacklanternsecurity/badsecrets'
+license=('GPL3')
+depends=('python' 'python-django' 'python-pycryptodome' 'python-pyjwt' 'python-viewstate' 'flask-unsign')
+makedepends=('git' 'python-build' 'python-pip')
+source=("git+https://github.com/blacklanternsecurity/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd $pkgname
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
+
