@@ -2,24 +2,39 @@
 # See COPYING for license details.
 
 pkgname=rfcat
-pkgver=170508
+pkgver=v2.0.1.r5.g07f99bb
 pkgrel=1
-pkgdesc='RF ChipCon-based Attack Toolset.'
-groups=('blackarch' 'blackarch-exploitation')
+epoch=1
+pkgdesc='Swiss-army knife of ISM band radio.'
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-radio')
 url='http://code.google.com/p/rfcat'
 arch=('any')
 license=('BSD')
-depends=('python2' 'python2-pyusb')
-source=("https://bitbucket.org/atlas0fd00m/rfcat/downloads/${pkgname}_${pkgver}.tgz")
-sha512sums=('79f960ee6b8c2d66cb17ca69216041bb9679b0d38579feb3ab59bbb6e41337b29c4ad30a6d03b2de4c58eeeff5f22fe26412a670da5278e81a47a2ec3d699f60')
+depends=('python' 'python-pyusb' 'pyside2' 'libusb')
+makedepends=('python-setuptools')
+source=("git+https://github.com/atlas0fd00m/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
 
 package() {
-  cd "${pkgname}_$pkgver"
+  cd $pkgname
 
-  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" FAQ README TODO \
-    README.immesniff README.nonroot TODO
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
