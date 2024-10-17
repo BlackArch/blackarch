@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=ssldump
-pkgver=1.7
+pkgver=1.8
 pkgrel=1
 groups=('blackarch' 'blackarch-sniffer')
 pkgdesc='An SSLv3/TLS network protocol analyzer.'
@@ -11,28 +11,22 @@ url='http://www.rtfm.com/ssldump/'
 license=('custom:unknown')
 depends=('openssl' 'json-c' 'libnet' 'libpcap')
 source=("https://github.com/adulau/ssldump/archive/refs/tags/v$pkgver.tar.gz")
-sha512sums=('1836d8cc968f006f7c503c5537594e2e47d35a8cfbb4c4de0eb3154e7f20b60d965589b4cdf6adf46584c8b55300bc12e186ddfc9641b8039c2851bec463c461')
+sha512sums=('5435187fa851cddd167a5ee7e79f8051752780512873195b215e8695430282338f22719e6ddd32bd4eae3cc9a385abd44a4b369f93dc201908696aaed214b9bc')
+
+prepare() {
+  sed -i 's|/usr/local|/usr|' $pkgname-$pkgver/CMakeLists.txt
+}
 
 build() {
-  cd "$pkgname-$pkgver"
-
-  ./autogen.sh
-
-  # Arch64 fixes.
-  ./configure \
-    --prefix=/usr \
-    --build=i686-pc-linux-gnu \
-    --host=i686-pc-linux-gnu \
-    "--sbindir=$pkgdir/usr/bin"
-
-  make
+  cmake -G Ninja -B $pkgname-$pkgver/build -S $pkgname-$pkgver \
+    -DCMAKE_BUILD_TYPE=None \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -Wno-dev
+  ninja -C $pkgname-$pkgver/build
+  $pkgname-$pkgver/build/ssldump -v
 }
 
 package() {
-  cd "$pkgname-$pkgver"
-
-  make prefix="$pkgdir/usr" install
-
-  install -Dm 644 COPYRIGHT "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 $pkgname-$pkgver/COPYRIGHT "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  DESTDIR="$pkgdir" ninja -C $pkgname-$pkgver/build install
 }
-
