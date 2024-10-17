@@ -6,7 +6,7 @@
 # AUR Contributor: max-k <max-kATpostDOTcom>
 
 pkgname=sonar-scanner
-pkgver=4.8.0.2856
+pkgver=6.2.1.4610
 pkgrel=1
 pkgdesc='Generic CLI tool to launch project analysis on SonarQube servers.'
 groups=('blackarch' 'blackarch-code-audit')
@@ -15,25 +15,19 @@ url='https://docs.sonarqube.org/latest/analysis/scan/sonarscanner/'
 license=('LGPL3')
 depends=('java-runtime' 'sh')
 backup=("opt/$pkgname/conf/$pkgname.properties")
-source=("https://binaries.sonarsource.com/Distribution/$pkgname-cli/$pkgname-cli-$pkgver.zip")
-sha512sums=('b2c94c5c8bde1092c332421f8988fe7d709b09b6644f43c9af2a5a28d90f91656a8cda5cd7f920981225c602f00653e3ddd1ac5dba750da44d784e5736ea790d')
+source=("https://binaries.sonarsource.com/Distribution/$pkgname-cli/$pkgname-cli-$pkgver.zip"
+        "$pkgname.sh"
+        "$pkgname.install")
+sha256sums=('d45e09eecb2fe867ce7548be59d54317192c79944ef7e54c691423c832a8208f'
+            '70e67c19cc976f68c28b169647d335cbd803007279ff1c9e84b20ab0ac78d89f'
+            '61f04a4f7771fe95e7f0a993d45002855a4c526cfaa3203845b922045c4ea5cf')
 
 package() {
-  cd "$pkgname-$pkgver"
+    install -Dm755 --target-directory="$pkgdir/etc/profile.d/" "$pkgname.sh"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  rm bin/*.bat
-
-  cp -rT . "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-export SONAR_SCANNER_HOME="/usr/share/$pkgname"
-exec /usr/share/$pkgname/bin/$pkgname "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+    cd "$pkgname-$pkgver"
+    install -Dm755 --target-directory="$pkgdir/opt/$pkgname/bin/" "bin/$pkgname"
+    install -Dm644 --target-directory="$pkgdir/opt/$pkgname/lib/" "lib/$pkgname-cli-$pkgver.jar"
+    install -Dm644 --target-directory="$pkgdir/opt/$pkgname/conf/" "conf/sonar-scanner.properties"
+    ln -sf "/opt/$pkgname/conf" "$pkgdir/etc/$pkgname"
 }
-
