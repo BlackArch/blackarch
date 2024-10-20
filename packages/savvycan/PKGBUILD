@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=savvycan
+_pkgname=SavvyCAN
+pkgver=continuous.r0.g2836977
+pkgrel=1
+pkgdesc='QT-based CAN bus analysis tool.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-automobile')
+url='https://github.com/collin80/SavvyCAN'
+license=('MIT')
+depends=('qt5-serialbus')
+makedepends=('qt5-base' 'qt5-tools')
+optdepends=('qt5-clx000-git: clx000 loggers')
+source=("git+https://github.com/collin80/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $_pkgname
+
+  sed -i -e '/.*isEmpty(PREFIX)/,+3d' SavvyCAN.pro
+  qmake-qt5 PREFIX=/usr \
+    QMAKE_CFLAGS="${CFLAGS}" \
+    QMAKE_CXXFLAGS="${CXXFLAGS}" \
+    QMAKE_LFLAGS="${LDFLAGS}"
+  make
+}
+
+check() {
+  cd $_pkgname
+
+  make check
+}
+
+package() {
+  cd $_pkgname
+
+  make INSTALL_ROOT="$pkgdir" install
+  qmake-qt5 -install qinstall -exe $_pkgname "$pkgdir/usr/bin/$pkgname"
+}
+
