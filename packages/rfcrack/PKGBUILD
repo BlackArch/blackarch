@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=rfcrack
+_pkgname=RFCrack
+pkgver=103.cc20093
+pkgrel=1
+pkgdesc='A Software Defined Radio Attack Tool.'
+arch=('any')
+groups=('blackarch' 'blackarch-cracker' 'blackarch-radio')
+url='https://github.com/cclabsInc/RFCrack'
+license=('custom:unknown')
+depends=('python' 'python-bitstring' 'python-libusb' 'python-matplotlib' 'python-numpy' 'python-pyusb' 'rfcat')
+makedepends=('git' 'python-setuptools' 'python-pip')
+source=("git+https://github.com/cclabsInc/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE INSTALL README .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/RFCrack.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
