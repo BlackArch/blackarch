@@ -2,22 +2,54 @@
 # See COPYING for license details.
 
 pkgname=de4dot
-pkgver=3.1.41592
-pkgrel=2
-pkgdesc='.NET deobfuscator and unpacker.'
-url='https://github.com/0xd4d/de4dot/'
+pkgver=2090.b7d5728
+pkgrel=1
+pkgdesc=".NET deobfuscator and unpacker."
+arch=("x86_64")
 groups=('blackarch' 'blackarch-windows' 'blackarch-unpacker'
         'blackarch-binary' 'blackarch-reversing')
-license=('GPL3')
-arch=('any')
-source=("$pkgname-$pkgver.zip::https://github.com/0xd4d/$pkgname/archive/v$pkgver.zip")
-sha512sums=('32d80663b0d475ea5f3ef3d63e3d5e455c36ca230f8c1259b1804751c864b71c1d0231a74c31f4965371a10f695c54d7868dfa56d3d8b0af4a5a70d0975cfdc3')
+url="https://github.com/de4dot/de4dot"
+license=("GPL3")
+depends=('mono')
+makedepends=('git' 'mono' 'mono-msbuild')
+source=("git+https://github.com/de4dot/$pkgname.git"
+        "de4dot.sh"
+        "de4dot-x64.sh")
+sha512sums=('SKIP'
+            '61c7a09497491ca4198df0320de43dabe1e67e414303b8dbe91e6b83c179eaf395d0dcbc8f9c6c078dc557b98cc21fc538c60b3f7430e42a34806aec64f6f95a'
+            '600bd38aa72d10950486655be33c77a23f5364879369869f364163c5cbe53115bbe89e2c88c473d56a637a7f52232b11c07b85da14bba6f32f2c3b5b541c0958')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  msbuild -v:m -restore -t:Build -p:Configuration=Release -p:TargetFramework=net45 de4dot.netframework.sln
+  find Release/net45 -iname '*.pdb' -or -iname '*.xml' -or -iname 'Test.Rename.*' -delete
+}
 
 package() {
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
   install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
 
-  rm "$pkgname-$pkgver.zip"
-
-  cp -a * "$pkgdir/usr/share/windows/$pkgname/"
+  cp -R $pkgname/Release/net45/* "$pkgdir/usr/share/$pkgname"
+  install -Dm0755 "${srcdir}/de4dot.sh" "$pkgdir/usr/share/$pkgname/de4dot.sh"
+  install -Dm0755 "${srcdir}/de4dot-x64.sh" "$pkgdir/usr/share/$pkgname/de4dot-x64.sh"
+  # For now, symlink both x32 and x64 scripts
+  install -dm 755 "$pkgdir/usr/bin"
+  ln -s "/usr/share/$pkgname/de4dot.sh" "$pkgdir/usr/bin/de4dot"
+  ln -s "/usr/share/$pkgname/de4dot-x64.sh" "$pkgdir/usr/bin/de4dot-x64"
+  
+  cp -R "$pkgdir/usr/share/$pkgname"/* "$pkgdir/usr/share/windows/$pkgname/"
+  rm "$pkgdir/usr/share/windows/$pkgname/"{de4dot.sh,de4dot-x64.sh}
 }
 
