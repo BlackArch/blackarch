@@ -2,9 +2,9 @@
 # See COPYING for license details.
 
 pkgname=empire
-pkgver=3443.ee6526b1
+pkgver=v5.11.5.r0.gee6526b
 pkgrel=1
-epoch=2
+epoch=3
 pkgdesc='A PowerShell and Python post-exploitation agent.'
 groups=('blackarch' 'blackarch-automation')
 arch=('any')
@@ -28,36 +28,51 @@ depends=('python' 'python-urllib3' 'python-requests' 'python-iptools' 'tk'
          'python-constantly' 'python-ecdsa' 'python-fastapi' 'python-greenlet'
          'python-h11' 'python-hyperlink' 'python-idna' 'python-iniconfig'
          'python-importlib-metadata' 'python-incremental' 'python-isort'
-         'python-itsdangerous' 'python-markupsafe' 'python-mypy_extensions'
-         'python-numpy' 'python-packaging' 'python-passlib' 'python-pathspec'
-         'python-platformdirs' 'python-pluggy' 'python-ply' 'python-pyasn1'
-         'python-pyasn1-modules' 'python-pycparser' 'python-pycryptodome'
-         'python-pygame' 'python-engineio' 'python-python-multipart'
+         'python-itsdangerous' 'python-markupsafe' 'python-md2pdf' 'python-mypy_extensions'
+         'python-numpy' 'python-obfuscator' 'python-packaging' 'python-passlib'
+         'python-pathspec' 'python-platformdirs' 'python-pluggy' 'python-ply'
+         'python-pyasyncore' 'python-pyasn1' 'python-pyasn1-modules' 'python-pycparser'
+         'python-pycryptodome' 'python-pygame' 'python-engineio' 'python-python-multipart'
          'python-pyvnc' 'python-rsa' 'python-ruff' 'python-secretsocks'
-         'python-service-identity' 'python-sniffio' 'python-starlette'
-         'python-stone' 'python-toml' 'python-tomli' 'python-twisted'
+         'python-service-identity' 'python-sniffio' 'python-starlette' 'python-stix2'
+         'python-stone' 'python-tabulate' 'python-toml' 'python-tomli' 'python-twisted'
          'python-typing_extensions' 'python-wcwidth' 'python-websocket-client'
          'python-websockets' 'python-werkzeug' 'python-zipp' 'websockify'
-         'python-zope-interface' 'uvicorn')
+         'python-zope-interface' 'mariadb' 'uvicorn')
 makedepends=('git')
+install='empire.install'
 source=("$pkgname::git+https://github.com/BC-SECURITY/Empire.git"
         'https://files.pythonhosted.org/packages/35/d3/d6a9610f19d943e198df502ae660c6b5acf84cc3bc421a2aa3c0fb6b21d1/pyOpenSSL-22.0.0.tar.gz'
-        'setup_database.py.patch')
+        'setup_database.py.patch'
+        'empire.install')
 sha512sums=('SKIP'
             '3d7695f27b7909eb82f05527ab7551fe90a85a70f20ea980293b59672a62f9b015966180407fa0786e94b01ad1d1acfaa7d40426bb63410efd24a144e559e2f0'
-            '9ffc3dc5d6a1dfd5b71cd22a0878a0231958938cb939e5fda5467c301fb4837ff96a299c2cbf2b2cc232fd8dd340c9086130e1067870c8c4272d7cc05e3954b4')
+            '9ffc3dc5d6a1dfd5b71cd22a0878a0231958938cb939e5fda5467c301fb4837ff96a299c2cbf2b2cc232fd8dd340c9086130e1067870c8c4272d7cc05e3954b4'
+            '22eae94614fa5fee5effb9c03160b307d1d43f0dbd4a68011cdc66c2437119c94e80f3efa98fa92b9fb061a12b960f6d0598c9f9420714ad3c16c18f54ce88e6')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
   cd $pkgname
 
+  # Prevent invoking git submodule update on install directory since no git dir
+  sed -i "s/auto_update: true/auto_update: false/g" ./empire/server/config.yaml
+  # Prevent invoking git clone on install directory due to permission denied
+  sed -i '/starkiller:/,/enabled:/s/enabled: true/enabled: false/' ./empire/server/config.yaml
+
   # need by empire
   cp -r "$srcdir/pyOpenSSL-22.0.0/src/OpenSSL" OpenSSL
+
+  git submodule update --init --recursive
 }
 
 package() {
@@ -72,6 +87,14 @@ package() {
   rm changelog LICENSE README.md
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python empire.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 
   cat > "$pkgdir/usr/bin/$pkgname-server" << EOF
 #!/bin/sh
