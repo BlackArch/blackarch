@@ -2,9 +2,9 @@
 # See COPYING for license details.
 
 pkgname=fluxion
-pkgver=1571.4f461a4
-pkgrel=2
-epoch=3
+pkgver=v4.10.r240.g4f461a4
+pkgrel=1
+epoch=4
 pkgdesc='A security auditing and social-engineering research tool.'
 arch=('any')
 groups=('blackarch' 'blackarch-social' 'blackarch-wireless')
@@ -12,8 +12,8 @@ url='https://github.com/FluxionNetwork/fluxion'
 license=('GPL3')
 source=("git+https://github.com/FluxionNetwork/$pkgname.git")
 depends=('aircrack-ng' 'bash>=4.2' 'coreutils' 'awk' 'iw' 'unzip' 'curl' 'bc'
-         'xterm' 'cowpatty' 'dhcp' 'p7zip' 'hostapd' 'lighttpd' 'macchanger'
-         'mdk3' 'mdk4' 'nmap' 'php-cgi' 'xorg-xdpyinfo')
+         'xterm' 'cowpatty' 'dhcp' 'dsniff' 'p7zip' 'hostapd' 'lighttpd'
+         'macchanger' 'mdk3' 'mdk4' 'nmap' 'php-cgi' 'xorg-xdpyinfo')
 makedepends=('binutils' 'coreutils' 'git')
 sha512sums=('SKIP')
 
@@ -24,7 +24,12 @@ prepare() {
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
@@ -34,7 +39,7 @@ package() {
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 -t "$pkgdir/usr/share/man/man1/" docs/man/fluxion.1
+  install -Dm 644 -t "$pkgdir/usr/share/man/man1/" "docs/man/$pkgname.1"
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm -rf *.md .git* *.yml .project .editorconfig
