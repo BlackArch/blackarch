@@ -5,49 +5,51 @@ pkgname=recon-ng
 pkgver=1025.470f4c1
 pkgrel=1
 epoch=1
-groups=('blackarch' 'blackarch-recon')
-pkgdesc='A full-featured Web Reconnaissance framework written in Python.'
 arch=('any')
-url='https://github.com/lanmaster53/recon-ng'
+url="https://github.com/lanmaster53/recon-ng"
 license=('GPL3')
-depends=('python' 'python-dicttoxml' 'python-dnspython' 'python-unicodecsv'
-         'python-jsonrpclib-pelix' 'python-lxml' 'python-mechanize'
-         'python-slowaes' 'python-xlsxwriter' 'python-olefile' 'python-pypdf2'
-         'python-flask' 'python-pyaml' 'python-requests' 'python-flask-restful'
-         'python-flasgger' 'python-rq')
+depends=('python39')
 makedepends=('git')
 source=("git+https://github.com/lanmaster53/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
-  cd $pkgname
-
+  cd "$srcdir/$pkgname"
   echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
 }
 
+prepare() {
+  cd "$srcdir/$pkgname"
+}
+
 package() {
-  cd $pkgname
+  cd "$srcdir/$pkgname"
 
-  _bins='recon-ng recon-cli recon-web'
+  # Create the virtual environment
+  python -m venv "$pkgdir/usr/share/$pkgname/venv"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  # Activate the virtual environment and install requirements
+  . "$pkgdir/usr/share/$pkgname/venv/bin/activate"
+  pip install -r REQUIREMENTS 
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md REQUIREMENTS \
-    VERSION
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  # Deactivate the virtual environment
+  deactivate
 
-  rm LICENSE README.md
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/$pkgname"
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  for bin in $_bins; do
-    cat >> "$pkgdir/usr/bin/$bin" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python $bin "\$@"
-EOF
-    chmod +x "$pkgdir/usr/bin/$bin"
-  done
-}
+  _bins=('recon-ng' 'recon-cli' 'recon-web')
 
+  for bin in "${_bins[@]}"; do
+    install -Dm755 -t "$pkgdir/usr/bin" "$srcdir/$pkgname/$bin"
+    sed -i "1i #!/bin/bash" "$pkgdir/usr/bin/$bin"
+    sed -i "2i source /usr/share/$pkgname/venv/bin/activate" "$pkgdir/usr/bin/$bin" # Activate venv
+    sed -i "3i cd /usr/share/$pkgname" "$pkgdir/usr/bin/$bin"                               # cd to project dir
+    # No need for 'exec python $bin "$@"' – the original script is now directly executable within the activated venv.
+  done
+
+ install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+ install -Dm644 -t "$pkgdir/usr/share/doc/$pkgname" README.md REQUIREMENTS VERSION
+}
