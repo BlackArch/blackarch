@@ -3,16 +3,16 @@
 
 pkgname=phoss
 pkgver=0.1.13
-pkgrel=6
-groups=('blackarch' 'blackarch-cracker' 'blackarch-sniffer')
+pkgrel=7
 pkgdesc='Sniffer designed to find HTTP, FTP, LDAP, Telnet, IMAP4, VNC and POP3 logins.'
 arch=('x86_64' 'aarch64')
-url='http://www.phenoelit.org/fr/tools.html'
+groups=('blackarch' 'blackarch-cracker' 'blackarch-sniffer')
+url='http://194.150.168.69/phoss'
 license=('custom')
 depends=('libpcap')
 makedepends=('make' 'gcc')
-source=('http://www.phenoelit.org/phoss/PHoss_src.tar.gz'
-        'http://www.phenoelit.org/phoss/PHoss.diff')
+source=('http://194.150.168.69/phoss/PHoss_src.tar.gz'
+        'http://194.150.168.69/phoss/PHoss.diff')
 sha512sums=('2616d573495d0bcc0f510ee4fdabd80c21ba3a0d6dd858c42a8e3c51bb074afb389a4d3466c3a5351949287b842ff874ffd2d261cc84204c5a021bd04cd274ed'
             '959c08b9cf5643615241cab954c309773e3f00bf23576a169fe7a06018430abe96201d4994224a1a30e28255a0962dbd7b42bbe49a918325f9ac454773151b95')
 
@@ -20,12 +20,13 @@ prepare() {
   cd PHoss
 
   patch -Np1 < "$srcdir/PHoss.diff"
+  sed -i "s|#include <net/bpf.h>|#include <pcap/bpf.h>|" main.c
 }
 
 build() {
   cd PHoss
 
-  make OPTIMI="$CFLAGS"
+  make OPTIMI="$CFLAGS -fcommon"
 }
 
 package() {
@@ -36,6 +37,12 @@ package() {
 
   cp -aR PHoss "$pkgdir/usr/share/$pkgname/"
 
-  ln -s "/usr/share/$pkgname/PHoss" "$pkgdir/usr/bin/"
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ./PHoss "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
