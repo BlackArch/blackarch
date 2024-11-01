@@ -2,30 +2,43 @@
 # See COPYING for license details.
 
 pkgname=dnsmap
-pkgver=0.30
-pkgrel=4
-groups=('blackarch' 'blackarch-fingerprint')
+pkgver=0.36.r6.g96b17ad
+pkgrel=1
 pkgdesc='Passive DNS network mapper.'
 arch=('x86_64' 'aarch64')
-url='http://dnsmap.googlecode.com'
-license=('GPL')
-makedepends=('make')
+groups=('blackarch' 'blackarch-fingerprint')
+url='https://github.com/resurrecting-open-source-projects/dnsmap'
+license=('GPL3')
+makedepends=('git' 'make')
 install=dnsmap.install
-source=("http://dnsmap.googlecode.com/files/$pkgname-$pkgver.tar.gz")
-sha512sums=('a9a8a17102825510d16c1f8af33ca74407c18c70')
+source=("git+https://github.com/resurrecting-open-source-projects/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
+  ./autogen.sh
+  ./configure --prefix=/usr
   make
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
-  install -Dm 755 "$pkgname-bulk.sh" "$pkgdir/usr/bin/$pkgname-bulk"
-  install -Dm 644 wordlist_TLAs.txt \
+  make DESTDIR=$pkgdir install
+
+  install -Dm 644 doc/wordlist_TLAs.txt \
     "$pkgdir/usr/share/$pkgname/wordlist_TLAs.txt"
 }
 
