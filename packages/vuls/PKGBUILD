@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=vuls
-pkgver=1572.188645f0
+pkgver=1573.c4de5e8e
 pkgrel=1
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='Vulnerability scanner for Linux/FreeBSD, agentless, written in Go.'
@@ -15,39 +15,31 @@ source=("git+https://github.com/future-architect/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
-  cd $pkgname
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  cd "$pkgname"
+  echo "$(git rev-list --count HEAD).$(git rev-parse --short HEAD)"
 }
 
 build() {
-  cd $pkgname
+  cd "$pkgname"
 
   VERSION=$(git describe --tags --abbrev=0)
   REVISION=$(git rev-parse --short HEAD)
   BUILDTIME=$(date "+%Y%m%d_%H%M%S")
 
   GOFLAGS="-trimpath -buildmode=pie -mod=readonly -modcacherw"
-  LDFLAGS="-X 'github.com/future-architect/vuls/config.Version=${VERSION}'"
-  LDFLAGS="$LDFLAGS -X 'github.com/future-architect/vuls/config.Revision=build-${BUILDTIME}_${REVISION}'"
-  LDFLAGS="$LDFLAGS -s -w"
+  LDFLAGS="-X github.com/future-architect/vuls/config.Version=${VERSION}"
+  LDFLAGS+=" -X github.com/future-architect/vuls/config.Revision=build-${BUILDTIME}_${REVISION} -s -w"
 
-  GOPATH="$srcdir" go mod download
-  GOPATH="$srcdir" go build \
-    $GOFLAGS \
-    -ldflags $LDFLAGS \
-    -o $pkgname ./cmd/$pkgname
-
-  GOPATH="$srcdir" go build \
-    $GOFLAGS \
-    -ldflags $LDFLAGS \
-    -o $pkgname-scanner ./cmd/scanner
+  export GOPATH="$srcdir"
+  go mod download
+  go build $GOFLAGS -ldflags "$LDFLAGS" -o "$pkgname" ./cmd/$pkgname
+  go build $GOFLAGS -ldflags "$LDFLAGS" -o "$pkgname-scanner" ./cmd/scanner
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname"
 
-  install -Dm 755 $pkgname $pkgname-scanner -t "$pkgdir/usr/bin"
+  install -Dm 755 "$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 "$pkgname-scanner" "$pkgdir/usr/bin/$pkgname-scanner"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 }
-
