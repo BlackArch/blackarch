@@ -2,30 +2,47 @@
 # See COPYING for license details.
 
 pkgname=dnsmap
-pkgver=0.30
-pkgrel=4
-groups=('blackarch' 'blackarch-fingerprint')
+pkgver=19.6d34014
+pkgrel=1
 pkgdesc='Passive DNS network mapper.'
 arch=('x86_64' 'aarch64')
-url='http://dnsmap.googlecode.com'
+groups=('blackarch' 'blackarch-fingerprint')
+url='https://github.com/pagvac/dnsmap'
 license=('GPL')
-makedepends=('make')
-install=dnsmap.install
-source=("http://dnsmap.googlecode.com/files/$pkgname-$pkgver.tar.gz")
-sha512sums=('a9a8a17102825510d16c1f8af33ca74407c18c70')
+depends=('python')
+makedepends=('git')
+source=("git+https://github.com/pagvac/$pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
 
-build() {
-  cd "$pkgname-$pkgver"
+pkgver() {
+  cd $pkgname
 
-  make
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
-  install -Dm 755 "$pkgname-bulk.sh" "$pkgdir/usr/bin/$pkgname-bulk"
-  install -Dm 644 wordlist_TLAs.txt \
-    "$pkgdir/usr/share/$pkgname/wordlist_TLAs.txt"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE *.md
+
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" $pkgname.py
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/dnsmap.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
