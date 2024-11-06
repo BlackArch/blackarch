@@ -10,20 +10,30 @@ arch=('any')
 url='https://github.com/tomasbasham/ratelimit'
 license=('MIT')
 depends=('python')
-optdepends=()
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip' 'python-wheel')
 source=("https://pypi.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('cc82c0dd19250889effd328632da4a72c64163858a396a8491b60252313192acbb97fb47224dd8bc2208cac5671ba2620f1fb66f4decdb0211a81278b445b940')
 
 build(){
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package(){
   cd "$_pkgname-$pkgver"
-  
-  python setup.py install --root="$pkgdir/" --optimize=1 --skip-build
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
