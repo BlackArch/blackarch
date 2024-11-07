@@ -2,41 +2,31 @@
 # See COPYING for license details.
 
 pkgname=analyzemft
-pkgver=415.b1d0e6a
+_pkgname=analyzeMFT
+pkgver=20241008.b1d0e6a
 pkgrel=1
 pkgdesc='Parse the MFT file from an NTFS filesystem.'
 groups=('blackarch' 'blackarch-forensic')
 arch=('any')
-url='https://github.com/dkovar/analyzeMFT'
+url="https://github.com/dkovar/analyzeMFT"
 license=('CPL')
-depends=('python2')
-makedepends=('git' 'python2-setuptools')
-source=("$pkgname::git+https://github.com/dkovar/analyzeMFT.git")
-sha512sums=('SKIP')
+depends=('python')
+makedepends=('git' 'python-setuptools')
+source=("${_pkgname}::git+${url}.git")
+sha256sums=('SKIP')
 
 pkgver() {
-  cd $pkgname
-
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  cd "${srcdir}/${_pkgname}"
+  git log -1 --format='%cd.%h' --date=short | tr -d -
 }
 
 build() {
-  cd $pkgname
-
-  python2 setup.py build
+  cd "${srcdir}/${_pkgname}"
+  python setup.py build
 }
 
 package() {
-  cd $pkgname
-
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" CHANGES.txt README.txt
-  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
-
-  ln -fs /usr/bin/analyzeMFT.py "$pkgdir/usr/bin/$pkgname"
+  cd "${srcdir}/${_pkgname}"
+  python setup.py install --root="${pkgdir}/" --optimize=1 --skip-build
 }
 
