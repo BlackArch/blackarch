@@ -1,0 +1,46 @@
+From: Arnaud Rebillout <arnaudr@kali.org>
+Date: Mon, 15 Apr 2024 15:07:55 +0700
+Subject: acinclude.m4: Fix -Werror=implicit-function-declaration
+
+```
+checking snprintf format for long long int... none
+configure: error: cannot determine snprintf format string for long long int
+
+...
+
+configure:5765: checking snprintf format for long long int
+configure:5803: gcc -o conftest -g -O2 -Werror=implicit-function-declaration -ffile-prefix-map=/<<PKGBUILDDIR>>=. -fstack-protector-strong -fstack-clash-protection -Wformat -Werror=format-security -Wall -Wshadow -Wwrite-strings -Wextra -fstack-protector -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_TIME_BITS=64 -Wdate-time -D_FORTIFY_SOURCE=2 -Wl,-z,relro -Wl,-z,now conftest.c  >&5
+conftest.c: In function 'does_int64_snprintf_work':
+conftest.c:58:7: error: implicit declaration of function 'strcmp' [-Werror=implicit-function-declaration]
+   58 |   if (strcmp(buf, "800000140000005") != 0)
+      |       ^~~~~~
+conftest.c:42:1: note: include '<string.h>' or provide a declaration of 'strcmp'
+   41 | #include <stdio.h>
+  +++ |+#include <string.h>
+   42 | typedef long long int int64;
+conftest.c: At top level:
+conftest.c:62:1: warning: return type defaults to 'int' [-Wimplicit-int]
+   62 | main() {
+      | ^~~~
+cc1: some warnings being treated as errors
+```
+
+Initially reported on the Debian bugtracker: https://bugs.debian.org/1065969
+
+Forwarded: https://github.com/royhills/ike-scan/pull/40
+---
+ acinclude.m4 | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/acinclude.m4 b/acinclude.m4
+index 5ab3172..2b2bd9e 100644
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -167,6 +167,7 @@ AC_DEFUN([PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT],
+ AC_CACHE_VAL(pgac_cv_snprintf_long_long_int_format,
+ [for pgac_format in '%lld' '%qd' '%I64d'; do
+ AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>
++#include <string.h>
+ typedef long long int int64;
+ #define INT64_FORMAT "$pgac_format"
+ 
