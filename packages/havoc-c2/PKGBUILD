@@ -1,0 +1,84 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+_pkgname=Havoc
+pkgname=havoc-c2
+pkgver=856.fb67b76
+pkgrel=1
+pkgdesc='Modern and malleable post-exploitation command and control framework.'
+arch=('x86_64' 'i686')
+groups=('blackarch' 'blackarch-automation' 'blackarch-backdoor' 'blackarch-exploitation' 'blackarch-networking')
+url='https://havocframework.com/'
+license=('GPL3')
+depends=('bzip2' 'fontconfig' 'gdbm' 'glu' 'gtest' 'libffi' 'mesa'
+		     'mingw-w64-gcc' 'nasm' 'ncurses' 'openssl' 'python' 'qt5-base'
+         'qt5-websockets' 'readline' 'spdlog' 'sqlite')
+makedepends=('git' 'go' 'cmake')
+optdepends=('qt5-wayland: wayland support')
+source=("git+https://github.com/HavocFramework/$_pkgname.git#branch=dev"
+		    "https://musl.cc/x86_64-w64-mingw32-cross.tgz"
+		    "https://musl.cc/i686-w64-mingw32-cross.tgz")
+sha512sums=('SKIP'
+            '7c622ffe0b46d4ffe1ea01db6589259dbce663ca9ad53a70269430f141d0b55b61a73886b0311cebf1cc6bb1b759f098a32a5a9bc0a7a8ae80aaf141549b94cd'
+            '903aa8a200d030706b7a51aa031c92841594e32414dec7465d38e90ae4133d4d40a757e1531f6d4d69d07db5a3d7caaf49741b20066facf300095a8dc85c6556')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+	cd $_pkgname
+
+  git submodule update --init --recursive
+	mkdir -p client/Build
+	cd client/Build
+	cmake ..
+	cd ..
+	if [ -d "Modules" ]; then echo "Modules installed"; else git clone --recurse-submodules https://github.com/HavocFramework/Modules; fi
+}
+
+build() {
+	cd $_pkgname
+
+	cmake --build client/Build -- -j 4
+
+	cd teamserver
+  GOPATH="$srcdir" go mod download golang.org/x/sys
+  GOPATH="$srcdir" go mod download github.com/ugorji/go
+	GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" GO111MODULE="on" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o ../havoc main.go
+}
+
+package() {
+	cd $_pkgname
+
+	install -dm755 "$pkgdir"/{opt/$_pkgname,usr/bin,usr/share/licenses}
+	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+	cp -a * "$pkgdir/opt/$_pkgname/"
+	cp -rf ../i686-w64-mingw32-cross "$pkgdir/opt/$_pkgname/data/"
+	cp -rf ../x86_64-w64-mingw32-cross "$pkgdir/opt/$_pkgname/data/"
+	rm -rf "$pkgdir/opt/$_pkgname/assets"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /opt/$_pkgname
+exec ./havoc "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
