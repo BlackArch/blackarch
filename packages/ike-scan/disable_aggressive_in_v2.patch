@@ -1,0 +1,33 @@
+From: Jan Christoph Nordholz <hesso@pool.math.tu-berlin.de>
+Date: Mon, 18 Oct 2021 11:22:20 +0200
+Subject: disable_aggressive_in_v2
+
+--ikev2 overrides --aggressive anyway by reusing the
+.exchange_type member. Sadly, the override works the
+other way, too. For consistency disallow both.
+---
+ ike-scan.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/ike-scan.c b/ike-scan.c
+index 1ee7902..7b6d3c4 100644
+--- a/ike-scan.c
++++ b/ike-scan.c
+@@ -426,6 +426,8 @@ main(int argc, char *argv[]) {
+             strlcpy(patfile, optarg, sizeof(patfile));
+             break;
+          case 'A':	/* --aggressive */
++            if (ike_params.ike_version == 2)
++               err_msg("ERROR: Aggressive mode not applicable for IKEv2.");
+             ike_params.exchange_type = ISAKMP_XCHG_AGGR;
+             break;
+          case 'G':	/* --gssid */
+@@ -552,6 +554,8 @@ main(int argc, char *argv[]) {
+             shownum_flag = 1;
+             break;
+          case '2':	/* --ikev2 */
++            if (ike_params.exchange_type == ISAKMP_XCHG_AGGR)
++               err_msg("ERROR: Aggressive mode not applicable for IKEv2.");
+             ike_params.ike_version = 2;
+             ike_params.header_version = 0x20;	/* v2.0 */
+             ike_params.hdr_flags=0x08;	/* Set Initiator bit */
