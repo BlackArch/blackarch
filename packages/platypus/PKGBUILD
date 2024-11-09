@@ -1,0 +1,72 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=platypus
+_pkgname=Platypus
+pkgver=v1.5.1.r134.g2c1f71b
+pkgrel=1
+pkgdesc='A modern multiple reverse shell sessions manager written in go.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-backdoor')
+url='https://github.com/WangYihang/Platypus '
+license=('LGPL3')
+depends=('axel' 'unarchiver' 'upx')
+makedepends=('git' 'go' 'yarn' 'go-bindata' 'python' 'nodejs')
+source=("git+https://github.com/WangYihang/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $_pkgname
+
+  cd web/frontend && yarn && yarn build && cd ../../
+  cd web/ttyd && yarn && yarn build && cd ../../
+  go-bindata -pkg resource -o ./internal/utils/resource/resource.go ./internal/runtime/... ./web/ttyd/dist/... ./web/frontend/build/...
+
+  export CGO_CPPFLAGS="${CPPFLAGS}"
+  export CGO_CFLAGS="${CFLAGS}"
+  export CGO_CXXFLAGS="${CXXFLAGS}"
+  export CGO_LDFLAGS="${LDFLAGS}"
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname-admin cmd/$pkgname-admin/main.go
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname-agent cmd/$pkgname-agent/main.go
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname-server cmd/$pkgname-server/main.go
+}
+
+package() {
+  cd $_pkgname
+
+  install -Dm 755 $pkgname-admin "$pkgdir/usr/bin/$pkgname-admin"
+  install -Dm 755 $pkgname-agent "$pkgdir/usr/bin/$pkgname-agent"
+  install -Dm 755 $pkgname-server "$pkgdir/usr/bin/$pkgname-server"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+
