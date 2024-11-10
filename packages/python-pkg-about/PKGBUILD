@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-pkg-about
+_pkgname=pkg_about
+pkgver=1.2.2
+pkgrel=1
+pkgdesc='Share Python package metadata at runtime.'
+arch=('any')
+url='https://github.com/karpierz/pkg-about'
+license=('Zlib')
+depends=('python' 'python-packaging' 'python-tox')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.zip")
+sha512sums=('e73bdbe4e7ef2bc455283db57c6c7e4bdea183f4783220dc591c74c0101b6c5ed5951179599516e252dd2c75690a38a5ceb621a3f0e60abc34ea87054965ab46')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

@@ -4,20 +4,17 @@
 # Initial PKGBUILD from AUR.
 # Old Maintainer:  dreieck (https://aur.archlinux.org/account/dreieck)
 
-pkgname='rtl-433'
-_pkgname='rtl_433'
-pkgver=23.11+165.r3557.20241006.8fa97e2a
+pkgname=rtl-433
+_pkgname=rtl_433
+pkgver=24.10+3.r3569.20241105.4fa37568
 pkgrel=1
-pkgdesc="A generic software defined radio data receiver, mainly for the 433.92 MHz, 868 MHz (SRD), 315 MHz, 345 MHz, and 915 MHz ISM bands."
+pkgdesc='A generic software defined radio data receiver, mainly for the 433.92 MHz, 868 MHz (SRD), 315 MHz, 345 MHz, and 915 MHz ISM bands.'
 arch=('x86_64' 'i686')
 groups=('blackarch' 'blackarch-radio' 'blackarch-wireless')
-url="https://github.com/merbanan/rtl_433"
+url='https://github.com/merbanan/rtl_433'
 license=('GPL2')
 depends=('glibc' 'libusb' 'openssl' 'soapysdr' 'rtl-sdr')
-makedepends=('git' 'cmake'
-  # 'doxygen'     # Would only be needed to build source code documentation.
-  # 'texlive-bin' # Would only be needed to build source code documentation.
-)
+makedepends=('git' 'cmake')
 backup=(
   'usr/etc/rtl_433/adlm_fprf.conf'
   'usr/etc/rtl_433/atc-technology_lmt-430.conf'
@@ -62,35 +59,32 @@ backup=(
   'usr/etc/rtl_433/verisure_alarm.conf'
   'usr/etc/rtl_433/xmas-tree-remote-2APJZ-CW002.conf'
 )
-source=(
-  "${_pkgname}::git+${url}.git"     # Official upstream source
-  'doxygen-no-warn-as-error.patch'  # Otherwise build fails with `devices/srsmith_pool_srs_2c_tx.c:1: error: explicit link request to 'SRS' could not be resolved (warning treated as error, aborting now)` (as of 2024-02-07).
-)
-sha512sums=('SKIP'
-            '7430b9efd209ffdf3b97da37b5d074aaa1067567687e6c09595e0ad7444cf13e250ce5d6db3bc6873434d5a1f8e82e71ed7896a27a9dd27d765ecd6d7821a765')
+source=("$_pkgname::git+https://github.com/merbanan/rtl_433.git")
+sha512sums=('SKIP')
 
 prepare() {
-  mkdir -p "${srcdir}/build"
+  mkdir -p build
 
-  cd "${srcdir}/${_pkgname}"
+  cd $_pkgname
 
-  for _patch in "${srcdir}/doxygen-no-warn-as-error.patch"; do
-    printf '%s\n' "      > Applying patch '${_patch}' ..."
-    patch -Np1 --follow-symlinks -i "${_patch}"
-  done
+  #for _patch in "$srcdir/doxygen-no-warn-as-error.patch"; do
+  #  printf '%s\n' "      > Applying patch '${_patch}' ..."
+  #  patch -Np1 --follow-symlinks -i $_patch
+  #done
 
   git log > git.log
 }
 
 pkgver() {
-  cd "${srcdir}/${_pkgname}"
+  cd $_pkgname
 
-  _ver="$(git describe --tags --exclude=nightly | sed 's|^[vV]||' | sed 's|-g[0-9a-fA-F]*$||' | tr '-' '+')"
+  _ver="$(git describe --tags --exclude=nightly | sed 's|^[vV]||' |
+    sed 's|-g[0-9a-fA-F]*$||' | tr '-' '+')"
   _rev="$(git rev-list --count HEAD)"
   _date="$(git log -1 --date=format:"%Y%m%d" --format="%ad")"
   _hash="$(git rev-parse --short HEAD)"
 
-  if [ -z "${_ver}" ]; then
+  if [ -z "$_ver" ]; then
     error "Version could not be determined."
     return 1
   else
@@ -99,10 +93,8 @@ pkgver() {
 }
 
 build() {
-  cd "${srcdir}"
-
   # -DBUILD_DOCUMENTATION=ON builds only source code documentation.
-  cmake -S "${_pkgname}" -B build \
+  cmake -S "$_pkgname" -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DCMAKE_INSTALL_BINDIR=/usr/bin \
@@ -120,25 +112,21 @@ build() {
   make -C build
 }
 
-check() {
-  cd "${srcdir}"
-
-  make -C build test
-}
-
 package() {
-  cd "${srcdir}"
-
-  make -C build DESTDIR="${pkgdir}" install
+  make -C build DESTDIR="$pkgdir" install
 
   ### Only if -DBUILD_DOCUMENTATION=ON.
   # install -Dvm755 "${pkgdir}/usr/share/doc/${_pkgname}/dev"
   # cp -av 'doc/html' "${pkgdir}/usr/share/doc/${_pkgname}/dev"/
 
-  cd "${srcdir}/${_pkgname}"
+  cd $_pkgname
 
-  install -Dvm644 -t "${pkgdir}/usr/share/doc/${_pkgname}"      'git.log' 'AUTHORS' 'CHANGELOG.md' 'README.md'
-  install -Dvm644 -t "${pkgdir}/usr/share/licenses/${pkgname}"  'COPYING'
-  ln -svr "${pkgdir}/usr/share/licenses/${pkgname}/COPYING"     "${pkgdir}/usr/share/doc/${_pkgname}/COPYING"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$_pkgname" git.log AUTHORS \
+    CHANGELOG.md README.md
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" COPYING
+  ln -svr "$pkgdir/usr/share/licenses/${pkgname}/COPYING" \
+    "$pkgdir/usr/share/doc/$_pkgname/COPYING"
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/$pkgname"
 }
 
