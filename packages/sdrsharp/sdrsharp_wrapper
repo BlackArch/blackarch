@@ -1,0 +1,26 @@
+#!/bin/bash
+
+set -eu
+
+_PROGRAM=$(basename "$0")
+[ "${_PROGRAM}" = "${_PROGRAM,,}" ] && _PROGRAM=$(readlink "$0")
+[ "${_PROGRAM}" = "sdrsharp_wrapper" ] && (echo "This can't be executed directly"; exit 1)
+
+[ "${XDG_CONFIG_HOME-default}" == "default" ] && XDG_CONFIG_HOME="$HOME/.config"
+SDR_CONFIG_HOME="$XDG_CONFIG_HOME/sdrsharp"
+[ ! -d "$SDR_CONFIG_HOME" ] && mkdir -p "$SDR_CONFIG_HOME"
+
+if [ -L /opt/sdrsharp/"${_PROGRAM}".exe.config ]; then
+  ln -sf "$SDR_CONFIG_HOME"/"${_PROGRAM}".exe.config /tmp/"${_PROGRAM}".exe.config
+
+  if [ -f /opt/sdrsharp/"${_PROGRAM}".exe.config.old ] && [ ! -f "$SDR_CONFIG_HOME"/"${_PROGRAM}".exe.config ]; then
+    cp /opt/sdrsharp/"${_PROGRAM}".exe.config.old "$SDR_CONFIG_HOME"/"${_PROGRAM}".exe.config
+  fi
+
+  [ -f "$SDR_CONFIG_HOME"/"${_PROGRAM}".exe.config ] || cp /usr/share/sdrsharp/"${_PROGRAM}".exe.config "$SDR_CONFIG_HOME"/"${_PROGRAM}".exe.config
+fi
+
+# Disable the problematic GTK theming support
+export GTK_DATA_PREFIX=
+
+exec mono /opt/sdrsharp/"${_PROGRAM}".exe "$@"
