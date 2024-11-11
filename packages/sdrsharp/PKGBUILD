@@ -8,9 +8,9 @@
 
 pkgname=sdrsharp
 pkgver=1.0.0.1457
-pkgrel=5
+pkgrel=1
 pkgdesc='The most popular SDR program.'
-arch=('x86_64' 'i686')
+arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-radio')
 url='https://airspy.com'
 license=('LicenseRef-SDRSharp') # It's basically identical to MS-RSL (which may not be suitable for binaries)
@@ -18,8 +18,8 @@ depends=('alsa-lib' 'bash' 'hicolor-icon-theme' 'mono' 'portaudio' 'rtl-sdr')
 makedepends=('icoutils' 'unzip')
 _sdrsharp="${pkgname}-${pkgver}"
 source=("${_sdrsharp}.zip::https://www.iz3mez.it/software/SDRSharp/SDRSharp_v${pkgver:(-4)}.zip"
-        "sdrsharp_wrapper"
-        "${pkgname}.desktop"
+        "${pkgname}_wrapper"
+        "$pkgname.desktop"
         "adsbspy.desktop"
         "airspycalibrate.desktop"
         "astrospy.desktop"
@@ -36,8 +36,8 @@ install="${pkgname}.install"
 
 prepare() {
   echo "Extracting SDRSharp archive..."
-  unzip -q -o ${_sdrsharp}.zip -d ${_sdrsharp}
-  cd ${_sdrsharp}
+  unzip -q -o "$_sdrsharp.zip" -d $_sdrsharp
+  cd $_sdrsharp
 
   rm httpget.exe install-rtlsdr.bat unzip.exe
 }
@@ -45,43 +45,36 @@ prepare() {
 build() {
   mkdir build || true
 
-  # compile and optimize executables
   mono --aot --optimize=all ${_sdrsharp}/*.exe
   mv ${_sdrsharp}/*.exe.so build
 }
 
 package() {
-  # install stuff
-  install -Dm644 "${srcdir}"/${_sdrsharp}/* -t "${pkgdir}"/opt/${pkgname}
-  install -Dm644 "${srcdir}"/build/*.exe.so "${pkgdir}"/opt/${pkgname} || true
+  install -Dm 644 "$_sdrsharp/"* -t "$pkgdir/opt/$pkgname"
+  install -Dm 644 build/*.exe.so "$pkgdir/opt/$pkgname" || true
 
-  cd "${pkgdir}"/opt/${pkgname}
+  cd "$pkgdir/opt/$pkgname"
 
-  # link libraries
   ln -s /usr/lib/librtlsdr.so librtlsdr.dll
   ln -s /usr/lib/libportaudio.so libportaudio.so
 
-  # extract/install the icons
   for app in AirspyCalibrate AstroSpy SDRSharp SpectrumSpy; do
-    wrestool -x -t14 ${app}.exe | icotool -x -w 64 -o - - | install -Dm644 \
-      /dev/stdin "${pkgdir}"/usr/share/icons/hicolor/64x64/apps/${app}.png
+    wrestool -x -t14 ${app}.exe | icotool -x -w 64 -o - - | install -Dm 644 \
+      /dev/stdin "$pkgdir/usr/share/icons/hicolor/64x64/apps/$app.png"
   done
-  wrestool -x -t14 ADSBSpy.exe | icotool -x -w 48 -o - - | install -Dm644 \
-    /dev/stdin "${pkgdir}"/usr/share/icons/hicolor/48x48/apps/ADSBSpy.png
+  wrestool -x -t14 ADSBSpy.exe | icotool -x -w 48 -o - - | install -Dm 644 \
+    /dev/stdin "$pkgdir/usr/share/icons/hicolor/48x48/apps/ADSBSpy.png"
 
-  # install the config files
-  install -Dm644 *.exe.config -t "${pkgdir}"/usr/share/${pkgname}
-
-  # install wrapper stuff/desktop entries
-  install -Dm755 "${srcdir}"/sdrsharp_wrapper -t "${pkgdir}"/usr/bin
+  install -Dm 644 *.exe.config -t "$pkgdir/usr/share/$pkgname"
+  install -Dm 755 "$srcdir/sdrsharp_wrapper" -t "$pkgdir/usr/bin"
   for app in ADSBSpy AirspyCalibrate AstroSpy SDRSharp SpectrumSpy; do
-    [ ${app} = ADSBSpy ] || ln -sf /tmp/${app}.exe.config "${pkgdir}"/opt/${pkgname}/${app}.exe.config
-    ln -s sdrsharp_wrapper "${pkgdir}"/usr/bin/${app}
-    ln -s ${app} "${pkgdir}"/usr/bin/${app,,}
+    [ ${app} = ADSBSpy ] || ln -sf /tmp/${app}.exe.config \
+      "$pkgdir/opt/$pkgname/$app.exe.config"
+    ln -s sdrsharp_wrapper "$pkgdir/usr/bin/$app"
+    ln -s $app "$pkgdir"/usr/bin/${app,,}
   done
-  install -Dm644 "${srcdir}"/*.desktop -t "${pkgdir}"/usr/share/applications
+  install -Dm 644 "$srcdir"/*.desktop -t "$pkgdir/usr/share/applications"
 
-  # install license
-  install -Dm644 LICENSE.txt "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE.txt
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
