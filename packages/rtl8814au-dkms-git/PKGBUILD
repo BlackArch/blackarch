@@ -8,18 +8,19 @@
 # Old Contributor: Marcel Unbehaun <f.rostze.ux at gmail dot com>
 
 pkgname=rtl8814au-dkms-git
+_pkgname=8814au
 _pkgbase=rtl8814au
 pkgver=5.8.5.1.r183.gd8208c8
 pkgrel=1
-pkgdesc="RTL8814AU and RTL8813AU chipset driver with firmware v5.8.5.1"
-arch=('x86_64' 'i686' 'arm' 'armv6h' 'armv7h' 'aarch64')
+pkgdesc='RTL8814AU and RTL8813AU chipset driver with firmware v5.8.5.1.'
+arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-wireless')
-url="https://github.com/morrownr/8814au"
+url='https://github.com/morrownr/8814au'
 license=('GPL2')
 depends=('dkms' 'bc')
 makedepends=('git')
 conflicts=("${_pkgbase}")
-source=("git+https://github.com/morrownr/8814au.git"
+source=("git+https://github.com/morrownr/$_pkgname.git"
         'dkms.conf'
         'arm.patch')
 sha512sums=('SKIP'
@@ -27,23 +28,30 @@ sha512sums=('SKIP'
             '04c09943d2634104e9caaf92f10ccb95b58f4f9b7f72ba118364363b310cc7ebc3450946475647880593e8c05eac6a730e441a88432c876f94a4e6f29b5e1700')
 
 pkgver() {
-    cd "$srcdir/8814au"
-    
-    printf '%s.r%s.g%s' '5.8.5.1' "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+  cd $_pkgname
+
+  printf '%s.r%s.g%s' '5.8.5.1' "$(git rev-list --count HEAD)" \
+    "$(git rev-parse --short HEAD)"
+}
+
+prepare() {
+  if [ "$CARCH" = "arm" ] || [ "$CARCH" = "armv6h" ] || \
+    [ "$CARCH" = "armv7h" ] || [ "$CARCH" = "aarch64" ]; then
+    msg2 "Applying patch for ARM architecture..."
+		patch rtl8814au/Makefile -i arm.patch
+	fi
 }
 
 package() {
-		if [ "$CARCH" = "arm" ] || [ "$CARCH" = "armv6h" ] || [ "$CARCH" = "armv7h" ] || [ "$CARCH" = "aarch64" ]; then
-			msg2 "Applying patch for ARM architecture..."
-			patch ${srcdir}/rtl8814au/Makefile -i ${srcdir}/arm.patch
-		fi
-		cd ${srcdir}/8814au
-        mkdir -p ${pkgdir}/usr/src/${_pkgbase}-${pkgver}
-        cp -pr * ${pkgdir}/usr/src/${_pkgbase}-${pkgver}
-        cp ${srcdir}/dkms.conf ${pkgdir}/usr/src/${_pkgbase}-${pkgver}
-        # Set name and version
-        sed -e "s/@_PKGBASE@/${_pkgbase}-dkms/" \
-                        -e "s/@PKGVER@/${pkgver}/" \
-                        -i "${pkgdir}"/usr/src/${_pkgbase}-${pkgver}/dkms.conf
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/src/$_pkgbase-$pkgver"
+
+  cp -a * "$pkgdir/usr/src/$_pkgbase-$pkgver"
+  cp "$srcdir/dkms.conf" "$pkgdir/usr/src/$_pkgbase-$pkgver"
+
+  # Set name and version
+  sed -e "s/@_PKGBASE@/$_pkgbase-dkms/" -e "s/@PKGVER@/$pkgver/" \
+    -i "$pkgdir/usr/src/$_pkgbase-$pkgver/dkms.conf"
 }
 
