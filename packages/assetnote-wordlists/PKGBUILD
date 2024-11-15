@@ -5,7 +5,7 @@ pkgname=assetnote-wordlists
 pkgver=158.bd3c5c2
 pkgrel=1
 pkgdesc='Assetnote generated wordlists.'
-groups=('blackarch' 'blackarch-misc')
+groups=('blackarch-wordlist')
 arch=('any')
 url='https://github.com/assetnote/wordlists'
 license=('Apache-2.0')
@@ -32,7 +32,11 @@ package() {
   for dataset in "${datasets[@]}"; do
     install -dm 755 "$pkgdir/usr/share/$pkgname/$dataset"
 
-    curl -s https://wordlists-cdn.assetnote.io/data/$dataset/ | grep -oP 'href="\K[^"]+\.[a-zA-Z0-9]+' | awk -F'_' '{prefix=$1; for (i=2; i<=NF-3; i++) prefix=prefix"_"$i} !seen[prefix]++ {latest[prefix]=$0} {latest[prefix]=$0} END {for (p in latest) print latest[p]}' | xargs -I {} curl -o "$pkgdir/usr/share/$pkgname/$dataset/{}" -L "https://wordlists-cdn.assetnote.io/data/$dataset/{}"
+    curl -s https://wordlists-cdn.assetnote.io/data/$dataset/ |
+    grep -oP 'href="\K[^"]+\.[a-zA-Z0-9]+' |
+    awk -F'_' '{prefix=$1; for (i=2; i<=NF-3; i++) prefix=prefix"_"$i} !seen[prefix]++ {latest[prefix]=$0} {latest[prefix]=$0} END {for (p in latest) print latest[p]}' |
+    xargs -I {} curl -o "$pkgdir/usr/share/$pkgname/$dataset/{}" \
+    -L "https://wordlists-cdn.assetnote.io/data/$dataset/{}"
   done
 }
 
