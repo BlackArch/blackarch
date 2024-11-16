@@ -75,6 +75,45 @@ is_installed() {
 	pacman -Qi "$1" &> /dev/null
 }
 
+update() {
+  # Check for updates for the installed packages
+  printf "Checking for updates...\n"
+  local updates=()
+  for pack in packages/*/ aur/*/ ; do (
+    source "$(realpath -f "$pack/PKGBUILD")"
+    if is_installed "$pkgname" ; then
+      local local_ver=$(pacman -Q "$pkgname" | cut -d' ' -f2)
+      local remote_ver="$pkgver-$pkgrel"
+      if [[ "$local_ver" != "$remote_ver" ]] ; then
+        updates+=("$pkgname")
+      fi
+    fi;;
+  ) ; done
+
+  # Prompt the user to install the updates if available
+  if [[ ${#updates[@]} -gt 0 ]] ; then
+    printf "The following packages have updates available:"
+    printf '%s\n' "${updates[@]}"
+    read -r -p "Do you want to install them? [Y/n] " choice
+    case "$choice" in
+      y|Y|'')
+        for pack in "${updates[@]}" ; do
+          do_sync "$pack"
+        done
+        ;;
+      n|N)
+        printf "Update cancelled."
+        ;;
+      *)
+        printf "Invalid input."
+        ;;
+    esac
+  else
+    printf "All packages are up to date."
+  fi
+}
+
+
 case $action in
 	sync)
 		# Check for targets.
@@ -131,6 +170,10 @@ case $action in
 			) ; done
 		done
 		;;
+	update)
+		update
+		;;
+	*)
 	groups)
 		for pack in packages/*/ aur/*/ ; do (
 			source $pack/PKGBUILD
