@@ -9,15 +9,22 @@ pkgdesc='POSIX function tracing. Much better and faster than ftrace.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/elfmaster/binflow'
 license=('custom:unknown')
-depends=('glibc' 'linux-headers' 'capstone')
+depends=('glibc' 'capstone')
+optdepends=('linux-headers' 'linux-lts-headers' 'linux-hardened-headers'
+            'linux-rt-headers' 'linux-rt-lts-headers' 'linux-zen-headers')
 makedepends=('git')
 source=("git+https://github.com/elfmaster/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
-  cd $pkgname
+  cd $_pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 #prepare() {
