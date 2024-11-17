@@ -1,48 +1,55 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=lief
-_pkgname=LIEF
-pkgver=0.13.2
-pkgrel=2
-pkgdesc='Library to Instrument Executable Formats.'
-groups=('blackarch' 'blackarch-disassembler' 'blackarch-reversing')
-arch=('x86_64' 'aarch64')
-url='https://github.com/lief-project/LIEF/'
-license=('Apache')
-depends=('python')
-makedepends=('python-setuptools' 'cmake' 'python-build' 'python-installer'
-             'python-wheel' 'ninja')
-source=("https://github.com/lief-project/LIEF/archive/$pkgver.tar.gz")
-sha512sums=('a8dce9cce9c68d93ec5d78cf9f67eb32dc11d4498c9903f61e34d48683905cdf8040630b390fdaefb66fd18213cdc81682b4acb24ce43fb7fe89202492f71660')
+pkgbase=lief
+pkgname=(lief python-lief)
+pkgver=0.15.1
+pkgrel=1
+pkgdesc='Library to instrument executable formats.'
+arch=('x86_64')
+url='https://github.com/lief-project/lief'
+license=('Apache-2.0')
+depends=('tl-expected')
+makedepends=('cmake' 'python' 'nlohmann-json' 'python-build' 'python-installer' 'python-wheel' 'python-tomli' 'python-scikit-build-core' 'ninja' 'python-cattrs' 'python-packaging' 'python-rich' 'python-setuptools' 'python-pydantic' 'python-pydantic-core' 'python-pyproject-metadata' 'python-pathspec')
+provides=('libLIEF.so')
+source=("$url/archive/refs/tags/$pkgver.tar.gz")
+sha512sums=('30f248ce5c77993ccc08a360bfd74562ff1e661233abf7e6017cd11351ee359c67848a1ac4159b82a38e971f41704a6008b8778c817e06ef558efe21b76e04ae')
 
 prepare() {
-  cd "$_pkgname-$pkgver"
+  cd "LIEF-$pkgver/api/python"
 
-  # tmp dirty fix! we need to change this asap
-  sed -i 's|version   = "0.0.0"|version   = "0.10.1"|' setup.py
-
-  # fix for https://github.com/lief-project/LIEF/issues/918
-  sed -i '1 i\#include <cstdint>' include/LIEF/DEX/Field.hpp
+  sed -i 's/==.*//' build-requirements.txt
 }
 
 build() {
-  cd "$_pkgname-$pkgver"
+  cd "LIEF-$pkgver"
 
-	PYTHONPATH="$PWD" python -m build api/python --wheel --no-isolation
+  cmake \
+    -B build \
+    -G Ninja \
+    -D CMAKE_BUILD_TYPE=Release \
+    -D BUILD_SHARED_LIBS=ON \
+    -D LIEF_EXAMPLES=OFF \
+    -D LIEF_PYTHON_API=ON \
+    -D LIEF_OPT_NLOHMANN_JSON_EXTERNAL=ON \
+    -D LIEF_OPT_EXTERNAL_EXPECTED=ON
+  cmake --build build
 
+  cd api/python
+  python -m build --wheel --no-isolation
 }
 
-package() {
-  cd "$_pkgname-$pkgver"
+package_lief() {
+  cd "LIEF-$pkgver"
 
-	PYTHONHASHSEED=0 python -m installer --destdir="$pkgdir" api/python/dist/*.whl
+  DESTDIR="$pkgdir" cmake --install build
+}
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md AUTHORS \
-    CHANGELOG
+package_python-lief() {
+  depends+=(python lief)
+  
+  cd "LIEF-$pkgver/api/python"
 
-  for i in "$pkgdir/usr/bin/"*; do
-    mv $i $(echo $i | sed 's|_|-|g;s|.py||g')
-  done
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
