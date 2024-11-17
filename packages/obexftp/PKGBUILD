@@ -8,13 +8,21 @@ pkgdesc='A tool for transfer files to/from any OBEX enabled device.'
 arch=('x86_64' 'aarch64')
 url='http://dev.zuckschwerdt.org/openobex/wiki/ObexFtp'
 license=('GPL')
-depends=('openobex')
+depends=('openobex' 'expat' 'fuse2')
 makedepends=('cmake' 'asciidoc' 'xmlto' 'fuse2' 'swig' 'ruby' 'tk')
 optdepends=('ruby: ruby bindings'
             'tk: TCL/Tk bindings')
 options=('!makeflags' '!docs')
-source=("http://downloads.sourceforge.net/openobex/$pkgname-$pkgver-Source.tar.gz")
-sha512sums=('91a5d7e52c00bbaf24837384ceadc987a89297e672b246df1370bbd669fae05459281bc46bb60ba562607bfbead321926cdf11422059cd918819d80321e190c2')
+source=("http://downloads.sourceforge.net/openobex/$pkgname-$pkgver-Source.tar.gz"
+        'explicitly-link-libbfb-and-libmulticobex.patch')
+sha512sums=('91a5d7e52c00bbaf24837384ceadc987a89297e672b246df1370bbd669fae05459281bc46bb60ba562607bfbead321926cdf11422059cd918819d80321e190c2'
+            '0f7bf40bde282faa6e6c5fc9bab4d5f4d95c9c09581b2e5bfa2f7490714da09c41c3b02789c3ddd7bb2be5d5960aa59587796685a4a250b7f60095237ce77eba')
+
+prepare() {
+  cd "$pkgname-$pkgver-Source"
+
+  patch -p1 < "$srcdir/explicitly-link-libbfb-and-libmulticobex.patch"
+}
 
 build() {
   mkdir -p build
@@ -23,12 +31,15 @@ build() {
 
   cmake "../$pkgname-$pkgver-Source" \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_SKIP_RPATH=OFF \
+    -DCMAKE_SKIP_RPATH=ON \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DCMAKE_INSTALL_LIBDIR=lib \
     -DCMAKE_INSTALL_SBINDIR=bin \
     -DENABLE_PERL=YES \
     -DENABLE_PYTHON=YES \
+    -DPYTHON_EXECUTABLE=/usr/bin/python2 \
+    -DPYTHON_INCLUDE_DIR:PATH=/usr/include/python2.7 \
+    -DPYTHON_LIBRARY=/usr/lib/libpython2.7.so \
     -DENABLE_RUBY=YES \
     -DENABLE_TCL=YES
 
