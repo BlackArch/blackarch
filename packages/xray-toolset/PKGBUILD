@@ -1,0 +1,60 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=xray-toolset
+pkgver=EvilPot.0.0.2.r1.gaee9f9c
+pkgrel=1
+pkgdesc='A complete security assessment tool that supports common web security issues scanning and custom POC.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
+url='https://github.com/chaitin/xray'
+license=('custom:unknown')
+depends=()
+makedepends=('git')
+source=("git+https://github.com/chaitin/xray.git"
+        "git+https://github.com/chaitin/xray-plugins.git"
+        "https://github.com/chaitin/xray/releases/download/xpoc-0.1.0/xpoc_linux_amd64"
+        "https://github.com/chaitin/xray/releases/download/xapp-0.0.2/xapp_linux_amd64"
+        "https://github.com/chaitin/xray-plugins/releases/download/xlint-0.0.3/xlint_linux_amd64")
+sha512sums=('SKIP'
+            'SKIP'
+            'cc106c5a8581bbbf4762861a837b459451246fe41eac5c325176aaf9e4b93e56d042a05449039de4c339430add9314956785ca412be242483da1a76721f7afc0'
+            'ff5b97b60358f7b01347cb2a30056dd156f1d38190bf75df31eaf5acba6c90f7521bd46270b37a09cdc37a9ba85280a81ebc73a07cf9a7226bee2e986d179072'
+            '578752a72e557e8e57e141993b80d0ec4643f45f13c4350c2f57e562b005f799224827f5cd6ba52094f1afed3a5f826499d30f444ec74c9ab812d532df6f2398')
+
+pkgver() {
+  cd "xray"
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd "xray"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname/plugins"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" docs/* *.md
+
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf docs/ *.md LICENSE.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cd "../xray-plugins"
+
+  rm -rf *.md LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/plugins/"
+
+  install -Dm 755 ../xpoc_linux_amd64 "$pkgdir/usr/bin/xpoc"
+  install -Dm 755 ../xapp_linux_amd64 "$pkgdir/usr/bin/xapp"
+  install -Dm 755 ../xlint_linux_amd64 "$pkgdir/usr/bin/xlint"
+}
+
