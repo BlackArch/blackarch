@@ -3,13 +3,13 @@
 
 pkgname=sstimap
 _pkgname=SSTImap
-pkgver=12.0d45b44
+pkgver=v1.2.r3.g0d45b44
 pkgrel=1
 pkgdesc='Automatic SSTI detection tool with interactive interface.'
 arch=('any')
-groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation')
-url='URL pointing to download section of package'
-license=('gpl3')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-webapp')
+url='https://github.com/vladko312/SSTImap'
+license=('GPL-3.0')
 depends=('python')
 makedepends=('git' 'python-setuptools' 'python-pip')
 source=("git+https://github.com/vladko312/$_pkgname.git")
@@ -19,7 +19,13 @@ install="$pkgname.install"
 pkgver() {
   cd $_pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+
 }
 
 package() {
