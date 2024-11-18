@@ -14,11 +14,22 @@ url="https://www.usebruno.com/"
 license=('MIT')
 _electron=electron31
 depends=("$_electron" 'alsa-lib')
-makedepends=('asar' 'python-setuptools' 'python')
+makedepends=('nvm' 'asar' 'python-setuptools' 'python')
 source=("git+https://github.com/usebruno/$pkgname.git"
         "com.usebruno.app.Bruno.desktop")
 sha512sums=('SKIP'
             '0c303dd2a3cb1d1628d25b33d515df4fdaf116298520bed5a251d8320d5f771146a625165ab07fbbf7f4698ebc3bcfc7682a44aaa635d980493c7fc208389884')
+
+_ensure_local_nvm() {
+  # lets be sure we are starting clean
+  which nvm >/dev/null 2>&1 && nvm deactivate && nvm unload
+
+  export NVM_DIR="${srcdir}/${pkgname}-${pkgver}/.nvm"
+  # The init script returns 3 if version
+  #   specified in ./.nvrc is not (yet) installed in $NVM_DIR
+  #   but nvm itself still gets loaded ok
+  source /usr/share/nvm/init-nvm.sh || [[ $? != 1 ]]
+}
 
 pkgver() {
   cd $pkgname
@@ -32,6 +43,7 @@ pkgver() {
 }
 
 prepare() {
+    _ensure_local_nvm
     cd $pkgname
 
     # https://typicode.github.io/husky/how-to.html#ci-server-and-docker
@@ -44,6 +56,7 @@ prepare() {
 }
 
 build() {
+    _ensure_local_nvm
     export NODE_ENV=production
     export NODE_OPTIONS=--openssl-legacy-provider
 
