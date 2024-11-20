@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sstimap
+_pkgname=SSTImap
+pkgver=v1.2.r3.g0d45b44
+pkgrel=1
+pkgdesc='Automatic SSTI detection tool with interactive interface.'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-webapp')
+url='https://github.com/vladko312/SSTImap'
+license=('GPL-3.0-or-later')
+depends=('python')
+makedepends=('git' 'python-pip')
+source=("git+https://github.com/vladko312/$_pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  rm -rf LICENSE *.md .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/$pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
