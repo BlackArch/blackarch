@@ -24,7 +24,7 @@ _ensure_local_nvm() {
   # lets be sure we are starting clean
   which nvm >/dev/null 2>&1 && nvm deactivate && nvm unload
 
-  export NVM_DIR="${srcdir}/${pkgname}-${pkgver}/.nvm"
+  export NVM_DIR="$srcdir/$pkgname-$pkgver/.nvm"
   # The init script returns 3 if version
   #   specified in ./.nvrc is not (yet) installed in $NVM_DIR
   #   but nvm itself still gets loaded ok
@@ -43,57 +43,60 @@ pkgver() {
 }
 
 prepare() {
-    _ensure_local_nvm
-    cd $pkgname
+  _ensure_local_nvm
+  cd $pkgname
 
-    nvm install
+  nvm install
 
-    # https://typicode.github.io/husky/how-to.html#ci-server-and-docker
-    export HUSKY=0
+  # https://typicode.github.io/husky/how-to.html#ci-server-and-docker
+  export HUSKY=0
 
-    npm install --cache "$srcdir/npm-cache"
+  npm install --cache "$srcdir/npm-cache"
 
-    npm install electron-builder --save-dev --cache "$srcdir/npm-cache"
-    npm install node-addon-api --save-dev --cache "$srcdir/npm-cache"
+  npm install electron-builder --save-dev --cache "$srcdir/npm-cache"
+  npm install node-addon-api --save-dev --cache "$srcdir/npm-cache"
 }
 
 build() {
-    _ensure_local_nvm
-    export NODE_ENV=production
-    export NODE_OPTIONS=--openssl-legacy-provider
+  _ensure_local_nvm
+  export NODE_ENV=production
+  export NODE_OPTIONS=--openssl-legacy-provider
 
-    cd $pkgname
+  cd $pkgname
 
-    npm run build:graphql-docs
-    npm run build:bruno-query
-    npm run build:bruno-common
-    npm run sandbox:bundle-libraries --workspace=packages/bruno-js
-    npm run build:web
+  npm run build:graphql-docs
+  npm run build:bruno-query
+  npm run build:bruno-common
+  npm run sandbox:bundle-libraries --workspace=packages/bruno-js
+  npm run build:web
 
-    electronDist="/usr/lib/$_electron"
-    electronVer="$(cat $electronDist/version)"
-    sed -i -e "s~\"dist:linux\":.*~\"dist:linux\": \"electron-builder --linux --x64 --dir --config electron-builder-config.js -c.electronDist=$electronDist -c.electronVersion=$electronVer\",~g" packages/bruno-electron/package.json
+  electronDist="/usr/lib/$_electron"
+  electronVer="$(cat $electronDist/version)"
+  sed -i -e "s~\"dist:linux\":.*~\"dist:linux\": \"electron-builder --linux --x64 --dir --config electron-builder-config.js -c.electronDist=$electronDist -c.electronVersion=$electronVer\",~g" packages/bruno-electron/package.json
 
-    npm run build:electron:linux
+  npm run build:electron:linux
 }
 
 package() {
-    install -Dm0644 com.usebruno.app.Bruno.desktop -t "$pkgdir/usr/share/applications/"
+  cd $pkgname
 
-    cd $pkgname
+  install -Dm 644 "$srcdir/com.usebruno.app.Bruno.desktop" -t \
+    "$pkgdir/usr/share/applications/"
 
-    install -Dm0755 /dev/null "$pkgdir/usr/bin/$pkgname"
-    cat >> "$pkgdir/usr/bin/$pkgname" <<EOD
+  install -Dm 755 /dev/null "$pkgdir/usr/bin/$pkgname"
+  cat >> "$pkgdir/usr/bin/$pkgname" <<EOD
 #! /usr/bin/sh
 ELECTRON_IS_DEV=0 exec $_electron /usr/lib/bruno "\$@"
 EOD
 
-    install -Dm0644 license.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-    install -d "$pkgdir/usr/lib/$pkgname/"
-    asar e packages/bruno-electron/out/linux-unpacked/resources/app.asar "$pkgdir/usr/lib/$pkgname/"
+  install -Dm 644 license.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -d "$pkgdir/usr/lib/$pkgname/"
+  asar e packages/bruno-electron/out/linux-unpacked/resources/app.asar \
+    "$pkgdir/usr/lib/$pkgname/"
 
-    for i in 16 24 48 64 128 256 512 1024; do
-        install -Dm644 "packages/bruno-electron/resources/icons/png/${i}x${i}.png" "$pkgdir/usr/share/icons/hicolor/${i}x${i}/apps/com.usebruno.app.Bruno.png"
-    done
+  for i in 16 24 48 64 128 256 512 1024; do
+    install -Dm 644 "packages/bruno-electron/resources/icons/png/${i}x${i}.png"\
+      "$pkgdir/usr/share/icons/hicolor/${i}x${i}/apps/com.usebruno.app.Bruno.png"
+  done
 }
 
