@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=owrx_connector
+pkgver=0.6.2.r26.g03d5b97
+pkgrel=1
+pkgdesc='Connectors used by OpenWebRX to interface with SDR hardware.'
+arch=('x86_64')
+url='https://github.com/jketterl/owrx_connector'
+license=('GPL-3.0')
+depends=('csdr' 'libsamplerate')
+makedepends=('git' 'cmake')
+optdepends=(
+	'rtl-sdr: RTLSDR dongles support.'
+	'soapysdr: Allows interfacing with SDRs of many vendors.'
+)
+source=("git+https://github.com/jketterl/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  cmake -B build \
+	  -DCMAKE_INSTALL_PREFIX=/usr \
+	  -Wno-dev
+
+  make -C build
+}
+
+package() {
+  cd $pkgname
+
+  make -C build DESTDIR="$pkgdir" install
+}
+
