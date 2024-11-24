@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=reptor
+pkgver=0.7
+pkgrel=2
+pkgdesc='CLI tool to automate pentest reporting with SysReptor.'
+arch=('any')
+groups=('blackarch' 'blackarch-misc' 'blackarch-automation')
+url='https://github.com/Syslifters/reptor'
+license=('custom:MIT')
+depends=('python' 'python-asgiref' 'python-certifi' 'python-charset-normalizer'
+         'python-cvss' 'python-django' 'python-idna' 'python-markdown-it-py'
+         'python-mdurl' 'python-pygments' 'python-pyaml' 'python-requests'
+         'python-rich' 'python-sqlparse' 'python-termcolor' 'python-urllib3'
+         'python-xmltodict' 'python-tomli' 'python-tomli-w')
+makedepends=('python-build' 'python-pip')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz")
+sha512sums=('ecf9d401a4e31fe0b0556f31835929039b4611981f83f972c5f48d097a0b38d1796b6ed2ca149f24771a2f32673158a26f37d0c4ea60a18ff08e53ba9a0bf087')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
+

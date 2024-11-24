@@ -1,0 +1,89 @@
+From dc29784bd9bbcd9f3300a6580d3e58c2dca6be98 Mon Sep 17 00:00:00 2001
+From: Roy Hills <royhills@hotmail.com>
+Date: Wed, 14 Sep 2022 12:35:56 +0000
+Subject: [PATCH] Use %zu instead of %u printf format for size_t
+
+---
+ ike-scan.c  | 4 ++--
+ isakmp.c    | 8 ++++----
+ psk-crack.c | 2 +-
+ 3 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/ike-scan.c b/ike-scan.c
+index 1ee7902..29f510c 100644
+--- a/ike-scan.c
++++ b/ike-scan.c
+@@ -843,7 +843,7 @@ main(int argc, char *argv[]) {
+       interval = ((IKE_UINT64)(packet_out_len+PACKET_OVERHEAD) * 8 * 1000000) /
+                  bandwidth;
+       if (verbose) {
+-         warn_msg("DEBUG: pkt len=%u bytes, bandwidth=%u bps, int=%u us",
++         warn_msg("DEBUG: pkt len=%zu bytes, bandwidth=%u bps, int=%u us",
+                   packet_out_len, bandwidth, interval);
+       }
+    }
+@@ -1815,7 +1815,7 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
+    if (nsent < 0) {
+       err_sys("ERROR: sendto");
+    } else if ((unsigned)nsent != packet_out_len) {
+-      warn_msg("WARNING: sendto: only %d bytes sent, but %u requested",
++      warn_msg("WARNING: sendto: only %d bytes sent, but %zu requested",
+                nsent, packet_out_len);
+    }
+ /*
+diff --git a/isakmp.c b/isakmp.c
+index a03f6fb..7a30d36 100644
+--- a/isakmp.c
++++ b/isakmp.c
+@@ -1278,7 +1278,7 @@ make_ke(size_t *length, unsigned next, size_t kx_data_len) {
+    unsigned i;
+ 
+    if (kx_data_len % 4)
+-      err_msg("Key exchange data length %d is not a multiple of 4",
++      err_msg("Key exchange data length %zu is not a multiple of 4",
+               kx_data_len);
+ 
+    payload = Malloc(sizeof(struct isakmp_kx)+kx_data_len);
+@@ -1322,7 +1322,7 @@ make_ke2(size_t *length, unsigned next, unsigned dh_group, size_t kx_data_len) {
+    unsigned i;
+ 
+    if (kx_data_len % 4)
+-      err_msg("Key exchange data length %d is not a multiple of 4",
++      err_msg("Key exchange data length %zu is not a multiple of 4",
+               kx_data_len);
+ 
+    payload = Malloc(sizeof(struct isakmp_kx2)+kx_data_len);
+@@ -1920,7 +1920,7 @@ process_attr(unsigned char **cp, size_t *len) {
+    if (attr_type == 'B')
+       msg = make_message("%s=%s", attr_class_str, attr_value_str);
+    else
+-      msg = make_message("%s(%u)=0x%s", attr_class_str, value_len,
++      msg = make_message("%s(%zu)=0x%s", attr_class_str, value_len,
+                          attr_value_str);
+ 
+    free(attr_class_str);
+@@ -2394,7 +2394,7 @@ process_cert(unsigned char *cp, size_t len, unsigned next) {
+    data_len = ntohs(hdr->isag_length) < len ? ntohs(hdr->isag_length) : len;
+    data_len -= sizeof(struct isakmp_generic) + 1;
+ 
+-   msg=make_message("%s(Type=%s, Length=%u bytes)",
++   msg=make_message("%s(Type=%s, Length=%zu bytes)",
+                     id_to_name(next, payload_map),
+                     id_to_name(cert_type, cert_map), data_len);
+ 
+diff --git a/psk-crack.c b/psk-crack.c
+index 506707e..3134bbc 100644
+--- a/psk-crack.c
++++ b/psk-crack.c
+@@ -425,7 +425,7 @@ load_psk_params(const char *filename, const char *nortel_user) {
+          pe->hash_type=HASH_TYPE_SHA1;
+          pe->hash_name=make_message("SHA1");
+       } else {
+-         err_msg("Cannot determine hash type from %u byte HASH_R",
++         err_msg("Cannot determine hash type from %zu byte HASH_R",
+                  pe->hash_r_len);
+       }
+       pe->live = 1;
+-- 
+2.43.0
+

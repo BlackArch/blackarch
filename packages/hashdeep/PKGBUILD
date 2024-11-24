@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=hashdeep
+pkgver=4.4
+pkgrel=8
+groups=('blackarch' 'blackarch-crypto')
+pkgdesc='Cross-platform tools to message digests for any number of files.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/jessek/hashdeep'
+license=('GPL' 'custom:unknown')
+depends=('gcc-libs')
+source=("https://github.com/jessek/hashdeep/archive/refs/tags/v$pkgver.tar.gz"
+        "hashdeep-4.4-fix-errors-found-by-clang.patch::https://github.com/jessek/hashdeep/commit/6ef69a26126ee4e69a25392fd456b8a66c51dffd.patch")
+sha512sums=('142d3355f0e90f253ca52941a0ab14eefa55e0783b09e66a6ee8f8bc3fbb93ba7aaef1ec006d0e9afb00839adae338ba2002931907b28d968d4f224e28a64f9e'
+            '2dbde3a047c09dc586fc37323a9ac4d9f7e7aebead6a8285958296cf846136b555fd853cc17ddb663a7aac8d8bfbce2be127b0c57845db6c73b085302c1ae896')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch --forward --strip=1 \
+    --input="$srcdir/hashdeep-4.4-fix-errors-found-by-clang.patch"
+
+  ./bootstrap.sh
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  ./configure --prefix=/usr
+
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Old Contributor: Kaiting Chen <kaitocracy@gmail.com>
+# Old Contributor: Aaron Schaefer <aaron@elasticdog.com>
+
+pkgname=python-boto
+_pkgname=boto
+pkgver=2.49.0.20190327
+_commit=9e1cd3bd76e738d80630f1bd9160fd87c8eab865
+pkgrel=10
+pkgdesc='A Python interface to Amazon Web Services (AWS).'
+arch=('any')
+url='https://github.com/boto/boto'
+license=('MIT')
+depends=('python')
+makedepends=('python-setuptools')
+checkdepends=('python-nose' 'python-requests' 'python-httpretty')
+source=("$pkgname-$_commit.tar.gz::https://github.com/boto/boto/archive/$_commit.tar.gz"
+         boto-python-3.10.patch::https://github.com/boto/boto/pull/3898.patch
+         boto-python-3.8.patch
+         boto-python-3.11-mock.patch
+         unittest-mock.patch)
+sha512sums=('a68b7560caef3328970b9d1febc77fb28e537e4012b692b492d69428aca7deccf539e883cba4975497059ccdc56452f6e46f4a101b6e93f007667fe45c842e24'
+            '86c1318781832dad8e45f5a0168fe338f0c3dd168568342055191db68779caa8af04a4e11357a37e6b47adb132f9dccfd6e2e4df96d59ebb71db4e6073a625ba'
+            '3e32db201adb637d3b6041f9e7be65889f1306042cbed36e4884207cbf772dc8f7691be9a505ec79f111b99c8313e0d42436c1f9a2dfa095de6cc77a7fe4bc6d'
+            '5b3d8cfa74e0996ffbe467080f48241b5ea90801f738702b5845f53b68d692981a994bccaccbcd70e455bea934d246f441106293e4602e93f594c53254e13584'
+            '8179486e67a9224fee9fa9b2a39a3eb6a80226d9bf1cff20cef1b34f4d85dc1589cd4d263cc8e0c6f6f6b9776957de98c2e641c1260eff926d266a223766a4b5')
+
+prepare() {
+  mv $_pkgname-{$_commit,$pkgver}
+  cd "$_pkgname-$pkgver"
+
+  patch -p1 -i ../boto-python-3.8.patch # Fix escaping with python 3.8
+  patch -p1 -i ../boto-python-3.10.patch # Fix collections.abc imports
+  patch -p1 -i ../unittest-mock.patch # Stop using python-mock
+  patch -p1 -i ../boto-python-3.11-mock.patch # Fix mock for python 3.11
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install -O1 --root="$pkgdir" --prefix=/usr
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  # Remove (somewhat deprecated) python 2 tools.
+  rm -r "$pkgdir"/usr/bin
+}
+

@@ -3,27 +3,39 @@
 
 pkgname=python-pyngrok
 _pkgname=pyngrok
-pkgver=5.2.1
-pkgrel=2
+pkgver=7.2.0
+pkgrel=1
 pkgdesc='A Python wrapper for Ngrok.'
 arch=('any')
 url='https://pypi.org/project/pyngrok/#files'
 license=('MIT')
 depends=('python' 'ngrok')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('2bb40e827fa7407b307e696cf93b66b0f8fcc6806e8d0118ad6d1530aac857d254cf28a28df559e9f7d8989d1a18d9b591be1b9b472e5a0316ad2295edc26800')
+sha512sums=('87696008edd31d3a8afacd6bf4b3101dbae2f6f95da4f2dfc649edf6e317a231a8a93eccaec3e2997779db64864c6933013c5ccb6531e7133f6d613b8f7d5e83')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+
   mv "$pkgdir/usr/bin/ngrok" "$pkgdir/usr/bin/pyngrok"
 }
 

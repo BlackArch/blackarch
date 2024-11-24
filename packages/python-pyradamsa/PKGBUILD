@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-pyradamsa
+_pkgname=pyradamsa
+pkgver=v0.1.1.r1.g8d1fdb5
+pkgrel=2
+pkgdesc='Python bindings for radamsa fuzzing library..'
+arch=('x86_64' 'aarch64')
+url="https://github.com/tsundokul/$_pkgname"
+license=('MIT')
+depends=('python' 'python-pytest' 'python-setuptools')
+makedepends=('git' 'python-build' 'python-wheel' 'python-installer')
+source=("$pkgname::git+https://github.com/tsundokul/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+  cd $pkgname
+
+  git submodule update --init --recursive
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$startdir/dist"
+
+  python -m installer --destdir="$pkgdir" *.whl
+}
+

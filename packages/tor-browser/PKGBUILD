@@ -1,55 +1,82 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
+#
+# from AUR - adjusted to our styles
+#
+# Maintainer: grufo <madmurphy333 AT gmail DOT com>
+# Maintainer: Sebastian Jug <seb AT stianj DOT ug>
+# Contributor: midgard <arch.midgard AT janmaes DOT com>
+# Contributor: TrialnError <autumn-wind AT web DOT de>
+# Contributor: Yardena Cohen <yardenack AT gmail DOT com>
+# Contributor: Max Roder <maxroder AT web DOT de>
+# Contributor: BrLi
 
 pkgname=tor-browser
-pkgver=12.0.6
+pkgver=14.0.2
 pkgrel=1
 pkgdesc='Tor Browser Bundle: anonymous browsing using Firefox and Tor.'
-url='https://www.torproject.org/projects/torbrowser.html.en'
-arch=('x86_64')
 groups=('blackarch' 'blackarch-defensive')
+url='https://www.torproject.org/projects/torbrowser.html'
 license=('GPL')
 depends=('libxt' 'startup-notification' 'mime-types' 'dbus-glib' 'alsa-lib'
          'desktop-file-utils' 'hicolor-icon-theme' 'libvpx' 'icu' 'libevent'
-         'nss' 'hunspell' 'sqlite' 'zenity')
-optdepends=('kdialog: KDE dialog boxes'
+         'nss' 'hunspell' 'sqlite')
+optdepends=('zenity: simple dialog boxes'
+            'kdialog: KDE dialog boxes'
             'gst-plugins-good: H.264 video'
             'gst-libav: H.264 video'
             'libpulse: PulseAudio audio driver'
             'libnotify: Gnome dialog boxes')
-#source=("https://dist.torproject.org/torbrowser/$pkgver/tor-browser-linux64-${pkgver}_en-US.tar.xz"
-source=("https://www.torproject.org/dist/torbrowser/$pkgver/tor-browser-linux64-${pkgver}_ALL.tar.xz"
-        "$pkgname.desktop"
-        "$pkgname.png"
-        "$pkgname.sh"
-        "$pkgname.svg")
-sha512sums=('307fcf4a1738735b5557d2689a80795eeb32a7bdb7df7adeffd7efe1e0afe5c536f95f26f872a2102f0ad8225f9136cf01fc824b57ec2b8127a98f8384f7c58e'
-            '1318a652f7b65e30cdb0c607faf4391035288bcfcaffc50f7713de8eeb7d9151c115269fad1225fccd71d4d38537a804f05fba03b3df516afbce8a79d8988d7c'
-            'e334c1f226235c30011e62602ec0c0bd549bfe411e37125a5ee47f2a2d187045bc261efcaf2a9490d01dc687878ecfe01827996adc62e76df39ee8146d76713e'
-            '88c5d3035df46aa23cd98657e19b907a68ac233f92307556ea44b6a90bac2d04dfb5b23c7efaa3addd48a5def3daacf0c8731acb59b15a7390c4c3435427674a'
-            '662b800e849f2fa369496974d0e22c68cb5f5666cb8d3f768d236daae40c693880fb051f860aacf347a0fc8491764a315053dc9bbcc149f820267d1466bd995a')
-noextract=("tor-browser-linux64-${pkgver}_en-US.tar.xz")
+provides=("$pkgname")
+conflicts=("$pkgname")
 install="$pkgname.install"
+_urlbase="https://dist.torproject.org/torbrowser/${pkgver}"
+_archstr="x86_64"
+arch=('x86_64')
+source=("$_urlbase/$pkgname-linux-$_archstr-$pkgver.tar.xz"
+        "$pkgname.desktop.in"
+        "$pkgname.in"
+        "$pkgname.png"
+        "$pkgname.svg")
+noextract=("$pkgname-linux-$_archstr-$pkgver.tar.xz")
+sha512sums=('0d4844691714c6bebe2db6fb1c0f10b9e10be10ad6002469a573b19fe5d96335d340e479f297b544831b7390e141fad3ff426f96d4164af14c0b25e1cde14a7f'
+            '909d72393acbfe1123ead9450e14bef35fb570e5488982e46632a21734990a2cffdcba74f6e0d62eac78aa183c5778b57951ccd1095e46b910cbd860277f0259'
+            '8c656941749238d1e4b0549cc0f2ca37c103a4e57422ac1f25ea147ab396b843c0613569ced0f3418ae9be5a8d5158d7d3da8be153a1da01f460625eced46e7e'
+            'e334c1f226235c30011e62602ec0c0bd549bfe411e37125a5ee47f2a2d187045bc261efcaf2a9490d01dc687878ecfe01827996adc62e76df39ee8146d76713e'
+            '662b800e849f2fa369496974d0e22c68cb5f5666cb8d3f768d236daae40c693880fb051f860aacf347a0fc8491764a315053dc9bbcc149f820267d1466bd995a')
 
-prepare() {
-  sed -i "s/REPL_NAME/$pkgname/g" "$pkgname.sh"
-  sed -i "s/REPL_VERSION/$pkgver/g" "$pkgname.sh"
-  sed -i "s/REPL_LANGUAGE/en-US/g" "$pkgname.sh"
-  sed -i "s/REPL_NAME/$pkgname/g" "$pkgname.desktop"
-  sed -i "s/REPL_LANGUAGE/en-US/g" "$pkgname.desktop"
-  sed -i "s/REPL_COMMENT/$pkgdesc/g" "$pkgname.desktop"
+# Make a string suitable for `sed`, by escaping `[]/&$.*^\` - syntax:
+# `_sed_escape STRING`
+_sed_escape() {
+	echo "${1}" | sed 's/[]\/&.*$^[]/\\&/g'
 }
 
 package() {
-  install -Dm 755 "$pkgname.sh" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 "tor-browser-linux64-${pkgver}_ALL.tar.xz" \
-    "$pkgdir/opt/$pkgname/tor-browser-linux64-${pkgver}_ALL.tar.xz"
-  install -Dm 644 "$pkgname.desktop" \
-    "$pkgdir/usr/share/applications/$pkgname.desktop"
-  install -Dm 644 "$pkgname.png" "$pkgdir/usr/share/pixmaps/$pkgname.png"
-  install -Dm 644 "$pkgname.png" \
+	local _sed_subst="
+		s/@PACKAGE_NAME@/$(_sed_escape "$pkgname")/g
+		s/@PACKAGE_VERSION@/$(_sed_escape "$pkgver")/g
+		s/@PACKAGE_RELEASE@/$(_sed_escape "$pkgrel")/g
+		s/@PACKAGE_ARCH@/$(_sed_escape "$_archstr")/g
+	"
+
+	install -dm 755 "$pkgdir/usr/bin"
+	sed "$_sed_subst" "$pkgname.in" > "$pkgdir/usr/bin/$pkgname"
+	chmod +x "$pkgdir/usr/bin/$pkgname"
+
+	install -dm 755 \
+		"$pkgdir/usr/share/icons/hicolor/scalable/apps" \
+		"$pkgdir/usr/share/icons/hicolor/128x128/apps"
+
+	install -Dm 644 "$pkgname.png" \
     "$pkgdir/usr/share/icons/hicolor/128x128/apps/$pkgname.png"
-  install -Dm 644 "$pkgname.svg" \
+	install -Dm 644 "$pkgname.svg" \
     "$pkgdir/usr/share/icons/hicolor/scalable/apps/$pkgname.svg"
+
+	install -dm 755 "$pkgdir/usr/share/applications"
+	sed "$_sed_subst" "$pkgname.desktop.in" > \
+		"$pkgdir/usr/share/applications/$pkgname.desktop"
+
+	install -Dm 444 "$pkgname-linux-$_archstr-$pkgver.tar.xz" \
+		"$pkgdir/opt/$pkgname/$pkgname-$_archstr-$pkgver.tar.xz"
 }
 

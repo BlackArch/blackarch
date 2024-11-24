@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=mantra
+pkgver=v2.0.r1.ga0ae15e
+pkgrel=1
+epoch=1
+pkgdesc='Hunt down API key leaks in JS files and pages.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
+url='https://github.com/MrEmpy/mantra'
+license=('GPL3')
+depends=()
+makedepends=('git' 'go')
+source=("git+https://github.com/MrEmpy/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+

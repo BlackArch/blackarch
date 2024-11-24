@@ -1,0 +1,30 @@
+# Maintainer: Anatol Pomozov <anatol.pomozov@gmail.com>
+
+_gemname=gobject-introspection
+pkgname="ruby-$_gemname"
+pkgver=4.2.3
+pkgrel=2
+pkgdesc='Ruby/GObjectIntrospection is a Ruby binding of GObjectIntrospection.'
+arch=('x86_64' 'aarch64')
+url='http://ruby-gnome2.sourceforge.jp/'
+license=('LGPL2.1')
+depends=('ruby' 'gobject-introspection-runtime' "ruby-glib2=$pkgver")
+makedepends=('gobject-introspection' 'ruby-native-package-installer')
+options=(!emptydirs)
+source=("https://rubygems.org/gems/$_gemname-$pkgver.gem")
+noextract=("$_gemname-$pkgver.gem")
+sha512sums=('0de6d0119a92188357e9aa96598f3824fccb91ff148173ff96929443bf83f21c67b7deff2e49b02807bd5bbc4dd232a6050e43f3a6f5f63689f13fe741f1e79b')
+
+package() {
+  local _gemdir="$(ruby -e'puts Gem.default_dir')"
+  local _platform="$(gem env platform | cut -d':' -f2)"
+  local _extension_api_version="$(ruby -e'puts Gem.extension_api_version')"
+
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
+  rm -f "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem" \
+    ${pkgdir}/${_gemdir}/gems/${_gemname}-${pkgver}/ext/gobject-introspection/*.o \
+    "${pkgdir}/${_gemdir}/extensions/${_platform}/${_extension_api_version}/${_gemname}-${pkgver}/gem_make.out" \
+    "${pkgdir}/${_gemdir}/gems/${_gemname}-${pkgver}/ext/gobject-introspection/Makefile"
+}
+

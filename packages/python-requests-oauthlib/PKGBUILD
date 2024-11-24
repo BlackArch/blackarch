@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-requests-oauthlib
+_pkgname=requests-oauthlib
+pkgver=2.0.0
+pkgrel=1
+pkgdesc='OAuth library support for Requests.'
+arch=('any')
+url='https://pypi.org/project/requests-oauthlib/'
+license=('ISC')
+depends=('python' 'python-requests' 'python-oauthlib')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('f15851aa27a19053c1bd6ccc7e1fcbc24b5c9e3e4ced736754e34ff8121a3d9be9f4f9ff878cbd2a75ca5803e25522807b4ace19cb0f64a88844158fdf7d098f')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$_pkgname"
+
+    cd $srcdir/$_pkgname-$pkgver
+
+    install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

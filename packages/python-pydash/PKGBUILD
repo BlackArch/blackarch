@@ -3,26 +3,37 @@
 
 pkgname=python-pydash
 _pkgname=pydash
-pkgver=6.0.2
-pkgrel=2
+pkgver=8.0.3
+pkgrel=1
 pkgdesc='TPython utility libraries for doing stuff in a functional way based on the Lo-Dash Javascript library.'
 arch=('any')
 url='https://pypi.org/project/pydash/#files'
 license=('MIT')
 depends=('python')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('89f2169fd2739f415ae8938474becb582bf6ed34ae9205d020b45b8ba9e2af8138fc375a7e0a5dd7aba650bf5aa5ec649f162a05614892727c5c92770b259329')
+sha512sums=('8a4aefe4ae461c7abce1ed58cadb950bbd31f6f1010b7b21dc17433be0b5f944149d94212b7d325ffb6d7f30bf62406bd68fe53202a846cee2d8dd075e9618ee')
 
 build() {
   cd $_pkgname-$pkgver
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $_pkgname-$pkgver
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

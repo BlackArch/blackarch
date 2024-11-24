@@ -1,48 +1,39 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-requests-cache
-pkgname=('python2-requests-cache' 'python-requests-cache')
-_pkgname=requests-cache
-pkgver=1.0.0
-pkgrel=2
+pkgname=python-requests-cache
+_pkgname=requests_cache
+pkgver=1.2.1
+pkgrel=1
 pkgdesc='Persistent cache for requests library.'
 arch=('any')
 url='https://pypi.org/project/requests-cache/#files'
 license=('BSD')
-makedepends=('python2-setuptools' 'python-setuptools')
+depends=('python' 'python-requests')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('011cc530104eb7258928d135954634dea27940e0540ef344d021c03fe22aec9f37eb30d475a4160ea40b4f6b913c01489b8e9817c14430eb02beb1b443f2222d')
-
-prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
-}
+sha512sums=('774c82eb2c78b44a74b5a836c2d2362a2a7ada6467befe3d96dc204cb76eb12d6e3229613fa8d9eddbc27180565a50bf604c306ce93f4b0db9f8c168f26cdc81')
 
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
-
-  python setup.py build
-}
-
-package_python2-requests-cache() {
-  depends=('python2' 'python2-requests')
-
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
-}
-
-package_python-requests-cache() {
-  depends=('python' 'python-requests')
-
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

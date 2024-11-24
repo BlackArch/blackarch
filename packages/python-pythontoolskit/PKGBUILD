@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-pythontoolskit
+_pkgname=PythonToolsKit
+pkgver=1.2.6
+pkgrel=2
+pkgdesc='This package implements tools to build python package and tools.'
+arch=('any')
+url='https://pypi.org/project/pythontoolskit/#files'
+license=('MIT')
+depends=('python')
+makedepends=('python-build' 'python-pip' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('ccd6c581241cefc0ce634dbcb30df2a1dc9ad140c40565c75d44665c2721149057342ccd4060511797913b9ecdac6d106503f8a3455d54ff5cc2e58bab0dd0b0')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

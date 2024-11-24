@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=theharvester
-pkgver=3282.7834c13
+pkgver=3763.16cc8afc
 pkgrel=1
 groups=('blackarch' 'blackarch-recon')
 pkgdesc='Python tool for gathering e-mail accounts and subdomain names from different public sources (search engines, pgp key servers).'
@@ -17,8 +17,8 @@ depends=('python' 'python-requests' 'python-shodan' 'python-texttable'
          'python-gevent' 'python-lxml' 'python-aiomultiprocess' 'python-orjson'
          'python-typing_extensions' 'python-zope-event' 'python-starlette'
          'python-slowapi' 'python-certifi' 'python-pyppeteer' 'python-fastapi'
-         'python-aiofiles' 'python-ujson' 'uvicorn')
-makedepends=('git')
+         'python-aiofiles' 'python-ujson' 'uvicorn' 'python-playwright')
+makedepends=('git' 'python-build' 'python-pip')
 source=("$pkgname::git+https://github.com/laramies/theHarvester.git")
 sha512sums=('SKIP')
 
@@ -38,7 +38,7 @@ prepare() {
 build() {
   cd $pkgname
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
@@ -47,9 +47,22 @@ package() {
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+	  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 
-  install -Dm 644 api-keys.yaml "$pkgdir/usr/share/$pkgname/api-keys.yaml"
+  cp -a theHarvester/data "$pkgdir/usr/share/$pkgname/data"
+  install -Dm 644 theHarvester/data/api-keys.yaml\
+     "$pkgdir/usr/share/$pkgname/api-keys.yaml"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md README/*.md
   install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" README/COPYING \
     README/LICENSES

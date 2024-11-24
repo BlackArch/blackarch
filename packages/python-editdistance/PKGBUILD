@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-editdistance
+_pkgname=${pkgname#python-}
+pkgver=0.8.1
+pkgrel=1
+pkgdesc='Fast implementation of the edit distance(Levenshtein distance).'
+arch=('x86_64' 'aarch64')
+license=('MIT')
+url='https://pypi.org/project/editdistance/'
+depends=('python')
+makedepends=('python-build' 'python-pip' 'cython')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('a79ee5a9b091670cc2432ffe3f913ec393aaa2aa33ae1f7b7235824f4a002258d1d8577b6d553587d1c36eb4783b3d7891e0de35954639e2eb84a3145fe0fa29')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

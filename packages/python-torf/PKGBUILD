@@ -3,30 +3,41 @@
 
 pkgname=python-torf
 _pkgname=torf
-pkgver=4.1.4
-_pyver=3.11
-pkgrel=3
+pkgver=4.2.7
+_pyver=3.12
+pkgrel=1
 pkgdesc='Python 3 module for creating and parsing torrent files and magnet URIs.'
 arch=('any')
 url='https://pypi.org/project/torf/#files'
 license=('MIT')
 depends=('python' 'python-flatbencode')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('7fc7fe9bd6ecb063ed4ca869e96e7dbc9209c0e499672b577f33e0aba3cbd5041436333e8a70d64c1edaf12731fa1e6e7790af0ec9586e203a4118df1fde00d1')
+sha512sums=('f44e68a0e76b4966b15afbdbb3459379ced5a460b9eb0965ef4594718392ec639125a993f34a2ce8491abcc2a51926337fc11dee1bdd040f8aff44e62d3fdcc7')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+	pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 
-  chmod 644 \
-    "$pkgdir/usr/lib/python$_pyver/site-packages/torf-4.1.4-py$_pyver.egg-info/"*
+  #chmod 644 \
+  #  "$pkgdir/usr/lib/python$_pyver/site-packages/torf-4.2.7-py$_pyver.egg-info/"*
 }
 

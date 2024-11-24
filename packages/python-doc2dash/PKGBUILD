@@ -3,8 +3,8 @@
 
 pkgname=python-doc2dash
 _pkgname=doc2dash
-pkgver=3.0.0
-pkgrel=2
+pkgver=3.1.0
+pkgrel=1
 pkgdesc='Convert docs to Dash.app.'
 arch=('any')
 url='https://pypi.org/project/doc2dash/#files'
@@ -12,19 +12,30 @@ license=('MIT')
 depends=('python' 'python-sphinx' 'python-attrs' 'python-beautifulsoup4'
          'python-click' 'python-colorama' 'python-lxml' 'python-six'
          'python-zope-interface')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('ba3e20b89eb1363e1559c32bb65656a1182d3760abd139351cc65ef93561a7fc627a350f69124885870cf133a45de31ac8d48dfa090d192612527b327f13ac6c')
+sha512sums=('5ef929574fc4bf937797dfc81e918521db66528d4970a65ea62c15db84250f42e2e4e05041ba3b3c0cddcc9356f83283062a78fd62de86d95b97841c5ab125f5')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
