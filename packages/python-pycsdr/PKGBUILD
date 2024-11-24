@@ -7,11 +7,10 @@ pkgver=0.18.2.r44.g041986e
 pkgrel=1
 pkgdesc='Python bindings for the csdr library.'
 arch=('x86_64' 'aarch64')
-groups=('blackarch' 'blackarch-radio')
 url='https://github.com/jketterl/pycsdr'
-license=('AGPL-3.0')
-depends=('python')
-makedepends=('git' 'csdr' 'python-setuptools')
+license=('AGPL-3.0-only')
+depends=('python' 'csdr')
+makedepends=('git' 'python-build' 'python-pip')
 source=("git+https://github.com/jketterl/$_pkgname.git")
 sha512sums=('SKIP')
 
@@ -29,12 +28,23 @@ pkgver() {
 build() {
   cd $_pkgname
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $_pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

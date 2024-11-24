@@ -6,11 +6,12 @@ _pkgname=${pkgname#python-}
 pkgver=0.1.2.r6.gf7e394b
 pkgrel=1
 pkgdesc='Python module for parsing messages from the "js8" command line decoder.'
-arch=('x86_64')
+arch=('any')
 url="https://github.com/jketterl/js8py"
 license=('GPL-3.0')
-makedepends=('git' 'python-setuptools' 'python-nose')
 depends=('python')
+makedepends=('git' 'python-build' 'python-pip')
+options=(!emptydirs)
 provides=('js8py')
 source=("git+https://github.com/jketterl/$_pkgname.git")
 sha512sums=('SKIP')
@@ -26,21 +27,26 @@ pkgver() {
   )
 }
 
-check(){
-  cd $_pkgname
-
-  nosetests
-}
-
 build() {
   cd $_pkgname
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $_pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
