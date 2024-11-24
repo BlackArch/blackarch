@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-unblob-native
+_pkgname=${pkgname#python-}
+pkgver=v0.1.5.r6.gb9463ad
+pkgrel=1
+pkgdesc='Performance critical parts of Unblob.'
+arch=('any')
+url='https://github.com/onekey-sec/unblob-native'
+license=('MIT')
+depends=('python')
+makedepends=('git' 'python-build' 'python-pip')
+options=(!emptydirs)
+source=("git+https://github.com/onekey-sec/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $_pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd $_pkgname
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

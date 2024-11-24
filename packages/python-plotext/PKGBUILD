@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-plotext
+_pkgname=${pkgname#python-}
+pkgver=5.3.2.r0.g4d19108
+pkgrel=1
+pkgdesc='Plotting on terminal.'
+arch=('any')
+url='https://github.com/piccolomo/plotext'
+depends=('python')
+makedepends=('git' 'python-setuptools')
+license=('MIT')
+options=(!emptydirs)
+source=("git+https://github.com/piccolomo/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $_pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $_pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+}
+
