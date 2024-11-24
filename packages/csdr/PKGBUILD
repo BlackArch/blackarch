@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=csdr
+pkgver=0.18.2.r68.g1f15b8c
+pkgrel=1
+pkgdesc='A simple DSP library and command-line tool for Software Defined Radio.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-radio')
+url='https://github.com/jketterl/csdr'
+license=('GPL-3.0')
+depends=('fftw' 'libsamplerate')
+makedepends=('git' 'gcc')
+source=("git+https://github.com/jketterl/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  mkdir build
+  cd build
+  cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+
+  make
+}
+
+package() {
+  cd $pkgname/build
+
+  make DESTDIR="$pkgdir" install
+  
+  cd ..
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+}
+
