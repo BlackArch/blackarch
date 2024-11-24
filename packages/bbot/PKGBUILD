@@ -1,0 +1,59 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=bbot
+pkgver=5246.95d1bc5
+pkgrel=1
+pkgdesc='Multipurpose scanner built to automate your Recon, Bug Bounties, and ASM.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/blacklanternsecurity/bbot'
+license=('GPL-3.0-or-later')
+depends=('python' 'python-ansible' 'python-beautifulsoup4' 'python-cachetools'
+         'python-deepdiff' 'python-dnspython' 'python-httpx' 'python-idna'
+         'python-jinja' 'python-lxml' 'python-mmh3' 'python-omegaconf'
+         'python-psutil' 'python-puremagic' 'python-pycryptodome'
+         'python-pydantic' 'python-pyopenssl' 'python-pyjwt' 'python-pyzmq'
+         'python-radixtarget' 'python-regex' 'python-setproctitle'
+         'python-socksio' 'python-tabulate' 'python-tldextract'
+         'python-unidecode' 'python-websockets' 'python-wordninja'
+         'python-yara-python-dex' 'ansible-runner' 'baddns' 'cloudcheck'
+         'xmltojson')
+makedepends=('git' 'python-build' 'python-pip')
+source=("git+https://github.com/blacklanternsecurity/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd $pkgname
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
+
