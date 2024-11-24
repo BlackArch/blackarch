@@ -1,0 +1,55 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=unblob
+pkgver=24.11.13.r4.g325c3e1
+pkgrel=1
+pkgdesc='Extract files from any kind of container formats.'
+arch=('any')
+groups=('blackarch' 'blackarch-forensic' 'blackarch-reversing')
+url='https://github.com/onekey-sec/unblob'
+license=('MIT')
+depends=('python' 'python-click' 'python-dissect.cstruct' 'python-attrs'
+         'python-structlog' 'python-arpy' 'python-rarfile' 'python-ubi-reader'
+         'python-plotext' 'python-pluggy' 'python-python-magic'
+         'python-pyperscan' 'python-lark' 'python-lief' 'python-cryptography'
+         'python-treelib' 'python-unblob-native' 'python-rich'
+         'python-pyfatfs' 'jefferson' 'lz4')
+makedepends=('git' 'python-build' 'python-pip')
+source=("git+https://github.com/onekey-sec/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd $pkgname
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
+
