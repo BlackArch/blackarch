@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Felix Yan <felixonmars@archlinux.org>
+
+pkgname=python-setuptools-markdown
+_pkgname=setuptools-markdown
+pkgver=0.4.1
+_commit=34ed6276e0c8bcefcd967bd8db138546a270bdf4
+pkgrel=10
+pkgdesc='Use Markdown for your project description.'
+arch=('any')
+url="https://github.com/msabramo/setuptools-markdown"
+license=('MIT')
+depends=('python-setuptools' 'python-pypandoc')
+source=("$pkgname-$_commit.tar.gz::https://github.com/msabramo/setuptools-markdown/archive/$_commit.tar.gz"
+        "$pkgname-pypandoc-1.8.patch::https://github.com/msabramo/setuptools-markdown/pull/21.patch")
+sha512sums=('394bf37e53bcdb702f44749eb5bfa156aa11df310e603a034af38d8ca47d8f5231b76eacec6049cf3c7615031eca7b4238670555fcf9835723beb6f3b7f9496c'
+            '0da7fd152ca93dc8d5b852dedc60e10a825af5adaa64afd490e3e0674431d67ad456305464db3de0e5581ecb883da59dd91b8af575d03d9dff2f3e681cc30914')
+
+prepare() {
+  mv $_pkgname-{$_commit,$pkgver}
+
+  patch -d "setuptools-markdown-$pkgver" -p1 < "$pkgname-pypandoc-1.8.patch"
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py build
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+}
+

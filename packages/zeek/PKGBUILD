@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=zeek
-pkgver=v6.1.0.dev.r116.g64ebdec43
+pkgver=v7.1.0.dev.r572.g62bc324fe
 pkgrel=1
 epoch=1
 groups=('blackarch' 'blackarch-networking' 'blackarch-defensive'
@@ -34,7 +34,10 @@ prepare() {
 build() {
   cd $pkgname
 
-  ./configure --prefix=/usr
+  ./configure \
+    --prefix=/usr/share/zeek \
+    --disable-broker-tests \
+    --disable-cpp-tests \
 
   make
 }
@@ -42,9 +45,14 @@ build() {
 package() {
   cd $pkgname
 
+  install -dm 755 "$pkgdir/usr/bin"
+
   make DESTDIR="$pkgdir" install
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README CHANGES VERSION
   install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+
+  cp -a "$pkgdir/usr/share/$pkgname/bin/"* "$pkgdir/usr/bin/"
+  rm -rf "$pkgdir/usr/share/$pkgname/bin"
 }
 

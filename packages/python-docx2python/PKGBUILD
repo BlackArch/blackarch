@@ -3,27 +3,38 @@
 
 pkgname=python-docx2python
 _pkgname=${pkgname#python-}
-pkgver=2.6.0
-pkgrel=2
+pkgver=3.0.0
+pkgrel=1
 pkgdesc='Extract docx headers, footers, text, footnotes, endnotes, properties, and images to a Python object.'
 arch=('any')
-url='https://github.com/ShayHill/docx2python'
+url='https://pypi.org/project/docx2python/'
 license=('MIT')
 depends=('python' 'python-lxml')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('aa05f05d320e92c7c4979d2a1c7e5ff5225478008aa1fdfd1a43ba5d7837b7a52e8a70d43748c3fb848a181ea8f09d3a22dcefd16b89ab65fdc612a68cd3c0b2')
+sha512sums=('db10a61f011df21781c01a8595d7591f73dd84bdd088bb5bca1438b0beb3e7ab546b9b85385957a28592df2627281d9fb0049b65c6e293ad5be1bb0c35dba04f')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

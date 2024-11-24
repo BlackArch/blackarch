@@ -1,0 +1,99 @@
+From 3f486ed9c15c78bdcbde408f90c1148bba34bd72 Mon Sep 17 00:00:00 2001
+From: Hugo <hugovk@users.noreply.github.com>
+Date: Mon, 20 Jan 2020 23:27:30 +0200
+Subject: [PATCH 1/2] Test on Python 3.9-dev
+
+---
+ .travis.yml | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/.travis.yml b/.travis.yml
+index 4a7f0fc02b..2fb32203b6 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -30,6 +30,9 @@ matrix:
+     - os: linux
+       dist: xenial
+       python: "3.7"
++    - os: linux
++      dist: xenial
++      python: "3.9-dev"
+     - os: linux
+       dist: xenial
+       python: "pypy3.5"
+
+From 203134c4fc04cf63ec2acb253866ea20260d22bb Mon Sep 17 00:00:00 2001
+From: Hugo <hugovk@users.noreply.github.com>
+Date: Mon, 20 Jan 2020 23:31:05 +0200
+Subject: [PATCH 2/2] Fix collections.abc imports for Python 3.9
+
+---
+ boto/dynamodb/types.py |  7 ++++++-
+ boto/mws/connection.py | 12 +++++++++---
+ 2 files changed, 15 insertions(+), 4 deletions(-)
+
+diff --git a/boto/dynamodb/types.py b/boto/dynamodb/types.py
+index d9aaaa4cb3..a1d022ac76 100644
+--- a/boto/dynamodb/types.py
++++ b/boto/dynamodb/types.py
+@@ -27,10 +27,15 @@
+ import base64
+ from decimal import (Decimal, DecimalException, Context,
+                      Clamped, Overflow, Inexact, Underflow, Rounded)
+-from collections import Mapping
+ from boto.dynamodb.exceptions import DynamoDBNumberError
+ from boto.compat import filter, map, six, long_type
+ 
++try:
++    # Python 3.3+
++    from collections.abc import Mapping
++except ImportError:
++    from collections import Mapping
++
+ 
+ DYNAMODB_CONTEXT = Context(
+     Emin=-128, Emax=126, rounding=None, prec=38,
+diff --git a/boto/mws/connection.py b/boto/mws/connection.py
+index 687fae74f0..b01f906794 100644
+--- a/boto/mws/connection.py
++++ b/boto/mws/connection.py
+@@ -21,7 +21,6 @@
+ import xml.sax
+ import hashlib
+ import string
+-import collections
+ from boto.connection import AWSQueryConnection
+ from boto.exception import BotoServerError
+ import boto.mws.exception
+@@ -29,6 +28,13 @@
+ from boto.handler import XmlHandler
+ from boto.compat import filter, map, six, encodebytes
+ 
++try:
++    # Python 3.3+
++    from collections.abc import Iterable, Mapping
++except ImportError:
++    from collections import Iterable, Mapping
++
++
+ __all__ = ['MWSConnection']
+ 
+ api_version_path = {
+@@ -109,7 +115,7 @@ def wrapper(*args, **kw):
+ def destructure_object(value, into, prefix, members=False):
+     if isinstance(value, boto.mws.response.ResponseElement):
+         destructure_object(value.__dict__, into, prefix, members=members)
+-    elif isinstance(value, collections.Mapping):
++    elif isinstance(value, Mapping):
+         for name in value:
+             if name.startswith('_'):
+                 continue
+@@ -117,7 +123,7 @@ def destructure_object(value, into, prefix, members=False):
+                                members=members)
+     elif isinstance(value, six.string_types):
+         into[prefix] = value
+-    elif isinstance(value, collections.Iterable):
++    elif isinstance(value, Iterable):
+         for index, element in enumerate(value):
+             suffix = (members and '.member.' or '.') + str(index + 1)
+             destructure_object(element, into, prefix + suffix,

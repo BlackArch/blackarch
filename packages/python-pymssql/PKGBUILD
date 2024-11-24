@@ -3,26 +3,37 @@
 
 pkgname=python-pymssql
 _pkgname=pymssql
-pkgver=2.2.7
-pkgrel=2
+pkgver=2.3.1
+pkgrel=1
 pkgdesc='DB-API interface to Microsoft SQL Server for Python. (new Cython-based version).'
 arch=('x86_64' 'aarch64')
 url='https://pypi.org/project/pymssql/#files'
 license=('LGPL')
 depends=('python' 'freetds')
-makedepends=('python-setuptools-scm' 'cython')
+makedepends=('python-pip' 'python-build' 'python-wheel' 'cython')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('14427d36210d1418b692e549721bf61e080d361d1eb7510dd8253e442f4a9dde1da3cb5c2af8b4adceca2cc80a757ea68ce0ae2a2916e2d6454428e0b6557486')
+sha512sums=('fa8ffee9884dfa481c2f571bbcbae85683b2367aa64dbc9842bbe870149d49dae3db917b81780e05a831e8badef49419ed7829ed47f04760db5261114ddb82ac')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

@@ -2,9 +2,9 @@
 # See COPYING for license details.
 
 pkgname=python-ssh-mitm
-_pkgname=ssh-mitm
-pkgver=3.0.2
-pkgrel=2
+_pkgname=ssh_mitm
+pkgver=5.0.0
+pkgrel=1
 pkgdesc='SSH mitm server for security audits supporting public key authentication, session hijacking and file manipulation.'
 arch=('any')
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-sniffer')
@@ -13,19 +13,30 @@ license=('LGPL3')
 depends=('python' 'python-paramiko' 'python-pytz' 'python-enhancements'
          'python-requests' 'python-typeguard' 'python-packaging' 'python-rich'
          'python-sshpubkeys' 'python-colored' 'python-pyaml')
-makedepends=('python-setuptools')
+makedepends=('python-pip' 'python-build' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('9ac3b6d035c28d8e19cb674bbd3fbca7444c404348cdacfd3658c9434529e2fa820d3b5ae7b805d7a982f980588ae2abed458a84d3bf82284f8eb851436a34a2')
+sha512sums=('da823c02150870c63fbe7de431a310ac88db1f5e86ea07f4891bcaa0e9616c11cf903eb017bbf52250fd0ea91301042743cac74d335ade1b19cc259f2a65a4fa')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

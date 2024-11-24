@@ -2,15 +2,15 @@
 # See COPYING for license details.
 
 pkgname=dftimewolf
-pkgver=588.2964c929
+pkgver=736.a6b44c6b
 pkgrel=1
-pkgdesc='Framework for orchestrating forensic collection, processing and data export .'
+pkgdesc='Framework for orchestrating forensic collection, processing and data export.'
 arch=('any')
 groups=('blackarch' 'blackarch-forensic')
 url='https://github.com/log2timeline/dftimewolf'
 license=('Apache')
-depends=('python')
-makedepends=('git' 'python-pip')
+depends=('python' 'python-poetry')
+makedepends=('git')
 source=("git+https://github.com/log2timeline/$pkgname.git")
 sha512sums=('SKIP')
 install="$pkgname.install"
@@ -37,11 +37,12 @@ package() {
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname
-source venv/bin/activate
-exec python $pkgname/cli/${pkgname}_recipes.py "\$@"
+poetry config cache-dir "/usr/share/$pkgname"
+poetry env use /usr/share/$pkgname/.venv/bin/python$_pyver \\
+  --directory /usr/share/$pkgname
+poetry run --directory "/usr/share/$pkgname" $_pkgname_cmd "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

@@ -2,28 +2,40 @@
 # See COPYING for license details.
 
 pkgname=python-m2crypto
-_pkgname=M2Crypto
-pkgver=0.38.0
-pkgrel=2
-pkgdesc='Wrapper for OpenSSL.'
-arch=('any')
+_pkgname=${pkgname#python-}
+__pkgname=M2Crypto
+pkgver=0.43.0
+pkgrel=1
+pkgdesc='A Python crypto and SSL toolkit.'
+arch=('x86_64' 'aarch64')
 url='https://gitlab.com/m2crypto/m2crypto'
 license=('MIT')
-depends=('python' 'python-wheel')
-makedepends=('python-setuptools' 'swig')
+depends=('python' 'openssl')
+makedepends=('python-build' 'python-pip' 'python-wheel' 'swig')
 options=(!emptydirs)
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('b1e24e3101ce0dd9f17be4cabeddc2ec0f1228b270d74ef2fb38bae8807c5025b031d0743185f06370786a3dd5c3f42129720534dcff07ea4de3c727613f8d20')
+source=("https://files.pythonhosted.org/packages/source/${__pkgname::1}/$__pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('c5232956a88de51bd3a1e02859b7a308eabb4e055cc0c8aac2d8d34a60c60a4a4c7160db4060ec07f559134a04eb41c6ab116a194ec3f7441d342e6d38f9add9')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

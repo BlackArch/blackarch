@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-fuzzywuzzy
+_pkgname=${pkgname#python-}
+pkgver=0.18.0
+pkgrel=8
+pkgdesc='Fuzzy string matching like a boss.'
+arch=('any')
+url='https://pypi.python.org/pypi/fuzzywuzzy'
+license=('GPL2')
+depends=('python')
+optdepends=('python-levenshtein: provides a 4-10x speedup in string matching')
+makedepends=('python-build' 'python-pip')
+source=("https://github.com/seatgeek/fuzzywuzzy/archive/$pkgver/$pkgname-$pkgver.tar.gz")
+sha512sums=('3266dbb9932581db1f2e6a91fcb25730e453fe36461b496d5ea07ff285b5c3cafe35a340ea97d6a465eb253a2605f088e30d748fba3ea2a42b9c67dbc1496529')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}

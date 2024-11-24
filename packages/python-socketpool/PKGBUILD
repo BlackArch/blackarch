@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-socketpool
+_pkgname=socketpool
+pkgver=0.5.3
+pkgrel=11
+pkgdesc='A simple Python socket pool.'
+arch=('any')
+license=('MIT')
+url='https://github.com/benoitc/socketpool'
+depends=('python')
+makedepends=('python-setuptools' 'git')
+source=("git+https://github.com/benoitc/socketpool.git#tag=$pkgver")
+sha512sums=('55fb6874bfd6faeccb57dccfa94d6a219747794ce319a5fb5b593549125b714cdabc58169438c8c310c091322c0f489657da59e4903828bbc52142e209d990f3')
+
+prepare() {
+  cd $_pkgname
+
+  sed -i 's/data_files.*$/)/' setup.py
+  sed -i 's/isAlive/is_alive/' socketpool/backend_thread.py
+}
+
+build() {
+  cd $_pkgname
+
+  LC_CTYPE=en_US.UTF-8 python setup.py build
+}
+
+package() {
+  cd $_pkgname
+
+  LC_CTYPE=en_US.UTF-8 python setup.py install --root="$pkgdir" --prefix=/usr \
+    -O1 --skip-build
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

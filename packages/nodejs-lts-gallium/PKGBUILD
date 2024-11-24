@@ -1,0 +1,62 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: Bruno Pagani <archange@archlinux.org>
+# Old Contributor: Felix Yan <felixonmars@archlinux.org>
+
+pkgname=nodejs-lts-gallium
+_pkgname=nodejs
+pkgver=16.20.2
+pkgrel=3
+pkgdesc='Evented I/O for V8 javascript (LTS release: Gallium).'
+arch=('x86_64' 'aarch64')
+url='https://nodejs.org/'
+license=('MIT')
+depends=('openssl' 'zlib' 'icu' 'libuv' 'c-ares' 'brotli' 'libnghttp2')
+makedepends=('python' 'procps-ng')
+optdepends=('npm: nodejs package manager')
+options=(!lto)
+provides=("nodejs=$pkgver")
+conflicts=('nodejs')
+source=("$url/dist/v$pkgver/node-v$pkgver.tar.xz"
+        'fix-test-socket-write-after-fin-error.patch'
+        'icu72.patch')
+sha512sums=('c7953630b7d0eb832ab5a4b839c07e6505cf5f4e37853f59cd0ffc6b8742ac2ecaba20bfb47d8995ef88f3c7005bb456c1eb70cb2fc6b6fc506e1d8b81f25cb4'
+            '72cbd4c55885ecef21ef3cd21490a884386cfa6e02b04f630449539cce373607951ccf886c61cc2b96892557032253bf2c4efa1ae53993794ef6bd42ae4c6283'
+            'a1697f6c3d52cbf7f701c7019a19927100c7b1b115314828ed1faecf1e96685aa6adb78c89c0fb65dc72fa6f52e84e8b4a22ed75a96e2a2a305f3a3d9835b09b')
+
+prepare() {
+  cd "$_pkgname-v$pkgver"
+
+  patch -Np1 -i ../fix-test-socket-write-after-fin-error.patch
+  # patch -Np1 -i ../icu72.patch
+}
+
+build() {
+  cd "$_pkgname-v$pkgver"
+
+  ./configure \
+    --prefix=/usr \
+    --with-intl=system-icu \
+    --without-npm \
+    --shared-openssl \
+    --shared-zlib \
+    --shared-libuv \
+    --experimental-http-parser \
+    --shared-cares \
+    --shared-brotli \
+    --shared-nghttp2
+    # --shared-v8
+    # --shared-http-parser
+
+  make
+}
+
+package() {
+  cd "$_pkgname-v$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname/"
+}
+

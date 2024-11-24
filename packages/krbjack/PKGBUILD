@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=krbjack
+pkgver=1.2.0
+pkgrel=1
+pkgdesc='DNS dynamic update abuse in ADIDNS and MitM attack using Kerberos AP-REQ hijacking.'
+arch=('any')
+groups=('blackarch' 'blackarch-networking' 'blackarch-exploitation')
+url='https://github.com/almandin/krbjack'
+license=('custom:THE BEER-WARE LICENSE')
+depends=('python' 'python-scapy' 'impacket-ba' 'python-dnspython'
+         'python-colorama')
+makedepends=('python-build' 'python-pip')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz")
+sha512sums=('d8937395c0e5ac57b44ec30fac34a233b570f373aaf3b9a759e58beece676aead1ae64b471c43fbc62cfa5ee7994f9e11b3e982ac22687cb1b04c25e65929168')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
+

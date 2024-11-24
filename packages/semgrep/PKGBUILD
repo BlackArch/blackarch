@@ -2,9 +2,9 @@
 # See COPYING for license details.
 
 pkgname=semgrep
-pkgver=1.22.0
-_pyver=3.11
-_py=cp37.cp38.cp39.py37.py38.py39
+pkgver=1.96.0
+_pyver=3.12
+_py=cp38.cp39.cp310.cp311.py37.py38.py39.py310.py311
 pkgrel=3
 pkgdesc='Lightweight static analysis for many languages.'
 arch=('x86_64')
@@ -12,22 +12,22 @@ groups=('blackarch' 'blackarch-code-audit')
 url='https://pypi.org/project/semgrep/#files'
 license=('LGPL')
 depends=('python' 'python-attrs' 'python-boltons' 'python-colorama'
-         'python-click' 'python-click-option-group' 'python-glom'
+         'python-click' 'python-click-option-group' 'python-glom' 'python-rich'
          'python-requests' 'python-ruamel-yaml' 'python-tqdm' 'python-packaging'
-         'python-jsonschema' 'python-wcmatch' 'python-peewee'
+         'python-jsonschema' 'python-wcmatch' 'python-peewee' 'python-tomli'
          'python-defusedxml' 'python-urllib3' 'python-typing_extensions'
-         'python-lsp-jsonrpc' 'python-tomli' 'python-rich')
+         'python-lsp-jsonrpc' 'python-exceptiongroup')
 makedepends=('python-build' 'python-pip' 'python-wheel')
 replaces=('python-semgrep')
 source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz"
         "https://files.pythonhosted.org/packages/$_py/${pkgname::1}/$pkgname/${pkgname//-/_}-$pkgver-$_py-none-any.whl")
-sha512sums=('fd7004a80cd80b6d461a8b3660ac8c3a48b97585ad4d9ff00798f7fbb11488de1362f79773e874936014b722314d0adcc501982e0c64f24fa7f53dd81edb5e83'
-            '1decc14ffe3cd703140f7ef987d4b89db311a4f8f53cec62debce23fb7d4ec1e4effa41d80f83f5927c7f11da1d2d96552945872e57247a812eff65dfeb09a05')
+sha512sums=('e439ec88a6c1c8b4b24273bed1971fc6e01a42a105d5c2b13e03df1d11449cd6ed7cae0627cbadf34caad9573f2dc5e12d908bbaad8282e0431966c7a105e874'
+            '409df43b858e8bed63bbe2ae88a42c890f1e936128f495902ce9953c36c595f96001c5f4493cd987ae61df7de093cb1cef5c3bc9c37387327cfcfe0ce42469d5')
 
 build() {
   cd "$pkgname-$pkgver"
 
-  export SEMGREP_CORE_BIN="$srcdir/$pkgname-$pkgver.data/purelib/semgrep/bin/semgrep-core"
+  export SEMGREP_CORE_BIN="$srcdir/$pkgname-$pkgver.data/purelib/$pkgname/bin/$pkgname-core"
 
   python -m build --wheel --outdir="$startdir/dist"
 }
@@ -48,6 +48,9 @@ package() {
     --find-links="file://$startdir/dist" \
     "$pkgname"
 
-  strip "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/semgrep-core"
+  install -Dm 555 \
+    "$srcdir/$pkgname-$pkgver.data/purelib/$pkgname/bin/$pkgname-core" \
+    "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/$pkgname-core"
+  strip "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/$pkgname-core"
 }
 

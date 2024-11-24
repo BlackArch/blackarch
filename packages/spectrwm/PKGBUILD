@@ -7,14 +7,15 @@
 # Old Contributor: Christoph Zeiler <archNOSPAM_at_moonblade.dot.org>
 
 pkgname=spectrwm
-pkgver=3.4.1.r49.g06e3733
-pkgrel=1
+pkgver=3.6.0.r0.g64776ba
+pkgrel=2
 pkgdesc='A minimalistic automatic tiling window manager that tries to stay out of the way.'
 arch=('x86_64' 'aarch64')
 url="https://github.com/conformal/spectrwm/releases"
 license=('custom:ISC')
 depends=('dmenu' 'xcb-util' 'xcb-util-wm' 'xcb-util-keysyms' 'libxrandr'
-         'libxft' 'libxcursor' 'terminus-font')
+         'libxft' 'libxcursor' 'terminus-font' 'fontconfig' 'libbsd' 'libx11'
+         'libxcb')
 replaces=('scrotwm')
 makedepends=('git' 'libxt')
 optdepends=('scrot: screenshots'
@@ -47,16 +48,16 @@ prepare() {
 build() {
   cd "$pkgname/linux"
 
-  make PREFIX=/usr
+  make PREFIX=/usr SYSCONFDIR=/etc
 }
 
 package() {
   cd $pkgname
 
   cd linux
-  make PREFIX=/usr DESTDIR="$pkgdir" install
-  install -Dm 644 "$pkgname.desktop" \
-    "$pkgdir/usr/share/xsessions/spectrwm.desktop"
+  make PREFIX=/usr SYSCONFDIR=/etc DESTDIR="$pkgdir" install
+  install -Dm 644 "$srcdir/$pkgname/$pkgname.desktop" \
+    "$pkgdir/usr/share/xsessions/$pkgname.desktop"
 
   cd ..
   install -Dm 644 "$pkgname.conf" "$pkgdir/etc/$pkgname.conf"
@@ -68,7 +69,7 @@ package() {
   cd $srcdir
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   install -Dm 755 baraction.sh "$pkgdir/usr/share/spectrwm/baraction.sh"
-  install -Dm 755 spectrwm-no-preload "$pkgdir/usr/bin/spectrwm-no-preload"
+  install -Dm 755 "$pkgname-no-preload" "$pkgdir/usr/bin/$pkgname-no-preload"
 
   # fix this for real in the makefile
   rm "$pkgdir/usr/bin/scrotwm"

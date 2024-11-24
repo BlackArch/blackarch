@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=goshs
+pkgver=0.3.8
+pkgrel=1
+pkgdesc='A SimpleHTTPServer written in Go, enhanced with features and with a nice design.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/patrickhener/goshs'
+license=('MIT')
+depends=()
+makedepends=('git' 'go')
+source=("$url/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('3f5c3cda4ebb460ada1428885e687add36bdbe4e4a65e3ec19dc4280099af7fb6b1fb2fb7574d18264c30551e2efd59e6bf504c9d4222cbaf2941fac39e3a124')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

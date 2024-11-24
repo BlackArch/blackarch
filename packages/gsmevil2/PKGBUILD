@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=gsmevil2
+pkgver=12.eb96b4f
+pkgrel=1
+pkgdesc='Python web-based tool which use for capturing imsi numbers and sms.'
+arch=('any')
+groups=('blackarch' 'blackarch-radio' 'blackarch-sniffer')
+url='https://github.com/ninjhacks/gsmevil2'
+license=('custom:unknown')
+depends=('gr-gsm' 'kalibrate-rtl' 'python-appdirs' 'python-flask'
+         'python-flask-socketio' 'python-pyshark' 'python-termcolor')
+makedepends=('git')
+source=("git+https://github.com/ninjhacks/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  rm -rf *.md .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/GsmEvil.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-peid
+_pkgname=peid
+pkgver=2.2.1
+pkgrel=1
+pkgdesc='Python implementation of the Packed Executable iDentifier (PEiD).'
+arch=('any')
+groups=('blackarch' 'blackarch-binary' 'blackarch-reversing')
+license=('GPL3')
+depends=('python' 'python-pefile' 'python-pip')
+makedepends=('python-build')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('1feeea32802f9ffd652f13bad3cc9988347161e8224eecef90bc0242222fd67b05299d24720df238f09e0cde13f3567369c87ffeb3f54602017f657e903c2125')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$_pkgname"
+}
+

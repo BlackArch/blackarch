@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-boltons
+_pkgname=boltons
+pkgver=24.0.0
+pkgrel=1
+pkgdesc='Functionality that should be in the standard library. Like builtins, but Boltons.'
+arch=('any')
+url='https://pypi.org/project/boltons/#files'
+license=('BSD')
+depends=('python')
+makedepends=('python-build' 'python-pip' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('afc7f9d495d91e38219378f9f4f287918d6e5b19feb1299c5f504cab1d4a3e0a5fb9fa1c073d46f941c86a18086af5be3a44506d986b010b2595da0c2b908b48')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

@@ -3,37 +3,38 @@
 
 pkgname=zulucrypt
 _pkgname=zuluCrypt
-pkgver=6.2.0
+pkgver=7.0.0
 pkgrel=1
 pkgdesc='Front end to cryptsetup and tcplay and it allows easy management of encrypted block devices.'
 groups=('blackarch' 'blackarch-crypto')
-arch=('x86_64')
+arch=('x86_64' 'aarch64')
 url='https://github.com/mhogomchungu/zuluCrypt'
 license=('GPL')
-depends=('cryptsetup' 'libpwquality' 'libsecret' 'libxkbcommon-x11' 'qt5-base')
+depends=('cryptsetup' 'qt5-base' 'libpwquality' 'libsecret' 'libxkbcommon-x11'
+         'util-linux')
+optdepends=('kwalletmanager: retrieve volume keys from kde kwallet')
+conflicts=('zulucrypt-git')
 makedepends=('cmake')
 source=("https://github.com/mhogomchungu/zuluCrypt/releases/download/$pkgver/$_pkgname-$pkgver.tar.xz")
-sha512sums=('8ec56a35b57834dcd8d97e3ef738ff98841490ee50bfa3e7baf78a0977e3a1f1fa76bd5dc780d45184cdb8356bade75ae11fff17b3b4aa897bebd3620da043f3')
+sha512sums=('f131f423da2796d760e4eaa50a7e56e0283bdf6d5e46ff32bd9bf0edc127a087e947e0f7d39fd99fd28cc4566c89cde9e1a85dd67e50e1cb7d6c9de31d7918bf')
 
 build() {
   cd "$_pkgname-$pkgver"
 
   mkdir -p build
   cd build
-
   cmake -DCMAKE_INSTALL_PREFIX=/usr/ -DLIB_SUFFIX=lib -DNOGUI=false -DQT5=true \
-    -DHOMEMOUNTPREFIX=false -DCMAKE_BUILD_TYPE=release . ..
-
+    -DHOMEMOUNTPREFIX=false -DCMAKE_BUILD_TYPE=release -DWITH_UUID=e2fs . ..
   make
 }
 
 package() {
-  cd "$_pkgname-$pkgver"
+  cp "$_pkgname-$pkgver"/changelog ../${pkgname}.changelog
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" changelog README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  cd build
+  cd "$_pkgname-$pkgver/build"
   make DESTDIR="$pkgdir" install
+
+  mkdir -p "$pkgdir/etc/modules-load.d"
+  echo 'loop' > "$pkgdir/etc/modules-load.d/$pkgname.conf"
 }
 
