@@ -6,7 +6,7 @@
 # AUR Contributor: max-k <max-kATpostDOTcom>
 
 pkgname=sonar-scanner
-pkgver=4.8.0.2856
+pkgver=6.2.1.4610
 pkgrel=1
 pkgdesc='Generic CLI tool to launch project analysis on SonarQube servers.'
 groups=('blackarch' 'blackarch-code-audit')
@@ -15,25 +15,20 @@ url='https://docs.sonarqube.org/latest/analysis/scan/sonarscanner/'
 license=('LGPL3')
 depends=('java-runtime' 'sh')
 backup=("opt/$pkgname/conf/$pkgname.properties")
-source=("https://binaries.sonarsource.com/Distribution/$pkgname-cli/$pkgname-cli-$pkgver.zip")
-sha512sums=('b2c94c5c8bde1092c332421f8988fe7d709b09b6644f43c9af2a5a28d90f91656a8cda5cd7f920981225c602f00653e3ddd1ac5dba750da44d784e5736ea790d')
+source=("https://binaries.sonarsource.com/Distribution/$pkgname-cli/$pkgname-cli-$pkgver.zip"
+        "$pkgname.sh"
+        "$pkgname.install")
+sha512sums=('4da4447df630270738ee0a803bfd1d081e0c29a0783572eebada186dd808f2fd26b60de29df9cb6d284279cad215a708d3678aee8dbcbbe1f8f924ac2a267372'
+            'd31374e9cf8a7e814655b1e4dca0496e90f973b87df056fa84756b4824cd59dabe0dcf4419f0ff6428e3cb43707d6586be07ec7de31d9c39a828bb18808d0fcd'
+            '5f54133c386fe7d93618df04abe12105d846ca24f9f0706ea02055013f9623641281d8e70507afd6f04a77c98e7af11ed9ed3ef346ed4abe728b069e4f1a57f4')
 
 package() {
-  cd "$pkgname-$pkgver"
+    install -Dm755 --target-directory="$pkgdir/etc/profile.d/" "$pkgname.sh"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  rm bin/*.bat
-
-  cp -rT . "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-export SONAR_SCANNER_HOME="/usr/share/$pkgname"
-exec /usr/share/$pkgname/bin/$pkgname "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+    cd "$pkgname-$pkgver"
+    install -Dm755 --target-directory="$pkgdir/opt/$pkgname/bin/" "bin/$pkgname"
+    install -Dm644 --target-directory="$pkgdir/opt/$pkgname/lib/" "lib/$pkgname-cli-$pkgver.jar"
+    install -Dm644 --target-directory="$pkgdir/opt/$pkgname/conf/" "conf/sonar-scanner.properties"
+    ln -sf "/opt/$pkgname/conf" "$pkgdir/etc/$pkgname"
 }
 
