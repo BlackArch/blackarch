@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=libxtrxll
+pkgver=43.78fb365
+pkgrel=1
+pkgdesc='Low level XTRX hardware abstraction library.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/xtrx-sdr/libxtrxll'
+license=('Apache-2.0')
+depends=('libusb3380')
+makedepends=('git' 'cmake')
+source=("git+https://github.com/xtrx-sdr/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  mkdir -p build
+  cd build
+
+  cmake .. \
+    -DBUILD_SHARED_LIBS=ON \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_BUILD_TYPE=Release
+  make
+}
+
+package() {
+  cd $pkgname
+
+  make -C build DESTDIR="$pkgdir" install
+}
+

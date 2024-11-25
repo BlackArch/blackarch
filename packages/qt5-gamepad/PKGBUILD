@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=qt5-gamepad
+_pkgname=${pkgname/5-/}
+pkgver=v5.15.16.lts.lgpl.r0.g4a0bc80
+pkgrel=1
+pkgdesc='Adds support for getting events from gamepad devices.'
+arch=('x86_64' 'aarch64')
+groups=('qt5')
+url='https://www.qt.io'
+license=('GPL-3.0-or-later' 'LGPL-3.0-or-later' 'FDL' 'custom')
+depends=('qt5-base' 'sdl2')
+makedepends=('git' 'qt5-declarative')
+optdepends=('qt5-declarative: QML bindings')
+source=("git+https://invent.kde.org/qt/qt/$_pkgname.git#branch=5.15")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  mkdir -p build
+}
+
+build() {
+  cd build
+
+  qmake ../$_pkgname
+  make
+}
+
+package() {
+  cd build
+  make INSTALL_ROOT="$pkgdir" install
+
+  # Drop QMAKE_PRL_BUILD_DIR because reference the build dir
+  find "$pkgdir/usr/lib" -type f -name '*.prl' \
+    -exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;
+
+  install -d "$pkgdir/usr/share/licenses"
+  ln -s /usr/share/licenses/qt5-base "$pkgdir/usr/share/licenses/$pkgname"
+}
+
