@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=liblms7002m-xtrx
+_pkgname=liblms7002m
+pkgver=10.b07761b
+pkgrel=1
+pkgdesc='Compact LMS7002M library suitable for resource-limited MCUs.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/xtrx-sdr/liblms7002m'
+license=('LGPL-2.1-or-later')
+depends=()
+makedepends=('git' 'cmake' 'python-cheetah3')
+source=("git+https://github.com/xtrx-sdr/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $_pkgname
+
+  mkdir -p build
+  cd build
+
+  cmake .. \
+    -DBUILD_SHARED_LIBS=ON \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_BUILD_TYPE=Release
+
+  make
+}
+
+package() {
+  cd $_pkgname
+
+  make -C build DESTDIR="$pkgdir" install
+}
+

@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=libxtrx
+pkgver=78.d9599fb
+pkgrel=1
+pkgdesc='High level API for the xtrx SDR.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/xtrx-sdr/libxtrx'
+license=('Apache-2.0')
+depends=('liblms7002m-xtrx' 'libxtrxdsp' 'libxtrxll' 'qcustomplot' 'soapysdr')
+makedepends=('git' 'cmake')
+source=("git+https://github.com/xtrx-sdr/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  mkdir -p build
+  cd build
+
+  cmake .. \
+    -DBUILD_SHARED_LIBS=ON \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_BUILD_TYPE=Debug
+  make
+}
+
+package() {
+  cd $pkgname
+
+  make -C build DESTDIR="$pkgdir" install
+}
+
