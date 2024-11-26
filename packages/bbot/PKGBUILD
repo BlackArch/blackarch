@@ -9,17 +9,8 @@ arch=('any')
 groups=('blackarch' 'blackarch-recon')
 url='https://github.com/blacklanternsecurity/bbot'
 license=('GPL-3.0-or-later')
-depends=('python' 'python-ansible' 'python-beautifulsoup4' 'python-cachetools'
-         'python-deepdiff' 'python-dnspython' 'python-httpx' 'python-idna'
-         'python-jinja' 'python-lxml' 'python-mmh3' 'python-omegaconf'
-         'python-psutil' 'python-puremagic' 'python-pycryptodome'
-         'python-pydantic' 'python-pyopenssl' 'python-pyjwt' 'python-pyzmq'
-         'python-radixtarget' 'python-regex' 'python-setproctitle'
-         'python-socksio' 'python-tabulate' 'python-tldextract'
-         'python-unidecode' 'python-websockets' 'python-wordninja'
-         'python-yara-python-dex' 'ansible-runner' 'baddns' 'cloudcheck'
-         'xmltojson')
-makedepends=('git' 'python-build' 'python-pip')
+depends=('python')
+makedepends=('git' 'python-virtualenv' 'python-pip')
 source=("git+https://github.com/blacklanternsecurity/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -34,26 +25,23 @@ pkgver() {
   )
 }
 
-build() {
-  cd $pkgname
-
-  python -m build --wheel --outdir="$startdir/dist"
-}
-
 package() {
-  cd $pkgname
+    cd $pkgname
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $pkgname
+    install -dm755 "$pkgdir/usr/share/$pkgname"
+
+    python -m venv "$pkgdir/usr/share/$pkgname/venv"
+    source "$pkgdir/usr/share/$pkgname/venv/bin/activate"
+
+    pip install --upgrade pip
+    pip install .
+
+    deactivate
+
+    install -Dm755 /dev/stdin "$pkgdir/usr/bin/$pkgname" <<EOF
+#!/bin/bash
+source /usr/share/$pkgname/venv/bin/activate
+exec python -m $pkgname.cli "\$@"
+EOF
 }
 
