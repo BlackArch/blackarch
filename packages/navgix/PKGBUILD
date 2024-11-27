@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=navgix
+pkgver=3.6f25c98
+pkgrel=1
+pkgdesc='Blazing fast, advanced Padding Oracle exploit.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-exploit' 'blackarch-crypto')
+url='https://github.com/hakaioffsec/navgix'
+license=('NONE')
+makedepends=('git' 'go')
+source=("git+https://github.com/hakaioffsec/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  # use, if no version string provided neither in sources nor in git describe:
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  # If you encounter the error: go mod download: no modules specified (see 'go help mod download')
+  # while building, then uncomment the following lines:
+  # GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+
