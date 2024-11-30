@@ -9,11 +9,10 @@ arch=('any')
 groups=('blackarch' 'blackarch-sniffer')
 url='https://github.com/HalilDeniz/DNSWatch'
 license=('MIT')
-depends=('python')
-makedepends=('git' 'python-setuptools' 'python-pip')
-source=("$pkgname::git+https://github.com/HalilDeniz/$pkgname.git")
+depends=('python' 'python-argparse' 'python-pyfiglet' 'python-requests' 'python-scapy')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/HalilDeniz/$pkgname.git")
 sha512sums=('SKIP')
-install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
@@ -26,25 +25,15 @@ pkgver() {
   )
 }
 
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm -rf LICENSE .gitignore .github img *.md
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-source /usr/share/$pkgname/venv/bin/activate
-exec python /usr/share/$pkgname/dnswatch.py "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }
 
