@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-argus
+_pkgname=Argus
+__pkgname=argus
+pkgver=7.56ece87
+pkgrel=1
+pkgdesc='All-in-One OSINT Toolkit.'
+arch=('any')
+groups=('blackarch' 'blackarch-misc' 'blackarch-recon')
+url='https://github.com/jasonxtn/Argus'
+license=('GPL')
+depends=('python')
+makedepends=('git' 'python-setuptools' 'python-pip')
+source=("git+https://github.com/jasonxtn/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $_pkgname
+
+  python -m venv .
+  ./bin/pip install -r requirements.txt
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$__pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/bin/activate
+exec python /usr/share/$pkgname/argus.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$__pkgname"
+}
