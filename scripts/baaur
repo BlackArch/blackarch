@@ -2,7 +2,7 @@
 # Uploads a package to the AUR.
 # TODO: Finish this.
 
-if (( $# < 3 )) ; then
+usage() {
 	cat >&2 <<-HELP
 	usage: upload-to-aur MAINTAINER CATEGORY PKGBUILD
 	where MAINTAINER is a string such as 'Evan Teitelman <teitelmanevan at gmail dot com>'.
@@ -10,11 +10,28 @@ if (( $# < 3 )) ; then
 			PKGBUILD is the PKGBUILD file.
 	HELP
 	exit 1
+}
+
+# Check if the user has provided three arguments
+if (( $# < 3 )) ; then
+	usage
 fi
 
 maintainer=$1
 category=$2
 pkgbuild=$3
+
+# Check if the PKGBUILD file exists and is readable
+if [[ ! -f "$pkgbuild" || ! -r "$pkgbuild" ]]; then
+	echo "Error: PKGBUILD file does not exist or is not readable" >&2
+	exit 2
+fi
+
+# Check if the PKGBUILD file is valid
+if ! makepkg --printsrcinfo -p "$pkgbuild" >/dev/null 2>&1; then
+	echo "Error: PKGBUILD file is not valid" >&2
+	exit 3
+fi
 
 cleanup() {
 	rm -f "$tmp"
@@ -28,10 +45,22 @@ cat > "$tmp" <<EOF
 
 EOF
 
-cat "$arg" >> "$tmp"
-makepkg -Sp "$tmp"
-( source "$tmp"
-  burp -c "$category" "$pkgname-$pkgver-$pkgrel.src.tar.gz" )
+cat "$pkgbuild" >> "$tmp"
+
+# Source the temporary file to get the package name, version, and release variables
+source "$tmp"
+
+# Check if the package already exists in the AUR
+if curl -s "https://aur.archlinux.org/rpc/?v=5&type=info&arg[]=$pkgname" | grep -q '"resultcount":0'; then
+	# Upload the package archive and check for errors
+	if ! aurpublish -c "$category" "$pkgname-$pkgver-$pkgrel.src.tar.gz"; then
+		echo "Error: Failed to upload package archive" >&2
+		exit 5
+	fi
+else
+	echo "Warning: Package $pkgname already exists in the AUR" >&2
+fi
+
 # Add maintainer tag
 # Blacklist
 # Check SCM
