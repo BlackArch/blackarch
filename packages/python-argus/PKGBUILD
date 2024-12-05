@@ -17,9 +17,14 @@ source=("git+https://github.com/jasonxtn/$_pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
-  cd $_pkgname
+  cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
