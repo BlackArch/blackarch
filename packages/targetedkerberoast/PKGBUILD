@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=targetedkerberoast
+pkgver=23.d77e642
+pkgrel=1
+pkgdesc='Kerberoast with ACL abuse capabilities.'
+arch=('any')
+groups=('blackarch' 'blackarch-windows')
+url='https://github.com/ShutdownRepo/targetedkerberoast'
+license=('GPL-3.0-or-later')
+depends=('impacket-ba' 'python' 'python-ldap3' 'python-pyasn1'
+         'python-pycryptodome' 'python-rich')
+makedepends=('git')
+source=("git+$url.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  cp -a targetedKerberoast.py "$pkgdir/usr/share/$pkgname/$pkgname.py"
+  cp -a kerberoastables.txt "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/$pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

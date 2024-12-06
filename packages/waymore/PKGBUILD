@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=waymore
+pkgver=v4.6.r0.g604ec29
+pkgrel=1
+pkgdesc='Find way more from the Wayback Machine, Common Crawl, Alien Vault OTX, URLScan & VirusTotal.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/xnl-h4ck3r/waymore'
+license=('MIT')
+depends=('python' 'python-tldextract' 'python-psutil' 'python-termcolor'
+         'python-requests' 'python-pyaml')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/xnl-h4ck3r/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+}
+

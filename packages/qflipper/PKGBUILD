@@ -1,0 +1,60 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD from AUR.
+# Old Maintainer: L. Bradley LaBoon <me@bradleylaboon.com>
+
+pkgname=qflipper
+pkgver=1.3.3
+pkgrel=1
+pkgdesc='Desktop application for updating Flipper Zero firmware via PC.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-firmware')
+url='https://github.com/flipperdevices/qFlipper'
+license=('GPL3')
+depends=('libusb' 'qt6-5compat' 'qt6-declarative' 'qt6-serialport' 'qt6-svg')
+makedepends=('git' 'qt6-tools')
+source=("$pkgname"::"git+https://github.com/flipperdevices/qFlipper.git#tag=$pkgver"
+        'git+https://github.com/pbatard/libwdi'
+        'git+https://github.com/nanopb/nanopb')
+sha512sums=('SKIP'
+            'SKIP'
+            'SKIP')
+
+prepare() {
+  cd $pkgname
+
+  git submodule init
+  git config submodule.driver-tool/libwdi.url "$srcdir/libwdi"
+  git config submodule.3rdparty/nanopb.url "$srcdir/nanopb"
+  git -c protocol.file.allow=always submodule update
+
+  # Use uucp group instead of dialout for udev rules
+  sed -i 's/dialout/uucp/g' installer-assets/udev/42-flipperzero.rules
+}
+
+build() {
+  local _qmake_options=(
+    ../qFlipper.pro
+    -spec linux-g++
+    CONFIG+=qtquickcompiler
+    DEFINES+=DISABLE_APPLICATION_UPDATES
+    PREFIX=/usr
+  )
+
+  mkdir -p "$pkgname/build"
+  cd "$pkgname/build"
+
+  qmake6 "${_qmake_options[@]}"
+
+  make qmake_all
+  make
+}
+
+package() {
+  make -C "$pkgname/build" INSTALL_ROOT="$pkgdir" install
+
+  mv "$pkgdir/usr/bin/qFlipper" "$pkgdir/usr/bin/$pkgname"
+  mv "$pkgdir/usr/bin/qFlipper-cli" "$pkgdir/usr/bin/$pkgname-cli"
+}
+

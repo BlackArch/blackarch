@@ -1,0 +1,60 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=mssqlrelay
+pkgver=10.97efa52
+pkgrel=1
+pkgdesc="Microsoft SQL Relay is an offensive tool for auditing and abusing Microsoft SQL (MSSQL) services."
+arch=('any')
+groups=('blackarch' 'blackarch-windows')
+url='https://github.com/CompassSecurity/mssqlrelay'
+license=('MIT')
+depends=('python'
+         'impacket-ba'
+         'python-asn1crypto'
+         'python-cryptography'
+         'python-ldap3'
+         'python-pyasn1'
+         'python-dnspython'
+         'python-dsinternals'
+         'python-pyopenssl'
+         'python-requests'
+         'python-requests-ntlm'
+)
+makedepends=('git' 'python-setuptools')
+source=("git+$url.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i 's/pyasn1==0.4.8/pyasn1/' setup.py
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" LICENSE
+
+  find "$pkgdir" -type f -iname '*.pyc' -exec rm {} \;
+}
+

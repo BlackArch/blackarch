@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pre2k
+pkgver=22.be66190
+pkgrel=1
+pkgdesc='Query for existence of pre-windows 2000 computer objects which can be leveraged to gain a foothold in a target domain.'
+arch=('any')
+groups=('blackarch' 'blackarch-windows' 'blackarch-recon')
+url='https://github.com/garrettfoster13/pre2k-TS'
+license=('MIT')
+depends=('python' 'impacket-ba' 'python-ldap3' 'python-pyasn1' 'python-rich')
+makedepends=('git')
+source=("$pkgname::git+$url.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd "$pkgname"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" LICENSE
+
+  cp -a "$pkgname.py" "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/$pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

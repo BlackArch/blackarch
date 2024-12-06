@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=dnswatch
+pkgver=dnswatch.1.r16.gea62872
+pkgrel=1
+pkgdesc='DNS Traffic Sniffer and Analyzer.'
+arch=('any')
+groups=('blackarch' 'blackarch-sniffer')
+url='https://github.com/HalilDeniz/DNSWatch'
+license=('MIT')
+depends=('python' 'python-argparse' 'python-pyfiglet' 'python-requests'
+         'python-scapy')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/HalilDeniz/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+}
+
