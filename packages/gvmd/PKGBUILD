@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# from AUR - adapted to you style
+#
+# Old Contributor: Matthias Fulz < mfulz [at] olznet [dot] de >
+
+pkgname=gvmd
+pkgver=24.0.0
+pkgrel=1
+pkgdesc='Greenbone Vulnerability Manager - The database backend for the Greenbone Community Edition.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/greenbone/gvmd'
+license=('AGPL-3.0-only')
+depends=('ospd-openvas' 'cjson' 'gvm-libs' 'libbsd' 'libical' 'pg-gvm' 'python'
+         'gnutls' 'postgresql' 'libxslt')
+makedepends=('cmake' 'doxygen' 'xmltoman' 'libxslt')
+optdepends=('logrotate: for rotating logs'
+            'greenbone-feed-sync: scripts for downloading updated feed informations')
+source=("https://github.com/greenbone/gvmd/archive/v$pkgver.tar.gz"
+        'archlinux_postgres_headers.patch'
+        '0001-fix-unit-path.patch'
+        'gvmd.tmpfiles')
+sha512sums=('87f648a3e4a5f879f4686e0544562fdabf8f65a31d467f0c696d5c276d5bde6e77fa1f640cd321da6e00ad9bfedad15f179d098b500f5e1043cd7c4c5ad2c824'
+            'ec2cbedf87bfd8cc1abfc6be9c566b6d2e6f7b1f902f5596d496b01faf208c9921b502d77ec9281ef3c0d03462f2d49bb973f4f9216a106116cd824e938951c2'
+            '3d86dfd288dcf1ab91454c0fefcb33e2bf9cdc20638804fd524ebee5ff5783a21c67e9d6b5b575a2d009c2f97828d3866513b00d02d18665ecf3f1ca91c99c41'
+            'f34f37df26faa8ea80574d9311c12fe37747ceda1b98cdf7dfc97451b840a01d5352af1412667f40e51f80bc314a799cad1d13dae7224580f2c4d97b8d5b78e3')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch --forward --strip=1 --input="$srcdir/archlinux_postgres_headers.patch"
+  patch -Np2 -i "$srcdir/0001-fix-unit-path.patch"
+}
+
+build() {
+  cmake \
+    -B build \
+    -S "$pkgname-$pkgver" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DSBINDIR=/usr/bin \
+    -DLIBDIR=/usr/lib \
+    -DSYSCONFDIR=/etc \
+    -DLOCALSTATEDIR=/var \
+    -DGVM_FEED_LOCK_PATH=/run/gvm/feed-update.lock \
+    -DGVM_RUN_DIR=/run/gvm/
+
+  make -C build
+}
+
+package() {
+  make DESTDIR="$pkgdir" -C build install
+
+  install -Dm 644 "$pkgname.tmpfiles" "$pkgdir/usr/lib/tmpfiles.d/$pkgname.conf"
+}
+
