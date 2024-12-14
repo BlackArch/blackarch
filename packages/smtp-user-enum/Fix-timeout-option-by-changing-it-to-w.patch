@@ -1,0 +1,47 @@
+From: Marius Renner <marius@mariusrenner.de>
+Date: Tue, 4 Aug 2020 10:50:08 +0200
+Subject: Fix timeout option by changing it to '-w'
+
+The usage hint listed both the option for the target host and the option
+for the query timeout as '-t'. Of course there is no way to make that
+work reliably.
+
+As there was no way to properly specify the timeout before, it is safe
+to assume that absolutely nobody could rely on the old option '-t' for
+the timeout. Therefore the timeout option was changed to '-w' and added
+to the option parser. Old commandlines will still work because '-t'
+always was and still is used for the target host.
+---
+ smtp-user-enum.pl | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/smtp-user-enum.pl b/smtp-user-enum.pl
+index 7600bd3..8735270 100755
+--- a/smtp-user-enum.pl
++++ b/smtp-user-enum.pl
+@@ -69,7 +69,7 @@ options are:
+ 	-T file  File of hostnames running the smtp service
+ 	-p port  TCP port on which smtp service runs (default: $smtp_port)
+ 	-d       Debugging output
+-	-t n     Wait a maximum of n seconds for reply (default: $query_timeout)
++	-w n     Wait a maximum of n seconds for reply (default: $query_timeout)
+ 	-v       Verbose
+ 	-h       This help message
+ 
+@@ -84,7 +84,7 @@ Examples:
+ 
+ USAGE
+ 
+-getopts('m:u:U:s:S:r:dt:vhM:f:D:p:', \%opts);
++getopts('m:u:U:s:S:r:dt:vhM:f:D:p:w:', \%opts);
+ 
+ # Print help message if required
+ if ($opts{'h'}) {
+@@ -105,6 +105,7 @@ $debug          = $opts{'d'} if $opts{'d'};
+ $smtp_port      = $opts{'p'} if $opts{'p'};
+ $mode           = $opts{'M'} if $opts{'M'};
+ $from_address   = $opts{'f'} if $opts{'f'};
++$query_timeout  = $opts{'w'} if $opts{'w'};
+ 
+ # Check for illegal option combinations
+ unless ((defined($username) or defined($username_file)) and (defined($host) or defined($host_file))) {
