@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=libperseus-sdr
+pkgver=v0.8.2.r3.gc2c95da
+pkgrel=1
+pkgdesc='Perseus Software Defined Radio Control Library for Linux.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-radio')
+url='https://github.com/Microtelecom/libperseus-sdr'
+license=('LGPL-3.0-or-later')
+depends=('libusb')
+makedepends=('git' 'vim')
+provides=('libperseus-sdr.so')
+source=("git+https://github.com/Microtelecom/$pkgname.git"
+        "0001-makefile-install-udev-rules-to-correct-location.patch")
+sha512sums=('SKIP'
+            '2abc9cc1b291b4d32e37ef252d1e0dc0a970b0788cdecd2c7e523f5368c611532eb9329c5cf4679a6437293ecac682ad5abfe44d6aaa6e5a02806aa1ff15d778')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  patch -p1 < "../0001-makefile-install-udev-rules-to-correct-location.patch"
+}
+
+build() {
+  cd $pkgname
+
+  autoreconf -i
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd $pkgname
+
+  make DESTDIR="$pkgdir" install
+}
+
