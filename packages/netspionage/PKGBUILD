@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=netspionage
+pkgver=99.c24f995
+pkgrel=1
+pkgdesc='Network Forensics CLI utility that performs Network Scanning, OSINT, and Attack Detection.'
+arch=('any')
+groups=('blackarch' 'blackarch-forensic' 'blackarch-recon' 'blackarch-scanner')
+url='https://github.com/ANG13T/netspionage'
+license=('custom:unknown')
+depends=('python' 'python-scapy' 'python-pandas' 'python-pick'
+         'python-requests' 'python-termcolor')
+makedepends=('git')
+source=("git+https://github.com/ANG13T/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  rm -rf *.md .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python netspionage.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

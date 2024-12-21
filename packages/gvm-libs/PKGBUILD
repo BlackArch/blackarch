@@ -1,19 +1,35 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
+#
+# from AUR - adapted to you style
+#
+# Old Contributor: Luis Martinez <luis dot martinez at disroot dot org>
+# Old Contributor: Christian Rebischke <chris.rebischke@archlinux.org>
+# Old Contributor: Levente Polyak <anthraxx[at]archlinux[dot]org>
+# Old Contributor : Daniel Micay <danielmicay@gmail.com>
 
 pkgname=gvm-libs
-pkgver=22.5.0
+pkgver=22.14.0
 pkgrel=1
-pkgdesc='greenbone-vulnerability-manager libraries.'
+pkgdesc='Greenbone Vulnerability Management Libraries.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/greenbone/gvm-libs'
 license=('GPL')
-depends=('gnutls' 'libpcap' 'gpgme' 'libssh' 'glib2' 'libldap' 'hiredis' 'sudo'
-         'libnet' 'paho-mqtt-c' 'zlib' 'libgcrypt' 'util-linux-libs' 'libxml2')
-makedepends=('cmake' 'doxygen' 'graphviz')
-source=("https://github.com/greenbone/gvm-libs/archive/v$pkgver.tar.gz")
-sha512sums=('3e7b9d8a9f846198be629417c11f90b981839aa33958f956144609bdc5a06bd3ec7451f0202c1c3d8447b8107428ede3d79ddcae90ea7af440932cccb301c1f4')
+depends=('cjson' 'gnutls' 'hiredis' 'libgcrypt' 'libgio-2.0.so' 'libglib-2.0.so'
+         'libgpgme.so' 'libldap' 'libnet' 'libssh.so' 'libuuid.so' 'libxml2.so'
+         'paho-mqtt-c' 'zlib' 'libpcap')
+makedepends=('cmake')
+provides=(
+  "libgvm_base.so=${pkgver::2}-64"
+  "libgvm_boreas.so=${pkgver::2}-64"
+  "libgvm_gmp.so=${pkgver::2}-64"
+  "libgvm_osp.so=${pkgver::2}-64"
+  "libgvm_util.so=${pkgver::2}-64")
 replaces=('openvas-libraries')
+source=("https://github.com/greenbone/gvm-libs/archive/v$pkgver.tar.gz")
+sha256sums=('23fd9dcc0b26f7156a065d1e71046696698e66b43eb756c10af86124f9b9523c')
+
+PURGE_TARGETS=('var/run')
 
 prepare() {
   cd "$pkgname-$pkgver"
@@ -22,27 +38,20 @@ prepare() {
 }
 
 build() {
-  cd "$pkgname-$pkgver"
-
-  #LDFLAGS+=" -Wl,--no-as-needed"
-
   cmake \
+    -B build \
+    -S "$pkgname-$pkgver" \
     -DCMAKE_BUILD_TYPE=None \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DLIBDIR=/usr/lib \
     -DSYSCONFDIR=/etc \
-    -DLOCALSTATEDIR=/var \
-    -B build \
-    -S "$pkgname-$pkgver" \
-    .
+    -DLOCALSTATEDIR=/var
 
   make -C build
 }
 
 package() {
-  cd "$pkgname-$pkgver"
-
-  make DESTDIR="$pkgdir" -C build install
+  make DESTDIR="${pkgdir}/" -C build install
 
   rm -rf "$pkgdir/run"
 }

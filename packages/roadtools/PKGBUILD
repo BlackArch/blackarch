@@ -1,0 +1,125 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=roadtools
+_pkgbase=ROADtools
+pkgname=('roadlib' 'roadrecon' 'roadoidc' 'roadtx')
+pkgver=327.87ffa57
+pkgrel=1
+pkgdesc='Azure AD and O365 exploration framework.'
+arch=('any')
+groups=('blackarch' 'blackarch-windows' 'blackarch-scanner' 'blackarch-recon')
+url='https://github.com/dirkjanm/ROADtools'
+license=('MIT')
+makedepends=('python-build' 'python-pip' 'git' 'npm')
+source=("git+https://github.com/dirkjanm/$_pkgbase.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgbase
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd "$_pkgbase/roadlib"
+
+  python -m build --wheel --outdir="$startdir/dist"
+
+  cd "../roadrecon/frontend"
+
+  npm install
+  npm run build
+
+  cd ".."
+
+  python -m build --wheel --outdir="$startdir/dist"
+
+  cd "../roadtx"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package_roadlib() {
+  depends=('python' 'python-adal' 'python-sqlalchemy' 'python-pyjwt')
+
+  cd "$_pkgbase/roadlib"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
+
+package_roadoidc() {
+  depends=('python' 'roadlib' 'roadtx' 'python-flask' 'python-cryptography'
+           'python-requests' 'python-werkzeug')
+
+  cd "$_pkgbase/roadoidc"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/genconfig" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/genconfig.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/genconfig"
+}
+
+package_roadrecon() {
+  depends=('python' 'roadlib' 'python-flask' 'python-sqlalchemy'
+           'python-marshmallow' 'python-flask-sqlalchemy'
+           'python-flask-marshmallow' 'python-flask-cors'
+           'python-marshmallow-sqlalchemy' 'python-aiohttp')
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
+
+package_roadtx() {
+  depends=('python' 'python-requests' 'python-selenium' 'python-selenium-wire'
+           'python-pyotp' 'python-pycryptodomex' 'python-blinker')
+
+  cd "$_pkgbase/roadtx"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
+

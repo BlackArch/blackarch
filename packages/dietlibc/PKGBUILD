@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Old Maintainer: tarball <bootctl@gmail.com>
+# Old Contributor: Kyle Keen <keenerd@gmail.com>
+# Old Contributor: Sergej Pupykin <pupykin.s+arch@gmail.com>
+# Old Contributor: Tino Reichardt <milky-archlinux@mcmilk.de>
+
+pkgname=dietlibc
+pkgver=0.35
+pkgrel=1
+pkgdesc='A libc optimized for small size.'
+arch=('x86_64' 'aarch64')
+url='https://www.fefe.de/dietlibc/'
+license=("GPL-2.0-only")
+options=('staticlibs')
+source=("https://www.fefe.de/$pkgname/$pkgname-$pkgver.tar.xz")
+sha512sums=('24adcdb0968c45f888fdb923f898b38d3b25e2bff09960000fbbefdfcb678d96632f7fe2987ba48c791001d134d606099a363b02b4b76ea7d477206d02844c89')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  install -dm 755 "$pkgdir/usr/bin/"
+  install -dm 755 "$pkgdir/usr/man/man1/"
+
+  for bin in "$pkgdir"/opt/diet/bin/*; do
+    ln -s /opt/diet/bin/"$(basename "$bin")" -t "$pkgdir/usr/bin/"
+  done
+
+  ln -s /opt/diet/man/man1/diet.1 -t "$pkgdir/usr/man/man1/"
+}
+
