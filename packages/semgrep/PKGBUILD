@@ -2,55 +2,29 @@
 # See COPYING for license details.
 
 pkgname=semgrep
-pkgver=1.96.0
-_pyver=3.12
-_py=cp38.cp39.cp310.cp311.py37.py38.py39.py310.py311
-pkgrel=3
+pkgver=1.100.0
+pkgrel=2
+epoch=1
 pkgdesc='Lightweight static analysis for many languages.'
-arch=('x86_64')
+arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-code-audit')
-url='https://pypi.org/project/semgrep/#files'
-license=('LGPL')
-depends=('python' 'python-attrs' 'python-boltons' 'python-colorama'
-         'python-click' 'python-click-option-group' 'python-glom' 'python-rich'
-         'python-requests' 'python-ruamel-yaml' 'python-tqdm' 'python-packaging'
-         'python-jsonschema' 'python-wcmatch' 'python-peewee' 'python-tomli'
-         'python-defusedxml' 'python-urllib3' 'python-typing_extensions'
-         'python-lsp-jsonrpc' 'python-exceptiongroup')
+url='https://pypi.org/project/semgrep/'
+license=('LGPL-2.0-only')
+depends=('python')
 makedepends=('python-build' 'python-pip' 'python-wheel')
 replaces=('python-semgrep')
-source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz"
-        "https://files.pythonhosted.org/packages/$_py/${pkgname::1}/$pkgname/${pkgname//-/_}-$pkgver-$_py-none-any.whl")
-sha512sums=('e439ec88a6c1c8b4b24273bed1971fc6e01a42a105d5c2b13e03df1d11449cd6ed7cae0627cbadf34caad9573f2dc5e12d908bbaad8282e0431966c7a105e874'
-            '409df43b858e8bed63bbe2ae88a42c890f1e936128f495902ce9953c36c595f96001c5f4493cd987ae61df7de093cb1cef5c3bc9c37387327cfcfe0ce42469d5')
-
-build() {
-  cd "$pkgname-$pkgver"
-
-  export SEMGREP_CORE_BIN="$srcdir/$pkgname-$pkgver.data/purelib/$pkgname/bin/$pkgname-core"
-
-  python -m build --wheel --outdir="$startdir/dist"
-}
+install="$pkgname.install"
 
 package() {
-  cd "$pkgname-$pkgver"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    "$pkgname"
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec /usr/share/$pkgname/venv/bin/$pkgname "\$@"
+EOF
 
-  install -Dm 555 \
-    "$srcdir/$pkgname-$pkgver.data/purelib/$pkgname/bin/$pkgname-core" \
-    "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/$pkgname-core"
-  strip "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/bin/$pkgname-core"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

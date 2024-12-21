@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ldapmonitor
+pkgver=1.4.r12.g498e048
+pkgrel=1
+pkgdesc='Monitor creation, deletion and changes to LDAP objects live during your pentest or system administration!'
+arch=('any')
+groups=('blackarch' 'blackarch-windows' 'blackarch-misc')
+url='https://github.com/p0dalirius/ldapmonitor'
+license=('GPL-3.0-only')
+depends=('python' 'python-ldap3' 'python-pycryptodome' 'python-sectools')
+makedepends=('git')
+source=("git+$url.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" python/README.md
+
+  cp -aT "python/pyLDAPmonitor.py" "$pkgdir/usr/share/$pkgname/$pkgname.py"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/$pkgname.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+

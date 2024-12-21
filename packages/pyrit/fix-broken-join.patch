@@ -1,0 +1,24 @@
+From: =?utf-8?q?Rapha=C3=ABl_Hertzog?= <raphael@offensive-security.com>
+Date: Tue, 4 Feb 2020 12:35:11 +0100
+Subject: Fix broken join
+
+---
+ cpyrit/storage.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/cpyrit/storage.py b/cpyrit/storage.py
+index 3933f62..dcf3a51 100644
+--- a/cpyrit/storage.py
++++ b/cpyrit/storage.py
+@@ -962,7 +962,10 @@ if 'sqlalchemy' in sys.modules:
+                 pwtotal = 0 if pwtotal is None else int(pwtotal)
+                 q = session.query(ESSID_DBObject.essid,
+                                   sql.func.sum(PAW2_DBObject.numElems))
+-                q = q.outerjoin(PYR2_DBObject).outerjoin(PAW2_DBObject)
++                q = q.outerjoin(PYR2_DBObject,
++                                PYR2_DBObject.essid_id==ESSID_DBObject.essid_id)
++                q = q.outerjoin(PAW2_DBObject,
++                                PAW2_DBObject.key==PYR2_DBObject.key)
+                 q = q.group_by(ESSID_DBObject.essid)
+                 essid_results = {}
+                 for essid, pwcount in q:

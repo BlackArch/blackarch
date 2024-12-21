@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-dissect.sql
+_pkgname=${pkgname#python-}
+pkgver=3.10.r0.g863d97e
+pkgrel=1
+pkgdesc='A Dissect module implementing a parsers for the SQLite database file format, commonly used by applications to store configuration data.'
+arch=('any')
+groups=('blackarch' 'blackarch-forensic')
+url='https://github.com/fox-it/dissect.sql'
+license=('AGPL-3.0-or-later')
+depends=('python' 'python-dissect.cstruct' 'python-dissect.util')
+makedepends=('git' 'python-pip' 'python-build' 'python-installer'
+             'python-wheel' 'python-setuptools' 'python-setuptools-scm')
+options=(!emptydirs)
+source=("git+https://github.com/fox-it/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  git -C "$srcdir/$_pkgname" clean -dfx
+}
+
+build() {
+  cd $_pkgname
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd $_pkgname
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+

@@ -1,0 +1,59 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sccmhunter
+pkgver=v1.0.6.r23.g25f189e
+pkgrel=1
+pkgdesc='Identifying, profiling, and attacking SCCM related assets in an Active Directory domain.'
+arch=('any')
+groups=('blackarch' 'blackarch-windows')
+url='https://github.com/garrettfoster13/sccmhunter'
+license=('MIT')
+depends=('python'
+         'python-cmd2'
+         'python-cryptography'
+         'impacket-ba'
+         'python-ldap3'
+         'python-pandas'
+         'python-pyasn1'
+         'python-pyasn1-modules'
+         'python-requests'
+         'python-requests-ntlm'
+         'python-requests-toolbelt'
+         'python-rich'
+         'python-tabulate'
+         'python-typer'
+         'python-urllib3'
+         'python-pyopenssl'
+         'python-pycryptodome'
+)
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+source=("git+$url.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd $pkgname
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+
+  mv "$pkgdir/usr/bin/$pkgname.py" "$pkgdir/usr/bin/$pkgname"
+}
+

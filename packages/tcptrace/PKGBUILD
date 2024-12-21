@@ -7,7 +7,7 @@
 
 pkgname=tcptrace
 pkgver=6.6.7
-pkgrel=7
+pkgrel=8
 pkgdesc='A TCP dump file analysis tool.'
 groups=('blackarch' 'blackarch-networking')
 arch=('x86_64' 'aarch64')
@@ -20,18 +20,17 @@ optdepends=(
   'xplot: for plotting graphs'
 )
 source=("https://ftp.fau.de/macports/distfiles/tcptrace/$pkgname-$pkgver.tar.gz"
-        "$pkgname-${pkgver}_no_pcap_offline_read.patch")
+        "$pkgname-${pkgver}_no_pcap_offline_read.patch"
+        'compress.c.patch')
 sha512sums=('3638770c342aea6c71aa556e758ed22e1fd44730f6c652cf82d3861eb1c31b186952c660071bd1df45020b80eaf9dd090a4ff58c979cc907eb8154dcb7b9b432'
-            'f3acc25267119868b944891a2341786865a86fe83fd452e988dc5b0aa56b2555118a879f411dfd35e398cf4d6ffffd56a31a68d50fb2ee117d895eca3929a703')
+            'f3acc25267119868b944891a2341786865a86fe83fd452e988dc5b0aa56b2555118a879f411dfd35e398cf4d6ffffd56a31a68d50fb2ee117d895eca3929a703'
+            '1257465eecd4f455c975a005fe819cf0ea62f3ef852b0646996bf16d577dba33600edf67683caa25ff1f41abb78a80d60d68642a5057d2364492b65924fa8f1a')
 
 prepare() {
   cd "$pkgname-$pkgver"
 
+  patch -p0 < "$srcdir/compress.c.patch"
   patch -p1 -i "$srcdir/$pkgname-${pkgver}_no_pcap_offline_read.patch"
-}
-
-build() {
-  cd "$pkgname-$pkgver"
 
   if [[ $CARCH == "aarch64" ]]; then
     ./configure --prefix=/usr --mandir=/usr/share/man --host=$CARCH
@@ -43,6 +42,10 @@ build() {
     -e "s|MANDIR = /usr/local/man/|MANDIR = $pkgdir/usr/share/man|" \
     -i Makefile
   sed -e 's|-o bin -g bin| -o root -g root|' -i Makefile
+}
+
+build() {
+  cd "$pkgname-$pkgver"
 
   make
 }

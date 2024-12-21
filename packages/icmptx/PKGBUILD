@@ -2,22 +2,29 @@
 # See COPYING for license details.
 
 pkgname=icmptx
-pkgver=1.374c357
+pkgver=0.2.r11.gbffe984
 pkgrel=1
+epoch=1
 pkgdesc='IP over ICMP tunnel.'
 groups=('blackarch' 'blackarch-tunnel' 'blackarch-networking')
 arch=('x86_64' 'aarch64')
 url='http://thomer.com/icmptx/'
-license=('GPL')
+license=('GPL-3.0-only')
 depends=('glibc')
 makedepends=('git' 'make' 'gcc')
-source=("git+https://github.com/jakkarth/$pkgname.git")
+#source=("git+https://github.com/jakkarth/$pkgname.git")
+source=("git+https://codeberg.org/jakkarth/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+	( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
@@ -30,7 +37,7 @@ package(){
   cd $pkgname
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README
-  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

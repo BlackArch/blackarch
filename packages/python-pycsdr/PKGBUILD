@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-pycsdr
+_pkgname=${pkgname#python-}
+pkgver=0.18.2.r44.g041986e
+pkgrel=1
+pkgdesc='Python bindings for the csdr library.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/jketterl/pycsdr'
+license=('AGPL-3.0-only')
+depends=('python' 'csdr')
+makedepends=('git' 'python-build' 'python-pip')
+source=("git+https://github.com/jketterl/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $_pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd $_pkgname
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+
