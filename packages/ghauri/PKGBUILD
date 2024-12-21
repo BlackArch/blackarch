@@ -3,33 +3,48 @@
 
 pkgname=ghauri
 pkgver=1.4.1.r0.g316410a
-pkgrel=1
+pkgrel=2
 pkgdesc='An advanced cross-platform tool that automates the process of detecting and exploiting SQL injection security flaws.'
 arch=('any')
 groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation')
 url='https://github.com/r0oth3x49/ghauri'
 license=('MIT')
-depends=('python' 'python-chardet' 'python-tldextract' 'python-colorama'
-         'python-requests')
-makedepends=('git' 'python-setuptools')
+depends=('python')
+makedepends=('git' 'python-setuptools' 'python-pip')
 source=("git+https://github.com/r0oth3x49/$pkgname.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed 's/#/\./g'
-}
-
-build() {
-  cd $pkgname
-
-  python setup.py build
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE *.md docs/*.md .gitignore .github/
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec $pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

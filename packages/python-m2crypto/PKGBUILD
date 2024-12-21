@@ -3,8 +3,7 @@
 
 pkgname=python-m2crypto
 _pkgname=${pkgname#python-}
-__pkgname=M2Crypto
-pkgver=0.43.0
+pkgver=0.43.0.r8.gd99f560
 pkgrel=1
 pkgdesc='A Python crypto and SSL toolkit.'
 arch=('x86_64' 'aarch64')
@@ -13,17 +12,28 @@ license=('MIT')
 depends=('python' 'openssl')
 makedepends=('python-build' 'python-pip' 'python-wheel' 'swig')
 options=(!emptydirs)
-source=("https://files.pythonhosted.org/packages/source/${__pkgname::1}/$__pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('c5232956a88de51bd3a1e02859b7a308eabb4e055cc0c8aac2d8d34a60c60a4a4c7160db4060ec07f559134a04eb41c6ab116a194ec3f7441d342e6d38f9add9')
+source=("git+https://gitlab.com/m2crypto/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
 
 build() {
-  cd "$_pkgname-$pkgver"
+  cd $_pkgname
 
   python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "$_pkgname-$pkgver"
+  cd $_pkgname
 
   pip install \
     --verbose \

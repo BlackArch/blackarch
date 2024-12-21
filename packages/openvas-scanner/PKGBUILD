@@ -1,65 +1,68 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
+#
+# from AUR - adapted to you style
+#
+# Old Contributor: Matthias Fulz < mfulz [at] olznet [dot] de >
 
 pkgname=openvas-scanner
-pkgver=22.5.0
+pkgver=23.13.1
 pkgrel=1
-pkgdesc='The OpenVAS scanning Daemon.'
-groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-fuzzer'
-        'blackarch-exploitation')
+pkgdesc='OpenVAS Scanner of the Greenbone Community Edition.'
 arch=('x86_64' 'aarch64')
-url='https://github.com/greenbone/openvas-scanner/'
-license=('GPL')
-depends=('gvm-libs' 'redis' 'rsync' 'json-glib' 'gvmd')
-conflicts=('openvas')
-makedepends=('cmake' 'doxygen')
-install="$pkgname.install"
-source=("https://github.com/greenbone/$pkgname/archive/v$pkgver.tar.gz"
-        "greenbone-nvt-sync.service"
-        "greenbone-nvt-sync.timer"
-        "$pkgname.install"
-      )
-sha512sums=('9af44effc313d8c5898a05803ceef2559e39029f4e7573c18758fbfade4c6439d9957361481878e0cd1cd8237076b619ca5d233f747b2829f0cfbe08faf94ac5'
-            '1ef913c24721533b0f779047532de63d195e8498885b90972a7bbbfb734444c0f7cbdcc52c437b2ce773881d45eadfcec03fcd00886e02962cb06d318d0c7c96'
-            '2df63297cd9bd1cfb7b774152b1791ff946a1a410e563e54212652d847063b3c22b5362cd287b1bd73684be1fbd66464a2f8bb79b92cd086ba58e9a801d675ec'
-            'a7a743ab2899187cf4dd71c605ed3acb722f19d5e3077858f3a6b3199b384de3d59c05c2c5d6cf0ce2df7ab1de99f058de6ff8c931b6fd33a8fbccf8d3afd82c')
+url='https://github.com/greenbone/openvas-scanner'
+license=('GPL-2.0-only')
+depends=('gvm-libs' 'json-glib' 'libbsd' 'libgcrypt' 'redis' 'rsync')
+makedepends=('cmake' 'doxygen' 'cargo' 'inetutils')
+optdepends=('greenbone-feed-sync: scripts for downloading updated feed informations')
+install='openvas.install'
+options=(!lto)
+source=("https://github.com/greenbone/openvas-scanner/archive/v${pkgver}.tar.gz"
+        'openvas-scanner.tmpfiles')
+sha512sums=('63d8ff8fbe3dc86c3753ae08dfb9e17dba16198b82d8bc8637cfd25f587f9797f3de7fae8cf7f9404aa8f56194017b1cfd7ffdb0cdd86609c9db1aca9de743fd'
+            '3df08a3e16f16a1735a4d6aa09b34fd0c04e4af95ef4264002a7f50447d9e200531551f162571b59e0c61707c09ca25f66e8a17baa8a42e2745752a5a6717672')
 
 prepare() {
   cd "$pkgname-$pkgver"
 
   sed -i '/-Werror/d' CMakeLists.txt
+
+  cd rust
+  export RUSTUP_TOOLCHAIN=stable
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
 }
 
 build() {
-  cd "$pkgname-$pkgver"
-
   cmake \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DSBINDIR=/usr/bin \
-    -DLIBDIR=/usr/lib \
-    -DCMAKE_INSTALL_PREFIX=/usr \
-    -DSYSCONFDIR=/etc \
-    -DLOCALSTATEDIR=/var \
-    -DOPENVAS_FEED_LOCK_PATH=/run/gvm/feed-update.lock \
-    -DOPENVAS_NVT_DIR=/var/lib/openvas \
-    --debug-output \
-    .
+  -B build \
+  -S "$pkgname-$pkgver" \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=/usr \
+  -DSBINDIR=/usr/bin \
+  -DLIBDIR=/usr/lib \
+  -DSYSCONFDIR=/etc \
+  -DLOCALSTATEDIR=/var \
+  -DOPENVAS_FEED_LOCK_PATH=/run/gvm/feed-update.lock \
+  -DOPENVAS_NVT_DIR=/var/lib/openvas
 
-  make
+  make -C build
+
+  # Build openvasd and scannerctl
+  cd "$pkgname-$pkgver/rust"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+  cargo build --frozen --release --all-features
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  make DESTDIR="$pkgdir" -C build install
 
-  make DESTDIR="$pkgdir" install
+  find "$pkgname-$pkgver/rust/target/release" \
+    -maxdepth 1 \
+    -executable \
+    -type f \
+    -exec install -Dm 755 -t "$pkgdir/usr/bin/" {} +
 
-  cp "$srcdir/$pkgname-$pkgver/config/redis-openvas.conf" "$pkgdir/etc/openvas"
-
-  install -m 755 -d "$pkgdir/usr/lib/systemd/system"
-
-  install -m 644 "$srcdir/greenbone-nvt-sync.service" \
-    "$pkgdir/usr/lib/systemd/system"
-  install -m 644 "$srcdir/greenbone-nvt-sync.timer" \
-    "$pkgdir/usr/lib/systemd/system"
+  install -Dm 644 "$pkgname.tmpfiles" "$pkgdir/usr/lib/tmpfiles.d/$pkgname.conf"
 }
 
