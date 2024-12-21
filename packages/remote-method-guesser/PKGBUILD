@@ -1,0 +1,59 @@
+# This file is part of BlackArch ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=remote-method-guesser
+pkgver=v5.1.0.r11.g3398ec6
+pkgrel=1
+pkgdesc='Java RMI Vulnerability Scanner.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner')
+url='https://github.com/qtc-de/remote-method-guesser'
+license=('GPL-3.0-or-later')
+depends=('java-runtime' 'ysoserial')
+makedepends=('maven' 'git')
+source=("git+https://github.com/qtc-de/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i "s|YSO =.*|YSO = /usr/share/java/ysoserial.jar|g" src/config.properties
+}
+
+build() {
+  cd $pkgname
+
+  mvn clean package -DskipTests
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  cp -a docs "$pkgdir/usr/share/doc/$pkgname/"
+
+  cp -a target "$pkgdir/usr/share/$pkgname/"
+  install -Dm 644 resources/bash_completion.d/rmg "$pkgdir/usr/share/bash-completion/completions/rmg"
+
+  cat > "$pkgdir/usr/bin/rmg" << EOF
+#!/bin/sh
+exec java -jar /usr/share/$pkgname/target/rmg-5.1.0-jar-with-dependencies.jar "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/rmg"
+}
+
