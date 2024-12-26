@@ -2,32 +2,40 @@
 # See COPYING for license details.
 
 pkgname=python-jproperties
-pkgver=v2.1.1.r20.g25e0d15
-pkgrel=3
+_pkgname=${pkgname#python-}
+pkgver=2.1.2
+pkgrel=1
+epoch=1
 pkgdesc='Java Property file parser and writer for Python.'
 arch=('any')
 url='https://github.com/Tblue/python-jproperties'
 license=('BSD')
 depends=('python' 'python-six')
-makedepends=('git' 'python-setuptools' 'python-pip')
-source=("git+https://github.com/Tblue/$pkgname.git")
-sha512sums=('SKIP')
-
-pkgver() {
-  cd $pkgname
-
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
-}
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('463e961b353d0af7c7dc41e4f5f502444ee903a20f62b3229bc649a35d8a0d49927e5512c731ff5b8b5406c00a08568b8fe7c9f76dba4ab69d3fb8d90133ccc3')
 
 build() {
-  cd $pkgname
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd $pkgname
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
