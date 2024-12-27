@@ -2,33 +2,39 @@
 # See COPYING for license details.
 
 pkgname=python-rq
-_pkgname=rq
+_pkgname=${pkgname#python-}
 pkgver=1.16.2
-pkgrel=3
+pkgrel=1
 pkgdesc='A simple, lightweight, library for creating background jobs, and processing them.'
 arch=('any')
 url='https://pypi.org/project/rq/#files'
 license=('BSD')
 depends=('python' 'python-click' 'python-redis')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('1c3162b1acffc9d11292fcbff7177267272a02e752b5839a4004b875bb5bb25af7e61f31041df438ef4e0e47152296c3a2711856c6a36d787848dcb766387d1a')
-
-prepare() {
-  cd "$_pkgname-$pkgver"
-
-  touch requirements.txt
-}
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
