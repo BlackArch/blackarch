@@ -21,6 +21,15 @@ There are three ways to go:
      (`blackarch-install`). The Slim ISO comes with a GUI-based installer.
      You can use the installer to install BlackArch Linux onto your hard disk.
 
+## Notes on the current ISO/OVA images (2023) 
+If you try `sudo pacman -Syu` you might notice that there is a JDk/JRE 21 package conflicts. To get passed this simply run the command below:
+
+`sudo pacman -Sy jdk-openjdk && pacman -Su` 
+
+If you wanted to read more on this go [here](https://archlinux.org/news/incoming-changes-in-jdk-jre-21-packages-may-require-manual-intervention/)
+
+In additon, there maybe some key errors, feel free to go [here](https://github.com/BlackArch/blackarch/issues/4290#issuecommnet-2424171751)
+
 ## Get Involved
 
 You can get in touch with the BlackArch Linux team. Just check out the following:
