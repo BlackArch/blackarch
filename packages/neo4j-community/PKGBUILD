@@ -3,7 +3,8 @@
 
 pkgname=neo4j-community
 _pkgname=neo4j
-pkgver=5.24.0
+pkgver=5.26.0
+_neo4j_browser_ver=5.24.0
 pkgrel=1
 pkgdesc='A fully transactional graph database implemented in Java.'
 arch=('any')
@@ -23,12 +24,14 @@ source=("https://github.com/$_pkgname/$_pkgname/archive/$pkgver.tar.gz"
         'neo4j.executable-template'
         'neo4j.service'
         'neo4j.sysusers'
-        'neo4j.tmpfiles')
-sha512sums=('cedb13ce99e9f20efa042f6115701232bff78a4c062ffc4df437d3eda1bbf54d251cb8dc1b1e9def9a6fcba1591e278bfc6d2f316456347dafbb093cc6211cb1'
+        'neo4j.tmpfiles'
+        "https://repo.maven.apache.org/maven2/org/neo4j/client/neo4j-browser/$_neo4j_browser_ver/neo4j-browser-$_neo4j_browser_ver.jar")
+sha512sums=('dc026d51d01ac7c383c8bafed23c99600998406903e75f0a8d081b906a538474055e23314c385045514cb4fd2c911130b35610993734dde5998fe8d8c8a7c70c'
             '1aee5f3f977720fd1a31a4404403a3241467257380dd4db8c6a3f949a7e2d16d127c02eb64b2d9801decbef034e91a3de98977101b7511f23197f7fb02b3b989'
             '3b4ec61ce42df80dc42f16cd7c2e2d1f54b2e71325b6a21060bd9961ddf277aa451fe8d94194f631114f82ff44c5802c28deff802c639b265fe5cf76ec770c97'
             '1a8f4fd2cc64c3e3e472448512d7d5ed4b123628a39fb440b29523a5fc849667a1ef54dfdd0fb1328f2398b2adcad149e5ea5fed0e5105c5a81fa2ea135b5413'
-            'b2bcfaded870902124e80637a81f9c0f90963a70ba46fdf3dbc1a530463b2a1355d06ac6edb41bde19c2771b2e377a3c88e742b4c880cce6691b3fb9ce1abd8f')
+            'b2bcfaded870902124e80637a81f9c0f90963a70ba46fdf3dbc1a530463b2a1355d06ac6edb41bde19c2771b2e377a3c88e742b4c880cce6691b3fb9ce1abd8f'
+            '10b759888e80175849382fac26a899982df56541a3c93520935523e6482a4ce3fdd181715b91cf5d0e503b0284f04c5b65637ece26003e64df1868f4fc0c8da3')
 
 prepare() {
   cd "$_pkgname-$pkgver"
@@ -125,5 +128,10 @@ package() {
     "$pkgdir/usr/lib/sysusers.d/neo4j.conf"
   install -Dm 644 "$srcdir/neo4j.tmpfiles" \
     "$pkgdir/usr/lib/tmpfiles.d/neo4j.conf"
+
+  # Neo4j browser is missing, it's release separately on newer versions https://neo4j.com/docs/browser-manual/current/deployment-modes/neo4j-server/
+  # Create plugins directory https://neo4j.com/docs/operations-manual/current/configuration/file-locations/#neo4j-plugins
+  install -dm 755 "$pkgdir/var/lib/neo4j/plugins"
+  install -Dm 755 -t "$pkgdir/var/lib/neo4j/plugins" "$srcdir/neo4j-browser-$_neo4j_browser_ver.jar"
 }
 
