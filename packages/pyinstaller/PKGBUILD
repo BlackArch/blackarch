@@ -2,41 +2,72 @@
 # See COPYING for license details.
 
 pkgname=pyinstaller
-_pkgname=PyInstaller
-pkgver=3.6
-pkgrel=4
+pkgver=6.11.1
+pkgrel=1
 epoch=2
 groups=('blackarch' 'blackarch-misc')
-pkgdesc='A program that converts (packages) Python programs into stand-alone executables, under Windows, Linux, Mac OS X, Solaris and AIX.'
-arch=('any')
-url='http://www.pyinstaller.org/downloads.html'
-license=('GPL')
-depends=('python2' 'python2-requests' 'python2-pyusb' 'python2-dis3'
-         'python2-pefile' 'python2-macholib' 'python2-setuptools'
-         'python2-altgraph')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('97e7ac3632b5a84a85268c68cb3f3a404ca9f2786396f31016313a15c81c9c453983fd9d0376de0e7543401d3ad8af58b839dde7cefb0dfe7cbb9f3ac360f3e0')
+pkgdesc='Bundles a Python application and all its dependencies into a single package.'
+arch=('x86_64' 'aarch64')
+url='https://pyinstaller.org'
+license=('Apache-2.0' 'GPL-2.0-or-later' 'MIT')
+depends=(
+  'python' 'python-setuptools' 'python-altgraph' # project python dependencies
+  'glibc' 'binutils' 'gcc' 'base-devel' # project system dependencies
+)
+makedepends=(
+  'python-build' 'python-pip' 'python-wheel' # python package
+  'waf' # bootloader
+)
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz"
+        'fortify-source-fix.patch')
+sha512sums=('baed8f875b3bed6edc697015da9cfb89d58e5634b272d14c8df7f9a26c270c23c1b13358149b5f204bd3b4a38e7d5d5cfdfa40fae27e536b479c3c94741efc85'
+            '765a2f0c984d966c27309194e73a50b325309c5e65253c92a7140d8b179f94394dd0e01aa1b46b3777a1a06da33ce92919070dd70fde87bf5d81eb750d73f5ed')
 options=('!strip' '!emptydirs')
 
 prepare() {
-  cd "$_pkgname-$pkgver"
+  cd "$pkgname-$pkgver"
 
-  grep -RIl '^#!.*python' . | xargs sed -i '/^#!/ s|.*|#! /usr/bin/env python2|'
+  # Remove pre-built binaries
+  rm -rf PyInstaller/bootloader/{Darwin,Linux,Windows}*
+
+  # Avoid redefining _FORTIFY_SOURCE if default makepkg CFLAGS are used
+  patch -Np1 -i "${srcdir}/fortify-source-fix.patch"
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  # Compile bootloader
+  #cd bootloader
+  #python ./waf all
+  #cd ..
+
+  # Build package
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "$_pkgname-$pkgver"
+  cd "$pkgname-$pkgver"
 
-  rm -rf bootloader old tests PKG-INFO setup.py
-
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  rm -rf doc
-
-  cp -a --no-preserve=ownership . "$pkgdir/usr/share/$pkgname"
-
-  ln -s "/usr/share/$pkgname/$pkgname.py" "$pkgdir/usr/bin/$pkgname"
+  # Package
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+  
+  # Man pages
+  install -Dm 644 doc/{"$pkgname",pyi-makespec}.1 -t \
+    "$pkgdir/usr/share/man/man1/"
+  
+  # Custom license
+  install -Dm 644 COPYING.txt -t "$pkgdir/usr/share/licenses/$pkgname/"
 }
 
