@@ -4,23 +4,15 @@
 pkgname=sleuthkit-java
 _pkgname=sleuthkit
 pkgver=4.12.1
-pkgrel=1
+pkgrel=2
 pkgdesc='Java dependencies for The Sleuth Kit.'
 arch=('x86_64')
 url='https://github.com/sleuthkit/sleuthkit/releases/'
 license=('CPL, custom:"IBM Public Licence", GPL2')
-provides=('sleuthkit')
-depends=('jre8-openjdk' 'sleuthkit')
-makedepends=('ant' 'jdk-openjdk')
+depends=('java-runtime=23' 'sleuthkit')
+makedepends=('ant' 'java-environment=23')
 source=("https://github.com/sleuthkit/sleuthkit/releases/download/sleuthkit-$pkgver/sleuthkit-$pkgver.tar.gz")
 sha512sums=('f3efe1339edc9eb07023975a1e2e2dc7bc47d61d838aada941b7591e2c5beb74fc5298ebf68ae71875bf8f0f09c0d7929a11762fa47840e7e18398d3ff80b9fc')
-
-prepare() {
-  cd "$_pkgname-$pkgver"
-
-  sed -i 's|value="${user.home}/.ant"/>|value="/tmp/ant"/>|g' \
-    bindings/java/build.xml
-}
 
 build() {
   cd "$_pkgname-$pkgver"
@@ -28,14 +20,27 @@ build() {
   ./configure
   make
 
-  cd bindings/java
+  (cd bindings/java;
   ant
+  )
+
+  (cd case-uco/java;
+  ant
+  )
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
+  install -d "$pkgdir/usr/share/java"
   install -Dm 644 "bindings/java/dist/$_pkgname-$pkgver.jar" \
     "$pkgdir/usr/share/java/$_pkgname-$pkgver.jar"
+  install -Dm 644 "case-uco/java/dist/sleuthkit-caseuco-${pkgver}.jar" \
+    "$pkgdir/usr/share/java"
+
+  install -d "$pkgdir/usr/lib"
+  install -Dm0644 "bindings/java/jni/.libs"/*.so.0.0.0 "$pkgdir/usr/lib"
+  ln -s /usr/lib/libtsk_jni.so.0.0.0 "$pkgdir/usr/lib/libtsk_jni.so.0"
+  ln -s /usr/lib/libtsk_jni.so.0.0.0 "$pkgdir/usr/lib/libtsk_jni.so"
 }
 
