@@ -2,62 +2,45 @@
 # See COPYING for license details.
 
 pkgname=empire
-pkgver=3458.8f41087f
+pkgver=v5.12.2.r0.g2765c6a
 pkgrel=1
-epoch=2
+epoch=3
 pkgdesc='A PowerShell and Python post-exploitation agent.'
-groups=('blackarch' 'blackarch-automation')
 arch=('any')
+groups=('blackarch' 'blackarch-automation')
 url='https://github.com/BC-SECURITY/Empire'
-license=('BSD')
-depends=('python' 'python-urllib3' 'python-requests' 'python-iptools' 'tk'
-         'python-pydispatcher' 'python-flask' 'python-macholib' 'python-dropbox'
-         'python-zlib_wrapper' 'python-netifaces' 'python-m2crypto'
-         'python-jinja' 'python-cryptography' 'python-pefile' 'python-xlutils'
-         'python-pyminifier' 'python-pycryptodome' 'python-simplejson'
-         'python-xlrd' 'python-xlwt' 'python-bcrypt' 'java-environment'
-         'python-flask-socketio' 'python-setuptools' 'pyinstaller' 'python-jq'
-         'python-pycryptodomex' 'python-pyparsing' 'python-sqlalchemy'
-         'python-pyaml' 'python-prompt_toolkit' 'python-sqlalchemy-utc'
-         'python-pymysql' 'python-poetry' 'python-docopt' 'python-humanize'
-         'python-pydantic' 'python-socketio' 'python-terminaltables' 'donut'
-         'python-pyperclip' 'python-jose' 'python-aiofiles' 'python-altgraph'
-         'python-anyio' 'python-asgiref' 'python-atomicwrites' 'python-attrs'
-         'python-bidict' 'python-black' 'python-certifi' 'python-cffi'
-         'python-charset-normalizer' 'python-click' 'python-colorama'
-         'python-constantly' 'python-ecdsa' 'python-fastapi' 'python-greenlet'
-         'python-h11' 'python-hyperlink' 'python-idna' 'python-iniconfig'
-         'python-importlib-metadata' 'python-incremental' 'python-isort'
-         'python-itsdangerous' 'python-markupsafe' 'python-mypy_extensions'
-         'python-numpy' 'python-packaging' 'python-passlib' 'python-pathspec'
-         'python-platformdirs' 'python-pluggy' 'python-ply' 'python-pyasn1'
-         'python-pyasn1-modules' 'python-pycparser' 'python-pycryptodome'
-         'python-pygame' 'python-engineio' 'python-python-multipart'
-         'python-pyvnc' 'python-rsa' 'python-ruff' 'python-secretsocks'
-         'python-service-identity' 'python-sniffio' 'python-starlette'
-         'python-stone' 'python-toml' 'python-tomli' 'python-twisted'
-         'python-typing_extensions' 'python-wcwidth' 'python-websocket-client'
-         'python-websockets' 'python-werkzeug' 'python-zipp' 'websockify'
-         'python-zope-interface' 'uvicorn')
-makedepends=('git')
-source=("$pkgname::git+https://github.com/BC-SECURITY/Empire.git"
-        'https://files.pythonhosted.org/packages/35/d3/d6a9610f19d943e198df502ae660c6b5acf84cc3bc421a2aa3c0fb6b21d1/pyOpenSSL-22.0.0.tar.gz'
-        'setup_database.py.patch')
-sha512sums=('SKIP'
-            '3d7695f27b7909eb82f05527ab7551fe90a85a70f20ea980293b59672a62f9b015966180407fa0786e94b01ad1d1acfaa7d40426bb63410efd24a144e559e2f0'
-            '9ffc3dc5d6a1dfd5b71cd22a0878a0231958938cb939e5fda5467c301fb4837ff96a299c2cbf2b2cc232fd8dd340c9086130e1067870c8c4272d7cc05e3954b4')
+license=('BSD-3-Clause')
+depends=('python' 'mariadb' 'openssl')
+makedepends=('git' 'python-setuptools' 'python-pip')
+optdepends=(
+  'xar: enables generating .dmg stagers'
+  'bomutils: enables generating .dmg stagers'
+  'jdk-openjdk: enables generating .jar stager'
+  'nim: enables generating nim stagers'
+)
+install="empire.install"
+source=("$pkgname::git+https://github.com/BC-SECURITY/Empire.git")
+sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
   cd $pkgname
 
-  # need by empire
-  cp -r "$srcdir/pyOpenSSL-22.0.0/src/OpenSSL" OpenSSL
+  git submodule update --init --recursive
+
+  # grab openssl certs
+  cd setup
+  bash ./cert.sh
 }
 
 package() {
@@ -66,16 +49,26 @@ package() {
   install -dm 755 "$pkgdir/usr/bin/"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md changelog
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm changelog LICENSE README.md
+  rm changelog LICENSE CHANGELOG.md
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+source /usr/share/$pkgname/venv/bin/activate
+exec python empire.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 
   cat > "$pkgdir/usr/bin/$pkgname-server" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
+source /usr/share/$pkgname/venv/bin/activate
 exec python empire.py server "\$@"
 EOF
 
@@ -84,6 +77,7 @@ EOF
   cat > "$pkgdir/usr/bin/$pkgname-client" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
+source /usr/share/$pkgname/venv/bin/activate
 exec python empire.py client "\$@"
 EOF
 

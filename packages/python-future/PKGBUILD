@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-future
+_pkgname=${pkgname#python-}
+pkgver=1.0.0
+pkgrel=2
+pkgdesc='Clean single-source support for Python 3 and 2.'
+url='https://pypi.org/project/future/#files'
+arch=('any')
+license=('MIT')
+depends=('python')
+optdepends=('python-setuptools: futurize and pasteurize scripts')
+makedepends=('python-build' 'python-pip')
+provides=('futurize' 'pasteurize')
+options=('!emptydirs')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('8e28d53172e3ae7b3b27c424a48fb698a6e86bf1c648cdf74e7fd57d34901a9bda18429fe4e176d70be67fc6c80b7f961b3021356594e38b5f294406af40bc61')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+
+	install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
