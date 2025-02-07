@@ -2,42 +2,49 @@
 # See COPYING for license details.
 
 pkgname=kamerka
-pkgver=40.be17620
-pkgrel=5
-epoch=1
+pkgver=44.39d6796
+pkgrel=1
 pkgdesc='Build interactive map of cameras from Shodan.'
 arch=('any')
 groups=('blackarch' 'blackarch-recon')
-url='https://github.com/woj-ciech/kamerka'
-license=('custom:unknown')
-depends=('python' 'python-geopy' 'python-colorama' 'python-shodan'
-         'python-folium' 'python-twitter' 'python-instagramapi'
-         'python-flickrapi' 'python-branca' 'python-google-streetview'
-         'python-elasticsearch')
-makedepends=('git')
-source=("git+https://github.com/woj-ciech/$pkgname.git#commit=be17620618163cf414cda63576f7947e6a7ec44c")
+url='https://github.com/s7x/kamerka'
+license=('MIT')
+depends=('python')
+makedepends=('git' 'python-setuptools' 'python-pip')
+source=("git+https://github.com/s7x/$pkgname.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
-#pkgver() {
-#  cd $pkgname
-#
-#  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-#}
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
 
 package() {
   cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -Dm 755 -t "$pkgdir/usr/share/$pkgname/" *.py *.yml
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE *.md
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname
-exec python $pkgname.py "\$@"
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/kamerka.py "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
