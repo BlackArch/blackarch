@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=go-bindata
+pkgver=4.0.2
+pkgrel=1
+pkgdesc='A small utility which generates Go code from any file.'
+arch=('x86_64')
+url='https://github.com/kevinburke/go-bindata'
+license=('custom:CC0')
+depends=('glibc')
+makedepends=('go')
+source=("$url/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('4d92510d967bcac7e05eb5fd6e7bb6aa3d90550ac1c72adf56bdfbdd5e9f59703b65d24ec21f9b9f5d1033748b1f911830b177b845405008e6f5c41ab64282b9')
+
+prepare(){
+  cd "$pkgname-$pkgver"
+
+  mkdir -p build/
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  export CGO_CPPFLAGS="${CPPFLAGS}"
+  export CGO_CFLAGS="${CFLAGS}"
+  export CGO_CXXFLAGS="${CXXFLAGS}"
+  export CGO_LDFLAGS="${LDFLAGS}"
+  export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw"
+  go build -o build ./$pkgname
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -Dm755 "build/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
