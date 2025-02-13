@@ -3,14 +3,15 @@
 
 pkgname=bkcrack
 pkgver=v1.7.1.r11.g52c95ab
-pkgrel=1
+pkgrel=2
 pkgdesc='Crack legacy zip encryption with Biham and Kocher known plaintext attack.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-cracker')
 url='https://github.com/kimci86/bkcrack'
-license=('ZLIB')
-depends=('gcc-libs')
-makedepends=('git' 'cmake')
+license=('Zlib')
+depends=('gcc-libs' 'glibc')
+makedepends=('git' 'cmake' 'doxygen')
+optdepends=('python: deflate/inflate tools')
 source=("git+https://github.com/kimci86/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -21,23 +22,33 @@ pkgver() {
 }
 
 build() {
-  cd $pkgname
-
-  cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release .
-
-  make
+  local cmake_options=(
+    -B build
+    -S $pkgname
+    -W no-dev
+    -D CMAKE_BUILD_TYPE=None
+    -D CMAKE_INSTALL_PREFIX=/usr
+    -D BKCRACK_BUILD_DOC=ON
+    -D BKCRACK_BUILD_TESTING=ON
+  )
+  cmake "${cmake_options[@]}"
+  cmake --build build
 }
 
 package() {
-  cd $pkgname
-
-  install -dm 755 "$pkgdir/usr/share/$pkgname/"
+  cd build
 
   install -Dm 755 "src/$pkgname" "$pkgdir/usr/bin/$pkgname"
 
-  install -Dm 644 license.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md doc/*.md
+  install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
+  cp -a doc/html "$pkgdir/usr/share/doc/$pkgname/"
 
-  cp -a tools example "$pkgdir/usr/share/$pkgname/"
+  cd ../$pkgname
+  install -Dm 644 license.txt -t "$pkgdir/usr/share/licenses/$pkgname"
+
+  cp -a example "$pkgdir/usr/share/doc/$pkgname"
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  cp -a tools "$pkgdir/usr/share/$pkgname/"
 }
 

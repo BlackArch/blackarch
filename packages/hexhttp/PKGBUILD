@@ -1,0 +1,61 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=hexhttp
+pkgver=v1.7.4.r1.g0f01774
+pkgrel=2
+pkgdesc='Perform tests on HTTP headers and analyze the results to identify vulnerabilities and interesting behaviors.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
+url='https://github.com/c0dejump/HExHTTP'
+license=('MIT')
+depends=('python' # https://github.com/c0dejump/HExHTTP/blob/main/requirements.txt
+         'python-requests'
+         'wafw00f'
+         'python-urllib3'
+         'python-notify_py'
+        )
+makedepends=('git')
+source=("$pkgname::git+$url.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  touch modules/__init__.py
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf docs/ *.md LICENSE .github/ .gitignore Dockerfile requirements.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+#cd /usr/share/$pkgname
+python /usr/share/$pkgname/$pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
