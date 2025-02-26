@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=shuji
+pkgver=v0.8.0.r54.gada0339
+pkgrel=1
+pkgdesc='Reverse engineering JavaScript and CSS sources from sourcemaps.'
+arch=('any')
+groups=('blackarch' 'blackarch-decompiler')
+url='https://github.com/paazmaya/shuji'
+license=('MIT')
+depends=('nodejs')
+makedepends=('git' 'npm')
+source=("git+https://github.com/paazmaya/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+
+package() {
+  cd $pkgname
+
+  _npmdir="$pkgdir/usr/lib/node_modules/"
+
+  install -dm 755 "$_npmdir"
+
+  cd "$_npmdir"
+
+  npm install --user root -g --prefix "$pkgdir/usr" "$pkgname@"
+
+  cd "$srcdir/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

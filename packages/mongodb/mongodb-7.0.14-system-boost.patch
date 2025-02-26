@@ -1,0 +1,320 @@
+diff -u -r a/src/mongo/client/sdam/sdam_json_test_runner.cpp b/src/mongo/client/sdam/sdam_json_test_runner.cpp
+--- a/src/mongo/client/sdam/sdam_json_test_runner.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/client/sdam/sdam_json_test_runner.cpp	2024-09-08 13:38:28.557633361 +0800
+@@ -33,6 +33,7 @@
+ 
+ #include <boost/algorithm/string.hpp>
+ #include <boost/filesystem.hpp>
++#include <boost/filesystem/directory.hpp>
+ #include <boost/filesystem/operations.hpp>
+ #include <boost/format.hpp>
+ #include <boost/optional/optional.hpp>
+diff -u -r a/src/mongo/client/sdam/server_selection_json_test_runner.cpp b/src/mongo/client/sdam/server_selection_json_test_runner.cpp
+--- a/src/mongo/client/sdam/server_selection_json_test_runner.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/client/sdam/server_selection_json_test_runner.cpp	2024-09-08 13:38:28.557633361 +0800
+@@ -33,6 +33,7 @@
+ 
+ #include <boost/algorithm/string.hpp>
+ #include <boost/filesystem.hpp>
++#include <boost/filesystem/directory.hpp>
+ #include <boost/filesystem/operations.hpp>
+ #include <boost/format.hpp>
+ 
+diff -u -r a/src/mongo/db/ftdc/file_manager.cpp b/src/mongo/db/ftdc/file_manager.cpp
+--- a/src/mongo/db/ftdc/file_manager.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/db/ftdc/file_manager.cpp	2024-09-08 13:38:28.560966720 +0800
+@@ -33,6 +33,7 @@
+ #include "mongo/db/ftdc/file_manager.h"
+ 
+ #include <boost/filesystem.hpp>
++#include <boost/filesystem/directory.hpp>
+ #include <memory>
+ #include <string>
+ 
+diff -u -r a/src/mongo/db/ftdc/ftdc_test.cpp b/src/mongo/db/ftdc/ftdc_test.cpp
+--- a/src/mongo/db/ftdc/ftdc_test.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/db/ftdc/ftdc_test.cpp	2024-09-08 13:38:28.560966720 +0800
+@@ -32,6 +32,7 @@
+ #include "mongo/db/ftdc/ftdc_test.h"
+ 
+ #include <boost/filesystem.hpp>
++#include <boost/filesystem/directory.hpp>
+ #include <memory>
+ 
+ #include "mongo/base/data_type_validated.h"
+diff -u -r a/src/mongo/db/initialize_server_global_state.cpp b/src/mongo/db/initialize_server_global_state.cpp
+--- a/src/mongo/db/initialize_server_global_state.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/db/initialize_server_global_state.cpp	2024-09-08 13:44:23.743647036 +0800
+@@ -33,6 +33,7 @@
+ #include "mongo/db/initialize_server_global_state.h"
+ #include "mongo/db/initialize_server_global_state_gen.h"
+ 
++#include <boost/filesystem/exception.hpp>
+ #include <boost/filesystem/operations.hpp>
+ #include <fmt/format.h>
+ #include <iostream>
+@@ -310,7 +311,7 @@
+                                     << "\" should name a file, not a directory.");
+         }
+ 
+-        if (!serverGlobalParams.logAppend && boost::filesystem::is_regular(absoluteLogpath)) {
++        if (!serverGlobalParams.logAppend && boost::filesystem::is_regular_file(absoluteLogpath)) {
+             std::string renameTarget = absoluteLogpath + "." + terseCurrentTimeForFilename();
+             boost::system::error_code ec;
+             boost::filesystem::rename(absoluteLogpath, renameTarget, ec);
+diff -u -r a/src/mongo/db/sorter/sorter_test.cpp b/src/mongo/db/sorter/sorter_test.cpp
+--- a/src/mongo/db/sorter/sorter_test.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/db/sorter/sorter_test.cpp	2024-09-08 13:38:28.564300078 +0800
+@@ -32,6 +32,7 @@
+ #include "mongo/platform/basic.h"
+ 
+ #include <boost/filesystem.hpp>
++#include <boost/filesystem/directory.hpp>
+ #include <fstream>
+ #include <memory>
+ 
+diff -u -r a/src/mongo/db/startup_recovery.cpp b/src/mongo/db/startup_recovery.cpp
+--- a/src/mongo/db/startup_recovery.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/db/startup_recovery.cpp	2024-09-08 13:38:28.567633437 +0800
+@@ -29,6 +29,8 @@
+ 
+ #include "mongo/db/startup_recovery.h"
+ 
++#include <boost/filesystem/directory.hpp>
++
+ #include "mongo/db/catalog/collection_write_path.h"
+ #include "mongo/db/catalog/create_collection.h"
+ #include "mongo/db/catalog/database_holder.h"
+diff -u -r a/src/mongo/db/startup_warnings_mongod.cpp b/src/mongo/db/startup_warnings_mongod.cpp
+--- a/src/mongo/db/startup_warnings_mongod.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/db/startup_warnings_mongod.cpp	2024-09-08 13:40:57.852092056 +0800
+@@ -32,6 +32,7 @@
+ 
+ #include "mongo/db/startup_warnings_mongod.h"
+ 
++#include <boost/filesystem/exception.hpp>
+ #include <boost/filesystem/operations.hpp>
+ #include <fstream>
+ #ifndef _WIN32
+diff -u -r a/src/mongo/db/storage/storage_engine_lock_file_posix.cpp b/src/mongo/db/storage/storage_engine_lock_file_posix.cpp
+--- a/src/mongo/db/storage/storage_engine_lock_file_posix.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/db/storage/storage_engine_lock_file_posix.cpp	2024-09-08 13:45:35.370855295 +0800
+@@ -57,7 +57,7 @@
+     // if called without a fully qualified path it asserts; that makes mongoperf fail.
+     // so make a warning. need a better solution longer term.
+     // massert(40389, str::stream() << "Couldn't find parent dir for file: " << file.string(),);
+-    if (!file.has_branch_path()) {
++    if (!file.has_parent_path()) {
+         LOGV2(22274,
+               "warning flushMyDirectory couldn't find parent dir for file: {file}",
+               "flushMyDirectory couldn't find parent dir for file",
+@@ -66,7 +66,7 @@
+     }
+ 
+ 
+-    boost::filesystem::path dir = file.branch_path();  // parent_path in new boosts
++    boost::filesystem::path dir = file.parent_path();  // parent_path in new boosts
+ 
+     LOGV2_DEBUG(22275, 1, "flushing directory {dir_string}", "dir_string"_attr = dir.string());
+ 
+diff -u -r a/src/mongo/db/storage/storage_engine_lock_file_test.cpp b/src/mongo/db/storage/storage_engine_lock_file_test.cpp
+--- a/src/mongo/db/storage/storage_engine_lock_file_test.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/db/storage/storage_engine_lock_file_test.cpp	2024-09-08 13:38:28.570966795 +0800
+@@ -30,6 +30,7 @@
+ #include "mongo/platform/basic.h"
+ 
+ #include <boost/filesystem.hpp>
++#include <boost/filesystem/directory.hpp>
+ #include <fstream>
+ #include <ostream>
+ 
+diff -u -r a/src/mongo/db/storage/storage_engine_metadata.cpp b/src/mongo/db/storage/storage_engine_metadata.cpp
+--- a/src/mongo/db/storage/storage_engine_metadata.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/db/storage/storage_engine_metadata.cpp	2024-09-08 13:46:14.344483426 +0800
+@@ -222,7 +222,7 @@
+     // if called without a fully qualified path it asserts; that makes mongoperf fail.
+     // so make a warning. need a better solution longer term.
+     // massert(13652, str::stream() << "Couldn't find parent dir for file: " << file.string(),);
+-    if (!file.has_branch_path()) {
++    if (!file.has_parent_path()) {
+         LOGV2(22283,
+               "warning flushMyDirectory couldn't find parent dir for file: {file}",
+               "flushMyDirectory couldn't find parent dir for file",
+@@ -231,7 +231,7 @@
+     }
+ 
+ 
+-    boost::filesystem::path dir = file.branch_path();  // parent_path in new boosts
++    boost::filesystem::path dir = file.parent_path();  // parent_path in new boosts
+ 
+     LOGV2_DEBUG(22284, 1, "flushing directory {dir_string}", "dir_string"_attr = dir.string());
+ 
+diff -u -r a/src/mongo/db/storage/wiredtiger/wiredtiger_c_api_test.cpp b/src/mongo/db/storage/wiredtiger/wiredtiger_c_api_test.cpp
+--- a/src/mongo/db/storage/wiredtiger/wiredtiger_c_api_test.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/db/storage/wiredtiger/wiredtiger_c_api_test.cpp	2024-09-08 13:38:28.570966795 +0800
+@@ -28,6 +28,7 @@
+  */
+ 
+ #include <boost/filesystem.hpp>
++#include <boost/filesystem/directory.hpp>
+ #include <boost/filesystem/operations.hpp>
+ #include <boost/filesystem/path.hpp>
+ #include <boost/system/error_code.hpp>
+diff -u -r a/src/mongo/db/storage/wiredtiger/wiredtiger_util.cpp b/src/mongo/db/storage/wiredtiger/wiredtiger_util.cpp
+--- a/src/mongo/db/storage/wiredtiger/wiredtiger_util.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/db/storage/wiredtiger/wiredtiger_util.cpp	2024-09-08 13:38:28.574300153 +0800
+@@ -31,6 +31,7 @@
+ #include "mongo/db/storage/wiredtiger/wiredtiger_util.h"
+ 
+ #include <boost/filesystem.hpp>
++#include <boost/filesystem/directory.hpp>
+ #include <boost/filesystem/fstream.hpp>
+ 
+ #include "mongo/base/simple_string_data_comparator.h"
+diff -u -r a/src/mongo/dbtests/framework_options.cpp b/src/mongo/dbtests/framework_options.cpp
+--- a/src/mongo/dbtests/framework_options.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/dbtests/framework_options.cpp	2024-09-08 13:41:53.502512039 +0800
+@@ -33,6 +33,8 @@
+ 
+ #include "mongo/dbtests/framework_options.h"
+ 
++#include <boost/filesystem/directory.hpp>
++#include <boost/filesystem/exception.hpp>
+ #include <boost/filesystem/operations.hpp>
+ #include <iostream>
+ 
+diff -u -r a/src/mongo/scripting/engine.cpp b/src/mongo/scripting/engine.cpp
+--- a/src/mongo/scripting/engine.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/scripting/engine.cpp	2024-09-08 13:38:28.577633512 +0800
+@@ -33,6 +33,7 @@
+ #include "mongo/scripting/engine.h"
+ 
+ #include <algorithm>
++#include <boost/filesystem/directory.hpp>
+ #include <boost/filesystem/operations.hpp>
+ 
+ #include "mongo/base/string_data.h"
+diff -u -r a/src/mongo/scripting/mozjs/module_loader.cpp b/src/mongo/scripting/mozjs/module_loader.cpp
+--- a/src/mongo/scripting/mozjs/module_loader.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/scripting/mozjs/module_loader.cpp	2024-09-08 13:38:28.577633512 +0800
+@@ -28,6 +28,7 @@
+  */
+ 
+ #include <boost/filesystem.hpp>
++#include <boost/filesystem/directory.hpp>
+ 
+ #include "mongo/logv2/log.h"
+ #include "mongo/scripting/mozjs/implscope.h"
+diff -u -r a/src/mongo/shell/shell_utils_extended.cpp b/src/mongo/shell/shell_utils_extended.cpp
+--- a/src/mongo/shell/shell_utils_extended.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/shell/shell_utils_extended.cpp	2024-09-08 13:42:27.456101736 +0800
+@@ -36,6 +36,8 @@
+ #endif
+ 
+ #include <boost/filesystem.hpp>
++#include <boost/filesystem/directory.hpp>
++#include <boost/filesystem/exception.hpp>
+ #include <boost/filesystem/fstream.hpp>
+ #include <fmt/format.h>
+ #include <fstream>
+diff -u -r a/src/mongo/shell/shell_utils_launcher.cpp b/src/mongo/shell/shell_utils_launcher.cpp
+--- a/src/mongo/shell/shell_utils_launcher.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/shell/shell_utils_launcher.cpp	2024-09-08 13:47:56.188587429 +0800
+@@ -31,6 +31,8 @@
+ 
+ #include <algorithm>
+ #include <array>
++#include <boost/filesystem/directory.hpp>
++#include <boost/filesystem/exception.hpp>
+ #include <boost/iostreams/device/file_descriptor.hpp>
+ #include <boost/iostreams/stream.hpp>
+ #include <boost/iostreams/stream_buffer.hpp>
+@@ -316,26 +318,26 @@
+     boost::filesystem::directory_iterator i(from);
+     while (i != end) {
+         boost::filesystem::path p = *i;
+-        if (p.leaf() == "metrics.interim" || p.leaf() == "metrics.interim.temp") {
++        if (p.filename() == "metrics.interim" || p.filename() == "metrics.interim.temp") {
+             // Ignore any errors for metrics.interim* files as these may disappear during copy
+             boost::system::error_code ec;
+-            boost::filesystem::copy_file(p, to / p.leaf(), ec);
++            boost::filesystem::copy_file(p, to / p.filename(), ec);
+             if (ec) {
+                 LOGV2_INFO(22814,
+                            "Skipping copying of file from '{from}' to "
+                            "'{to}' due to: {error}",
+                            "Skipping copying of file due to error"
+                            "from"_attr = p.generic_string(),
+-                           "to"_attr = (to / p.leaf()).generic_string(),
++                           "to"_attr = (to / p.filename()).generic_string(),
+                            "error"_attr = ec.message());
+             }
+-        } else if (p.leaf() != "mongod.lock" && p.leaf() != "WiredTiger.lock") {
++        } else if (p.filename() != "mongod.lock" && p.filename() != "WiredTiger.lock") {
+             if (boost::filesystem::is_directory(p)) {
+-                boost::filesystem::path newDir = to / p.leaf();
++                boost::filesystem::path newDir = to / p.filename();
+                 boost::filesystem::create_directory(newDir);
+                 copyDir(p, newDir);
+             } else {
+-                boost::filesystem::copy_file(p, to / p.leaf());
++                boost::filesystem::copy_file(p, to / p.filename());
+             }
+         }
+         ++i;
+diff -u -r a/src/mongo/shell/shell_utils_launcher.h b/src/mongo/shell/shell_utils_launcher.h
+--- a/src/mongo/shell/shell_utils_launcher.h	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/shell/shell_utils_launcher.h	2024-09-08 13:43:55.856769586 +0800
+@@ -29,7 +29,6 @@
+ 
+ #pragma once
+ 
+-#include <boost/filesystem/convenience.hpp>
+ #include <map>
+ #include <sstream>
+ #include <string>
+diff -u -r a/src/mongo/unittest/golden_test_base.cpp b/src/mongo/unittest/golden_test_base.cpp
+--- a/src/mongo/unittest/golden_test_base.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/unittest/golden_test_base.cpp	2024-09-08 13:48:19.232095193 +0800
+@@ -95,7 +95,7 @@
+     fs::path outputRoot;
+     if (opts.outputRootPattern) {
+         fs::path pattern(*opts.outputRootPattern);
+-        outputRoot = pattern.parent_path() / fs::unique_path(pattern.leaf());
++        outputRoot = pattern.parent_path() / fs::unique_path(pattern.filename());
+     } else {
+         outputRoot = fs::temp_directory_path() / fs::unique_path("out-%%%%-%%%%-%%%%-%%%%");
+     }
+diff -u -r a/src/mongo/util/processinfo_linux.cpp b/src/mongo/util/processinfo_linux.cpp
+--- a/src/mongo/util/processinfo_linux.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/util/processinfo_linux.cpp	2024-09-08 13:43:30.446577565 +0800
+@@ -53,6 +53,7 @@
+ #endif
+ 
+ #include <boost/filesystem.hpp>
++#include <boost/filesystem/exception.hpp>
+ #include <boost/none.hpp>
+ #include <boost/optional.hpp>
+ #include <fmt/format.h>
+diff -u -r a/src/mongo/util/procparser.cpp b/src/mongo/util/procparser.cpp
+--- a/src/mongo/util/procparser.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/util/procparser.cpp	2024-09-08 13:38:28.584300228 +0800
+@@ -37,6 +37,7 @@
+ #include <boost/algorithm/string/finder.hpp>
+ #include <boost/algorithm/string/split.hpp>
+ #include <boost/filesystem.hpp>
++#include <boost/filesystem/directory.hpp>
+ #include <fcntl.h>
+ #include <string>
+ #include <sys/stat.h>
+diff -u -r a/src/mongo/util/stacktrace_threads.cpp b/src/mongo/util/stacktrace_threads.cpp
+--- a/src/mongo/util/stacktrace_threads.cpp	2024-08-15 04:38:09.000000000 +0800
++++ b/src/mongo/util/stacktrace_threads.cpp	2024-09-08 13:38:28.584300228 +0800
+@@ -35,6 +35,7 @@
+ #include <array>
+ #include <atomic>
+ #include <boost/filesystem.hpp>
++#include <boost/filesystem/directory.hpp>
+ #include <boost/filesystem/fstream.hpp>
+ #include <csignal>
+ #include <cstdint>
