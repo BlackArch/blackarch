@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=seccomp-tools
+pkgver=v1.6.1.r21.ge32a4fd
+pkgrel=1
+pkgdesc='Provide powerful tools for seccomp analysis.'
+arch=('any')
+groups=('blackarch' 'blackarch-binary' 'blackarch-decompiler' 'blackarch-reversing')
+url='https://github.com/david942j/seccomp-tools'
+license=('MIT')
+depends=('ruby' 'ruby-os' 'ruby-racc')
+makedepends=('git' 'gcc')
+options=(!emptydirs)
+source=("git+https://github.com/david942j/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+    cd $pkgname
+
+	local _gemdir="$(ruby -e 'puts Gem.default_dir')"
+    local _release=$(gem build seccomp-tools.gemspec | grep Version | cut -d' ' -f4)
+	gem install --ignore-dependencies --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" "$pkgname-$_release".gem
+	rm "$pkgdir/$_gemdir/cache/$pkgname-$_release.gem"
+    install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
