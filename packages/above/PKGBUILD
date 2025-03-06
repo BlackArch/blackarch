@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=above
+pkgver=v2.8.r0.gb73cdec
+pkgrel=1
+pkgdesc='Network Protocols Sniffer.'
+arch=('any')
+groups=('blackarch' 'blackarch-sniffer' 'blackarch-scanner'
+        'blackarch-fingerprint' 'blackarch-networking' 'blackarch-recon'
+        'blackarch-voip')
+url='https://github.com/casterbyte/Above'
+license=('Apache-2.0')
+depends=('python' 'python-colorama' 'scapy')
+makedepends=('python-build' 'python-pip')
+source=("$pkgname::git+https://github.com/casterbyte/Above.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd "$pkgname"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$pkgname"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
+
