@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=cloud_enum
+_pkgname=cloud-enum
+pkgver=0.7.r10.gd3c292c
+pkgrel=1
+pkgdesc='Multi-cloud OSINT tool. Enumerate public resources in AWS, Azure, and Google Cloud.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/initstring/cloud_enum'
+license=('MIT')
+depends=('python' 'python-dnspython' 'python-requests' 'python-requests-futures')
+makedepends=('git')
+source=("git+https://github.com/initstring/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$_pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$_pkgname/" *.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$_pkgname/LICENSE"
+
+  rm -rf LICENSE *.md .gitignore .github tests requirements.txt
+
+  cp -a * "$pkgdir/usr/share/$_pkgname/"
+
+  cat > "$pkgdir/usr/bin/$_pkgname" << EOF
+#!/bin/sh
+exec python /usr/share/$_pkgname/cloud_enum.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$_pkgname"
+}
+

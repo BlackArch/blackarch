@@ -1,0 +1,78 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Original Contributor: Thomas Dziedzic <gostrc@gmail.com>
+# Original Contributor: Allan McRae <allan@archlinux.org>
+# Original Contributor: John Proctor <jproctor@prium.net>
+# Original Contributor: Jeramy Rutley <jrutley@gmail.com>
+
+pkgname=ruby2.7
+pkgver=2.7.8
+pkgrel=2
+arch=('x86_64' 'aarch64')
+pkgdesc='An object-oriented language for quick and easy programming, version 2.7.'
+url='https://www.ruby-lang.org/en/'
+license=('BSD' 'custom')
+depends=('libxcrypt' 'gdbm' 'openssl' 'libffi' 'libyaml' 'gmp' 'zlib')
+optdepends=(
+  'tk: for Ruby/TK'
+)
+makedepends=('tk')
+options=(!emptydirs !lto) # Disable LTO until fixes for https://bugs.ruby-lang.org/issues/18062 released
+_osslver=3.0.0
+source=("https://cache.ruby-lang.org/pub/ruby/${pkgver:0:3}/ruby-$pkgver.tar.xz"
+        'ruby2.7-do-not-depend-on-ext-openssl-deprecation-rb.patch::https://github.com/ruby/ruby/commit/28f3e038805a4f396f228c6884c531677c075867.patch'
+        "ruby-openssl-$_osslver.tar.xz::https://github.com/ruby/openssl/archive/refs/tags/v$_osslver.tar.gz")
+sha512sums=('4b49dff3e1c2e79d914e10418e4c03026f5d4c137dc337f5c720fe26cb9fcdcf4afc6b7c967356cf5fbe04cc5ef431174c48a035becf3e2322c2c45d3c9b2f59'
+            '743e19a2aeadf166eb604de02cf48cccc2101719b8a36be738de74262a75f33ba07ce273dd545ec86a2fcec9754e5e19960f7f7677049d714d8d91cc18edbff2'
+            '076d2924b61c4f7704b47718a33732fb5285a3af39f328ed9e83add36589da99dfae73b3e893398fc3f2a74dcbead0b66edc682040fa1b48f9530894c7187f95')
+
+prepare() {
+  cd "ruby-$pkgver"
+
+  patch -Np1 -i ../ruby2.7-do-not-depend-on-ext-openssl-deprecation-rb.patch
+
+  rm -rf ext/openssl test/openssl
+
+  mv "../openssl-$_osslver/ext/openssl" ext
+  mv "../openssl-$_osslver/lib" ext/openssl
+  mv "../openssl-$_osslver/"{History.md,openssl.gemspec} ext/openssl
+  mv "../openssl-$_osslver/test/openssl" test
+}
+
+build() {
+  cd "ruby-$pkgver"
+
+  # this uses malloc_usable_size, which is incompatible with fortification level
+  # 3
+  export CFLAGS="${CFLAGS/_FORTIFY_SOURCE=3/_FORTIFY_SOURCE=2}"
+  export CXXFLAGS="${CXXFLAGS/_FORTIFY_SOURCE=3/_FORTIFY_SOURCE=2}"
+
+  ./configure \
+    --prefix=/usr \
+    --program-suffix=-2.7 \
+    --with-soname=ruby-2.7 \
+    --sysconfdir=/etc \
+    --localstatedir=/var \
+    --sharedstatedir=/var/lib \
+    --libexecdir=/usr/lib/ruby \
+    --enable-shared \
+    --disable-rpath \
+    --with-dbm-type=gdbm_compat \
+    --disable-install-doc
+
+  make
+}
+
+package() {
+  cd "ruby-$pkgver"
+
+  make DESTDIR="${pkgdir}" install-nodoc
+
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/ruby2.7/LICENSE"
+  install -Dm 644 BSDL "$pkgdir/usr/share/licenses/ruby2.7/BSDL"
+
+  # remove files conflicting with 'ruby' package
+  rm -r "$pkgdir/usr/share/man/"
+}
+

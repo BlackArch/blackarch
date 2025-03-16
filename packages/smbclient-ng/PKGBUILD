@@ -1,0 +1,59 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=smbclient-ng
+_pkgname=smbclientng
+pkgver=2.1.7.r6.g408ee98
+pkgrel=1
+pkgdesc='Interact with SMB shares.'
+arch=('any')
+groups=('blackarch' 'blackarch-networking' 'blackarch-windows')
+url='https://github.com/p0dalirius/smbclient-ng'
+license=('GPL-3.0-only')
+depends=('python'
+         'impacket-ba'
+         'python-rich'
+         'python-charset-normalizer'
+         'python-pefile')
+makedepends=('git' 'python-build' 'python-pip')
+source=("git+https://github.com/p0dalirius/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd $pkgname
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+
+  # Alias
+  install -dm 755 "$pkgdir/usr/bin/"
+  ln -s "/usr/bin/$_pkgname" "$pkgdir/usr/bin/$pkgname"
+}
+
