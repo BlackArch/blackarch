@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sgp4
+pkgver=v1.0.r6.g6a448b4
+pkgrel=1
+pkgdesc='Simplified perturbations models.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/dnwrnr/sgp4'
+license=('Apache-2.0')
+depends=('gcc-libs')
+makedepends=('cmake' 'git')
+source=("git+https://github.com/dnwrnr/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  cmake -B build \
+  	-DCMAKE_BUILD_TYPE='None' \
+  	-DCMAKE_INSTALL_PREFIX=/usr
+  make -C build
+}
+
+package() {
+  cd $pkgname
+
+  make -C build DESTDIR="$pkgdir" install
+}
+
