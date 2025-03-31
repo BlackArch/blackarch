@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-stransi
+_pkgname=${pkgname#python-}
+pkgver=0.3.0
+pkgrel=1
+pkgdesc='A lightweight parser for ANSI escape sequences.'
+arch=('any')
+url='https://github.com/getcuia/stransi/'
+license=('MIT')
+depends=('python' 'python-ochre')
+makedepends=('python-build' 'python-pip' 'python-poetry')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('3e2ba83b30fe31473801f10446d85ae4c93999272b0fe5160ff41ea8ed789fbc46caae4cfa7960026edc28c19ddaf1b9b63ff83c78b6bb8e930123147c5a63db')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+
