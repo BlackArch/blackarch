@@ -3,65 +3,52 @@
 
 pkgname=netexec
 _pyver=3.13
-pkgver=v1.3.0.r522.g4ae32a73
+pkgver=v1.3.0.r524.gf31fb4f
 pkgrel=1
 groups=('blackarch' 'blackarch-scanner' 'blackarch-exploitation'
-        'blackarch-windows')
+        'blackarch-networking' 'blackarch-windows')
 pkgdesc='A Windows / Active Directory environments pentest tool.'
 arch=('any')
 url='https://netexec.wiki/'
 license=('BSD')
-# need rust for aardwolf, poetry can't install system dependencies
-# https://github.com/Pennyw0rth/NetExec/issues/233#issuecomment-2274444462
-depends=('python' 'python-poetry' 'rust')
-makedepends=('git')
+# need rust for aardwolf
+makedepends=('git' 'rust' 'python-virtualenv')
 source=("$pkgname::git+https://github.com/Pennyw0rth/NetExec.git")
 sha512sums=('SKIP')
-install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  virtualenv venv
+  source venv/bin/activate
+  pip install pyinstaller . # it does not work with system pyinstaller
+
+  pyinstaller netexec.spec
+
+  deactivate
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 755 ./dist/nxc "$pkgdir/usr/bin/$pkgname"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm -rf LICENSE .github .git* .dockerignore Dockerfile Makefile *.nix
+  ln -s "/usr/bin/$pkgname" "$pkgdir/usr/bin/nxc"
 
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-poetry config cache-dir "/usr/share/$pkgname"
-poetry env use /usr/share/$pkgname/virtualenvs/*/bin/python$_pyver \\
-  --directory /usr/share/netexec
-poetry run --directory "/usr/share/$pkgname" $pkgname "\$@"
-EOF
-
-  cat > "$pkgdir/usr/bin/nxc" << EOF
-#!/bin/sh
-poetry config cache-dir "/usr/share/$pkgname"
-poetry env use /usr/share/$pkgname/virtualenvs/*/bin/python$_pyver \\
-  --directory /usr/share/netexec
-poetry run --directory "/usr/share/$pkgname" nxc "\$@"
-EOF
-
-  cat > "$pkgdir/usr/bin/nxcdb" << EOF
-#!/bin/sh
-poetry config cache-dir "/usr/share/$pkgname"
-poetry env use /usr/share/$pkgname/virtualenvs/*/bin/python$_pyver \\
-  --directory /usr/share/netexec
-poetry run --directory "/usr/share/$pkgname" nxcdb "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname" "$pkgdir/usr/bin/nxc" \
-    "$pkgdir/usr/bin/nxcdb"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
