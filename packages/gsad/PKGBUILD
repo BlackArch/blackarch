@@ -6,7 +6,7 @@
 # Old Contributor: Lex Black <autumn-wind@web.de>
 
 pkgname=gsad
-pkgver=24.0.0
+pkgver=24.2.4
 pkgrel=1
 pkgdesc='Greenbone Security Assistant HTTP Server - The server talking to the Greenbone Vulnerability Management daemon (gvmd).'
 arch=('x86_64' 'aarch64')
@@ -19,7 +19,7 @@ optdepends=('logrotate: for rotating logs')
 source=("https://github.com/greenbone/gsad/archive/refs/tags/v$pkgver.tar.gz"
         '0001-libgcrypt-config.patch'
         '0002-fix-unit-path.patch')
-sha512sums=('27b6f27e1da5c587c60b0d9afc4f912f174fd4438a93ad23cf538a4424ce6a5b5ae3dbb6f47a10a9e6f163c67047ad193d7a57210675aa75d7a382d586ec5220'
+sha512sums=('4480ef569505d73a4012a16d0dbefde09b73d01b724d8f843f1347e9c2e630525a885a47dbf09a61b7a5668d0fea58f4fbdebf250a4bc6e821b17d3ac2bb1d0d'
             'a063e3caccb3a24f3bc164cb03e8ff27cdfbd5f2275158a00a6a1b49d920a99d663e0616d344b3dee3e640329b7e74667861c7c24bc5fd6f3d51ab4ec4c7c7b8'
             '3d86dfd288dcf1ab91454c0fefcb33e2bf9cdc20638804fd524ebee5ff5783a21c67e9d6b5b575a2d009c2f97828d3866513b00d02d18665ecf3f1ca91c99c41')
 
@@ -27,14 +27,6 @@ prepare() {
   cd "$pkgname-$pkgver"
 
   sed -i '/-Werror/d' CMakeLists.txt
-
-  # libgcrypt-config got replaced
-  # ToDo: issue @ upstream (same as done with openvas-scanner)
-  patch -Np2 -i "$srcdir/0001-libgcrypt-config.patch"
-
-  # fix install path for unit file
-  # ToDo: issue @ upstream (similar currently open for gvmd)
-	patch -Np2 -i "$srcdir/0002-fix-unit-path.patch"
 }
 
 build() {
@@ -43,10 +35,13 @@ build() {
     -S "$pkgname-$pkgver" \
     -DCMAKE_BUILD_TYPE=None \
     -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
     -DSBINDIR=/usr/bin \
     -DLIBDIR=/usr/lib \
     -DSYSCONFDIR=/etc \
-    -DLOCALSTATEDIR=/var
+    -DLOCALSTATEDIR=/var \
+    -DGVMD_RUN_DIR=/run/gvmd \
+    -DGSAD_RUN_DIR=/run/gsad
 
   make -C build
 }
