@@ -1,0 +1,62 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=seccomp-tools
+_pkgname=seccomp-tools
+pkgver=v1.6.1.r21.ge32a4fd
+pkgrel=1
+pkgdesc='Provide powerful tools for seccomp analysis.'
+arch=('any')
+groups=('blackarch' 'blackarch-reversing', 'blackarch-binary')
+url='https://github.com/david942j/seccomp-tools/tree/master'
+license=('MIT')
+depends=('ruby')
+makedepends=('git' 'make' 'gcc' 'ruby-bundler' 'patch')
+options=(!emptydirs)
+source=("git+https://github.com/david942j/seccomp-tools.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $_pkgname
+
+  # for mobility changes
+  patch -Np1 -i ../../0001-Add-.-lib-to-library-load-path.patch
+}
+
+package() {
+  cd $_pkgname
+  
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+
+  # Only install license if required according to
+  # https://wiki.archlinux.org/index.php/PKGBUILD#license
+  install -Dm 644 "LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf doc/ *.md spec/ LICENSE
+
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec env GEM_PATH="$GEM_PATH:/usr/share/$pkgname/vendor/bundle/ruby/3.3.0/" ruby /usr/share/$pkgname/bin/$pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir"/usr/bin/*
+}
+
