@@ -1,3 +1,5 @@
+#https://github.com/bunnyhop-dev/
+#baraction.sh for spectrwm bar
 #!/bin/bash
 
 # Function to get CPU usage
