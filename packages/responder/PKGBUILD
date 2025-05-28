@@ -13,7 +13,7 @@ depends=('impacket' 'mingw-w64-gcc' 'python' 'python-aioquic'
          'python-cryptography' 'python-pycryptodome' 'python-netifaces')
 makedepends=('git')
 url='https://github.com/lgandx/Responder'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 source=("$pkgname::git+https://github.com/lgandx/Responder.git")
 sha512sums=('SKIP')
 install="$pkgname.install"
@@ -21,7 +21,12 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
