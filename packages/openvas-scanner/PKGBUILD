@@ -12,15 +12,17 @@ pkgdesc='OpenVAS Scanner of the Greenbone Community Edition.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/greenbone/openvas-scanner'
 license=('GPL-2.0-only')
-depends=('gvm-libs' 'json-glib' 'libbsd' 'libgcrypt' 'redis' 'rsync')
-makedepends=('cmake' 'doxygen' 'cargo' 'inetutils')
+depends=('gvm-libs' 'json-glib' 'libbsd' 'libgcrypt' 'redis' 'net-snmp' 'rsync')
+makedepends=('cmake' 'doxygen' 'cargo' 'inetutils' 'graphviz' 'pandoc-cli')
 optdepends=('greenbone-feed-sync: scripts for downloading updated feed informations')
 install='openvas.install'
 options=(!lto)
 source=("https://github.com/greenbone/openvas-scanner/archive/v${pkgver}.tar.gz"
-        'openvas-scanner.tmpfiles')
+        "$pkgname.tmpfiles"
+        'openvasd.service')
 sha512sums=('e594bc9ef98c15359f408b784dcbac1ee9ac454c80a771e0f64ef5df27bcefbae19a8bb63332ff269e2f7da09265d373cc56b6c92652b81e96961fdaa8d46658'
-            '3df08a3e16f16a1735a4d6aa09b34fd0c04e4af95ef4264002a7f50447d9e200531551f162571b59e0c61707c09ca25f66e8a17baa8a42e2745752a5a6717672')
+            'c87d7890698368a6b8d569d9af73712676d0e0061de8e058cc6c7f609da1def99ebbf9b11d35d1dd0234538dbb07987ff18bbf186928ea39c33441f231eb8751'
+            '476e0aaeb916959b93082bf2529774ff46db46e6e699c34ea0ac246c461d554c87d15c25a2bc6565c06f0cd39df5dd14609d99777608c1c8afb824b0a6de99ae')
 
 prepare() {
   cd "$pkgname-$pkgver"
@@ -36,7 +38,7 @@ build() {
   cmake \
   -B build \
   -S "$pkgname-$pkgver" \
-  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_BUILD_TYPE=None \
   -DCMAKE_INSTALL_PREFIX=/usr \
   -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
   -DSBINDIR=/usr/bin \
@@ -44,7 +46,7 @@ build() {
   -DSYSCONFDIR=/etc \
   -DLOCALSTATEDIR=/var \
   -DOPENVAS_DATA_DIR=/var/lib/openvas \
-  -DOPENVAS_FEED_LOCK_PATH=/run/gvm/feed-update.lock \
+  -DOPENVAS_FEED_LOCK_PATH=/var/lib/openvas/feed-update.lock \
   -DOPENVAS_RUN_DIR=/run/ospd \
   -DOPENVAS_NVT_DIR=/var/lib/openvas/plugins \
   -DBUILD_WITH_NETSNMP=True
@@ -68,5 +70,8 @@ package() {
     -exec install -Dm 755 -t "$pkgdir/usr/bin/" {} +
 
   install -Dm 644 "$pkgname.tmpfiles" "$pkgdir/usr/lib/tmpfiles.d/$pkgname.conf"
+  install -Dm 644 openvasd.service -t "$pkgdir/usr/lib/systemd/system/"
+  install -Dm 644 "$pkgname-$pkgver/config/redis-openvas.conf" \
+    -t "$pkgdir/etc/redis/"
 }
 
