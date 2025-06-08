@@ -1,79 +1,90 @@
-# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
-# See COPYING for license details.
-#
-# $Id: PKGBUILD 314848 2018-04-07 14:39:43Z bgyorgy $
-# Old Maintainer: Eric Bélanger <eric@archlinux.org>
+# Maintainer: Fabio 'Lolix' Loli <fabio.loli@disroot.org> -> https://github.com/FabioLolix
+# Contributor: Matthias Mailänder <matthias@mailaender.name>
+# Contributor: dreieck
+# Contributor: Eric Bélanger <eric@archlinux.org>
 
 pkgname=python2-wxpython3
-_pkgname=wxPython
 pkgver=3.0.2.0
-pkgrel=6
-pkgdesc='Classic wxWidgets GUI toolkit for Python.'
-arch=('x86_64' 'aarch64')
+pkgrel=13
+pkgdesc="Classic wxWidgets GUI toolkit for Python"
+arch=(x86_64 aarch64)
 license=('custom:wxWindows')
 url="https://www.wxpython.org"
-depends=('wxwidgets-gtk3' 'python2')
-makedepends=('mesa' 'glu')
+depends=(wxwidgets-gtk3-3.0 python2)
+makedepends=(mesa glu)
 conflicts=(wxpython)
 replaces=(wxpython)
-provides=("wxpython=$pkgver")
-source=("https://downloads.sourceforge.net/wxpython/wxPython-src-$pkgver.tar.bz2"
-        'fix-plot.patch')
-sha512sums=('a3798e89ff19344253aac7d771971e519f7fa9723e82bd97e98f16fd7f1572e513170b02295b872dae0b1ae3fa95efc4ef34d078045b839694b4fdad3a27c9e4'
-            '6b4d235bbc67be66ae32c45b9ae8d2fd1aa6513d8625e1fa8af8f8399183ab598bd34ccd65158e113e8b99b86f3fd566e264d9bdeb681e68d634de17be29c473')
+provides=(wxpython=$pkgver)
+source=("https://downloads.sourceforge.net/wxpython/wxPython-src-${pkgver}.tar.bz2"
+        "fix-plot.patch"
+        "fix-editra-removal.patch")
+sha256sums=('d54129e5fbea4fb8091c87b2980760b72c22a386cb3b9dd2eebc928ef5e8df61'
+            '2d8b2bdbf55172738c7bf93955e552aac61842800c3b8b0a2e1f07f4314abc65'
+            '559b076f206c44e66b33857f49068d66f59a3fc15b97972486e32a8105885554')
 
 prepare() {
-  find . -type f -exec sed -i 's/env python/env python2/' {} \;
+    find . -type f -exec sed -i 's/env python/env python2/' {} \;
 
-  cd "$_pkgname-src-$pkgver/$_pkgname"
-  # Fix plot library (FS#42807)
-  patch -Np1 -i ../../fix-plot.patch
+    cd wxPython-src-${pkgver}/wxPython
+    # Fix plot library (FS#42807)
+    patch -Np1 -i ../../fix-plot.patch
 
-  sed -i "s|PyErr_Format(PyExc_RuntimeError, mesg)|return|g" \
-    src/gtk/*_wrap.cpp \
-    contrib/gizmos/gtk/gizmos_wrap.cpp
+    # Fix editra removal (FS#63563)
+    patch -Np2 -i ../../fix-editra-removal.patch
 }
 
 build() {
-  cd "$_pkgname-src-$pkgver"
+# Old, non-maintained software. Use older C/C++ standard.
+_C_std='gnu++14'
+_CXX_std='gnu++14'
 
-  export CFLAGS=`wx-config --cxxflags`
-  export CXXFLAGS=`wx-config --cxxflags`
-  export LDFLAGS=`wx-config --libs`
-  export LFLAGS=`wx-config --libs`
+# In case a newer C standard is used, warnings are generated which should not be treated as errors.
+_append_to_CFLAGS_after_configure=' -Wno-error -Wno-error=format-security -Wno-error=register -Wno-error=deprecated-declarations -Wno-error=alloc-size-larger-than= -Wno-error=write-strings -Wno-error=return-local-addr -Wno-error=attributes' # Or just use -Wno-error to catch all.
+_append_to_CXXFLAGS_after_configure="${_append_to_CFLAGS_after_configure}"
 
-  ./configure \
-    --prefix=/usr \
-    --libdir=/usr/lib \
-    --includedir=/usr/include \
-    --with-gtk=3 \
-    --with-opengl \
-    --enable-unicode \
-    --enable-graphics_ctx \
-    --disable-precomp-headers \
-    --with-regex=sys \
-    --with-libpng=sys \
-    --with-libxpm=sys \
-    --with-libjpeg=sys \
-    --with-libtiff=sys \
-    --with-wx-config=/usr/bin/wx-config-gtk3
+  CFLAGS+=" -std=${_C_std}"
+  CXXFLAGS+=" -std=${_CXX_std}"
+  export CFLAGS
+  export CXXFLAGS
 
-  cd $_pkgname
+    cd wxPython-src-${pkgver}
+    ./configure "${_configure_opts[@]}" \
+        --prefix=/usr \
+        --libdir=/usr/lib \
+        --includedir=/usr/include \
+        --with-gtk=3 \
+        --with-opengl \
+        --enable-unicode \
+        --enable-graphics_ctx \
+        --disable-precomp-headers \
+        --with-regex=sys \
+        --with-libpng=sys \
+        --with-libxpm=sys \
+        --with-libjpeg=sys \
+        --with-libtiff=sys \
+        --with-wx-config=/opt/wxgtk-3.0/bin/wx-config-gtk3
 
-  python2 setup.py WX_CONFIG=/usr/bin/wx-config-gtk3 WXPORT=gtk3 UNICODE=1 build
+  echo "CONFIG DONE"
+
+  CFLAGS+="${_append_to_CFLAGS_after_configure} -std=${_C_std}"
+  CXXFLAGS+="${_append_to_CXXFLAGS_after_configure} -std=${_CXX_std}"
+  export CFLAGS
+  export CXXFLAGS
+
+  make
+
+  cd wxPython
+  python2 setup.py WX_CONFIG=/opt/wxgtk-3.0/bin/wx-config-gtk3 WXPORT=gtk3 UNICODE=1 build
 }
 
 package() {
-  cd "$_pkgname-src-$pkgver/$_pkgname"
+    cd "wxPython-src-${pkgver}/wxPython"
+    python2 setup.py WX_CONFIG=/opt/wxgtk-3.0/bin/wx-config-gtk3 WXPORT=gtk3 UNICODE=1 install --root="${pkgdir}" --optimize=1
 
-  python2 setup.py WX_CONFIG=/usr/bin/wx-config-gtk3 WXPORT=gtk3 UNICODE=1 \
-    install --root="$pkgdir" -O1
+    install -d "${pkgdir}"/usr/include/wx-3.0/wx/wxPython
+    cp -r "${pkgdir}"/opt/wxgtk-3.0/include/wx-3.0/wx/wxPython/* "${pkgdir}"/usr/include/wx-3.0/wx/wxPython
+    rm -r "${pkgdir}"/opt
 
-  for file in "$pkgdir"/usr/bin/*; do
-    mv "${file}" "${file}2";
-  done
-
-  install -Dm 644 ../docs/licence.txt \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    for file in "${pkgdir}"/usr/bin/*; do mv "${file}" "${file}2"; done
+    install -Dm644 ../docs/licence.txt "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE
 }
-
