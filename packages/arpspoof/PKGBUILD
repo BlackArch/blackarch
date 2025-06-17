@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=arpspoof
+pkgver=31.ef5f0b1
+pkgrel=1
+pkgdesc="Perform an ARP spoofing attack using the Linux kernel's raw sockets."
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-networking' 'blackarch-spoof')
+url='https://github.com/smikims/arpspoof'
+license=('GPL-3.0-or-later')
+depends=()
+makedepends=('git')
+source=("git+https://github.com/smikims/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  make
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 arpspoof "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+}
