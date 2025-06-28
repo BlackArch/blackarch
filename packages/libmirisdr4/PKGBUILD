@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=libmirisdr4
+_pkgname=libmirisdr-4
+pkgver=v2.0.0.r0.gfd0452e
+pkgrel=1
+pkgdesc='Support of Mirics MSi001 + MSi2500 SDR devices (yet another flavour of libmirisdr).'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-radio')
+url='https://github.com/f4exb/libmirisdr-4'
+license=('GPL-2.0-or-later')
+depends=('libusb')
+makedepends=('git' 'cmake')
+source=("git+https://github.com/f4exb/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $_pkgname
+
+  cmake . \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr
+  make
+}
+
+package() {
+  cd $_pkgname
+
+  make DESTDIR="$pkgdir" install
+  mkdir -p "$pkgdir/etc/udev/rules.d/"
+  cp mirisdr.rules "$pkgdir/etc/udev/rules.d/99-mirisdr.rules"
+}
+
