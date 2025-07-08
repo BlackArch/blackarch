@@ -2,43 +2,42 @@
 # See COPYING for license details.
 
 pkgname=nsec3map
-pkgver=133.d145b13
-pkgrel=3
+pkgver=v0.8.2.r0.gd145b13
+pkgrel=4
 pkgdesc='A tool to enumerate the resource records of a DNS zone using its DNSSEC NSEC or NSEC3 chain.'
-groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
 arch=('any')
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
 url='https://github.com/anonion0/nsec3map'
-license=('GPL3')
-depends=('python2' 'python2-dnspython' 'python2-numpy' 'python2-scipy' 'openssl')
-makedepends=('python2-setuptools' 'git')
+license=('GPL-3.0-only')
+depends=('python' 'python-dnspython' 'python-numpy' 'python-scipy' 'openssl')
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
 source=("git+https://github.com/anonion0/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
-prepare() {
-  cd $pkgname
-
-  sed -i "s|/usr/local/share/man/man1/|/usr/share/man/man1|" setup.py
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
-  cd $pkgname
+  cd "$pkgname"
 
-  python2 setup.py build_ext
+  python -m build --wheel --no-isolation
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname"
 
   install -dm 755 "$pkgdir/usr/share/bash-completion/completions"
   install -Dm 644 n3map.bash_completion \
-    "$pkgdir/usr/share/bash-completion/completions/"
+    "$pkgdir/usr/share/bash-completion/completions/n3map"
 
-  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
