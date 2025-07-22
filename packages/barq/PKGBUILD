@@ -1,6 +1,51 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
+pkgname=getsploit
+pkgver=37.bcab2ee
+pkgrel=5
+pkgdesc='Command line utility for searching and downloading exploits.'
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-misc')
+arch=('any')
+url='https://github.com/vulnersCom/getsploit'
+license=('LGPL3')
+depends=('python')
+makedepends=('git' 'python-setuptools')
+source=("git+https://github.com/vulnersCom/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python -m pip install --isolated --no-deps --root="$pkgdir"/usr clint \ six texttable vulners appdirs
+
+  python setup.py install --root="$pkgdir" --prefix=/usr --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+[taceo@thinkpad getsploit]$ d ..
+bash: d: command not found
+[taceo@thinkpad getsploit]$ cd ..
+[taceo@thinkpad packages]$ cd barq
+[taceo@thinkpad barq]$ nano PKGBUILD 
+[taceo@thinkpad barq]$ cat PKGBUILD 
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
 pkgname=barq
 pkgver=35.6f1a68c
 pkgrel=8
@@ -10,8 +55,7 @@ groups=('blackarch' 'blackarch-exploitation' 'blackarch-backdoor'
         'blackarch-automation' 'blackarch-recon')
 url='https://github.com/Voulnet/barq'
 license=('MIT')
-depends=('python' 'python-clint' 'python-prettytable' 'python-pygments'
-         'python-boto3')
+depends=('python')
 makedepends=('git')
 source=("git+https://github.com/Voulnet/$pkgname.git")
 sha512sums=('SKIP')
@@ -25,8 +69,9 @@ pkgver() {
 package() {
   cd $pkgname
 
+  python -m pip install --isolated --no-deps --root="$pkgdir"/usr clint \ prettytable pygments boto3
+
   install -Dm 755 "$pkgname.py" "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md *.png
   install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE
 }
-
