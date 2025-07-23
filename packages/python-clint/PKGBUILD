@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-clint
+_pkgname=${pkgname#python-}
+pkgver=0.5.1
+pkgrel=1
+pkgdesc='Python CLI interface toolbox.'
+arch=('any')
+url='https://github.com/kennethreitz/clint'
+license=('ISC')
+depends=('python')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('4462969afcc0c6119afdd1ddae1984d06f150dd6ec660c51b42e3120196cdd694e5050b5b8575688863431e92d8ae80e46849aa5f6dc3474eb784312f3573266')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
