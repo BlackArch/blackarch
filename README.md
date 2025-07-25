@@ -36,6 +36,7 @@ curl -s https://blackarch.org/strap.sh | sudo bash
 
 # Then, install BlackArch tools by choosing either individual tools or groups
 sudo pacman -S blackarch
+'''
 
 2. Live ISO Installation
 
