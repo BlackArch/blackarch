@@ -25,7 +25,7 @@ Whether you're a cybersecurity professional, enthusiast, or researcher, **BlackA
 
 ## Installation Instructions
 
-Setting up **BlackArch Linux** is quick and easy. There are three primary installation methods, depending on your preference:
+Setting up **BlackArch Linux** is quick and easy. There are three primary installation methods, and fourth one to install all tools depending on your preference:
 
 ### 1. **Install on an Existing Arch Machine**
 If you're running **Arch Linux**, you can install **BlackArch tools** directly onto your system. This method requires only the **BlackArch repository**.
