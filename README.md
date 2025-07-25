@@ -110,7 +110,8 @@ We encourage contributions in various forms:
 *   Tool Groups: Organize tools into logical groups and categories.
 
 We are happy to accept pull requests for improvements. For more detailed information on how to contribute, please refer to the Developer Guide in the repository.
-3. Pull Requests
+
+### 3. Pull Requests
 
 You can submit pull requests directly to our GitHub repository:
 
