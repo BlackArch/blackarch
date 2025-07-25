@@ -38,7 +38,7 @@ curl -s https://blackarch.org/strap.sh | sudo bash
 sudo pacman -S blackarch
 ```
 
-2. Live ISO Installation
+### 2. Live ISO Installation
 
 The Live ISO allows you to try BlackArch without installation. You can explore the pre-configured environment and tools before deciding to install.
 
@@ -46,7 +46,7 @@ The Live ISO allows you to try BlackArch without installation. You can explore t
 
 *   Boot from the live ISO to start penetration testing and security research tasks right away.
 
-3. Install Using Full or Netinstall ISOs
+### 3. Install Using Full or Netinstall ISOs
 
 BlackArch offers Full and Netinstall ISOs, both of which include a text-based installer (blackarch-install) to guide you through the installation process.
 
@@ -62,13 +62,16 @@ Usage
 Once installed, you can install additional tools or tool groups from the BlackArch repository using the pacman package manager. Here are some examples:
 Install BlackArch Tools
 
-To install all BlackArch tools:
+### 4. To install all BlackArch tools:
 
+```bash
 sudo pacman -S blackarch
+```
 
 Install Specific Tool Groups
 
 To install a specific category of tools, use the following:
+
 
 # For example, to install Web Application Security tools:
 sudo pacman -S blackarch-webapp
