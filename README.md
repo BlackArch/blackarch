@@ -72,9 +72,13 @@ Install Specific Tool Groups
 
 To install a specific category of tools, use the following:
 
+---
 
 # For example, to install Web Application Security tools:
+
+```bash
 sudo pacman -S blackarch-webapp
+```
 
 For a complete list of available tools and categories, refer to the official BlackArch tools list.
 Running Tools
@@ -83,7 +87,7 @@ After installation, you can run tools directly from the terminal or from the app
 Get Involved
 
 BlackArch is an open-source project, and we welcome contributions from the community. Whether you're a security researcher, developer, or just a passionate user, you can contribute in the following ways:
-1. Report Bugs & Request New Tools
+### 1. Report Bugs & Request New Tools
 
 If you encounter a bug or have suggestions for new tools, please use the following channels:
 
@@ -93,13 +97,13 @@ If you encounter a bug or have suggestions for new tools, please use the followi
 
 *   Email: You can also reach out to us via email at team@blackarch.org.
 
-2. Contribute to BlackArch
+## 2. Contribute to BlackArch
 
 We encourage contributions in various forms:
 
-*   Bug Fixes: Help us improve the system by fixing bugs.
+* Bug Fixes: Help us improve the system by fixing bugs.
 
-*   Documentation: Help write, maintain, and improve the documentation.
+* Documentation: Help write, maintain, and improve the documentation.
 
 *   New Tools: Contribute new penetration testing tools or improve existing ones.
 
