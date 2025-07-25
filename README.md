@@ -8,7 +8,7 @@ Whether you're a cybersecurity professional, enthusiast, or researcher, **BlackA
 
 ## Key Features
 
-- **Over 2,800 Tools**: BlackArch offers a vast collection of tools categorized by task, ensuring you have what you need for any penetration testing scenario.
+- **Over 2,800+ Tools**: BlackArch offers a vast collection of tools categorized by task, ensuring you have what you need for any penetration testing scenario.
 - **Arch Linux-based**: Leverages Arch's rolling release model for continuous updates and cutting-edge software.
 - **Compatibility**: Seamlessly integrates with existing Arch Linux installations.
 - **Customizable Installation**: Choose between **Full** or **Slim ISO** installations, or install BlackArch tools on an existing Arch system.
