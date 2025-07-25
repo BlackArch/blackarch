@@ -119,7 +119,7 @@ You can submit pull requests directly to our GitHub repository:
 
 *   Please follow our contribution guidelines to ensure your PR is well-received.
 
-Contributing
+## 4. Contributing
 
 We adhere to the Contributor Covenant Code of Conduct, which sets standards for respectful communication and collaboration. Before contributing, please review the following:
 
