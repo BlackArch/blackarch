@@ -1,0 +1,45 @@
+# bash-completion for blackarch-helper
+
+_blackarch_helper_completions() {
+    local cur prev words cword
+    _get_comp_words_by_ref -n : cur prev words cword
+
+    # Variables
+    local commands="category tool interactive help --help -h --verbose -v"
+    local category_subcommands="list install"
+    local tool_subcommands="list list-installed search info install upgrade"
+
+    # Main command completion
+    if [[ ${cword} -eq 1 ]]; then
+        COMPREPLY=($(compgen -W "${commands}" -- "${cur}"))
+        return 0
+    fi
+
+    # Subcommand completion
+    local command="${words[1]}"
+    case "${command}" in
+        category)
+            if [[ ${cword} -eq 2 ]]; then
+                COMPREPLY=($(compgen -W "${category_subcommands}" -- "${cur}"))
+            elif [[ ${cword} -eq 3 && "${words[2]}" == "install" ]]; then
+                # Define a local function to avoid polluting the global scope
+                _list_all_categories_for_comp() {
+                    pacman -Sg 2>/dev/null | grep '^blackarch-' | cut -d' ' -f1 | sort -u
+                }
+                local categories=$(_list_all_categories_for_comp)
+                COMPREPLY=($(compgen -W "${categories}" -- "${cur}"))
+            fi
+            ;;
+        tool)
+            if [[ ${cword} -eq 2 ]]; then
+                COMPREPLY=($(compgen -W "${tool_subcommands}" -- "${cur}"))
+            elif [[ ${cword} -eq 3 && ("${words[2]}" == "info" || "${words[2]}" == "search" || "${words[2]}" == "install") ]]; then
+                # Autocompleting all tool names is too slow.
+                # Default to file directory completion.
+                _filedir
+            fi
+            ;;
+    esac
+}
+
+complete -F _blackarch_helper_completions blackarch-helper
