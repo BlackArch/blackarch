@@ -6,11 +6,12 @@ _blackarch_helper() {
 
     commands=(
         'sync:Download/update the local package database'
-        'search:Search for a package by keyword'
-        'info:Show info for a specific package'
-        'install:Build and install a package from source'
         'interactive:Open the interactive menu'
-        'fzf:Alias for interactive'
+        'review:Review a PKGBUILD before building'
+        'install:Build and install a package from source'
+        'info:Show info for a specific package'
+        'search:Search for a package by keyword'
+        'clean-cache:Delete the local cache directory'
         'help:Show the help message'
     )
 
@@ -24,11 +25,12 @@ _blackarch_helper() {
             ;;
         argument)
             case $words[2] in
-                install|info)
+                install|info|review)
                     local cache_file="${HOME}/.cache/blackarch-helper/tool_index.txt"
                     if [[ -f "$cache_file" ]]; then
+                        # Suggest both base names and versioned names for convenience
                         local -a tools
-                        tools=($(cut -d: -f3 "$cache_file"))
+                        tools=($(cut -d: -f2,3 "$cache_file" | sed 's/:/\n/' | sort -u))
                         _describe -t tools "tool" tools
                     else
                         _message "run 'sync' first to generate tool list"

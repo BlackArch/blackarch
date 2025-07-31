@@ -4,7 +4,7 @@ _blackarch_helper_completions() {
     local cur prev words cword
     _get_comp_words_by_ref -n : cur prev words cword
 
-    local commands="sync search info install interactive fzf help"
+    local commands="sync interactive review install info search clean-cache help"
 
     if [[ ${cword} -eq 1 ]]; then
         COMPREPLY=($(compgen -W "${commands}" -- "${cur}"))
@@ -14,10 +14,11 @@ _blackarch_helper_completions() {
     local command="${words[1]}"
     if [[ ${cword} -eq 2 ]]; then
         case "${command}" in
-            install|info)
+            install|info|review)
                 local cache_file="${HOME}/.cache/blackarch-helper/tool_index.txt"
                 if [[ -f "${cache_file}" ]]; then
-                    local tools=$(cut -d: -f3 "${cache_file}")
+                    # Suggest both base names and versioned names
+                    local tools=$(cut -d: -f2,3 "${cache_file}" | sed 's/:/\n/' | sort -u)
                     COMPREPLY=($(compgen -W "${tools}" -- "${cur}"))
                 fi
                 ;;
