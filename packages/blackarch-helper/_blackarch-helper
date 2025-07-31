@@ -2,80 +2,40 @@
 
 _blackarch_helper() {
     local -a commands
-    local -a category_subcommands
-    local -a tool_subcommands
     local state
 
-    # Options with descriptions
-    local -a global_opts
-    global_opts=(
-        '(-v --verbose)'{-v,--verbose}'[Enable verbose output]'
-        '(-h --help)'{-h,--help}'[Show help message]'
-    )
-
-    # Commands with descriptions
     commands=(
-        'category:Manage tool categories'
-        'tool:Manage individual tools'
+        'sync:Download/update the local package database'
+        'search:Search for a package by keyword'
+        'info:Show info for a specific package'
+        'install:Build and install a package from source'
         'interactive:Open the interactive menu'
+        'fzf:Alias for interactive'
         'help:Show the help message'
-    )
-    category_subcommands=(
-        'list:List all categories'
-        'install:Install an entire category'
-    )
-    # UPDATED tool subcommands
-    tool_subcommands=(
-        'list:List all tools in the repository'
-        'list-installed:List all installed BlackArch packages'
-        'search:Search for a tool by keyword'
-        'info:Show info for a specific tool'
-        'install:Install a specific tool'
-        'upgrade:Upgrade all installed BlackArch packages'
     )
 
     _arguments -C \
-        $global_opts \
         '1: :->command' \
-        '2: :->subcommand' \
-        '3: :->argument'
+        '2: :->argument'
 
     case $state in
         command)
             _describe "command" commands
             ;;
-        subcommand)
-            case $words[2] in
-                category)
-                    _describe "category subcommand" category_subcommands
-                    ;;
-                tool)
-                    _describe "tool subcommand" tool_subcommands
-                    ;;
-            esac
-            ;;
         argument)
             case $words[2] in
-                category)
-                    case $words[3] in
-                        install)
-                            # Dynamically generate category list
-                            local -a categories
-                            categories=($(pacman -Sg 2>/dev/null | grep '^blackarch-' | cut -d' ' -f1 | sort -u))
-                            _describe -t categories "category" categories
-                            ;;
-                    esac
+                install|info)
+                    local cache_file="${HOME}/.cache/blackarch-helper/tool_index.txt"
+                    if [[ -f "$cache_file" ]]; then
+                        local -a tools
+                        tools=($(cut -d: -f3 "$cache_file"))
+                        _describe -t tools "tool" tools
+                    else
+                        _message "run 'sync' first to generate tool list"
+                    fi
                     ;;
-                tool)
-                    case $words[3] in
-                        info|install)
-                            # Generating a list of all tools is too slow for completion.
-                            _message "tool name (use 'tool search' to find one)"
-                            ;;
-                        search)
-                            _message "keyword to search for"
-                            ;;
-                    esac
+                search)
+                    _message "keyword to search for"
                     ;;
             esac
             ;;

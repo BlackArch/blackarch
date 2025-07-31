@@ -2,29 +2,28 @@
 # See COPYING for license details.
 
 pkgname=blackarch-helper
-pkgver=1.1.0
+pkgver=2.0.0
 pkgrel=1
-pkgdesc='TUI/CLI helper to manage and install tools from the BlackArch repository'
+pkgdesc="Helper to find, inspect, and build BlackArch packages from source using makepkg."
 arch=('any')
 url='https://github.com/x0rgus/blackarch-helper'
 license=('MIT')
-groups=('blackarch')
-depends=('bash' 'fzf')
-source=('blackarch-helper'
-        'LICENSE'
-        'blackarch-helper.1'
-        'blackarch-helper.bash-completion'
-        '_blackarch-helper')
-sha512sums=('SKIP'
+depends=('bash' 'curl' 'fzf')
+source=("${pkgname}"
+        "LICENSE"
+        "${pkgname}.1"
+        "${pkgname}.bash-completion"
+        "_${pkgname}")
+sha256sums=('SKIP'
             'SKIP'
             'SKIP'
             'SKIP'
             'SKIP')
 
 package() {
-    install -Dm755 "$srcdir/blackarch-helper" "$pkgdir/usr/bin/blackarch-helper"
-    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-    install -Dm644 "$srcdir/blackarch-helper.1" "$pkgdir/usr/share/man/man1/$pkgname.1"
-    install -Dm644 "$srcdir/blackarch-helper.bash-completion" "$pkgdir/usr/share/bash-completion/completions/$pkgname"
-    install -Dm644 "$srcdir/_blackarch-helper" "$pkgdir/usr/share/zsh/site-functions/_$pkgname"
+    install -Dm755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
+    install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    install -Dm644 "$srcdir/${pkgname}.1" "${pkgdir}/usr/share/man/man1/${pkgname}.1"
+    install -Dm644 "$srcdir/${pkgname}.bash-completion" "${pkgdir}/usr/share/bash-completion/completions/${pkgname}"
+    install -Dm644 "$srcdir/_${pkgname}" "${pkgdir}/usr/share/zsh/site-functions/_${pkgname}"
 }
