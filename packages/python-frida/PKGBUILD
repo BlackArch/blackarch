@@ -3,7 +3,7 @@
 
 pkgname=python-frida
 _pkgname=frida
-pkgver=17.2.14
+pkgver=17.2.15
 pkgrel=1
 pkgdesc='Dynamic instrumentation toolkit for developers, reverse-engineers, and security researchers.'
 groups=('blackarch' 'blackarch-reversing' 'blackarch-binary')
@@ -19,19 +19,23 @@ replaces=('frida')
 conflicts=('frida')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
         'https://raw.githubusercontent.com/frida/frida/master/COPYING')
-sha512sums=('9902985a75cf2a9ed9a9fb4a13a77102f92116871b8d57b63788bc740b3f856c47319b089cad97c10600389b9b93fa470c0c1a53a71c871ee46921b748e19aa5'
+sha512sums=('d5b9929af2e130219a9aae9a513cd1048ce4b36a09ef3a76a9eb28960bfe9c7823473a74808d0469a2038a9f92fb54d3f3fd473d07d06e4feebbdcc9b588b1a'
             'e36c8d5a0538fa4bb3575a60322057f7a687aab04c13deed25399462ba0be74ce6071cc41d967e23b9a96e552462d210280427a945c6cc956919b062878efc9a')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python -m build --wheel --no-isolation --outdir="$startdir/dist"
+  if [[ -n $LDFLAGS ]]; then
+    export LDFLAGS="${LDFLAGS//-Wl,-z,pack-relative-relocs/}"
+  fi
+
+  python -m build --wheel --no-isolation
 }
 
 package_python-frida() {
   cd "$_pkgname-$pkgver"
 
-  python -m installer --destdir="$pkgdir" "$startdir/dist/"*.whl
+  python -m installer --destdir="$pkgdir" dist/*.whl
 
   install -Dm 644 "$srcdir/COPYING" \
     "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
