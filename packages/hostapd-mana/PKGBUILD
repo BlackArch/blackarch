@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=hostapd-mana
+pkgver=2.6.5.r20.g8853d5a
+pkgrel=1
+pkgdesc='Modified hostapd for Wi-Fi attacks to create a rogue access point.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-wireless')
+url='https://github.com/sensepost/hostapd-mana'
+license=('custom:BSD/GPL v2 dual')
+depends=('openssl' 'libnl')
+makedepends=('git')
+source=("git+https://github.com/sensepost/$pkgname.git"
+        'hostapd.service')
+sha512sums=('SKIP'
+            '09627a637ceb034d21f1998e8aaaccd77f210f6b9cc1fd687e6ec6a363d06e6d5fe5cf34d22c23045f4e99d78516cd7ef2769553255b242e665b562096c8a99d')
+options=('emptydirs')
+conflicts=('hostapd')
+provides=('hostapd')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd "$pkgname/hostapd"
+  sed -i 's:/etc/hostapd:/etc/hostapd/hostapd:' hostapd.conf
+
+  cd ..
+  make -C hostapd
+}
+
+package() {
+  cd "$pkgname/hostapd"
+
+  install -Dm 755 -t "$pkgdir/usr/bin" hostapd hostapd_cli
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/hostapd/" hostapd.[a-z]* wired.conf hlr_auc_gw.milenage_db
+
+  install -dm 755 "$pkgdir/etc/hostapd"
+  install -Dm 644 hostapd.8 "$pkgdir/usr/share/man/man8/hostapd.8"
+  install -Dm 644 hostapd_cli.1 "$pkgdir/usr/share/man/man1/hostapd_cli.1"
+  install -Dm 644 ../COPYING "$pkgdir/usr/share/licenses/hostapd/COPYING"
+  install -Dm644 "$srcdir/hostapd.service" "$pkgdir/usr/lib/systemd/system/hostapd.service"
+}
+
