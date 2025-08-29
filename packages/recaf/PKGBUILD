@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=recaf
-pkgver=2.21.14.2283.e5669cd90
+pkgver=2.16.6.r2889.g70cccf1
 pkgrel=1
 groups=('blackarch' 'blackarch-decompiler' 'blackarch-reversing')
 pkgdesc='Modern Java bytecode editor.'
@@ -10,21 +10,32 @@ arch=('any')
 url='https://github.com/Col-E/Recaf'
 license=('MIT')
 depends=('java-runtime' 'java-environment')
-makedepends=('maven' 'git' 'jdk-openjdk')
+makedepends=('gradle' 'git' 'jdk-openjdk')
+# TODO package openjfx ?
 source=("$pkgname::git+https://github.com/Col-E/Recaf.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git describe --tags).$(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
   cd $pkgname
 
-  # https://github.com/Col-E/Recaf/blob/master/build
-  mvn package -Dmaven.test.skip -Dcheckstyle.skip -P java11
+  # https://github.com/Col-E/Recaf/blob/master/.github/workflows/build.yml
+
+  # Do not use `./gradlew` wrapper as it force older version of gradle not compatible with latest Java version
+  # e.g. 8.11.1 compatible up to Java 23 where we need Gradle 8.14 for Java 24 support
+  # https://docs.gradle.org/current/userguide/compatibility.html
+  gradle assemble -x compileTestJava -Dskip_jfx_bundle=true --stacktrace
+  # gradle publish --stacktrace
 }
 
 package() {
