@@ -2,16 +2,16 @@
 # See COPYING for license details.
 
 pkgname=recaf
-pkgver=2.16.6.r2889.g70cccf1
+pkgver=4.0.0.alpha.r19.g4347776
+_javaver=24
 pkgrel=1
 groups=('blackarch' 'blackarch-decompiler' 'blackarch-reversing')
 pkgdesc='Modern Java bytecode editor.'
 arch=('any')
 url='https://github.com/Col-E/Recaf'
 license=('MIT')
-depends=('java-runtime' 'java-environment')
-makedepends=('gradle' 'git' 'jdk-openjdk')
-# TODO package openjfx ?
+depends=('java-runtime' 'java-environment' "java$_javaver-openjfx-bin")
+makedepends=('git' 'jdk-openjdk' "gradle")
 source=("$pkgname::git+https://github.com/Col-E/Recaf.git")
 sha512sums=('SKIP')
 
@@ -26,16 +26,27 @@ pkgver() {
   )
 }
 
+prepare() {
+  cd $pkgname
+
+  echo "org.gradle.java.installations.auto-detect=false" >> gradle.properties
+  echo "org.gradle.java.installations.auto-download=false" >> gradle.properties
+}
+
 build() {
   cd $pkgname
 
+  # How upstream builds
   # https://github.com/Col-E/Recaf/blob/master/.github/workflows/build.yml
 
-  # Do not use `./gradlew` wrapper as it force older version of gradle not compatible with latest Java version
-  # e.g. 8.11.1 compatible up to Java 23 where we need Gradle 8.14 for Java 24 support
-  # https://docs.gradle.org/current/userguide/compatibility.html
-  gradle assemble -x compileTestJava -Dskip_jfx_bundle=true --stacktrace
-  # gradle publish --stacktrace
+  # Try either with
+  # 1. gradle as makedepends + call gradle
+  # 2. no gradle as makedepends + call ./gradlew
+  # `./gradlew` wrapper forces a specific version of gradle that may not be
+  # compatible with latest Java version
+  # See https://docs.gradle.org/current/userguide/compatibility.html
+
+  TARGET_VERSION=$_javaver gradle publish --stacktrace
 }
 
 package() {
@@ -44,7 +55,7 @@ package() {
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  cp target/recaf-*-jar-with-dependencies.jar \
+  cp recaf-ui/build/libs/recaf-ui-*-all.jar \
     "$pkgdir/usr/share/$pkgname/$pkgname.jar"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
