@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Initial author: Mohammadreza Abdollahzadeh <morealaz at gmail dot com>
+# Modified: noptrix at blackarch d0t org
+# Modified: noraj at blackarch d0t org
+
+pkgname=java24-openjfx-bin
+_ver=24
+pkgver=24.0.2
+pkgrel=1
+pkgdesc="Java OpenJFX ${_ver} client application platform (Gluon build)."
+arch=('x86_64')
+url='https://openjfx.io/'
+license=('GPL2')
+depends=('ffmpeg' 'gstreamer' "java-environment>=$_ver" 'libxtst' 'qt5-base'
+         'webkit2gtk')
+provides=("java-openjfx=$_ver")
+conflicts=("java-openjfx=$_ver" "java${_ver}-openjfx")
+source=("https://download2.gluonhq.com/openjfx/$pkgver/openjfx-${pkgver}_linux-x64_bin-sdk.zip"
+        "https://download2.gluonhq.com/openjfx/$pkgver/openjfx-${pkgver}_linux-x64_bin-jmods.zip")
+sha512sums=('f0c8d211bd648a28fc7267d50c63d5637a5bea2c17d322c05985cba8b2848c859212ea0e7a73fb16c9fd0e520c3b2cd53fa106dc20c563a07fc09b66e49ce4ab'
+            '3f3d4dee102995157076bc032845e9bba3c05515d43dde4e7a63e0f34df8089aecf7d9cb6f75754816580d344629a7a02294d4a80a374e57fe8557296465dce1')
+
+package() {
+  _jvmdir="usr/lib/jvm/java-${_ver}-openjdk"
+
+  install -dm 755 "$pkgdir/$_jvmdir"
+  install -dm 755 "$pkgdir/$_jvmdir/jmods"
+  install -dm 750 "$pkgdir/usr/share/licenses/java$_ver-openjdk"
+
+  cp -a "javafx-sdk-$pkgver/lib" "$pkgdir/$_jvmdir/"
+  cp -a "javafx-sdk-$pkgver/src.zip" "$pkgdir/$_jvmdir/"
+  mv "$pkgdir/$_jvmdir/src.zip" "$pkgdir/$_jvmdir/lib/javafx-src.zip"
+  cp -a "javafx-sdk-$pkgver/legal" \
+    "$pkgdir/usr/share/licenses/java$_ver-openjdk/"
+  cp -a "javafx-jmods-$pkgver/"* "$pkgdir/$_jvmdir/jmods/"
+  rm "$pkgdir/$_jvmdir/jmods/jdk.jsobject.jmod" # else conflict with jdk-openjdk
+}
+
