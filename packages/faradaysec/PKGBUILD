@@ -40,14 +40,19 @@ depends=('couchdb' 'python' 'gtk3' 'gobject-introspection' 'python-pyjwt' 'pytho
          'python-sh' 'python-elasticsearch' 'python-croniter' 'postgresql')
 makedepends=('git')
 options=('!strip')
-license=('GPL')
+license=('GPL-3.0-or-later')
 source=("$pkgname::git+https://github.com/infobyte/faraday.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
