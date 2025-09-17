@@ -4,14 +4,14 @@
 pkgname=typo3scan
 _pkgname=Typo3Scan
 pkgver=v1.2.final.r0.g0c4ec73
-pkgrel=4
+pkgrel=5
 pkgdesc='Enumerate Typo3 version and extensions.'
 arch=('any')
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
 url='https://github.com/whoot/Typo3Scan'
-license=('GPL2')
+license=('GPL-2.0-or-later')
 depends=('python' 'python-requests' 'python-colorama' 'python-progressbar'
-         'python-setuptools')
+         'python-setuptools' 'python-beautifulsoup4' 'python-fake-useragent')
 makedepends=('git')
 replaces=('typo-enumerator')
 source=("git+https://github.com/whoot/$_pkgname.git")
@@ -20,7 +20,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $_pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
