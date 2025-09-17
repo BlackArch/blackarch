@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-fusepy
+_pkgname=${pkgname#python-}
+pkgver=3.0.1
+pkgrel=3
+pkgdesc='Simple ctypes bindings for FUSE.'
+url='https://github.com/fusepy/fusepy'
+arch=('any')
+license=('custom:ISCL')
+depends=('python' 'fuse2')
+makedepends=('python-build' 'python-pip')
+conflicts=('python-fuse')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/${_pkgname}/${_pkgname}-${pkgver}.tar.gz")
+b2sums=('c76319b0d0b64a8dc674b803551f32352fed9a1e6e050110963a159259c3fed8fefbb63cfe6dda689738f07cb796c6b9da14e3070c4a1cf5b70892a6ebe52cc2')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+	sed -n '/Copyright/,/ THIS SOFTWARE[.]/p' fuse.py > LICENSE
+}
+
+build() {
+	cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+	cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+
+	install -Dm 644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}
+

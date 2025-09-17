@@ -1,0 +1,2779 @@
+Only in yersinia-0.8.2/: config.log
+Only in yersinia-0.8.2/: config.status
+Only in yersinia-0.8.2/: Makefile
+Only in yersinia-0.8.2/: po
+Only in yersinia-0.8.2/src: config.h
+diff -ru src/yersinia-0.8.2/src/gtk-gui.h yersinia-0.8.2/src/gtk-gui.h
+--- src/yersinia-0.8.2/src/gtk-gui.h	2017-08-24 13:36:01.000000000 +0200
++++ yersinia-0.8.2/src/gtk-gui.h	2024-12-21 19:32:06.023332925 +0100
+@@ -42,12 +42,12 @@
+ #define HELP_SCREEN    2
+ #define SPLASH_SCREEN  1
+ 
+-#define INFO_HEIGHT    13 
++#define INFO_HEIGHT    13
+ #define INFO_WIDTH     44
+-#define MAX_PAD_HEIGHT 40 
++#define MAX_PAD_HEIGHT 40
+ #define MAX_PAD_WIDTH  70
+ 
+-u_int8_t pointer[MAX_PROTOCOLS];
++extern u_int8_t pointer[MAX_PROTOCOLS];
+ 
+ void gtk_gui(void *);
+ void gtk_gui_th_exit(struct term_node *);
+diff -ru src/yersinia-0.8.2/src/gtk-interface.c yersinia-0.8.2/src/gtk-interface.c
+--- src/yersinia-0.8.2/src/gtk-interface.c	2017-08-24 13:36:01.000000000 +0200
++++ yersinia-0.8.2/src/gtk-interface.c	2024-12-21 19:32:06.023332925 +0100
+@@ -36,6 +36,9 @@
+ 
+ #include "gtk-interface.h"
+ 
++GtkWidget *protocols_tree[MAX_PROTOCOLS + 1];
++GtkListStore *protocols_tree_model[MAX_PROTOCOLS + 1];
++
+ #define GLADE_HOOKUP_OBJECT(component,widget,name) \
+   g_object_set_data_full (G_OBJECT (component), name, \
+     gtk_widget_ref (widget), (GDestroyNotify) gtk_widget_unref)
+@@ -461,8 +464,8 @@
+    {
+       if (protocols[i].visible) {
+          gtk_list_store_append (GTK_LIST_STORE (main_vhvs_tree_model), &iter);
+-         gtk_list_store_set (GTK_LIST_STORE(main_vhvs_tree_model), &iter, 0, protocols[i].namep, -1); 
+-         gtk_list_store_set (GTK_LIST_STORE(main_vhvs_tree_model), &iter, 1, protocols[i].packets, -1); 
++         gtk_list_store_set (GTK_LIST_STORE(main_vhvs_tree_model), &iter, 0, protocols[i].namep, -1);
++         gtk_list_store_set (GTK_LIST_STORE(main_vhvs_tree_model), &iter, 1, protocols[i].packets, -1);
+       }
+    }
+    gtk_list_store_append (GTK_LIST_STORE (main_vhvs_tree_model), &iter);
+@@ -533,7 +536,7 @@
+ 
+    GLADE_HOOKUP_OBJECT (Main, main_vhv2_notebook, "main_vhv2_notebook");
+    for (i=0; i < MAX_PROTOCOLS; i++)
+-   {   
++   {
+       protocols_vpaned[i] = create_protocol_mwindow(Main, helper, i);
+       if (protocols[i].visible)
+          gtk_widget_show(protocols_vpaned[i]);
+@@ -895,14 +898,14 @@
+     if (j >= 0)
+       gtk_about_dialog_set_comments( GTK_ABOUT_DIALOG( aboutdialog ), _( vty_motd[j] ) );
+ 
+-    gtk_about_dialog_set_license( GTK_ABOUT_DIALOG( aboutdialog ), LICENSE ); 
++    gtk_about_dialog_set_license( GTK_ABOUT_DIALOG( aboutdialog ), LICENSE );
+     gtk_about_dialog_set_website( GTK_ABOUT_DIALOG( aboutdialog ), "http://www.yersinia.net");
+     gtk_about_dialog_set_website_label( GTK_ABOUT_DIALOG( aboutdialog), _("http://www.yersinia.net"));
+     gtk_about_dialog_set_authors( GTK_ABOUT_DIALOG( aboutdialog ), authors );
+     gtk_about_dialog_set_translator_credits( GTK_ABOUT_DIALOG( aboutdialog ), translators );
+ 
+     aboutdialog_logo_pixbuf = create_pixbuf( "yersinia.png" );
+-    
++
+     gtk_about_dialog_set_logo( GTK_ABOUT_DIALOG( aboutdialog ), aboutdialog_logo_pixbuf );
+ 
+     gtk_dialog_run( GTK_DIALOG( aboutdialog ) );
+@@ -949,8 +952,8 @@
+     gtk_box_pack_start( GTK_BOX( attacks_vbox ), attacks_notebook, TRUE, TRUE, 0 );
+ 
+     for (i=0; i < MAX_PROTOCOLS; i++)
+-    {   
+-      if ( protocols[i].attack_def_list ) 
++    {
++      if ( protocols[i].attack_def_list )
+       {
+          attack_def = protocols[i].attack_def_list;
+ 
+@@ -958,61 +961,61 @@
+          gtk_container_add( GTK_CONTAINER( attacks_notebook ), attacks_frame );
+          if ( protocols[i].visible )
+             gtk_widget_show( attacks_frame );
+-    
++
+          attacks_n_labels[i] = gtk_label_new (_(protocols[i].namep));
+ 
+          if (protocols[i].visible)
+             gtk_widget_show (attacks_n_labels[i]);
+-    
++
+          gtk_notebook_set_tab_label (GTK_NOTEBOOK (attacks_notebook), gtk_notebook_get_nth_page (GTK_NOTEBOOK (attacks_notebook), i), attacks_n_labels[i]);
+-    
++
+          attacks_v_table = gtk_table_new (SIZE_ARRAY(attack_def), 3, FALSE);
+          gtk_widget_show (attacks_v_table);
+          gtk_container_add(GTK_CONTAINER(attacks_frame), attacks_v_table);
+          gtk_container_set_border_width (GTK_CONTAINER (attacks_v_table), 10);
+-    
++
+          attacks_vt_label_attack = gtk_label_new (_("Description"));
+          gtk_widget_show (attacks_vt_label_attack);
+          gtk_table_attach (GTK_TABLE (attacks_v_table), attacks_vt_label_attack, 0, 1, 0, 1,
+                (GtkAttachOptions) (GTK_FILL),
+                (GtkAttachOptions) (0), 0, 0);
+          gtk_misc_set_alignment (GTK_MISC (attacks_vt_label_attack), 0, 0.5);
+-    
++
+          attacks_vt_label_dos = gtk_label_new (_("DoS"));
+          gtk_widget_show (attacks_vt_label_dos);
+          gtk_table_attach (GTK_TABLE (attacks_v_table), attacks_vt_label_dos, 1, 2, 0, 1,
+                (GtkAttachOptions) (GTK_FILL),
+                (GtkAttachOptions) (0), 0, 0);
+          gtk_misc_set_alignment (GTK_MISC (attacks_vt_label_dos), 0, 0.5);
+-    
++
+          num_attacks = 0;
+-    
++
+          while ( attack_def[num_attacks].desc )
+             num_attacks++;
+-    
+-         for(j = 0; j < num_attacks; j++) 
++
++         for(j = 0; j < num_attacks; j++)
+          {
+             if (j == 0)
+                attacks_vt_radio_attack[i] = gtk_radio_button_new_with_label( NULL, attack_def[j].desc );
+             else
+                attacks_vt_radio_attack[i] = gtk_radio_button_new_with_label_from_widget( GTK_RADIO_BUTTON( attacks_vt_radio_attack[i] ), ( attack_def[j].desc ) );
+-    
++
+             gtk_widget_show (attacks_vt_radio_attack[i]);
+-    
++
+             g_signal_connect(attacks_vt_radio_attack[i], "toggled", (GCallback) gtk_c_attacks_radio_changed, helper);
+-    
++
+             gtk_table_attach (GTK_TABLE (attacks_v_table), attacks_vt_radio_attack[i], 0, 1, j+1, j+2,
+                   (GtkAttachOptions) (GTK_FILL),
+                   (GtkAttachOptions) (0), 0, 0);
+-    
++
+             attacks_vt_check_attack1 = gtk_check_button_new();
+             gtk_widget_set_sensitive(GTK_WIDGET(attacks_vt_check_attack1), FALSE);
+-    
++
+             if ( attack_def[j].type == DOS )
+                gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(attacks_vt_check_attack1), TRUE);
+             else
+                gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(attacks_vt_check_attack1), FALSE);
+-    
++
+             gtk_widget_show (attacks_vt_check_attack1);
+             gtk_table_attach (GTK_TABLE (attacks_v_table), attacks_vt_check_attack1, 1, 2, j+1, j+2,
+                   (GtkAttachOptions) (GTK_FILL),
+@@ -1023,7 +1026,7 @@
+ 
+     /* Start in the same label than the main window */
+     gtk_notebook_set_current_page( GTK_NOTEBOOK( attacks_notebook ), mode );
+-    
++
+     attacks_v_hbox = gtk_hbox_new( TRUE, 0 );
+     gtk_widget_show(attacks_v_hbox);
+     gtk_container_add( GTK_CONTAINER( attacks_vbox ), attacks_v_hbox );
+@@ -1031,7 +1034,7 @@
+     attacks_vh_cancel_button = gtk_button_new_with_mnemonic (_("Cancel"));
+     gtk_widget_show (attacks_vh_cancel_button);
+     gtk_box_pack_start (GTK_BOX (attacks_v_hbox), attacks_vh_cancel_button, FALSE, TRUE, 0);
+-    
++
+     g_signal_connect_swapped((gpointer) attacks_vh_cancel_button, "clicked", G_CALLBACK( gtk_widget_destroy ), GTK_OBJECT( main_dialog ) );
+ 
+     attacks_vh_ok_button = gtk_button_new_with_mnemonic (_("OK"));
+@@ -1598,7 +1601,7 @@
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scroll), GTK_SHADOW_IN);
+ 
+-   protocols_tree[proto] = gtk_tree_view_new(); 
++   protocols_tree[proto] = gtk_tree_view_new();
+    gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(protocols_tree[proto]), TRUE);
+ 
+    /* +4 for the index, interface, total count and the timestamp */
+@@ -1697,7 +1700,7 @@
+ 
+    for (i = 0; i < protocols[proto].nparams; i++) {
+       if ((params[i].type != FIELD_DEFAULT) && (params[i].type != FIELD_IFACE) && (params[i].type != FIELD_EXTRA)) {
+-         field_label = gtk_label_new(params[i].ldesc); 
++         field_label = gtk_label_new(params[i].ldesc);
+          gtk_widget_show(field_label);
+          entry[i] = gtk_entry_new();
+          gtk_entry_set_width_chars(GTK_ENTRY(entry[i]), params[i].size_print);
+@@ -1721,7 +1724,7 @@
+          /* We are going to refer to the entry boxes as XXYY where XX is the protocol number, and YY the field number */
+          snprintf(tmp_name, 5, "%02d%02d", proto, i);
+          GLADE_HOOKUP_OBJECT (Main, entry[i], tmp_name);
+-      } 
++      }
+    }
+ 
+    if (protocols[proto].extra_nparams > 0)
+diff -ru src/yersinia-0.8.2/src/gtk-interface.h yersinia-0.8.2/src/gtk-interface.h
+--- src/yersinia-0.8.2/src/gtk-interface.h	2017-08-24 13:36:01.000000000 +0200
++++ yersinia-0.8.2/src/gtk-interface.h	2024-12-21 19:32:06.023332925 +0100
+@@ -26,8 +26,8 @@
+ #include "gtk-callbacks.h"
+ #include "gtk-support.h"
+ 
+-GtkWidget *protocols_tree[MAX_PROTOCOLS + 1];
+-GtkListStore *protocols_tree_model[MAX_PROTOCOLS + 1];
++extern GtkWidget *protocols_tree[MAX_PROTOCOLS + 1];
++extern GtkListStore *protocols_tree_model[MAX_PROTOCOLS + 1];
+ 
+ GtkWidget* gtk_i_create_Main (struct gtk_s_helper *);
+ GtkWidget* gtk_i_create_opendialog (struct gtk_s_helper *);
+diff -ru src/yersinia-0.8.2/src/interfaces.h yersinia-0.8.2/src/interfaces.h
+--- src/yersinia-0.8.2/src/interfaces.h	2017-08-24 13:36:01.000000000 +0200
++++ yersinia-0.8.2/src/interfaces.h	2024-12-21 19:32:06.023332925 +0100
+@@ -52,7 +52,7 @@
+ #define FILTER    "stp || (udp and (port 1985 or port 68 or port 67)) || (ether host 01:00:0c:cc:cc:cc and ether[20:2] = 0x2000) || (ether host 01:00:0c:cc:cc:cc and ether[20:2] = 0x2004) || (ether host 01:00:0c:cc:cc:cc and ether[20:2] = 0x2003) || arp || (ether[12:2] = 0x8100) || (ether[14]=0xaa and ether[15]=0xaa and ether[0]=0x01 and ether[1]=0x00 and ether[2]=0x0c and ether[3]=0x00 and ether[4]=0x00) || (ether[0]=0x01 and ether[1]=0x80 and ether[2]=0xc2 and ether[12:2] = 0x888e) || mpls"
+ 
+ /* Fields for recognizing packets */
+-#define F_ETHERTYPE 1 
++#define F_ETHERTYPE 1
+ #define F_LLC_SSAP  2
+ #define F_LLC_DSAP  3
+ #define F_LLC_SNAP  4
+@@ -67,7 +67,7 @@
+ 
+ #define NO_TIMEOUT  0
+ 
+-list_t *interfaces;
++extern list_t *interfaces;
+ 
+ struct interface_data {
+        int8_t   up;                  /* is it active? */
+@@ -80,7 +80,7 @@
+        char     ipaddr[IPADDRSIZ+1];    /* IP address */
+        char     netmask[IPADDRSIZ+1];   /* Netmask address */
+        char     broadcast[IPADDRSIZ+1]; /* Broadcast address */
+-       char     ptpaddr[IPADDRSIZ+1];   /* Point-to-point (if suitable) */   
++       char     ptpaddr[IPADDRSIZ+1];   /* Point-to-point (if suitable) */
+        pcap_t  *pcap_handler;     /* Libpcap handler */
+        int      pcap_file;            /* Libpcap file handler */
+        libnet_t *libnet_handler; /* Libnet handler */
+Only in yersinia-0.8.2/src: Makefile
+diff -ru src/yersinia-0.8.2/src/ncurses-callbacks.c yersinia-0.8.2/src/ncurses-callbacks.c
+--- src/yersinia-0.8.2/src/ncurses-callbacks.c	2017-08-24 13:36:01.000000000 +0200
++++ yersinia-0.8.2/src/ncurses-callbacks.c	2024-12-21 19:32:06.023332925 +0100
+@@ -38,7 +38,7 @@
+ #ifdef HAVE_INTTYPES_H
+ #include <inttypes.h>
+ #endif
+-#include <sys/socket.h>       
++#include <sys/socket.h>
+ 
+ #ifdef HAVE_NETINET_IN_SYSTM_H
+ #include <netinet/in_systm.h>
+@@ -88,15 +88,17 @@
+ #include <pthread.h>
+ #endif
+ 
++#include "protocols.h"
+ #include "ncurses-gui.h"
+ #include "ncurses-callbacks.h"
+ #include "ncurses-interface.h"
++u_int8_t pointer[MAX_PROTOCOLS];
+ 
+ /*
+  * Refresh main window
+  */
+-void 
+-ncurses_c_refresh_mwindow(u_int8_t mode, WINDOW *mwindow, u_int8_t pointer, 
++void
++ncurses_c_refresh_mwindow(u_int8_t mode, WINDOW *mwindow, u_int8_t pointer,
+         struct term_node *node)
+ {
+    u_int8_t i, row, col, j, offset, tlv, k, position, max_len;
+@@ -115,7 +117,7 @@
+    term_console = node->specific;
+ 
+    params = (struct commands_param *) protocols[mode].parameters;
+-   
++
+ //   if (protocols[mode].extra_nparams)
+       extra_params = (struct commands_param_extra *) protocols[mode].extra_parameters;
+ 
+@@ -125,7 +127,7 @@
+    if (term_console->need_resize) {
+       /*        if (delwin(mwindow) == ERR)
+                 thread_error("Error in delwin", errno);
+-                if ((mwindow = newwin(row-5, col, 0, 0)) == NULL) 
++                if ((mwindow = newwin(row-5, col, 0, 0)) == NULL)
+                 thread_error("Error in newwin", errno);*/
+ #ifdef HAVE_NCURSES_WRESIZE
+       wresize(mwindow, row-NCURSES_BWINDOW_SIZE, col);
+@@ -149,15 +151,15 @@
+       mvwprintw(mwindow, 0, col-11, "[%02d:%02d:%02d]", aux->tm_hour, aux->tm_min,
+             aux->tm_sec);
+ 
+-   mvwprintw(mwindow, row-NCURSES_BWINDOW_SIZE-2, 1 + offset, " Total Packets: %d ", 
++   mvwprintw(mwindow, row-NCURSES_BWINDOW_SIZE-2, 1 + offset, " Total Packets: %d ",
+          packet_stats.global_counter.total_packets);
+    mvwprintw(mwindow, row-NCURSES_BWINDOW_SIZE-2, 60 + offset, " MAC Spoofing [ ] ");
+    if (node->mac_spoofing)
+       mvwprintw(mwindow, row-NCURSES_BWINDOW_SIZE-2, 75 + offset, "X");
+ 
+-   mvwprintw(mwindow, 0, 3, " %s %s by Slay & tomac - %s mode ", 
++   mvwprintw(mwindow, 0, 3, " %s %s by Slay & tomac - %s mode ",
+          PACKAGE, VERSION, protocols[mode].namep);
+-   mvwprintw(mwindow, row-NCURSES_BWINDOW_SIZE-2, 30 + offset, " %s Packets: %d ", 
++   mvwprintw(mwindow, row-NCURSES_BWINDOW_SIZE-2, 30 + offset, " %s Packets: %d ",
+          protocols[mode].namep, protocols[mode].packets);
+    wattroff(mwindow, COLOR_PAIR(5) | A_BOLD);
+ 
+@@ -170,7 +172,7 @@
+          if (params[i].meaning)
+          {
+             max_len = parser_get_max_field_length(params[i].meaning);
+-            position += (( MAX2(max_len, strlen(params[i].ldesc)) > NCURSES_MWINDOW_MAX_FIELD_LENGTH) ? 
++            position += (( MAX2(max_len, strlen(params[i].ldesc)) > NCURSES_MWINDOW_MAX_FIELD_LENGTH) ?
+                   NCURSES_MWINDOW_MAX_FIELD_LENGTH : MAX2(max_len, strlen(params[i].ldesc))) + 1;
+          } else
+             position += (params[i].size_print > strlen(params[i].ldesc) ? params[i].size_print : strlen(params[i].ldesc)) + 1;
+@@ -183,7 +185,7 @@
+          if (extra_params[i].meaning)
+          {
+             max_len = parser_get_max_field_length(extra_params[i].meaning);
+-            position += (( MAX2(max_len, strlen(params[i].ldesc)) > NCURSES_MWINDOW_MAX_FIELD_LENGTH) ? 
++            position += (( MAX2(max_len, strlen(params[i].ldesc)) > NCURSES_MWINDOW_MAX_FIELD_LENGTH) ?
+                   NCURSES_MWINDOW_MAX_FIELD_LENGTH : MAX2(max_len, strlen(params[i].ldesc))) + 1;
+          } else
+             position += (extra_params[i].size_print > strlen(extra_params[i].ldesc) ? extra_params[i].size_print : strlen(extra_params[i].ldesc)) + 1;
+@@ -197,11 +199,11 @@
+ 
+    for (i=0; i < MAX_PACKET_STATS; i++)
+    {
+-      if (protocols[mode].stats[i].header->ts.tv_sec > 0) 
++      if (protocols[mode].stats[i].header->ts.tv_sec > 0)
+       {
+          if (protocols[mode].get_printable_packet)
+          {
+-            if ((values = (*protocols[mode].get_printable_packet)(&protocols[mode].stats[i])) == NULL) 
++            if ((values = (*protocols[mode].get_printable_packet)(&protocols[mode].stats[i])) == NULL)
+             {
+                write_log(0, "Error in get_printable_packet (mode %d)\n", mode);
+                wrefresh(mwindow);
+@@ -240,7 +242,7 @@
+                      mvwprintw(mwindow, i + 2, position + offset, "%s", meaningbuf);
+ 
+                      max_len = parser_get_max_field_length(params[j].meaning);
+-                     position += (( MAX2(max_len, strlen(params[j].ldesc)) > NCURSES_MWINDOW_MAX_FIELD_LENGTH) ? 
++                     position += (( MAX2(max_len, strlen(params[j].ldesc)) > NCURSES_MWINDOW_MAX_FIELD_LENGTH) ?
+                           NCURSES_MWINDOW_MAX_FIELD_LENGTH : MAX2(max_len, strlen(params[j].ldesc))) + 1;
+                   } else {
+                      mvwprintw(mwindow, i + 2, position + offset, "%s", values[k]);
+@@ -266,7 +268,7 @@
+                      ptrtlv += strlen((char *)ptrtlv) + 1;
+                   }
+ 
+-                  if (ptrtlv) 
++                  if (ptrtlv)
+                   {
+ 
+                      ptrtlv += strlen((char *)ptrtlv) + 1;
+@@ -279,15 +281,15 @@
+                            meaningbuf[NCURSES_MWINDOW_MAX_FIELD_LENGTH-1] = '|';
+                         mvwprintw(mwindow, i + 2, position + offset, "%s", meaningbuf);
+                         max_len = parser_get_max_field_length(extra_params[j].meaning);
+-                        position += (( MAX2(max_len, strlen(params[j].ldesc)) > NCURSES_MWINDOW_MAX_FIELD_LENGTH) ? 
++                        position += (( MAX2(max_len, strlen(params[j].ldesc)) > NCURSES_MWINDOW_MAX_FIELD_LENGTH) ?
+                              NCURSES_MWINDOW_MAX_FIELD_LENGTH : MAX2(max_len, strlen(params[j].ldesc))) + 1;
+-                     } 
++                     }
+                      else
+                      {
+                         mvwprintw(mwindow, i + 2, position + offset, "%s", ptrtlv);
+                         position += (extra_params[j].size_print > strlen(extra_params[j].ldesc) ? extra_params[j].size_print : strlen(extra_params[j].ldesc)) + 1;
+                      }
+-                  } 
++                  }
+                   else
+                   {
+                      mvwprintw(mwindow, i + 2, position + offset, "???");
+@@ -298,12 +300,12 @@
+             }
+          }
+ 
+-         mvwprintw(mwindow, i+2, 58 + offset, "%s", protocols[mode].stats[i].iface); 
++         mvwprintw(mwindow, i+2, 58 + offset, "%s", protocols[mode].stats[i].iface);
+          strftime(timebuf, 19, "%d %b %H:%M:%S", localtime((time_t *)&protocols[mode].stats[i].header->ts));
+ 
+          mvwprintw(mwindow, i+2, 64 + offset, "%s", timebuf);
+ 
+-         if (i == pointer) 
++         if (i == pointer)
+             wattroff(mwindow, COLOR_PAIR(5) | A_BOLD);
+ 
+          k = 0;
+@@ -311,9 +313,9 @@
+          /* Reset values */
+          memset((void *)values, 0, sizeof(values));
+ 
+-         if (values) 
++         if (values)
+          {
+-            while(values[k]) 
++            while(values[k])
+             {
+                free(values[k]);
+                k++;
+@@ -333,7 +335,7 @@
+ /*
+  * Refresh panels
+  */
+-void 
++void
+ ncurses_c_refresh(void)
+ {
+     /* refresh the panels */
+@@ -347,7 +349,7 @@
+ /*
+  * Main engine catching keystrokes
+  */
+-void 
++void
+ ncurses_c_engine(WINDOW *my_wins[], PANEL *my_panels[], struct term_node *node)
+ {
+    int32_t key, key_pressed, ret, max, proto_key;
+@@ -396,8 +398,8 @@
+             if (secs == NCURSES_REFRESH_TIME)
+             {
+                ncurses_c_refresh_bwindow(mode, my_wins[SEC_SCREEN], node);
+-               ncurses_c_refresh_mwindow(mode, my_wins[MAIN_SCREEN], 
+-                     pointer[mode], node); 
++               ncurses_c_refresh_mwindow(mode, my_wins[MAIN_SCREEN],
++                     pointer[mode], node);
+                secs = 0;
+             }
+             else
+@@ -416,7 +418,7 @@
+             case '?':
+             case 'H':
+             case 'h':
+-               ncurses_i_help_screen(mode, my_wins[HELP_SCREEN], 
++               ncurses_i_help_screen(mode, my_wins[HELP_SCREEN],
+                      my_panels[HELP_SCREEN]);
+                break;
+ 
+@@ -431,7 +433,7 @@
+             case 'a':
+                ncurses_i_splash_screen(my_wins[SPLASH_SCREEN],
+                      my_panels[SPLASH_SCREEN]);
+-               break; 
++               break;
+ 
+                /* List Attacks */
+             case 'l':
+@@ -444,8 +446,8 @@
+                break;
+ 
+             case KEY_DOWN:
+-               if ( (pointer[mode] < MAX_PACKET_STATS - 1) && 
+-                     (protocols[mode].stats[pointer[mode] + 1].header->ts.tv_sec > 0)) 
++               if ( (pointer[mode] < MAX_PACKET_STATS - 1) &&
++                     (protocols[mode].stats[pointer[mode] + 1].header->ts.tv_sec > 0))
+                {
+                   pointer[mode]++;
+                   ncurses_c_refresh_mwindow(mode, my_wins[MAIN_SCREEN], pointer[mode], node);
+@@ -453,12 +455,12 @@
+                break;
+ 
+             case KEY_UP:
+-               if (pointer[mode] > 0) 
++               if (pointer[mode] > 0)
+                {
+                   pointer[mode]--;
+                   ncurses_c_refresh_mwindow(mode, my_wins[MAIN_SCREEN], pointer[mode], node);
+                }
+-               break; 
++               break;
+ 
+             case 'K':
+                key = ncurses_i_getconfirm(node,
+@@ -506,29 +508,29 @@
+                /* ENTER. Show info about the selected item */
+             case 13:
+                if (protocols[mode].packets)
+-                   ncurses_i_show_info(mode, my_wins[MAIN_SCREEN], 
++                   ncurses_i_show_info(mode, my_wins[MAIN_SCREEN],
+                                        pointer[mode], node);
+             break;
+ 
+                /* View packet */
+             case 'v':
+                if (protocols[mode].packets)
+-                   ncurses_i_view_packet(mode, my_wins[MAIN_SCREEN], 
++                   ncurses_i_view_packet(mode, my_wins[MAIN_SCREEN],
+                                          pointer[mode]);
+             break;
+ 
+             case 'I':
+             case 'i':
+-               ncurses_i_ifaces_screen(node, my_wins[IFACE_SCREEN], 
++               ncurses_i_ifaces_screen(node, my_wins[IFACE_SCREEN],
+                      my_panels[IFACE_SCREEN]);
+             break;
+ 
+                /* Save data */
+             case 'S':
+                if (node->pcap_file.pdumper)
+-               {                
++               {
+                   if (ncurses_i_error_window(1,
+-                           "Error: pcap_file is in use at %s", 
++                           "Error: pcap_file is in use at %s",
+                            node->pcap_file.name) < 0)
+                      ncurses_gui_th_exit(node);
+                }
+@@ -540,7 +542,7 @@
+                      thread_error(" ncurses_engine calloc",errno);
+                      ncurses_gui_th_exit(node);
+                   }
+-                  if (ncurses_i_getstring_window(node, 
++                  if (ncurses_i_getstring_window(node,
+                            " Stealing data? Tsk, tsk...",
+                            filename,
+                            FILENAME_MAX,
+@@ -577,8 +579,8 @@
+ 
+             case 's':
+                if (node->protocol[mode].pcap_file.pdumper)
+-               {                
+-                  if (ncurses_i_error_window(1, "Error: pcap_file is in use at %s", 
++               {
++                  if (ncurses_i_error_window(1, "Error: pcap_file is in use at %s",
+                            node->protocol[mode].pcap_file.name) < 0)
+                      ncurses_gui_th_exit(node);
+                }
+@@ -591,7 +593,7 @@
+                      ncurses_gui_th_exit(node);
+                   }
+ 
+-                  if (ncurses_i_getstring_window(node, 
++                  if (ncurses_i_getstring_window(node,
+                            " Stealing data? Tsk, tsk...",
+                            filename,
+                            FILENAME_MAX,
+@@ -634,7 +636,7 @@
+                /* Display implemented attacks */
+             case 'X':
+             case 'x':
+-               ncurses_i_attack_screen(node, mode, my_wins[ATTACK_SCREEN], 
++               ncurses_i_attack_screen(node, mode, my_wins[ATTACK_SCREEN],
+                      my_panels[ATTACK_SCREEN]);
+             break;
+ 
+@@ -644,11 +646,11 @@
+                for (i = 0; i < MAX_PROTOCOLS; i++)
+                {
+                   if (protocols[i].visible)
+-                     memcpy((void *)protocols[i].default_values, 
+-                             (void *)node->protocol[i].tmp_data, 
++                     memcpy((void *)protocols[i].default_values,
++                             (void *)node->protocol[i].tmp_data,
+                              protocols[i].size);
+                }
+-               if (strlen(tty_tmp->config_file) == 0) 
++               if (strlen(tty_tmp->config_file) == 0)
+                {
+                   char *filename = (char *)calloc(1,FILENAME_MAX+1);
+                   if (filename == NULL)
+@@ -656,7 +658,7 @@
+                      thread_error(" ncurses_engine calloc",errno);
+                      ncurses_gui_th_exit(node);
+                   }
+-                  if (ncurses_i_getstring_window(node, 
++                  if (ncurses_i_getstring_window(node,
+                            " Save the world ",
+                            filename,
+                            FILENAME_MAX,
+@@ -685,9 +687,9 @@
+ 
+             case KEY_F(1):
+             case KEY_F(2):
+-            case KEY_F(3): 
+-            case KEY_F(4): 
+-            case KEY_F(5): 
++            case KEY_F(3):
++            case KEY_F(4):
++            case KEY_F(5):
+             case KEY_F(6):
+             case KEY_F(7):
+             case KEY_F(8):
+@@ -706,7 +708,7 @@
+                if ( (key_pressed - KEY_F0 - 1) < used)
+                {
+                    proto_key = keys[key_pressed - KEY_F0 - 1];
+-                   if (mode != proto_key) 
++                   if (mode != proto_key)
+                    {
+                        mode = proto_key;
+                        wclear(my_wins[MAIN_SCREEN]);
+@@ -738,7 +740,7 @@
+       }
+ 
+       ncurses_c_refresh_bwindow(mode, my_wins[SEC_SCREEN], node);
+-      ncurses_c_refresh_mwindow(mode, my_wins[MAIN_SCREEN], pointer[mode], node); 
++      ncurses_c_refresh_mwindow(mode, my_wins[MAIN_SCREEN], pointer[mode], node);
+ 
+       timeout.tv_sec = 0;
+       timeout.tv_usec = 500000;
+@@ -749,7 +751,7 @@
+ /*
+  * Refresh the fields window (Bottom window)
+  */
+-void 
++void
+ ncurses_c_refresh_bwindow(u_int8_t mode, WINDOW *bwindow, struct term_node *node)
+ {
+    int32_t offset, row, col, position, lastposition;
+@@ -771,7 +773,7 @@
+ #ifdef HAVE_NCURSES_WRESIZE
+       wresize(bwindow, NCURSES_BWINDOW_SIZE, col);
+       mvwin(bwindow, row-NCURSES_BWINDOW_SIZE, 0);
+-      werase(bwindow); 
++      werase(bwindow);
+ #endif
+       term_console->need_resize--;
+       //write_log(0, "Resize bwindow con %d row y %d col y resize es %d\n", row, col, term_console->need_resize);
+@@ -801,7 +803,7 @@
+    lastusedrow = 1;
+    lastposition = 0;
+    /* We have 5 rows in the bwindow */
+-   for (row = 1; row <= 5; row++) 
++   for (row = 1; row <= 5; row++)
+    {
+       position = 2;
+       k = 0;
+@@ -854,7 +856,7 @@
+ /*
+  * Edit BPDU Fields
+  */
+-void 
++void
+ ncurses_c_edit_bwindow(u_int8_t mode, WINDOW *mwindow, WINDOW *bwindow, struct term_node *node)
+ {
+    u_int8_t i, state;
+@@ -877,9 +879,9 @@
+ 
+    params = protocols[mode].parameters;
+ 
+-   for (i = 0; i < protocols[mode].nparams; i++) 
++   for (i = 0; i < protocols[mode].nparams; i++)
+    {
+-      if (params[i].row == 1) 
++      if (params[i].row == 1)
+       {
+          initial = strlen(params[i].ldesc) + offset + 2 + 1;
+          start = initial;
+@@ -944,14 +946,14 @@
+             if (params[state].meaning)
+             {
+                curs_set(0);
+-               if ((result = ncurses_i_popup_window(bwindow, params[state].meaning, state)) != ERR) 
++               if ((result = ncurses_i_popup_window(bwindow, params[state].meaning, state)) != ERR)
+                {
+                   snprintf(buffer, 1024, "%d", result);
+                   parser_filter_param(params[state].type, node->protocol[mode].commands_param[state],
+                      buffer, params[state].size_print, params[state].size);
+                }
+                curs_set(1);
+-               ncurses_c_refresh_bwindow(mode, bwindow, node);    
++               ncurses_c_refresh_bwindow(mode, bwindow, node);
+                /* fix to come back to the position */
+                wmove(bwindow, y, x);
+             }
+@@ -959,7 +961,7 @@
+ 
+          default:
+             if ((params[state].type == FIELD_HEX) || (params[state].type == FIELD_MAC)
+-                  || (params[state].type == FIELD_BRIDGEID) || (params[state].type == FIELD_BYTES)) 
++                  || (params[state].type == FIELD_BRIDGEID) || (params[state].type == FIELD_BYTES))
+             {
+                if (!isxdigit(key_pressed))
+                   /* only hexadecimal characters are allowed */
+@@ -1012,9 +1014,9 @@
+     ncurses_c_set_status_line(" Packet learnt. Ouch! ");
+ 
+     if (protocols[mode].load_values)
+-        return (*protocols[mode].load_values)((struct pcap_data *)&protocols[mode].stats[pointer], 
++        return (*protocols[mode].load_values)((struct pcap_data *)&protocols[mode].stats[pointer],
+                             node->protocol[mode].tmp_data);
+-    else 
++    else
+     {
+         write_log(0, "Warning: no load_values in protocol %d\n", mode);
+         return -1;
+@@ -1039,9 +1041,9 @@
+ 
+         if (size > row)
+             mvwaddnstr(info_window, 0, 0, msg, row - 1);
+-        else 
++        else
+             mvwaddnstr(info_window, 0, 0, msg, size);
+-    } 
++    }
+ 
+     /* Nice */
+     /* wmove(info_window, 0, 1);*/
+@@ -1064,7 +1066,7 @@
+         if ((size.ws_row < NCURSES_MIN_ROWS) || (size.ws_col < NCURSES_MIN_COLS))
+             ncurses_i_error_window(1, "Hmmm.. %d rows and %d cols are \
+                     not supported for a proper display!!!!. You need at least \
+-                    %d rows and %d cols.", size.ws_row, size.ws_col, 
++                    %d rows and %d cols.", size.ws_row, size.ws_col,
+                     NCURSES_MIN_ROWS, NCURSES_MIN_COLS);
+         else {
+ #ifdef HAVE_NCURSES_RESIZETERM
+@@ -1168,7 +1170,7 @@
+    }
+ 
+    /* Are there rows in the next row? */
+-   if (position == (offset + 2)) 
++   if (position == (offset + 2))
+    {
+       (*row)--;
+       return -1;
+@@ -1256,8 +1258,8 @@
+                *pos = prev_pos;
+                *state = prev_state;
+             }
+-              
+-            if ( (position <= ((*pos) - 1) && (((*pos) - 1)) < (position + params[i].size_print))) 
++
++            if ( (position <= ((*pos) - 1) && (((*pos) - 1)) < (position + params[i].size_print)))
+             {
+                (*pos)--;
+                if ((params[i].type ==FIELD_MAC) && (((*pos) - position + 1) % 3 == 0))
+diff -ru src/yersinia-0.8.2/src/ncurses-callbacks.h yersinia-0.8.2/src/ncurses-callbacks.h
+--- src/yersinia-0.8.2/src/ncurses-callbacks.h	2017-08-24 13:36:01.000000000 +0200
++++ yersinia-0.8.2/src/ncurses-callbacks.h	2024-12-21 19:32:06.023332925 +0100
+@@ -65,9 +65,9 @@
+ #define HELP_SCREEN    2
+ #define SPLASH_SCREEN  1
+ 
+-#define INFO_HEIGHT    13 
++#define INFO_HEIGHT    13
+ #define INFO_WIDTH     44
+-#define MAX_PAD_HEIGHT 40 
++#define MAX_PAD_HEIGHT 40
+ #define MAX_PAD_WIDTH  70
+ 
+ #define VIEW_HEIGHT 15
+@@ -77,8 +77,8 @@
+ #define CAN_RESIZE 1
+ #endif
+ 
+-u_int8_t pointer[MAX_PROTOCOLS];
+-WINDOW *info_window;
++extern u_int8_t pointer[MAX_PROTOCOLS];
++extern WINDOW *info_window;
+ 
+ void    ncurses_c_refresh_mwindow(u_int8_t, WINDOW *, u_int8_t, struct term_node *);
+ void    ncurses_c_refresh_bwindow(u_int8_t, WINDOW *, struct term_node *);
+diff -ru src/yersinia-0.8.2/src/ncurses-interface.c yersinia-0.8.2/src/ncurses-interface.c
+--- src/yersinia-0.8.2/src/ncurses-interface.c	2017-08-24 13:36:01.000000000 +0200
++++ yersinia-0.8.2/src/ncurses-interface.c	2024-12-21 19:32:06.023332925 +0100
+@@ -39,7 +39,7 @@
+ #include <inttypes.h>
+ #endif
+ 
+-#include <sys/socket.h>       
++#include <sys/socket.h>
+ 
+ #ifdef HAVE_NETINET_IN_SYSTM_H
+ #include <netinet/in_systm.h>
+@@ -89,9 +89,14 @@
+ #include <pthread.h>
+ #endif
+ 
++#include "protocols.h"
++struct protocol_def protocols[MAX_PROTOCOLS];
++#include "interfaces.h"
++list_t *interfaces;
+ #include "ncurses-interface.h"
+ #include "ncurses-callbacks.h"
+ 
++WINDOW *info_window;
+ 
+ /*
+  * Ncurses init
+@@ -128,7 +133,7 @@
+             for a proper display!!\n", NCURSES_MIN_ROWS,
+             NCURSES_MIN_COLS);
+ 
+-      printw(" Error: I need at least %d rows and %d columns for a proper display!!\n", 
++      printw(" Error: I need at least %d rows and %d columns for a proper display!!\n",
+             NCURSES_MIN_ROWS, NCURSES_MIN_COLS);
+       printw("        I can't work with only %d rows and %d columns, who do you think I am?\n",
+             row, col);
+@@ -195,7 +200,7 @@
+ /*
+  * About panel
+  */
+-void 
++void
+ ncurses_i_splash_screen(WINDOW *splash_screen, PANEL *splash_panel)
+ {
+    int32_t row, col, y, x;
+@@ -216,7 +221,7 @@
+    mvwprintw(splash_screen, 4, 2, "²²°²°#   #²°°²²²#");
+    mvwprintw(splash_screen, 5, 2, "°²°°#      #²²°²²#");
+    mvwprintw(splash_screen, 6, 2, "²°²°#       #°°²°²²");
+-   mvwprintw(splash_screen, 7, 2, "²²°°²#        #°²##²²²");                                                         
++   mvwprintw(splash_screen, 7, 2, "²²°°²#        #°²##²²²");
+    mvwprintw(splash_screen, 8, 2, "#²²²°#         ##°²°##²²²");
+    mvwprintw(splash_screen, 9, 2, " ²²²°²##          #°°²²°²²");
+    mvwprintw(splash_screen,10, 2, " ²##°°²°#            #°²²#²²");
+@@ -232,7 +237,7 @@
+    mvwprintw(splash_screen, 4, 8, "±²±");
+    mvwprintw(splash_screen, 5, 7, "±²±²²±");
+    mvwprintw(splash_screen, 6, 7, "±²±±²²±");
+-   mvwprintw(splash_screen, 7, 8, "²²±²²±²±");                                                         
++   mvwprintw(splash_screen, 7, 8, "²²±²²±²±");
+    mvwprintw(splash_screen, 8, 8, "±²²²±±²²±");
+    mvwprintw(splash_screen, 9,10, "±²²²²²²²²±");
+    mvwprintw(splash_screen,10,11, "±²²±±±²²²²²±");
+@@ -245,7 +250,7 @@
+ 
+    wattron(splash_screen, A_BOLD);
+    mvwprintw(splash_screen, 2, 17, "Chaos Internetwork Operating System Software");
+-   mvwprintw(splash_screen, 3, 17, "%s (tm) Software (%s), Version %s, RELEASE SOFTWARE", 
++   mvwprintw(splash_screen, 3, 17, "%s (tm) Software (%s), Version %s, RELEASE SOFTWARE",
+          PACKAGE, INFO_PLATFORM, VERSION);
+    mvwprintw(splash_screen, 4, 21, "Copyright (c) 2004-2007 by tomac & Slay, Inc.");
+    mvwprintw(splash_screen, 5, 22, "Compiled %s by someone", INFO_DATE);
+@@ -265,11 +270,11 @@
+          }
+          else
+             mvwprintw(splash_screen, 6, 23, "%s uptime is %02lu days, %02lu hours, \
+-                  %02lu minutes, %02lu seconds", PACKAGE, uptime / (3600*24), 
++                  %02lu minutes, %02lu seconds", PACKAGE, uptime / (3600*24),
+                   (uptime % (3600*24)) / 3600, (uptime % 3600) / 60, uptime % 60);
+       }
+    }
+-   mvwprintw(splash_screen, 8, 29, "Running Multithreading Image on"); 
++   mvwprintw(splash_screen, 8, 29, "Running Multithreading Image on");
+    mvwprintw(splash_screen, 9, 30, "%s %s supporting:", INFO_KERN, INFO_KERN_VER);
+    mvwprintw(splash_screen, 11, 40, "%02d console terminal(s)", MAX_CON);
+    mvwprintw(splash_screen, 12, 40, "%02d tty terminal(s)", MAX_TTY);
+@@ -286,10 +291,10 @@
+ }
+ 
+ 
+-/* 
++/*
+  * Help panel
+  */
+-void 
++void
+ ncurses_i_help_screen(u_int8_t mode, WINDOW *help_screen, PANEL *help_panel)
+ {
+    int32_t row, col, y, x;
+@@ -362,7 +367,7 @@
+ }
+ 
+ 
+-/* 
++/*
+  * Attack information panel
+  */
+ void ncurses_i_attack_screen( struct term_node *node, u_int8_t mode, WINDOW *attack_screen, PANEL *attack_panel )
+@@ -383,7 +388,7 @@
+ 
+    if ( protocols[ mode ].attack_def_list )
+       attack_def = protocols[ mode ].attack_def_list;
+-   else 
++   else
+    {
+       write_log(0, "Warning: no attacks for mode %d\n", mode);
+       return;
+@@ -398,7 +403,7 @@
+    mvwprintw(attack_screen, 1, 2, "No   DoS   Description");
+    wattroff(attack_screen, COLOR_PAIR(1));
+ 
+-   while( attack_def[i].desc != NULL ) 
++   while( attack_def[i].desc != NULL )
+    {
+       mvwprintw(attack_screen, i+2, 2, "%d", i);
+       mvwprintw(attack_screen, i+2, 7, "%c", (attack_def[i].type == DOS) ? 'X' : ' ');
+@@ -427,7 +432,7 @@
+          case '8':
+          case '9':
+             j = key_pressed - 48;
+-            if (j < i) 
++            if (j < i)
+             { /* does the attack exist? */
+ 
+                if ( attack_def[j].nparams) /* Do we need parameters for attack? */
+@@ -515,11 +520,11 @@
+ }
+ 
+ 
+-/* 
++/*
+  * Set interfaces panel
+  */
+-void 
+-ncurses_i_ifaces_screen(struct term_node *node, WINDOW *ifaces_window, 
++void
++ncurses_i_ifaces_screen(struct term_node *node, WINDOW *ifaces_window,
+         PANEL *ifaces_panel)
+ {
+    u_int8_t end, change;
+@@ -542,7 +547,7 @@
+ 
+    wtimeout(ifaces_window, NCURSES_KEY_TIMEOUT); /* Block for 100 millisecs...*/
+ 
+-   while(!end && !terms->gui_th.stop) 
++   while(!end && !terms->gui_th.stop)
+    {
+       i = 0;
+       if (change) {
+@@ -555,11 +560,11 @@
+          for (p = interfaces->list; p; p = dlist_next(interfaces->list, p)) {
+             iface_data = (struct interface_data *) dlist_data(p);
+             found = dlist_search(node->used_ints->list, node->used_ints->cmp, (void *) iface_data->ifname);
+-            if (found) 
++            if (found)
+                wattron(ifaces_window, COLOR_PAIR(4));
+             else
+                wattroff(ifaces_window, COLOR_PAIR(4));
+-            mvwprintw(ifaces_window, i+2, 2, "%c) %s (%s)", i + 97, 
++            mvwprintw(ifaces_window, i+2, 2, "%c) %s (%s)", i + 97,
+                   iface_data->ifname, found ? "ON" : "OFF");
+             i++;
+          }
+@@ -585,15 +590,15 @@
+                iface_data = (struct interface_data *) dlist_data(p);
+                if (iface_data)
+                {
+-                   if ((p = dlist_search(node->used_ints->list, 
+-                        node->used_ints->cmp, (void *)iface_data->ifname)) != NULL) 
+-                   { 
++                   if ((p = dlist_search(node->used_ints->list,
++                        node->used_ints->cmp, (void *)iface_data->ifname)) != NULL)
++                   {
+                       iface_data = (struct interface_data *) dlist_data(p);
+                       interfaces_disable(iface_data->ifname);
+                       node->used_ints->list = dlist_remove(node->used_ints->list, iface_data);
+                       change = 1;
+                    }
+-                   else 
++                   else
+                    {
+                       interfaces_enable(iface_data->ifname);
+                       iface_new = (struct interface_data *) calloc(1, sizeof(struct interface_data));
+@@ -615,7 +620,7 @@
+ }
+ 
+ 
+-/* 
++/*
+  * Display information about the selected item
+  */
+ int8_t
+@@ -636,7 +641,7 @@
+    line = 0;
+    params = (struct commands_param *) protocols[mode].parameters;
+ 
+-   /* OK, I already know that this is a weird way to do it, but 
++   /* OK, I already know that this is a weird way to do it, but
+     * I do not have enough free time to fix it :P */
+    wattron(info_window, COLOR_PAIR(4));
+    wattron(main_window, COLOR_PAIR(4));
+@@ -697,20 +702,20 @@
+    wattron(info_window, COLOR_PAIR(4));
+    mvwprintw(info_window, k, 2, "%15s", "Total");
+    wattroff(info_window, COLOR_PAIR(4));
+-   mvwprintw(info_window, k++, 19,"%ld",  
++   mvwprintw(info_window, k++, 19,"%ld",
+          protocols[mode].stats[pointer].total);
+ 
+    wattron(info_window, COLOR_PAIR(4));
+    mvwprintw(info_window, k, 2, "%15s", "Interface");
+    wattroff(info_window, COLOR_PAIR(4));
+-   mvwprintw(info_window, k++, 19,"%s",  
++   mvwprintw(info_window, k++, 19,"%s",
+          protocols[mode].stats[pointer].iface);
+ 
+-   wtimeout(info_window,NCURSES_KEY_TIMEOUT); 
++   wtimeout(info_window,NCURSES_KEY_TIMEOUT);
+ 
+    do
+    {
+-      prefresh(info_window, line, 0, (row-INFO_HEIGHT)/2, (col-INFO_WIDTH)/2, 
++      prefresh(info_window, line, 0, (row-INFO_HEIGHT)/2, (col-INFO_WIDTH)/2,
+             (row-INFO_HEIGHT)/2 + INFO_HEIGHT - 1, (col-INFO_WIDTH)/2 + INFO_WIDTH - 1);
+       do
+       {
+@@ -719,7 +724,7 @@
+ 
+       switch(key_pressed) {
+          case KEY_UP:
+-            if (line > 0) 
++            if (line > 0)
+                line--;
+             break;
+          case KEY_DOWN:
+@@ -739,7 +744,7 @@
+    return 0;
+ }
+ 
+-/* 
++/*
+  * Display packet
+  * Taken from print-ascii.c (tcpdump)
+  * http://www.tcpdump.org
+@@ -770,7 +775,7 @@
+    length = 0;
+    packet = NULL;
+ 
+-   /* OK, I already know that this is a weird way to do it, but 
++   /* OK, I already know that this is a weird way to do it, but
+     * I do not have enough free time to fix it :P */
+    wattron(info_window, COLOR_PAIR(4));
+    wattron(main_window, COLOR_PAIR(4));
+@@ -829,7 +834,7 @@
+                       hexstuff, asciistuff);
+    }
+ 
+-   wtimeout(view_window, NCURSES_KEY_TIMEOUT); 
++   wtimeout(view_window, NCURSES_KEY_TIMEOUT);
+ 
+    do
+    {
+@@ -841,7 +846,7 @@
+ 
+       switch(key_pressed) {
+          case KEY_UP:
+-            if (line > 0) 
++            if (line > 0)
+                line--;
+             break;
+          case KEY_DOWN:
+@@ -862,7 +867,7 @@
+ }
+ 
+ 
+-/* 
++/*
+  * List attack
+  */
+ void ncurses_i_list_attacks( WINDOW *list_window, struct term_node *node )
+@@ -877,7 +882,7 @@
+    {
+       for (i=0; i<MAX_THREAD_ATTACK; i++)
+       {
+-         if (node->protocol[a].attacks[i].up) 
++         if (node->protocol[a].attacks[i].up)
+          {
+             files[j][0]=a; /* Protocol */
+             files[j][1]=i; /* Attack used */
+@@ -906,10 +911,10 @@
+ 
+    wtimeout(list_window,NCURSES_KEY_TIMEOUT); /* Block for 100 millisecs...*/
+ 
+-   while (!end && !terms->gui_th.stop) 
++   while (!end && !terms->gui_th.stop)
+    {
+       i = 0;
+-      while (!terms->gui_th.stop && (i < used)) 
++      while (!terms->gui_th.stop && (i < used))
+       {
+          /* Kill the attack thread selected */
+          if (kill)
+@@ -929,13 +934,13 @@
+          else
+             wattroff(list_window, COLOR_PAIR(1));
+ 
+-         if (node->protocol[files[i][0]].attacks[files[i][1]].up) 
++         if (node->protocol[files[i][0]].attacks[files[i][1]].up)
+          {
+             attack_def = protocols[files[i][0]].attack_def_list;
+ 
+-            mvwprintw(list_window, i+4, 2, "%8s   %-2d      %s", 
+-                  protocols[files[i][0]].namep, 
+-                  node->protocol[files[i][0]].attacks[files[i][1]].attack, 
++            mvwprintw(list_window, i+4, 2, "%8s   %-2d      %s",
++                  protocols[files[i][0]].namep,
++                  node->protocol[files[i][0]].attacks[files[i][1]].attack,
+                   attack_def[ node->protocol[files[i][0]].attacks[files[i][1]].attack].desc);
+          }
+          i++;
+@@ -944,7 +949,7 @@
+       wrefresh(list_window);
+ 
+       if (kill)
+-         break;  
++         break;
+ 
+       do
+       {
+@@ -953,17 +958,17 @@
+ 
+       if (!terms->gui_th.stop)
+       {
+-         switch(key_pressed) 
++         switch(key_pressed)
+          {
+             case KEY_DOWN:
+-               if ( pointer < (used-1)) 
++               if ( pointer < (used-1))
+                   pointer++;
+                break;
+ 
+             case KEY_UP:
+-               if (pointer > 0) 
++               if (pointer > 0)
+                   pointer--;
+-               break; 
++               break;
+ 
+             case 'Q':
+             case 'q':
+@@ -980,10 +985,10 @@
+ }
+ 
+ 
+-/* 
++/*
+  * List capture files
+  */
+-void 
++void
+ ncurses_i_list_filecaps(WINDOW *list_window, struct term_node *node)
+ {
+    int32_t key_pressed;
+@@ -1026,11 +1031,11 @@
+ 
+    wtimeout(list_window,NCURSES_KEY_TIMEOUT);
+ 
+-   while (!end && !terms->gui_th.stop) 
++   while (!end && !terms->gui_th.stop)
+    {
+       i = 0;
+ 
+-      while (!terms->gui_th.stop && (i < used) ) 
++      while (!terms->gui_th.stop && (i < used) )
+       {
+          if (kill)
+          {
+@@ -1039,7 +1044,7 @@
+             else
+                interfaces_pcap_file_close(node,files[indx]);
+             break;
+-         }        
++         }
+ 
+          if (i == pointer)
+          {
+@@ -1051,23 +1056,23 @@
+ 
+          if (files[i] == PROTO_ALL)
+          {
+-            mvwprintw(list_window, i+4, 2, "  %-6s  %s", 
+-                  "ALL", 
++            mvwprintw(list_window, i+4, 2, "  %-6s  %s",
++                  "ALL",
+                   node->pcap_file.name);
+          }
+          else
+          {
+-            mvwprintw(list_window, i+4, 2, "  %-6s  %s", 
+-                  protocols[files[i]].namep, 
++            mvwprintw(list_window, i+4, 2, "  %-6s  %s",
++                  protocols[files[i]].namep,
+                   node->protocol[files[i]].pcap_file.name);
+-         } 
++         }
+          i++;
+       }
+ 
+       wrefresh(list_window);
+ 
+       if (kill)
+-         break;  
++         break;
+ 
+       do
+       {
+@@ -1076,23 +1081,23 @@
+ 
+       if (!terms->gui_th.stop)
+       {
+-         switch(key_pressed) 
++         switch(key_pressed)
+          {
+             case KEY_DOWN:
+-               if ( pointer < (used-1)) 
++               if ( pointer < (used-1))
+                   pointer++;
+                break;
+ 
+             case KEY_UP:
+-               if (pointer > 0) 
++               if (pointer > 0)
+                   pointer--;
+-               break; 
++               break;
+ 
+             case 'Q':
+             case 'q':
+                end = 1;
+                break;
+-            case 13: 
++            case 13:
+                kill = 1;
+                break;
+          }
+@@ -1213,7 +1218,7 @@
+ 
+    getmaxyx(stdscr,row,col);
+ 
+-   /* TODO: lateral scroll 
++   /* TODO: lateral scroll
+       max_y = max+3; */
+    max_y = 64+3;
+    max_x = 5;
+@@ -1235,7 +1240,7 @@
+    curs_set(2);
+    wgetnstr(my_window, data, max);
+    noecho();
+-   curs_set(0);    
++   curs_set(0);
+ 
+    update_panels();
+ 
+@@ -1325,7 +1330,7 @@
+ }
+ 
+ 
+-int32_t 
++int32_t
+ ncurses_i_popup_window(WINDOW *bwindow, const struct tuple_type_desc *tuple, u_int8_t state)
+ {
+    WINDOW *win;
+@@ -1390,7 +1395,7 @@
+       return ERR;
+ 
+    return result;
+-}    
++}
+ 
+ 
+ 
+@@ -1440,7 +1445,7 @@
+       {
+          while ((ptrtlv) && (strlen((char *)ptrtlv) > 0))
+          {
+-            if (jfields == pointer) 
++            if (jfields == pointer)
+                wattron(win, COLOR_PAIR(4));
+             else
+                wattroff(win, COLOR_PAIR(4));
+@@ -1473,7 +1478,7 @@
+             /* Add TLV */
+          case 'a':
+          case 'A':
+-            ncurses_i_add_selected_tlv_type(win, node, mode); 
++            ncurses_i_add_selected_tlv_type(win, node, mode);
+             modified = 1;
+             break;
+             /* Delete TLV */
+@@ -1491,9 +1496,9 @@
+             break;
+       }
+ 
+-      if (modified && values) 
++      if (modified && values)
+       {
+-         while(values[j]) 
++         while(values[j])
+          {
+             free(values[j]);
+             j++;
+@@ -1507,9 +1512,9 @@
+ 
+    j = 0;
+ 
+-   if (values) 
++   if (values)
+    {
+-      while(values[j]) 
++      while(values[j])
+       {
+          free(values[j]);
+          j++;
+@@ -1667,7 +1672,7 @@
+    if (protocols[mode].get_extra_field)
+    {
+       extra = (*protocols[mode].get_extra_field)(node, NULL, 0);
+-      for (i=0,p=extra;p; i++,p = dlist_next(extra, p)) 
++      for (i=0,p=extra;p; i++,p = dlist_next(extra, p))
+       {
+          extrap = dlist_data(p);
+          if (i == (pointer - 1))
+@@ -1705,7 +1710,7 @@
+             aux_char = (u_int8_t *)attack_param[i].value;
+             snprintf(attack_param[i].print, 18, "%02X:%02X:%02X:%02X:%02X:%02X",
+                   aux_char[0], aux_char[1], aux_char[2],
+-                  aux_char[3], aux_char[4], aux_char[5]); 
++                  aux_char[3], aux_char[4], aux_char[5]);
+             break;
+ 
+          case FIELD_HEX:
+@@ -1721,7 +1726,7 @@
+                   break;
+                case 2:
+                   aux_short = (u_int16_t *)attack_param[i].value;
+-                  if (attack_param[i].type == FIELD_HEX)                       
++                  if (attack_param[i].type == FIELD_HEX)
+                      snprintf(attack_param[i].print, attack_param[i].size_print+1, "%04X", *(aux_short));
+                   else
+                      snprintf(attack_param[i].print, attack_param[i].size_print+1, "%04d", *(aux_short));
+@@ -1729,7 +1734,7 @@
+                default:
+                   aux_long = (u_int32_t *)attack_param[i].value;
+                   if (attack_param[i].type == FIELD_HEX)
+-                     snprintf(attack_param[i].print, attack_param[i].size_print+1, "%0*X", 
++                     snprintf(attack_param[i].print, attack_param[i].size_print+1, "%0*X",
+                            attack_param[i].size_print, *(aux_long));
+                   else
+                      snprintf(attack_param[i].print, attack_param[i].size_print+1, "%0*d",
+@@ -1804,9 +1809,9 @@
+    for (i=0; i< nparams; i++)
+    {
+       wattron(my_window, COLOR_PAIR(2));
+-      mvwprintw(my_window, i+2, 1, "%*s", offset_x, param[i].desc); 
++      mvwprintw(my_window, i+2, 1, "%*s", offset_x, param[i].desc);
+       wattroff(my_window, COLOR_PAIR(2));
+-      mvwprintw(my_window, i+2, 2+offset_x, "%s", param[i].print); 
++      mvwprintw(my_window, i+2, 2+offset_x, "%s", param[i].print);
+    }
+ 
+    origin_x = 2+offset_x;
+@@ -1814,7 +1819,7 @@
+ 
+    wmove(my_window, origin_y, origin_x);
+ 
+-   noecho();    
++   noecho();
+    curs_set(1);
+    keypad(my_window, TRUE);
+ 
+@@ -1845,7 +1850,7 @@
+             break;
+ 
+          case 9:  /* TAB */
+-         case KEY_DOWN:            
++         case KEY_DOWN:
+             getyx(my_window,y,x);
+             if ( (y - offset_y) == (nparams-1))
+                wmove(my_window, origin_y, origin_x);
+@@ -1866,20 +1871,20 @@
+             /* jump to the next valid character */
+             if ( x < (origin_x + param[y-offset_y].size_print - 1))
+             {
+-               if ((param[y-offset_y].type == FIELD_MAC) && 
+-                     (((x - origin_x - 1) % 3) == 0)) 
++               if ((param[y-offset_y].type == FIELD_MAC) &&
++                     (((x - origin_x - 1) % 3) == 0))
+                   wmove(my_window, y, x + 2); /* jump : */
+-               else 
+-                  if ((param[y-offset_y].type == FIELD_BRIDGEID) && 
+-                        ((x - origin_x) == 3)) 
++               else
++                  if ((param[y-offset_y].type == FIELD_BRIDGEID) &&
++                        ((x - origin_x) == 3))
+                      wmove(my_window, y, x + 2); /* jump . */
+-                  else 
+-                     if ((param[y-offset_y].type == FIELD_IP) && 
+-                           (((x - origin_x-1 ) % 4) == 1)) 
++                  else
++                     if ((param[y-offset_y].type == FIELD_IP) &&
++                           (((x - origin_x-1 ) % 4) == 1))
+                         wmove(my_window, y, x + 2); /* jump . */
+                      else
+                         wmove(my_window, y, x + 1);
+-            }                
++            }
+             else /* jump to the next field */
+             {
+                if ((y-offset_y) == (nparams-1))
+@@ -1898,50 +1903,50 @@
+                      (((x - origin_x) % 3) == 0) )
+                   /* jump */
+                   wmove(my_window, y, x - 2);
+-               else 
+-                  if ((param[y-offset_y].type == FIELD_BRIDGEID) && 
+-                        ((x - origin_x) == 5) ) 
++               else
++                  if ((param[y-offset_y].type == FIELD_BRIDGEID) &&
++                        ((x - origin_x) == 5) )
+                      /* jump */
+                      wmove(my_window, y, x - 2);
+-                  else 
+-                     if ((param[y-offset_y].type == FIELD_IP) && 
+-                           (((x - origin_x) % 4) == 0) ) 
++                  else
++                     if ((param[y-offset_y].type == FIELD_IP) &&
++                           (((x - origin_x) % 4) == 0) )
+                         /* jump */
+                         wmove(my_window, y, x - 2);
+                      else
+                         wmove(my_window, y, x - 1);
+             }
+-            else 
++            else
+             {
+                if ( (y - offset_y) == 0)
+-                  wmove(my_window, origin_y+(nparams-1), 
++                  wmove(my_window, origin_y+(nparams-1),
+                         origin_x+param[origin_y+(nparams-1)-offset_y].size_print-1);
+                else
+-                  wmove(my_window, y-1, 
+-                        origin_x+param[y-1-offset_y].size_print-1);                
++                  wmove(my_window, y-1,
++                        origin_x+param[y-1-offset_y].size_print-1);
+             }
+             break;
+ 
+          default:
+             getyx(my_window, y, x);
+ 
+-            if ((key_pressed == 'Q' || key_pressed == 'q') && 
++            if ((key_pressed == 'Q' || key_pressed == 'q') &&
+                   ( param[y-offset_y].type != FIELD_STR ) &&
+                   ( param[y-offset_y].type != FIELD_IFACE ) &&
+                   ( param[y-offset_y].type != FIELD_ENABLED_IFACE ) )
+             {
+                end_edit = 1;
+                ret = -1;
+-            }            
++            }
+ 
+-            if ((param[y-offset_y].type == FIELD_HEX) || 
+-                  (param[y-offset_y].type == FIELD_MAC) || 
+-                  (param[y-offset_y].type == FIELD_BRIDGEID)) 
++            if ((param[y-offset_y].type == FIELD_HEX) ||
++                  (param[y-offset_y].type == FIELD_MAC) ||
++                  (param[y-offset_y].type == FIELD_BRIDGEID))
+             {
+                if (!isxdigit(key_pressed))
+                   /* only hexadecimal characters are allowed */
+                   break;
+-            } 
++            }
+             else
+                if ((param[y-offset_y].type == FIELD_DEC) ||
+                      (param[y-offset_y].type == FIELD_IP))
+@@ -1971,22 +1976,22 @@
+                if ((y-offset_y) == (nparams-1))
+                   wmove(my_window, origin_y, origin_x);
+                else
+-                  wmove(my_window, y+1, origin_x);                    
++                  wmove(my_window, y+1, origin_x);
+             }
+-            else 
++            else
+             {
+-               if ( (param[y-offset_y].type == FIELD_MAC) && 
+-                     (((x - origin_x + 1) % 3) == 0)) 
++               if ( (param[y-offset_y].type == FIELD_MAC) &&
++                     (((x - origin_x + 1) % 3) == 0))
+                   /* jump */
+                   wmove(my_window, y, x + 1);
+-               else 
+-                  if ( (param[y-offset_y].type == FIELD_BRIDGEID) && 
+-                        ((x - origin_x) == 4)) 
++               else
++                  if ( (param[y-offset_y].type == FIELD_BRIDGEID) &&
++                        ((x - origin_x) == 4))
+                      /* jump */
+                      wmove(my_window, y, x + 1);
+-                  else 
+-                     if ( (param[y-offset_y].type == FIELD_IP) && 
+-                           (((x - origin_x + 1) % 4) == 0)) 
++                  else
++                     if ( (param[y-offset_y].type == FIELD_IP) &&
++                           (((x - origin_x + 1) % 4) == 0))
+                         /* jump */
+                         wmove(my_window, y, x + 1);
+             }
+@@ -1997,7 +2002,7 @@
+ 
+    keypad(my_window, FALSE);
+    noecho();
+-   curs_set(0);    
++   curs_set(0);
+    del_panel(my_panel);
+    delwin(my_window);
+ 
+@@ -2008,7 +2013,7 @@
+ }
+ 
+ 
+-/* 
++/*
+  * Display available modes and let the user choose one!
+  */
+ int8_t
+@@ -2052,7 +2057,7 @@
+    mvwprintw(win, used+2, 2, " ENTER to select  -  ESC/Q to quit ");
+    wtimeout(win,NCURSES_KEY_TIMEOUT); /* Block for 100 millisecs...*/
+ 
+-   while (!terms->gui_th.stop && !end) 
++   while (!terms->gui_th.stop && !end)
+    {
+       i = 0;
+       while (!terms->gui_th.stop && (i < used) )
+@@ -2113,4 +2118,4 @@
+    ncurses_c_set_status_line("");
+ 
+    return result;
+-} 
++}
+diff -ru src/yersinia-0.8.2/src/ncurses-interface.h yersinia-0.8.2/src/ncurses-interface.h
+--- src/yersinia-0.8.2/src/ncurses-interface.h	2017-08-24 13:36:01.000000000 +0200
++++ yersinia-0.8.2/src/ncurses-interface.h	2024-12-21 19:32:06.023332925 +0100
+@@ -66,9 +66,9 @@
+ #define HELP_SCREEN    2
+ #define SPLASH_SCREEN  1
+ 
+-#define INFO_HEIGHT    13 
++#define INFO_HEIGHT    13
+ #define INFO_WIDTH     44
+-#define MAX_PAD_HEIGHT 40 
++#define MAX_PAD_HEIGHT 40
+ #define MAX_PAD_WIDTH  70
+ 
+ #define NCURSES_DEFAULT_MODE PROTO_STP
+@@ -80,8 +80,8 @@
+ #define CAN_RESIZE 1
+ #endif
+ 
+-u_int8_t pointer[MAX_PROTOCOLS];
+-WINDOW *info_window;
++extern u_int8_t pointer[MAX_PROTOCOLS];
++extern WINDOW *info_window;
+ 
+ int8_t  ncurses_i_init(WINDOW *[], PANEL *[], struct term_node *);
+ void    ncurses_i_add_node(void);
+diff -ru src/yersinia-0.8.2/src/protocols.h yersinia-0.8.2/src/protocols.h
+--- src/yersinia-0.8.2/src/protocols.h	2017-08-24 13:36:01.000000000 +0200
++++ yersinia-0.8.2/src/protocols.h	2024-12-21 19:32:06.023332925 +0100
+@@ -36,7 +36,7 @@
+ /* Protocols info */
+ #define PROTO_ARP    0
+ #define PROTO_CDP    1
+-#define PROTO_DHCP   2 
++#define PROTO_DHCP   2
+ #define PROTO_DOT1Q  3
+ #define PROTO_DOT1X  4
+ #define PROTO_DTP    5
+@@ -47,16 +47,16 @@
+ #define PROTO_VTP   10
+ 
+ 
+-#define MAX_PROTOCOLS 11 
++#define MAX_PROTOCOLS 11
+ 
+ #define PROTO_VISIBLE 1
+ #define PROTO_NOVISIBLE 0
+ 
+-#define NO_PROTO -1 
++#define NO_PROTO -1
+ #define COMMON_TLV 69
+ 
+ /* Read the HGTTG */
+-#define PROTO_ALL      42 
++#define PROTO_ALL      42
+ #define SNAPLEN   1500
+ 
+ #define MAX_PROTO_NAME 8
+@@ -66,7 +66,7 @@
+ #define MAX_PACKET_STATS  10
+ 
+ /* Packets minimum size */
+-#define CDP_MIN_LENGTH        LIBNET_CDP_H + LIBNET_802_2SNAP_H + LIBNET_802_3_H 
++#define CDP_MIN_LENGTH        LIBNET_CDP_H + LIBNET_802_2SNAP_H + LIBNET_802_3_H
+ #define DHCP_MIN_LENGTH       LIBNET_DHCPV4_H + LIBNET_UDP_H + LIBNET_IPV4_H + LIBNET_ETH_H
+ #define DOT1Q_MIN_LENGTH      LIBNET_802_1Q_H
+ #define DOT1X_MIN_LENGTH      LIBNET_802_1X_H
+@@ -146,8 +146,8 @@
+    u_int32_t id;
+    u_int8_t  *value;
+ };
+-                         
+-/* struct needed for giving info about packet fields and 
++
++/* struct needed for giving info about packet fields and
+  * letting the user to choose values when crafting the packet */
+ struct tuple_type_desc {
+        u_int16_t type;
+@@ -207,15 +207,15 @@
+        end_t end;
+ };
+ 
+-struct protocol_def protocols[MAX_PROTOCOLS];
++extern struct protocol_def protocols[MAX_PROTOCOLS];
+ 
+ void   protocol_init(void);
+ int8_t protocol_register(u_int8_t, const char *, const char *, const char *,
+-                         u_int16_t, init_attribs_t, learn_packet_t, 
++                         u_int16_t, init_attribs_t, learn_packet_t,
+                          get_printable_packet_t, get_printable_store_t,
+-                         load_values_t, struct _attack_definition *, 
+-                         update_field_t, struct proto_features *, 
+-                         struct commands_param *, u_int8_t, 
++                         load_values_t, struct _attack_definition *,
++                         update_field_t, struct proto_features *,
++                         struct commands_param *, u_int8_t,
+                          struct commands_param_extra *, u_int8_t, get_extra_field_t,
+                          init_commands_struct_t, u_int8_t, end_t);
+ int8_t protocol_register_tlv(u_int8_t, edit_tlv_t, const struct tuple_type_desc *, struct attack_param *, u_int16_t);
+Only in yersinia-0.8.2/src: stamp-h1
+diff -ru src/yersinia-0.8.2/src/vtp.c yersinia-0.8.2/src/vtp.c
+--- src/yersinia-0.8.2/src/vtp.c	2017-08-24 13:36:01.000000000 +0200
++++ yersinia-0.8.2/src/vtp.c	2024-12-21 19:32:06.023332925 +0100
+@@ -31,7 +31,7 @@
+ #include <stdio.h>
+ #include <errno.h>
+ #include <sys/types.h>
+-#include <sys/socket.h>       
++#include <sys/socket.h>
+ 
+ #ifdef HAVE_NETINET_IN_SYSTM_H
+ #include <netinet/in_systm.h>
+@@ -84,7 +84,7 @@
+    protocol_register(PROTO_VTP, "VTP", "VLAN Trunking Protocol", "vtp",
+          sizeof(struct vtp_data), vtp_init_attribs, vtp_learn_packet,
+          vtp_get_printable_packet, vtp_get_printable_store, vtp_load_values,
+-         vtp_attack, vtp_update_field, vtp_features, 
++         vtp_attack, vtp_update_field, vtp_features,
+          vtp_comm_params, SIZE_ARRAY(vtp_comm_params), NULL, 0, NULL,
+          vtp_init_comms_struct, PROTO_VISIBLE, vtp_end);
+ }
+@@ -95,16 +95,16 @@
+  * se accede al demonio de red.
+  * Teoricamente como esta funcion solo se llama desde term_add_node()
+  * la cual, a su vez, solo es llamada al tener el mutex bloqueado por
+- * lo que no veo necesario que sea reentrante. (Fredy). 
++ * lo que no veo necesario que sea reentrante. (Fredy).
+  */
+ int8_t
+ vtp_init_comms_struct(struct term_node *node)
+ {
+     struct vtp_data *vtp_data;
+     void **comm_param;
+- 
++
+     comm_param = (void *)calloc(1,sizeof(void *)*SIZE_ARRAY(vtp_comm_params));
+-    
++
+     if (comm_param == NULL)
+     {
+        thread_error("vtp_init_commands_struct calloc error",errno);
+@@ -112,22 +112,22 @@
+     }
+ 
+     vtp_data = node->protocol[PROTO_VTP].tmp_data;
+-    
++
+     node->protocol[PROTO_VTP].commands_param = comm_param;
+-    
+-    comm_param[VTP_SMAC]      = &vtp_data->mac_source; 
++
++    comm_param[VTP_SMAC]      = &vtp_data->mac_source;
+     comm_param[VTP_DMAC]      = &vtp_data->mac_dest;
+     comm_param[VTP_VERSION]   = &vtp_data->version;
+-    comm_param[VTP_CODE]      = &vtp_data->code;  
+-    comm_param[VTP_DOMAIN]    = &vtp_data->domain; 
+-    comm_param[VTP_MD5]       = &vtp_data->md5; 
+-    comm_param[VTP_UPDATER]   = &vtp_data->updater; 
+-    comm_param[VTP_REVISION]  = &vtp_data->revision; 
+-    comm_param[VTP_TIMESTAMP] = &vtp_data->timestamp; 
++    comm_param[VTP_CODE]      = &vtp_data->code;
++    comm_param[VTP_DOMAIN]    = &vtp_data->domain;
++    comm_param[VTP_MD5]       = &vtp_data->md5;
++    comm_param[VTP_UPDATER]   = &vtp_data->updater;
++    comm_param[VTP_REVISION]  = &vtp_data->revision;
++    comm_param[VTP_TIMESTAMP] = &vtp_data->timestamp;
+     comm_param[VTP_STARTVAL]  = &vtp_data->start_val;
+-    comm_param[VTP_FOLLOWERS] = &vtp_data->followers; 
++    comm_param[VTP_FOLLOWERS] = &vtp_data->followers;
+     comm_param[VTP_SEQ]       = &vtp_data->seq;
+-    comm_param[12]            = NULL; 
++    comm_param[12]            = NULL;
+     comm_param[13]            = NULL;
+     comm_param[VTP_VLAN]      = &vtp_data->options;
+ 
+@@ -142,7 +142,7 @@
+     sigset_t mask;
+ 
+     attacks = arg;
+-    
++
+     pthread_mutex_lock(&attacks->attack_th.finished);
+ 
+     pthread_detach(pthread_self());
+@@ -173,7 +173,7 @@
+     if (attacks)
+        attack_th_exit(attacks);
+     pthread_mutex_unlock(&attacks->attack_th.finished);
+-    
++
+     pthread_exit(NULL);
+ }
+ 
+@@ -194,36 +194,36 @@
+     u_int8_t cisco_data[]={ 0x00, 0x00, 0x0c, 0x20, 0x03 };
+     dlist_t *p;
+     struct interface_data *iface_data;
+-    struct interface_data *iface_data2;        
+- 
++    struct interface_data *iface_data2;
++
+    vtp_data = attacks->data;
+-    
++
+     switch(vtp_data->code)
+     {
+         case VTP_SUMM_ADVERT:
+            vtp_len = sizeof(cisco_data)+sizeof(struct vtp_summary);
+         break;
+-        case VTP_SUBSET_ADVERT:        
++        case VTP_SUBSET_ADVERT:
+            vtp_len = sizeof(cisco_data)+sizeof(struct vtp_subset)+vtp_data->vlans_len;
+         break;
+-        case VTP_REQUEST:        
++        case VTP_REQUEST:
+            vtp_len = sizeof(cisco_data)+38;
+         break;
+-        case VTP_JOIN:        
++        case VTP_JOIN:
+            vtp_len = sizeof(cisco_data)+40+126;
+         break;
+         default:
+            vtp_len = sizeof(cisco_data)+30;
+-        break;        
++        break;
+     }
+-    
++
+     vtp_packet = calloc(1,vtp_len);
+- 
++
+     if (vtp_packet == NULL)
+     {
+        thread_error("vtp_send calloc error",errno);
+        return -1;
+-    } 
++    }
+ 
+     aux = vtp_packet;
+     memcpy(vtp_packet,cisco_data,sizeof(cisco_data));
+@@ -245,13 +245,13 @@
+            {
+                vtp_summ->dom_len = vtp_data->dom_len;
+                memcpy(vtp_summ->domain,vtp_data->domain,vtp_data->dom_len);
+-           }                
++           }
+            vtp_summ->revision = htonl(vtp_data->revision);
+            vtp_summ->updater = htonl(vtp_data->updater);
+-           memcpy(vtp_summ->timestamp,vtp_data->timestamp,VTP_TIMESTAMP_SIZE);      
++           memcpy(vtp_summ->timestamp,vtp_data->timestamp,VTP_TIMESTAMP_SIZE);
+            memcpy(vtp_summ->md5,vtp_data->md5,16);
+         break;
+-  
++
+         case VTP_SUBSET_ADVERT:
+            vtp_subset = (struct vtp_subset *)aux;
+            vtp_subset->version = vtp_data->version;
+@@ -266,13 +266,13 @@
+            {
+                vtp_subset->dom_len = vtp_data->dom_len;
+                memcpy(vtp_subset->domain,vtp_data->domain,vtp_data->dom_len);
+-           }                
++           }
+            vtp_subset->revision = htonl(vtp_data->revision);
+            if (vtp_data->vlans_len)
+-              memcpy((vtp_subset+1),vtp_data->vlan_info,vtp_data->vlans_len);           
++              memcpy((vtp_subset+1),vtp_data->vlan_info,vtp_data->vlans_len);
+         break;
+-        
+-        case VTP_REQUEST:        
++
++        case VTP_REQUEST:
+            vtp_request = (struct vtp_request *)aux;
+            vtp_request->version = vtp_data->version;
+            vtp_request->code = vtp_data->code;
+@@ -286,10 +286,10 @@
+            {
+                vtp_request->dom_len = vtp_data->dom_len;
+                memcpy(vtp_request->domain,vtp_data->domain,vtp_data->dom_len);
+-           }                
++           }
+            vtp_request->start_val = htons(vtp_data->start_val);
+         break;
+-        
++
+         case VTP_JOIN:
+            vtp_join = (struct vtp_join *)aux;
+            vtp_join->version = vtp_data->version;
+@@ -304,7 +304,7 @@
+            {
+                vtp_join->dom_len = vtp_data->dom_len;
+                memcpy(vtp_join->domain,vtp_data->domain,vtp_data->dom_len);
+-           }                
++           }
+            vtp_join->vlan = htonl(0x000003ef);
+            vtp_join->unknown[0] = 0x40;
+         break;
+@@ -313,27 +313,27 @@
+            aux[1]=vtp_data->code;
+         break;
+     }
+-    
++
+     for (p = attacks->used_ints->list; p; p = dlist_next(attacks->used_ints->list, p)) {
+        iface_data = (struct interface_data *) dlist_data(p);
+             lhandler = iface_data->libnet_handler;
+ 
+             t = libnet_build_802_2(
+-                    0xaa,            /* DSAP */   
++                    0xaa,            /* DSAP */
+                     0xaa,            /* SSAP */
+                     0x03,            /* control */
+-                    vtp_packet,      /* payload */  
++                    vtp_packet,      /* payload */
+                     vtp_len,         /* payload size */
+                     lhandler,        /* libnet handle */
+                     0);              /* libnet id */
+ 
+-            if (t == -1) 
++            if (t == -1)
+             {
+                 thread_libnet_error("Can't build ethernet header",lhandler);
+                 libnet_clear_packet(lhandler);
+                 free(vtp_packet);
+                 return -1;
+-            }  
++            }
+ 
+             t = libnet_build_802_3(
+                     vtp_data->mac_dest,       /* ethernet destination */
+@@ -349,7 +349,7 @@
+             {
+                 thread_libnet_error("Can't build ethernet header",lhandler);
+                 libnet_clear_packet(lhandler);
+-                free(vtp_packet);                
++                free(vtp_packet);
+                 return -1;
+             }
+ 
+@@ -370,7 +370,7 @@
+             iface_data2->packets_out[PROTO_VTP]++;
+     }
+ 
+-    free(vtp_packet);    
++    free(vtp_packet);
+ 
+     return 0;
+ }
+@@ -392,29 +392,29 @@
+     sigset_t mask;
+     /* Cisco default vlans */
+     u_int8_t vlan_cisco[]={ 0x14, 0x00, 0x01, 0x07, 0x00, 0x01, 0x05, 0xdc,
+-                          0x00, 0x01, 0x86, 0xa1, 0x64, 0x65, 0x66, 0x61, 
+-                          0x75, 0x6c, 0x74, 0x00, 0x20, 0x00, 0x02, 0x0c, 
+-                          0x03, 0xea, 0x05, 0xdc, 0x00, 0x01, 0x8a, 0x8a, 
+-                          0x66, 0x64, 0x64, 0x69, 0x2d, 0x64, 0x65, 0x66, 
+-                          0x61, 0x75, 0x6c, 0x74, 0x01, 0x01, 0x00, 0x00, 
+-                          0x04, 0x01, 0x00, 0x00, 0x28, 0x00, 0x03, 0x12, 
+-                          0x03, 0xeb, 0x05, 0xdc, 0x00, 0x01, 0x8a, 0x8b, 
+-                          0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2d, 0x72, 0x69, 
+-                          0x6e, 0x67, 0x2d, 0x64, 0x65, 0x66, 0x61, 0x75, 
+-                          0x6c, 0x74, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 
+-                          0x04, 0x01, 0x00, 0x00, 0x24, 0x00, 0x04, 0x0f, 
+-                          0x03, 0xec, 0x05, 0xdc, 0x00, 0x01, 0x8a, 0x8c, 
+-                          0x66, 0x64, 0x64, 0x69, 0x6e, 0x65, 0x74, 0x2d, 
+-                          0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x00, 
+-                          0x02, 0x01, 0x00, 0x00, 0x03, 0x01, 0x00, 0x01, 
+-                          0x24, 0x00, 0x05, 0x0d, 0x03, 0xed, 0x05, 0xdc, 
+-                          0x00, 0x01, 0x8a, 0x8d, 0x74, 0x72, 0x6e, 0x65, 
+-                          0x74, 0x2d, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 
+-                          0x74, 0x00, 0x00, 0x00, 0x02, 0x01, 0x00, 0x00, 
++                          0x00, 0x01, 0x86, 0xa1, 0x64, 0x65, 0x66, 0x61,
++                          0x75, 0x6c, 0x74, 0x00, 0x20, 0x00, 0x02, 0x0c,
++                          0x03, 0xea, 0x05, 0xdc, 0x00, 0x01, 0x8a, 0x8a,
++                          0x66, 0x64, 0x64, 0x69, 0x2d, 0x64, 0x65, 0x66,
++                          0x61, 0x75, 0x6c, 0x74, 0x01, 0x01, 0x00, 0x00,
++                          0x04, 0x01, 0x00, 0x00, 0x28, 0x00, 0x03, 0x12,
++                          0x03, 0xeb, 0x05, 0xdc, 0x00, 0x01, 0x8a, 0x8b,
++                          0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2d, 0x72, 0x69,
++                          0x6e, 0x67, 0x2d, 0x64, 0x65, 0x66, 0x61, 0x75,
++                          0x6c, 0x74, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00,
++                          0x04, 0x01, 0x00, 0x00, 0x24, 0x00, 0x04, 0x0f,
++                          0x03, 0xec, 0x05, 0xdc, 0x00, 0x01, 0x8a, 0x8c,
++                          0x66, 0x64, 0x64, 0x69, 0x6e, 0x65, 0x74, 0x2d,
++                          0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x00,
++                          0x02, 0x01, 0x00, 0x00, 0x03, 0x01, 0x00, 0x01,
++                          0x24, 0x00, 0x05, 0x0d, 0x03, 0xed, 0x05, 0xdc,
++                          0x00, 0x01, 0x8a, 0x8d, 0x74, 0x72, 0x6e, 0x65,
++                          0x74, 0x2d, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c,
++                          0x74, 0x00, 0x00, 0x00, 0x02, 0x01, 0x00, 0x00,
+                           0x03, 0x01, 0x00, 0x02 };
+ 
+     attacks = arg;
+-    
++
+     pthread_mutex_lock(&attacks->attack_th.finished);
+ 
+     pthread_detach(pthread_self());
+@@ -433,31 +433,31 @@
+ 
+     header.ts.tv_sec = now.tv_sec;
+     header.ts.tv_usec = now.tv_usec;
+-    
++
+     if ((packet = calloc(1, SNAPLEN)) == NULL)
+         vtp_th_dos_del_all_exit(attacks);
+ 
+-    
++
+     while (!attacks->attack_th.stop)
+     {
+         memset((void *)&vtp_data_learned,0,sizeof(struct vtp_data));
+         interfaces_get_packet(attacks->used_ints, NULL, &attacks->attack_th.stop, &header, packet,
+                               PROTO_VTP, NO_TIMEOUT);
+         if (attacks->attack_th.stop)
+-           break;   
+-           
++           break;
++
+         ether = (struct libnet_802_3_hdr *) packet;
+-        
++
+         if (!memcmp(vtp_data->mac_source,ether->_802_3_shost,6) )
+           continue; /* Oops!! Its our packet... */
+ 
+         pcap_aux.header = &header;
+         pcap_aux.packet = packet;
+-                                                                                          
++
+         if (vtp_load_values(&pcap_aux, &vtp_data_learned) < 0)
+            continue;
+ 
+-        if ((vtp_data_learned.code != VTP_SUMM_ADVERT) 
++        if ((vtp_data_learned.code != VTP_SUMM_ADVERT)
+              && (vtp_data_learned.code != VTP_SUBSET_ADVERT) )
+            continue;
+ 
+@@ -468,10 +468,10 @@
+         if (vtp_generate_md5( NULL,
+                               vtp_data->updater,
+                               (vtp_data_learned.revision+1),
+-                              vtp_data_learned.domain, 
+-                              vtp_data_learned.dom_len, 
++                              vtp_data_learned.domain,
++                              vtp_data_learned.dom_len,
+                               vlan_cisco,
+-                              sizeof(vlan_cisco), 
++                              sizeof(vlan_cisco),
+                               vtp_data->md5,
+                               vtp_data_learned.version) < 0)
+            break;
+@@ -487,26 +487,26 @@
+         {
+             vtp_data->dom_len = vtp_data_learned.dom_len;
+             memcpy(vtp_data->domain,vtp_data_learned.domain,vtp_data_learned.dom_len);
+-        }                
++        }
+         vtp_data->revision = vtp_data_learned.revision+1;
+-        
++
+         thread_usleep(200000);
+         if (vtp_send(attacks)< 0)
+            break;
+         thread_usleep(200000);
+-        
++
+         vtp_data->code = VTP_SUBSET_ADVERT;
+         vtp_data->seq = 1;
+-      
++
+         vtp_data->vlan_info = vlan_cisco;
+         vtp_data->vlans_len = sizeof(vlan_cisco);
+         vtp_send(attacks);
+-        
+-        break; 
++
++        break;
+     }
+ 
+     free(packet);
+-    
++
+     vtp_th_dos_del_all_exit(attacks);
+ }
+ 
+@@ -515,7 +515,7 @@
+  * Generate the MD5 hash for a VTP Summary-Advert packet
+  */
+ int8_t
+-vtp_generate_md5(char *secret, u_int32_t updater, u_int32_t revision, char *domain, 
++vtp_generate_md5(char *secret, u_int32_t updater, u_int32_t revision, char *domain,
+                  u_int8_t dom_len, u_int8_t *vlans, u_int16_t vlans_len, u_int8_t *md5,
+                  u_int8_t version)
+ {
+@@ -534,7 +534,7 @@
+        md5_sum(data, strlen(secret), md5_secret);
+ 
+     vtp_summ = (struct vtp_summary *)(data+16);
+-write_log(0,"Se calcula MD5 con version=%d\n",version);    
++write_log(0,"Se calcula MD5 con version=%d\n",version);
+     vtp_summ->version = version;
+     vtp_summ->code = 0x01;
+     if (dom_len > VTP_DOMAIN_SIZE)
+@@ -546,7 +546,7 @@
+     {
+         vtp_summ->dom_len = dom_len;
+         memcpy(vtp_summ->domain,domain,dom_len);
+-    }                
++    }
+     vtp_summ->updater  = htonl(updater);
+     vtp_summ->revision = htonl(revision);
+ 
+@@ -557,7 +557,7 @@
+        memcpy((void *)(data+16+sizeof(struct vtp_summary)+vlans_len),md5_secret,16);
+ 
+     md5_sum(data, (32+sizeof(struct vtp_summary)+vlans_len), md5);
+- 
++
+     free(data);
+ 
+     return 0;
+@@ -570,9 +570,9 @@
+ {
+     if (attacks)
+        attack_th_exit(attacks);
+-    
++
+     pthread_mutex_unlock(&attacks->attack_th.finished);
+-    
++
+     pthread_exit(NULL);
+ }
+ 
+@@ -587,7 +587,7 @@
+     sigset_t mask;
+ 
+     attacks = arg;
+-    
++
+     pthread_mutex_lock(&attacks->attack_th.finished);
+ 
+     pthread_detach(pthread_self());
+@@ -601,14 +601,14 @@
+     }
+ 
+     vtp_modify_vlan(VTP_VLAN_DEL,attacks);
+-    
++
+     vtp_th_dos_del_exit(attacks);
+ }
+ 
+ 
+ void
+ vtp_modify_vlan(u_int8_t op, struct attacks *attacks)
+-{   
++{
+     struct vtp_data *vtp_data, vtp_data_learned;
+     struct pcap_pkthdr header;
+     struct pcap_data pcap_aux;
+@@ -620,47 +620,47 @@
+     u_int16_t *vlan=NULL;
+ 
+     vtp_data = attacks->data;
+-    
++
+     param = attacks->params;
+-      
++
+     vlan = (u_int16_t *)param[VTP_PARAM_VLAN_ID].value;
+ 
+     if (op == VTP_VLAN_ADD)
+         vlan_name  = (char *)param[VTP_PARAM_VLAN_NAME].value;
+-    
++
+     gettimeofday(&now, NULL);
+-    
++
+     header.ts.tv_sec = now.tv_sec;
+     header.ts.tv_usec = now.tv_usec;
+-    
++
+     if ((packet = calloc(1, SNAPLEN)) == NULL)
+         return;
+-    
++
+     while (!attacks->attack_th.stop)
+     {
+         memset((void *)&vtp_data_learned,0,sizeof(struct vtp_data));
+         interfaces_get_packet(attacks->used_ints, NULL, &attacks->attack_th.stop, &header, packet,
+                               PROTO_VTP, NO_TIMEOUT);
+         if (attacks->attack_th.stop)
+-           break;   
+-           
++           break;
++
+         ether = (struct libnet_802_3_hdr *) packet;
+-        
++
+         if (!memcmp(vtp_data->mac_source,ether->_802_3_shost,6) )
+           continue; /* Oops!! Its our packet... */
+ 
+         pcap_aux.header = &header;
+         pcap_aux.packet = packet;
+-                                                                                          
++
+         if (vtp_load_values(&pcap_aux, &vtp_data_learned) < 0)
+            continue;
+ 
+-        if ((vtp_data_learned.code != VTP_SUMM_ADVERT) 
++        if ((vtp_data_learned.code != VTP_SUMM_ADVERT)
+              && (vtp_data_learned.code != VTP_SUBSET_ADVERT) )
+            continue;
+ 
+         if (vtp_data_learned.code == VTP_SUMM_ADVERT)
+-            
++
+         {
+            if ( !vtp_data_learned.followers)
+            {
+@@ -676,7 +676,7 @@
+               {
+                   vtp_data->dom_len = vtp_data_learned.dom_len;
+                   memcpy(vtp_data->domain,vtp_data_learned.domain,vtp_data_learned.dom_len);
+-              }                
++              }
+               vtp_data->start_val = 1;
+               if (vtp_send(attacks)< 0)
+                  break;
+@@ -691,7 +691,7 @@
+ 
+         if (op == VTP_VLAN_DEL)
+         {
+-            if (vtp_del_vlan(*vlan, vtp_data_learned.vlan_info, 
++            if (vtp_del_vlan(*vlan, vtp_data_learned.vlan_info,
+                              &vtp_data_learned.vlans_len) < 0)
+             {
+                 write_log(0," vtp_del_attack: VLAN %d not existent. Aborting...\n",*vlan);
+@@ -711,10 +711,10 @@
+         if (vtp_generate_md5( NULL,
+                               vtp_data->updater,
+                               (vtp_data_learned.revision+1),
+-                              vtp_data_learned.domain, 
+-                              vtp_data_learned.dom_len, 
++                              vtp_data_learned.domain,
++                              vtp_data_learned.dom_len,
+                               vtp_data_learned.vlan_info,
+-                              vtp_data_learned.vlans_len, 
++                              vtp_data_learned.vlans_len,
+                               vtp_data->md5,
+                               vtp_data_learned.version) < 0)
+             break;
+@@ -722,7 +722,7 @@
+         vtp_data->version = vtp_data_learned.version;
+         vtp_data->code = VTP_SUMM_ADVERT;
+         vtp_data->followers = 1;
+-        
++
+         if (vtp_data_learned.dom_len > VTP_DOMAIN_SIZE)
+         {
+             vtp_data->dom_len = VTP_DOMAIN_SIZE;
+@@ -732,18 +732,18 @@
+         {
+             vtp_data->dom_len = vtp_data_learned.dom_len;
+             memcpy(vtp_data->domain,vtp_data_learned.domain,vtp_data_learned.dom_len);
+-        }                
++        }
+         vtp_data->revision = vtp_data_learned.revision+1;
+ 
+         if (vtp_send(attacks)< 0)
+            break;
+         thread_usleep(200000);
+-        
++
+         vtp_data->version = vtp_data_learned.version;
+         vtp_data->code = VTP_SUBSET_ADVERT;
+         vtp_data->seq = 1;
+         vtp_data->vlans_len = vtp_data_learned.vlans_len;
+-        vtp_data->vlan_info = vtp_data_learned.vlan_info;          
++        vtp_data->vlan_info = vtp_data_learned.vlan_info;
+ 
+ write_log(0," Vlan_len after = %d\n",vtp_data_learned.vlans_len);
+ 
+@@ -762,9 +762,9 @@
+     struct vlan_info *vlan_info, *vlan_info2;
+     u_int8_t gotit=0, *cursor, *cursor2;
+     u_int16_t len=0, vlans_len=0;
+-    
++
+     vlans_len = *vlen;
+-    
++
+     cursor = vlans;
+ 
+     while( (cursor+sizeof(struct vlan_info)) < (vlans+vlans_len))
+@@ -790,19 +790,19 @@
+              }
+              write_log(0," *NOT* the last VLAN, moving %d bytes...\n",
+                        ( (vlans+vlans_len) - (cursor2+vlan_info->len)));
+-             memcpy((void *)vlan_info, (void *)(cursor2+vlan_info->len), 
++             memcpy((void *)vlan_info, (void *)(cursor2+vlan_info->len),
+                         ((vlans+vlans_len) - (cursor2+vlan_info->len)));
+           }
+           break;
+        }
+        cursor+=vlan_info->len;
+     }
+-    
++
+     if (!gotit)
+        return -1;
+-    
++
+     *vlen = len;
+-    
++
+     return 0;
+ }
+ 
+@@ -814,9 +814,9 @@
+     struct vlan_info *vlan_info, *vlan_info2;
+     u_int8_t  *cursor, *cursor2, *aux, *vlans, *last_init=NULL;
+     u_int16_t vlans_len, last_id=0, last_len=0;
+-    
++
+     vlans = *vlans_ptr;
+-    
++
+     vlans_len = *vlen;
+ 
+     aux = (u_int8_t *)calloc(1,vlans_len+sizeof(struct vlan_info)+VLAN_ALIGNED_LEN(strlen(vlan_name)));
+@@ -825,7 +825,7 @@
+        thread_error("vtp_add_vlan calloc()", errno);
+        return -1;
+     }
+-    
++
+     cursor = vlans;
+ 
+     while( (cursor+sizeof(struct vlan_info)) < (vlans+vlans_len))
+@@ -849,12 +849,12 @@
+                /* Now copy all the rest of vlans...*/
+                memcpy((void *)(aux+vlan_info->len),vlans,vlans_len);
+                *vlen = vlan_info->len+vlans_len;
+-               *vlans_ptr = aux;          
++               *vlans_ptr = aux;
+                return 0;
+           }
+-          
++
+           cursor+=vlan_info->len;
+-          
++
+           if ( (cursor+sizeof(struct vlan_info)) < (vlans+vlans_len))
+           {
+              cursor2 = (u_int8_t *)vlan_info;
+@@ -893,14 +893,14 @@
+        last_len  = vlan_info->len;
+        last_id   = vlan_info->id;
+        last_init = (u_int8_t *)vlan_info;
+-       
++
+        cursor+=vlan_info->len;
+     }
+ 
+     /* Last VLAN...*/
+-    
++
+     memcpy((void *)aux,(void *)*vlans_ptr,vlans_len);
+-     
++
+     vlan_info = (struct vlan_info *)(aux+vlans_len);
+     vlan_info->len = sizeof(struct vlan_info)+VLAN_ALIGNED_LEN(strlen(vlan_name));
+     vlan_info->status = 0x00;
+@@ -908,7 +908,7 @@
+     vlan_info->name_len = strlen(vlan_name);
+     vlan_info->id = htons(vlan);
+     vlan_info->mtu = htons(1500);
+-    vlan_info->dot10 = htonl(vlan+VTP_DOT10_BASE);             
++    vlan_info->dot10 = htonl(vlan+VTP_DOT10_BASE);
+     memcpy((void *)(vlan_info+1),vlan_name,strlen(vlan_name));
+     *vlen = vlan_info->len+vlans_len;
+     *vlans_ptr = aux;
+@@ -924,9 +924,9 @@
+ {
+     if (attacks)
+        attack_th_exit(attacks);
+-    
++
+     pthread_mutex_unlock(&attacks->attack_th.finished);
+-    
++
+     pthread_exit(NULL);
+ }
+ 
+@@ -941,7 +941,7 @@
+     sigset_t mask;
+ 
+     attacks = arg;
+-    
++
+     pthread_mutex_lock(&attacks->attack_th.finished);
+ 
+     pthread_detach(pthread_self());
+@@ -955,7 +955,7 @@
+     }
+ 
+     vtp_modify_vlan(VTP_VLAN_ADD,attacks);
+-    
++
+     vtp_th_dos_add_exit(attacks);
+ }
+ 
+@@ -965,9 +965,9 @@
+ {
+     if (attacks)
+        attack_th_exit(attacks);
+-    
++
+     pthread_mutex_unlock(&attacks->attack_th.finished);
+-    
++
+     pthread_exit(NULL);
+ }
+ 
+@@ -986,29 +986,29 @@
+     u_int8_t *packet=NULL;
+     sigset_t mask;
+     /* Cisco vlans for crashing */
+-    u_int8_t vlan_cisco[]={ 0x75, 0x00, 0x01, 0x07, 0x20, 0x00, 0x02, 0x0c, 
+-                            0x03, 0xea, 0x05, 0xdc, 0x00, 0x01, 0x8a, 0x8a, 
+-                            0x66, 0x64, 0x64, 0x69, 0x2d, 0x64, 0x65, 0x66, 
+-                            0x61, 0x75, 0x6c, 0x74, 0x01, 0x01, 0x00, 0x00, 
+-                            0x04, 0x01, 0x00, 0x00, 0x28, 0x00, 0x03, 0x12, 
+-                            0x03, 0xeb, 0x05, 0xdc, 0x00, 0x01, 0x8a, 0x8b, 
+-                            0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2d, 0x72, 0x69, 
+-                            0x6e, 0x67, 0x2d, 0x64, 0x65, 0x66, 0x61, 0x75, 
++    u_int8_t vlan_cisco[]={ 0x75, 0x00, 0x01, 0x07, 0x20, 0x00, 0x02, 0x0c,
++                            0x03, 0xea, 0x05, 0xdc, 0x00, 0x01, 0x8a, 0x8a,
++                            0x66, 0x64, 0x64, 0x69, 0x2d, 0x64, 0x65, 0x66,
++                            0x61, 0x75, 0x6c, 0x74, 0x01, 0x01, 0x00, 0x00,
++                            0x04, 0x01, 0x00, 0x00, 0x28, 0x00, 0x03, 0x12,
++                            0x03, 0xeb, 0x05, 0xdc, 0x00, 0x01, 0x8a, 0x8b,
++                            0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2d, 0x72, 0x69,
++                            0x6e, 0x67, 0x2d, 0x64, 0x65, 0x66, 0x61, 0x75,
+                             0x6c, 0x74, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00,
+-                            0x04, 0x01, 0x00, 0x00, 0x24, 0x00, 0x04, 0x0f, 
+-                            0x03, 0xec, 0x05, 0xdc, 0x00, 0x01, 0x8a, 0x8c, 
+-                            0x66, 0x64, 0x64, 0x69, 0x6e, 0x65, 0x74, 0x2d, 
+-                            0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x00, 
+-                            0x02, 0x01, 0x00, 0x00, 0x03, 0x01, 0x00, 0x01, 
+-                            0x24, 0x00, 0x05, 0x0d, 0x03, 0xed, 0x05, 0xdc, 
+-                            0x00, 0x01, 0x8a, 0x8d, 0x74, 0x72, 0x6e, 0x65, 
+-                            0x74, 0x2d, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 
++                            0x04, 0x01, 0x00, 0x00, 0x24, 0x00, 0x04, 0x0f,
++                            0x03, 0xec, 0x05, 0xdc, 0x00, 0x01, 0x8a, 0x8c,
++                            0x66, 0x64, 0x64, 0x69, 0x6e, 0x65, 0x74, 0x2d,
++                            0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x00,
++                            0x02, 0x01, 0x00, 0x00, 0x03, 0x01, 0x00, 0x01,
++                            0x24, 0x00, 0x05, 0x0d, 0x03, 0xed, 0x05, 0xdc,
++                            0x00, 0x01, 0x8a, 0x8d, 0x74, 0x72, 0x6e, 0x65,
++                            0x74, 0x2d, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c,
+                             0x74, 0x00, 0x00, 0x00, 0x02, 0x01, 0x00, 0x00,
+-                            0x03, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 
+-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
++                            0x03, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00,
++                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+-                            0x00, 0x00, 0x00, 0x00, 0xf1, 0x00, 0x00, 0x00, 
++                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
++                            0x00, 0x00, 0x00, 0x00, 0xf1, 0x00, 0x00, 0x00,
+                             0x00, 0x00, 0x0c, 0x20 };
+ 
+     sigfillset(&mask);
+@@ -1020,18 +1020,18 @@
+     }
+ 
+     attacks = arg;
+-    
++
+     vtp_data = attacks->data;
+ 
+     gettimeofday(&now, NULL);
+ 
+     header.ts.tv_sec = now.tv_sec;
+     header.ts.tv_usec = now.tv_usec;
+-    
++
+     if ((packet = calloc(1, SNAPLEN)) == NULL)
+         vtp_th_dos_crash_exit(attacks);
+ 
+-    
++
+     while (!attacks->attack_th.stop)
+     {
+         memset((void *)&vtp_data_learned,0,sizeof(struct vtp_data));
+@@ -1039,30 +1039,30 @@
+                               PROTO_VTP, NO_TIMEOUT);
+ 
+         if (attacks->attack_th.stop)
+-           break;   
+-           
++           break;
++
+         ether = (struct libnet_802_3_hdr *) packet;
+-        
++
+         if (!memcmp(vtp_data->mac_source,ether->_802_3_shost,6) )
+           continue; /* Oops!! Its our packet... */
+ 
+         pcap_aux.header = &header;
+         pcap_aux.packet = packet;
+-                                                                                          
++
+         if (vtp_load_values(&pcap_aux, &vtp_data_learned) < 0)
+            continue;
+ 
+-        if ((vtp_data_learned.code != VTP_SUMM_ADVERT) 
++        if ((vtp_data_learned.code != VTP_SUMM_ADVERT)
+              && (vtp_data_learned.code != VTP_SUBSET_ADVERT) )
+            continue;
+ 
+         if (vtp_generate_md5( NULL,
+                               vtp_data->updater,
+                               (vtp_data_learned.revision+1),
+-                              vtp_data_learned.domain, 
+-                              vtp_data_learned.dom_len, 
++                              vtp_data_learned.domain,
++                              vtp_data_learned.dom_len,
+                               vlan_cisco,
+-                              sizeof(vlan_cisco), 
++                              sizeof(vlan_cisco),
+                               vtp_data->md5,
+                               vtp_data_learned.version) < 0)
+            break;
+@@ -1078,26 +1078,26 @@
+         {
+             vtp_data->dom_len = vtp_data_learned.dom_len;
+             memcpy(vtp_data->domain,vtp_data_learned.domain,vtp_data_learned.dom_len);
+-        }                
++        }
+         vtp_data->revision = vtp_data_learned.revision+1;
+-        
++
+         usleep(200000);
+         if (vtp_send(attacks)< 0)
+            break;
+         usleep(200000);
+-        
++
+         vtp_data->code = VTP_SUBSET_ADVERT;
+         vtp_data->seq = 1;
+-      
++
+         vtp_data->vlan_info = vlan_cisco;
+         vtp_data->vlans_len = sizeof(vlan_cisco);
+         vtp_send(attacks);
+-        
+-        break; 
++
++        break;
+     }
+ 
+     free(packet);
+-    
++
+     vtp_th_dos_crash_exit(attacks);
+ }
+ 
+@@ -1121,16 +1121,16 @@
+ 
+     attack_gen_mac(vtp_data->mac_source);
+ 
+-    vtp_data->mac_source[0] &= 0x0E; 
++    vtp_data->mac_source[0] &= 0x0E;
+ 
+     parser_vrfy_mac("01:00:0c:cc:cc:cc",vtp_data->mac_dest);
+-    
++
+     vtp_data->version = VTP_DFL_VERSION;
+-    
++
+     memcpy(vtp_data->domain, VTP_DFL_DOMAIN,sizeof(VTP_DFL_DOMAIN));
+-    
++
+     vtp_data->dom_len = VTP_DFL_DOM_LEN;
+-    
++
+     vtp_data->code = VTP_DFL_CODE;
+ 
+     vtp_data->start_val = 1;
+@@ -1140,9 +1140,9 @@
+     vtp_data->followers = 1;
+ 
+     vtp_data->seq = 1;
+-   
++
+     vtp_data->updater = ntohl(inet_addr("10.13.58.1"));
+-   
++
+     return 0;
+ }
+ 
+@@ -1155,7 +1155,7 @@
+     u_int8_t *packet, got_vtp_packet = 0;
+     dlist_t *p;
+     struct interface_data *iface_data;
+-    
++
+     vtp_data = data;
+ 
+     if ((packet = calloc(1, SNAPLEN)) == NULL)
+@@ -1182,10 +1182,10 @@
+ 
+         pcap_aux.header = header;
+         pcap_aux.packet = packet;
+-                                                                                          
++
+         if (!vtp_load_values((struct pcap_data *)&pcap_aux, vtp_data))
+            got_vtp_packet = 1;
+-        
++
+     } /* While got */
+ 
+     free(packet);
+@@ -1194,7 +1194,7 @@
+ }
+ 
+ 
+-/* 
++/*
+  * Return formated strings of each VTP field
+  */
+ char **
+@@ -1218,7 +1218,7 @@
+         thread_error("vtp_get_rpintable calloc()",errno);
+         return NULL;
+     }
+-    
++
+     ether = (struct libnet_802_3_hdr *) data->packet;
+     vtp_data = (u_int8_t *) (data->packet + LIBNET_802_3_H + LIBNET_802_2SNAP_H);
+ 
+@@ -1230,9 +1230,9 @@
+     snprintf(field_values[VTP_DMAC], 18, "%02X:%02X:%02X:%02X:%02X:%02X",
+        ether->_802_3_dhost[0], ether->_802_3_dhost[1], ether->_802_3_dhost[2],
+        ether->_802_3_dhost[3], ether->_802_3_dhost[4], ether->_802_3_dhost[5]);
+-    
+-    ptr = vtp_data; 
+-    
++
++    ptr = vtp_data;
++
+     /* VTP Version */
+     snprintf(field_values[VTP_VERSION], 3, "%02X", *ptr);
+ 
+@@ -1244,12 +1244,12 @@
+     /* VTP code */
+     if (*code == VTP_SUMM_ADVERT)
+        snprintf(field_values[VTP_FOLLOWERS], 4, "%03d", *(ptr+1));
+-    
++
+     if (*code == VTP_SUBSET_ADVERT)
+        snprintf(field_values[VTP_SEQ], 4, "%03d", *(ptr+1));
+-    
++
+     ptr+=2;
+-   
++
+     if (*ptr < 24)/*VTP_DOMAIN_SIZE )*/
+     {
+        memcpy(field_values[VTP_DOMAIN], (ptr+1), *ptr);
+@@ -1258,8 +1258,8 @@
+     else
+     {
+        memcpy(field_values[VTP_DOMAIN], (ptr+1), 24);
+-       field_values[VTP_DOMAIN][24]=0;    
+-       field_values[VTP_DOMAIN][23]='|';    
++       field_values[VTP_DOMAIN][24]=0;
++       field_values[VTP_DOMAIN][23]='|';
+     }
+ 
+     ptr+=33;
+@@ -1272,7 +1272,7 @@
+             snprintf(field_values[VTP_REVISION], 11, "%010hd", ntohl(*aux_long));
+               aux_long++;
+ 
+-#ifdef LBL_ALIGN 
++#ifdef LBL_ALIGN
+     memcpy((void *)&aux_long2, (void *)aux_long,4);
+     aux2 = libnet_addr2name4(aux_long2, LIBNET_DONT_RESOLVE);
+     strncpy(field_values[VTP_UPDATER],aux2,16);
+@@ -1294,14 +1294,14 @@
+             snprintf(field_values[VTP_REVISION], 11, "%010hd", ntohl(*aux_long));
+             field_values[VTP_MD5][0]=0;
+             field_values[VTP_UPDATER][0] = 0;
+-#ifdef KKKKKKKKKKK            
++#ifdef KKKKKKKKKKK
+             ptr+=4; /* Point to VLANs info */
+-            
++
+             cursor = ptr;
+             i = 0;
+             vlans_len = (data->packet + data->header->caplen) - ptr;
+             tlv = field_values[VTP_VLAN];
+-                
++
+             while( ((cursor+sizeof(struct vlan_info)) < (ptr+vlans_len)) && (i<MAX_TLV) )
+             {
+                vlan_info = (struct vlan_info *) cursor;
+@@ -1342,15 +1342,15 @@
+                 thread_usleep(500000);
+             }
+ #endif
+-            
++
+        break;
+-       
++
+        case VTP_JOIN:
+             field_values[VTP_MD5][0] = 0;
+             field_values[VTP_REVISION][0] = 0;
+             field_values[VTP_UPDATER][0] = 0;
+        break;
+-       
++
+        case VTP_REQUEST:
+             aux_short = (u_int16_t *)aux_long;
+             snprintf(field_values[VTP_STARTVAL], 6, "%05hd", ntohs(*aux_short));
+@@ -1359,7 +1359,7 @@
+             field_values[VTP_UPDATER][0] = 0;
+        break;
+     }
+-     
++
+     return (char **)field_values;
+ }
+ 
+@@ -1395,7 +1395,7 @@
+              vtp_tmp->mac_dest[3], vtp_tmp->mac_dest[4], vtp_tmp->mac_dest[5]);
+ 
+     snprintf(field_values[VTP_VERSION], 3, "%02X", vtp_tmp->version);
+-    
++
+     snprintf(field_values[VTP_CODE], 3, "%02X", vtp_tmp->code);
+ 
+     memcpy(field_values[VTP_DOMAIN], vtp_tmp->domain, VTP_DOMAIN_SIZE);
+@@ -1414,7 +1414,7 @@
+ 
+     memcpy(field_values[VTP_TIMESTAMP], vtp_tmp->timestamp, 12);
+ 
+-    snprintf(field_values[VTP_STARTVAL], 6, "%05hd", vtp_tmp->start_val);            
++    snprintf(field_values[VTP_STARTVAL], 6, "%05hd", vtp_tmp->start_val);
+ 
+     snprintf(field_values[VTP_FOLLOWERS], 4, "%03d", vtp_tmp->followers);
+ 
+@@ -1424,10 +1424,10 @@
+ }
+ 
+ 
+-/* 
++/*
+  * Load values from packet to data.
+  */
+-int8_t 
++int8_t
+ vtp_load_values(struct pcap_data *data, void *values)
+ {
+     struct libnet_802_3_hdr *ether;
+@@ -1447,17 +1447,17 @@
+     memcpy(vtp->mac_source, ether->_802_3_shost, ETHER_ADDR_LEN);
+     /* Destination MAC */
+     memcpy(vtp->mac_dest, ether->_802_3_dhost, ETHER_ADDR_LEN);
+-    
++
+     ptr = vtp_data;
+-    
++
+     if ( (ptr+sizeof(struct vtp_request)) > (data->packet + data->header->caplen))
+         return -1; /* Undersized packet...*/
+-        
++
+     /* VTP Version */
+     vtp->version = *ptr;
+     ptr++;
+-    
+-    /* VTP code */    
++
++    /* VTP code */
+     vtp->code = *ptr;
+     ptr++;
+ 
+@@ -1470,9 +1470,9 @@
+           vtp->seq = *ptr;
+        break;
+     }
+-       
++
+     ptr++;
+-   
++
+     if (*ptr < VTP_DOMAIN_SIZE )
+     {
+        vtp->dom_len = *ptr;
+@@ -1526,26 +1526,26 @@
+             aux_short = (u_int16_t *)ptr;
+ #ifdef LBL_ALIGN
+             memcpy((void *)&aux_short2, (void *)aux_short, 4);
+-            vtp->start_val = ntohs(aux_short2);
++            vtp->start_val = ntohs(*aux_short2);
+ #else
+             vtp->start_val = ntohs(*aux_short);
+-#endif            
++#endif
+        break;
+ 
+        case VTP_JOIN:
+        break;
+     }
+-    
++
+     return 0;
+ }
+ 
+ 
+-int8_t 
++int8_t
+ vtp_update_field(int8_t state, struct term_node *node, void *value)
+ {
+     struct vtp_data *vtp_data;
+     u_int16_t len;
+-    
++
+     if (node == NULL)
+        vtp_data = protocols[PROTO_VTP].default_values;
+     else
+@@ -1562,7 +1562,7 @@
+         case VTP_DMAC:
+            memcpy((void *)vtp_data->mac_dest, (void *)value, ETHER_ADDR_LEN);
+         break;
+-        
++
+         /* Version */
+         case VTP_VERSION:
+        vtp_data->version = *(u_int8_t *)value;

@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-marshmallow-autoschema
+_pkgname=marshmallow-autoschema
+pkgver=0.4.0
+pkgrel=1
+pkgdesc='Generate marshmallow schemas from type annotations and decorators.'
+arch=('any')
+url='https://pypi.org/project/marshmallow-autoschema/#files'
+license=('MIT')
+depends=('python' 'python-marshmallow')
+makedepends=('python-build' 'python-pip' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('629604443b53570ee4da3dfaf6aa7e55b26b205d6bcbfde8cda0a8064d934815195a8374c765717f943a37156b02a474842507f36fd2bbf98ab179a665629222')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  echo 'marshmallow' >> requirements.txt
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

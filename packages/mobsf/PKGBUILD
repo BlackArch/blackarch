@@ -2,31 +2,16 @@
 # See COPYING for license details.
 
 pkgname=mobsf
-pkgver=1961.f6193dc1
+pkgver=v4.4.2.r1.g5d1096d
 pkgrel=1
-epoch=1
-groups=('blackarch' 'blackarch-mobile')
+epoch=2
 pkgdesc='An intelligent, all-in-one open source mobile application (Android/iOS) automated pen-testing framework capable of performing static, dynamic analysis and web API testing.'
 arch=('any')
+groups=('blackarch' 'blackarch-mobile')
 url='https://github.com/MobSF/Mobile-Security-Framework-MobSF'
-license=('GPL3')
-depends=(
-  # requirements.txt : https://github.com/MobSF/Mobile-Security-Framework-MobSF/blob/master/requirements.txt
-  'python-django' 'python-lxml' 'python-rsa' 'python-biplist' 'python-requests'
-  'python-beautifulsoup4' 'python-colorlog' 'python-macholib'
-  'python-whitenoise' 'gunicorn' 'python-psutil' 'python-shelljob'
-  'python-asn1crypto' 'python-oscrypto' 'python-distro' 'python-ip2location'
-  'lief' 'python-http-tools' 'python-libsast' 'python-pdfkit'
-  'python-google-play-scraper' 'androguard' 'apkid' 'quark-engine'
-  'python-frida' 'python-tldextract' 'python-openstep-parser' 'python-svgutils'
-  'python-arpy'
-  # For semgrep & mitmproxy
-  'python-ruamel-yaml' 'python-click' 'python-decorator'
-  # requirements : https://mobsf.github.io/docs/#/requirements
-  'git' 'python' 'java-environment' 'python-virtualenv' 'python-pip' 'libffi'
-  'libxml2' 'libxslt' 'libjpeg-turbo' 'wkhtmltopdf'
-)
-makedepends=('git' 'python-setuptools' 'python-pip')
+license=('GPL-3.0-or-later')
+depends=('python' 'gunicorn' 'python-xmlsec')
+makedepends=('git' 'python-setuptools' 'python-setuptools-scm' 'python-pip')
 source=("$pkgname::git+https://github.com/MobSF/Mobile-Security-Framework-MobSF.git")
 sha512sums=('SKIP')
 install="$pkgname.install"
@@ -34,33 +19,34 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
-  cd $pkgname/$pkgname
+  cd $pkgname
 
-  sed -i 's/USE_HOME = False/USE_HOME = True/g' MobSF/settings.py
+  sed -i '/^xmlsec = "1.3.14"/d' pyproject.toml
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/"{bin,share/$pkgname}
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm -f docker-compose.yml Dockerfile LICENSE README.md requirements.txt *.bat \
+  rm -rf LICENSE .gitignore docker-compose.yml Dockerfile *.bat \
     *.sh scripts/*.bat
-  #rm -r scripts/wheels/ scripts/stack/
 
-  cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname
+source /usr/share/$pkgname/venv/bin/activate
 exec gunicorn -b 0.0.0.0:8000 mobsf.MobSF.wsgi:application \
   --workers=1 --threads=10 --timeout=3600
 EOF

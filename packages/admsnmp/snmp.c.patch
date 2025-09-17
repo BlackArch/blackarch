@@ -1,0 +1,243 @@
+--- src/ADMsnmp/snmp.c	1999-02-17 08:20:05.000000000 +0100
++++ snmp.c	2024-11-24 02:20:13.993333598 +0100
+@@ -18,7 +18,7 @@
+ 
+ 
+ #define VERSION "beta 0.1"
+-/** include :> **/ 
++/** include :> **/
+ 
+ 
+ #include <stdio.h>
+@@ -45,7 +45,7 @@
+ 
+ 
+ struct optionz       /* option of the program's    */
+-  {                   
++  {
+     u_long utimeout;
+     u_long uwait;
+     u_long host;
+@@ -202,8 +202,8 @@
+ /** community name and return an offset to the end  return code of the paket **/
+ /** in ASN.1 language 0x4 [sizeof the string] = string
+ 		      0x2 [sizeof of the interger] = integer
+-**/   		      
+-		          
++**/
++
+ int
+ getret (u_char * buf, int size, struct snmpchex *sn)
+ {
+@@ -212,7 +212,7 @@
+     if (buf[i] == '\x04')
+       {
+ 	/** Search the comunity name **/
+-	
++
+ 	memset ((char *) &sn->name, 0, sizeof (sn->name));
+ 
+ 	if (buf[i + 1] < (sizeof (sn->name) - 1))
+@@ -223,7 +223,7 @@
+ 	i = i + (buf[i + 1] + 1);
+ 	for (; i < size && i + 2 < size; i++)
+ 	  if (buf[i] == 0xa2)
+-	    { 
++	    {
+ 	    /** ok we enter into the PDU **/
+ 	      for (; i < size && i + 2 < size; i++)
+ 		if (buf[i] == '\x02')
+@@ -262,13 +262,13 @@
+   buf[5] = 0x01;
+   buf[6] = 0x00;
+   buf[7] = 0x04;            /* we copy the community name */
+-  buf[8] = strlen (name); 
++  buf[8] = strlen (name);
+ 
+   strcpy ((buf + 9), name);
+   i = 9 + strlen (name);
+   if (set_req == 0)
+     buf[i++] = 0xa0;     /* a0 = getreq a3 = setreq */
+-  else              
++  else
+     buf[i++] = 0xa3;
+ /** get req **/
+ /* printf ("buf[%i]=%i\n", i, 12 + longid); */
+@@ -300,7 +300,7 @@
+   memset (buf, 0, sizeofbuf);
+   i = getreq (buf, namez, GETREQ_SYSDEC, id, set_req);
+   memcpy ((buf + i), sysdec, GETREQ_SYSDEC);
+-  return (sendto (sock, buf, i + GETREQ_SYSDEC, 0, sin, sizeof (struct sockaddr_in)));
++    return (sendto(sock, buf, i + GETREQ_SYSDEC, 0, (const struct sockaddr *)sin, sizeof(struct sockaddr_in)));
+ }
+ 
+ /** getreq paket **/
+@@ -382,7 +382,7 @@
+ 
+ /** main function **/
+ 
+-int 
++int
+ snmpcheck (u_long ip, FILE * f)
+ {
+   struct snmpchex sn;
+@@ -391,7 +391,7 @@
+   int i = 0, x;
+   u_char buf[255];
+   char namez[24];
+-  
++
+ 
+   int the_id = 10;
+   int nd;
+@@ -417,7 +417,9 @@
+       if (!feof (f)) /** get community name to test from the wordfile **/
+ 	{
+ 	  memset ((char *) &namez, 0, sizeof (namez));
+-	  fgets ((char *) &namez, sizeof (namez), f);
++            if (fgets((char *)&namez, sizeof(namez), f) == NULL) {
++                perror("fgets failed");
++            }
+ 	  if (strlen (namez) > 0 && namez [0] != '\n')
+ 	    {
+ 	      namez[strlen (namez) - 1] = '\0';
+@@ -430,7 +432,7 @@
+ 		    the_id = 0;
+ 		  else
+ 		    the_id++;
+-                                 /* send the request */		  
++                                 /* send the request */
+               if (req_makepktsnmp (sock, (char *) &buf, sizeof (buf), namez, the_id, &sin) < 0)
+ 		    {
+ 		      perror ("sendto");
+@@ -447,20 +449,20 @@
+       memset ((u_char *) & buf, 0, sizeof (buf));
+       x = sizeof (sin);
+ 
+-     if (feof(f)) 
++     if (feof(f))
+        {
+         /** time to wait before quit  this function  **/
+          gettimeofday (&tv3, NULL);
+          if ( (tv2.tv_sec + opz.utimeout) < tv3.tv_sec)
+            break;
+-       }   
++       }
+      else  gettimeofday (&tv2, NULL);
+-     
++
+ 
+       i = 0;
+       /** we get an answer !!!! */
+-      
+-      if ((i = recvfrom (sock, (char *) &buf, sizeof (buf), 0, &sin, &x)) > 0)
++
++        if ((i = recvfrom(sock, (char *)&buf, sizeof(buf), 0, (struct sockaddr *)&sin, &x)) > 0)
+ 	{
+ 	  nd = 0;
+ 	 /** extract the ID the return code and the community name **/
+@@ -471,7 +473,7 @@
+ 
+               /** here we will save our first awnser and trying to see if the
+                   we can write with the community name  **/
+-                   
++
+ 	      for (; nd < i; nd++)
+ 		if (buf[nd] == 0x04)
+ 		  {
+@@ -488,7 +490,7 @@
+ 			printf ("\033[0m\033[01m\033[33m>>>>>>>>>>>> send setrequest id = %i name = %s >>>>>>>> \033[0m\n", sn.id, sn.name);
+ 			for (manysend = 0; manysend < opz.manysend; manysend++)
+ 			  {
+-			/** set  paket **/    
++			/** set  paket **/
+ 			    set_makepktsnmp (sock, (char *) &buf, sizeof (buf), (char *) &sn.name, "ADMsnmp", the_id + 127, &sin);
+ 			    usleep (opz.uwait);
+ 			  }
+@@ -613,11 +615,11 @@
+  *  printf ("wordfile = %s sleep = %u waitfor = %u guess = %i outputfile = %s manysend = %i\n",
+  *  opz.wordfile, opz.utimeout, opz.uwait, opz.guess, opz.outputfile, opz.manysend);
+  */
+-  
++
+ 
+ /** if we have the guessname option we make a new wordfile from it result +
+  **    the wordfile  choosed  **/
+- 
++
+   if (opz.guess == 1)
+     {
+       c = ip2host (opz.host);
+@@ -638,7 +640,9 @@
+ 	  while (!feof (fout))
+ 	    {
+ 	      memset (c, 0, 255);
+-	      fgets (c, 255, fout);
++                if (fgets(c, 255, fout) == NULL) {
++                    perror("fgets failed");
++                }
+ 	      fwrite (c, strlen (c), 1, f);
+ 	    }
+ 	  for (i = 0; i < guess_i; i++)
+@@ -663,7 +667,7 @@
+     }
+ 
+ fout = NULL;
+-  
++
+   if (opz.outputfile != NULL)
+     {
+       fout = fopen (opz.outputfile, "w");
+@@ -680,41 +684,41 @@
+ 
+  printf ("ADMsnmp v%s (c) The ADM crew\n",VERSION);
+  printf ("ftp://ADM.isp.at/ADM/\ngreets: !ADM, el8.org, ansia\n");
+- 
+- 
++
++
+  snmpcheck (host2ip (argv[1]), f);
+- 
+-  if (fout != NULL) 
++
++  if (fout != NULL)
+       fprintf (fout,"\n\n<!ADM!>\t\tsnmp check on %st\t<!ADM!>\n",argv [1]);
+- 
++
+   printf ("\n\n<!ADM!>\t\tsnmp check on %s\t\t<!ADM!>\n",argv[1]);
+ 
+-  if (strlen (oldbanner) > 0) 
++  if (strlen (oldbanner) > 0)
+    {
+     printf ("\033[1msys.sysName.0\033[0m:%s\n", oldbanner);
+-    if (fout != NULL) 
++    if (fout != NULL)
+         fprintf (fout,"\033[1msys.sysName.0\033[0m:%s\n", oldbanner);
+    }
+-   
++
+   for (i = 0; i < 255; i++)
+     {
+       if (sntab[i].id != -666)
+ 	{
+ 	  printf ("name = \033[1m\033[31m%s\033[0m", (char *) &sntab[i].name);
+-	  if (fout != NULL) 
++	  if (fout != NULL)
+ 	         fprintf (fout,"name = \033[1m\033[31m%s\033[0m", (char *) &sntab[i].name);
+ 	  if (sntab[i].rw == 2)
+ 	    {
+ 	    printf (" \033[1\033[5mwrite\033[0m access\n");
+ 	    if (fout != NULL)fprintf (fout," \033[1\033[5mwrite\033[0m access\n");
+ 	    }
+-	  else 
++	  else
+ 	   {
+ 	    printf (" readonly access\n");
+ 	    if (fout != NULL)fprintf (fout," readonly access\n");
+ 	   }
+ 	}
+-	
++
+     }
+ 
+   if (opz.guess == 1)

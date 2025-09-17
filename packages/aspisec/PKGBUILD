@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=aspisec
+pkgver=0.2.0
+pkgrel=2
+groups=('blackarch' 'blackarch-misc')
+pkgdesc='Removes the traces left by offensive security tools.'
+arch=('any')
+url='https://noraj.github.io/aspisec/'
+license=('MIT')
+depends=('ruby' 'ruby-bundler')
+source=("https://github.com/noraj/$pkgname/archive/refs/tags/$pkgver.tar.gz")
+sha512sums=('26ac384a1bdfbdf06031859d7cae0a421634e77c336f90d787296ef6f027eb9962c90d241343a87da2c117d5c954ea7886bf084c2dbd78f7e5099de30e4debaf')
+install="$pkgname.install"
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+  cp -rT --no-preserve=ownership --preserve=all --no-dereference docs/ "$pkgdir/usr/share/doc/$pkgname"
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf docs/ docs-tools/ *.md LICENSE .*
+
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+bundle exec ruby bin-ruby/$pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir"/usr/bin/*
+}
+

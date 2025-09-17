@@ -3,13 +3,15 @@
 
 pkgname=email2phonenumber
 pkgver=29.9df9dbe
-pkgrel=1
+pkgrel=4
 pkgdesc="A OSINT tool to obtain a target's phone number just by having his email address."
 groups=('blackarch' 'blackarch-social' 'blackarch-recon')
 arch=('any')
-url='https://github.com/martinvigo/email2phonenumber/'
+url='https://github.com/martinvigo/email2phonenumber'
 license=('MIT')
-depends=('python2' 'python2-beautifulsoup4' 'python2-requests')
+depends=('python' 'python-beautifulsoup4' 'python-bs4' 'python-certifi'
+         'python-chardet' 'python-idna' 'python-requests' 'python-soupsieve'
+         'python-urllib3')
 makedepends=('git')
 source=("git+https://github.com/martinvigo/$pkgname.git")
 sha512sums=('SKIP')
@@ -17,13 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
-prepare() {
-  cd $pkgname
-
-  sed -i '1i\#!/usr/bin/python2' "$pkgname.py"
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

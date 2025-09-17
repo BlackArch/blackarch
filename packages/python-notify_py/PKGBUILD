@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-notify_py
+_pkgname=${pkgname#python-}
+pkgver=0.3.43
+pkgrel=1
+pkgdesc='Python Module for sending cross-platform desktop notifications.'
+arch=('any')
+url='https://github.com/ms7m/notify-py'
+license=('MIT')
+depends=('python' # https://github.com/ms7m/notify-py/blob/master/pyproject.toml
+         'python-loguru'
+         'python-jeepney'
+         'libnotify')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('573aedb394a2af1e5872851455af5584ab81f393c71a4229c1499cd68204a40a45f9a01dd72a7a79991e83160b12c4d7c9b3ef9cbec84a7ceb7bda1fdde641ba')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

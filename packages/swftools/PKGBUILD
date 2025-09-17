@@ -3,7 +3,7 @@
 
 pkgname=swftools
 pkgver=0.9.2
-pkgrel=7
+pkgrel=8
 pkgdesc='A collection of SWF manipulation and creation utilities.'
 groups=('blackarch' 'blackarch-reversing' 'blackarch-binary' 'blackarch-webapp')
 arch=('x86_64' 'aarch64')
@@ -14,36 +14,43 @@ makedepends=('bison' 'flex' 'zlib' 'patch')
 changelog="$pkgname.changelog"
 source=("http://www.swftools.org/$pkgname-$pkgver.tar.gz"
         "$pkgname-$pkgver.patch"
-        'giflib-5.1.patch')
+        'giflib-5.1.patch'
+        'extern.patch'
+        'pointer_compare.patch')
 sha512sums=('91bbd48914f9a8a1cdf85532b371721b01982c5f88648b908fbe99fbf4e17e9893ce575e4fd699927e9bc1c79d846f6bcd4f1d868578fb17403467cc1e28259b'
             '660d2f046bb8030640c55ee736ad40937b00e1a43715e82bffbb36eb9dfe3824995ce0b637904afce5692e74ffef4d015718468ee124d4e18b5298944420a22b'
-            'cd309d2e423fbf21da56e3a72bc339954f22e6dad892cc132fcc6874b0ae3196d20c47aad8b17de3573fa5c84a279bddc0163ec1e2881d745a3961afedb3e809')
+            'cd309d2e423fbf21da56e3a72bc339954f22e6dad892cc132fcc6874b0ae3196d20c47aad8b17de3573fa5c84a279bddc0163ec1e2881d745a3961afedb3e809'
+            'e1b22a4a13f48af0d06da5122431f3f2cb5b83ef39c1bf53c2981b6885b0e30f24547628c315e5c6c5b1f1ef17e1b9c9e01f148675540ee6d845acadc922a458'
+            'b9795fadabca0ad0ad8ef75f0de8b9df094ec4f9a64626dc585a41c19663ed91cc86a5119887ef2dfcda2db825b4d68137404a7d0a434758bb3a3752871064df')
 
 prepare() {
   cd "$pkgname-$pkgver"
 
   patch -Np0 -i ../giflib-5.1.patch
+  patch -Np0 -i ../extern.patch
+  patch -Np0 -i ../pointer_compare.patch
 
-  sed -i 's#PrintGifError()#fprintf(stderr, "%s\\n", GifErrorString())#g' \
-    src/gif2swf.c
+  #sed -i 's#PrintGifError()#fprintf(stderr, "%s\\n", GifErrorString())#g' \
+  #  src/gif2swf.c
 }
 
 build() {
   cd "$pkgname-$pkgver"
 
-  if [[ "$CARCH" == "x86_64" ]]; then
-    ./configure --prefix=/usr
+  CFLAGS="${CFLAGS} -Wno-error=incompatible-pointer-types"
+  if [[ "$CARCH" == "aarch64" ]]; then
+    ./configure --prefix=/usr --build=arm
   else
     ./configure --prefix=/usr
   fi
 
   make
-
-  patch -Np0 -i "$srcdir/$pkgname-$pkgver.patch"
 }
 
 package() {
   cd "$pkgname-$pkgver"
+
+  patch -Np0 -i "$srcdir/$pkgname-$pkgver.patch"
 
   make prefix="$pkgdir/usr" install
 

@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=pmacct
-pkgver=5265.b65616fa
+pkgver=v1.7.6.r1617.gd76c89e
 pkgrel=1
+epoch=1
 pkgdesc='Small set of multi-purpose passive network monitoring tools [NetFlow IPFIX sFlow libpcap BGP BMP IGP Streaming Telemetry].'
 groups=('blackarch' 'blackarch-networking' 'blackarch-sniffer'
         'blackarch-defensive')
@@ -11,20 +12,27 @@ arch=('x86_64' 'aarch64')
 url='https://github.com/pmacct/pmacct'
 license=('GPL2')
 depends=('libpcap' 'zeromq' 'rabbitmq' 'mariadb' 'geoip')
-makedepends=('git')
+makedepends=('git' 'autoconf')
 source=("git+https://github.com/pmacct/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+	( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
   cd $pkgname
 
   ./autogen.sh
+
+  autoreconf
 
   ./configure --prefix=/usr --sbindir=/usr/bin
 

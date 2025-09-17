@@ -1,0 +1,64 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=remote-method-guesser
+pkgver=v5.1.0.r11.g3398ec6
+pkgrel=1
+pkgdesc='Java RMI vulnerability scanner.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner')
+url='https://github.com/qtc-de/remote-method-guesser'
+license=('GPL-3.0-or-later')
+depends=('java-runtime' 'ysoserial')
+makedepends=('maven' 'git')
+source=("git+https://github.com/qtc-de/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i "s|YSO =.*|YSO = /usr/share/java/ysoserial.jar|g" src/config.properties
+}
+
+build() {
+  cd $pkgname
+
+  mvn clean package -DskipTests
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  mv docs/README.md docs/README-docs.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" docs/*.md *.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/rmg" docs/rmg/*.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/rmi" docs/rmi/*.md
+
+  install -Dm 644 target/rmg-?.?.?-jar-with-dependencies.jar \
+    "$pkgdir/usr/share/$pkgname/rmg.jar"
+  install -Dm 644 resources/bash_completion.d/rmg \
+    "$pkgdir/usr/share/bash-completion/completions/rmg"
+
+  cat > "$pkgdir/usr/bin/rmg" << EOF
+#!/bin/sh
+exec java -jar /usr/share/$pkgname/rmg.jar "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/rmg"
+
+  ln -s /usr/bin/rmg "$pkgdir/usr/bin/$pkgname"
+}
+

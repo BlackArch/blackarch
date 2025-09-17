@@ -1,180 +1,97 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 #
-# from AUR - adjusted to our styles
+# from AUR - adjusted to our style
 #
-# Maintainer: JustKidding <jk@vin.ovh>
-# Contributor: James P. Harvey <jamespharvey20 at gmail dot com>
-# Contributor: Christoph Bayer <chrbayer@criby.de>
-# Contributor: Felix Yan <felixonmars@archlinux.org>
-# Contributor: Sven-Hendrik Haase <sh@lutzhaase.com>
-# Contributor: Thomas Dziedzic < gostrc at gmail >
-# Contributor: Mathias Stearn <mathias@10gen.com>
-# Contributor: Alec Thomas
-# Contributor: Fredy García <frealgagu at gmail dot com>
+# Maintainer: Ali Molaei <ali dot molaei at protonmail dot com>
+# Maintainer: Rafael Fontenelle <rafaelff at gnome dot org>
 
 pkgname=mongodb
-pkgver=7.0.11
+pkgver=8.0.13
+_basever=8.0
+_basedist=noble
 pkgrel=1
 pkgdesc='A high-performance, open source, schema-free document-oriented database.'
 arch=('x86_64' 'aarch64')
-url="https://www.mongodb.com/"
-license=("SSPL-1.0")
-depends=('libstemmer' 'snappy' 'boost-libs' 'pcre2' 'yaml-cpp' 'gperftools'
-         'libunwind' 'curl' 'zstd' 'zlib' 'libsasl' 'openssl' 'glibc' 'libldap'
-         'gcc-libs' 'krb5')
-makedepends=('python-psutil' 'python-setuptools' 'python-regex' 'python-yaml'
-             'python-cheetah3' 'python-requests' 'python-pymongo' 'boost'
-             'mongo-c-driver')
-optdepends=('mongodb-tools: mongoimport, mongodump, mongotop, etc'
-            'mongosh: interactive shell to connect with MongoDB')
-backup=("etc/$pkgname.conf")
-provides=(mongodb="$pkgver")
-options=(!debug)
-source=("https://github.com/mongodb/mongo/archive/refs/tags/r$pkgver.tar.gz"
-        "$pkgname.sysusers"
-        "$pkgname.tmpfiles"
-        "$pkgname-5.0.2-skip-reqs-check.patch"
-        "$pkgname-5.0.2-no-compass.patch"
-        "$pkgname-7.0.2-sconstruct.patch"
-        "$pkgname-4.4.29-no-enterprise.patch")
-sha512sums=('30c3dfa886b9510d99d3d7ad77ef203c750fb10bd7c833535fd299a80fe980728327bbe49091bea71b612c2fbe9162c349d0c3069c33600cb424394d169ee6d0'
-            '36a2c4336d6aeeec303dd0aec2c554db826d479efcb95269f75e2150ad752516c3f25c50f8e25b90384dea65b5b5b72a15ab17d5da35f6f92f20cc65af02f61b'
-            '41b711a623b034b66e146487fab948608111af48aff2b4f1b171b64b531fa6a1b36de8b348ff543fdd9c3ac34a1a20fae9b23cdb124abda93f89ce011a7921ef'
-            '29d4ff6de3a89c39ed0e3c54aa1e17fc3466ceb69dfbcfc62109ea2666ca98458b7b23ac82e4b5c9be77d5d82c69d5b213670b3a3367b13c3b8cab06cfacf4c2'
-            '07fe714a4256c13449e1e764c88d5051773aa9397228085a8d581cde91477dff2c3dc70ba801eb559af76ff19abf205d32c9510606a9bb26cebb33f68822e607'
-            '8650bd07392dd33c8746669126753b18357d23dc46d3af799875ba0b080258341cb3cefb2ac8c40e0592d99c69eae39793a3379d52aa5eef0b22318bef79ad10'
-            '6e84db876022c21c1fcff8c9f88d4ff7375ebb8b37ab0dd445d1697484a1344098bfbffd82b3da7f2f8c2f926c4f403f2ffce9d67ef46b894f3a9f0b981aba10')
-sha512sums_aarch64=('a9ab48048c0ec72720d7a8039273401b1fbd760447e118e440fe665eda8cf6c0a0bd6ebed2a977313216360d5a3b5d382fa2a27183693813a13d1d23c765e88b')
-source_aarch64=(extrapatch-sconstruct.patch)
+url='https://www.mongodb.com/try/download/community'
+license=('SSPL-1.0')
+depends=('mongosh' 'curl' 'openssl')
+makedepends=('chrpath')
+optdepends=("mongodb-tools: The MongoDB tools provide import, export, and diagnostic capabilities.")
+provides=("mongodb=$pkgver")
+backup=("etc/mongodb.conf")
 
-_scons_args=(
-  CC="${CC:-gcc}"
-  CXX="${CXX:-g++}"
-  AR="${AR:-ar}"
-  MONGO_DISTMOD=arch
-  MONGO_VERSION="$pkgver"
-
-  --use-system-boost
-  --use-system-pcre2
-  --use-system-snappy
-  --use-system-stemmer
-  --use-system-yaml
-  --use-system-zlib
-  --use-system-zstd
-  --use-system-tcmalloc
-  --use-system-libunwind
-  --use-system-libbson
-  --use-system-mongo-c
-
-  --use-sasl-client
-  --ssl
-  --disable-warnings-as-errors
-  --runtime-hardening=off
+_repo_url=https://repo.mongodb.org/apt/ubuntu/dists/${_basedist}/mongodb-org/${_basever}/multiverse
+source=(
+	"$pkgname.sysusers"
+	"$pkgname.tmpfiles"
+	'LICENSE'
+)
+source_x86_64=(
+	"$pkgname-org-server_${pkgver}_x86_64.deb"::"$_repo_url/binary-amd64/mongodb-org-server_${pkgver}_amd64.deb"
+	"$pkgname-org-mongos_${pkgver}_x86_64.deb"::"$_repo_url/binary-amd64/mongodb-org-mongos_${pkgver}_amd64.deb"
+)
+source_aarch64=(
+	"mongodb-org-server_${pkgver}_aarch64.deb"::"$_repo_url/binary-arm64/mongodb-org-server_${pkgver}_arm64.deb"
+	"mongodb-org-mongos_${pkgver}_aarch64.deb"::"$_repo_url/binary-arm64/mongodb-org-mongos_${pkgver}_arm64.deb"
+)
+noextract=(
+	"$pkgname-org-server_${pkgver}_${CARCH}.deb"
+	"$pkgname-org-mongos_${pkgver}_${CARCH}.deb"
 )
 
-all-flag-vars() {
-  echo {C,CXX}FLAGS
-}
-
-_filter-var() {
-  local f x var=$1 new=()
-  shift
-
-  for f in ${!var} ; do
-    for x in "$@" ; do
-      # Note this should work with globs like -O*
-      [[ ${f} == "${x}" ]] && continue 2
-    done
-    new+=( "${f}" )
-  done
-  export "${var}"="${new[*]}"
-}
-
-filter-flags() {
-  local v
-  for v in $(all-flag-vars) ; do
-    _filter-var "${v}" "$@"
-  done
-  return 0
-}
-
+sha512sums=('889425b864c58a767aa5865c0ce9817361ad99fec78050fa600f14eaef5a56ce0bc41a03878233e99f4862596a94dafcfebebecd4d57443b742117b873ab813d'
+            'a931c401792f4e7928e4778d91626c1ecc3e97e5728549b170c050de487b2e5234747b0ee2d5acc3d63b798716758c17e30914dcaa9a92ac386db39f8a45a05c'
+            '05cc1d1ae1af4fd0f51dcf1a5fca9ee8124306eb1a5a4f3c9b17ec7376e9b58cfb38de97c3d82b549f48113f9a50cf98e1e25898f430ce23e6e884efac7deda3')
+sha512sums_x86_64=('4814855397654eee2e534f1b4cec13b286c4d56ddfb494f6568cca190170e81ebdf54e199a001eab169993ea4b5b2006fcbc83f220064482f72859a0838a3e81'
+                   'a964ab2ff99809a183fbf36dc4e4a83f5e258de4b7ab42a390cca28f91b0a269de4b3305cfb9fd626aae123d820b3f4b15c93bc7ec9b459ddaae1588523d333c')
+sha512sums_aarch64=('803cce87425641d228ff6aa090f3436335ed32e2d2a68ecc4841d97a8c4b1afe50a7f76f49c91b5a7eca543e6c43571350e376c0c895f0122855eda772de815c'
+                    '9d3ac3ec3f2d97bd152b0e1bc05e2cde3255f196144e1047745e2450f49262e9d0e4e602cfeebe46867bd210f5b4d69506b01002ed9c337336331e369b6f7da0')
 prepare() {
-  cd "mongo-r${pkgver}"
+	mkdir -p output
+	bsdtar -O -xf "$pkgname-org-server_${pkgver}_${CARCH}.deb" data.tar.zst |
+    bsdtar -C output -xJf - #server extracted
+	bsdtar -O -xf "$pkgname-org-mongos_${pkgver}_${CARCH}.deb" data.tar.zst |
+    bsdtar -C output -xJf - #mongos extracted
 
-  # Keep historical Arch dbPath
-  sed -i 's|dbPath: /var/lib/mongo|dbPath: /var/lib/mongodb|' rpm/mongod.conf
+	# Remove insecure RUNPATH '$ORIGIN/../lib' as reported by namcap
+	chrpath -d output/usr/bin/mongos
 
-  # Keep historical Arch conf file name
-  sed -i 's|-f /etc/mongod.conf|-f /etc/mongodb.conf|' rpm/mongod.service
+	# Keep historical Arch dbPath
+	sed -i 's|dbPath: /var/lib/mongo$|dbPath: /var/lib/mongodb|' \
+    output/etc/mongod.conf
 
-  # Keep historical Arch user name (no need for separate daemon group name)
-  sed -i 's/User=mongod/User=mongodb/' rpm/mongod.service
-  sed -i 's/Group=mongod/Group=mongodb/' rpm/mongod.service
-  sed -i 's/chown mongod:mongod/chown mongodb:mongodb/' rpm/mongod.service
+	# Keep historical Arch conf file name
+	sed -i 's|/etc/mongod.conf|/etc/mongodb.conf|' \
+    output/usr/lib/systemd/system/mongod.service
 
-  # Remove sysconfig file, used by upstream's init.d script not used on Arch
-  sed -i '/EnvironmentFile=-\/etc\/sysconfig\/mongod/d' rpm/mongod.service
+	# Keep historical Arch user name (no need for separate daemon group name)
+	sed -i 's/User=mongod$/User=mongodb/' \
+    output/usr/lib/systemd/system/mongod.service
+	sed -i 's/Group=mongod$/Group=mongodb/' \
+    output/usr/lib/systemd/system/mongod.service
 
-  # Make systemd wait as long as it takes for MongoDB to start
+	# Avoid legacy PID filepath
+	sed -i 's|/var/run/|/var/|' output/usr/lib/systemd/system/mongod.service
+
+	# Remove sysconfig file, used by upstream's init.d script not used on Arch
+	sed -i '/^EnvironmentFile=/d' output/usr/lib/systemd/system/mongod.service
+
+	# Make systemd wait as long as it takes for MongoDB to start
   # If MongoDB needs a long time to start, prevent systemd from restarting it
-  # every 90 seconds - See: https://jira.mongodb.org/browse/SERVER-38086
-  sed -i 's/\[Service]/[Service]\nTimeoutStartSec=infinity/' rpm/mongod.service
-
-  if check_option debug y; then
-    _scons_args+=(--dbg=on)
-  fi
-
-  if check_option lto y; then
-    _scons_args+=(--lto=on)
-  fi
-
-  # apply gentoo patches
-  for file in "$srcdir"/*.patch; do
-    echo "Applying patch $file..."
-    patch -Np1 -i "$file"
-  done
-}
-
-build() {
-  cd "mongo-r${pkgver}"
-
-  if check_option debug n; then
-    filter-flags '-m*'
-    filter-flags '-O?'
-  fi
-
-  export SCONSFLAGS="$MAKEFLAGS"
-  ./buildscripts/scons.py "${_scons_args[@]}" install-devcore
+  # every 90 seconds. See: https://jira.mongodb.org/browse/SERVER-38086
+	sed -i 's/\[Service]/[Service]\nTimeoutStartSec=infinity/' \
+    output/usr/lib/systemd/system/mongod.service
 }
 
 package() {
-  cd "mongo-r${pkgver}"
-
-  # Install binaries
-  install -D build/install/bin/mongo "$pkgdir/usr/bin/mongo"
-  install -D build/install/bin/mongod "$pkgdir/usr/bin/mongod"
-  install -D build/install/bin/mongos "$pkgdir/usr/bin/mongos"
-
-  # Keep historical Arch conf file name
-  install -Dm 644 "rpm/$pkgname.conf" "$pkgdir/etc/$pkgname.conf"
-
-  # Keep historical Arch service name
-  install -Dm 644 "rpm/mongod.service" \
+	install -Dm 644 output/etc/mongod.conf "$pkgdir/etc/$pkgname.conf"
+	install -Dm 644 output/usr/lib/systemd/system/mongod.service \
     "$pkgdir/usr/lib/systemd/system/$pkgname.service"
-
-  # Install manpages
-  #install -Dm 644 "debian/mongo.1" "$pkgdir/usr/share/man/man1/mongo.1"
-  install -Dm 644 "debian/mongod.1" "$pkgdir/usr/share/man/man1/mongod.1"
-  install -Dm 644 "debian/mongos.1" "$pkgdir/usr/share/man/man1/mongos.1"
-
-  # Install systemd files
-  install -Dm 644 "$srcdir/$pkgname.sysusers" \
-    "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
-  install -Dm 644 "$srcdir/$pkgname.tmpfiles" \
-    "$pkgdir/usr/lib/tmpfiles.d/$pkgname.conf"
-
-  # Install license
-  install -D LICENSE-Community.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	install -Dm 755 output/usr/bin/* -t "$pkgdir/usr/bin"
+	install -Dm 644 output/usr/share/man/man1/* -t "$pkgdir/usr/share/man/man1"
+	install -Dm 644 "$pkgname.sysusers" "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
+	install -Dm 644 "$pkgname.tmpfiles" "$pkgdir/usr/lib/tmpfiles.d/$pkgname.conf"
+	install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
