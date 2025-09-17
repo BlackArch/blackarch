@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=whatweb
-pkgver=4915.36fd28b8
+pkgver=v0.6.2.r0.g36fd28b
 pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-recon' 'blackarch-webapp')
 pkgdesc='Next generation web scanner that identifies what websites are running.'
 arch=('any')
@@ -18,7 +19,20 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  # tmp fix until https://github.com/urbanadventurer/WhatWeb/pull/415 merged
+  echo "gem 'getoptlong', '~> 0.1'" >> Gemfile
+  echo "gem 'resolv-replace', '~> 0.1'" >> Gemfile
 }
 
 package() {
@@ -36,9 +50,11 @@ package() {
 
   cp -a --no-preserve=ownership * "$pkgdir/usr/share/$pkgname/"
 
+  # need to cd to load .bundle/
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-exec /usr/share/$pkgname/$pkgname "\$@"
+cd /usr/share/$pkgname
+exec bundle exec ruby $pkgname "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
