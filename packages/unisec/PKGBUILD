@@ -2,30 +2,40 @@
 # See COPYING for license details.
 
 pkgname=unisec
-_gemname=$pkgname
-pkgver=0.0.5
-pkgrel=3
+pkgver=0.0.6
+pkgrel=2
 pkgdesc='Unicode Security Toolkit.'
 arch=('any')
 groups=('blackarch' 'blackarch-misc')
-url='https://acceis.github.io/unisec'
-#url='https://github.com/Acceis/unisec'
+url='https://noraj.github.io/unisec'
 license=('MIT')
-depends=('ruby' 'ctf-party' 'ruby-dry-cli' 'ruby-paint' 'ruby-twitter_cldr'
-         'ruby-unicode-confusable')
-source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem")
-noextract=("$_gemname-$pkgver.gem")
-sha512sums=('46bc2e0166124bea4524a5376adb35afa2bc49fc7281426c63976fb46770b0718dc989f76036bf8fa2902b2c661746e44437a492755a5c38e866d588a7b96cae')
+depends=('ruby')
+makedepends=('git' 'ruby-bundler')
+source=("https://github.com/noraj/$pkgname/archive/refs/tags/$pkgver.tar.gz")
+sha512sums=('5922fde428d93ad12df1ade61d188d5f4e8731d704a824e69b7f8beeb7c4d4199393ad327c1b34382b7b2fba7477a78ddd38f2c2263e094ba15da68fbf6e3093')
+install="$pkgname.install"
 
 package() {
-  _gemhome="$(gem env home)"
+  cd "$pkgname-$pkgver"
 
-  gem install --ignore-dependencies --no-user-install --no-document \
-    -i "$pkgdir/$_gemhome" -n "$pkgdir/usr/bin" "$_gemname-$pkgver.gem"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  rm "$pkgdir/$_gemhome/cache/$_gemname-$pkgver.gem"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+  cp -rT --no-preserve=ownership --preserve=all --no-dereference docs/ "$pkgdir/usr/share/doc/$pkgname"
 
-  install -Dm 644 "$pkgdir/$_gemhome/gems/$_gemname-$pkgver/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf docs/ *.md LICENSE .github/ docs-tools/ test/ .* Rakefile
+
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+bundle exec ruby bin/$pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir"/usr/bin/*
 }
 

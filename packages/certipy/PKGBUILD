@@ -2,51 +2,50 @@
 # See COPYING for license details.
 
 pkgname=certipy
-_pkgname=Certipy
-pkgver=4.8.2.r0.g2780d53
-pkgrel=3
+pkgver=5.0.3.r10.ge172b52
+pkgrel=1
 pkgdesc='Active Directory Certificate Services enumeration and abuse.'
 arch=('any')
 groups=('blackarch' 'blackarch-windows' 'blackarch-exploitation')
 url='https://github.com/ly4k/Certipy'
 license=('MIT')
-depends=('python' 'python-asn1crypto' 'python-cryptography' 'impacket'
-         'python-ldap3' 'python-pyasn1' 'python-dnspython' 'python-dsinternals'
-         'python-pyopenssl' 'python-requests' 'python-requests-ntlm'
-          'python-pycryptodome' 'python-unicrypto'
-          # missing from impacket
-          # future missing upstream https://github.com/fortra/impacket/pull/1724
-          # others are missing from AL
-          'python-charset-normalizer' 'python-future' 'python-chardet'
-          'ldapdomaindump'
-        )
-        # unused? 'python-pyspnego')
-makedepends=('git' 'python-setuptools')
-source=("git+https://github.com/ly4k/$_pkgname.git")
+depends=('python')
+makedepends=('git' 'python-setuptools' 'python-pip')
+source=("git+https://github.com/ly4k/$pkgname.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
-  cd $_pkgname
+  cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
-}
-
-prepare() {
-  cd $_pkgname
-
-  # https://github.com/ly4k/Certipy/pull/204
-  sed -i 's/pyasn1==0.4.8/pyasn1>=0.4.8,<0.6.0/' setup.py
-}
-
-build() {
-  cd $_pkgname
-
-  python setup.py build
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
-  cd $_pkgname
+  cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  # README.md is needed in setup.py
+  rm -rf LICENSE .gitignore .github/ *.spec
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/$pkgname/entry.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

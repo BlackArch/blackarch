@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-marshmallow-har
+_pkgname=marshmallow-har
+pkgver=1.2.1
+pkgrel=1
+pkgdesc='Simple set of marshmallow schemas to load/dump the HTTP Archive (HAR) format.'
+arch=('any')
+url='https://pypi.org/project/marshmallow-har/#files'
+license=('MIT')
+depends=('python' 'python-marshmallow')
+makedepends=('python-build' 'python-pip' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('d4ce7fa1a9f905e272457f932111cb721a26b1678e356cf32c9e0abeea74fbf1800935a4163ffa6b1cb7a8df0b4bea236cabc65ba5bc553c0d02a8a35a1e530a')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  echo 'marshmallow' >> requirements.txt
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

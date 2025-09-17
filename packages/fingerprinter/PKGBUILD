@@ -2,13 +2,13 @@
 # See COPYING for license details.
 
 pkgname=fingerprinter
-pkgver=480.105ab04
-pkgrel=4
+pkgver=486.e0078b4
+pkgrel=1
 groups=('blackarch' 'blackarch-webapp' 'blackarch-fingerprint')
 pkgdesc='CMS/LMS/Library etc Versions Fingerprinter.'
 arch=('any')
 url='https://github.com/erwanlr/Fingerprinter'
-license=('custom:unknown')
+license=('CC-BY-NC-4.0')
 depends=('ruby' 'ruby-pkg-config' 'libxslt' 'ruby-bundler')
 makedepends=('git' 'ruby-bundler')
 source=("$pkgname::git+https://github.com/erwanlr/Fingerprinter.git")
@@ -18,7 +18,12 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

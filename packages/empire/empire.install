@@ -1,0 +1,38 @@
+#!/bin/sh
+
+post_install() {
+  set -e
+  cd /usr/share/empire
+  python -m venv venv
+  source venv/bin/activate &&
+    pip install --isolated --root="/usr/share/empire" --prefix='venv' .
+
+  # Check if the directory does NOT exist OR is empty
+  MYSQL_DATA_DIR="/var/lib/mysql"
+  if [ ! -d "$MYSQL_DATA_DIR" ] ||
+    [ -z "$(ls -A "$MYSQL_DATA_DIR" 2>/dev/null)" ]; then
+      echo "MySQL data directory is missing or empty. Initializing MariaDB..."
+
+      # Initialize MariaDB
+      mariadb-install-db --user=mysql --basedir=/usr --datadir="$MYSQL_DATA_DIR"
+  fi
+
+  systemctl restart mysql
+  mysql -u root -e "CREATE USER IF NOT EXISTS 'empire_user'@'localhost' IDENTIFIED BY 'empire_password';" || true
+  mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'empire_user'@'localhost' WITH GRANT OPTION;" || true
+  mysql -u root -e "FLUSH PRIVILEGES;" || true
+  systemctl restart mysql
+}
+
+post_upgrade() {
+  post_install "$@"
+}
+
+post_remove() {
+  # Check if the directory exists to avoid errors if it doesn't
+  if [[ -d /usr/share/empire ]]; then
+    rm -rf /usr/share/empire
+    echo "Removed /usr/share/empire"
+  fi
+}
+

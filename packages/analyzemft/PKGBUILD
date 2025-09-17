@@ -2,15 +2,15 @@
 # See COPYING for license details.
 
 pkgname=analyzemft
-pkgver=415.b1d0e6a
+pkgver=483.d82bc98
 pkgrel=1
 pkgdesc='Parse the MFT file from an NTFS filesystem.'
 groups=('blackarch' 'blackarch-forensic')
 arch=('any')
 url='https://github.com/dkovar/analyzeMFT'
 license=('CPL')
-depends=('python2')
-makedepends=('git' 'python2-setuptools')
+depends=('python' 'python-openpyxl')
+makedepends=('git' 'python-build' 'python-pip')
 source=("$pkgname::git+https://github.com/dkovar/analyzeMFT.git")
 sha512sums=('SKIP')
 
@@ -23,20 +23,26 @@ pkgver() {
 build() {
   cd $pkgname
 
-  python2 setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" CHANGES.txt README.txt
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
   install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
-
-  ln -fs /usr/bin/analyzeMFT.py "$pkgdir/usr/bin/$pkgname"
 }
 

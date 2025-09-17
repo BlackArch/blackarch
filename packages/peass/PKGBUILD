@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname=peass
-pkgver=20241205.c8c0c3e5.r0.g2a71da4
-_pkgver=20221225
+pkgver=20250904.27f4363e.r0.g7c7884f
+_pkgver=20250701-bdcab634
 pkgrel=1
 pkgdesc='Privilege Escalation Awesome Scripts SUITE (with colors).'
 arch=('any')
@@ -19,7 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
@@ -27,7 +32,8 @@ build() {
 
   # build linpeas.sh and linpeas_fat.sh
   cd linPEAS
-  python3 -m builder.linpeas_builder
+  python3 -m builder.linpeas_builder --all --output linpeas_fat.sh
+  python3 -m builder.linpeas_builder --all-no-fat --output linpeas.sh
 
   # build linpeas binaries
   # requires to package sh2bin
@@ -95,7 +101,9 @@ package() {
   cp -a --no-preserve=ownership winPEAS/winPEASbat/winPEAS.bat \
     "$pkgdir/usr/share/windows/$pkgname/"
 
+  install -Dm 755 linPEAS/linpeas.sh "$pkgdir/usr/share/peass/linPEAS/linpeas.sh"
+  install -Dm 755 linPEAS/linpeas_fat.sh "$pkgdir/usr/share/peass/linPEAS/linpeas_fat.sh"
+
   ln -sf /usr/share/peass/linPEAS/linpeas.sh "$pkgdir/usr/bin/linpeas"
   ln -sf /usr/share/peass/linPEAS/linpeas_fat.sh "$pkgdir/usr/bin/linpeas_fat"
 }
-

@@ -3,14 +3,14 @@
 
 pkgname=amass
 _pkgname=Amass
-pkgver=2143.5f1f7176
+pkgver=2559.61f53cc9
 pkgrel=1
 epoch=2
 pkgdesc='In-depth subdomain enumeration written in Go.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
 url='https://github.com/OWASP/Amass'
-license=('Apache')
+license=('Apache-2.0')
 makedepends=('git' 'go')
 source=('git+https://github.com/OWASP/Amass.git')
 sha512sums=('SKIP')
@@ -24,6 +24,8 @@ pkgver() {
 build() {
   cd $_pkgname
 
+  export CGO_ENABLED=0
+
   GOPATH="$srcdir" go mod download
   GOPATH="$srcdir" go build \
     -trimpath \
@@ -31,8 +33,7 @@ build() {
     -mod=readonly \
     -modcacherw \
     -ldflags "-s -w" \
-    -o $pkgname ./cmd/...
-
+    -o $pkgname "./cmd/$pkgname"
 }
 
 package() {
@@ -42,8 +43,9 @@ package() {
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
 
-  cp -a --no-preserve=ownership examples "$pkgdir/usr/share/$pkgname"
-  mv "$pkgdir/usr/share/$pkgname/examples/wordlists" "$pkgdir/usr/share/$pkgname"
-  chmod 644 "$pkgdir/usr/share/$pkgname/"{wordlists/*,examples/*}
+  cp -a --no-preserve=ownership resources "$pkgdir/usr/share/$pkgname//"
+  chmod 644 "$pkgdir/usr/share/$pkgname/resources/"*
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 }
 

@@ -2,6 +2,7 @@
 # See COPYING for license details.
 
 pkgname=sqlite2
+_pkgname=${pkgname//[0-9]/}
 pkgver=2.8.17
 pkgrel=9
 pkgdesc='A C library that implements an SQL database engine.'
@@ -9,21 +10,35 @@ arch=('x86_64' 'aarch64')
 url='http://www.sqlite.org/'
 depends=('readline>=6.0.00')
 source=("http://www.sqlite.org/sqlite-$pkgver.tar.gz"
-        'LICENSE')
-license=('custom')
+        'LICENSE'
+        'Makefile.in.patch')
+license=('custom:unknown')
 sha512sums=('966e0b7f7ebbaaa9e1899864475040946fd7b66363be778d29fadd5184623b1e62644f3c8d4c4ecd001b88044befa7c34d9de9f68590329a1a8301d854b73e3f'
-            'a2e3294c5a8188a0c81d0cde13b6bc33a69b525cb101fb08e5d14ad7dce8342ddd170ef14306ae2adc5107f8b8774f0b20816e69294b6bed1d26473975b8a780')
+            'a2e3294c5a8188a0c81d0cde13b6bc33a69b525cb101fb08e5d14ad7dce8342ddd170ef14306ae2adc5107f8b8774f0b20816e69294b6bed1d26473975b8a780'
+            '4ab360d78a338f9e9d0bb3da4c0798ef1a54da7362ead552232f43f5223f525471fde0d053b900a918831857bdead0e0e01805952ced45ad07cd58bc24cbf77b')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  patch -Np2 -i "$srcdir/Makefile.in.patch"
+}
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  ./configure --prefix=/usr
+  export CFLAGS="-O2 -Wall -Wno-error -Wno-implicit-function-declaration -std=gnu89"
+
+  if [[ $CARCH == "aarch64" ]]; then
+    ./configure --prefix=/usr --host=arm --build=arm
+  else
+    ./configure --prefix=/usr
+  fi
 
   make
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd "$_pkgname-$pkgver"
 
   make DESTDIR="$pkgdir" install
 

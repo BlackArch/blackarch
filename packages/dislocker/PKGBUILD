@@ -5,12 +5,13 @@
 # changes: psf
 
 pkgname=dislocker
-pkgver=580.3e7aea1
-pkgrel=3
+pkgver=v0.7.3.r61.g4ff070f
+pkgrel=1
+epoch=1
 pkgdesc='Read BitLocker encrypted volumes under Linux.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-crypto')
-url='http://www.hsc.fr/ressources/outils/dislocker'
+url='https://github.com/Aorimn/dislocker'
 license=('GPL2')
 depends=('fuse' 'mbedtls' 'ruby')
 makedepends=('git' 'make' 'cmake')
@@ -22,7 +23,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
@@ -33,6 +39,7 @@ build() {
 
   cmake -DCMAKE_INSTALL_PREFIX=/usr \
         -Dlibdir=/usr/lib \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
         -D WARN_FLAGS:STRING="-Wall -Wextra" \
         .
   make
@@ -47,6 +54,6 @@ package() {
   install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   # temp fix
-  ln -sf /usr/lib/libmbedcrypto.so.3 "$pkgdir/usr/lib/libmbedcrypto.so.1"
+  ln -sf /usr/lib/libmbedcrypto.so.3.6.1 libmbedcrypto.so.1
 }
 
