@@ -3,15 +3,15 @@
 
 pkgname=seccomp-tools
 pkgver=v1.6.1.r36.g728ec2f
+ver="${pkgver%%.r*}" 
 pkgrel=1
-pkgdesc='Provide powerful tools for seccomp analysis.'
+pkgdesc="Provide powerful tools for seccomp analysis."
 arch=('any')
 groups=('blackarch' 'blackarch-binary' 'blackarch-decompiler' 'blackarch-reversing')
-url='https://github.com/david942j/seccomp-tools'
+url="https://github.com/david942j/seccomp-tools"
 license=('MIT')
-depends=('ruby' 'ruby-os' 'ruby-racc')
-makedepends=('git' 'gcc')
-options=(!emptydirs)
+depends=('glibc' 'ruby' 'ruby-os' 'ruby-racc')
+makedepends=('git')
 source=("git+https://github.com/david942j/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -26,13 +26,60 @@ pkgver() {
   )
 }
 
-package() {
-    cd $pkgname
+prepare() {
+  cd $pkgname
 
-	local _gemdir="$(ruby -e 'puts Gem.default_dir')"
-    local _release=$(gem build seccomp-tools.gemspec | grep Version | cut -d' ' -f4)
-	gem install --ignore-dependencies --no-user-install -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" "$pkgname-$_release".gem
-	rm "$pkgdir/$_gemdir/cache/$pkgname-$_release.gem"
-    install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  # update gemspec/Gemfile to allow newer version of the dependencies
+  sed --in-place --regexp-extended 's|~>|>=|g' "${pkgname}.gemspec"
+}
+
+build() {
+  cd $pkgname
+
+  local _gemdir="$(gem env gemdir)"
+
+  gem build "${pkgname}.gemspec"
+
+  gem install \
+    --local \
+    --verbose \
+    --ignore-dependencies \
+    --build-root "tmp_install" \
+    "${pkgname}-${ver#v}.gem"
+
+  # remove unrepreducible files
+  rm --force --recursive --verbose \
+    "tmp_install/${_gemdir}/cache/" \
+    "tmp_install/${_gemdir}/gems/${pkgname}-${ver#v}/vendor/" \
+    "tmp_install/${_gemdir}/doc/${pkgname}-${ver#v}/ri/ext/"
+
+  find "tmp_install/${_gemdir}/gems/" \
+    -type f \
+    \( \
+    -iname "*.o" -o \
+    -iname "*.c" -o \
+    -iname "*.so" -o \
+    -iname "*.time" -o \
+    -iname "gem.build_complete" -o \
+    -iname "Makefile" \
+    \) \
+    -delete
+
+  find "tmp_install/${_gemdir}/extensions/" \
+    -type f \
+    \( \
+    -iname "mkmf.log" -o \
+    -iname "gem_make.out" \
+    \) \
+    -delete
+}
+
+package() {
+  cd $pkgname
+
+  cp --archive --verbose tmp_install/* "$pkgdir"
+
+  install --verbose -D --mode=0644 LICENSE --target-directory "${pkgdir}/usr/share/licenses/${pkgname}"
+  install --verbose -D --mode=0644 README.md --target-directory "${pkgdir}/usr/share/doc/${pkgname}"
 }
 
