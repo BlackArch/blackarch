@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-timezonefinder
+_pkgname=${pkgname#python-}
+pkgver=6.5.9
+pkgrel=1
+pkgdesc='A Python package for finding the timezone of any point on Earth (coordinates) offline.'
+arch=('any')
+url='https://github.com/jannikmi/timezonefinder'
+license=('MIT')
+depends=('python' 'python-cffi' 'python-h3' 'python-numba' 'python-numpy'
+         'python-pytz')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('57f1f6a40771bf0f56795619271ba19402f903aefda0fd0f0052bc6dc95e53d36340cf8e59b00ef2165e8767e1d636b33b8e591f63dd05d39163853d133db94b')
+
+build() {
+  python -m build --wheel --outdir="$startdir/dist" $srcdir/timezonefinder-$pkgver
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

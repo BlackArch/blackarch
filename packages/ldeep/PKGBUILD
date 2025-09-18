@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=ldeep
-pkgver=1.0.70.r0.g975b985
+pkgver=1.0.87.r10.g2a3df3b
 pkgrel=1
 epoch=1
 pkgdesc='In-depth ldap enumeration utility.'
@@ -14,7 +14,7 @@ depends=('python' 'python-dnspython' 'python-cryptography' 'python-ldap3'
          'python-tqdm' 'python-termcolor' 'python-commandparse'
          'python-pycryptodomex' 'python-six' 'python-gssapi' 'python-oscrypto'
          'python-pycryptodome')
-makedepends=('git' 'python-setuptools' 'python-pip')
+makedepends=('git' 'python-build' 'python-pip')
 source=("git+https://github.com/franc-pentest/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -27,13 +27,24 @@ pkgver() {
 build() {
   cd $pkgname
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst VERSION
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"

@@ -2,9 +2,9 @@
 # See COPYING for license details.
 
 pkgname=chipsec
-pkgver=2227.93443244
+pkgver=1.13.16.r0.gc5e3967
 pkgrel=1
-epoch=4
+epoch=5
 pkgdesc='Platform Security Assessment Framework.'
 groups=('blackarch' 'blackarch-hardware' 'blackarch-binary' 'blackarch-forensic'
         'blackarch-scanner' 'blackarch-fuzzer')
@@ -21,20 +21,24 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
   cd $pkgname
 
-  python setup.py build
+  python setup.py build --skip-driver
 }
 
 package() {
   cd $pkgname
 
-  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build \
-    --skip-driver
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
   install -Dm 644 drivers/linux/dkms.conf \
     "$pkgdir/usr/src/$pkgname-$pkgver/dkms.conf"

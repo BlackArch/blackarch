@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=fastnetmon
-pkgver=v1.2.7.r73.ga427d8b6
+pkgver=v1.2.8.r36.g943d8707
 pkgrel=1
 pkgdesc='High performance DoS/DDoS load analyzer built on top of multiple packet capture engines.'
 url='https://github.com/pavel-odintsov/fastnetmon'
@@ -10,9 +10,10 @@ arch=('x86_64')
 groups=('blackarch' 'blackarch-defensive' 'blackarch-sniffer')
 license=('GPL')
 depends=('binutils' 'boost' 'hiredis' 'json-c' 'libpfring' 'log4cpp' 'luajit'
-         'mongo-c-driver' 'ndpi' 'numactl' 'pfring-dkms' 'boost-libs')
+         'mongo-c-driver' 'ndpi' 'numactl' 'pfring-dkms' 'boost-libs'
+         'capnproto' 'grpc')
 makedepends=('binutils' 'boost' 'cmake' 'git' 'hiredis' 'libpfring' 'log4cpp'
-             'luajit' 'make' 'mongo-c-driver' 'ndpi' 'numactl')
+             'luajit' 'make' 'mongo-c-driver' 'ndpi' 'numactl' 'libbpf')
 source=("git+https://github.com/pavel-odintsov/$pkgname.git"
         'CMakeLists.txt.patch')
 sha512sums=('SKIP'
@@ -36,18 +37,16 @@ build() {
   mkdir -p build
   cd build
 
-  cmake ..
+  cmake -DCMAKE_INSTALL_PREFIX=/usr ..
   make
 }
 
 package() {
   cd $pkgname
 
-  rm -rf docs/images
-
   install -dm 755 "$pkgdir/usr/lib"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" docs/* README.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   cd src/build

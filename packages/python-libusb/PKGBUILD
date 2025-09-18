@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-libusb
+_pkgname=${pkgname#python-}
+pkgver=1.0.27.post4
+pkgrel=1
+pkgdesc='Python binding for the libusb C library.'
+arch=('any')
+url='https://github.com/karpierz/libusb'
+license=('Zlib')
+depends=('python' 'python-pkg-about')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('030b5638aefb2c0a0953efb2d1a9f30115c4988e3401103eddabb7a4dd2363ee64db71e5247756689b992c0378f0cf50f95fca286dd724b8186a27cabbaa1e36')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

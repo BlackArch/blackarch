@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pyinstaller-hooks-contrib
+_pkgname=pyinstaller_hooks_contrib
+pkgver=2024.11
+pkgrel=1
+pkgdesc='PyInstaller community hooks.'
+arch=('any')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/pyinstaller/pyinstaller-hooks-contrib'
+license=('custom:mixed')
+depends=('python')
+makedepends=('python-build' 'python-pip')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('f0f6c5cfe92c17cb66b9eee0e7cd7b25749b9b555967b9cacfca90e99beb13e53a2c52cf8619271c5f15e587f993fd2d11765dce1c940f4cdefa1a23de20d72d')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
+

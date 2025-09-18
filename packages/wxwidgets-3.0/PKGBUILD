@@ -1,0 +1,97 @@
+# Maintainer: Fabio 'Lolix' Loli <fabio.loli@disroot.org> -> https://github.com/FabioLolix
+# Contributor: George Katevenis <george_kate[at]hotmail[dot]com>
+# Contributor: Qirui Wang <wqr.prg@gmail.com>
+
+pkgbase=wxwidgets-3.0
+pkgname=(wxwidgets-gtk2-3.0 wxwidgets-gtk3-3.0 wxwidgets-common-3.0)
+pkgver=3.0.5.1
+pkgrel=2
+arch=(x86_64 aarch64)
+url="https://wxwidgets.org"
+license=('custom:wxWindows')
+makedepends=(gst-plugins-base glu webkit2gtk libnotify gtk2)
+options=(!emptydirs)
+source=("https://github.com/wxWidgets/wxWidgets/releases/download/v${pkgver}/wxWidgets-${pkgver}.tar.bz2"
+        wxwidgets-3.0.conf)
+sha256sums=('440f6e73cf5afb2cbf9af10cec8da6cdd3d3998d527598a53db87099524ac807'
+            'fa0d36379d4d4d55c3eb50d7aeaec38654f65101c21bbfdde41ae68bc54e5953')
+
+prepare() {
+  cp -a wxWidgets-${pkgver} wxWidgets-${pkgver}-gtk3
+}
+
+build() {
+  cd "wxWidgets-${pkgver}"
+  ./configure \
+    --prefix=/opt/wxgtk-3.0 \
+    --libdir=/opt/wxgtk-3.0/lib \
+    --with-gtk=2 \
+    --with-opengl \
+    --enable-unicode \
+    --enable-graphics_ctx \
+    --enable-mediactrl \
+    --with-regex=builtin \
+    --with-libpng=sys \
+    --with-libxpm=sys \
+    --with-libjpeg=sys \
+    --with-libtiff=sys \
+    --enable-compat28 \
+    --disable-precomp-headers
+  make
+  make -C locale allmo
+
+  cd ../"wxWidgets-${pkgver}-gtk3"
+  ./configure \
+    --prefix=/opt/wxgtk-3.0 \
+    --libdir=/opt/wxgtk-3.0/lib \
+    --with-gtk=3 \
+    --with-opengl \
+    --enable-unicode \
+    --enable-graphics_ctx \
+    --enable-mediactrl \
+    --enable-webview \
+    --with-regex=builtin \
+    --with-libpng=sys \
+    --with-libxpm=sys \
+    --with-libjpeg=sys \
+    --with-libtiff=sys \
+    --enable-compat28 \
+    --disable-precomp-headers
+  make
+}
+
+package_wxwidgets-common-3.0() {
+  pkgdesc='Common libraries and headers for wxgtk2 and wxgtk3, v3.0 installed in /opt/wxgtk-3.0/'
+  depends=(zlib gcc-libs expat)
+
+  cd "wxWidgets-${pkgver}"
+  make DESTDIR="${pkgdir}" install
+  rm -r "$pkgdir"/opt/wxgtk-3.0/{bin/wx-config,lib/{wx,libwx_gtk*}}
+
+  install -D -m644  ../wxwidgets-3.0.conf -t "${pkgdir}/etc/ld.so.conf.d/"
+  install -D -m644 docs/licence.txt "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+package_wxwidgets-gtk2-3.0() {
+  pkgdesc='GTK+2 implementation of wxWidgets API for GUI, v3.0 installed in /opt/wxgtk-3.0/'
+  depends=(gtk2 libgl gst-plugins-base-libs libsm libxxf86vm wxwidgets-common-3.0 libnotify)
+
+  cd "wxWidgets-${pkgver}"
+  make DESTDIR="${pkgdir}" install
+  rm -r "$pkgdir"/opt/wxgtk-3.0/{include,share,lib/libwx_base*,bin/wxrc*}
+
+  install -D -m644 docs/licence.txt "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+package_wxwidgets-gtk3-3.0() {
+  pkgdesc='GTK+3 implementation of wxWidgets API for GUI, v3.0 installed in /opt/wxgtk-3.0/'
+  depends=(gtk3 gst-plugins-base-libs libsm libxxf86vm wxwidgets-common-3.0 libnotify)
+  optdepends=('webkit2gtk: for webview support')
+
+  cd "wxWidgets-${pkgver}-gtk3"
+  make DESTDIR="${pkgdir}" install
+  rm -r "$pkgdir"/opt/wxgtk-3.0/{include,share,lib/libwx_base*,bin/wxrc*}
+  mv "$pkgdir"/opt/wxgtk-3.0/bin/wx-config{,-gtk3}
+
+  install -D -m644 docs/licence.txt "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}

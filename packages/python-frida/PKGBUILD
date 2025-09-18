@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-frida
+_pkgname=frida
+pkgver=17.2.17
+pkgrel=1
+pkgdesc='Dynamic instrumentation toolkit for developers, reverse-engineers, and security researchers.'
+groups=('blackarch' 'blackarch-reversing' 'blackarch-binary')
+arch=('x86_64' 'aarch64')
+url='https://pypi.org/project/frida/#files'
+depends=('python' 'python-colorama' 'python-pygments' 'python-prompt_toolkit'
+         'python-typing_extensions' 'python-tomlkit')
+makedepends=('python-build' 'python-installer' 'python-wheel' 'nodejs' 'npm'
+             'python-setuptools' 'git')
+license=('custom:unknown')
+provides=('frida')
+replaces=('frida')
+conflicts=('frida')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+        'https://raw.githubusercontent.com/frida/frida/master/COPYING')
+sha512sums=('c262a1116a439f28e14b0d82f9eba612ecc9464ee24fc0b3da6c7de0b693ab90fe33e68f9fe3e7944fa236258e2358962a1608c5474b66941914fef609b22b25'
+            'e36c8d5a0538fa4bb3575a60322057f7a687aab04c13deed25399462ba0be74ce6071cc41d967e23b9a96e552462d210280427a945c6cc956919b062878efc9a')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  if [[ -n $LDFLAGS ]]; then
+    export LDFLAGS="${LDFLAGS//-Wl,-z,pack-relative-relocs/}"
+  fi
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+
+  install -Dm 644 "$srcdir/COPYING" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

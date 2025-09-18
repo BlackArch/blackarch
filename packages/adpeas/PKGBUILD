@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=adpeas
+pkgver=1.3.0.r15.g0bfcedc
+pkgrel=1
+pkgdesc='winPEAS, but for Active Directory.'
+arch=('any')
+groups=('blackarch' 'blackarch-windows')
+url='https://github.com/ajm4n/adpeas'
+license=('MIT')
+depends=('bloodhound' 'certi' 'certipy' 'impacket' 'netexec' 'python'
+         'python-ldap3' 'python-regex' 'python-termcolor')
+makedepends=('git' 'python-setuptools')
+source=("git+$url.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python setup.py build
+}
+
+package() {
+  cd $pkgname
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  mv "$pkgdir/usr/bin/adPEAS" "$pkgdir/usr/bin/$pkgname"
+}
+

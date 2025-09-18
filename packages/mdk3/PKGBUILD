@@ -7,33 +7,37 @@
 
 pkgname=mdk3
 pkgver=v6
-pkgrel=9
+pkgrel=10
 pkgdesc='WLAN penetration tool.'
 groups=('blackarch' 'blackarch-wireless' 'blackarch-fuzzer'
         'blackarch-exploitation')
 url='https://aspj.aircrack-ng.org/'
 arch=('x86_64' 'aarch64')
 license=('GPL2')
-depends=('glibc')
-#source=("$pkgname-$pkgver.tar.bz2::https://aspj.aircrack-ng.org/$pkgname-$pkgver.tar.bz2")
-source=("https://github.com/Wikel/$pkgname-$pkgver/raw/master/$pkgname-$pkgver.tar.bz2")
-sha512sums=('a7879e832a7184f85b9b4f591fddb313731a8d8899c98ca3a1f026284bec79018d4ae373d5fd9cc1935915ad848761dc5f865aeca38ca4e13122e9c9f9108c3a')
+depends=('glibc' 'aircrack-ng')
+source=("https://salsa.debian.org/pkg-security-team/$pkgname/-/archive/debian/master/$pkgname-debian-master.tar.bz2")
+sha512sums=('79dff994816e78ae1001074f93f266ad7b820cf03c0b2c3e61d9eb73e2a047c9bb912bcfb14f6dec09584c017407bd84fea127a11cc355b5f8a77102ef0ded89')
 
 prepare() {
-  cd "$pkgname-$pkgver"
+  cd "$pkgname-debian-master"
+
+  patches=$(cat debian/patches/series)
+  for patch in $patches; do
+    patch -Np1 -i debian/patches/$patch
+  done
 
   sed "s|-g -O3|${CFLAGS}|g" -i Makefile
   sed 's|sbin|bin|g' -i Makefile
 }
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd "$pkgname-debian-master"
 
   make -C osdep
   make
 }
 package() {
-  cd "$pkgname-$pkgver"
+  cd "$pkgname-debian-master"
 
   make DESTDIR="$pkgdir" PREFIX="/usr" install
 

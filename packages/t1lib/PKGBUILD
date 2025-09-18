@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# from AUR - adjusted to our style
+#
+# Old Maintainer: tobias <tobias@archlinux.org>
+# Old Contributor: Rainer Moll <renari@arcor.de>
+
+pkgname=t1lib
+pkgver=5.1.2
+pkgrel=9
+pkgdesc='Library for generating character- and string-glyphs from Adobe Type 1 fonts.'
+arch=('x86_64' 'aarch64')
+url="https://www.ibiblio.org/pub/Linux/libs/graphics/!INDEX.html"
+license=('GPL-2.0-only')
+depends=('glibc' 'libx11' 'libxaw' 'libxt')
+source=("https://www.ibiblio.org/pub/Linux/libs/graphics/$pkgname-$pkgver.tar.gz"
+        'lib-cleanup.diff'
+        'format-security.diff'
+        'CVE-2011-0764.diff'
+        'CVE-2011-1552_1553_1554.patch'
+        'CVE-2010-2642.patch'
+        't1lib-c99.patch')
+sha512sums=('9f424b19c6f35cc4f194ff7351a4c2352216462c7d1b1d9650ad3a05cf48c6e90c89ccbcda5ecc47a4169a39a850cf84a1fcbf88b3b15614860c27364b631ae3'
+            'efbce854093bc2408c9e7d6be374901e82e399b60a057746cb876f0943f69018039038e337bd4b03da2568d597cec87e2d9f01f98f374433310edbbe440ec259'
+            '0d7b5db6d9636182d557cc6a760e9eae7f4e8997998366eb517825ebd4a033e13e35bdce4f67f3f4d046d018cd348c68d9c578c0501fef417c9963763168ff22'
+            '922c1089ca7ec2ecaaee9058b68deb3c9e7952465883500e3247a835d5c8e0d54b9b8145dce8ec5846a0c47ac9b4b7889fcc88033f463acbd68d8ee9e3123859'
+            '54fb9bb95d20e6a622cc52a7f7b0c3db9ee77e7a1efe1f55b81f07140d0185dd49a8a0b86390dd2d317e5f779cd02759ed6ffa8259c054deab30d2a64d64c19b'
+            '5714bb8790cec04c0c03778e708fc69ed0e21a68a5c9ff2a6ecafdfbb649540e9e214085fa1b05206166abe3c48ed3605ef7a0812341970709c0ac205d93c925'
+            '64099e358aa48cd7a7fd408c0a60ab42ccd8067371d70da4021c4fdd0ef904784e11fc9d5074071f458903a2e8a29f693aec81c091206a40349a76558dd8d7cb')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -Np1 -i ../lib-cleanup.diff
+  patch -Np1 -i ../format-security.diff
+  patch -Np1 -i ../CVE-2011-0764.diff
+  patch -Np1 -i ../CVE-2011-1552_1553_1554.patch
+  patch -Np1 -i ../CVE-2010-2642.patch
+  patch -Np1 -i ../t1lib-c99.patch # Fedora patch
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  CFLAGS+=' -std=gnu17' \
+    ./configure --prefix=/usr
+
+  make without_doc -j1
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+}
+

@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=apkleaks
-pkgver=v2.6.2.r3.g3202df9
+pkgver=v2.6.3.r2.gdd5271a
 pkgrel=1
 pkgdesc='Scanning APK file for URIs, endpoints & secrets.'
 arch=('any')
@@ -10,7 +10,7 @@ groups=('blackarch' 'blackarch-mobile' 'blackarch-misc')
 url='https://github.com/dwisiswant0/apkleaks'
 license=('Apache')
 depends=('python' 'pyaxmlparser' 'jadx')
-makedepends=('git' 'python-setuptools')
+makedepends=('git' 'python-build' 'python-pip')
 source=("git+https://github.com/dwisiswant0/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -23,15 +23,26 @@ pkgver() {
 build() {
   cd $pkgname
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md *.in
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md VERSION
 }
 
