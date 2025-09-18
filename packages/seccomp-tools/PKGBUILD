@@ -1,0 +1,78 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=seccomp-tools
+pkgver=v1.6.1.r36.g728ec2f
+ver="${pkgver%%.r*}" 
+pkgrel=1
+pkgdesc="Provide powerful tools for seccomp analysis."
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-binary' 'blackarch-decompiler' 'blackarch-reversing')
+url="https://github.com/david942j/seccomp-tools"
+license=('MIT')
+depends=('glibc' 'ruby' 'ruby-os' 'ruby-racc')
+makedepends=('git')
+source=("git+https://github.com/david942j/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  local _gemdir="$(gem env gemdir)"
+
+  gem build "${pkgname}.gemspec"
+
+  gem install \
+    --local \
+    --verbose \
+    --ignore-dependencies \
+    --build-root "tmp_install" \
+    "${pkgname}-${ver#v}.gem"
+
+  # remove unrepreducible files
+  rm --force --recursive --verbose \
+    "tmp_install/${_gemdir}/cache/" \
+    "tmp_install/${_gemdir}/gems/${pkgname}-${ver#v}/vendor/" \
+    "tmp_install/${_gemdir}/doc/${pkgname}-${ver#v}/ri/ext/"
+
+  find "tmp_install/${_gemdir}/gems/" \
+    -type f \
+    \( \
+    -iname "*.o" -o \
+    -iname "*.c" -o \
+    -iname "*.so" -o \
+    -iname "*.time" -o \
+    -iname "gem.build_complete" -o \
+    -iname "Makefile" \
+    \) \
+    -delete
+
+  find "tmp_install/${_gemdir}/extensions/" \
+    -type f \
+    \( \
+    -iname "mkmf.log" -o \
+    -iname "gem_make.out" \
+    \) \
+    -delete
+}
+
+package() {
+  cd $pkgname
+
+  cp --archive --verbose tmp_install/* "$pkgdir"
+
+  install --verbose -D --mode=0644 LICENSE --target-directory "${pkgdir}/usr/share/licenses/${pkgname}"
+  install --verbose -D --mode=0644 README.md --target-directory "${pkgdir}/usr/share/doc/${pkgname}"
+}
+
