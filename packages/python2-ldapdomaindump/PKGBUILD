@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python2-ldapdomaindump
+_pkgname=ldapdomaindump
+pkgver=0.9.4
+pkgrel=5
+pkgdesc='Active Directory information dumper via LDAP.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-networking')
+arch=('any')
+url='https://pypi.org/project/ldapdomaindump/#files'
+license=('MIT')
+depends=('python2' 'python2-ldap3' 'python2-future' 'python2-dnspython')
+makedepends=('python2-setuptools')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('c5f66dc73f77cae041329ac17018dfd82c155dc7c4cca3fed2175680baeb3797776488aab6199498eefc4869121f556ede8558c784e71f1ff9573dd9634abee9')
+
+prepare() {
+  sed -i 's|ldap3==2.5.1|ldap3|g' "$_pkgname-$pkgver/setup.py"
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python2 setup.py build
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  install -dm 755 "$pkgdir/usr"
+
+  python2 setup.py install --root="$pkgdir" --prefix=/isr -O1 --skip-build
+
+  mv "$pkgdir/isr/"* "$pkgdir/" && rmdir "$pkgdir/isr"
+  mv "$pkgdir/"{lib,bin} "$pkgdir/usr/"
+
+  for i in "$pkgdir/usr/bin/"*; do
+    mv $i "${i}2"
+  done
+}
+
