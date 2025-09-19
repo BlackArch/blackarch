@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=seccomp-tools
+pkgver=1.6.1
+pkgrel=1
+pkgdesc='Seccomp analysis toolkit.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' MORE_BLACKARCH_GROUPS_HERE)
+url='https://github.com/david942j/seccomp-tools'
+license=('MIT')
+depends=('ruby' 'ruby-os' 'ruby-racc')
+source=("https://rubygems.org/downloads/$pkgname-$pkgver.gem"
+        "https://raw.githubusercontent.com/david942j/$pkgname/refs/heads/master/LICENSE")
+noextract=("$pkgname-$pkgver.gem")
+sha512sums=('f4d6581c5e104d4bf6bd4f98d4d4ac539c9549b68ee574ec8031684f19b297dd8f4252a362257b155ae6966c9e8b5ab32e213a428a9b00040bed66cdced0c91a'
+            '1489ff64267bcf357ff9734a52f0637b09486161c6b43d32d3c439372648e04e3281f2d9ef0449a54d8a68ffb0d046232ecee9a9818baa96a0087acac663f708')
+
+package() {
+  _gemhome="$(gem env home)"
+
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemhome" -n "$pkgdir/usr/bin" "$pkgname-$pkgver.gem"
+
+  # remove unrepreducible files
+  rm --force --recursive --verbose \
+    "$pkgdir/$_gemhome/cache/" \
+    "$pkgdir/$_gemhome/gems/${_name}-${pkgver}/vendor/" \
+    "$pkgdir/$_gemhome/doc/${_name}-${pkgver}/ri/ext/"
+
+  find "$pkgdir/$_gemhome/gems/" \
+    -type f \
+    \( \
+      -iname "*.o" -o \
+      -iname "*.c" -o \
+      -iname "*.so" -o \
+      -iname "*.time" -o \
+      -iname "gem.build_complete" -o \
+      -iname "Makefile" \
+    \) \
+    -delete
+
+  find "$pkgdir/$_gemhome/extensions/" \
+    -type f \
+    \( \
+      -iname "mkmf.log" -o \
+      -iname "gem_make.out" \
+    \) \
+    -delete
+
+  install -Dm 644 LICENSE \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
