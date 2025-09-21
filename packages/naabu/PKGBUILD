@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=naabu
-pkgver=1930.e656154
+pkgver=v2.3.4.r175.g75db5d2
 pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='A fast port scanner written in go with focus on reliability and simplicity.'
 arch=('x86_64' 'aarch64')
@@ -16,11 +17,16 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
-  cd $pkgname/v2
+  cd $pkgname
 
   GOPATH="$srcdir" go mod download
   GOPATH="$srcdir" go build \
@@ -29,13 +35,13 @@ build() {
     -mod=readonly \
     -modcacherw \
     -ldflags "-s -w" \
-    -o $pkgname ./cmd/$pkgname
+    -o $pkgname "./cmd/$pkgname"
 }
 
 package() {
   cd $pkgname
 
-  install -Dm 755 v2/$pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 }
 
