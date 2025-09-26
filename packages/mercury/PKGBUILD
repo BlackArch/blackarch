@@ -14,7 +14,7 @@ license=('custom:unknown')
 depends=('gmp' 'openssl' 'zlib')
 makedepends=('git' 'clang' 'gcc' 'python-pip' 'tcpreplay' 'valgrind')
 source=("git+https://github.com/cisco/$pkgname.git")
-backup=('etc/mercury/mercury.cfg')
+backup=("etc/$pkgname/$pkgname.cfg")
 sha512sums=('SKIP')
 
 pkgver() {
@@ -32,7 +32,7 @@ prepare() {
   cd $pkgname
 
   git submodule init
-  git config submodule.$pkgname/include/$submodule.url "$srcdir/$submodule"
+  git config "submodule.$pkgname/include/$submodule.url" "$srcdir/$submodule"
   git -c protocol.file.allow=always submodule update
 
   ./configure --prefix=/usr
@@ -47,14 +47,15 @@ build() {
 package() {
   cd $pkgname
 
-  install -Dm 755 src/mercury "$pkgdir/usr/bin/mercury"
+  install -Dm 755 "src/$pkgname" "$pkgdir/usr/bin/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" doc/{*.md,*.pdf} *.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  install -Dm 644 mercury.cfg "$pkgdir/etc/mercury/mercury.cfg"
-  install -Dm 644 mercury "$pkgdir/usr/share/bash-completion/completions/mercury"
+  install -Dm 644 "$pkgname.cfg" "$pkgdir/etc/$pkgname/$pkgname.cfg"
+  install -Dm 644 $pkgname \
+    "$pkgdir/usr/share/bash-completion/completions/$pkgname"
   install -Dm 644 install_mercury/mercury.service \
-      "$pkgdir/usr/lib/systemd/system/mercury.service"
+    "$pkgdir/usr/lib/systemd/system/$pkgname.service"
 }
 
