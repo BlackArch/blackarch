@@ -1,0 +1,78 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=hostapd-mana
+pkgver=2.6.5.r20.g8853d5a
+pkgrel=1
+pkgdesc='Modified hostapd for Wi-Fi attacks to create a rogue access point.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-wireless')
+url='https://github.com/sensepost/hostapd-mana'
+license=('custom:BSD/GPL v2 dual')
+depends=('openssl' 'libnl')
+optdepends=('asleap')
+makedepends=('git')
+source=("git+https://github.com/sensepost/$pkgname.git"
+        "$pkgname.service"
+        "$pkgname@.service"
+        "$pkgname.tmpfiles")
+sha512sums=('SKIP'
+            '66af211164de09f6895e569085200a125c9497e583b5ab54b37ba8c4d8e8e87c39a9e0915eabe177c736ee0d9e551957707a978ef6d3e7255836283f015b9af8'
+            'ffd585fd0e6a00b45e68767cd073668736ddf108e1be8bcdf1f380397496a86e9ce488d835e478ea7df1c9a9d0e46df3790e5b725ed03ec41731fa92bf7c0f0e'
+            'e79a48525947410c9fde3c83abb4b74d15ca621263970b8a170a6c4d5388b3a3c5e6d0f0ad8757efc08745417834448df65726fe7b0192836f1d4de23a3a72e1')
+options=('emptydirs')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd "$pkgname/hostapd"
+
+  sed -i "s:/var/run/hostapd:/run/$pkgname:g" hostapd.conf
+  sed -i "s:/etc/hostapd:/etc/$pkgname/hostapd:g" hostapd.conf
+
+  cd ../crackapd
+
+  sed -i "s:mana-toolkit:$pkgname:g" crackapd.{conf,py}
+  sed -i -E 's:THEPATH=(.*):THEPATH=str("/etc/hostapd-mana/"):' crackapd.py
+}
+
+build() {
+  cd "$pkgname"
+
+  make -C hostapd
+}
+
+package() {
+  cd "$pkgname/hostapd"
+
+  # binaries
+  install -Dm 755 hostapd_cli "${pkgdir}"/usr/bin/${pkgname}_cli
+  install -Dm 755 hostapd "${pkgdir}"/usr/bin/$pkgname
+
+  # documentation
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" hostapd.[a-z]* wired.conf hlr_auc_gw.milenage_db
+  install -Dm 644 hostapd.8 "$pkgdir/usr/share/man/man8/$pkgname.8"
+  install -Dm 644 hostapd_cli.1 "$pkgdir/usr/share/man/man1/${pkgname}_cli.1"
+
+  # config
+  install -dm 755 "$pkgdir/etc/$pkgname"
+  # license
+  install -Dm 644 ../COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+
+  # systemd service
+  install -Dm644 "$srcdir/$pkgname.service" -t "$pkgdir/usr/lib/systemd/system/"
+  install -Dm644 "$srcdir/$pkgname@.service" -t "$pkgdir/usr/lib/systemd/system/"
+
+  # tmpfiles.d
+  install -Dm644 "$srcdir"/$pkgname.tmpfiles -t "$pkgdir/usr/lib/tmpfiles.d/"
+}
+
