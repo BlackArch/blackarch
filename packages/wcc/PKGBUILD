@@ -2,22 +2,28 @@
 # See COPYING for license details.
 
 pkgname=wcc
-pkgver=184.221eb58
+pkgver=v0.0.11.r34.gdced7e9
 pkgrel=1
+epoch=1
 pkgdesc='The Witchcraft Compiler Collection.'
 groups=('blackarch' 'blackarch-binary' 'blackarch-misc')
 arch=('x86_64' 'aarch64')
 url='https://github.com/endrazine/wcc'
 license=('MIT' 'BSD' 'custom:unknown')
 depends=('capstone' 'libelf' 'zlib' 'gsl')
-makedepends=('git' 'clang')
+makedepends=('git' 'clang' 'cargo')
 source=("git+https://github.com/endrazine/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
