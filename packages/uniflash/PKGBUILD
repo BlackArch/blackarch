@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=uniflash
+pkgver=9.2.0.5300
+pkgrel=1
+pkgdesc="Universal Flash Programmer for Texas Instruments devices. Provides a single interface for programming Flash memory and executing Flash based operations on supported targets."
+arch=('x86_64' 'aarch64')
+url="https://processors.wiki.ti.com/index.php/Category:CCS_UniFlash"
+license=('custom:TECHNOLOGY SOFTWARE PUBLICLY AVAILABLE by Texas Instruments Incorporated')
+depends=('gconf' 'libudev0-shim' 'libusb-compat' 'libcanberra')
+makedepends=('libxcrypt-compat')
+optdepends=(
+	'python2: The SimpleLink CC31xx/CC32xx families require Python2.7'
+)
+source=(${pkgname}_sl.$pkgver.run::https://dr-download.ti.com/software-development/software-programming-tool/MD-QeJBJLj8gq/${pkgver%.5300}/${pkgname}_sl.$pkgver.run
+		62-msp430uif.rules)
+noextract=("${pkgname}_sl.$pkgver.run" )
+options=(!strip)
+sha512sums=('382788eadb60b0eeda2ecfdde194a9daeee8e3e35470e34080d598922f82e93855729f2c944d9ae2e5a8c16d46bb3b64b5051b14216b988856ee17b8516df34c'
+            '144993d8e63a7b9c30f5f41acc578513a78f92bf5180124b6d755069045194b935daeec294749be5013cfdfb21f7f00ee3152392d1b3d886f0ce20d58e41cd31')
+DLAGENTS=('https::/usr/bin/curl -fLC - --cookie nada -o %o %u')
+
+prepare() {
+  cd "$srcdir"
+ 
+  echo "If you continue you will accept the license, more information at https://processors.wiki.ti.com/index.php/Category:CCS_UniFlash."
+  chmod +x ${pkgname}_sl.$pkgver.run
+}
+
+package() {  
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/applications"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  ./${pkgname}_sl.$pkgver.run --unattendedmodeui none --mode unattended --prefix "$pkgdir/usr/share/$pkgname"
+  cd "$pkgdir/usr/share/$pkgname"
+
+  sed -s "s|$pkgdir||g" -i UniFlash.desktop
+  install -Dm 644 "UniFlash.desktop" "$pkgdir/usr/share/applications/UniFlash.desktop"
+  ln -s "/usr/share/$pkgname/dslite.sh" "$pkgdir/usr/bin/dslite"
+  ln -s "/usr/share/$pkgname/uniFlashGUI.sh" "$pkgdir/usr/bin/uniflash"
+
+  cd "TICloudAgentHostApp/install_scripts/"
+  install -d "$pkgdir/etc/udev/rules.d/"
+  install -Dm 644 -D "70-mm-no-ti-emulators.rules" "$pkgdir/etc/udev/rules.d/72-mm-no-ti-emulators.rules"
+  install -Dm 644 -D "71-ti-permissions.rules" "$pkgdir/etc/udev/rules.d/73-ti-permissions.rules"
+  install -Dm 644 "$srcdir/62-msp430uif.rules" "$pkgdir/etc/udev/rules.d/62-msp430uif.rules"
+}
+
