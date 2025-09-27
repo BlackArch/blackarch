@@ -1,0 +1,55 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=firebaseenum
+pkgver=19.1cbd19c
+pkgrel=1
+pkgdesc='Tool to mass analyse potentially exposed Firebase databases on Android apps.'
+arch=('any')
+groups=('blackarch' 'blackarch-mobile')
+url='https://github.com/Sambal0x/firebaseEnum'
+license=('custom:unknown')
+depends=('python' 'python-bs4' 'python-requests-futures')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/Sambal0x/firebaseEnum.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i -E "/^BANNER[[:space:]]*=([[:space:]]*\\\\)?[[:space:]]*$/{
+    n
+    s/^([[:space:]]*)(r?)(\"\"\"|''')/\1r\3/
+  }" firebaseEnum.py
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  rm -rf *.md .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/firebaseEnum.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

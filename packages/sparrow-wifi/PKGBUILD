@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sparrow-wifi
+pkgver=197.60e9ce7
+pkgrel=1
+pkgdesc='Next-Gen GUI-based WiFi and Bluetooth Analyzer.'
+arch=('any')
+groups=('blackarch' 'blackarch-bluetooth' 'blackarch-wireless')
+url='https://github.com/ghostop14/sparrow-wifi'
+license=('GPL-3.0-or-later')
+depends=('python' 'gpsd')
+makedepends=('git' 'python-setuptools' 'python-pip')
+source=("git+https://github.com/ghostop14/$pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md docs/*.pdf
+
+  rm -rf LICENSE *.md docs/*.pdf .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/sparrow-wifi.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
