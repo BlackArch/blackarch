@@ -3,21 +3,38 @@
 
 pkgname=inviteflood
 pkgver=2.0
-pkgrel=5
+pkgrel=6
 groups=('blackarch' 'blackarch-dos')
-pkgdesc="Flood a device with INVITE requests"
+pkgdesc='Flood a device with INVITE requests.'
 arch=('x86_64' 'armv7h' 'aarch64')
-url='https://launchpad.net/~wagungs/+archive/kali-linux/+build/4386635'
-license=('GPL2')
+url='https://github.com/foreni-packages/inviteflood'
+license=('GPL-2.0-or-later')
 depends=('libnet')
-source=('https://launchpad.net/~wagungs/+archive/kali-linux/+build/4386635/+files/inviteflood_2.0-1precise0_amd64.deb')
-sha512sums=('de53eb5d82d34088c7868953c88d38cee28e8acb51a1e05b06bd40c33226b5d91bd6a2414644b0430cb53185fbfe360c968a66db63b738addaac3aa31ace4004')
+source=("https://github.com/foreni-packages/$pkgname/archive/refs/tags/upstream/$pkgver.tar.gz"
+        "add-missing-flag.patch"
+        "add-missing-includes.patch")
+sha512sums=('0c51161fd99d925005906d36ceda0a1d91c1e1172ed702f7f973ab5c79d6d5cd42d64f77e99bd768285e071d09788472d9db89cd5c4fb24bdd175e76d87128ce'
+            '8db078d7c8e476d8b60099094638daa9e7d76fa3130f1459379dff2baa547cde0bce9ebd680553a0c44732e6dedaf023103b09acc5b90ff1cd12bfd958c968fc'
+            '27664050a275dd7420229d57a6ead2e98ff2838da4aca8cc6fb628d0efa47e5ab0ecd42de7a0a1884f121ea48c41449066d261254b9f073cf04fd3944209d1db')
 
 prepare() {
-  tar zvxf data.tar.gz
+  cd "$pkgname-upstream-$pkgver"
+
+  patch -p1 < ../add-missing-flag.patch
+  patch -p1 < ../add-missing-includes.patch
+}
+build() {
+  cd "$pkgname-upstream-$pkgver"
+  
+  make -C hack_library
+  make -C "$pkgname"
 }
 
 package() {
-  cp -R usr/ "$pkgdir"
+  cd "$pkgname-upstream-$pkgver/$pkgname"
+
+  install -Dm 755 "$pkgname" "$pkgdir/usr/bin/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" Readme.txt
 }
 
