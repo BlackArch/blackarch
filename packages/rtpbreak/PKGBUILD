@@ -3,21 +3,26 @@
 
 pkgname=rtpbreak
 pkgver=1.3a
-pkgrel=3
+pkgrel=4
 epoch=1
 groups=('blackarch' 'blackarch-networking')
-pkgdesc="Detects, reconstructs and analyzes any RTP session"
+pkgdesc='Detects, reconstructs and analyzes any RTP session.'
 url='http://xenion.antifork.org/rtpbreak/'
-license=('GPL')
+license=('GPL-2.0-or-later')
 depends=('libpcap' 'libnet')
 arch=('x86_64' 'aarch64')
-source=("https://dl.packetstormsecurity.net/sniffers/$pkgname-$pkgver.tgz")
-sha512sums=('abe0329f91a8c76d4fab5589d834e19615457fe1c5cdb410ce2f6fbf871b750cf917a92a979b92aaf5f0a2644fa4f4dc4ca7e53fb46d71c8fa016a7f41efe5ad')
+source=("https://dl.packetstormsecurity.net/sniffers/$pkgname-$pkgver.tgz"
+        "add-missing-debug-flag.patch"
+        "add-missing-include.patch")
+sha512sums=('abe0329f91a8c76d4fab5589d834e19615457fe1c5cdb410ce2f6fbf871b750cf917a92a979b92aaf5f0a2644fa4f4dc4ca7e53fb46d71c8fa016a7f41efe5ad'
+            '2a735b266f517c9d7ac92ec50da6723e5c0e9596a27d986feb2e915c1bd921e2271f7a661f2e8c7741511b8236dba6c1be2cdf5ba5574457d94652c708ea4505'
+            '7e3a2d787cc14e144d88775ee061ea31a825946b1f029cfed178bf6ebd6ca1bf40b33c3296df6b17194c30ae0e66f391f9a0a4430dadb1b9605b2aecb0815f4a')
 
 prepare() {
   cd "$pkgname-$pkgver"
 
-  sed -i 'i\#include <linux/udp.h>' src/main.c
+  patch -p1 ../add-missing-debug-flag.patch
+  patch -p1 ../add-missing-include.patch
 }
 
 build() {
@@ -29,9 +34,7 @@ build() {
 package() {
   cd "$pkgname-$pkgver"
 
-  install -dm 755 "$pkgdir/usr/share/doc/$pkgname/"
-
   install -Dm 755 "src/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -m 644 doc/* "$pkgdir/usr/share/doc/$pkgname/"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" doc/*
 }
 
