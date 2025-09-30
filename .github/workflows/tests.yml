@@ -14,7 +14,10 @@ on:
       - synchronize
       - ready_for_review
       - converted_to_draft
-
+env:
+  HEAD_REF: ${{ github.event.pull_request.head.ref }}             # <branch> (e.g., patch-1)
+  HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }} # <user>/blackarch
+  HEAD_SHA: ${{ github.event.pull_request.head.sha }} 
 jobs:
   pkgcheck:
     runs-on: ubuntu-latest
@@ -23,19 +26,21 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          pacman -Syu --noconfirm --needed git pkgcheck-arch
+          pacman -Syu --noconfirm --needed git pkgcheck-arch nodejs # 'node' needed to test workflow locally by act
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ env.HEAD_REF }}
+          repository: ${{ env.HEAD_REPO }}
           fetch-depth: 0
-      - name: Get tags
+      - name: Set up remotes and tags
         run: |
-          git config --global --add safe.directory /__w/blackarch/blackarch
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git remote add upstream "https://github.com/BlackArch/blackarch.git"
           git fetch --tags origin
+          git fetch upstream master
       - name: Check Styling
         run: |
-           CHANGED_FILES=($(git diff --name-only --diff-filter=ACMRT origin/${{ github.event.pull_request.base.ref }}...${{ github.event.pull_request.head.sha }} | tr '\n' ' '))
+           CHANGED_FILES=($(git diff --name-only --diff-filter=ACMRT upstream/master...${{ env.HEAD_SHA }} | tr '\n' ' '))
            for FILE in "${CHANGED_FILES[@]}"; do
               if [[ $(basename $FILE) == "PKGBUILD" ]]; then
                 echo "Validating $FILE..."
@@ -47,13 +52,18 @@ jobs:
      steps:
        - uses: actions/checkout@v5
          with:
-           ref: ${{ github.event.pull_request.head.ref }}
-           repository: ${{ github.event.pull_request.head.repo.full_name }}
+           ref: ${{ env.HEAD_REF }}
+           repository: ${{ env.HEAD_REPO }}
            fetch-depth: 0
-           
+       - name: Set up remotes and tags
+         run: |
+           git config --global --add safe.directory "$GITHUB_WORKSPACE"
+           git remote add upstream "https://github.com/BlackArch/blackarch.git"
+           git fetch --tags origin
+           git fetch upstream master           
        - name: Build Package
          run: |
-           CHANGED_FILES=($(git diff --name-only --diff-filter=ACMRT origin/${{ github.event.pull_request.base.ref }}...${{ github.event.pull_request.head.sha }} | tr '\n' ' '))
+           CHANGED_FILES=($(git diff --name-only --diff-filter=ACMRT upstream/master...${{ env.HEAD_SHA }} | tr '\n' ' '))
            for FILE in "${CHANGED_FILES[@]}"; do
               if [[ $(basename $FILE) == "PKGBUILD" ]]; then
                 echo "Building $FILE..."
