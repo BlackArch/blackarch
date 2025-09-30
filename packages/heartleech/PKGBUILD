@@ -2,26 +2,64 @@
 # See COPYING for license details.
 
 pkgname=heartleech
-pkgver=116.3ab1d60
-pkgrel=2
+_ossl_ver='openssl-1.0.2u'
+pkgver=1.0.0i.r4.g3ab1d60
+pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-scanner')
 pkgdesc='Scans for systems vulnerable to the heartbleed bug, and then download them.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/robertdavidgraham/heartleech'
-license=('GPL3')
-depends=('glibc' 'openssl')
-makedepends=('git')
-source=("git+https://github.com/robertdavidgraham/$pkgname.git")
-sha512sums=('SKIP')
+license=('GPL-3.0-or-later')
+depends=('glibc' 'zlib')
+makedepends=('git' 'patchelf' 'perl' 'pkgconf')
+source=("git+https://github.com/robertdavidgraham/$pkgname.git"
+        "https://www.openssl.org/source/old/1.0.2/openssl-1.0.2u.tar.gz")
+sha512sums=('SKIP'
+            'c455bb309e20e2c2d47fdc5619c734d107d5c8c38c1409903ce979acc120b0d5fa0312917c0aa0d630e402d092a703d4249643f36078e8528a3cafc9dac6ab32')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  # Export ssl3_write_bytes from OpenSSL 1.0.2 (normally hidden)
+  cd $_ossl_ver
+  
+  # Pick the next ordinal in util/ssleay.num and append the symbol.
+  local next
+  next=$(awk 'NF && $2 ~ /^[0-9]+$/ {n=$2} END{print n+1}' util/ssleay.num)
+  echo "ssl3_write_bytes  $next  EXIST::FUNCTION:" >> util/ssleay.num
+
+  cd "$srcdir/$pkgname"
+
+  sed -i "s|-I\.\./openssl/include|-I../$_ossl_ver/include|" Makefile
+  sed -i "s|-L\.\./openssl|-L../$_ossl_ver|" Makefile
 }
 
 build() {
-  cd $pkgname
+  cd $_ossl_ver
+
+  local target
+  case "$CARCH" in
+    x86_64)  target=linux-x86_64 ;;
+    aarch64) target=linux-aarch64 ;;
+    *)       target=linux-generic64 ;;
+  esac
+
+  # No "no-ssl3" here. keep internals that provide ssl3_write_bytes compiled.
+  ./Configure "$target" shared zlib-dynamic -fPIC --prefix=/usr
+  make depend
+  make
+
+  cd "$srcdir/$pkgname"
 
   make
 }
@@ -29,9 +67,21 @@ build() {
 package() {
   cd $pkgname
 
+  # Private OpenSSL 1.0.2u runtime libs (only the SONAME files are needed)
+  install -dm755 "$pkgdir/usr/lib/heartleech-ossl"
+  install -m644 "$srcdir/$_ossl_ver/libssl.so.1.0.0"   "$pkgdir/usr/lib/heartleech-ossl/"
+  install -m644 "$srcdir/$_ossl_ver/libcrypto.so.1.0.0" "$pkgdir/usr/lib/heartleech-ossl/"
+
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
 	install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 "$pkgname.8" "$pkgdir/usr/share/man/man8/$pkgname.8"
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  patchelf --force-rpath \
+    --set-rpath '$ORIGIN/../lib/heartleech-ossl' \
+    "$pkgdir/usr/bin/heartleech"
+
+  # sanity check
+  readelf -d "$pkgdir/usr/bin/heartleech" | grep -E 'RPATH|RUNPATH'
 }
 
