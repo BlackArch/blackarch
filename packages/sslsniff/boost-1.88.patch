@@ -1,0 +1,232 @@
+--- a/util/Util.hpp	2025-10-01 01:10:21.030746051 +0200
++++ b/util/Util.hpp	2025-10-01 01:12:13.475831807 +0200
+@@ -78,15 +78,14 @@
+   }
+ 
+   static void resolveName(std::string &name, std::list<boost::asio::ip::address> &results) {
+-    boost::asio::io_service io_service;
+-    boost::asio::ip::tcp::resolver resolver(io_service);
+-    boost::asio::ip::tcp::resolver::query query(name, "https");    
+-    boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+-    boost::asio::ip::tcp::resolver::iterator end;
+-    
+-    while (endpoint_iterator != end) {
+-//       std::cout << "Resolved To: " << (*endpoint_iterator).endpoint().address().to_string() << std::endl;
+-      results.push_back((*endpoint_iterator++).endpoint().address());
++    // Boost.Asio >= 1.70 uses io_context and resolver.resolve(host, service)
++    boost::asio::io_context io;
++    boost::asio::ip::tcp::resolver resolver(io);
++
++    auto resolved = resolver.resolve(name, "https");
++
++    for (const auto &entry : resolved) {
++      results.push_back(entry.endpoint().address());
+     }
+     
+     if (results.empty()) throw UnresolvableCertificateException();    
+--- a/http/HttpConnectionManager.hpp	2025-10-01 01:10:40.745935846 +0200
++++ b/http/HttpConnectionManager.hpp	2025-10-01 01:15:25.991961837 +0200
+@@ -52,7 +52,7 @@
+   void handleServerConnection(HttpBridge::ptr bridge, const boost::system::error_code& error);
+ 
+  public:
+-  HttpConnectionManager(io_service& io_service, int port, 
++  HttpConnectionManager(io_context& io_service, int port,
+ 			CertificateManager &certificateManager, bool denyOCSP);
+ 
+ };
+--- a/SSLConnectionManager.hpp	2025-10-01 01:10:52.352047697 +0200
++++ b/SSLConnectionManager.hpp	2025-10-01 01:12:41.098073028 +0200
+@@ -62,7 +62,7 @@
+ 
+ public:
+ 
+-  SSLConnectionManager(io_service &io_service, 
++  SSLConnectionManager(io_context &io_service, 
+ 		       CertificateManager &certificateManager, 
+ 		       int sslPort);
+   
+--- a/SSLConnectionManager.cpp	2025-10-01 01:10:52.352047697 +0200
++++ b/SSLConnectionManager.cpp	2025-10-01 01:14:54.022393643 +0200
+@@ -34,7 +34,7 @@
+ 
+ using namespace boost::asio;
+ 
+-SSLConnectionManager::SSLConnectionManager(io_service &io_service,
++SSLConnectionManager::SSLConnectionManager(io_context &io_service,
+ 					   CertificateManager &certificateManager, 
+ 					   int sslListenPort)
+   : acceptor(io_service, ip::tcp::endpoint(ip::tcp::v4(), sslListenPort)),
+@@ -44,10 +44,12 @@
+ }
+ 
+ void SSLConnectionManager::acceptIncomingConnection() {
+-  boost::shared_ptr<ip::tcp::socket> socket(new ip::tcp::socket(acceptor.io_service()));
++  // In modern Asio, obtain the io_context from the acceptor's executor.
++  auto &io = static_cast<io_context&>(acceptor.get_executor().context());
++  boost::shared_ptr<ip::tcp::socket> socket(new ip::tcp::socket(io));
+ 
+   acceptor.async_accept(*socket, boost::bind(&SSLConnectionManager::handleClientConnection,
+-					     this, socket, placeholders::error));
++					     this, socket, boost::asio::placeholders::error));
+ }
+ 
+ void SSLConnectionManager::handleClientConnection(boost::shared_ptr<ip::tcp::socket> socket, 
+@@ -76,7 +78,8 @@
+ 					     ip::tcp::endpoint &destination)
+ 
+ {
+-  Bridge::ptr bridge = RawBridge::create(clientSocket, destination, acceptor.io_service());
++  auto &io = static_cast<io_context&>(acceptor.get_executor().context());
++  Bridge::ptr bridge = RawBridge::create(clientSocket, destination, io);
+   bridge->shuttle();
+ }
+ 
+@@ -134,7 +137,8 @@
+ 					ip::tcp::endpoint &destination,
+ 					bool wildcardOK)
+ {
+-  ip::tcp::socket serverSocket(acceptor.io_service());
++  auto &io = static_cast<io_context&>(acceptor.get_executor().context());
++  ip::tcp::socket serverSocket(io);
+   boost::system::error_code error;
+   serverSocket.connect(destination, error);
+ 
+--- a/http/HttpBridge.hpp	2025-10-01 01:24:32.281086832 +0200
++++ b/http/HttpBridge.hpp	2025-10-01 01:26:59.710315685 +0200
+@@ -41,7 +41,7 @@
+ public:
+ 
+   static ptr create(boost::shared_ptr<ip::tcp::socket> clientSocket,
+-		    io_service& io_service, 
++		    io_context& io_service,
+ 		    HttpBridgeListener *listener) 
+   {
+     return ptr(new HttpBridge(clientSocket, io_service, listener));
+@@ -63,7 +63,7 @@
+ 
+ private:
+   int closed;
+-  io_service& io_service_;
++  io_context& io_service_;
+   boost::shared_ptr<ip::tcp::socket> clientSocket;
+   ip::tcp::socket serverSocket;
+   
+@@ -72,7 +72,7 @@
+   HttpBridgeListener *listener;
+ 
+   HttpBridge(boost::shared_ptr<ip::tcp::socket> clientSocket,
+-	     io_service& io_service, HttpBridgeListener *listener)
++	     io_context& io_service, HttpBridgeListener *listener)
+     : clientSocket(clientSocket),
+       serverSocket(io_service),
+       io_service_(io_service),
+--- a/RawBridge.hpp	2025-10-01 01:24:45.153214297 +0200
++++ b/RawBridge.hpp	2025-10-01 01:28:34.449408275 +0200
+@@ -20,7 +20,7 @@
+ #ifndef __RAW_BRIDGE_H__
+ #define __RAW_BRIDGE_H__
+ 
+-#include <boost/bind.hpp>
++#include <boost/bind/bind.hpp>
+ #include <boost/asio.hpp>
+ #include <boost/shared_ptr.hpp>
+ 
+@@ -36,13 +36,13 @@
+   ip::tcp::socket serverSocket;
+   ip::tcp::endpoint destination;
+ 
+-  boost::asio::io_service &io_service;
++  boost::asio::io_context &io_context;
+ 
+   RawBridge(boost::shared_ptr<ip::tcp::socket> clientSocket,
+ 	    ip::tcp::endpoint& destination,
+-	    boost::asio::io_service & io_service) :
++	    boost::asio::io_context & io_service) :
+     clientSocket(clientSocket), serverSocket(io_service), 
+-    io_service(io_service), destination(destination), closed(0)
++    io_context(io_service), destination(destination), closed(0)
+   {}
+ 
+   void handleConnect(Bridge::ptr bridge, const boost::system::error_code &error) {
+@@ -57,7 +57,7 @@
+ 
+   static ptr create(boost::shared_ptr<ip::tcp::socket> clientSocket,
+ 		    ip::tcp::endpoint& destination,
+-		    boost::asio::io_service & io_service)
++		    boost::asio::io_context & io_service)
+ 
+   {
+     return ptr(new RawBridge(clientSocket, destination, io_service));    
+@@ -75,7 +75,7 @@
+     serverSocket.async_connect(destination, boost::bind(&RawBridge::handleConnect,
+ 							this,
+ 							Bridge::getSmartPointer(), 
+-							placeholders::error));      
++							boost::asio::placeholders::error));
+   }
+ 
+   virtual void close() {
+--- a/sslsniff.cpp	2025-10-01 01:31:03.657713133 +0200
++++ b/sslsniff.cpp	2025-10-01 01:32:35.245225223 +0200
+@@ -120,7 +120,7 @@
+ 
+ int main(int argc, char* argv[]) {
+   Options options;
+-  boost::asio::io_service io_service;
++  boost::asio::io_context io_service;
+ 
+   if (parseArguments(argc, argv, options) < 0) {
+     printUsage(argv[0]);
+--- a/http/HttpConnectionManager.cpp	2025-10-01 01:34:56.688826672 +0200
++++ b/http/HttpConnectionManager.cpp	2025-10-01 01:37:19.009069481 +0200
+@@ -20,7 +20,7 @@
+ 
+ #include "HttpConnectionManager.hpp"
+ 
+-#include <boost/bind.hpp>
++#include <boost/bind/bind.hpp>
+ #include <boost/asio.hpp>
+ #include <boost/noncopyable.hpp>
+ #include <boost/shared_ptr.hpp>
+@@ -39,8 +39,8 @@
+ 
+ using namespace boost::asio;
+ 
+-HttpConnectionManager::HttpConnectionManager(io_service& io_service, int port,
+-					     CertificateManager &certificateManager,
++HttpConnectionManager::HttpConnectionManager(io_context& io_service, int port,
++                        CertificateManager &certificateManager,
+ 					     bool denyOCSP) 
+   : acceptor_(io_service, ip::tcp::endpoint(ip::tcp::v4(), port)),
+     port_(port),
+@@ -53,22 +53,25 @@
+ }
+ 
+ void HttpConnectionManager::acceptIncomingConnection() {
+-  boost::shared_ptr<ip::tcp::socket> socket(new ip::tcp::socket(acceptor_.io_service()));
++  // In modern Asio, get the io_context from the acceptor's executor.
++  auto &io = static_cast<io_context&>(acceptor_.get_executor().context());
++  boost::shared_ptr<ip::tcp::socket> socket(new ip::tcp::socket(io));
+ 
+   acceptor_.async_accept(*socket, boost::bind(&HttpConnectionManager::handleClientConnection,
+-					      this, socket, placeholders::error));
++					      this, socket, boost::asio::placeholders::error));
+   
+ }
+ 
+ void HttpConnectionManager::bridgeHttpRequest(boost::shared_ptr<ip::tcp::socket> socket,
+ 					      ip::tcp::endpoint destination)
+ {
+-  Bridge::ptr bridge = HttpBridge::create(socket, acceptor_.io_service(), 
++  auto &io = static_cast<io_context&>(acceptor_.get_executor().context());
++  Bridge::ptr bridge = HttpBridge::create(socket, io, 
+ 					  FingerprintManager::getInstance());
+   
+   bridge->getServerSocket().
+     async_connect(destination, boost::bind(&HttpConnectionManager::handleServerConnection, 
+-					   this, bridge, placeholders::error));
++					   this, bridge, boost::asio::placeholders::error));
+ }
+ 
+ void HttpConnectionManager::handleClientConnection(boost::shared_ptr<ip::tcp::socket> socket, 
