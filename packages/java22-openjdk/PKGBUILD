@@ -53,6 +53,19 @@ _commondeps=('java-runtime-common>=3' 'ca-certificates-utils' 'nss' 'libjpeg-tur
            'lcms2' 'liblcms2.so' 'libnet' 'freetype2' 'libfreetype.so' 'harfbuzz' 'libharfbuzz.so'
            'glibc' 'gcc-libs')
 
+prepare() {
+  cd $_jdkdir
+
+  sed -i 's/static inline unsigned int uabs(unsigned int n)/inline unsigned int uabs(unsigned int n)/' \
+    src/hotspot/share/utilities/globalDefinitions.hpp
+
+  sed -i 's/static inline unsigned int uabs(int n)/inline unsigned int uabs(int n)/' \
+    src/hotspot/share/utilities/globalDefinitions.hpp
+
+    #sed -i 's|static inline unsigned int uabs(int n)||g' \
+  #  src/hotspot/share/utilities/globalDefinitions.hpp
+}
+
 build() {
   cd ${_jdkdir}
 
@@ -66,9 +79,9 @@ build() {
   fi
 
   # Avoid optimization of HotSpot to be lowered from O3 to O2
-  local _CFLAGS="${CFLAGS//-O2/-O3} ${CPPFLAGS} -fcommon"
-  local _CXXFLAGS="${CXXFLAGS//-O2/-O3} ${CPPFLAGS} -fcommon"
-  local _LDFLAGS=${LDFLAGS}
+  local _CFLAGS="${CFLAGS} ${CPPFLAGS} -fcommon"
+  local _CXXFLAGS="${CXXFLAGS} ${CPPFLAGS} -fcommon"
+  local _LDFLAGS="${LDFLAGS}"
   if [[ ${CARCH} = i686 ]]; then
     echo "Removing '-fno-plt' from CFLAGS and CXXFLAGS to prevent build fail with this architecture"
     _CFLAGS=${CFLAGS/-fno-plt/}
@@ -122,6 +135,7 @@ build() {
     ${NUM_PROC_OPT}
     #--disable-javac-server
 
+  make clean
   make images legacy-jre-image docs
 
   # https://bugs.openjdk.java.net/browse/JDK-8173610
