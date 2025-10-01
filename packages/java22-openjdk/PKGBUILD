@@ -1,0 +1,362 @@
+# Maintainer: Levente Polyak <anthraxx[at]archlinux[dot]org>
+# Maintainer: Frederik Schwan <freswa at archlinux dot org>
+# Contributor: Guillaume ALAUX <guillaume@archlinux.org>
+
+# TODO add test, see about packaging jtreg and using it here
+
+pkgbase=java22-openjdk
+pkgname=('jre22-openjdk-headless' 'jre22-openjdk' 'jdk22-openjdk' 'openjdk22-src' 'openjdk22-doc')
+# on a majorver change, don't forget to update the misc files that come along this PKGBUILD
+_majorver=22
+_minorver=0
+_securityver=2
+_updatever=9
+pkgver=${_majorver}.${_minorver}.${_securityver}.u${_updatever}
+# pkgver=${_majorver}.u${_updatever}
+pkgrel=1
+_git_tag=jdk-${_majorver}.${_minorver}.${_securityver}+${_updatever}
+# _git_tag=jdk-${_majorver}+${_updatever}
+arch=('x86_64')
+url='https://openjdk.java.net/'
+license=('LicenseRef-Java')
+makedepends=('java-environment=21' 'cpio' 'unzip' 'zip' 'libelf' 'libcups' 'libx11'
+             'libxrender' 'libxtst' 'libxt' 'libxext' 'libxrandr' 'alsa-lib' 'pandoc'
+             'graphviz' 'freetype2' 'libjpeg-turbo' 'giflib' 'libpng' 'lcms2'
+             'libnet' 'bash' 'harfbuzz' 'gcc-libs' 'glibc')
+optdepends=(
+  'gvfs: open links e.g. hyperlinks'
+)
+source=(https://github.com/openjdk/jdk${_majorver}u/archive/${_git_tag}.tar.gz
+        freedesktop-java.desktop
+        freedesktop-jconsole.desktop
+        freedesktop-jshell.desktop)
+sha512sums=('99df868ea802088d3a7aaf4fabfa6e8d70873beafad52040a2a741e132fdb5c9f805185a45ec923807b02fa1819613a0f68b8533cec5dd292e62d340750ede46'
+            '294ace5e41c72dccc0040fea4bd5c38cdb40e423a5a50b5acd2d1cbb0675f687440ce5fcc0fddda91a2c2aabee4515b132d059acfb315bd7d44ec1d3f1f966e5'
+            'de3a299e6fd99a01da579f3c36674fdc186e19336fdaae2b2ffcc39bcce866e2fd0b2c79b38579ea00c42e733ed5761c708d70724bc9f4cee3ea20add2274a8a'
+            'f70fd608832bd7abf7476f70934920746967808134575b165d31ade747bf1101b7f392ca58d124ed22c91bc361507a28d8e4e0eb3bacac58aa5e638c2fc730fc')
+
+case "${CARCH}" in
+  x86_64) _JARCH='x86_64';;
+  i686)   _JARCH='x86';;
+esac
+
+_jvmdir=/usr/lib/jvm/java-${_majorver}-openjdk
+_jdkdir=jdk${_majorver}u-${_git_tag//+/-}
+_imgdir=${_jdkdir}/build/linux-${_JARCH}-server-release/images
+
+_nonheadless=(lib/libawt_xawt.so
+              lib/libjawt.so
+              lib/libjsound.so
+              lib/libsplashscreen.so)
+
+_commondeps=('java-runtime-common>=3' 'ca-certificates-utils' 'nss' 'libjpeg-turbo' 'libjpeg.so'
+           'lcms2' 'liblcms2.so' 'libnet' 'freetype2' 'libfreetype.so' 'harfbuzz' 'libharfbuzz.so'
+           'glibc' 'gcc-libs')
+
+build() {
+  cd ${_jdkdir}
+
+  NUM_PROC_OPT=''
+  MAKEFLAG_J=$(echo ${MAKEFLAGS} | sed -En 's/.*-j([0-9]+).*/\1/p')
+  if [ -n "${MAKEFLAG_J}" ]; then
+    # http://hg.openjdk.java.net/jdk10/jdk10/file/85e6cb013b98/make/InitSupport.gmk#l105
+    echo "Removing '-j${MAKEFLAG_J}' from MAKEFLAGS to prevent build fail. Passing it directly to ./configure."
+    export MAKEFLAGS=${MAKEFLAGS/-j${MAKEFLAG_J}/}
+    NUM_PROC_OPT="--with-num-cores=${MAKEFLAG_J}"
+  fi
+
+  # Avoid optimization of HotSpot to be lowered from O3 to O2
+  local _CFLAGS="${CFLAGS//-O2/-O3} ${CPPFLAGS} -fcommon"
+  local _CXXFLAGS="${CXXFLAGS//-O2/-O3} ${CPPFLAGS} -fcommon"
+  local _LDFLAGS=${LDFLAGS}
+  if [[ ${CARCH} = i686 ]]; then
+    echo "Removing '-fno-plt' from CFLAGS and CXXFLAGS to prevent build fail with this architecture"
+    _CFLAGS=${CFLAGS/-fno-plt/}
+    _CXXFLAGS=${CXXFLAGS/-fno-plt/}
+  fi
+
+  # TODO: Should be rechecked for the next releases
+  # compiling with -fexceptions leads to:
+  # /usr/bin/ld: /build/java-openjdk/src/jdk17u-jdk-17.0.3-2/build/linux-x86_64-server-release/hotspot/variant-server/libjvm/objs/zPhysicalMemory.o: in function `ZList<ZMemory>::~ZList()':
+  # /build/java-openjdk/src/jdk17u-jdk-17.0.3-2/src/hotspot/share/gc/z/zList.hpp:54: undefined reference to `ZListNode<ZMemory>::~ZListNode()'
+  # collect2: error: ld returned 1 exit status
+  _CFLAGS=${CFLAGS/-fexceptions/}
+  _CXXFLAGS=${CXXFLAGS/-fexceptions/}
+
+  # CFLAGS, CXXFLAGS and LDFLAGS are ignored as shown by a warning
+  # in the output of ./configure unless used like such:
+  #  --with-extra-cflags="${CFLAGS}"
+  #  --with-extra-cxxflags="${CXXFLAGS}"
+  #  --with-extra-ldflags="${LDFLAGS}"
+  # See also paragraph "Configure Control Variables from "jdk${_majorver}-${_git_tag}/common/doc/building.md
+  unset CFLAGS
+  unset CXXFLAGS
+  unset LDFLAGS
+
+  if check_option "lto" "y"; then
+    jvm_features="zgc,shenandoahgc,link-time-opt"
+  else
+    jvm_features="zgc,shenandoahgc"
+  fi
+
+
+  bash configure \
+    --with-version-build="${_updatever}" \
+    --with-version-pre="" \
+    --with-version-opt="" \
+    --with-stdc++lib=dynamic \
+    --with-extra-cflags="${_CFLAGS}" \
+    --with-extra-cxxflags="${_CXXFLAGS}" \
+    --with-extra-ldflags="${_LDFLAGS}" \
+    --with-libjpeg=system \
+    --with-giflib=system \
+    --with-libpng=system \
+    --with-lcms=system \
+    --with-zlib=system \
+    --with-harfbuzz=system \
+    --with-jvm-features="${jvm_features}" \
+    --with-native-debug-symbols=internal \
+    --enable-unlimited-crypto \
+    --disable-warnings-as-errors \
+    --with-vendor-name="Arch Linux" \
+    ${NUM_PROC_OPT}
+    #--disable-javac-server
+
+  make images legacy-jre-image docs
+
+  # https://bugs.openjdk.java.net/browse/JDK-8173610
+  find "${srcdir}/${_imgdir}" -iname '*.so' -exec chmod +x {} \;
+}
+
+check() {
+  cd ${_jdkdir}
+  # TODO package jtreg
+  # make -k check
+}
+
+package_jre22-openjdk-headless() {
+  pkgdesc="OpenJDK Java ${_majorver} headless runtime environment"
+  depends=("${_commondeps[@]}")
+  optdepends=('java-rhino: for some JavaScript support')
+  provides=("java-runtime-headless=${_majorver}" "java-runtime-headless-openjdk=${_majorver}" "jre${_majorver}-openjdk-headless=${pkgver}-${pkgrel}")
+  conflicts=("jdk-openjdk" "jre-openjdk")
+  backup=(etc/${pkgbase}/logging.properties
+          etc/${pkgbase}/management/jmxremote.access
+          etc/${pkgbase}/management/jmxremote.password.template
+          etc/${pkgbase}/management/management.properties
+          etc/${pkgbase}/net.properties
+          etc/${pkgbase}/security/java.policy
+          etc/${pkgbase}/security/java.security
+          etc/${pkgbase}/security/policy/README.txt
+          etc/${pkgbase}/security/policy/limited/default_US_export.policy
+          etc/${pkgbase}/security/policy/limited/default_local.policy
+          etc/${pkgbase}/security/policy/limited/exempt_local.policy
+          etc/${pkgbase}/security/policy/unlimited/default_US_export.policy
+          etc/${pkgbase}/security/policy/unlimited/default_local.policy
+          etc/${pkgbase}/sound.properties)
+  install=install_jre-openjdk-headless.sh
+
+  cd ${_imgdir}/jre
+
+  install -dm 755 "${pkgdir}${_jvmdir}"
+
+  cp -a bin lib \
+    "${pkgdir}${_jvmdir}"
+
+  for f in "${_nonheadless[@]}"; do
+    rm "${pkgdir}${_jvmdir}/${f}"
+  done
+
+  # Conf
+  install -dm 755 "${pkgdir}/etc"
+  cp -r conf "${pkgdir}/etc/${pkgbase}"
+  ln -s /etc/${pkgbase} "${pkgdir}/${_jvmdir}/conf"
+
+  # Legal
+  install -dm 755 "${pkgdir}/usr/share/licenses"
+  cp -r legal "${pkgdir}/usr/share/licenses/${pkgbase}"
+  ln -s ${pkgbase} "${pkgdir}/usr/share/licenses/${pkgname}"
+  ln -s /usr/share/licenses/${pkgbase} "${pkgdir}/${_jvmdir}/legal"
+
+  # Man pages
+  for f in bin/*; do
+    f=$(basename "${f}")
+    _man=../jdk/man/man1/"${f}.1"
+    test -f "${_man}" && install -Dm 644 "${_man}" "${pkgdir}/usr/share/man/man1/${f}-openjdk${_majorver}.1"
+  done
+  ln -s /usr/share/man "${pkgdir}/${_jvmdir}/man"
+
+  # Link JKS keystore from ca-certificates-utils
+  rm -f "${pkgdir}${_jvmdir}/lib/security/cacerts"
+  ln -sf /etc/ssl/certs/java/cacerts "${pkgdir}${_jvmdir}/lib/security/cacerts"
+}
+
+package_jre22-openjdk() {
+  pkgdesc="OpenJDK Java ${_majorver} full runtime environment"
+  depends=("${_commondeps[@]}" 'giflib' 'libgif.so' 'libpng')
+  optdepends=('alsa-lib: for basic sound support'
+              'gtk3: for the Gtk+ 3 look and feel - desktop usage')
+  provides=("java-runtime=${_majorver}" "java-runtime-openjdk=${_majorver}" "jre${_majorver}-openjdk=${pkgver}-${pkgrel}"
+            "java-runtime-headless=${_majorver}" "java-runtime-headless-openjdk=${_majorver}" "jre${_majorver}-openjdk-headless=${pkgver}-${pkgrel}")
+  conflicts=("jdk22-openjdk" "jre22-openjdk-headless")
+  backup=(etc/${pkgbase}/logging.properties
+          etc/${pkgbase}/management/jmxremote.access
+          etc/${pkgbase}/management/jmxremote.password.template
+          etc/${pkgbase}/management/management.properties
+          etc/${pkgbase}/net.properties
+          etc/${pkgbase}/security/java.policy
+          etc/${pkgbase}/security/java.security
+          etc/${pkgbase}/security/policy/README.txt
+          etc/${pkgbase}/security/policy/limited/default_US_export.policy
+          etc/${pkgbase}/security/policy/limited/default_local.policy
+          etc/${pkgbase}/security/policy/limited/exempt_local.policy
+          etc/${pkgbase}/security/policy/unlimited/default_US_export.policy
+          etc/${pkgbase}/security/policy/unlimited/default_local.policy
+          etc/${pkgbase}/sound.properties)
+  install=install_jre-openjdk.sh
+
+  cd ${_imgdir}/jre
+
+  install -dm 755 "${pkgdir}${_jvmdir}"
+
+  cp -a bin lib \
+    "${pkgdir}${_jvmdir}"
+
+  for f in "${_nonheadless[@]}"; do
+    install -Dm 755 ${f} "${pkgdir}${_jvmdir}/${f}"
+  done
+
+  # Conf
+  install -dm 755 "${pkgdir}/etc"
+  cp -r conf "${pkgdir}/etc/${pkgbase}"
+  ln -s /etc/${pkgbase} "${pkgdir}/${_jvmdir}/conf"
+
+  # Legal
+  install -dm 755 "${pkgdir}/usr/share/licenses"
+  cp -r legal "${pkgdir}/usr/share/licenses/${pkgbase}"
+  ln -s ${pkgbase} "${pkgdir}/usr/share/licenses/${pkgname}"
+  ln -s /usr/share/licenses/${pkgbase} "${pkgdir}/${_jvmdir}/legal"
+
+  # Man pages
+  for f in bin/*; do
+    f=$(basename "${f}")
+    _man=../jdk/man/man1/"${f}.1"
+    test -f "${_man}" && install -Dm 644 "${_man}" "${pkgdir}/usr/share/man/man1/${f}-openjdk${_majorver}.1"
+  done
+  ln -s /usr/share/man "${pkgdir}/${_jvmdir}/man"
+
+  # Link JKS keystore from ca-certificates-utils
+  rm -f "${pkgdir}${_jvmdir}/lib/security/cacerts"
+  ln -sf /etc/ssl/certs/java/cacerts "${pkgdir}${_jvmdir}/lib/security/cacerts"
+
+  # Desktop files
+  for f in java; do
+    install -Dm 644 \
+      "${srcdir}/freedesktop-${f}.desktop" \
+      "${pkgdir}/usr/share/applications/${f}-${pkgbase}.desktop"
+  done
+}
+
+package_jdk22-openjdk() {
+  pkgdesc="OpenJDK Java ${_majorver} development kit"
+  depends=("${_commondeps[@]}" 'java-environment-common=3'
+           'hicolor-icon-theme' 'libelf' 'libgif.so' 'libpng'
+           'ca-certificates-utils' 'nss' 'libjpeg-turbo' 'libjpeg.so'
+           'lcms2' 'liblcms2.so' 'libnet' 'freetype2' 'libfreetype.so' 'harfbuzz'
+           'libharfbuzz.so')
+  optdepends=('java-rhino: for some JavaScript support'
+              'alsa-lib: for basic sound support'
+              'gtk3: for the Gtk+ 3 look and feel - desktop usage')
+  provides=("java-environment=${_majorver}" "java-environment-openjdk=${_majorver}" "jdk${_majorver}-openjdk=${pkgver}-${pkgrel}"
+            "java-runtime=${_majorver}" "java-runtime-openjdk=${_majorver}" "jre${_majorver}-openjdk=${pkgver}-${pkgrel}"
+            "java-runtime-headless=${_majorver}" "java-runtime-headless-openjdk=${_majorver}" "jre${_majorver}-openjdk-headless=${pkgver}-${pkgrel}")
+  conflicts=("jre22-openjdk" "jre22-openjdk-headless")
+  backup=(etc/${pkgbase}/logging.properties
+          etc/${pkgbase}/management/jmxremote.access
+          etc/${pkgbase}/management/jmxremote.password.template
+          etc/${pkgbase}/management/management.properties
+          etc/${pkgbase}/net.properties
+          etc/${pkgbase}/security/java.policy
+          etc/${pkgbase}/security/java.security
+          etc/${pkgbase}/security/policy/README.txt
+          etc/${pkgbase}/security/policy/limited/default_US_export.policy
+          etc/${pkgbase}/security/policy/limited/default_local.policy
+          etc/${pkgbase}/security/policy/limited/exempt_local.policy
+          etc/${pkgbase}/security/policy/unlimited/default_US_export.policy
+          etc/${pkgbase}/security/policy/unlimited/default_local.policy
+          etc/${pkgbase}/sound.properties)
+  install=install_jdk-openjdk.sh
+
+  cd ${_imgdir}/jdk
+
+  install -dm 755 "${pkgdir}${_jvmdir}"
+
+  cp -a bin demo include jmods lib release\
+    "${pkgdir}${_jvmdir}"
+
+  rm "${pkgdir}${_jvmdir}/lib/src.zip"
+
+    # Conf
+  install -dm 755 "${pkgdir}/etc"
+  cp -r conf "${pkgdir}/etc/${pkgbase}"
+  ln -s /etc/${pkgbase} "${pkgdir}/${_jvmdir}/conf"
+
+  # Legal
+  install -dm 755 "${pkgdir}/usr/share/licenses"
+  cp -r legal "${pkgdir}/usr/share/licenses/${pkgbase}"
+  ln -s ${pkgbase} "${pkgdir}/usr/share/licenses/${pkgname}"
+  ln -s /usr/share/licenses/${pkgbase} "${pkgdir}/${_jvmdir}/legal"
+
+  # Man pages
+  for f in bin/*; do
+    f=$(basename "${f}")
+    _man=../jdk/man/man1/"${f}.1"
+    test -f "${_man}" && install -Dm 644 "${_man}" "${pkgdir}/usr/share/man/man1/${f}-openjdk${_majorver}.1"
+  done
+  ln -s /usr/share/man "${pkgdir}/${_jvmdir}/man"
+
+  # Link JKS keystore from ca-certificates-utils
+  rm -f "${pkgdir}${_jvmdir}/lib/security/cacerts"
+  ln -sf /etc/ssl/certs/java/cacerts "${pkgdir}${_jvmdir}/lib/security/cacerts"
+
+  # Icons
+  for s in 16 24 32 48; do
+    install -Dm 644 \
+      "${srcdir}/${_jdkdir}/src/java.desktop/unix/classes/sun/awt/X11/java-icon${s}.png" \
+      "${pkgdir}/usr/share/icons/hicolor/${s}x${s}/apps/${pkgbase}.png"
+  done
+
+  # Desktop files
+  for f in jconsole java jshell; do
+    install -Dm 644 \
+      "${srcdir}/freedesktop-${f}.desktop" \
+      "${pkgdir}/usr/share/applications/${f}-${pkgbase}.desktop"
+  done
+}
+
+package_openjdk22-src() {
+  pkgdesc="OpenJDK Java ${_majorver} sources"
+  # Depends on JDK to get license files
+  depends=("jdk${_majorver}-openjdk=${pkgver}-${pkgrel}")
+  provides=("openjdk${_majorver}-src=${pkgver}-${pkgrel}")
+
+  install -Dm 644 -t "${pkgdir}${_jvmdir}/lib" ${_imgdir}/jdk/lib/src.zip
+
+  install -dm 755 "${pkgdir}/usr/share/licenses"
+  ln -s ${pkgbase} "${pkgdir}/usr/share/licenses/${pkgname}"
+}
+
+package_openjdk22-doc() {
+  pkgdesc="OpenJDK Java ${_majorver} documentation"
+  # Depends on JDK to get license files
+  depends=("jdk${_majorver}-openjdk=${pkgver}-${pkgrel}")
+  provides=("openjdk${_majorver}-doc=${pkgver}-${pkgrel}")
+
+  install -dm 755 "${pkgdir}/usr/share/doc"
+  cp -r ${_imgdir}/docs "${pkgdir}/usr/share/doc/${pkgbase}"
+
+  install -dm 755 "${pkgdir}/usr/share/licenses"
+  ln -s ${pkgbase} "${pkgdir}/usr/share/licenses/${pkgname}"
+}
+
+# vim: ts=2 sw=2 et:
