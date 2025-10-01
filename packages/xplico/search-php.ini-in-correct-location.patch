@@ -1,0 +1,38 @@
+From: Sophie Brun <sophie@offensive-security.com>
+Date: Mon, 19 Aug 2019 09:08:03 +0200
+Subject: Change search location of php.ini
+
+Last-Update: 2018-02-28
+
+xplico is looking for the php.ini file in the wrong locations. Improve
+the research to get the correct path for all current php versions (5 and
+7.*)
+Last-Update: 2018-02-28
+---
+ system/xi3/app/Controller/Component/XplicoComponent.php | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/system/xi3/app/Controller/Component/XplicoComponent.php b/system/xi3/app/Controller/Component/XplicoComponent.php
+index 7448e66..d4e696b 100644
+--- a/system/xi3/app/Controller/Component/XplicoComponent.php
++++ b/system/xi3/app/Controller/Component/XplicoComponent.php
+@@ -306,15 +306,15 @@ class XplicoComponent extends Component
+     
+     function getmaxSizePCAP() {
+         //Max size able to upload at Apache. Look for parameters post_max_size and upload_max_filesize, and choose the minimun one.
+-        if (file_exists('/etc/php5/apache2/php.ini')) {
++        if (PHP_MAJOR_VERSION == '5') {
+             $apacheConfigData = parse_ini_file("/etc/php5/apache2/php.ini");
+         }
++        else if (PHP_MAJOR_VERSION >= '7') {
++            $apacheConfigData = parse_ini_file("/etc/php/".PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION."/apache2/php.ini");
++        }
+         else if (file_exists('/etc/php/php.ini')) {
+             $apacheConfigData = parse_ini_file("/etc/php/php.ini");
+         }
+-        else if (file_exists('/etc/php/7.0/apache2/php.ini')) {
+-            $apacheConfigData = parse_ini_file("/etc/php/7.0/apache2/php.ini");
+-        }
+         
+         return (min(intval($apacheConfigData['post_max_size']), intval($apacheConfigData['upload_max_filesize']))); 
+     }
