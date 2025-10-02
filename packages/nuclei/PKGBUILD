@@ -13,13 +13,20 @@ url='https://github.com/projectdiscovery/nuclei'
 license=('MIT')
 depends=('nuclei-templates')
 makedepends=('git' 'go')
-source=("git+https://github.com/projectdiscovery/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/projectdiscovery/$pkgname.git"
+        "config.yaml")
+sha512sums=('SKIP'
+            '33ae33a38717992094e09bad08dcb4d55d604c763c3709d1b01610add2ab64dae39368b443d8c8c216e5ce5f3ed30059aa640943a64a94a0fb3939c411fee662')
 
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
@@ -38,8 +45,18 @@ build() {
 package() {
   cd $pkgname
 
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 755 $pkgname "$pkgdir/usr/share/$pkgname/$pkgname"
+  install -Dm 755 ../config.yaml "$pkgdir/usr/share/$pkgname/config.yaml"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md THANKS.md
   install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ./$pkgname -config /usr/share/$pkgname/config.yaml "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
