@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Credits AUR
+# Maintainer: Marcel Joss <marceljoss@hotmail.ch>
+# Contributor: Felix Golatofski <contact@xdfr.de>
+# Contributor: M A <morealaz at gmail dot com>
+
+pkgname=java22-openjdk
+_majorver=22
+_fullver=22.0.2
+_buildver=9
+pkgver="$_fullver.u$_buildver"
+pkgrel=1
+pkgdesc="Java OpenJDK $_fullver Oracle Build."
+arch=('x86_64' 'aarch64')
+url="https://jdk.java.net/$_majorver"
+license=('GPL-2.0-or-later')
+depends=('java-environment-common' 'java-runtime-common' 'ca-certificates-utils'
+         'nss')
+provides=(
+  "java-environment=$_majorver"
+  "java-environment-openjdk=$_majorver"
+  "java-runtime=$_majorver"
+  "java-runtime-openjdk=$_majorver"
+  "java-runtime-headless=$_majorver"
+  "java-runtime-headless-openjdk=$_majorver"
+)
+source=("https://download.java.net/java/GA/jdk${_fullver}/c9ecb94cd31b495da20a27d4581645e8/${_buildver}/GPL/openjdk-${_fullver}_linux-x64_bin.tar.gz")
+sha512sums=('bff3de43945a6f780dadc16564fccaafd892ef05045730ac0c47b6d2eebc26275418b614c5f814985315fa57138205cf237533917cf69cc6a925addfcf372d81')
+
+_jvmdir="usr/lib/jvm/java-$_majorver-openjdk"
+
+package() {
+  install -d "$pkgdir/$_jvmdir"
+  cd "jdk-$_fullver"
+  cp -a bin include jmods lib release "$pkgdir/$_jvmdir/"
+
+  # Link JKS keystore from ca-certificates-utils
+  rm -f "$pkgdir/$_jvmdir/lib/security/cacerts"
+  ln -sf /etc/ssl/certs/java/cacerts "$pkgdir/$_jvmdir/lib/security/cacerts"
+
+  # Legal
+  install -d "$pkgdir/usr/share/licenses/java$_majorver-openjdk"
+  cp -a legal "$pkgdir/usr/share/licenses/java$_majorver-openjdk/"
+  ln -s "/usr/share/licenses/java$_majorver-openjdk" "$pkgdir/$_jvmdir/legal"
+
+  # Conf
+  install -d "$pkgdir/etc"
+  cp -r conf "$pkgdir/etc/java$_majorver-openjdk"
+  ln -s "/etc/java$_majorver-openjdk" "$pkgdir/$_jvmdir/conf"
+}
+
