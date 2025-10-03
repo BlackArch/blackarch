@@ -2,27 +2,38 @@
 # See COPYING for license details.
 
 pkgname=python-flask-session
-_pkgname=Flask-Session
-pkgver=0.5.0
-pkgrel=1
+_pkgname=flask_session
+pkgver=0.8.0
+pkgrel=3
 pkgdesc='Adds server-side session support to your Flask application.'
 arch=('any')
 url='https://pypi.org/project/Flask-Session/#files'
 license=('BSD')
 depends=('python' 'python-flask')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/Flask-Session-$pkgver.tar.gz")
-sha512sums=('fe77b5b14929c4a9db2daca0833e10a857db6137f00bc4e72258b938195896ad895f2f2c8f429110daf8921ad2ecb8c347c23896c64d815febafa940f0136f0d')
+makedepends=('python-build' 'python-pip')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('28627734d79b93e304f0fecfa1b4571a7877eb0810d13c352c0efacde51bdc52e09ab33c73cdeb6feece940c5febd30e97e09348922d341c5aad72793e032c32')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

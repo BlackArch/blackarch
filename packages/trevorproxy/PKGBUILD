@@ -3,7 +3,8 @@
 
 pkgname=trevorproxy
 pkgver=1.0.6
-pkgrel=1
+_pyver=3.13
+pkgrel=9
 pkgdesc='A SOCKS proxy written in Python that randomizes your source IP address.'
 arch=('any')
 groups=('blackarch' 'blackarch-proxy')
@@ -11,8 +12,16 @@ url='https://github.com/blacklanternsecurity/TREVORproxy'
 license=('GPL3')
 depends=('python' 'python-sh')
 makedepends=('python-build' 'python-pip')
-source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz")
-sha512sums=('6fae2f004ee4d0d11505ad623d1144ff7ac267aeb97dbd875da288a5126d78865d7ba0f152c6f6a0015ac3e226ea5f1450ffffffa11f0865afce6381b04a67e2')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz"
+        'cli.py.patch')
+sha512sums=('6fae2f004ee4d0d11505ad623d1144ff7ac267aeb97dbd875da288a5126d78865d7ba0f152c6f6a0015ac3e226ea5f1450ffffffa11f0865afce6381b04a67e2'
+            '8710afe78841012323b08925681ab81deab7ca0699c9cb1fc50124008de679a0a80305129504ea8863c1549da589d5030bd02d5007b2c0448a457553f2a770ac')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -p2 < "$srcdir/cli.py.patch"
+}
 
 build() {
   cd "$pkgname-$pkgver"
@@ -35,5 +44,12 @@ package() {
     --no-index \
     --find-links="file://$startdir/dist" \
     "$pkgname"
+
+  touch "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/lib/__init__.py"
+
+  sed -i 's|import lib.logger|from .lib import logger|' \
+    "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/cli.py"
+  sed -i 's|from lib|from .lib|g' \
+    "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname/cli.py"
 }
 

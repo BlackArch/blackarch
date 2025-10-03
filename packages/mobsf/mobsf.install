@@ -1,23 +1,29 @@
 post_install() {
+  set -e
   cd /usr/share/mobsf
+  python -m venv venv
+  source venv/bin/activate &&
+    pip install --isolated --root="/usr/share/mobsf" --prefix='venv' .
+  echo '==> To initialize mobsf to be run as standard user, execute the following commands:'
   echo '==> Clean Up'
-  bash scripts/clean.sh y
+  echo 'bash /usr/share/mobsf/scripts/clean.sh y'
   echo '==> Migrating Database if exists'
-  python manage.py makemigrations
-  python manage.py makemigrations StaticAnalyzer
-  python manage.py migrate
+  echo 'python /usr/share/mobsf/manage.py makemigrations'
+  echo 'python /usr/share/mobsf/manage.py makemigrations StaticAnalyzer'
+  echo 'python /usr/share/mobsf/manage.py migrate'
   echo '==> Installation Complete'
-  echo '==> Remove old Database in ~/.MobSF/ if migration failed!'
+  echo '==> Remove old Database in ~/.MobSF/ if migration fails!'
 }
 
 post_upgrade() {
+  set -e
   cd /usr/share/mobsf
-  echo '==> Clean Up'
-  bash scripts/clean.sh y
-  echo '==> Migrating Database'
-  python manage.py makemigrations
-  python manage.py makemigrations StaticAnalyzer
-  python manage.py migrate
-  echo '==> Remove old Database in ~/.MobSF/ if migration failed!'
+  python -m venv venv
+  source venv/bin/activate &&
+    pip install --isolated --root="/usr/share/mobsf" --prefix='venv' .
 }
 
+post_remove() {
+  # /usr/share/mobsf/venv
+  rm -r /usr/share/mobsf
+}

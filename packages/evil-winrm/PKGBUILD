@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname=evil-winrm
-pkgver=v3.5.r0.g7514b05
-pkgrel=1
+pkgver=v3.7.r0.gffe958c
+pkgrel=4
 epoch=1
 pkgdesc='The ultimate WinRM shell for hacking/pentesting.'
 arch=('any')
@@ -20,7 +20,12 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
@@ -44,10 +49,11 @@ package() {
   sed -zi "s/\[provider_sect\]\ndefault = default_sect/\[provider_sect\]\ndefault = default_sect\nlegacy = legacy_sect/" "$pkgdir/usr/share/$pkgname/openssl.cnf"
   sed -zi "s/\[default_sect\]\n# activate = 1/\[default_sect\]\nactivate = 1\n\[legacy_sect\]\nactivate = 1/" "$pkgdir/usr/share/$pkgname/openssl.cnf"
 
+  # Specify bundle's gemfile environment variable to avoid changing directories when running the program.
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname
-OPENSSL_CONF=/usr/share/$pkgname/openssl.cnf exec bundle exec $pkgname.rb "\$@"
+
+OPENSSL_CONF=/usr/share/$pkgname/openssl.cnf BUNDLE_GEMFILE=/usr/share/$pkgname/Gemfile exec bundle exec /usr/share/$pkgname/$pkgname.rb "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"

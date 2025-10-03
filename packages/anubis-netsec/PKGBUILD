@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=anubis-netsec
+_pkgname=anubis
+pkgver=1.1.3.r10.g52c4d62
+pkgrel=2
+pkgdesc='Subdomain enumeration and information gathering tool.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+url='https://github.com/jonluca/anubis'
+license=('MIT')
+depends=('python' 'python-python-nmap' 'python-shodan' 'python-docopt'
+         'python-requests' 'python-censys' 'python-dnspython')
+makedepends=('git' 'python-build' 'python-pip')
+source=("$pkgname::git+https://github.com/jonluca/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd $pkgname
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+

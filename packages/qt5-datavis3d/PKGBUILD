@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# from AUR - adapted our style
+#
+# Old Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Old Maintainer: Antonio Rojas <arojas@archlinux.org>
+
+pkgname=qt5-datavis3d
+_basever=5.15.17
+pkgver=5.15.17
+pkgrel=2
+_commit=a57e633b675d7886c3e5c64441f50ffe831f2de8
+pkgdesc='Qt Data Visualization module.'
+arch=('x86_64' 'aarch64')
+url='https://www.qt.io/'
+license=('GPL3')
+depends=('qt5-base')
+makedepends=('qt5-declarative' 'git')
+optdepends=('qt5-declarative: QML bindings')
+_pkgfqn=${pkgname/5-/}
+source=(kde-$_pkgfqn::git+https://invent.kde.org/qt/qt/$_pkgfqn#commit=$_commit)
+sha256sums=('8f264ff76d4899955fb1b820a8f38f197b1a8febd8930bacffcf5affe0733fe8')
+
+pkgver() {
+  cd "kde-$_pkgfqn"
+
+  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit` |
+    sed -e 's|+kde+r0||'
+}
+
+prepare() {
+  mkdir -p build
+}
+
+build() {
+  cd build
+
+  qmake "../kde-$_pkgfqn"
+  make
+}
+
+package() {
+  cd build
+
+  make INSTALL_ROOT="$pkgdir" install
+
+  # Drop QMAKE_PRL_BUILD_DIR because reference the build dir
+  find "$pkgdir/usr/lib" -type f -name '*.prl' \
+    -exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;
+}
+

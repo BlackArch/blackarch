@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=flare-floss
-pkgver=v3.0.1.r21.g50c9071
+pkgver=v3.1.1.r122.ge13cfe7
 pkgrel=1
 epoch=1
 pkgdesc='Obfuscated String Solver - Automatically extract obfuscated strings from malware.'
@@ -13,7 +13,7 @@ license=('Apache')
 depends=('python' 'python-tabulate' 'vivisect' 'python-viv-utils'
          'python-pydantic' 'python-tqdm' 'python-networkx' 'python-halo'
          'python-rich' 'python-pefile')
-makedepends=('git' 'python-setuptools')
+makedepends=('git' 'python-build' 'python-pip')
 source=("git+https://github.com/mandiant/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -23,21 +23,26 @@ pkgver() {
   git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
-prepare() {
-  cd $pkgname
-
-  sed -i 's/==/>=/' setup.py
-}
-
 build() {
   cd $pkgname
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+	pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 }
 

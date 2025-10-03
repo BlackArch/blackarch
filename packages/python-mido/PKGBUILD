@@ -3,26 +3,37 @@
 
 pkgname=python-mido
 _pkgname=mido
-pkgver=1.3.0
+pkgver=1.3.3
 pkgrel=1
 pkgdesc='MIDI Objects for Python.'
 arch=('any')
 url='https://pypi.org/project/mido/#files'
 license=('MIT')
 depends=('python')
-makedepends=('python-setuptools' 'python-pip' 'python-wheel')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('7e91daa704e72204af30af9c16a2e712a60794f8180c49d78de870381d50aac31029c01ae23fbb7c00947e299c1feba89622ea2648d54bd8786f497cf0a1bd20')
+sha512sums=('9a9b983b7d2cc6ea530f98df09bc84690dfc980467726217023991a680a7c3f294bb0ffac730e79dcc5a3e4afccacfb4423791df290a035260513a5f7cc26152')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+	pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

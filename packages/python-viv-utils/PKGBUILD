@@ -2,35 +2,47 @@
 # See COPYING for license details.
 
 pkgname=python-viv-utils
-_pkgname=viv_utils
-pkgver=0.7.9
+_pkgname=${pkgname#python-}
+pkgver=0.8.0
 pkgrel=1
 pkgdesc='Utilities for binary analysis using vivisect.'
 arch=('any')
-# https://github.com/williballenthin/viv-utils
-url='https://pypi.org/project/viv-utils/#files'
+url='https://pypi.org/project/viv-utils/'
 license=('Apache')
-depends=('python' 'python-funcy' 'python-pefile' 'vivisect'
-         'python-intervaltree' 'python-python-flirt')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/viv_utils-$pkgver.tar.gz")
-sha512sums=('e5353fd8d1e28b06e3808b96c7b029a4291344d3c240a6a81f98b7a471e3e5f3ce6196b7c0e252cdeb2cf3ce782b830e764e48379aab638edaa9c836d0e6a810')
-
-prepare() {
-  cd "$_pkgname-$pkgver"
-
-  sed -i 's/==/>=/' setup.py
-}
+depends=('python-black' 'python-build' 'python-click' 'python-cxxfilt'
+         'python-funcy' 'python-iniconfig' 'python-intervaltree' 'python-isort'
+         'python-msgpack' 'mypy' 'python-packaging' 'python-pathspec'
+         'python-pefile' 'python-pip' 'python-platformdirs' 'python-pluggy'
+         'python-pyasn1' 'python-pyasn1-modules' 'python-pycodestyle'
+         'python-pycparser' 'python-pyproject-hooks' 'python-pytest'
+         'python-pytest-instafail' 'python-pytest-sugar' 'python-python-flirt'
+         'python-setuptools' 'python-sortedcontainers' 'python-termcolor'
+         'vivisect')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://github.com/williballenthin/viv-utils/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('aa894fbdc36f9ce2b2c3689cb2ef11dab7004687e43bf94126c7c142fc8fdc65232562d2fe2da242f3ef2ff102e4d825e5f98169d4d795729bfccbe407d8ee7b')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

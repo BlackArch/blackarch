@@ -3,26 +3,37 @@
 
 pkgname=python-environs
 _pkgname=environs
-pkgver=9.5.0
-pkgrel=2
+pkgver=14.2.0
+pkgrel=1
 pkgdesc='Simplified environment variable parsing.'
 arch=('any')
 url='https://pypi.org/project/environs/#files'
 license=('MIT')
 depends=('python' 'python-marshmallow' 'python-dotenv')
-makedepends=('python2-setuptools' 'python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('618c422f0e2a90bc5922ea9c38f1f8f96a048e916c6f8023124e2bb755a93a11ccb25acd9b1879171c8144b7d1fb7777aa69101b700a5e675294e8584dc28bd3')
+sha512sums=('0705365bc07ec4314cab1f177595b3307309667b0cf212e5372b7bfa3f8edfc6c265ded92640cf2d31e459c92a3f117a659d4eb04d9803a161e1980aa72b842a')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

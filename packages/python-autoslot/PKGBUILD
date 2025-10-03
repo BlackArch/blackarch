@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-autoslot
+_pkgname=${pkgname#python-}
+pkgver=2024.12.1
+pkgrel=1
+pkgdesc='Automatic __slots__ for your Python classes.'
+arch=('any')
+url='https://github.com/cjrh/autoslot'
+license=('Apache-2.0')
+depends=('python')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('a82d40a8475bd0035c9e4bcacc19274fba9468dcfbee61245a46161a51c2b5ebebbece57b9bc2c2c5fc44020325546ff329913a28951d51a52f9215ecb16f948')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

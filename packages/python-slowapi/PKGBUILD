@@ -3,26 +3,37 @@
 
 pkgname=python-slowapi
 _pkgname=slowapi
-pkgver=0.1.8
-pkgrel=1
+pkgver=0.1.9
+pkgrel=3
 pkgdesc='A rate limiting extension for Starlette and Fastapi.'
 arch=('any')
 url='https://pypi.org/project/slowapi/#files'
 license=('MIT')
 depends=('python' 'python-limits' 'python-redis')
-makedepends=('python' 'python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('1558236630c0d14bd11d4e6a1ed86e3d2ad23654a88a3fdf2d36cc031d24fd4e1da2bdd0a3145a7cb767d32db4591692ec3ec89ecd2fa6ba54f66310c08f6bb3')
+sha512sums=('9d3f868a4121e5aff4dc79d2820ca4114019ba7b7cb73f379885529d611a637cc53ac7bdfc7716284c008a54d6ef6dabf907a09ae1ddfc09194569ed54d3e90b')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+	pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

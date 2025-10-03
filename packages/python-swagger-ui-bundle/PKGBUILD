@@ -1,30 +1,40 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
-#
-# Old Maintainer: Filipe Laíns (FFY00) <lains@archlinux.org>
 
 pkgname=python-swagger-ui-bundle
 _pkgname=swagger_ui_bundle
-pkgver=0.0.9
-pkgrel=2
-pkgdesc='Bundled swagger-ui.'
+pkgver=1.1.0
+pkgrel=1
+pkgdesc='Swagger UI bundled for usage with Python.'
 arch=('any')
-url='https://github.com/dtkav/swagger_ui_bundle'
+url='https://pypi.org/project/swagger-ui-bundle/'
 license=('Apache')
-depends=('python-jinja')
-makedepends=('python-setuptools' 'python-pip')
-source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
-sha512sums=('25318bb9e69a0e23f4382322586efb55dd1d3fc093c57527803cc8c9dd6f0e67ce51b20ec8cbc03cf456b8d95172ac1577d79100ba56c6580eeea7e4a649fbc4')
+depends=('python' 'python-jinja')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('76abc6579bacb3c00b203f29ed48d7bc4430487ae598107a7a4b730ce65fdb3ac77d8dc1dc6105282094a99fb1535ed0fcf4d072aa27f6a0240c4d6975653272')
 
 build() {
-  cd $_pkgname-$pkgver
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd $_pkgname-$pkgver
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

@@ -1,0 +1,102 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD from AUR.
+# Old Maintainer: Vianney Bouchaud <aur dot vianney at bouchaud dot org>
+
+pkgname=bruno
+pkgver=v1.34.2.r3.g4894ac2
+pkgrel=1
+pkgdesc='Opensource API Client for Exploring and Testing APIs.'
+groups=('blackarch' 'blackarch-webapp')
+arch=('x86_64')
+url="https://www.usebruno.com/"
+license=('MIT')
+_electron=electron31
+depends=("$_electron" 'alsa-lib')
+makedepends=('nvm' 'asar' 'python-setuptools' 'python')
+source=("git+https://github.com/usebruno/$pkgname.git"
+        "com.usebruno.app.Bruno.desktop")
+sha512sums=('SKIP'
+            '0c303dd2a3cb1d1628d25b33d515df4fdaf116298520bed5a251d8320d5f771146a625165ab07fbbf7f4698ebc3bcfc7682a44aaa635d980493c7fc208389884')
+
+_ensure_local_nvm() {
+  # lets be sure we are starting clean
+  which nvm >/dev/null 2>&1 && nvm deactivate && nvm unload
+
+  export NVM_DIR="$srcdir/$pkgname-$pkgver/.nvm"
+  # The init script returns 3 if version
+  #   specified in ./.nvrc is not (yet) installed in $NVM_DIR
+  #   but nvm itself still gets loaded ok
+  source /usr/share/nvm/init-nvm.sh || [[ $? != 1 ]]
+}
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  _ensure_local_nvm
+  cd $pkgname
+
+  nvm install
+
+  # https://typicode.github.io/husky/how-to.html#ci-server-and-docker
+  export HUSKY=0
+
+  npm install --cache "$srcdir/npm-cache"
+
+  npm install electron-builder --save-dev --cache "$srcdir/npm-cache"
+  npm install node-addon-api --save-dev --cache "$srcdir/npm-cache"
+}
+
+build() {
+  _ensure_local_nvm
+  export NODE_ENV=production
+  export NODE_OPTIONS=--openssl-legacy-provider
+
+  cd $pkgname
+
+  npm run build:graphql-docs
+  npm run build:bruno-query
+  npm run build:bruno-common
+  npm run sandbox:bundle-libraries --workspace=packages/bruno-js
+  npm run build:web
+
+  electronDist="/usr/lib/$_electron"
+  electronVer="$(cat $electronDist/version)"
+  sed -i -e "s~\"dist:linux\":.*~\"dist:linux\": \"electron-builder --linux --x64 --dir --config electron-builder-config.js -c.electronDist=$electronDist -c.electronVersion=$electronVer\",~g" packages/bruno-electron/package.json
+
+  npm run build:electron:linux
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 644 "$srcdir/com.usebruno.app.Bruno.desktop" -t \
+    "$pkgdir/usr/share/applications/"
+
+  install -Dm 755 /dev/null "$pkgdir/usr/bin/$pkgname"
+  cat >> "$pkgdir/usr/bin/$pkgname" <<EOD
+#! /usr/bin/sh
+ELECTRON_IS_DEV=0 exec $_electron /usr/lib/bruno "\$@"
+EOD
+
+  install -Dm 644 license.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -d "$pkgdir/usr/lib/$pkgname/"
+  asar e packages/bruno-electron/out/linux-unpacked/resources/app.asar \
+    "$pkgdir/usr/lib/$pkgname/"
+
+  for i in 16 24 48 64 128 256 512 1024; do
+    install -Dm 644 "packages/bruno-electron/resources/icons/png/${i}x${i}.png"\
+      "$pkgdir/usr/share/icons/hicolor/${i}x${i}/apps/com.usebruno.app.Bruno.png"
+  done
+}
+

@@ -1,0 +1,31 @@
+# Maintainer: Anatol Pomozov <anatol.pomozov@gmail.com>
+# Contributor: Andreas 'Segaja' Schleifer <segaja at archlinux dot org>
+
+_gemname=gio2
+pkgname="ruby-$_gemname"
+pkgver=4.3.0
+pkgrel=1
+pkgdesc='Ruby/GIO2 is a Ruby binding of gio-2.x.'
+arch=('x86_64' 'aarch64')
+url='http://ruby-gnome2.sourceforge.jp/'
+license=('LGPL2.1')
+depends=('ruby' "ruby-glib2=$pkgver" "ruby-gobject-introspection=$pkgver")
+makedepends=('gobject-introspection' 'ruby-native-package-installer')
+options=(!emptydirs)
+source=("https://rubygems.org/gems/$_pkgname-$pkgver.gem")
+noextract=("$_gemname-$pkgver.gem")
+sha512sums=('bc3ffcc07ff38c5c0ebaafa87bd5947d6b6be4403078afca1c668e9eb227dcd5257a0a610f5eea5b316f394571daaaa2f9ed848ef958e07dc86e163f641b8b25')
+
+package() {
+  local _gemdir="$(ruby -e'puts Gem.default_dir')"
+  local _platform="$(gem env platform | cut -d':' -f2)"
+  local _extension_api_version="$(ruby -e'puts Gem.extension_api_version')"
+
+  gem install --ignore-dependencies --no-user-install --no-document \
+    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" $_gemname-$pkgver.gem
+  rm -f "$pkgdir/$_gemdir/cache/$_gemname-$pkgver.gem" \
+    ${pkgdir}/${_gemdir}/gems/${_gemname}-${pkgver}/ext/gio2/*.o \
+    "${pkgdir}/${_gemdir}/extensions/${_platform}/${_extension_api_version}/${_gemname}-${pkgver}/gem_make.out" \
+    "${pkgdir}/${_gemdir}/gems/${_gemname}-${pkgver}/ext/gio2/Makefile"
+}
+

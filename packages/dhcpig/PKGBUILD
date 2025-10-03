@@ -2,15 +2,15 @@
 # See COPYING for license details.
 
 pkgname=dhcpig
-pkgver=109.b580dc3
+pkgver=1.6.r4.ga140c62
 pkgrel=1
-epoch=2
+epoch=3
 pkgdesc='Enhanced DHCPv4 and DHCPv6 exhaustion and fuzzing script written in python using scapy network library.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-dos')
 url='https://github.com/kamorin/DHCPig'
-license=('GPL2')
+license=('GPL-2.0-or-later')
 arch=('any')
-depends=('python2' 'python2-scapy')
+depends=('python' 'python-scapy' 'libpcap')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/kamorin/DHCPig.git")
 sha512sums=('SKIP')
@@ -18,18 +18,19 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
-prepare() {
-  cd $pkgname
-
-  sed -i 's/python/python2/' pig.py
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
   cd $pkgname
 
   install -Dm 755 pig.py "$pkgdir/usr/bin/$pkgname"
+
+  install -Dm 644 "$pkgname.1" "$pkgdir/usr/share/man/man1/$pkgname.1"
 }
 

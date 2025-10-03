@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# from AUR - adapted to you style
+#
+# Old Contributor: Lex Black <autumn-wind@web.de>
+
+pkgname=pg-gvm
+pkgver=22.6.9
+pkgrel=2
+pkgdesc='Greenbone Library for helper functions in PostgreSQL.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/greenbone/pg-gvm'
+license=('GPL-3.0-only')
+depends=('gvm-libs' 'glib2' 'libical' 'postgresql')
+makedepends=('cmake' 'doxygen' 'xmltoman' 'libxslt')
+source=("https://github.com/greenbone/pg-gvm/archive/v$pkgver.tar.gz"
+        '0001_not-sbin.patch')
+sha512sums=('4e44bd2632407bc0493ffb3e5d652c8b5a6ee4ec2c4a91d313e7408c2a20d42b097d23075a7cdd53d8d2c301b39a7a7cdf9c6b6aa1614e85620e188091fcf06c'
+            'fad85369efd8ebcc0c72928328e25b239a227ca014ba2f0d237cf70286d2e6ee62193a02e268895a53493d198852b01b43dd8cdae553225fcfa0159b7369eb91')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -Np2 -i "$srcdir/0001_not-sbin.patch"
+}
+
+build() {
+  cmake \
+    -B build \
+    -S "$pkgname-$pkgver" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_DEV_PREFIX=/usr
+
+  make -C build
+}
+
+package() {
+  make DESTDIR="$pkgdir" -C build install
+}
+

@@ -4,25 +4,39 @@
 pkgname=python-cherrypy-cors
 _pkgname=cherrypy-cors
 pkgver=1.7.0
-pkgrel=1
+_pyver=3.13
+pkgrel=4
 pkgdesc='CORS handling as a cherrypy tool.'
 arch=('any')
 url='https://pypi.org/project/cherrypy-cors/#files'
 license=('MIT')
 depends=('python')
-makedepends=('python-setuptools' 'python-pip' 'python-wheel')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('5e2830f1235bd88ce3563e064f5af14054098b0f9f8f7114e8c86e58fcc69b0c41fc4d0518e638f509595b36a2df3e85119badc6e61c8a31ead51ca94d65ae4c')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+	pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+
+  rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/__pycache__"
 }
 

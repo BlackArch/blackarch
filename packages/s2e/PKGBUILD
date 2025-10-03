@@ -1,0 +1,63 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=s2e
+pkgver=v2.0.0.r544.g0cab056
+pkgrel=1
+pkgdesc='A platform for multi-path program analysis with selective symbolic execution.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-binary')
+url='https://github.com/S2E/s2e'
+license=('custom:cyberhaven')
+makedepends=('git' 'repo' 'ca-certificates' 'cmake' 'curl' 'wget' 'python'
+             'python-pip' 'python-virtualenv' 'mingw-w64-gcc' 'lsb-release'
+             'autoconf' 'libtool' 'protobuf' 'protobuf-c' 'libdwarf' 'libelf'
+             'boost' 'zlib' 'jemalloc' 'nasm' 'pkgconf' 'memcached' 'libbsd'
+             'postgresql-libs' 'glibc' 'binutils' 'boost-libs' 'pixman' 'glib2'
+             'gcc-multilib' 'gtest' 'rapidjson' 'capstone' 'unzip' 'zstd'
+             'python-sphinx_rtd_theme')
+source=("git+https://github.com/S2E/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  git config --global color.ui false
+  repo init -u https://github.com/s2e/manifest.git
+  repo sync --fail-fast
+}
+
+build() {
+  cd $pkgname
+
+  export S2E_PREFIX="$pkgdir/usr/share/$pkgname"
+  export USE_Z3_BINARY=yes
+
+  mkdir -p build
+  cd build
+
+  make -f ../s2e/Makefile stamps/llvm-release-make
+  make -f ../s2e/Makefile stamps/z3
+  make -f ../s2e/Makefile stamps/libdwarf-make
+
+  cd ../docs/sphinx
+  ./build.sh
+}
+
+package() {
+  cd $pkgname
+
+  make -f ../s2e/Makefile S2E_PREFIX="$pkgdir/usr/share/$pkgname" install
+}
+

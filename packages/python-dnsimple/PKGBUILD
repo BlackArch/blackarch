@@ -4,25 +4,36 @@
 pkgname=python-dnsimple
 _pkgname=dnsimple
 pkgdesc='DNSimple API service for python.'
-pkgver=2.11.0
+pkgver=5.0.0
 pkgrel=1
 arch=('any')
 url='https://pypi.org/project/dnsimple/'
 license=('MIT')
 depends=('python' 'python-requests' 'python-omitempty')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('e52856d24178592e25e03d03f8aad18c1641142d6c28814ece2a52d39cb2330ed07f37911aef83a183965bce228e108dfd45fafdc737dbef81a4bf49b4116699')
+sha512sums=('397620b9baa78a6e407e898f91d4009b6e0bba394c7e61e270bc3e2341abeaec2256450c822c65b0d5fecd3813b76476364c142a9048ef5982f3b3b2e84611af')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

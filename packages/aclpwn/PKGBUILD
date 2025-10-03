@@ -3,14 +3,15 @@
 
 pkgname=aclpwn
 pkgver=4.81480cc
-pkgrel=6
+pkgrel=11
 pkgdesc='Active Directory ACL exploitation with BloodHound.'
 arch=('any')
 groups=('blackarch' 'blackarch-exploitation')
 url='https://github.com/fox-it/aclpwn.py'
 license=('MIT')
 depends=('python' 'impacket' 'python-ldap3' 'python-neo4j-driver'
-         'python-requests' 'python-neotime' 'python-neobolt' 'ldapdomaindump')
+         'python-requests' 'python-neotime' 'python-neobolt'
+         'python-ldapdomaindump')
 makedepends=('git' 'python-setuptools')
 source=("$pkgname::git+https://github.com/fox-it/aclpwn.py.git")
 sha512sums=('SKIP')
@@ -18,7 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

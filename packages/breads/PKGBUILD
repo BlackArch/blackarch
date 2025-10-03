@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=breads
+pkgver=131.2d97bcc
+_pyver=3.13
+pkgrel=5
+pkgdesc='BREaking Active Directory Security; focused on enumerating and attacking Active Directory environments through LDAP and SMB protocols.'
+arch=('any')
+groups=('blackarch' 'blackarch-windows' 'blackarch-exploitation'
+        'blackarch-recon')
+url='https://github.com/oppsec/breads'
+license=('MIT')
+depends=('python' 'python-ldap3' 'python-rich' 'impacket')
+makedepends=('git' 'python-build' 'python-pip' 'python-setuptools')
+source=("git+$url.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd $pkgname
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    "$pkgname-ad"
+
+  rm -f "$pkgdir/usr/lib/python$_pyver/site-packages/__init__.py"
+}
+

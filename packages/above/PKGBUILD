@@ -1,0 +1,64 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=above
+pkgver=v2.8.r1.g1f4ff3e
+pkgrel=1
+epoch=1
+pkgdesc='Network Protocols Sniffer.'
+arch=('any')
+groups=('blackarch' 'blackarch-sniffer' 'blackarch-scanner' 'blackarch-voip'
+        'blackarch-fingerprint' 'blackarch-networking' 'blackarch-recon')
+url='https://github.com/casterbyte/Above'
+license=('Apache-2.0')
+depends=('python' 'python-colorama' 'scapy')
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+source=("$pkgname::git+https://github.com/casterbyte/Above.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  # packaging fix until upstream merge
+  # https://github.com/casterbyte/Above/pull/11
+  mkdir -p $pkgname
+  mv above*.py "$pkgname/"
+
+  # Create individual folder to avoid deployment under root
+  # /usr/lib/python3.13/site-packages/
+  sed -i 's/"console_scripts": \["above = above:main"\]/"console_scripts": \["above = above.above:main"\]/' setup.py
+  sed -i "s/py_modules=\['above_oui_dict'\]/py_modules=\['above.above_oui_dict'\]/" setup.py
+  sed -i 's/from above_oui_dict/from above.above_oui_dict/' \
+    "$pkgname/$pkgname.py"
+  # useless and avoid deployment of /usr/bin/above.py
+  sed -i "/scripts=\['above.py'\]/d" setup.py
+
+  # else above/above.py is not included in SOURCES.txt because find_packages()
+  # doesn't detect it as a package
+  touch "$pkgname/__init__.py"
+}
+
+build() {
+  cd "$pkgname"
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$pkgname"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+

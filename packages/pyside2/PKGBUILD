@@ -1,0 +1,148 @@
+# Maintainer: envolution
+# Contributor: Antonio Rojas <arojas@archlinux.org>
+# Contributor: Felix Yan <felixonmars@archlinux.org>
+# shellcheck shell=bash disable=SC2034,SC2154
+
+pkgname=(
+  pyside2
+  pyside2-tools
+  shiboken2
+  python-shiboken2
+)
+pkgbase=pyside2
+pkgver=5.15.16+3.1
+pkgrel=1
+pkgdesc="CPython bindings generator for C++ libraries - Debian rel ${pkgver#*+}"
+arch=('x86_64' 'aarch64')
+url="https://wiki.qt.io/Qt_for_Python"
+license=('LGPL-3.0-or-later')
+depends=(qt5-multimedia qt5-tools qt5-sensors qt5-charts qt5-webengine qt5-datavis3d
+  qt5-websockets qt5-speech qt5-3d qt5-svg qt5-script qt5-scxml qt5-x11extras
+  qt5-quickcontrols2 qt5-serialport qt5-remoteobjects qt5-xmlpatterns)
+makedepends=(cmake python-setuptools python-wheel llvm clang)
+
+_debver="${pkgver/+/-}"
+_pkgver="${pkgver%%+*}"
+
+source=(
+  "https://download.qt.io/official_releases/QtForPython/pyside2/PySide2-${_pkgver}-src/pyside-setup-opensource-src-${_pkgver}.tar.xz"
+  "http://deb.debian.org/debian/pool/main/p/pyside2/pyside2_${_debver}.debian.tar.xz"
+  Modify-sendCommand-signatures.patch
+  cmake-findpython.patch
+)
+
+sha256sums=('6d3ed6fd17275ea74829ab56df9c2e7641bfca6b5b201cf244998fa81cf07360'
+            '523d191e45b1a9720e8eb8ea66fd930f49ffad54df1295ca09efea8838257aa6'
+            '2f39461136a718a9f75bd94c1e71fc358764af25f68c650fd503c777e32ff302'
+            '4d82961c7f978dadae6e82c73fb0a239dbb62db5f66106975f75dd25161843e9')
+
+_pkgdir="pyside-setup-opensource-src-${_pkgver}"
+
+_get_python_libdir() {
+  python -c "from sysconfig import get_path; print(get_path('platlib'))"
+}
+
+prepare() {
+  mapfile -t _patch_series <debian/patches/series
+  cd $_pkgdir
+  for _patch in "${_patch_series[@]}"; do
+    patch -Np1 -i "../debian/patches/$_patch"
+  done
+  patch -Np1 -i ../Modify-sendCommand-signatures.patch
+  patch -Np1 -i ../cmake-findpython.patch
+}
+
+build() {
+  local _pythonpath="$(_get_python_libdir)"
+  cd $_pkgdir
+  export LLVM_INSTALL_DIR='/usr/bin'
+  CFLAGS="-I${_pythonpath}/numpy/_core/include $CFLAGS"
+  CXXFLAGS="-I${_pythonpath}/numpy/_core/include $CXXFLAGS"
+  if [ ! -f "./.build-complete" ]; then
+    cmake -B build -S "./" \
+      -DCMAKE_INSTALL_PREFIX=/usr \
+      -DCMAKE_BUILD_TYPE=None \
+      -DBUILD_TESTS=OFF \
+      -DPYTHON_EXECUTABLE=/usr/bin/python \
+      -DPYTHON_CONFIG_SUFFIX='python-config' \
+      -DCMAKE_POLICY_VERSION_MINIMUM=3.30
+
+    cmake --build build
+  else
+    msg2 'Pyside2 build cache found, skipping configuration and compilation.  Remove ${pkgdir}/.build-complete to build again'
+  fi
+  touch .build-complete
+}
+
+package_shiboken2() {
+  pkgdesc='Generates bindings for C++ libraries using CPython source code'
+  depends=('clang' 'llvm' 'libxslt' 'qt5-xmlpatterns')
+
+  cd $_pkgdir
+  DESTDIR="${pkgdir}" cmake --install build/sources/shiboken2
+
+  # Remove files conflicting with other packages
+  rm -r "${pkgdir}"/usr/lib/{python*,libshiboken*}
+  rm "${pkgdir}/usr/bin/shiboken_tool.py"
+}
+
+package_python-shiboken2() {
+  pkgdesc='Python bindings for shiboken2'
+  depends=('python' 'python-numpy' 'pyside2')
+  local _pythonpath="$(_get_python_libdir)"
+
+  cd $_pkgdir
+  DESTDIR="${pkgdir}" cmake --install build/sources/shiboken2
+
+  # Remove unnecessary files
+  rm -r "${pkgdir}"/usr/{bin,include,lib/{cmake,pkgconfig}}
+
+  # Install egg-info
+  python setup.py egg_info --build-type=shiboken2
+  install -dm755 "${pkgdir}${_pythonpath}/shiboken2.egg-info"
+  mv shiboken2.egg-info "${pkgdir}${_pythonpath}/shiboken2.egg-info"
+}
+
+package_pyside2() {
+  pkgdesc='Enables the use of Qt5 APIs in Python applications'
+  depends=('python-shiboken2' 'qt5-declarative' 'qt5-xmlpatterns' 'shiboken2')
+  optdepends=(
+    'qt5-svg: QtSvg bindings'
+    'qt5-script: QtScript bindings'
+    'qt5-speech: QtTextToSpeech bindings'
+    'qt5-websockets: QtWebSockets bindings'
+    'qt5-webengine: QtWebEngine bindings'
+    'qt5-datavis3d: QtDataVisualization bindings'
+    'qt5-scxml: QtScxml bindings'
+    'qt5-sensors: QtSensors bindings'
+    'qt5-3d: Qt3D bindings'
+    'qt5-x11extras: QtX11Extras bindings'
+    'qt5-charts: QtCharts bindings'
+    'qt5-tools: QtHelp bindings'
+    'qt5-remoteobjects: QtRemoteObjects bindings'
+    'qt5-serialport: QtSerialPort bindings'
+    'qt5-quickcontrols2: QtQuickControls2 bindings'
+  )
+  provides=('qt5-python-bindings')
+  local _pythonpath="$(_get_python_libdir)"
+
+  cd $_pkgdir
+  DESTDIR="${pkgdir}" cmake --install build/sources/pyside2
+
+  # Install egg-info
+  python setup.py egg_info --build-type=pyside2
+  install -dm755 "${pkgdir}${_pythonpath}/PySide2.egg-info"
+  mv PySide2.egg-info "${pkgdir}${_pythonpath}/PySide2.egg-info"
+}
+
+package_pyside2-tools() {
+  pkgdesc='Tools for PySide2'
+  depends=('pyside2' 'qt5-base' 'gcc-libs' 'glibc')
+
+  cd $_pkgdir
+  DESTDIR="${pkgdir}" cmake --install build/sources/pyside2-tools
+
+  # Remove files provided by qt5-base
+  rm "${pkgdir}/usr/bin/"{rcc,uic,designer,pyside_tool.py}
+}
+# vim:set ts=2 sw=2 et:

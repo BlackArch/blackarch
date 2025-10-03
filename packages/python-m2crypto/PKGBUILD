@@ -2,28 +2,50 @@
 # See COPYING for license details.
 
 pkgname=python-m2crypto
-_pkgname=M2Crypto
-pkgver=0.39.0
+_pkgname=${pkgname#python-}
+pkgver=0.45.1.r34.g9705d73
 pkgrel=1
-pkgdesc='Wrapper for OpenSSL.'
-arch=('any')
+pkgdesc='A Python crypto and SSL toolkit.'
+arch=('x86_64' 'aarch64')
 url='https://gitlab.com/m2crypto/m2crypto'
 license=('MIT')
-depends=('python' 'python-wheel')
-makedepends=('python-setuptools' 'swig')
+depends=('python' 'openssl')
+makedepends=('git' 'python-build' 'python-pip' 'python-wheel' 'swig')
 options=(!emptydirs)
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('5d8210c6204fd71f06d238c5b1fe08dd38d6b8e92db7b1e433a9e4e2fe9af46d6d55df7550716a7d05328fb3c9eed427f015b7d5a1fe33a073f0af15a82ab050')
+source=("git+https://gitlab.com/m2crypto/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
 
 build() {
-  cd "$_pkgname-$pkgver"
+  cd $_pkgname
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "$_pkgname-$pkgver"
+  cd $_pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

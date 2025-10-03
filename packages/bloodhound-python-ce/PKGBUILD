@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=bloodhound-ce-python
+_pkgname=BloodHound.py
+pkgver=v1.0.1.r202.gebcff84
+pkgrel=1
+pkgdesc='Python data collector for Bloodhound community edition (v5)'
+arch=('any')
+groups=('blackarch' 'blackarch-recon' 'blackarch-windows')
+url='https://github.com/dirkjanm/BloodHound.py'
+license=('MIT')
+depends=('python' 'python-dnspython' 'impacket' 'python-ldap3' 'python-pyasn1'
+         'python-pycryptodome')
+makedepends=('python-setuptools' 'git')
+source=("git+https://github.com/dirkjanm/$_pkgname.git#branch=bloodhound-ce")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+  cd "$_pkgname"
+
+  # prevent conflicts with bloodhound-python package
+  # workaround patch until solved upstream https://github.com/dirkjanm/BloodHound.py/issues/206
+  mv bloodhound/ bloodhound_ce/
+  sed -i -E "s/'(bloodhound)(|\..+)'/'\1_ce\2'/g" setup.py # for the 4 packages=[] lines
+  sed -i "s/=bloodhound:/=bloodhound_ce:/g" setup.py  # for the console_scripts line
+  # rename all import
+  find bloodhound_ce/ -type f -name '*.py' -exec sed -i 's/import bloodhound/import bloodhound_ce/g' {} \+ \
+                                           -exec sed -i 's/from bloodhound/from bloodhound_ce/g' {} \+
+}
+
+build() {
+  cd "$_pkgname"
+
+  python setup.py build
+}
+
+package() {
+  cd "$_pkgname"
+
+  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

@@ -4,26 +4,37 @@
 pkgname=python-github3.py
 _pkgname=github3.py
 pkgver=4.0.1
-pkgrel=1
+pkgrel=3
 pkgdesc='Python wrapper for the GitHub API (http://developer.github.com/v3).'
 arch=('any')
 url='https://pypi.org/project/github3.py/#files'
 license=('BSD')
 depends=('python' 'python-dateutil' 'python-jwcrypto' 'python-uritemplate'
          'python-requests')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('a79f7e4c48405318bd61d03c7a8b2dc3629f6e2d8e954e316fba319115dd12c6e5e2fd69a00743e86078367b083841dbc494704e66ffda8582fb48c614ecf5b2')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+ 	pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

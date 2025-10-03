@@ -2,18 +2,18 @@
 # See COPYING for license details.
 
 pkgname=responder
-pkgver=v3.1.4.0.r9.g1a2f2fd
+pkgver=v3.1.7.0.r0.gfe5f632
 pkgrel=1
 epoch=4
 pkgdesc='A LLMNR and NBT-NS poisoner, with built-in HTTP/SMB/MSSQL/FTP/LDAP rogue authentication server supporting NTLMv1/NTLMv2/LMv2 (multirelay version).'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-spoof'
         'blackarch-networking')
 arch=('any')
-depends=('impacket' 'mingw-w64-gcc' 'python' 'python-cryptography'
-         'python-pycryptodome' 'python-netifaces')
+depends=('impacket' 'mingw-w64-gcc' 'python' 'python-aioquic'
+         'python-cryptography' 'python-pycryptodome' 'python-netifaces')
 makedepends=('git')
 url='https://github.com/lgandx/Responder'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 source=("$pkgname::git+https://github.com/lgandx/Responder.git")
 sha512sums=('SKIP')
 install="$pkgname.install"
@@ -21,7 +21,12 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

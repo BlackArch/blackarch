@@ -1,0 +1,60 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=qradiolink
+pkgver=0.9.1.3.r1.gbcc7574
+pkgrel=1
+_branch=gr_3.10
+pkgdesc='Multimode SDR transceiver for GNU radio, ADALM-Pluto, LimeSDR, USRP.'
+groups=('blackarch' 'blackarch-radio')
+arch=('x86_64' 'aarch64')
+url='https://github.com/qradiolink/qradiolink'
+license=('GPL-3.0-or-later' 'LGPL-3.0-or-later' 'MIT')
+depends=('gnuradio' 'protobuf' 'gnuradio-osmosdr' 'libvolk' 'opus' 'speexdsp'
+         'log4cpp' 'codec2' 'alsa-lib' 'libjpeg-turbo' 'libconfig' 'qt5-base'
+         'qt5-multimedia' 'libftdi' 'libsndfile' 'gstreamer' 'pulseaudio'
+         'limesuite' 'soapysdr' 'sqlite' 'libuhd')
+makedepends=('git' 'cppzmq' 'boost' 'boost-libs')
+source=("git+https://github.com/qradiolink/$pkgname.git#branch=$_branch")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  # Fix linking libftdi library
+  sed -i 's|-lftdi|-lftdi1|g' qradiolink.pro
+}
+
+build() {
+  cd $pkgname
+
+  mkdir -p build
+  cd src/ext/
+  protoc --cpp_out=. Mumble.proto
+  protoc --cpp_out=. QRadioLink.proto
+  cd ../../build/
+  qmake QMAKE_LFLAGS+="-labsl_log_internal_message -labsl_log_internal_check_op -labsl_base -labsl_status -labsl_strings -labsl_raw_logging_internal -labsl_throw_delegate -labsl_spinlock_wait -labsl_hash -labsl_raw_hash_set -labsl_cord -labsl_time -labsl_synchronization" "INCLUDEPATH+=/usr/include/libftdi1" ..
+
+  make
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "build/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 "$pkgname.desktop" \
+    "$pkgdir/usr/share/applications/$pkgname.desktop"
+  install -Dm 644 LICENSE.MIT "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

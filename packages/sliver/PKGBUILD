@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sliver
+pkgver=v1.5.39.r1458.g422a1d3
+pkgrel=1
+pkgdesc='Opensource C2 framework.'
+groups=('blackarch' 'blackarch-backdoor' 'blackarch-automation')
+url='https://github.com/BishopFox/sliver'
+arch=('x86_64' 'aarch64')
+makedepends=('git' 'go' 'zip' 'unzip')
+license=('BSD-3-Clause')
+source=("$pkgname::git+https://github.com/BishopFox/$pkgname.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  make --directory $pkgname
+}
+
+package() {
+  install -Dm 755 "$pkgname/$pkgname-server" "$pkgdir/usr/bin/$pkgname-server"
+  install -Dm 755 "$pkgname/$pkgname-client" "$pkgdir/usr/bin/$pkgname-client"
+
+  install -dm 755 "$pkgdir/usr/share/bash-completion/completions/"
+  "$pkgname/$pkgname-server" completion bash > \
+    "$pkgdir/usr/share/bash-completion/completions/$pkgname-server"
+  "$pkgname/$pkgname-client" completion bash > \
+    "$pkgdir/usr/share/bash-completion/completions/$pkgname-client"
+
+  install -dm 755 "$pkgdir/usr/share/fish/vendor_completions.d/"
+  "$pkgname/$pkgname-server" completion fish > \
+    "$pkgdir/usr/share/fish/vendor_completions.d/$pkgname-server.fish"
+  "$pkgname/$pkgname-client" completion fish > \
+    "$pkgdir/usr/share/fish/vendor_completions.d/$pkgname-client.fish"
+
+  install -dm 755 "$pkgdir/usr/share/zsh/site-functions/"
+  "$pkgname/$pkgname-server" completion zsh > \
+    "$pkgdir/usr/share/zsh/site-functions/_$pkgname-server"
+  "$pkgname/$pkgname-client" completion zsh > \
+    "$pkgdir/usr/share/zsh/site-functions/_$pkgname-client"
+}
+

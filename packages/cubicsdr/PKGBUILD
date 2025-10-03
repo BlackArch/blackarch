@@ -1,0 +1,64 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Initial PKGBUILD from AUR.
+# Maintainer: Carl Smedstad <carl.smedstad at protonmail dot com>
+# Contributor: Josef Miegl <josef@miegl.cz>
+# Contributor: Romain Porte <microjoe@microjoe.org>
+# Contributor: Michal Krenek (Mikos) <m.krenek@gmail.com>
+# Contributor: valvetime <valvetimepackages@gmail.com>
+# Contributor: Dan McCurry <dan.mccurry at linux dot com>
+# Contributor: Tom Swartz <tom@tswartz.net>
+
+pkgname=cubicsdr
+_pkgname=CubicSDR
+pkgver=0.2.7
+pkgrel=1
+pkgdesc='Cross-Platform Software-Defined Radio Application.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-radio')
+url='https://github.com/cjcliffe/CubicSDR'
+license=('GPL2')
+depends=('gcc-libs' 'glibc' 'hamlib' 'hicolor-icon-theme' 'libglvnd' 'libpulse'
+         'liquid-dsp' 'soapysdr' 'wxwidgets-common' 'wxwidgets-gtk3' 'freeglut')
+makedepends=('cmake')
+optdepends=(
+  'fftw: FFTW support'
+  'limesuite: support for LimeSDR'
+  'soapyairspy: support for Airspy R2 and Airspy Mini'
+  'soapyhackrf: support for HackRF'
+  'soapyosmo: support for MiriSDR and RFSpace'
+  'soapyplutosdr: support for PlutoSDR'
+  'soapyremote: use any SoapySDR device remotely over network'
+  'soapyrtlsdr: support for RTL-SDR (RTL2832U) dongles'
+  'soapysdrplay: support for SDRplay RSP'
+)
+source=("$pkgname-$pkgver.tar.gz::$url/archive/$pkgver.tar.gz"
+        "$pkgname.desktop")
+sha512sums=('baffb0f26cee4b76db0d29c3084d459806db9d0b36c73efe0ab5aa11edcd67fc87836e170658c2ce3b0b2bf55b534e2e09193d60d17938b6dbbef52f0a813f7e'
+            '4beee3c5cef788d807b0d9456026a8f6aa583ae7aee64bacdf3d8f7a15f762f12733fe82c72d05254951c90e64889a4bd8857babc3093e63204dbd8d65ab66f0')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  cmake -S . -B build \
+    -DCMAKE_BUILD_TYPE=None \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -Wno-dev \
+    -DUSE_HAMLIB=ON \
+    -DENABLE_DIGITAL_LAB=ON
+  cmake --build build
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  DESTDIR="$pkgdir" cmake --install build
+
+  install -Dm 644 -t "$pkgdir/usr/share/applications" "$srcdir/cubicsdr.desktop"
+  install -Dm 644 -t "$pkgdir/usr/share/icons/hicolor/256x256/apps" \
+    "$pkgdir/usr/share/cubicsdr/CubicSDR.png"
+
+  ln -s /usr/bin/CubicSDR "$pkgdir/usr/bin/$pkgname"
+}
+

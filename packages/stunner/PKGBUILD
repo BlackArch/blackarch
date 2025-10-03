@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=stunner
+pkgver=v0.5.8.r99.gd47c9f3
+pkgrel=1
+pkgdesc='Test and exploit STUN, TURN and TURN over TCP servers.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-networking' 'blackarch-webapp')
+url='https://github.com/firefart/stunner'
+license=('CC-BY-NC-SA-4.0')
+depends=()
+makedepends=('git' 'go')
+source=("git+https://github.com/firefart/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname .
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" Readme.md
+}
+

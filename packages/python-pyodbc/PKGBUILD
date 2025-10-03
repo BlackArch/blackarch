@@ -3,15 +3,16 @@
 
 pkgname=python-pyodbc
 _pkgname=pyodbc
-pkgver=4.0.39
+pkgver=5.2.0
 pkgrel=1
-pkgdesc='DB API Module for ODBC'
+pkgdesc='DB API Module for ODBC.'
 arch=('x86_64' 'aarch64')
 url='https://pypi.org/project/pyodbc/'
 license=('MIT')
 depends=('python' 'unixodbc')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('a260dbad5a95c09cb08662f9d284acbcbd8cdb4748fdff04687d872736819bb741e44c365372a260c9b510ea2a304564d87b6e37cb6bf5f4c053dea857ffb03d')
+sha512sums=('bc8649ac7d2ceea9453b91064d3dcee28ad2c51630542d917afd872424c987a9dcec8d5e4fe8312311d5009c4cd826d664f4e58ea9f2cb7305af05da0e0fd2df')
 
 prepare() {
   echo "Version: $pkgver.0" > "$_pkgname-$pkgver/PKG-INFO"
@@ -20,15 +21,23 @@ prepare() {
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm "$pkgdir/usr/pyodbc.pyi"
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

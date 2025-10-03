@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-pyfatfs
+_pkgname=${pkgname#python-}
+pkgver=v1.1.0.r0.g5590fb8
+pkgrel=1
+pkgdesc='Python based FAT12/FAT16/FAT32 implementation with VFAT support.'
+arch=('any')
+url='https://github.com/nathanhi/pyfatfs'
+license=('MIT')
+depends=('python' 'python-fs')
+makedepends=('git' 'python-build' 'python-pip')
+options=(!emptydirs)
+source=("git+https://github.com/nathanhi/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $_pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd $_pkgname
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

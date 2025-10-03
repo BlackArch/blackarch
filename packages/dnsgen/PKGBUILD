@@ -1,0 +1,62 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=dnsgen
+pkgver=v1.0.4.r12.g7c98e7e
+_pyver=3.13
+pkgrel=2
+pkgdesc='Generate combination of domain names from the provided input.'
+arch=('any')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/AlephNullSK/dnsgen'
+license=('MIT')
+depends=('python' 'python-click' 'python-rich' 'python-tldextract')
+makedepends=('git' 'python-build' 'python-pip')
+source=("git+https://github.com/AlephNullSK/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i 's|python = ">=3.10, <3.13"|python = ">=3.10"|g' pyproject.toml
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd $pkgname
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+
+  # ... really ...
+  mkdir -p "$pkgdir/usr/lib/python$_pyver/site-packages/$pkgname"
+  cd "$pkgdir/usr/lib/python$_pyver/site-packages"
+  mv cli.py "$pkgname.py" __init__.py words.txt "$pkgname/"
+}
+

@@ -1,0 +1,59 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=volana
+pkgver=v1.0.0.r26.g6dbf9a4
+pkgrel=1
+pkgdesc='Shell command obfuscation to avoid detection systems.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-exploitation')
+url='https://github.com/ariary/volana'
+license=('Unlicense')
+makedepends=('git' 'go')
+source=("git+https://github.com/ariary/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  SECRET=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 24; echo '')
+
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go mod vendor
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname cmd/volana/volana.go
+
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w -X main.Secret=${SECRET}" \
+    -o $pkgname-encr cmd/volana-encr/volana-encr.go
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 "$pkgname-encr" "$pkgdir/usr/bin/$pkgname-encr"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+

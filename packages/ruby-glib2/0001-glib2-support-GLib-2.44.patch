@@ -1,0 +1,38 @@
+From c5cdb741a9eb72351739e48a38946b87c292c293 Mon Sep 17 00:00:00 2001
+From: Kouhei Sutou <kou@clear-code.com>
+Date: Sat, 4 Apr 2015 15:00:14 +0900
+Subject: [PATCH] glib2: support GLib 2.44
+
+gwin32.h includes an enum type that is available on Windows.
+
+GitHub: fix #361
+
+Reported by Benjamin Maisano. Thanks!!!
+
+diff --git a/glib2/ext/glib2/extconf.rb b/glib2/ext/glib2/extconf.rb
+index d88d971..1c5cd8d 100644
+--- a/glib2/ext/glib2/extconf.rb
++++ b/glib2/ext/glib2/extconf.rb
+@@ -56,10 +56,18 @@ create_pkg_config_file("Ruby/GLib2", package_id)
+ 
+ enum_types_prefix = "glib-enum-types"
+ include_paths = PKGConfig.cflags_only_I("glib-2.0")
++ignore_headers = [
++  "giochannel.h",
++  "gmain.h",
++  "gscanner.h",
++]
++unless (/mingw|cygwin|mswin/ === RUBY_PLATFORM)
++  ignore_headers << "gwin32.h"
++end
+ headers = include_paths.split.inject([]) do |result, path|
+   result + Dir.glob(File.join(path.sub(/^-I/, ""), "glib", "*.h"))
+ end.reject do |file|
+-  /g(iochannel|main|scanner)\.h/ =~ file
++  ignore_headers.include?(File.basename(file))
+ end
+ include_paths = PKGConfig.cflags_only_I("gobject-2.0")
+ headers = include_paths.split.inject(headers) do |result, path|
+-- 
+2.3.5
+

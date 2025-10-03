@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=cmsscanner
-pkgver=0.13.8.35.gf7c1700
+pkgver=0.15.0.r0.ge2fd720
 pkgrel=1
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-recon'
         'blackarch-fingerprint')
@@ -10,7 +10,7 @@ pkgdesc='CMS Scanner Framework.'
 arch=('any')
 url='https://github.com/wpscanteam/CMSScanner'
 license=('custom:unknown')
-depends=('ruby' 'ruby-bundler' 'libxslt')
+depends=('ruby' 'ruby-bundler' 'libxslt' 'ruby-nokogiri')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/wpscanteam/CMSScanner.git")
 sha512sums=('SKIP')
@@ -19,7 +19,26 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  git describe --always | sed 's|-|.|g' | sed 's/^v//'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' |
+      sed 's/^v//' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  # relax cms_scanner requirement for cmsscan
+  # https://github.com/wpscanteam/CMSScanner/pull/291
+  sed -i "s/'cms_scanner', '~> 0.13.5'/'cms_scanner', '~> 0.13'/" example/cmsscan.gemspec
+  # add missing erb requirement
+  # https://github.com/wpscanteam/CMSScanner/issues/292
+  sed -i '$ i\  s.add_dependency "erb"' example/cmsscan.gemspec
+  # avoid reline warning for ruby 3.5.0
+  sed -i '$ i\  s.add_dependency "reline"' example/cmsscan.gemspec
 }
 
 package() {

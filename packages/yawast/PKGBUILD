@@ -2,13 +2,14 @@
 # See COPYING for license details.
 
 pkgname=yawast
-pkgver=0.11.0
+_pkgname=yawast_ng
+pkgver=0.12.1
 pkgrel=1
 epoch=1
 pkgdesc='The YAWAST Antecedent Web Application Security Toolkit.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
 arch=('any')
-url='https://github.com/adamcaudill/yawast'
+url='https://pypi.org/project/yawast-ng/#files'
 license=('BSD')
 depends=('python' 'python-asn1crypto' 'python-attrs' 'python-beautifulsoup4'
          'python-certifi' 'python-cffi' 'python-chardet' 'python-colorama'
@@ -22,35 +23,32 @@ depends=('python' 'python-asn1crypto' 'python-attrs' 'python-beautifulsoup4'
          'python-cached-property' 'python-cerberus' 'python-first'
          'python-importlib-metadata' 'python-more-itertools' 'python-pep517'
          'python-ordered-set' 'python-orderedmultidict' 'python-pip-shims'
-         'python-plette' 'python-tomlkit' 'python-zipp'
-         'python-requirementslib')
-makedepends=('python-setuptools' 'python-requirementslib')
-#source=("git+https://github.com/adamcaudill/$pkgname.git"
-source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz"
-        'setup.py.patch')
-sha512sums=('a03c8621cef543cd2c6635f595cae9eed8e458eb25b941ddc4c506143f32cf19f7ae73da926fa59f832c63bcf5c0d53b9363b213d1a40abcae29fa14f678939e'
-            'acabc5def734bab6bfe60834f1c762c26c1496f3f20dfd822bba31c26d56917353004a27a6779c6bf55f2ce44e4cc9e4680210d65a49a956f67b9e7c88fe8ea6')
-
-prepare() {
-  cd "$pkgname-$pkgver"
-
-  patch -p0 < ../setup.py.patch
-
-  touch Pipfile
-}
+         'python-plette' 'python-tomlkit' 'python-zipp' 'python-requirementslib'
+         'python-webdriver-manager')
+makedepends=('python-build' 'python-pip')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('8ba36d80c2a1273f06c46797ebd07d3ef0ded13d0a234bbb5bea5c94c85c239d010142f21528425c8bad58c736d88a673461e5f5170dad7e0ef9fe2a78a63583')
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
