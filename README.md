@@ -99,8 +99,10 @@ We adhere to the Contributor Covenant Code of Conduct, which sets standards for 
     Pull Requests
 
 For a complete guide on contributing to BlackArch, please refer to our Dev-Guide.
+
 Contact Information
 Email: team@blackarch.org
+
 Matrix: [#BlackArch:matrix.org](https://matrix.to/#/#BlackArch:matrix.org)
 For updates and announcements, check our official blog.
 
