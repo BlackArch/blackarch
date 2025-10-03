@@ -75,6 +75,7 @@ GitHub Issues: Report issues directly on our GitHub Issue Tracker.
 Matrix: Join our discussion channel for real-time communication.
 
 Email: team@blackarch.org
+    
     Contribute to BlackArch
     We encourage contributions in various forms:
     Bug Fixes
@@ -83,6 +84,7 @@ Email: team@blackarch.org
     Tool Groups
 
 We are happy to accept pull requests for improvements. For more detailed information on how to contribute, please refer to the Developer Guide in the repository.
+    
     Pull Requests
     You can submit pull requests directly to our GitHub repository:
     Fork the repository, make your changes, and submit a PR.
@@ -90,6 +92,7 @@ We are happy to accept pull requests for improvements. For more detailed informa
 
 Contributing
 We adhere to the Contributor Covenant Code of Conduct, which sets standards for respectful communication and collaboration. Before contributing, please review the following:
+    
     Coding Standards
     Testing
     Documentation
@@ -101,11 +104,11 @@ Email: team@blackarch.org
 Matrix: [#BlackArch:matrix.org](https://matrix.to/#/#BlackArch:matrix.org)
 For updates and announcements, check our official blog.
 
-License
+License:
 BlackArch Linux is released under the GNU General Public License v3.0. See the COPYING file for more details.
 
-Disclaimer
+Disclaimer:
 BlackArch Linux is intended for ethical hacking, penetration testing, and security research purposes. It should only be used on systems where you have explicit permission to perform security assessments.
 
-Conclusion
+Conclusion:
 BlackArch Linux is a powerful, flexible, and comprehensive penetration testing platform built on the stability and versatility of Arch Linux. Whether you're conducting a security audit, performing vulnerability assessments, or learning about cybersecurity, BlackArch offers all the tools you need to succeed.
