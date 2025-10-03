@@ -69,12 +69,11 @@ After installation, you can run tools directly from the terminal or from the app
 Get Involved
 BlackArch is an open-source project, and we welcome contributions from the community. Whether you're a security researcher, developer, or just a passionate user, you can contribute in the following ways:
 
-    Report Bugs & Request New Tools
-    If you encounter a bug or have suggestions for new tools, please use the following channels:
-    GitHub Issues: Report issues directly on our GitHub Issue Tracker.
-    Matrix
+Report Bugs & Request New Tools
+If you encounter a bug or have suggestions for new tools, please use the following channels:
+GitHub Issues: Report issues directly on our GitHub Issue Tracker.
+Matrix: Join our discussion channel for real-time communication.
 
-: Join our discussion channel for real-time communication.
 Email: team@blackarch.org
     Contribute to BlackArch
     We encourage contributions in various forms:
