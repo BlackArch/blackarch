@@ -3,10 +3,12 @@
 check-mirror
 
 - Sync check: compares each mirror's 'lastupdate' against the canonical value.
-- Signature check (restricted): runs ONLY on [IN SYNC] mirrors, for BOTH x86_64 and aarch64,
-  tries blackarch.db(.tar.gz)+.sig and verifies with pacman keyring.
+- Signature check (restricted): runs ONLY on [IN SYNC] mirrors, for BOTH x86_64
+  and aarch64, tries blackarch.db(.tar.gz)+.sig and verifies with pacman
+  keyring.
 
-Output for signature phase: shows INVALID SIGNATURE, NOT FOUND, and DOWN for in-sync mirrors.
+Output for signature phase: shows INVALID SIGNATURE, NOT FOUND, and DOWN for
+in-sync mirrors.
 """
 
 from __future__ import annotations
@@ -18,241 +20,252 @@ from typing import Optional, Tuple, List, Dict
 
 import requests
 
-# --------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Config
-# --------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 BASE_URL = 'https://www.blackarch.org/blackarch/lastupdate'
-MIRROR_LIST = 'https://raw.githubusercontent.com/BlackArch/blackarch/master/mirror/mirror.lst'
+MIRROR_LIST = \
+  'https://raw.githubusercontent.com/BlackArch/blackarch/master/mirror/mirror.lst'
 
 THX = 25
 TIMEOUT = 15
 ARCHES = ["x86_64", "aarch64"]
 
 DB_CANDIDATES = [
-    ('blackarch.db', 'blackarch.db.sig'),
-    ('blackarch.db.tar.gz', 'blackarch.db.tar.gz.sig'),
+  ('blackarch.db', 'blackarch.db.sig'),
+  ('blackarch.db.tar.gz', 'blackarch.db.tar.gz.sig'),
 ]
 
 session = requests.Session()
 
-# --------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Utilities
-# --------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def parse_mirror_line(line_bytes: bytes) -> Optional[Tuple[str, str, str]]:
-    line = line_bytes.decode('utf-8', errors='ignore').strip()
-    if not line or line.startswith('#'):
-        return None
-    try:
-        country, url_tmpl, name = [x.strip() for x in line.split('|', 3)]
-        name = name.strip("'\" ")
-        return country, url_tmpl, name
-    except Exception:
-        return None
+  line = line_bytes.decode('utf-8', errors='ignore').strip()
+  if not line or line.startswith('#'):
+    return None
+  try:
+    country, url_tmpl, name = [x.strip() for x in line.split('|', 3)]
+    name = name.strip("'\" ")
+    return country, url_tmpl, name
+  except Exception:
+    return None
 
 
-def build_repo_urls(url_tmpl: str, repo: str, arch: str) -> Tuple[List[str], List[str]]:
-    base = url_tmpl.replace('$repo', repo).replace('$arch', arch).rstrip('/')
-    return [f'{base}/{db}' for db, _ in DB_CANDIDATES], [f'{base}/{sig}' for _, sig in DB_CANDIDATES]
+def build_repo_urls(url_tmpl: str, repo: str, arch: str) -> \
+  Tuple[List[str], List[str]]:
+  base = url_tmpl.replace('$repo', repo).replace('$arch', arch).rstrip('/')
+  return [f'{base}/{db}' for db, _ in DB_CANDIDATES], [f'{base}/{sig}' \
+    for _, sig in DB_CANDIDATES]
 
 
 def fetch(url: str):
-    try:
-        r = session.get(url, timeout=TIMEOUT, stream=True, allow_redirects=True)
-        return r.status_code, r
-    except requests.RequestException:
-        return None, None
+  try:
+    r = session.get(url, timeout=TIMEOUT, stream=True, allow_redirects=True)
+    return r.status_code, r
+  except requests.RequestException:
+    return None, None
 
 
 def download_to(path: str, resp: requests.Response):
-    with open(path, 'wb') as f:
-        for chunk in resp.iter_content(chunk_size=65536):
-            if chunk:
-                f.write(chunk)
+  with open(path, 'wb') as f:
+    for chunk in resp.iter_content(chunk_size=65536):
+      if chunk:
+        f.write(chunk)
 
 
 def verify_with_pacman_key(sig_path: str, file_path: str) -> bool:
+  try:
+    proc = subprocess.run(
+      ['pacman-key', '--verify', sig_path, file_path],
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE,
+      text=True,
+    )
+    return proc.returncode == 0
+  except FileNotFoundError:
     try:
-        proc = subprocess.run(
-            ['pacman-key', '--verify', sig_path, file_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        return proc.returncode == 0
-    except FileNotFoundError:
-        try:
-            proc = subprocess.run(
-                ['gpgv', '--keyring', '/etc/pacman.d/gnupg/pubring.kbx', sig_path, file_path],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-            return proc.returncode == 0
-        except Exception:
-            return False
-
-# --------------------------------------------------------------------------------------
-# Sync check
-# --------------------------------------------------------------------------------------
-def sync_check_one(url_tmpl: str, name: str, canonical_lastupdate: int) -> Tuple[str, str, str]:
-    lastupdate_url = url_tmpl.replace('$repo/os/$arch', 'lastupdate').rstrip('/')
-    try:
-        sc, r = fetch(lastupdate_url)
-        if sc != 200 or r is None:
-            return 'down', name, url_tmpl
-        mirror_lastupdate_str = (r.text or '').strip()
-        mirror_lastupdate = int(mirror_lastupdate_str)
+      proc = subprocess.run(
+        ['gpgv', '--keyring', '/etc/pacman.d/gnupg/pubring.kbx', sig_path,
+         file_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+      )
+      return proc.returncode == 0
     except Exception:
-        return 'down', name, url_tmpl
+      return False
 
-    if mirror_lastupdate < canonical_lastupdate:
-        return 'osync', name, url_tmpl
-    elif mirror_lastupdate > canonical_lastupdate:
-        return 'wrong', name, url_tmpl
-    else:
-        return 'isync', name, url_tmpl
+# ------------------------------------------------------------------------------
+# Sync check
+# ------------------------------------------------------------------------------
+def sync_check_one(url_tmpl: str, name: str, canonical_lastupdate: int) -> \
+  Tuple[str, str, str]:
+  lastupdate_url = url_tmpl.replace('$repo/os/$arch', 'lastupdate').rstrip('/')
+  try:
+    sc, r = fetch(lastupdate_url)
+    if sc != 200 or r is None:
+      return 'down', name, url_tmpl
+    mirror_lastupdate_str = (r.text or '').strip()
+    mirror_lastupdate = int(mirror_lastupdate_str)
+  except Exception:
+    return 'down', name, url_tmpl
 
-# --------------------------------------------------------------------------------------
+  if mirror_lastupdate < canonical_lastupdate:
+    return 'osync', name, url_tmpl
+  elif mirror_lastupdate > canonical_lastupdate:
+    return 'wrong', name, url_tmpl
+  else:
+    return 'isync', name, url_tmpl
+
+# ------------------------------------------------------------------------------
 # Signature check
-# --------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def signature_check_one(url_tmpl: str, name: str, arch: str) -> Tuple[str, str]:
-    db_urls, sig_urls = build_repo_urls(url_tmpl, 'blackarch', arch)
+  db_urls, sig_urls = build_repo_urls(url_tmpl, 'blackarch', arch)
 
-    with tempfile.TemporaryDirectory(prefix='ba-db-') as tmpdir:
-        for db_url, sig_url in zip(db_urls, sig_urls):
-            sc_db, r_db = fetch(db_url)
-            sc_sig, r_sig = fetch(sig_url)
+  with tempfile.TemporaryDirectory(prefix='ba-db-') as tmpdir:
+    for db_url, sig_url in zip(db_urls, sig_urls):
+      sc_db, r_db = fetch(db_url)
+      sc_sig, r_sig = fetch(sig_url)
 
-            if sc_db == 404 or sc_sig == 404:
-                continue
+      if sc_db == 404 or sc_sig == 404:
+        continue
 
-            if sc_db is None or sc_sig is None or sc_db != 200 or sc_sig != 200:
-                return 'down', f'{name} [{arch}] -> {db_url} (HTTP {sc_db}/{sc_sig})'
+      if sc_db is None or sc_sig is None or sc_db != 200 or sc_sig != 200:
+        return 'down', f'{name} [{arch}] -> {db_url} (HTTP {sc_db}/{sc_sig})'
 
-            db_path = os.path.join(tmpdir, os.path.basename(db_url))
-            sig_path = os.path.join(tmpdir, os.path.basename(sig_url))
-            try:
-                download_to(db_path, r_db)
-                download_to(sig_path, r_sig)
-            except Exception:
-                return 'down', f'{name} [{arch}] -> {db_url} (download error)'
+      db_path = os.path.join(tmpdir, os.path.basename(db_url))
+      sig_path = os.path.join(tmpdir, os.path.basename(sig_url))
+      try:
+        download_to(db_path, r_db)
+        download_to(sig_path, r_sig)
+      except Exception:
+        return 'down', f'{name} [{arch}] -> {db_url} (download error)'
 
-            ok = verify_with_pacman_key(sig_path, db_path)
-            if ok:
-                return 'valid', f'{name} [{arch}] -> {db_url}'
-            else:
-                return 'invalid-signature', f'{name} [{arch}] -> {db_url}'
+      ok = verify_with_pacman_key(sig_path, db_path)
+      if ok:
+        return 'valid', f'{name} [{arch}] -> {db_url}'
+      else:
+        return 'invalid-signature', f'{name} [{arch}] -> {db_url}'
 
-        return 'not-found', f'{name} [{arch}] -> {db_urls[0]} (db/sig not found)'
+    return 'not-found', f'{name} [{arch}] -> {db_urls[0]} (db/sig not found)'
 
-# --------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Printing helpers
-# --------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def dump_list(title: str, items: List[str]):
-    print(f'[{title}]')
-    for item in sorted(items):
-        print(item)
-    print()
+  print(f'[{title}]')
+  for item in sorted(items):
+    print(item)
+  print()
 
-# --------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Main
-# --------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def main() -> int:
-    # Canonical lastupdate
-    try:
-        sc, r = fetch(BASE_URL)
-        if sc != 200 or r is None:
-            print(f'[-] Could not fetch canonical lastupdate (HTTP {sc})')
-            return 1
-        canonical_lastupdate = int((r.text or '').strip())
-    except Exception as e:
-        print(f'[-] Could not parse canonical lastupdate: {e}')
-        return 1
+  # Canonical lastupdate
+  try:
+    sc, r = fetch(BASE_URL)
+    if sc != 200 or r is None:
+      print(f'[-] Could not fetch canonical lastupdate (HTTP {sc})')
+      return 1
+    canonical_lastupdate = int((r.text or '').strip())
+  except Exception as e:
+    print(f'[-] Could not parse canonical lastupdate: {e}')
+    return 1
 
-    # Fetch mirrors
-    try:
-        ml = session.get(MIRROR_LIST, timeout=TIMEOUT)
-        ml.raise_for_status()
-        entries = []
-        for line in ml.iter_lines():
-            parsed = parse_mirror_line(line)
-            if parsed:
-                entries.append(parsed)
-    except Exception as e:
-        print(f'[-] Could not fetch/parse mirror list: {e}')
-        return 1
+  # Fetch mirrors
+  try:
+    ml = session.get(MIRROR_LIST, timeout=TIMEOUT)
+    ml.raise_for_status()
+    entries = []
+    for line in ml.iter_lines():
+      parsed = parse_mirror_line(line)
+      if parsed:
+        entries.append(parsed)
+  except Exception as e:
+    print(f'[-] Could not fetch/parse mirror list: {e}')
+    return 1
 
-    print('[+] Checking mirror sync status, please wait...\n')
+  print('[+] Checking mirror sync status, please wait...\n')
 
-    sync_buckets: Dict[str, List[Tuple[str, str]]] = {k: [] for k in ('isync','osync','wrong','down')}
+  sync_buckets: Dict[str, List[Tuple[str, str]]] = {k: [] for k in \
+    ('isync','osync','wrong','down')}
 
-    with ThreadPoolExecutor(max_workers=THX) as exe:
-        futures = [exe.submit(sync_check_one, url_tmpl, name, canonical_lastupdate)
-                   for (_, url_tmpl, name) in entries]
-        for fut in as_completed(futures):
-            cat, name, url_tmpl = fut.result()
-            sync_buckets[cat].append((name, url_tmpl))
+  with ThreadPoolExecutor(max_workers=THX) as exe:
+    futures = [exe.submit(sync_check_one, url_tmpl, name, canonical_lastupdate)
+           for (_, url_tmpl, name) in entries]
+    for fut in as_completed(futures):
+      cat, name, url_tmpl = fut.result()
+      sync_buckets[cat].append((name, url_tmpl))
 
-    def fmt_lastupdate(name: str, url_tmpl: str) -> str:
-        return f'{name} -> {url_tmpl.replace("$repo/os/$arch", "lastupdate").rstrip("/")}'
-    dump_list('IN SYNC', [fmt_lastupdate(n, u) for (n, u) in sync_buckets['isync']])
-    dump_list('OUT OF SYNC', [fmt_lastupdate(n, u) for (n, u) in sync_buckets['osync']])
-    dump_list('WRONG', [fmt_lastupdate(n, u) for (n, u) in sync_buckets['wrong']])
-    dump_list('DOWN', [fmt_lastupdate(n, u) for (n, u) in sync_buckets['down']])
+  def fmt_lastupdate(name: str, url_tmpl: str) -> str:
+    return f'{name} -> {url_tmpl.replace("$repo/os/$arch",
+    "lastupdate").rstrip("/")}'
+  dump_list('IN SYNC', [fmt_lastupdate(n, u) for (n, u) in sync_buckets['isync']])
+  dump_list('OUT OF SYNC', [fmt_lastupdate(n, u) for (n, u) in sync_buckets['osync']])
+  dump_list('WRONG', [fmt_lastupdate(n, u) for (n, u) in sync_buckets['wrong']])
+  dump_list('DOWN', [fmt_lastupdate(n, u) for (n, u) in sync_buckets['down']])
 
-    total_sync = sum(len(v) for v in sync_buckets.values())
-    iperc = round(100 * len(sync_buckets['isync']) / total_sync) if total_sync else 0
-    print('=' * 80)
-    print(f'''
+  total_sync = sum(len(v) for v in sync_buckets.values())
+  iperc = round(100 * len(sync_buckets['isync']) / total_sync) if total_sync \
+    else 0
+  print('=' * 80)
+  print(f'''
 in sync:      {len(sync_buckets['isync'])} ({iperc}%)
 out of sync:  {len(sync_buckets['osync'])}
 down:         {len(sync_buckets['down'])}
 wrong:        {len(sync_buckets['wrong'])}
 total:        {total_sync}
 '''.rstrip())
-    print()
+  print()
 
-    in_sync_entries = sync_buckets['isync']
-    if not in_sync_entries:
-        print('[!] No in-sync mirrors; skipping signature checks.')
-        return 0
-
-    print(f'[+] Checking DB signatures ONLY for IN SYNC mirrors (arches: {", ".join(ARCHES)})\n')
-
-    sig_buckets: Dict[str, List[str]] = {k: [] for k in ('valid','invalid-signature','not-found','down')}
-
-    with ThreadPoolExecutor(max_workers=THX) as exe:
-        futures = []
-        for (name, url_tmpl) in in_sync_entries:
-            for arch in ARCHES:
-                futures.append(exe.submit(signature_check_one, url_tmpl, name, arch))
-        for fut in as_completed(futures):
-            cat, msg = fut.result()
-            sig_buckets[cat].append(msg)
-
-    # Print only invalid, not-found, and down
-    if sig_buckets['invalid-signature']:
-        dump_list('INVALID SIGNATURE (in-sync mirrors)', sig_buckets['invalid-signature'])
-    if sig_buckets['not-found']:
-        dump_list('NOT FOUND (db/sig missing) (in-sync mirrors)', sig_buckets['not-found'])
-    if sig_buckets['down']:
-        dump_list('DOWN (in-sync mirrors)', sig_buckets['down'])
-    if not (sig_buckets['invalid-signature'] or sig_buckets['not-found'] or sig_buckets['down']):
-        print('[OK] All in-sync mirrors passed signature verification for both arches.')
-        print()
-
-    total_sig = sum(len(v) for v in sig_buckets.values())
-    print('=' * 80)
-    print(f'''Signature check scope: IN SYNC mirrors only
-Total checks (arch×in-sync mirrors): {total_sig}
-  valid:               {len(sig_buckets["valid"])}
-  invalid-signature:   {len(sig_buckets["invalid-signature"])}
-  not-found:           {len(sig_buckets["not-found"])}
-  down:                {len(sig_buckets["down"])}
-'''.rstrip())
-
+  in_sync_entries = sync_buckets['isync']
+  if not in_sync_entries:
+    print('[!] No in-sync mirrors; skipping signature checks.')
     return 0
 
+  print(f'[+] Checking DB signatures ONLY for IN SYNC mirrors (arches: {", ".join(ARCHES)})\n')
+
+  sig_buckets: Dict[str, List[str]] = {k: [] for k in \
+    ('valid','invalid-signature','not-found','down')}
+
+  with ThreadPoolExecutor(max_workers=THX) as exe:
+    futures = []
+    for (name, url_tmpl) in in_sync_entries:
+      for arch in ARCHES:
+        futures.append(exe.submit(signature_check_one, url_tmpl, name, arch))
+    for fut in as_completed(futures):
+      cat, msg = fut.result()
+      sig_buckets[cat].append(msg)
+
+  # Print only invalid, not-found, and down
+  if sig_buckets['invalid-signature']:
+    dump_list('INVALID SIGNATURE (in-sync mirrors)',
+              sig_buckets['invalid-signature'])
+  if sig_buckets['not-found']:
+    dump_list('NOT FOUND (db/sig missing) (in-sync mirrors)',
+              sig_buckets['not-found'])
+  if sig_buckets['down']:
+    dump_list('DOWN (in-sync mirrors)', sig_buckets['down'])
+  if not (sig_buckets['invalid-signature'] or sig_buckets['not-found'] or \
+    sig_buckets['down']):
+    print('[OK] All in-sync mirrors passed signature verification for both arches.')
+    print()
+
+  total_sig = sum(len(v) for v in sig_buckets.values())
+  print('=' * 80)
+  print(f'''Signature check scope: IN SYNC mirrors only
+Total checks (arch×in-sync mirrors): {total_sig}
+  valid:              {len(sig_buckets["valid"])}
+  invalid signature:  {len(sig_buckets["invalid-signature"])}
+  not found:          {len(sig_buckets["not-found"])}
+  down:               {len(sig_buckets["down"])}
+'''.rstrip())
+
+  return 0
 
 if __name__ == '__main__':
-    raise SystemExit(main())
+  raise SystemExit(main())
