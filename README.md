@@ -5,7 +5,7 @@ penetration testers and security researchers. The repository contains
 individually or in groups. BlackArch Linux is compatible with existing Arch
 installs. For more information, see the installation instructions.
 # Overview
-To report bugs and request new tools, please visit the issue tracker on GitHub,
+To report bugs and request new tools, Visit the issue tracker on GitHub,
 stop by [Matrix](https://matrix.to/#/#BlackArch:matrix.org), or email us.  
 **BlackArch Linux** is an Arch Linux-based distribution specifically designed for **penetration testers** and **security researchers**. The repository contains over **2,800 tools** organized by category, allowing users to install tools individually or in **groups**. **BlackArch** is fully compatible with existing Arch Linux installations, making it a versatile choice for those who want to enhance their existing systems with security tools.
 # Download and Installation
@@ -18,7 +18,7 @@ BlackArch Linux only takes a moment to set up.
 - **Customizable Installation**: Choose between **Full** or **Slim ISO** installations, or install BlackArch tools on an existing Arch system.
 - **Live ISO**: Try out BlackArch without installation using the live ISO.
 
-# Use the installer to install BlackArch Linux onto your hard disk.
+# Use the installer to install BlackArch Linux.
 1. [Install on an existing Arch machine](https://www.blackarch.org/downloads.html#install-repo).
 2. Use the [live ISO](https://blackarch.org/downloads.html).
 3. The Full and Netinstall ISOs come with a text-based installer (`blackarch-install`). 
@@ -34,7 +34,7 @@ BlackArch Linux only takes a moment to set up.
 - [Contact Information](#contact-information)
 # Installation Instructions  
 Setting up **BlackArch Linux** is quick and easy. There are three primary installation methods, depending on your preference:
-To start developing for BlackArch please refer to the [Dev-Guide](./docs/HOWTO-DEV.md).
+To start developing for BlackArch refer to the [Dev-Guide](./docs/HOWTO-DEV.md).
 ### 1. **Install on an Existing Arch Machine**
 If you're running **Arch Linux**, you can install **BlackArch tools** directly onto your system. This method requires only the **BlackArch repository**.
 **Web:** https://www.blackarch.org/
@@ -79,46 +79,42 @@ After installation, you can run tools directly from the terminal or from the app
 BlackArch is an open-source project, and we welcome contributions from the community. Whether you're a security researcher, developer, or just a passionate user, you can contribute in the following ways:
 
 ### Report Bugs & Request New Tools :
-If you encounter a bug or have suggestions for new tools, please use the following channels:
+If you encounter a bug or have suggestions for new tools, Use the following channels:
 
 ### GitHub Issues:
 Report issues directly on our GitHub Issue Tracker.
 
 ### Matrix:
-Join our discussion channel for real-time communication.
+Join our discussion channel for real-time communication --> [#BlackArch:matrix.org](https://matrix.to/#/#BlackArch:matrix.org)
     
 ## Contribute to BlackArch We encourage contributions in various forms:
 - Bug Fixes
 - Documentation
-New Tools
-Tool Groups
+- New Tools
+- Tool Groups
 
-We are happy to accept pull requests for improvements. For more detailed information on how to contribute, please refer to the Developer Guide in the repository.
+We are happy to accept pull requests for improvements. For more detailed information on how to contribute,refer to the Developer Guide in the repository.
     
-Pull Requests
+### Pull Requests:
 You can submit pull requests directly to our GitHub repository:
 Fork the repository, make your changes, and submit a PR.
-Please follow our contribution guidelines to ensure your PR is well-received.
+follow our contribution guidelines to ensure your PR is well-received.
 
-Contributing
-We adhere to the Contributor Covenant Code of Conduct, which sets standards for respectful communication and collaboration. Before contributing, please review the following:
-    
-Coding Standards
-Testing
-Documentation
-Pull Requests
+### Contributing:
+We adhere to the Contributor Covenant Code of Conduct, which sets standards for respectful communication and collaboration. Before contributing.
 
-### Contact Information Email: team@blackarch.org
+
+### Contact Email: team@blackarch.org
 For a complete guide on contributing to BlackArch, Refer to our Dev-Guide.
 
-### Matrix: [#BlackArch:matrix.org](https://matrix.to/#/#BlackArch:matrix.org)
+## Matrix: [#BlackArch:matrix.org](https://matrix.to/#/#BlackArch:matrix.org)
 For updates and announcements, check our official blog.
 
 ## License: [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 BlackArch Linux is released under the BSD-3-Clause license. See the COPYING file for more details.
 
-### Disclaimer:
+## Disclaimer:
 BlackArch Linux is intended for ethical hacking, penetration testing, and security research purposes. It should only be used on systems where you have explicit permission to perform security assessments.
 
-### Conclusion:
+## Conclusion:
 BlackArch Linux is a powerful, flexible, and comprehensive penetration testing platform built on the stability and versatility of Arch Linux. Whether you're conducting a security audit, performing vulnerability assessments, or learning about cybersecurity, BlackArch offers all the tools you need to succeed.
