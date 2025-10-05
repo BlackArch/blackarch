@@ -31,7 +31,7 @@ BlackArch Linux only takes a moment to set up.
 - [Usage](#usage)
 - [Get Involved](#get-involved)
 - [Contributing](#contributing)
-- [Contact Information](#contact-information)
+- [Contact Information](#Contact-Email)
 # Installation Instructions  
 Setting up **BlackArch Linux** is quick and easy. There are three primary installation methods, depending on your preference:
 
