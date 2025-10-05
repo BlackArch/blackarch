@@ -34,6 +34,7 @@ BlackArch Linux only takes a moment to set up.
 - [Contact Information](#contact-information)
 # Installation Instructions  
 Setting up **BlackArch Linux** is quick and easy. There are three primary installation methods, depending on your preference:
+
 To start developing for BlackArch refer to the [Dev-Guide](./docs/HOWTO-DEV.md).
 ### 1. **Install on an Existing Arch Machine**
 If you're running **Arch Linux**, you can install **BlackArch tools** directly onto your system. This method requires only the **BlackArch repository**.
@@ -76,10 +77,10 @@ For a complete list of available tools and categories, refer to the official Bla
 After installation, you can run tools directly from the terminal or from the application menu (if you're using a GUI). Most tools are available as command-line utilities, making them ideal for automation and scripting.
 
 ### Get Involved :
-BlackArch is an open-source project, and we welcome contributions from the community. Whether you're a security researcher, developer, or just a passionate user, you can contribute in the following ways:
+BlackArch is an open-source project, and we welcome contributions from the community. Whether you're a security researcher, developer, or just a passionate user, you can contribute in the following ways.
 
 ### Report Bugs & Request New Tools :
-If you encounter a bug or have suggestions for new tools, Use the following channels:
+If you encounter a bug or have suggestions for new tools, Use the following channels.
 
 ### GitHub Issues:
 Report issues directly on our GitHub Issue Tracker.
