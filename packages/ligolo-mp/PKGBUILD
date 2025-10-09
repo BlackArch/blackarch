@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ligolo-mp
+pkgver=v2.1.0.r7.gcfd378c
+pkgrel=1
+pkgdesc='Multiplayer pivoting solution.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-networking' 'blackarch-tunnel')
+url='https://github.com/ttpreport/ligolo-mp'
+license=('GPL-3.0-or-later')
+depends=('curl' 'awk' 'gnupg')
+makedepends=('git' 'go' 'zip')
+source=("git+https://github.com/ttpreport/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  make assets
+  make server client
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "$pkgname" "$pkgdir/usr/bin/$pkgname-server"
+  install -Dm 755 "$pkgname-client" "$pkgdir/usr/bin/$pkgname-client"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+
