@@ -111,7 +111,7 @@ Matrix Chat: #BlackArch:matrix.org
 
 # Contributing
 
-We encourage contributions in various forms:
+We Encourage contributions in various forms:
 
 * Bug fixes
 * Documentation
