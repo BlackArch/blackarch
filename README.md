@@ -1,121 +1,150 @@
-# Description
-**BlackArch Linux** is an ArchLinux based penetration testing distribution for
-penetration testers and security researchers. The repository contains
-[2845 tools](https://www.blackarch.org/tools.html). You can install tools
-individually or in groups. BlackArch Linux is compatible with existing Arch
-installs. For more information, see the installation instructions.
-# Overview
-To report bugs and request new tools, Visit the issue tracker on GitHub,
-stop by [Matrix](https://matrix.to/#/#BlackArch:matrix.org), or email us.  
-**BlackArch Linux** is an Arch Linux-based distribution specifically designed for **penetration testers** and **security researchers**. The repository contains over **2,800 tools** organized by category, allowing users to install tools individually or in **groups**. **BlackArch** is fully compatible with existing Arch Linux installations, making it a versatile choice for those who want to enhance their existing systems with security tools.
-# Download and Installation
-Whether you're a cybersecurity professional, enthusiast, or researcher, **BlackArch** offers the tools you need for a variety of tasks, such as **penetration testing**, **forensics**, **reverse engineering**, **network analysis**, and much more.
-BlackArch Linux only takes a moment to set up.
-# Key Features
-- **Over 2,800 Tools**: BlackArch offers a vast collection of tools categorized by task, ensuring you have what you need for any penetration testing scenario.
-- **Arch Linux-based**: Leverages Arch's rolling release model for continuous updates and cutting-edge software.
-- **Compatibility**: Seamlessly integrates with existing Arch Linux installations.
-- **Customizable Installation**: Choose between **Full** or **Slim ISO** installations, or install BlackArch tools on an existing Arch system.
-- **Live ISO**: Try out BlackArch without installation using the live ISO.
-
-# Use the installer to install BlackArch Linux.
-1. [Install on an existing Arch machine](https://www.blackarch.org/downloads.html#install-repo).
-2. Use the [live ISO](https://blackarch.org/downloads.html).
-3. The Full and Netinstall ISOs come with a text-based installer (`blackarch-install`). 
-4. The Slim ISO comes with a GUI-based installer. 
-
-
-# Table of Contents
+## Table of Contents
 - [Description](#description)
-- [Installation Instructions](#installation-instructions)
+- [Overview](#overview)
+- [Download and Installation](#download-and-installation)
+- [Key Features](#key-features)
 - [Usage](#usage)
 - [Get Involved](#get-involved)
 - [Contributing](#contributing)
-- [Contact Information](#Contact-Email)
-# Installation Instructions  
-Setting up **BlackArch Linux** is quick and easy. There are three primary installation methods, depending on your preference:
+- [Contact](#contact)
+- [License](#license)
+- [Disclaimer](#disclaimer)
+- [Conclusion](#conclusion)
 
-To start developing for BlackArch refer to the [Dev-Guide](./docs/HOWTO-DEV.md).
-### 1. **Install on an Existing Arch Machine**
-If you're running **Arch Linux**, you can install **BlackArch tools** directly onto your system. This method requires only the **BlackArch repository**.
-**Web:** https://www.blackarch.org/
+---
+
+## Description
+**BlackArch Linux** is an Arch Linux–based penetration testing distribution for penetration testers and security researchers.  
+The repository contains [2845 tools](https://www.blackarch.org/tools.html). You can install tools individually or in groups.  
+BlackArch Linux is compatible with existing Arch installations.  
+For more information, see the installation instructions.
+
+---
+
+## Overview
+To report bugs and request new tools, visit the issue tracker on GitHub, stop by [Matrix](https://matrix.to/#/#BlackArch:matrix.org), or email us.  
+
+**BlackArch Linux** is specifically designed for **penetration testers** and **security researchers**.  
+The repository contains over **2,800 tools**, organized by category, allowing users to install them individually or in **groups**.  
+**BlackArch** is fully compatible with existing Arch Linux installations, making it a versatile choice for those who want to enhance their existing systems with security tools.
+
+---
+
+## Download and Installation
+Whether you're a cybersecurity professional, enthusiast, or researcher, **BlackArch** offers the tools you need for a variety of tasks, such as **penetration testing**, **forensics**, **reverse engineering**, **network analysis**, and more.  
+
+BlackArch Linux only takes a moment to set up.
+
+---
+
+## Key Features
+- **Over 2,800 Tools** – categorized for different testing scenarios  
+- **Arch Linux–based** – benefits from Arch’s rolling release updates  
+- **Compatibility** – integrates seamlessly with existing Arch setups  
+- **Customizable Installation** – Full, Slim, or Repo-based options  
+- **Live ISO** – test BlackArch without installing it
+
+---
+
+# Installation Instructions
+Setting up **BlackArch Linux** is quick and easy. There are three primary installation methods depending on your preference.  
+To start developing for BlackArch, refer to the [Developer Guide](./docs/HOWTO-DEV.md).
+
+## 1. Install on an Existing Arch Machine
+If you're running **Arch Linux**, you can install **BlackArch tools** directly onto your system using the BlackArch repository.
+
+**Website:** https://www.blackarch.org/
+
 ```bash
-# To install BlackArch tools, first sync the BlackArch repository
+# Sync the BlackArch repository
 curl -s https://blackarch.org/strap.sh | sudo bash
-```
 
-```bash
-# Install BlackArch tools by choosing either individual tools or groups
- sudo pacman -S blackarch
-```
-### 2. **Live ISO Installation**
-The Live ISO allows you to try BlackArch without installation. You can explore the pre-configured environment and tools before deciding to install.
-Download the Live ISO from the official BlackArch website.
-Boot from the live ISO to start penetration testing and security research tasks right away.
-### 3. **Install Using Full or Netinstall ISOs**
-BlackArch offers Full and Netinstall ISOs, both of which include a text-based installer (blackarch-install) to guide you through the installation process.
-The Full ISO comes with a complete set of tools, providing a comprehensive penetration testing environment.
-The Netinstall ISO is a minimal installation method that requires an internet connection to download tools and configure the system during installation.
-For users looking for a lightweight approach, the Slim ISO offers a GUI-based installer, enabling a smoother installation experience for those new to Linux or penetration testing.
-For more detailed installation steps, visit the installation documentation.
-Usage
-Once installed, you can install additional tools or tool groups from the BlackArch repository using the pacman package manager. Here are some examples:
-```bash
-#Install all BlackArch Tools
+# Install all BlackArch tools or specific ones
 sudo pacman -S blackarch
 ```
-### 4. **Install Specific Tool Groups**
+## 2. Live ISO Installation
+
+The Live ISO allows you to try BlackArch without installation.
+Download the Live ISO from the official website and boot from it to start penetration testing immediately.
+
+## 3. Full, Netinstall, or Slim ISOs
+
+Full ISO – complete set of tools with a text-based installer (blackarch-install)
+ 
+Netinstall ISO – minimal installer (requires internet)
+Slim ISO – lightweight version with GUI-based installer
+For detailed steps, see the installation documentation.
+
+# USAGE
+
+## Once installed, you can add or remove tools.
 
 ```bash
-#For example, to install Web Application Security tools:
+Install all BlackArch tools
+sudo pacman -S blackarch
+```
+
+## Install Specific Tool Groups
+
+```bash
+Example: Web Application Security tools
 sudo pacman -S blackarch-webapp
 ```
-For a complete list of available tools and categories, refer to the official BlackArch tools list.
-[#Blackarch:tools](https://blackarch.org/tools.html)
 
-### Running Tools :
-After installation, you can run tools directly from the terminal or from the application menu (if you're using a GUI). Most tools are available as command-line utilities, making them ideal for automation and scripting.
+For a complete list of available tools, visit the official tools page.
 
-### Get Involved :
-BlackArch is an open-source project, and we welcome contributions from the community. Whether you're a security researcher, developer, or just a passionate user, you can contribute in the following ways.
+### Running Tools
+After installation, you can run tools directly from the terminal or application menu.
+Most tools are command-line based, ideal for automation and scripting.
 
-### Report Bugs & Request New Tools :
-If you encounter a bug or have suggestions for new tools, Use the following channels.
+# Get Involved
 
-### GitHub Issues:
-Report issues directly on our GitHub Issue Tracker.
+BlackArch is open source and welcomes contributions from the community.
+Whether you're a developer, researcher, or user, you can help in several ways.
+Report Bugs or Request Tools
 
-### Matrix:
-Join our discussion channel for real-time communication --> [#BlackArch:matrix.org](https://matrix.to/#/#BlackArch:matrix.org)
-    
-## Contribute to BlackArch We encourage contributions in various forms:
-- Bug Fixes
-- Documentation
-- New Tools
-- Tool Groups
+If you encounter a bug or have suggestions:
 
-We are happy to accept pull requests for improvements. For more detailed information on how to contribute,refer to the Developer Guide in the repository.
-    
-### Pull Requests:
-You can submit pull requests directly to our GitHub repository:
-Fork the repository, make your changes, and submit a PR.
-follow our contribution guidelines to ensure your PR is well-received.
+GitHub Issues: BlackArch Issues
 
-### Contributing:
-We adhere to the Contributor Covenant Code of Conduct, which sets standards for respectful communication and collaboration. Before contributing.
+Matrix Chat: #BlackArch:matrix.org
 
+# Contributing
 
-### Contact Email: team@blackarch.org
-For a complete guide on contributing to BlackArch, Refer to our Dev-Guide.
+We encourage contributions in various forms:
 
-## Matrix: [#BlackArch:matrix.org](https://matrix.to/#/#BlackArch:matrix.org)
-For updates and announcements, check our official blog.
+* Bug fixes
+* Documentation
+* New tools 
+* tool groups
+
+Before contributing, Review our Contributor Covenant Code of Conduct.
+
+Refer to the Developer Guide for detailed steps.
+Pull Requests
+Fork the repository, make your changes, and submit a PR following our contribution guidelines.
+
+# Contact
+
+Email: team@blackarch.org
+
+Matrix: [#BlackArch:matrix.org](https://matrix.to/#/#BlackArch:matrix.org)
+
+For news and updates, visit our official blog.
+
+# License
 
 ## License: [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-BlackArch Linux is released under the BSD-3-Clause license. See the COPYING file for more details.
 
-## Disclaimer:
-BlackArch Linux is intended for ethical hacking, penetration testing, and security research purposes. It should only be used on systems where you have explicit permission to perform security assessments.
 
-## Conclusion:
-BlackArch Linux is a powerful, flexible, and comprehensive penetration testing platform built on the stability and versatility of Arch Linux. Whether you're conducting a security audit, performing vulnerability assessments, or learning about cybersecurity, BlackArch offers all the tools you need to succeed.
+BlackArch Linux is released under the BSD-3-Clause license. See the COPYING file for details.
+
+# Disclaimer
+
+BlackArch Linux is intended for ethical hacking, penetration testing, and security research only.
+Use it only on systems you own or have permission to test.
+
+# Conclusion
+
+BlackArch Linux is a powerful, flexible, and comprehensive penetration testing platform built on Arch Linux.
+Whether you're conducting a security audit, performing vulnerability assessments, or learning cybersecurity, BlackArch provides all the tools you need to succeed.
