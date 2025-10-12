@@ -1,15 +1,15 @@
-## Table of Contents
-- [Description](#description)
-- [Overview](#overview)
-- [Download and Installation](#download-and-installation)
-- [Key Features](#key-features)
-- [Usage](#usage)
-- [Get Involved](#get-involved)
-- [Contributing](#contributing)
-- [Contact](#contact)
-- [License](#license)
-- [Disclaimer](#disclaimer)
-- [Conclusion](#conclusion)
+# TABLE OF CONTENTS
+- [DESCRIPTION](#description)
+- [OVERVIEW](#overview)
+- [DOWNLOAD AND INSTALLATION](#download-and-installation)
+- [KEY FEATURES](#key-features)
+- [USAGE](#usage)
+- [GET INVOLVED](#get-involved)
+- [CONTRIBUTING](#contributing)
+- [CONTACT](#contact)
+- [LICENSE](#license)
+- [DISCLAIMER](#disclaimer)
+- [CONCLUSION](#conclusion)
 
 ---
 
