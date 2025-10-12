@@ -3,6 +3,7 @@
 - [OVERVIEW](#overview)
 - [DOWNLOAD AND INSTALLATION](#download-and-installation)
 - [KEY FEATURES](#key-features)
+- [INSTALLATION INSTRUCTION](#installation-instruction)
 - [USAGE](#usage)
 - [GET INVOLVED](#get-involved)
 - [CONTRIBUTING](#contributing)
