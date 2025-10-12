@@ -1,4 +1,4 @@
-# TABLE OF CONTENTS
+## TABLE OF CONTENTS
 - [DESCRIPTION](#description)
 - [OVERVIEW](#overview)
 - [DOWNLOAD AND INSTALLATION](#download-and-installation)
