@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=autowordlists
+pkgver=882.6085809
+pkgrel=1
+groups=('blackarch' 'blackarch-fuzzer')
+pkgdesc='Collection of wordlists generated automatically.'
+url='https://github.com/carlospolop/Auto_Wordlists'
+arch=('any')
+license=('custom:unknown')
+makedepends=('git')
+source=("$pkgname::git+https://github.com/carlospolop/Auto_Wordlists.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  rm -rf README.md custom_wordlists scripts
+
+  cp -a --no-preserve=ownership wordlists/* "$pkgdir/usr/share/$pkgname/"
+}
+
