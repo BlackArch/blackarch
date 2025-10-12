@@ -81,14 +81,14 @@ For detailed steps, see the installation documentation.
 ## Once installed, you can add or remove tools.
 
 ```bash
-Install all BlackArch tools
+#Install all BlackArch tools
 sudo pacman -S blackarch
 ```
 
 ## Install Specific Tool Groups
 
 ```bash
-Example: Web Application Security tools
+#Example: Web Application Security tools
 sudo pacman -S blackarch-webapp
 ```
 
