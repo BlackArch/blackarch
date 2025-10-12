@@ -1,0 +1,48 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ext4magic
+pkgver=0.3.2
+pkgrel=4
+pkgdesc='File carver used when recovering from disasters or in digital forensics activities.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-forensic')
+url='https://sourceforge.net/projects/ext4magic/'
+license=('GPL-2.0-or-later')
+depends=('bzip2' 'file' 'util-linux' 'e2fsprogs')
+conflicts=($pkgname)
+source=("$url/files/$pkgname-$pkgver.tar.gz"
+        "$url/files/Patches/workaround.patch"
+        '01-i_dir_acl.patch'
+        '02-Fix-undefined-reference-to-makedev.patch'
+        '03-Fix-segfault-extent-free.patch')
+sha512sums=('8d9c6a594f212aecf4eb5410d277caeaea3adc03d35378257dfd017ef20ea115'
+            '89468a7857778bd171490cddfc1f4ce8b8308c46353e8c01998dc054373f5fff'
+            '2b5cde2612370f49fa9ed8442c23425499bdcf67aaba442087eb11f1c8b51e06'
+            '850378bcee22c9e4888c7ebb77085db29747383e5a272795be18341d4426f2db'
+            'b8f4660c11c7e91edd85caa848a009b1a11b168cb80dec9cf7f23ac9d90dcdab')
+
+prepare() {
+  cd $pkgname-$pkgver
+  # apply patch from the source array (should be a pacman feature)
+  local filename
+  for filename in "${source[@]}"; do
+    if [[ "$filename" =~ \.patch$ ]]; then
+      echo "Applying patch ${filename##*/}"
+      patch -p1 -N -i "$srcdir/${filename##*/}"
+    fi
+  done
+  :
+}
+
+build() {
+  cd $pkgname-$pkgver
+  ./configure --prefix=/usr --sbindir=/usr/bin
+  make
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
+}
+
