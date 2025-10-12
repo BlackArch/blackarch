@@ -1,0 +1,29 @@
+From: Gokturk Yuksek <gokturk@gentoo.org>
+Subject: [PATCH] src/inode: supersede i_dir_acl with i_size_high
+
+The upstream has removed the macro that defined i_dir_acl as
+i_size_high which causes a build failure with the later versions of
+e2fsprogs. Replace every reference to inode->i_dir_acl with
+inode->i_size_high.
+
+[0] https://git.kernel.org/pub/scm/fs/ext2/e2fsprogs.git/commit/?id=578fcbfd2e61e0b13ce8c7b62804c941d6c1eb8e
+
+--- a/src/inode.c
++++ b/src/inode.c
+@@ -404,14 +404,14 @@
+         fprintf(out,
+                         "%sFile ACL: %d    Directory ACL: %d Translator: %d\n",
+                         prefix,
+-                        inode->i_file_acl, LINUX_S_ISDIR(inode->i_mode) ? inode->i_dir_acl : 0,
++                        inode->i_file_acl, LINUX_S_ISDIR(inode->i_mode) ? inode->i_size_high : 0,
+                         inode->osd1.hurd1.h_i_translator);
+         else
+                 fprintf(out, "%sFile ACL: %llu    Directory ACL: %d\n",
+                         prefix,
+                         inode->i_file_acl | ((long long)
+                                 (inode->osd2.linux2.l_i_file_acl_high) << 32),
+-                        LINUX_S_ISDIR(inode->i_mode) ? inode->i_dir_acl : 0);
++                        LINUX_S_ISDIR(inode->i_mode) ? inode->i_size_high : 0);
+         if (os == EXT2_OS_LINUX)
+                 fprintf(out, "%sLinks: %d   Blockcount: %llu\n",
+                         prefix, inode->i_links_count,

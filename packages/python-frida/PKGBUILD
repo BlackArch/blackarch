@@ -3,7 +3,7 @@
 
 pkgname=python-frida
 _pkgname=frida
-pkgver=16.7.13
+pkgver=17.4.0
 pkgrel=1
 pkgdesc='Dynamic instrumentation toolkit for developers, reverse-engineers, and security researchers.'
 groups=('blackarch' 'blackarch-reversing' 'blackarch-binary')
@@ -12,26 +12,30 @@ url='https://pypi.org/project/frida/#files'
 depends=('python' 'python-colorama' 'python-pygments' 'python-prompt_toolkit'
          'python-typing_extensions' 'python-tomlkit')
 makedepends=('python-build' 'python-installer' 'python-wheel' 'nodejs' 'npm'
-             'python-setuptools')
+             'python-setuptools' 'git')
 license=('custom:unknown')
 provides=('frida')
 replaces=('frida')
 conflicts=('frida')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
         'https://raw.githubusercontent.com/frida/frida/master/COPYING')
-sha512sums=('f54b850fcba1c58835f6cba565d3ed27cfaba6532091c5cbb4f22845eff0152bb19cc61674bc64cdc7abc901af1b0ab67fc1c5aff143c3af452092da29a55c81'
+sha512sums=('54605899d91fbd58f473eae847d799d0c556a24e3a849bbe359e1404871b97218d2d983e40588cb25729f1c2c21ccdfdc5c0ba6705313b3907697bdf7237902a'
             'e36c8d5a0538fa4bb3575a60322057f7a687aab04c13deed25399462ba0be74ce6071cc41d967e23b9a96e552462d210280427a945c6cc956919b062878efc9a')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python -m build --wheel --no-isolation --outdir="$startdir/dist"
+  if [[ -n $LDFLAGS ]]; then
+    export LDFLAGS="${LDFLAGS//-Wl,-z,pack-relative-relocs/}"
+  fi
+
+  python -m build --wheel --no-isolation
 }
 
-package_python-frida() {
+package() {
   cd "$_pkgname-$pkgver"
 
-  python -m installer --destdir="$pkgdir" "$startdir/dist/"*.whl
+  python -m installer --destdir="$pkgdir" dist/*.whl
 
   install -Dm 644 "$srcdir/COPYING" \
     "$pkgdir/usr/share/licenses/$pkgname/LICENSE"

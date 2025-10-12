@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=hoaxshell
+pkgver=150.e1bba89
+pkgrel=2
+pkgdesc='A Windows reverse shell payload generator and handler that abuses the http(s) protocol to establish a beacon-like reverse shell.'
+arch=('any')
+groups=('blackarch' 'blackarch-backdoor' 'blackarch-exploitation'
+        'blackarch-networking' 'blackarch-windows')
+url='https://github.com/t3l3machus/hoaxshell'
+license=('BSD-2-Clause')
+depends=('python' 'python-pyperclip' 'python-gnureadline' 'ipython')
+makedepends=('git')
+source=("git+https://github.com/t3l3machus/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf *.md .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/$pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+

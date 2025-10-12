@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=nuclei
-pkgver=v3.3.8.r167.g107949818
+pkgver=v3.4.7.r139.g4e2af6b
 pkgrel=1
 epoch=2
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp' 'blackarch-recon'
@@ -13,13 +13,20 @@ url='https://github.com/projectdiscovery/nuclei'
 license=('MIT')
 depends=('nuclei-templates')
 makedepends=('git' 'go')
-source=("git+https://github.com/projectdiscovery/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/projectdiscovery/$pkgname.git"
+        "config.yaml")
+sha512sums=('SKIP'
+            '45c72fa30d3e223319ab5f74263b9c73daa6efeb9db77ff1a440c4c534b5ecc2d6beea3de393d8e416ab18da5c387e6ea77a2895ef928e3a16e986b437fdfed6')
 
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
@@ -38,8 +45,18 @@ build() {
 package() {
   cd $pkgname
 
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 755 $pkgname "$pkgdir/usr/share/$pkgname/$pkgname"
+  install -Dm 755 ../config.yaml "$pkgdir/usr/share/$pkgname/config.yaml"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md THANKS.md
   install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec ./$pkgname -config /usr/share/$pkgname/config.yaml "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

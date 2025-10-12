@@ -2,62 +2,53 @@
 # See COPYING for license details.
 
 pkgname=fuddly
-pkgver=980.a7d8299
+pkgver=0.30.dev.r251.g546a0a8
 pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-fuzzer')
 pkgdesc='Fuzzing and Data Manipulation Framework (for GNU/Linux).'
 arch=('any')
 url='https://github.com/k0retux/fuddly'
 license=('GPL3')
-depends=('python2' 'python2-pycups' 'python2-rpyc' 'python2-pysqlite'
-         'python2-crcmod' 'python2-xtermcolor' 'sqlite' 'python2-enum34')
-makedepends=('git' 'python2-sphinx')
+depends=('python' 'python-argcomplete' 'python-crcmod' 'python-pycups'
+         'python-rpyc' 'python-graphviz' 'python-matplotlib' 'python-paramiko'
+         'python-pyserial' 'python-z3-solver' 'python-pyxdg'
+         'python-xtermcolor')
+makedepends=('git' 'python-build' 'python-pip')
 source=("git+https://github.com/k0retux/$pkgname.git")
 sha512sums=('SKIP')
-install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
-prepare() {
-  cd $pkgname
-
-  cd docs
-
-  sed -i 's|sphinx-build|sphinx-build2|' Makefile
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
   cd $pkgname
 
-  cd docs
-
-  make html
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst TODO
-  cp -a docs/build/html/ "$pkgdir/usr/share/doc/$pkgname/"
-  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
-
-  rm -rf README.rst TODO COPYING docs
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python2 fuddly_shell.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 }
 

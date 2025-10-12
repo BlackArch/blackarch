@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=wdict
+pkgver=v0.1.19.r0.g6e65a75
+pkgrel=1
+pkgdesc='Create dictionaries by scraping webpages or crawling local files.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-wordlist' 'blackarch-automation')
+url='https://github.com/pyqlsa/wdict'
+license=('MIT')
+depends=('glibc')
+makedepends=('git' 'cargo')
+source=("git+https://github.com/pyqlsa/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  cargo build --release --locked
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
+
+  install -Dm 644 LICENSE-MIT "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
