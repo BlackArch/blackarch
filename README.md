@@ -25,7 +25,8 @@ For more information, see the installation instructions.
 
 # Overview
 To report bugs and request new tools, visit the issue tracker on GitHub, stop by
-[Matrix](https://matrix.to/#/#BlackArch:matrix.org), or email us.
+[Matrix](https://matrix.to/#/#BlackArch:matrix.org), or [email
+us](team@blackarch.org).
 
 **BlackArch Linux** is specifically designed for **penetration testers** and
 **security researchers**. The repository contains over **2,800 tools**,
@@ -92,6 +93,8 @@ Netinstall ISO – minimal installer (requires internet)
 Slim ISO – lightweight version with GUI-based installer
 For detailed steps, see the installation documentation.
 
+---
+
 # Usage
 
 ## Once installed, you can add or remove tools.
@@ -127,6 +130,8 @@ GitHub Issues: BlackArch Issues
 
 Matrix Chat: [#BlackArch:matrix.org](https://matrix.to/#/#BlackArch:matrix.org)
 
+---
+
 # Contributing
 
 We Encourage contributions in various forms:
@@ -143,6 +148,8 @@ Pull Requests
 Fork the repository, make your changes, and submit a PR following our
 contribution guidelines.
 
+---
+
 # Contact
 
 Email: team@blackarch.org
@@ -150,6 +157,8 @@ Email: team@blackarch.org
 Matrix: [#BlackArch:matrix.org](https://matrix.to/#/#BlackArch:matrix.org)
 
 For news and updates, visit our official blog.
+
+---
 
 # License
 
@@ -159,11 +168,15 @@ For news and updates, visit our official blog.
 BlackArch Linux is released under the BSD-3-Clause license. See the COPYING file
 for details.
 
+---
+
 # Disclaimer
 
 BlackArch Linux is intended for ethical hacking, penetration testing, and
 security research only. Use it only on systems you own or have permission to
 test.
+
+---
 
 # Conclusion
 
