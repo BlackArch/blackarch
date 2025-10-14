@@ -24,7 +24,8 @@ For more information, see the installation instructions.
 ---
 
 # Overview
-To report bugs and request new tools, visit the issue tracker on GitHub, stop by
+To report bugs and request new tools, visit the issue tracker on
+[GitHub](https://github.com/BlackArch/blackarch/issues), stop by
 [Matrix](https://matrix.to/#/#BlackArch:matrix.org), or [email
 us](mailto:team@blackarch.org).
 
@@ -126,7 +127,7 @@ Report Bugs or Request Tools
 
 If you encounter a bug or have suggestions:
 
-GitHub Issues: BlackArch Issues
+GitHub Issues: [BlackArch Issues](https://github.com/BlackArch/blackarch/issues)
 
 Matrix Chat: [#BlackArch:matrix.org](https://matrix.to/#/#BlackArch:matrix.org)
 
