@@ -26,7 +26,7 @@ For more information, see the installation instructions.
 # Overview
 To report bugs and request new tools, visit the issue tracker on GitHub, stop by
 [Matrix](https://matrix.to/#/#BlackArch:matrix.org), or [email
-us](team@blackarch.org).
+us](mailto:team@blackarch.org).
 
 **BlackArch Linux** is specifically designed for **penetration testers** and
 **security researchers**. The repository contains over **2,800 tools**,
