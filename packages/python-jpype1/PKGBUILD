@@ -9,8 +9,9 @@ pkgdesc='Python to Java bridge, an effort to allow Python programs full access t
 arch=('x86_64' 'aarch64')
 url='https://github.com/jpype-project/jpype'
 license=('Apache-2.0')
-depends=('python' 'python-typing_extensions' 'python-packaging' 'java-runtime')
-makedepends=('python-setuptools' 'ant')
+depends=('python' 'python-packaging' 'java-runtime')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
 conflicts=('jpype' 'python-jpype')
 source=("https://github.com/jpype-project/jpype/archive/refs/tags/v$pkgver.tar.gz")
 sha512sums=('5849509334ab4eb63546b584eb32a0d61a9da2b5b303acc380f0be2742b96b32a2bd900b2a080e62ed32d7a7c5029a3d59c55fd9f7018ddd37e968e58df32707')
@@ -18,12 +19,23 @@ sha512sums=('5849509334ab4eb63546b584eb32a0d61a9da2b5b303acc380f0be2742b96b32a2b
 build() {
   cd "jpype-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "jpype-$pkgver"
 
-  python setup.py install --root="$pkgdir" --optimize=1
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 

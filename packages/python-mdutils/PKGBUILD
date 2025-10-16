@@ -3,37 +3,38 @@
 
 pkgname=python-mdutils
 _pkgname=${pkgname#python-}
-pkgver=v1.7.0.r4.g2a3c2fb
+pkgver=1.8.0
 pkgrel=1
 pkgdesc='Set of basic tools that can help to create a markdown file.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/didix21/mdutils'
 license=('MIT')
 depends=('python')
-makedepends=('git' 'python-setuptools')
-source=("git+https://github.com/didix21/$_pkgname.git")
-sha512sums=('SKIP')
-
-pkgver() {
-  cd $_pkgname
-
-  ( set -o pipefail
-    git describe --long --tags --abbrev=7 2>/dev/null |
-      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
-    printf "%s.%s" "$(git rev-list --count HEAD)" \
-      "$(git rev-parse --short=7 HEAD)"
-  )
-}
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://github.com/didix21/$_pkgname/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('c2837c0d74b45964e9d996b0c1cc39243f16422e58e7fa464a5675963a87e0849ce0bb985b08272b4a044891afe855cb508a33769216c8b129e97faea6b43beb')
 
 build() {
-  cd $_pkgname
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd $_pkgname
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
