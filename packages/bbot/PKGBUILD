@@ -10,9 +10,10 @@ groups=('blackarch' 'blackarch-recon')
 url='https://github.com/blacklanternsecurity/bbot'
 license=('GPL-3.0-or-later')
 depends=('python')
-makedepends=('git' 'python-pip' 'python-virtualenv')
+makedepends=('git' 'python-setuptools' 'python-pip')
 source=("git+https://github.com/blacklanternsecurity/$pkgname.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
@@ -25,25 +26,36 @@ pkgver() {
   )
 }
 
+prepare() {
+  cd $pkgname
+
+  # Switch to plain poetry-core backend
+  sed -i '/^\[build-system\]/,/^\[/ s/^build-backend = .*/build-backend = "poetry.core.masonry.api"/' pyproject.toml
+  sed -i '/^\[build-system\]/,/^\[/ s/^requires = .*/requires = ["poetry-core>=1.8.0"]/' pyproject.toml
+
+  # Remove poetry-dynamic-versioning config blocks
+  sed -i '/^\[tool.poetry-dynamic-versioning\]/,/^\[/d' pyproject.toml
+  sed -i '/^\[tool.poetry-dynamic-versioning\.substitution\]/,/^\[/d' pyproject.toml
+}
+
 package() {
   cd $pkgname
 
+  install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md docs/*.md
+  install -Dm 644 README.md "$pkgdir/usr/share/$pkgname/README.md"
 
-  python -m venv "$pkgdir/usr/share/$pkgname/venv"
-  source "$pkgdir/usr/share/$pkgname/venv/bin/activate"
+  rm -rf LICENSE *.md docs/*.md .gitignore
 
-  pip install --upgrade pip
-  pip install .
+  cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  deactivate
-
-  install -Dm 755 /dev/stdin "$pkgdir/usr/bin/$pkgname" <<EOF
-#!/bin/bash
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
 source /usr/share/$pkgname/venv/bin/activate
-exec python -m $pkgname.cli "\$@"
+exec python /usr/share/$pkgname/bbot/cli.py "\$@"
 EOF
-}
 
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
