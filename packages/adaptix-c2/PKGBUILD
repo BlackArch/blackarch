@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=adaptix-c2
+_pkgname=AdaptixC2
+pkgver=437.74fc6c0
+pkgrel=1
+pkgdesc='Extensible post-exploitation and adversarial emulation framework.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-exploitation')
+url='https://github.com/Adaptix-Framework/AdaptixC2'
+license=('GPL-3.0-or-later')
+depends=('libcap' 'libusb' 'openssl' 'qt6-base' 'qt6-declarative' 'qt6-scxml'
+         'qt6-websockets' 'zlib')
+makedepends=('git' 'go' 'mingw-w64-gcc')
+source=("git+https://github.com/Adaptix-Framework/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $_pkgname
+
+  make server
+  make extenders
+  make client
+}
+
+package() {
+  cd $_pkgname/dist
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  
+  install -Dm 755 adaptixserver "$pkgdir/usr/bin/$pkgname-server"
+  install -Dm 755 AdaptixClient "$pkgdir/usr/bin/$pkgname-client"
+
+  rm AdaptixClient adaptixserver
+
+  cp -rf * "$pkgdir/usr/share/$pkgname/"
+}
+
