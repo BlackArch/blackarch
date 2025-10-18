@@ -1,0 +1,15 @@
+[Unit]
+Description=Celery Nodes Daemon
+After=network.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/celery/%I.conf
+ExecStart=/usr/bin/celery multi start $CELERYD_NODES --pidfile=/run/celery/%n.pid --logfile=/var/log/celery/%n.log --loglevel="INFO" $CELERYD_OPTS
+ExecStop=/usr/bin/celery multi stopwait $CELERYD_NODES --pidfile=/run/celery/%n.pid
+ExecReload=/usr/bin/celery multi restart $CELERYD_NODES --pidfile=/run/celery/%n.pid --logfile=/var/log/celery/%n.log --loglevel="INFO" $CELERYD_OPTS
+KillMode=control-group
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
