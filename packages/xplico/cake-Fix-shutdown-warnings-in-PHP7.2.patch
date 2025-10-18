@@ -1,0 +1,31 @@
+From: mark_story <mark@mark-story.com>
+Date: Tue, 16 Apr 2019 21:23:58 -0400
+Subject: [PATCH] Fix shutdown warnings in PHP7.2+
+
+Check if the current file is valid before re-using it. This fixes
+warnings emitted during process shutdown when DboSource is persisting
+the method cache.
+
+Fixes #13085
+Origin: upstream, https://github.com/cakephp/cakephp/commit/4d0a2090336b60f6d34d1748582bdb11fc8f961e;
+---
+ system/xi3/lib/Cake/Cache/Engine/FileEngine.php | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/system/xi3/lib/Cake/Cache/Engine/FileEngine.php b/system/xi3/lib/Cake/Cache/Engine/FileEngine.php
+index 9b8eae0..7599d61 100644
+--- a/system/xi3/lib/Cake/Cache/Engine/FileEngine.php
++++ b/system/xi3/lib/Cake/Cache/Engine/FileEngine.php
+@@ -352,7 +352,11 @@ class FileEngine extends CacheEngine {
+ 		if (!$createKey && !$path->isFile()) {
+ 			return false;
+ 		}
+-		if (empty($this->_File) || $this->_File->getBaseName() !== $key) {
++		if (
++			empty($this->_File) ||
++			$this->_File->getBaseName() !== $key ||
++			$this->_File->valid() === false
++		) {
+ 			$exists = file_exists($path->getPathname());
+ 			try {
+ 				$this->_File = $path->openFile('c+');

@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sniffle
+_pkgname=Sniffle
+pkgver=v1.11.0.r0.g18252f2
+linkver=8.31.00.11
+pkgrel=1
+pkgdesc='A sniffer for Bluetooth 5 and 4.x LE.'
+arch=('aarch64')
+groups=('blackarch' 'blackarch-bluetooth')
+url='https://github.com/nccgroup/Sniffle'
+license=('GPL-3.0-or-later')
+depends=('python' 'python-pyserial')
+makedepends=('git' 'arm-none-eabi-gcc' 'cmake')
+source=("git+https://github.com/nccgroup/$_pkgname.git"
+        "https://dr-download.ti.com/software-development/software-development-kit-sdk/MD-BPlR3djvTV/$linkver/simplelink_cc13xx_cc26xx_sdk_${linkver//./_}.run")
+sha512sums=('SKIP'
+            '8602abdb09f497c95da415c12d38311a185baa3a8c1576900d793def80265caa18feec8a0487f29f8936794ae1233105b8292841b531c6817b368d11092a28d1')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  chmod +x "simplelink_cc13xx_cc26xx_sdk_${linkver//./_}.run"
+
+  ./"simplelink_cc13xx_cc26xx_sdk_${linkver//./_}.run" \
+    --prefix $srcdir \
+    --mode unattended
+}
+
+build() {
+  cd "simplelink_cc13xx_cc26xx_sdk_${linkver//./_}"
+
+  make build-gcc XDC_INSTALL_DIR=../xdctools_3_62_01_15_core \
+                 SYSCONFIG_TOOL=../sysconfig_1.18.1/sysconfig_cli.sh \
+                 CMAKE=cmake \
+                 PYTHON=python \
+                 GCC_ARMCOMPILER=/usr
+}
+
+package() {
+  cd "$_pkgname/fw"
+
+  make DESTDIR="$pkgdir"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+}
+

@@ -1,0 +1,24 @@
+From: =?utf-8?q?Rapha=C3=ABl_Hertzog?= <hertzog@debian.org>
+Date: Tue, 22 Nov 2016 16:06:54 +0100
+Subject: Add missing libraries at link time
+
+Without this you can get this error:
+g++ -ggdb -g -O2 -fdebug-prefix-map=/<<PKGBUILDDIR>>=. -fstack-protector-strong -Wformat -Werror=format-security -lssl -lboost_filesystem -lpthread -lboost_thread -llog4cpp -Wl,-z,relro -o sslsniff SSLConnectionManager.o Destination.o FirefoxUpdater.o Logger.o SessionCache.o SSLBridge.o HTTPSBridge.o sslsniff.o FingerprintManager.o AuthorityCertificateManager.o TargetedCertificateManager.o CertificateManager.o HttpBridge.o HttpConnectionManager.o HttpHeaders.o UpdateManager.o OCSPDenier.o FirefoxAddonUpdater.o
+/usr/bin/ld: AuthorityCertificateManager.o: undefined reference to symbol 'X509_gmtime_adj@@OPENSSL_1.0.2d'
+//lib/x86_64-linux-gnu/libcrypto.so.1.0.2: error adding symbols: DSO missing from command line
+---
+ Makefile.am | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 27b2ce5..d05d034 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -4,6 +4,6 @@ bin_PROGRAMS = sslsniff
+ 
+ sslsniff_SOURCES = Bridge.hpp SSLConnectionManager.cpp FingerprintManager.hpp FirefoxAddonUpdater.hpp FirefoxUpdater.hpp HTTPSBridge.hpp Logger.hpp RawBridge.hpp SessionCache.hpp SSLBridge.hpp SSLConnectionManager.hpp sslsniff.hpp UpdateManager.hpp certificate/AuthorityCertificateManager.hpp certificate/Certificate.hpp certificate/CertificateManager.hpp certificate/TargetedCertificateManager.hpp http/HttpBridge.hpp http/HttpConnectionManager.hpp http/HttpHeaders.hpp http/OCSPDenier.hpp util/Destination.cpp util/Destination.hpp util/Util.hpp FirefoxUpdater.cpp Logger.cpp SessionCache.cpp SSLBridge.cpp HTTPSBridge.cpp sslsniff.cpp FingerprintManager.cpp certificate/AuthorityCertificateManager.cpp certificate/TargetedCertificateManager.cpp certificate/CertificateManager.cpp http/HttpBridge.cpp http/HttpConnectionManager.cpp http/HttpHeaders.cpp UpdateManager.cpp http/OCSPDenier.cpp FirefoxAddonUpdater.cpp
+ 
+-sslsniff_LDFLAGS = -lssl -lboost_filesystem -lpthread -lboost_thread -llog4cpp
++sslsniff_LDADD = -lssl -lboost_filesystem -lpthread -lboost_thread -llog4cpp -lcrypto -lboost_system
+ 
+ EXTRA_DIST = certs/wildcard IPSCACLASEA1.crt leafcert.pem updates/Darwin_Universal-gcc3.xml updates/Linux_x86-gcc3.xml updates/WINNT_x86-msvc.xml

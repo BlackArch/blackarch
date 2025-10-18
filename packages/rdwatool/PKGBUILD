@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=rdwatool
+pkgver=1.2.r14.g2aefebc
+pkgrel=1
+pkgdesc='A python script to extract information from a Microsoft Remote Desktop Web Access (RDWA) application.'
+groups=('blackarch' 'blackarch-recon' 'blackarch-windows')
+arch=('any')
+url='https://github.com/p0dalirius/RDWAtool'
+license=('custom:unknown')
+depends=('python' 'python-beautifulsoup4' 'python-urllib3')
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+source=("$pkgname::git+https://github.com/p0dalirius/RDWAtool.git")
+provides=("rdwarecon")
+replaces=("rdwarecon")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd $pkgname
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+

@@ -3,15 +3,14 @@
 
 pkgname=bloodhound
 pkgver=v4.3.1.r60.g226f497
-pkgrel=1
+pkgrel=2
 epoch=1
 pkgdesc='Six Degrees of Domain Admin'
 groups=('blackarch' 'blackarch-recon' 'blackarch-windows')
 arch=('x86_64' 'aarch64')
 url='https://github.com/SpecterOps/BloodHound-Legacy'
-license=('GPL3')
-depends=('nodejs' 'neo4j-community' 'alsa-lib' 'gtk3' 'libxss' 'nss'
-         'gconf' 'libxtst' 'jre17-openjdk-headless')
+license=('GPL-3.0-only')
+depends=('nodejs' 'neo4j-community' 'jre17-openjdk-headless')
 makedepends=('git' 'nodejs-electron-packager' 'npm' 'unzip')
 optdepends=('python: for some scripts' 'powershell: for PowerShell ingestion')
 source=("$pkgname::git+$url.git")
@@ -19,10 +18,11 @@ options=(!strip)
 sha512sums=('SKIP')
 install="$pkgname.install"
 
-if [ "$CARCH" = "x86_64" ]; then
-  _path='BloodHound-linux-x64'
+if [ $CARCH = 'x86_64' ]
+then
+  _path=BloodHound-linux-x64
 else
-  _path='BloodHound-linux-armv7l'
+  _path=BloodHound-linux-arm64
 fi
 
 pkgver() {
@@ -37,14 +37,14 @@ pkgver() {
 }
 
 build() {
-  cd "$pkgname"
+  cd $pkgname
 
   npm install
   NODE_OPTIONS=--openssl-legacy-provider npm run build
 }
 
 package() {
-  cd "$pkgname"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
@@ -56,7 +56,11 @@ package() {
   rm -r *.md docs/
 
   cp -a --no-preserve=ownership $_path Collectors/ \
-    dist/ src/ *.js *.json *.html "$pkgdir/usr/share/$pkgname/"
+    src/ *.js *.json *.html "$pkgdir/usr/share/$pkgname/"
+  if [ $CARCH = 'x86_64' ]
+  then
+    cp -a --no-preserve=ownership dist/ "$pkgdir/usr/share/$pkgname/"
+  fi
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh

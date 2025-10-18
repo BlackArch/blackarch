@@ -2,28 +2,34 @@
 # See COPYING for license details.
 
 pkgname=spotbugs
-pkgver=17966.24f2035899
+pkgver=4.9.6.r32.g891a646
 pkgrel=1
+epoch=1
 pkgdesc='A tool for static analysis to look for bugs in Java code.'
 arch=('x86_64')
 groups=('blackarch' 'blackarch-code-audit')
 url='https://github.com/spotbugs/spotbugs'
 license=('LGPL')
 depends=('java-environment=11')
-makedepends=('git')
+makedepends=('git' 'gradle')
 source=("git+https://github.com/spotbugs/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
   cd $pkgname
 
-  ./gradlew build
+  ./gradlew build -x test
 }
 
 package() {

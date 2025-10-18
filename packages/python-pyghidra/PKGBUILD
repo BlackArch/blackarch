@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-pyghidra
+_pkgname=${pkgname#python-}
+pkgver=2.2.0
+pkgrel=1
+pkgdesc='Python library that provides direct access to the Ghidra API.'
+arch=('any')
+url='https://github.com/NationalSecurityAgency/ghidra'
+license=('Apache-2.0')
+depends=('python-jpype1' 'python-packaging')
+makedepends=('python-build' 'python-pip')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('5f99fb5b44b8d81f82761520a3d405bcdd58c69f12ebc9335c3c84b1a5702780c79cf8154644e018e50d0abe4d04bce02cd7948f95f1c9a1335c2e93c0fd4a6b')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+
+    # No need. It installs an executable to install pyghidra in a venv. It is
+    # already provided by ghidra package
+    rm "$pkgdir/usr/bin/pyghidra"
+}
+
