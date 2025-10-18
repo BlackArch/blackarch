@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=faradaysec
-pkgver=13490.e0d77d359
+pkgver=v3.19.0.r2517.gbd132bb
 pkgrel=1
 pkgdesc='Collaborative Penetration Test and Vulnerability Management Platform.'
 arch=('x86_64' 'aarch64')
@@ -37,12 +37,14 @@ depends=('couchdb' 'python' 'gtk3' 'gobject-introspection' 'python-pyjwt' 'pytho
          'python-pyyaml' 'python-bidict' 'python-socketio' 'python-pyotp' 'python-flask-limiter'
          'python-flask-mail' 'python-faraday-agent-parameters-types' 'python-cvss' 'python-celery'
          'python-gevent' 'python-psycogreen' 'python-flask-celery-helper' 'python-redis' 'python-gevent-websocket'
-         'python-sh' 'python-elasticsearch' 'python-croniter' 'postgresql')
+         'python-sh' 'python-elasticsearch' 'python-croniter' 'python-deprecated' 'postgresql')
 makedepends=('git')
 options=('!strip')
 license=('GPL-3.0-or-later')
-source=("$pkgname::git+https://github.com/infobyte/faraday.git")
-sha512sums=('SKIP')
+source=("$pkgname::git+https://github.com/infobyte/faraday.git"
+        "json_encoder.patch")
+sha512sums=('SKIP'
+            '1cb8eeaee5301959b49ae3a4465937e0afa2f8742dd81b8ab4257ebace25179f515524a375a8c2f2e3f0909e3936158c2590ccec5750c2de06034f92cd907e1f')
 
 pkgver() {
   cd $pkgname
@@ -58,7 +60,8 @@ pkgver() {
 prepare() {
   cd $pkgname
 
-  sed -i 's/>=.*//g' requirements.txt
+  sed -i -e 's/>=.*//g' -e 's/==.*//g' -e 's/<=.*//g' requirements.txt
+  patch -p1 < ../json_encoder.patch
 }
 
 build() {

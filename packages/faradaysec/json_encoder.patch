@@ -1,0 +1,48 @@
+--- a/faraday/server/app.py	2025-10-18 05:14:40.606174328 +0200
++++ b/faraday/server/app.py	2025-10-18 05:15:37.073262020 +0200
+@@ -30,7 +30,6 @@
+ import requests
+ from depot.manager import DepotManager
+ from flask import Flask, session, g, request
+-from flask.json import JSONEncoder
+ from flask_kvsession import KVSessionExtension
+ from flask_limiter import Limiter
+ from flask_limiter.util import get_remote_address
+@@ -655,12 +654,32 @@
+ 
+ 
+ def minify_json_output(app):
+-    class MiniJSONEncoder(JSONEncoder):
+-        item_separator = ','
+-        key_separator = ':'
++    """
++    Flask <2.3: use a custom JSONEncoder and set app.json_encoder.
++    Flask >=2.3: use the JSON provider API and set separators via a subclass.
++    """
++    try:
++        # New API (Flask >= 2.3)
++        from flask.json.provider import DefaultJSONProvider
++    except Exception:
++        # Old API (Flask < 2.3)
++        from flask.json import JSONEncoder  # type: ignore
++
++        class MiniJSONEncoder(JSONEncoder):
++            item_separator = ','
++            key_separator = ':'
++
++        app.json_encoder = MiniJSONEncoder
++        app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
++    else:
++        class MiniJSONProvider(DefaultJSONProvider):
++            def dumps(self, obj, **kwargs):
++                kwargs.setdefault("separators", (",", ":"))
++                kwargs.setdefault("ensure_ascii", False)
++                return super().dumps(obj, **kwargs)
+ 
+-    app.json_encoder = MiniJSONEncoder
+-    app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
++        app.json = MiniJSONProvider(app)
++        app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+ 
+ 
+ class CustomLoginForm(LoginForm):
