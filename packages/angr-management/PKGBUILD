@@ -1,38 +1,41 @@
-# This file is part of BlackArch Linux ( http://blackarch.org ).
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
 pkgname=angr-management
-pkgver=9.1.11752
-pkgrel=7
+pkgver=9.2.179
+pkgrel=1
+pkgdesc='The official angr GUI.'
 groups=('blackarch' 'blackarch-binary' 'blackarch-disassembler'
         'blackarch-reversing')
-pkgdesc='This is the GUI for angr.'
 arch=('any')
-url='https://pypi.org/project/angr-management/#files'
-license=('custom:unknown')
-depends=('angr' 'python' 'python-websocket-client' 'python-pyzmq' 'ipython'
-         'python-pyside' 'python-pygraphviz' 'python-enaml' 'python-simuvex'
-         'python-grandalf' 'python-qtconsole' 'python-atom' 'python-pygments'
-         'python-qtconsole' 'pyside2' 'python-requests' 'python-toml'
-         'python-sqlalchemy' 'python-pyxdg' 'python-jupyter_client'
-         'python-pyqodeng-core')
-makedepends=('git' 'python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz")
-sha512sums=('53162c0ccc3eed4ba4eb6ce214542d7653dbdd0c87c741cbeaa278e2a293ceb047702a1739d960f156c6252ffd54b3ed57870f82499b09fd4a4473fbd9f26dca')
-
-build() {
-  cd "$pkgname-$pkgver"
-
-  python setup.py build
-}
+url='https://github.com/angr/angr-management'
+license=('BSD-2-Clause')
+depends=('python')
+makedepends=('python-setuptools' 'python-pip')
+source=("https://github.com/angr/$pkgname/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('3e6416725a458e4018efd1cd33caeb38d4c2255b4594a72876ae2b9a7f7b12586cfa9e5e72badf326da8a15eab1797f6626f3d1491efffd8055bca23f932a826')
+install="$pkgname.install"
 
 package() {
   cd "$pkgname-$pkgver"
 
+  install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/share/applications"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md docs/*.rst
+  install -Dm 644 "$pkgname.desktop" "$pkgdir/usr/share/applications/$pkgname.desktop"
 
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  rm -rf LICENSE *.md .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec python -m angrmanagement "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
