@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=caido
+pkgname=('caido-cli' 'caido-desktop')
+pkgver=0.52.0
+pkgrel=1
+pkgdesc='A lightweight web security auditing toolkit.'
+url='https://caido.io/'
+license=('custom:unknown')
+arch=('x86_64' 'aarch64')
+source_x86_64=(
+  "https://caido.download/releases/v${pkgver}/caido-desktop-v${pkgver}-linux-x86_64.AppImage"
+  "caido-cli-${pkgver}-x86_64.tar.gz::https://caido.download/releases/v${pkgver}/caido-cli-v${pkgver}-linux-x86_64.tar.gz"
+)
+source_aarch64=(
+  "https://caido.download/releases/v${pkgver}/caido-desktop-v${pkgver}-linux-aarch64.AppImage"
+  "caido-cli-${pkgver}-aarch64.tar.gz::https://caido.download/releases/v${pkgver}/caido-cli-v${pkgver}-linux-aarch64.tar.gz"
+)
+sha512sums_x86_64=('88ed092074b0a933744412c187bed07e76ca3c4a6a8e327302a732baf8a87d5af8fa7e7a1e7e9f09459ce934fde455002b19419b9a2dc2aed9dc37ee5e8b4713'
+                   '6dd7c244d40658c3fa0ff89a89f36fb3ede3db4ead9e8a24e5067b9c90835c923a255ad05836a4feace90a3e18735efa743faa68f9398b30e8c093d99e937b9e')
+sha512sums_aarch64=('38bd8938feef678fe18965558bbdc859331e2a77a3df03b167f6467313d04717e18de7caaa2752c3a117342cdc0dc5144e0f97f1931e8ff75ee6aaab1bb2bfb9'
+                    '7a1780e8acbe2848daa7c60ac4779f9547862ddfc9aa66ad649e3aafcf05c4911b72142284574214277f5a92cc22c529b266d7244d50c63fd7cd1b74b7569581')
+
+package_caido-desktop() {
+  depends=('glibc' 'gcc-libs')
+  provides=('caido')
+
+  chmod +x *.AppImage
+  ./*.AppImage --appimage-extract
+  mv squashfs-root/ build
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  cp -aR build/* "$pkgdir/usr/share/$pkgname/"
+  ln -s "/usr/share/$pkgname/caido" "$pkgdir/usr/bin/$provides"
+  find "$pkgdir/usr/share/$pkgname" -type d -exec chmod 755 {} +
+
+  sed -i 's|Exec=AppRun --no-sandbox %U|Exec=caido|' "build/caido.desktop"
+  install -Dm 644 "build/caido.desktop" -t "$pkgdir/usr/share/applications/"
+  install -Dm 644 "build/caido.png" -t "$pkgdir/usr/share/icons/hicolor/256x256/apps/"
+}
+
+package_caido-cli() {
+  depends=('glibc' 'gcc-libs')
+
+  install -Dm 755 caido-cli "$pkgdir/usr/bin/caido-cli"
+}
+
