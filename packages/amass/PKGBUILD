@@ -2,27 +2,31 @@
 # See COPYING for license details.
 
 pkgname=amass
-_pkgname=Amass
-pkgver=2559.61f53cc9
+pkgver=v5.0.1.r1.g61f53cc
 pkgrel=1
-epoch=2
+epoch=3
 pkgdesc='In-depth subdomain enumeration written in Go.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
 url='https://github.com/OWASP/Amass'
 license=('Apache-2.0')
 makedepends=('git' 'go')
-source=('git+https://github.com/OWASP/Amass.git')
+source=("$pkgname::git+https://github.com/OWASP/Amass.git")
 sha512sums=('SKIP')
 
 pkgver() {
-  cd $_pkgname
+  cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
-  cd $_pkgname
+  cd $pkgname
 
   export CGO_ENABLED=0
 
@@ -37,7 +41,7 @@ build() {
 }
 
 package() {
-  cd $_pkgname
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
