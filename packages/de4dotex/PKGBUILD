@@ -12,12 +12,8 @@ url='https://github.com/GDATAAdvancedAnalytics/de4dotEx'
 license=('GPL-3.0-or-later')
 depends=('mono')
 makedepends=('git' 'mono' 'mono-msbuild' 'dotnet-sdk')
-source=("git+https://github.com/GDATAAdvancedAnalytics/$pkgname.git"
-        "$pkgname.sh"
-        "$pkgname-x64.sh")
-sha512sums=('SKIP'
-            '61c7a09497491ca4198df0320de43dabe1e67e414303b8dbe91e6b83c179eaf395d0dcbc8f9c6c078dc557b98cc21fc538c60b3f7430e42a34806aec64f6f95a'
-            '600bd38aa72d10950486655be33c77a23f5364879369869f364163c5cbe53115bbe89e2c88c473d56a637a7f52232b11c07b85da14bba6f32f2c3b5b541c0958')
+source=("git+https://github.com/GDATAAdvancedAnalytics/$pkgname.git")
+sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
@@ -41,18 +37,24 @@ build() {
 
 package() {
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
   install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
 
-  cp -a "$pkgname/Release/net48"/* "$pkgdir/usr/share/$pkgname"
-  install -Dm 755 "$pkgname.sh" "$pkgdir/usr/share/$pkgname/$pkgname.sh"
-  install -Dm 755 "$pkgname-x64.sh" "$pkgdir/usr/share/$pkgname/$pkgname-x64.sh"
+  cp -a "$pkgname/Release/net48"/* "$pkgdir/usr/share/windows/$pkgname"
 
-  ln -s "/usr/share/$pkgname/$pkgname.sh" "$pkgdir/usr/bin/$pkgname"
-  ln -s "/usr/share/$pkgname/$pkgname-x64.sh" "$pkgdir/usr/bin/$pkgname-x64"
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname
+mono ./de4dot.exe "\$@"
+EOF
 
-  cp -a "$pkgdir/usr/share/$pkgname"/* "$pkgdir/usr/share/windows/$pkgname/"
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 
-  rm "$pkgdir/usr/share/windows/$pkgname/"{de4dotex.sh,de4dotex-x64.sh}
+  cat > "$pkgdir/usr/bin/$pkgname-x64" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname
+mono ./de4dot-x64.exe "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname-x64"
 }
 
