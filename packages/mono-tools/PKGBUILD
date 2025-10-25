@@ -1,0 +1,63 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# from AUR - adjusted to our style.
+#
+# Maintainer: Daniel Isenmann <daniel@archlinux.org>
+# Contributor: Brice Carpentier <brice@dlfp.org>
+#
+# The mono-tool package now calls make-search-index by post_install().
+# Whenever a package is installed which places doc-sources into:
+# /usr/lib/monodoc/sources it should call --make-search-index with
+# post_install() and with post remove. mond-tools itself deletes the index
+# file pre_remove(), so pacman finds the directory empty an removes it
+# properly.
+
+pkgname=mono-tools
+pkgver=4.2
+pkgrel=5
+pkgdesc='Collection of testing and development tools for use with mono.'
+arch=('x86_64' 'aarch64')
+license=('GPL')
+url='https://www.mono-project.com/'
+depends=('gtk-sharp-2')
+makedepends=('git' 'zip')
+options=('!makeflags')
+source=("https://github.com/mono/mono-tools/archive/$pkgver.tar.gz"
+        'drop-docbrowser-gendarme.patch'
+        'monodoc.xml')
+install="$pkgname.install"
+sha512sums=('97e8a7e6a165a84327e2ebc1272e295657a523aa2c609522155dbf8fd218d834198f6af52ad5f1dd89fac19b4619067c44822601b67afd8005b8a306b2f48b26'
+            'bb9bc521242c7970a7efed4eb7d5a93d3d412690cc2f5349b11b60a31677f6ed1b2abc4473315be227fe609582ba4a4139c304b2d5fb38fab2f1c6bbf56e60b2'
+            '69d66cae8b570124ae02340ae4829bf5c97e24722b4184741d5845c60291df4a8f066801f8afc93a552fadb560dd6ef0f5793ef380c3daec4c21e59ad57f1786')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -Np1 -i ../drop-docbrowser-gendarme.patch
+
+  mv configure.in configure.ac
+
+  sed -e 's/-warnaserror+//' -i gendarme/options.make # Fix build with newer mono
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  glib-gettextize --force
+
+  autoreconf -fi
+
+  GMCS=/usr/bin/dmcs ./configure --prefix=/usr
+
+  make
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 "$srcdir/monodoc.xml" "$pkgdir/usr/lib/monodoc/monodoc.xml"
+}
+
