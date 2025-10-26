@@ -2,19 +2,32 @@
 # See COPYING for license details.
 
 pkgname=bless
-pkgver=0.6.3
-pkgrel=3
+pkgver=v0.6.3.r3.g103fbd6
+pkgrel=1
+epoch=1
 pkgdesc='High-quality, full-featured hex editor.'
+groups=('blackarch' 'blackarch-misc')
 arch=('any')
 url='https://github.com/afrantzis/bless'
 license=('GPL-1.0-or-later')
 depends=('gtk-sharp-2')
-makedepends=('meson' 'ninja')
-source=("https://github.com/afrantzis/bless/archive/v$pkgver.tar.gz")
-sha512sums=('22841b6f1b923ebfc7952ad9233cffb30df4ecb22a655f6461ff3cc97066a8c68ffc6bbd88e4fd83c345226928ed08c557f2f322942766da61bcd2b2c7f7d3cb')
+makedepends=('git' 'meson' 'ninja' 'itstool')
+source=("git+https://github.com/afrantzis/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   arch-meson -Dtests=false -Dhtml_user_doc=false build
 
@@ -22,7 +35,7 @@ build() {
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   DESTDIR="$pkgdir" ninja -C build install
 }
