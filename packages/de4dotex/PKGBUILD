@@ -1,0 +1,58 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=de4dotex
+pkgver=3.2.3.r0.g3355328
+pkgrel=1
+pkgdesc='.NET deobfuscator and unpacker.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-windows' 'blackarch-unpacker' 'blackarch-binary'
+        'blackarch-reversing')
+url='https://github.com/GDATAAdvancedAnalytics/de4dotEx'
+license=('GPL-3.0-or-later')
+depends=('mono')
+makedepends=('git' 'mono' 'mono-msbuild' 'dotnet-sdk')
+source=("git+https://github.com/GDATAAdvancedAnalytics/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  msbuild -v:m -restore -t:Build -p:Configuration=Release \
+    -p:TargetFramework=net48 de4dot.netframework.sln
+  find Release/net48 -iname '*.pdb' -or -iname '*.xml' -or \
+    -iname 'Test.Rename.*' -delete
+}
+
+package() {
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/windows/$pkgname"
+
+  cp -a "$pkgname/Release/net48"/* "$pkgdir/usr/share/windows/$pkgname"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname
+mono ./de4dot.exe "\$@"
+EOF
+
+  cat > "$pkgdir/usr/bin/$pkgname-x64" << EOF
+#!/bin/sh
+cd /usr/share/windows/$pkgname
+mono ./de4dot-x64.exe "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"{,-x64}
+}
+
