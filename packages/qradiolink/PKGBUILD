@@ -34,6 +34,9 @@ prepare() {
 
   # Fix linking libftdi library
   sed -i 's|-lftdi|-lftdi1|g' qradiolink.pro
+  sed -i '1i #include <cstdint>' src/DMR/constants.h
+  # Boost.System is header-only on Arch now; remove stale linker flag
+  sed -i 's/[[:space:]]-lboost_system//g' qradiolink.pro
 }
 
 build() {
@@ -44,7 +47,11 @@ build() {
   protoc --cpp_out=. Mumble.proto
   protoc --cpp_out=. QRadioLink.proto
   cd ../../build/
-  qmake QMAKE_LFLAGS+="-labsl_log_internal_message -labsl_log_internal_check_op -labsl_base -labsl_status -labsl_strings -labsl_raw_logging_internal -labsl_throw_delegate -labsl_spinlock_wait -labsl_hash -labsl_raw_hash_set -labsl_cord -labsl_time -labsl_synchronization" "INCLUDEPATH+=/usr/include/libftdi1" ..
+  qmake \
+    CONFIG+=link_pkgconfig \
+    PKGCONFIG+=protobuf \
+    INCLUDEPATH+=/usr/include/libftdi1 \
+    ..
 
   make
 }
