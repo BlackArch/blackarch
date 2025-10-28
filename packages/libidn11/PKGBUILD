@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=libidn11
+_pkgname=libidn
+pkgver=1.33
+pkgrel=3
+pkgdesc='Implementation of the Stringprep, Punycode and IDNA specifications.'
+url='https://www.gnu.org/software/libidn/'
+arch=('x86_64' 'aarch64')
+license=('GPL-3.0-only' 'LGPL')
+depends=('glibc')
+makedepends=('git' 'gperf')
+source=("git+https://git.savannah.gnu.org/git/libidn.git?#tag=libidn-${pkgver//./-}"
+        'libidn11-subdirs.patch')
+sha512sums=('73c8a707b0196c462db742f619edb8876c2d13e3207d87a3f5efe2ccb18a1af51c6676a81afb11645bd02efdc6585e909eadbf911f1fb980345aa1371cd4638c'
+            '46b5ecdb5fb899a53b3d9794b5f0a4c5e3726afa88e8cb11c96cabc04b3b6b8b415877fd54fece0f710720137e4fe1efb3c56deb2f8b66852fafa5eea8e9f1cd')
+
+prepare() {
+  cd $_pkgname
+
+  patch -Np1 -i ../libidn11-subdirs.patch
+  make -f GNUmakefile autoreconf
+}
+
+build() {
+  cd $_pkgname
+
+  ./configure \
+    --prefix='/usr' \
+    --disable-nls \
+    --disable-static
+  make
+}
+
+package() {
+  make DESTDIR="$pkgdir" -C libidn install
+
+  rm -rf "${pkgdir}"/usr/{include,lib/{libidn.so,pkgconfig}}
+}
+
