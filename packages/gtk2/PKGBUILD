@@ -1,0 +1,89 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# from AUR - adjusted to our styles (WIP).
+#
+# Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
+# Maintainer: Jan de Groot <jgc@archlinux.org>
+
+pkgname=gtk2
+pkgver=2.24.33
+pkgrel=6
+pkgdesc='GObject-based multi-platform GUI toolkit (legacy).'
+url='https://www.gtk.org/'
+arch=('x86_64' 'aarch64')
+license=('LGPL-2.1-or-later')
+depends=('atk' 'cairo' 'desktop-file-utils' 'fontconfig' 'gdk-pixbuf2' 'glib2'
+         'glibc' 'gtk-update-icon-cache' 'libcups' 'librsvg' 'libx11'
+         'libxcomposite' 'libxcursor' 'libxdamage' 'libxext' 'libxfixes' 'libxi'
+         'libxinerama' 'libxrandr' 'libxrender' 'pango' 'shared-mime-info'
+)
+makedepends=('git' 'glib2-devel' 'gobject-introspection' 'gtk-doc')
+optdepends=(
+  'adwaita-fonts: Default font'
+  'adwaita-icon-theme: Default icon theme'
+  'gnome-themes-extra-gtk2: Default widget theme'
+  'python: gtk-builder-convert'
+)
+provides=(
+  'libgailutil.so'
+  'libgdk-x11-2.0.so'
+  'libgtk-x11-2.0.so'
+)
+install="$pkgname.install"
+source=("git+https://gitlab.gnome.org/GNOME/gtk.git#tag=$pkgver"
+        'gtk-query-immodules-2.0.hook'
+        '0001-Lower-severity-of-XID-collision-warnings.patch'
+        '0002-Stop-looking-for-modules-in-cwd.patch'
+)
+sha512sums=('fc6fcdd1dc99adec9b6d167327d345b715c5658d90e10ad78bb370960bff9c65027a7f0600e70747b88a71eb8f5a25ed8142976fd0d6cc46f111cb3d1816c631'
+            '5e99c5558bf48dc251134869c6310bd9e4bce3775a93547f62028fe32b415c18079da89fe46c85d80b54c4810732acbd6b88ec9946962d02fafc46ed7f672cf2'
+            'f3e140a6c648fa37566dce60cdfe7c82bab4297ed56db464ca7043de40061329e0092619ac13ec2e5371c99596af19c206e885b1b5b5438a9fc9b6ee0475acfd'
+            '2a2bfcc7aa46ad51c8596efe395101a5942a1f716d6393fe089c5505effcb68fe4ca03569a8aa02228530d80227ffe3698a940ed76ac318b7c7fa17b3d47dab6')
+
+prepare() {
+  cd gtk
+
+  git apply -3 ../0001-Lower-severity-of-XID-collision-warnings.patch
+
+  # CVE-2024-6655: https://www.openwall.com/lists/oss-security/2024/09/09/1
+  # https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7361
+  git apply -3 ../0002-Stop-looking-for-modules-in-cwd.patch
+
+  sed -i '/AM_INIT_AUTOMAKE/s/]/ foreign]/' configure.ac
+  autoreconf -fvi
+}
+
+build() {
+  local configure_options=(
+    --prefix=/usr
+    --sysconfdir=/etc
+    --localstatedir=/var
+    --with-xinput=yes
+    --disable-gtk-doc
+  )
+
+  CFLAGS+=" -Wno-error=implicit-int -Wno-error=incompatible-pointer-types"
+
+  cd gtk
+  ./configure "${configure_options[@]}"
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  make
+}
+
+package() {
+  make -C gtk DESTDIR="$pkgdir" install
+
+  install -Dm 644 /dev/stdin "$pkgdir/usr/share/gtk-2.0/gtkrc" <<END
+gtk-icon-theme-name = "Adwaita"
+gtk-theme-name = "Adwaita"
+gtk-font-name = "Adwaita Sans 11"
+END
+
+  install -Dm 644 gtk-query-immodules-2.0.hook \
+    -t "$pkgdir/usr/share/libalpm/hooks"
+
+  # Built by GTK 4, shared with GTK 2/3
+  rm "$pkgdir/usr/bin/gtk-update-icon-cache"
+}
+
