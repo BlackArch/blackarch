@@ -2,13 +2,14 @@
 # See COPYING for license details.
 
 pkgname=vuls
-pkgver=1744.a2e2276c
+pkgver=v0.35.1.r3.g0ba85f8
 pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='Vulnerability scanner for Linux/FreeBSD, agentless, written in Go.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/future-architect/vuls'
-license=('GPL3')
+license=('GPL-3.0-only')
 depends=('sqlite')
 makedepends=('git' 'go')
 source=("git+https://github.com/future-architect/$pkgname.git")
@@ -17,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
@@ -28,26 +34,26 @@ build() {
   BUILDTIME=$(date "+%Y%m%d_%H%M%S")
 
   GOFLAGS="-trimpath -buildmode=pie -mod=readonly -modcacherw"
-  LDFLAGS="-X 'github.com/future-architect/vuls/config.Version=${VERSION}'"
-  LDFLAGS="$LDFLAGS -X 'github.com/future-architect/vuls/config.Revision=build-${BUILDTIME}_${REVISION}'"
-  LDFLAGS="$LDFLAGS -s -w"
+  LDFLAGS="-X github.com/future-architect/vuls/config.Version=${VERSION}"
+  LDFLAGS="$LDFLAGS -X github.com/future-architect/vuls/config.Revision=build-${BUILDTIME}_${REVISION}"
 
   GOPATH="$srcdir" go mod download
-  GOPATH="$srcdir" go build \
-    $GOFLAGS \
-    -ldflags $LDFLAGS \
-    -o $pkgname ./cmd/$pkgname
 
   GOPATH="$srcdir" go build \
     $GOFLAGS \
-    -ldflags $LDFLAGS \
-    -o $pkgname-scanner ./cmd/scanner
+    -ldflags "$LDFLAGS" \
+    -o $pkgname "./cmd/$pkgname"
+
+  GOPATH="$srcdir" go build \
+    $GOFLAGS \
+    -ldflags "$LDFLAGS" \
+    -o "$pkgname-scanner" ./cmd/scanner
 }
 
 package() {
   cd $pkgname
 
-  install -Dm 755 $pkgname $pkgname-scanner -t "$pkgdir/usr/bin"
+  install -Dm 755 $pkgname "$pkgname-scanner" -t "$pkgdir/usr/bin"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 }
 

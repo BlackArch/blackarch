@@ -1,0 +1,88 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=deskhpsdr
+pkgver=2.6.59.r19.gac0db31
+pkgrel=3
+pkgdesc='SDR App for HPSDR protocol and Soapy-API.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-radio')
+url='https://github.com/dl1bz/deskhpsdr'
+license=('GPL-3.0-or-later')
+depends=('fftw' 'gtk3' 'alsa-lib' 'openssl' 'curl' 'libusb' 'libgpiod'
+         'libpulse' 'libpcap' 'json-c' 'soapysdr' 'pipewire' 'pipewire-pulse'
+         'i2c-tools')
+makedepends=('git' 'cmake' 'libxml2')
+source=("git+https://github.com/dl1bz/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  # enable options (unchanged)
+  local cfg="make.config.deskhpsdr"
+  local enable_opts=( SATURN SOAPYSDR STEMLAB ATU COPYMODE AUTOGAIN REGION1 WMAP )
+  for opt in "${enable_opts[@]}"; do
+    if grep -q "^${opt}=" "$cfg"; then
+      sed -i "s/^${opt}=.*/${opt}=ON/" "$cfg"
+    else
+      echo "${opt}=ON" >> "$cfg"
+    fi
+  done
+
+  # https://github.com/dl1bz/deskhpsdr/issues/68
+  # drop all sudo calls
+  sed -i 's/\bsudo[[:space:]]\+//g' Makefile
+
+  # replace the cp of the .desktop with a proper install that creates dirs
+  sed -i 's|cp[[:space:]]\+LINUX/deskHPSDR\.desktop[[:space:]]\+"\${HOME}/\.local/share/applications"\
+|install -Dm644 LINUX/deskHPSDR.desktop "$(DESTDIR)/usr/share/applications/deskHPSDR.desktop"|' Makefile
+
+  # remove the moving of files in system icon dir
+  sed -i '/\/usr\/local\/share\/icons/d' Makefile
+  # now rewrite /usr/local → $(DESTDIR)/usr everywhere
+  sed -i 's|/usr/local|$(DESTDIR)/usr|g' Makefile
+
+  # stop writing to $HOME and running caches
+  sed -i '/Desktop\/deskHPSDR\.desktop/d' Makefile
+  sed -i '/\${HOME}\/Desktop/d' Makefile
+  sed -i '/deskHPSDR\.desklnk/d' Makefile
+  sed -i '/Copy deskHPSDR to your Desktop/d' Makefile
+  sed -i '/Create a link for deskHPSDR at the Desktop/d' Makefile
+  sed -i '/fc-cache/d' Makefile
+  sed -i '/ldconfig/d' Makefile
+  sed -i '/update-desktop-database/d' Makefile
+  sed -i '/sync$/d' Makefile
+
+  # fix the rm of the desktop file
+  sed -i 's|"\${HOME}/\.local/share/applications/deskHPSDR\.desktop"|$(DESTDIR)/usr/share/applications/deskHPSDR.desktop|g' Makefile
+}
+
+build() {
+  cd $pkgname
+
+  make CFLAGS="${CFLAGS} -D_GNU_SOURCE $(pkg-config --cflags libxml-2.0)" \
+    LDLIBS+=" $(pkg-config --libs libxml-2.0)"
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+}
+

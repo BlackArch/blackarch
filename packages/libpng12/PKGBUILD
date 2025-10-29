@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=libpng12
+_pkgname=libpng
+pkgver=1.2.59
+pkgrel=3
+pkgdesc='A collection of routines used to create PNG format graphics files.'
+arch=('x86_64' 'aarch64')
+url='http://www.libpng.org/pub/png/libpng.html'
+license=('custom:unknown')
+depends=('glibc' 'zlib')
+source=("https://sourceforge.net/projects/libpng/files/$_pkgname-$pkgver.tar.xz"
+        "https://sourceforge.net/projects/libpng-apng/files/$pkgname/$pkgver/$_pkgname-$pkgver-apng.patch.gz")
+sha512sums=('bfdc51eca72a76697f1396611a08aa4ce6a169837197699c55d845fdef17850e8f7665b7b81ba815c277453737f12eeb41409ff9c7eca1ac0c0d134c44492a6e'
+            '5e405e8c444956b5f30cb2bc8c55f8050c038287afa4b478d237a02084428c9ecda60bc0015c4ca915bf9784492ad3d854a627f165fa62040817cd19f32234c0')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  patch -Np1 -i "../$_pkgname-$pkgver-apng.patch"
+
+  libtoolize --force --copy
+  aclocal
+  autoconf
+  automake --add-missing
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  ./configure \
+    --prefix=/usr
+
+  make
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  rm -rf "${pkgdir}"/usr/{bin,include/*.h,lib/{libpng.{a,so},pkgconfig},share}
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

@@ -2,51 +2,48 @@
 # See COPYING for license details.
 
 pkgname=ldeep
-pkgver=1.0.89.r0.gf932f9f
-pkgrel=1
+pkgver=1.0.89.r6.gaedea51
+pkgrel=2
 epoch=1
 pkgdesc='In-depth ldap enumeration utility.'
 groups=('blackarch' 'blackarch-recon')
 arch=('any')
 url='https://github.com/franc-pentest/ldeep'
 license=('MIT')
-depends=('python' 'python-dnspython' 'python-cryptography' 'python-ldap3'
-         'python-tqdm' 'python-termcolor' 'python-commandparse'
-         'python-pycryptodomex' 'python-six' 'python-gssapi' 'python-oscrypto'
-         'python-pycryptodome')
-makedepends=('git' 'python-build' 'python-pip')
+depends=('python')
+makedepends=('git' 'python-setuptools' 'python-pip')
 source=("git+https://github.com/franc-pentest/$pkgname.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
-}
-
-build() {
-  cd $pkgname
-
-  python -m build --wheel --outdir="$startdir/dist"
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
   cd $pkgname
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $pkgname
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst VERSION
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.rst
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf .gitignore .github .pre-commit-config.yaml
+
+  cp -a . "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/ldeep/__main__.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
 }
 
