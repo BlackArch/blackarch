@@ -1,0 +1,62 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=bbot
+pkgver=7143.6821912
+pkgrel=1
+pkgdesc='Multipurpose scanner built to automate your Recon, Bug Bounties, and ASM.'
+arch=('any')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/blacklanternsecurity/bbot'
+license=('GPL-3.0-or-later')
+depends=('python')
+makedepends=('git' 'python-setuptools' 'python-pip')
+source=("git+https://github.com/blacklanternsecurity/$pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  # Switch to plain poetry-core backend
+  sed -i '/^\[build-system\]/,/^\[/ s/^build-backend = .*/build-backend = "poetry.core.masonry.api"/' pyproject.toml
+  sed -i '/^\[build-system\]/,/^\[/ s/^requires = .*/requires = ["poetry-core>=1.8.0"]/' pyproject.toml
+
+  # Remove poetry-dynamic-versioning config blocks
+  sed -i '/^\[tool.poetry-dynamic-versioning\]/,/^\[/d' pyproject.toml
+  sed -i '/^\[tool.poetry-dynamic-versioning\.substitution\]/,/^\[/d' pyproject.toml
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md docs/*.md
+  install -Dm 644 README.md "$pkgdir/usr/share/$pkgname/README.md"
+
+  rm -rf LICENSE *.md docs/*.md .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/bbot/cli.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
+
