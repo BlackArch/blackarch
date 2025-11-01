@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-pydemumble
+_pkgname=pydemumble
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='A Python wrapper library for demumble; demumble is a tool to demangle C++, Rust, and Swift symbol names.'
+arch=('x86_64' 'aarch64')
+url='https://pypi.org/project/pydemumble/#files'
+license=('BSD-3-Clause')
+depends=('python' 'python-scikit-build-core' 'nanobind')
+makedepends=('python-build' 'python-pip' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('691574fea4d1d986bc60b4b928e20f4bf077b69182210db9a0183874bd748bbaa5d49daaa68a66dafbd0e64ccfd24995ffe97d08bc2bcde0884d4c69c6a97f41')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+
