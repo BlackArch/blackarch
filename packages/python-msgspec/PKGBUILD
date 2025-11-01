@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-msgspec
+_pkgname=msgspec
+pkgver=0.19.0
+pkgrel=1
+pkgdesc='A fast serialization and validation library, with builtin support for JSON, MessagePack, YAML, and TOML.'
+arch=('x86_64' 'aarch64')
+url='https://pypi.org/project/msgspec/#files'
+license=('BSD-3-Clause')
+depends=('python' 'python-yaml' 'python-toml')
+makedepends=('python-build' 'python-pip' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('64e04fbe24c53dcdc511d71c04e5437262f979f3aec7a9d5036119793b585ea046eda5ce55d898dec5cc43cf91c22f0712020cd3bced964e551daac525ddcd35')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+
