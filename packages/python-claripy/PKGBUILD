@@ -2,8 +2,8 @@
 # See COPYING for license details.
 
 pkgname=python-claripy
-_pkgname=claripy
-pkgver=9.2.167
+_pkgname=${pkgname#python-}
+pkgver=9.2.182
 pkgrel=1
 pkgdesc='An abstraction layer for constraint solvers.'
 arch=('any')
@@ -11,18 +11,30 @@ url='https://pypi.org/project/claripy/#files'
 license=('custom:unknown')
 depends=('python' 'z3' 'python-future' 'python-cachetools' 'python-decorator'
          'python-pysmt')
+makedepends=('python-build' 'python-pip')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('a184799c72e6b486aa0e29e593c094e63e406f5aa09593ec49205d80c4890e1f9ce27ca39578f17808a2260b9707ab4044028e0c4322e29d562388ed26af4d3a')
+sha512sums=('855e6e34768500cf2703c9f31d800fd0c0f839ca2a0ce15f4b5a8814b0a55013213a9d64ae0590f15f6d8b6f1a355967a595441ed8c4f614dabc41901c84210f')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
