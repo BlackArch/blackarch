@@ -1,54 +1,51 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-# Initial PKGBUILD from AUR.
-# Old Maintainer: nemanjan00 <nemanjan00+aur@gmail.com>
-# Old Contributor: Filipe Laíns (FFY00) <filipe.lains@gmail.com>
-# Old Contributor: Michal Krenek (Mikos) <m.krenek@gmail.com>
-
 pkgname=sdrangel
-pkgver=v7.22.8.r20.g4d10b0b
+pkgver=v7.22.9.r27.ge615bd0
 pkgrel=1
-pkgdesc='Qt5/OpenGL SDR and signal analyzer frontend.'
+pkgdesc='Qt6/OpenGL SDR and signal analyzer frontend.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-radio')
 url='https://github.com/f4exb/sdrangel'
 license=('GPL-3.0-or-later')
-depends=('log4cpp' 'fftw' 'cm256cc' 'dsdcc' 'pulse-native-provider'
-         'lz4' 'nanomsg' 'qt5-base' 'qt5-multimedia' 'qt5-websockets'
-         'qt5-tools' 'qt5-charts' 'qt5-quickcontrols' 'qt5-quickcontrols2'
-         'qt5-serialport' 'qt5-declarative' 'qt5-location' 'qt5-speech'
-         'qt5-webengine' 'qt5-gamepad' 'qt5-svg' 'qt5-graphicaleffects')
+depends=('cm256cc' 'dsdcc' 'fftw' 'lz4' 'nanomsg' 'opencv'
+         'pulse-native-provider' 'qt6-base'	'qt6-multimedia' 'qt6-websockets'
+	       'qt6-tools' 'qt6-charts' 'qt6-serialport' 'qt6-declarative'
+         'qt6-location' 'qt6-speech' 'qt6-webengine' 'qt6-svg' 'qt6-scxml')
 # libsigmf requires the vendored version at https://github.com/f4exb/libsigmf/tree/new-namespaces, which isn't packaged yet
-makedepends=('git' 'cmake' 'boost' 'doxygen' 'graphviz' 'ffmpeg' 'libdab'
-             'zlib' 'faad2' 'sgp4' 'aptdec' 'codec2' 'libmirisdr4' 'rtl-sdr'
-             'hackrf' 'libiio' 'limesuite' 'bladerf' 'libperseus-sdr' 'airspy'
-             'airspyhf' 'libxtrx' 'libuhd')
-optdepends=('airspy: Airspy support'
-            'airspyhf: Airspy HF+ support'
-            'codec2: FreeDV modulator/demodulator'
-            'dsdcc: Required for Digital Speech Decoder (DSD) demodulator'
-            'ffmpeg: DATV demodulator'
-            'hackrf: HackRF support'
-            'hamlib: Required for Audio CAT SISO plugin'
-            'libiio: PlutoSDR support'
-            'libsdrplay: SDRplay support'
-            'libuhd: USRP support'
-            'libdab: DAB demodulator'
-            'mbelib: Required for Digital Speech Decoder (DSD) demodulator'
-            'opencv: Required for ATV demodulator'
-            'rtl-sdr: RTLSDR support'
-            'zlib: DAB demodulator'
-            'faad2: DAB demodulator'
-            'sgp4: satellite tracker'
-            'aptdec: APT (weather satellite) decoder'
-            'libmirisdr4<2.0.0: SDRPlay support'
-            'limesuite: LimeSDR support'
-            'bladerf: BladeRF support'
-            'libperseus-sdr: Perseus SDR support'
-            'libxtrx: XTRX SDR support')
-source=("git+https://github.com/f4exb/$pkgname.git")
-sha512sums=('SKIP')
+makedepends=('cmake' 'boost' 'codec2'	'doxygen'	'faad2'	'ffmpeg' 'git'
+             'graphviz' 'hamlib' 'libdab'	'ninja'	'vulkan-headers' 'zlib'
+	           'glslang' 'spirv-headers' 'spirv-tools' 'vulkan-headers'
+	           'vulkan-icd-loader' 'airspy' 'airspyhf'	'bladerf'
+	           'hackrf' 'libiio' 'libmirisdr4' 'libperseus-sdr' 'libuhd'
+             'limesuite' 'rtl-sdr' 'libsdrplay' 'sgp4' 'aptdec' 'libxtrx')
+optdepends=(
+	# Demodulator
+	'ffmpeg: DATV demodulator'
+	'libdab: DAB demodulator'
+	'zlib: DAB demodulator'
+	'faad2: DAB demodulator'
+	'sgp4: satellite tracker'
+	'aptdec: APT (weather satellite) decoder'
+	'codec2: FreeDV modulator/demodulator'
+	# Driver
+	'libmirisdr4: SDRPlay support'
+	'rtl-sdr: RTLSDR support'
+	'hackrf: HackRF support'
+	'libiio: PlutoSDR support'
+	'limesuite: LimeSDR support'
+	'bladerf: BladeRF support'
+	'libperseus-sdr: Perseus SDR support'
+	'airspy: Airspy support'
+	'airspyhf: Airspy HF+ support'
+	'libxtrx: XTRX SDR support'
+	'libuhd: USRP support'
+)
+source=("git+https://github.com/f4exb/$pkgname.git"
+        "git+https://github.com/DTolm/VkFFT.git")
+sha512sums=('SKIP'
+            'SKIP')
 
 pkgver() {
   cd $pkgname
@@ -61,26 +58,56 @@ pkgver() {
   )
 }
 
-build() {
+prepare() {
   cd $pkgname
 
+  # Arch's glslang no longer ships libSPVRemapper.so,
+  # but upstream CMakeLists still hard-requires it if using Vulkan+VkFFT.
+  # This keeps Vulkan/VkFFT working with system glslang/spirv-tools on Arch.
+
+  sed -i \
+    '/find_library *(VULKAN_SPVREMAPPER_LIB .*SPVRemapper/d;
+     /find_library *(VULKAN_SPVREMAPPERD_LIB .*SPVRemapper/d' \
+    sdrbase/CMakeLists.txt
+
+  sed -i \
+    's/optimized ${VULKAN_SPVREMAPPER_LIB}//g;
+     s/debug ${VULKAN_SPVREMAPPERD_LIB}//g;
+     s/${VULKAN_SPVREMAPPER_LIB}//g;
+     s/${VULKAN_SPVREMAPPERD_LIB}//g' \
+    sdrbase/CMakeLists.txt
+}
+
+build() {
   # https://bugs.gentoo.org/704322
-  export CXXFLAGS="$CXXFLAGS -fpermissive"
-  cmake -B build \
-    -Wno-dev \
-    -DARCH_OPT="" \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=/usr \
-    -DLIBDSDCC_INCLUDE_DIR=/usr/include/dsdcc \
-    -DCM256CC_INCLUDE_DIR=/usr/include/cm256cc \
-    -DENABLE_CHANNELRX_DEMODDATV=OFF \
-    -DENABLE_CHANNELTX_MODDATV=OFF
-  make -C build
+  # also enable x86-64-v3 (SSE3+) optimizations for DSP-heavy code
+  export CFLAGS="$CFLAGS -march=x86-64-v3"
+  export CXXFLAGS="$CXXFLAGS -fpermissive -march=x86-64-v3"
+
+  local cmake_options=(
+    -Wno-dev
+    -G Ninja
+    -DARCH_OPT=""
+    -DCMAKE_BUILD_TYPE=None
+    -DCMAKE_INSTALL_PREFIX=/usr
+    -DLIBDSDCC_INCLUDE_DIR=/usr/include/dsdcc
+    -DCM256CC_INCLUDE_DIR=/usr/include/cm256cc
+    # Build against Qt6
+    -DENABLE_QT6=ON
+    # Disable DAB demod plugin because it currently FTBFS
+    # https://github.com/f4exb/sdrangel/issues/2520
+    -DENABLE_CHANNELRX_DEMODDAB=OFF
+    # Tell SDRangel to use VkFFT headers we vendor'ed in $srcdir/VkFFT
+    -DVKFFT_INCLUDE_DIR="${srcdir}/VkFFT/vkFFT"
+    # Select backend = Vulkan (0), CUDA (1). Select Vulkan to cover more devices
+    -DVKFFT_BACKEND=0
+  )
+
+  cmake -S "$pkgname" -B build "${cmake_options[@]}"
+  ninja -C build
 }
 
 package() {
-  cd $pkgname
-
-  make -C build DESTDIR="$pkgdir" install
+	DESTDIR="$pkgdir" ninja -C build install
 }
 
