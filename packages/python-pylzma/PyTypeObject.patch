@@ -1,0 +1,361 @@
+--- a/src/pylzma/pylzma_aes.c	2025-11-03 05:47:18.605978840 +0100
++++ b/src/pylzma/pylzma_aes.c	2025-11-03 05:49:33.914100077 +0100
+@@ -148,6 +148,27 @@
+     {NULL, NULL},
+ };
+ 
++#if PY_MAJOR_VERSION >= 3
++
++/* Python 3.x+ version using designated initializers.
++   This layout is compatible with modern CPython (3.8+ through 3.13+)
++   because we only set the named fields we actually care about,
++   and let the rest default to 0/NULL. */
++
++static PyTypeObject CAESDecrypt_Type = {
++    PyVarObject_HEAD_INIT(NULL, 0)
++    .tp_name = "pylzma.AESDecrypt",
++    .tp_basicsize = sizeof(CAESDecryptObject),
++    .tp_flags = Py_TPFLAGS_DEFAULT,
++    .tp_doc = "AES decryption class",
++    .tp_methods = aesdecrypt_methods,
++    .tp_init = (initproc)aesdecrypt_init,
++    .tp_new = PyType_GenericNew,
++};
++
++#else  /* PY_MAJOR_VERSION < 3, i.e. Python 2.x */
++
++/* Original legacy layout for Python 2.x / early 3.x */
+ PyTypeObject
+ CAESDecrypt_Type = {
+     PyVarObject_HEAD_INIT(NULL, 0)
+@@ -169,8 +190,8 @@
+     0,                                   /* tp_getattro*/
+     0,                                   /* tp_setattro*/
+     0,                                   /* tp_as_buffer*/
+-    Py_TPFLAGS_DEFAULT,  /*tp_flags*/
+-    "AES decryption class",                 /* tp_doc */
++    Py_TPFLAGS_DEFAULT,                  /* tp_flags */
++    "AES decryption class",              /* tp_doc */
+     0,                                   /* tp_traverse */
+     0,                                   /* tp_clear */
+     0,                                   /* tp_richcompare */
+@@ -189,3 +210,5 @@
+     0,                                   /* tp_alloc */
+     0,                                   /* tp_new */
+ };
++
++#endif /* PY_MAJOR_VERSION >= 3 */
+--- a/src/pylzma/pylzma_compressfile.c	2025-11-03 06:00:52.252099407 +0100
++++ b/src/pylzma/pylzma_compressfile.c	2025-11-03 06:11:59.466224166 +0100
+@@ -224,44 +224,61 @@
+     return result;
+ }
+ 
+-PyTypeObject
+-CCompressionFileObject_Type = {
++#if PY_MAJOR_VERSION >= 3
++
++PyTypeObject CCompressionFileObject_Type = {
++    PyVarObject_HEAD_INIT(NULL, 0)
++    .tp_name = "pylzma.CompressionFile",
++    .tp_basicsize = sizeof(CCompressionFileObject),
++    .tp_flags = Py_TPFLAGS_DEFAULT,
++    .tp_doc = "File-like LZMA compression object",
++    .tp_dealloc = (destructor)pylzma_compfile_dealloc,
++    .tp_methods = pylzma_compfile_methods,
++    .tp_init = (initproc)pylzma_compfile_init,
++    .tp_new = PyType_GenericNew,
++};
++
++#else
++
++PyTypeObject CCompressionFileObject_Type = {
+     PyVarObject_HEAD_INIT(NULL, 0)
+-    "pylzma.compressfile",                  /* char *tp_name; */
+-    sizeof(CCompressionFileObject),      /* int tp_basicsize; */
+-    0,                                   /* int tp_itemsize;       // not used much */
+-    (destructor)pylzma_compfile_dealloc, /* destructor tp_dealloc; */
+-    NULL,                                /* printfunc  tp_print;   */
+-    NULL,                                /* getattrfunc  tp_getattr; // __getattr__ */
+-    NULL,                                /* setattrfunc  tp_setattr;  // __setattr__ */
+-    NULL,                                /* cmpfunc  tp_compare;  // __cmp__ */
+-    NULL,                                /* reprfunc  tp_repr;    // __repr__ */
+-    NULL,                                /* PyNumberMethods *tp_as_number; */
+-    NULL,                                /* PySequenceMethods *tp_as_sequence; */
+-    NULL,                                /* PyMappingMethods *tp_as_mapping; */
+-    NULL,                                /* hashfunc tp_hash;     // __hash__ */
+-    NULL,                                /* ternaryfunc tp_call;  // __call__ */
+-    NULL,                                /* reprfunc tp_str;      // __str__ */
+-    0,                                   /* tp_getattro*/
+-    0,                                   /* tp_setattro*/
+-    0,                                   /* tp_as_buffer*/
+-    Py_TPFLAGS_DEFAULT,  /*tp_flags*/
+-    "File compression class",           /* tp_doc */
+-    0,                                   /* tp_traverse */
+-    0,                                   /* tp_clear */
+-    0,                                   /* tp_richcompare */
+-    0,                                   /* tp_weaklistoffset */
+-    0,                                   /* tp_iter */
+-    0,                                   /* tp_iternext */
+-    pylzma_compfile_methods,             /* tp_methods */
+-    0,                                   /* tp_members */
+-    0,                                   /* tp_getset */
+-    0,                                   /* tp_base */
+-    0,                                   /* tp_dict */
+-    0,                                   /* tp_descr_get */
+-    0,                                   /* tp_descr_set */
+-    0,                                   /* tp_dictoffset */
+-    (initproc)pylzma_compfile_init,      /* tp_init */
+-    0,                                   /* tp_alloc */
+-    0,                                   /* tp_new */
++    "pylzma.CompressionFile",       /* tp_name */
++    sizeof(CCompressionFileObject), /* tp_basicsize */
++    0,                              /* tp_itemsize */
++    (destructor)pylzma_compfile_dealloc, /* tp_dealloc */
++    NULL,                           /* tp_print */
++    NULL,                           /* tp_getattr */
++    NULL,                           /* tp_setattr */
++    NULL,                           /* tp_compare */
++    NULL,                           /* tp_repr */
++    NULL,                           /* tp_as_number */
++    NULL,                           /* tp_as_sequence */
++    NULL,                           /* tp_as_mapping */
++    NULL,                           /* tp_hash */
++    NULL,                           /* tp_call */
++    NULL,                           /* tp_str */
++    0,                              /* tp_getattro */
++    0,                              /* tp_setattro */
++    0,                              /* tp_as_buffer */
++    Py_TPFLAGS_DEFAULT,             /* tp_flags */
++    "File-like LZMA compression object", /* tp_doc */
++    0,                              /* tp_traverse */
++    0,                              /* tp_clear */
++    0,                              /* tp_richcompare */
++    0,                              /* tp_weaklistoffset */
++    0,                              /* tp_iter */
++    0,                              /* tp_iternext */
++    pylzma_compfile_methods,        /* tp_methods */
++    0,                              /* tp_members */
++    0,                              /* tp_getset */
++    0,                              /* tp_base */
++    0,                              /* tp_dict */
++    0,                              /* tp_descr_get */
++    0,                              /* tp_descr_set */
++    0,                              /* tp_dictoffset */
++    (initproc)pylzma_compfile_init, /* tp_init */
++    0,                              /* tp_alloc */
++    0,                              /* tp_new */
+ };
++
++#endif /* PY_MAJOR_VERSION >= 3 */
+--- a/src/pylzma/pylzma_compressobj.c	2025-11-03 05:59:35.444557916 +0100
++++ b/src/pylzma/pylzma_compressobj.c	2025-11-03 06:16:19.782430519 +0100
+@@ -215,30 +215,44 @@
+     return result;
+ }
+ 
+-PyTypeObject
+-CCompressionObject_Type = {
+-    //PyObject_HEAD_INIT(&PyType_Type)
++#if PY_MAJOR_VERSION >= 3
++
++static PyTypeObject CCompressionObject_Type = {
++    PyVarObject_HEAD_INIT(NULL, 0)
++    .tp_name = "pylzma.compressobj",
++    .tp_basicsize = sizeof(CCompressionObject),
++    .tp_flags = Py_TPFLAGS_DEFAULT,
++    .tp_doc = "Compression class",
++    .tp_dealloc = (destructor)pylzma_comp_dealloc,
++    .tp_methods = pylzma_comp_methods,
++    .tp_init = (initproc)pylzma_comp_init,
++    .tp_new = PyType_GenericNew,
++};
++
++#else  /* Python 2 */
++
++PyTypeObject CCompressionObject_Type = {
+     PyObject_HEAD_INIT(NULL)
+     0,
+-    "pylzma.compressobj",                /* char *tp_name; */
+-    sizeof(CCompressionObject),          /* int tp_basicsize; */
+-    0,                                   /* int tp_itemsize;       // not used much */
+-    (destructor)pylzma_comp_dealloc,     /* destructor tp_dealloc; */
+-    NULL,                                /* printfunc  tp_print;   */
+-    NULL,                                /* getattrfunc  tp_getattr; // __getattr__ */
+-    NULL,                                /* setattrfunc  tp_setattr;  // __setattr__ */
+-    NULL,                                /* cmpfunc  tp_compare;  // __cmp__ */
+-    NULL,                                /* reprfunc  tp_repr;    // __repr__ */
+-    NULL,                                /* PyNumberMethods *tp_as_number; */
+-    NULL,                                /* PySequenceMethods *tp_as_sequence; */
+-    NULL,                                /* PyMappingMethods *tp_as_mapping; */
+-    NULL,                                /* hashfunc tp_hash;     // __hash__ */
+-    NULL,                                /* ternaryfunc tp_call;  // __call__ */
+-    NULL,                                /* reprfunc tp_str;      // __str__ */
+-    0,                                   /* tp_getattro*/
+-    0,                                   /* tp_setattro*/
+-    0,                                   /* tp_as_buffer*/
+-    Py_TPFLAGS_DEFAULT,  /*tp_flags*/
++    "pylzma.compressobj",                /* tp_name */
++    sizeof(CCompressionObject),          /* tp_basicsize */
++    0,                                   /* tp_itemsize */
++    (destructor)pylzma_comp_dealloc,     /* tp_dealloc */
++    NULL,                                /* tp_print */
++    NULL,                                /* tp_getattr */
++    NULL,                                /* tp_setattr */
++    NULL,                                /* tp_compare */
++    NULL,                                /* tp_repr */
++    NULL,                                /* tp_as_number */
++    NULL,                                /* tp_as_sequence */
++    NULL,                                /* tp_as_mapping */
++    NULL,                                /* tp_hash */
++    NULL,                                /* tp_call */
++    NULL,                                /* tp_str */
++    0,                                   /* tp_getattro */
++    0,                                   /* tp_setattro */
++    0,                                   /* tp_as_buffer */
++    Py_TPFLAGS_DEFAULT,                  /* tp_flags */
+     "Compression class",                 /* tp_doc */
+     0,                                   /* tp_traverse */
+     0,                                   /* tp_clear */
+@@ -258,3 +272,5 @@
+     0,                                   /* tp_alloc */
+     0,                                   /* tp_new */
+ };
++
++#endif /* PY_MAJOR_VERSION >= 3 */
+--- a/src/pylzma/pylzma_decompressobj.c	2025-11-03 06:00:19.388392381 +0100
++++ b/src/pylzma/pylzma_decompressobj.c	2025-11-03 06:17:01.046218338 +0100
+@@ -375,28 +375,43 @@
+     Py_TYPE(self)->tp_free((PyObject*) self);
+ }
+ 
+-PyTypeObject
+-CDecompressionObject_Type = {
++#if PY_MAJOR_VERSION >= 3
++
++PyTypeObject CDecompressionObject_Type = {
++    PyVarObject_HEAD_INIT(NULL, 0)
++    .tp_name = "pylzma.decompressobj",
++    .tp_basicsize = sizeof(CDecompressionObject),
++    .tp_flags = Py_TPFLAGS_DEFAULT,
++    .tp_doc = "Decompression class",
++    .tp_dealloc = (destructor)pylzma_decomp_dealloc,
++    .tp_methods = pylzma_decomp_methods,
++    .tp_init = (initproc)pylzma_decomp_init,
++    .tp_new = PyType_GenericNew,
++};
++
++#else  /* Python 2 branch */
++
++PyTypeObject CDecompressionObject_Type = {
+     PyVarObject_HEAD_INIT(NULL, 0)
+-    "pylzma.decompressobj",              /* char *tp_name; */
+-    sizeof(CDecompressionObject),        /* int tp_basicsize; */
+-    0,                                   /* int tp_itemsize;       // not used much */
+-    (destructor)pylzma_decomp_dealloc,   /* destructor tp_dealloc; */
+-    NULL,                                /* printfunc  tp_print;   */
+-    NULL,                                /* getattrfunc  tp_getattr; // __getattr__ */
+-    NULL,                                /* setattrfunc  tp_setattr;  // __setattr__ */
+-    NULL,                                /* cmpfunc  tp_compare;  // __cmp__ */
+-    NULL,                                /* reprfunc  tp_repr;    // __repr__ */
+-    NULL,                                /* PyNumberMethods *tp_as_number; */
+-    NULL,                                /* PySequenceMethods *tp_as_sequence; */
+-    NULL,                                /* PyMappingMethods *tp_as_mapping; */
+-    NULL,                                /* hashfunc tp_hash;     // __hash__ */
+-    NULL,                                /* ternaryfunc tp_call;  // __call__ */
+-    NULL,                                /* reprfunc tp_str;      // __str__ */
++    "pylzma.decompressobj",              /* tp_name */
++    sizeof(CDecompressionObject),        /* tp_basicsize */
++    0,                                   /* tp_itemsize */
++    (destructor)pylzma_decomp_dealloc,   /* tp_dealloc */
++    NULL,                                /* tp_print */
++    NULL,                                /* tp_getattr */
++    NULL,                                /* tp_setattr */
++    NULL,                                /* tp_compare */
++    NULL,                                /* tp_repr */
++    NULL,                                /* tp_as_number */
++    NULL,                                /* tp_as_sequence */
++    NULL,                                /* tp_as_mapping */
++    NULL,                                /* tp_hash */
++    NULL,                                /* tp_call */
++    NULL,                                /* tp_str */
+     0,                                   /* tp_getattro*/
+     0,                                   /* tp_setattro*/
+     0,                                   /* tp_as_buffer*/
+-    Py_TPFLAGS_DEFAULT,                  /*tp_flags*/
++    Py_TPFLAGS_DEFAULT,                  /* tp_flags */
+     "Decompression class",               /* tp_doc */
+     0,                                   /* tp_traverse */
+     0,                                   /* tp_clear */
+@@ -416,3 +431,5 @@
+     0,                                   /* tp_alloc */
+     0,                                   /* tp_new */
+ };
++
++#endif /* PY_MAJOR_VERSION >= 3 */
+--- a/src/pylzma/pylzma_decompressobj_compat.c	2025-11-03 06:00:03.174874348 +0100
++++ b/src/pylzma/pylzma_decompressobj_compat.c	2025-11-03 06:03:06.620285597 +0100
+@@ -196,23 +196,39 @@
+     {NULL},
+ };
+ 
++#if PY_MAJOR_VERSION >= 3
++
++static PyTypeObject CompatDecompressionObject_Type = {
++    PyVarObject_HEAD_INIT(NULL, 0)
++    .tp_name = "LZMACompatDecompress",
++    .tp_basicsize = sizeof(CCompatDecompressionObject),
++    .tp_flags = Py_TPFLAGS_DEFAULT,
++    .tp_doc = "Compat decompression class",
++    .tp_dealloc = (destructor)pylzma_decomp_dealloc,
++    .tp_methods = pylzma_decomp_compat_methods,
++    .tp_members = pylzma_decomp_compat_members,
++    .tp_new = PyType_GenericNew,
++};
++
++#else  /* Python 2 */
++
+ PyTypeObject CompatDecompressionObject_Type = {
+   PyVarObject_HEAD_INIT(NULL, 0)
+-  "LZMACompatDecompress",              /* char *tp_name; */
+-  sizeof(CCompatDecompressionObject),  /* int tp_basicsize; */
+-  0,                                   /* int tp_itemsize;       // not used much */
+-  (destructor)pylzma_decomp_dealloc,   /* destructor tp_dealloc; */
+-  NULL,                                /* printfunc  tp_print;   */
+-  NULL,                                /* getattrfunc  tp_getattr; // __getattr__ */
+-  NULL,                                /* setattrfunc  tp_setattr;  // __setattr__ */
+-  NULL,                                /* cmpfunc  tp_compare;  // __cmp__ */
+-  NULL,                                /* reprfunc  tp_repr;    // __repr__ */
+-  NULL,                                /* PyNumberMethods *tp_as_number; */
+-  NULL,                                /* PySequenceMethods *tp_as_sequence; */
+-  NULL,                                /* PyMappingMethods *tp_as_mapping; */
+-  NULL,                                /* hashfunc tp_hash;     // __hash__ */
+-  NULL,                                /* ternaryfunc tp_call;  // __call__ */
+-  NULL,                                /* reprfunc tp_str;      // __str__ */
++  "LZMACompatDecompress",              /* tp_name */
++  sizeof(CCompatDecompressionObject),  /* tp_basicsize */
++  0,                                   /* tp_itemsize */
++  (destructor)pylzma_decomp_dealloc,   /* tp_dealloc */
++  NULL,                                /* tp_print */
++  NULL,                                /* tp_getattr */
++  NULL,                                /* tp_setattr */
++  NULL,                                /* tp_compare */
++  NULL,                                /* tp_repr */
++  NULL,                                /* tp_as_number */
++  NULL,                                /* tp_as_sequence */
++  NULL,                                /* tp_as_mapping */
++  NULL,                                /* tp_hash */
++  NULL,                                /* tp_call */
++  NULL,                                /* tp_str */
+   NULL,                                /* tp_getattro*/
+   NULL,                                /* tp_setattro*/
+   NULL,                                /* tp_as_buffer*/
+@@ -237,6 +253,8 @@
+   NULL,                                /* tp_new */
+ };
+ 
++#endif /* PY_MAJOR_VERSION >= 3 */
++
+ const char doc_decompressobj_compat[] = \
+     "decompressobj_compat() -- Returns object that can be used for decompression.";
+ 
