@@ -2,14 +2,15 @@
 # See COPYING for license details.
 
 pkgname=bad-pdf
-pkgver=63.4b42f66
+pkgver=v1.1.r31.g4b42f66
 pkgrel=1
+epoch=1
 pkgdesc='Steal NTLM Hashes with Bad-PDF.'
 groups=('blackarch' 'blackarch-exploitation')
 arch=('any')
 url='https://github.com/deepzec/Bad-Pdf'
 license=('GPL3')
-depends=('python2' 'responder')
+depends=('python' 'responder')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/deepzec/Bad-Pdf.git")
 sha512sums=('SKIP')
@@ -17,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
@@ -35,7 +41,7 @@ package() {
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-exec python2 /usr/share/$pkgname/badpdf.py "\$@"
+exec python /usr/share/$pkgname/badpdf.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
