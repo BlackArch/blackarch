@@ -1,4 +1,4 @@
-FROM blackarchlinux/blackarch:base-devel
+FROM docker.io/blackarchlinux/blackarch:base-devel
 
 # Update Systen
 RUN pacman --noconfirm --noprogressbar --needed -Syyu
