@@ -2,13 +2,14 @@
 # See COPYING for license details.
 
 pkgname=roguehostapd
-pkgver=78.381b373
-pkgrel=10
+pkgver=1.0.r45.g381b373
+pkgrel=1
+epoch=1
 pkgdesc='Hostapd fork including Wi-Fi attacks and providing Python bindings with ctypes.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-wireless')
 url='https://github.com/wifiphisher/roguehostapd'
-license=('BSD')
+license=('BSD-3-Clause')
 depends=('python')
 makedepends=('git' 'python-setuptools' 'libnfnetlink' 'libnl')
 source=("git+https://github.com/wifiphisher/$pkgname")
@@ -17,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
