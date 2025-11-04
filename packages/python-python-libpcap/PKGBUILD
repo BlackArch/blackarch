@@ -2,27 +2,38 @@
 # See COPYING for license details.
 
 pkgname=python-python-libpcap
-_pkgname=python-libpcap
-pkgver=0.5.3
+_pkgname=python_libpcap
+pkgver=0.5.4
 pkgrel=1
 pkgdesc='Cython libpcap.'
 url='https://pypi.org/project/python-libpcap/#files'
 arch=('x86_64' 'aarch64')
-license=('BSD')
+license=('BSD-3-Clause')
 depends=('python' 'libpcap')
-makedepends=('python-setuptools' 'cython')
+makedepends=('python-build' 'python-pip' 'cython')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('84638f10728a720f91559580d8f919cdbc361508b69db5b8e7e0516583330186f4978ab3af9e71d27dc846b69120e634e299aa7b4d98e3ee359ec5fc5aea2b1c')
+sha512sums=('ca9e8370ac5bc4efd0caeda4c7dbd2ca61d3a1b0188a56152518c154ea7ccd2fce2254c2978337a6b20c5dad1a7071bbb04ebeb7775d7fda4c2fe79857266c31')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
