@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=zeek
-pkgver=v8.1.0.dev.r844.g0e9bfeeed2
+pkgver=v8.1.0.dev.r844.g0e9bfee
 pkgrel=1
 epoch=1
 groups=('blackarch' 'blackarch-networking' 'blackarch-defensive'
@@ -23,7 +23,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
