@@ -1,0 +1,101 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# from AUR - adjusted to our style
+#
+# Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Contributor: Andrea Scarpino <andrea@archlinux.org>
+
+pkgname=qt5-webengine
+_basever=5.15.18
+pkgver=5.15.19
+pkgrel=5
+arch=('x86_64' 'aarch64')
+url='https://www.qt.io'
+license=('LGPL3' 'LGPL2.1' 'BSD')
+pkgdesc='Provides support for web applications using the Chromium browser project'
+depends=('qt5-webchannel' 'qt5-location' 'libxcomposite' 'libxrandr' 'pciutils'
+         'libxss' 'libxkbfile' 'libxdamage' 'libevent' 'snappy' 'nss' 'libxslt'
+         'minizip' 'ffmpeg' 'libvpx' 'libxtst' 'ttf-font')
+makedepends=('git' 'python' 'gperf' 'jsoncpp' 'ninja' 'qt5-tools' 'poppler'
+             'pipewire' 'nodejs' 'python-html5lib')
+optdepends=('pipewire: WebRTC desktop sharing under Wayland')
+groups=('qt5')
+_pkgfqn=${pkgname/5-/}
+source=("kde-$_pkgfqn::git+https://code.qt.io/qt/qtwebengine.git#tag=v$pkgver-lts"
+        'git+https://code.qt.io/qt/qtwebengine-chromium.git'
+        'qt5-webengine-pipewire-0.3.patch'
+        'qt5-webengine-icu-75.patch'
+        'qt5-webengine-ninja-1.12.patch'
+        'qt5-webengine-gcc-15.patch'
+        'python3.12-six.patch')
+sha512sums=('c3824cd3adaedebdb4905d3e165014801eb571b4cae6f11471b9e76971083cc9db1b9a257c0d95f71bc6a8e4c05e25a0e782d6e96e9ad984d2e2fa9024d79dbf'
+            'SKIP'
+            'c2edc78ba7a3992c13663509b4604230a92ec6f4417a95a8f923a47cee72e91e7a10ef2b9e7dc26e2244b5a5847561b08a8a681fff97d39893d9e65c7e91807f'
+            '189f927bf3afbeb289a6923df8b2d9b785b5ef26b92104a086bb038222b451bd230e407210b082e7b6dbec5df36efb62f246bb501694a42dd6116be027ee5908'
+            'e4901b43ddebcba411efbc1630593f87fdd8f25e41276d041e197f103ce1dbcb373567803dee7d5bc6a31c5edbe9d68e70b66fc8efd439bccdb4259639029b11'
+            '6886f830291069b8ef9b91dd483e5e2d0c4d3e023271c37fc2c7a180ccbaa71c32101849b0098ab6eda33ee70c76c8e1d2648fae463c89a4146dad4b6d8316c3'
+            'ec917578f5394c1afde173abc4a6ab50ec43cdab8794b0d04583424f0f67dce53fefd9d0e556c43edba0d8eb3459d05d7a1edbfc8efc67d7ec5058bb994bcc48')
+
+prepare() {
+  cd "kde-$_pkgfqn"
+
+  mkdir -p build
+
+  git submodule init
+  git submodule set-url src/3rdparty "$srcdir"/qtwebengine-chromium
+  git submodule set-branch --branch 87-based src/3rdparty
+  git -c protocol.file.allow=always submodule update
+
+  patch -p1 -d src/3rdparty -i "$srcdir/qt5-webengine-pipewire-0.3.patch" # Port to pipewire 0.3
+  patch -p2 -d src/3rdparty/chromium -i "$srcdir/qt5-webengine-icu-75.patch" # Fix build with ICU 75
+  patch -p2 -d src/3rdparty/chromium -i "$srcdir/qt5-webengine-ninja-1.12.patch" # Fix build with ninja 1.12
+  patch -p1 -d src/3rdparty/chromium -i "$srcdir/python3.12-six.patch" # Fix build with python 3.12 - patch from Debian
+  patch -p1 -i "$srcdir"/qt5-webengine-gcc-15.patch # Fix build with GCC 15 (Fedora)
+
+  # Fix build with python 3.13
+  sed -e '/import pipes/d' \
+    -i src/3rdparty/chromium/build/android/gyp/util/build_utils.py
+}
+
+build() {
+  # this uses malloc_usable_size, which is incompatible with fortification level
+  # 3
+  export CFLAGS="${CFLAGS/_FORTIFY_SOURCE=3/_FORTIFY_SOURCE=2}"
+  export CXXFLAGS="${CXXFLAGS/_FORTIFY_SOURCE=3/_FORTIFY_SOURCE=2}"
+
+  cd build
+
+  qmake "../kde-$_pkgfqn" CONFIG+=force_debug_info -- \
+    -proprietary-codecs \
+    -webp \
+    -webengine-icu \
+    -spellchecker \
+    -webengine-kerberos \
+    -webengine-webrtc-pipewire \
+    -webengine-python-version python3
+
+  make
+}
+
+package() {
+  # this uses malloc_usable_size, which is incompatible with fortification level
+  # 3
+  export CFLAGS="${CFLAGS/_FORTIFY_SOURCE=3/_FORTIFY_SOURCE=2}"
+  export CXXFLAGS="${CXXFLAGS/_FORTIFY_SOURCE=3/_FORTIFY_SOURCE=2}"
+
+  cd build
+
+  make INSTALL_ROOT="$pkgdir" install
+
+  # Drop QMAKE_PRL_BUILD_DIR because reference the build dir
+  find "$pkgdir/usr/lib" -type f -name '*.prl' \
+    -exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;
+
+  install -Dm 644 "$srcdir/kde-$_pkgfqn/src/3rdparty/chromium/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE.chromium"
+
+  # Fix cmake dependency versions
+  sed -e "s|$pkgver\ |$_basever |" -i "$pkgdir/usr/lib/cmake/*/*Config.cmake"
+}
+

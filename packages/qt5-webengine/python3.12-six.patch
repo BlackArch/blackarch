@@ -1,0 +1,58 @@
+Patch-Source: https://sources.debian.org/data/main/q/qtwebengine-opensource-src/5.15.16+dfsg-3/debian/patches/python3.12-six.patch
+--
+Description: implement find_spec() for _SixMetaPathImporter
+Origin: upstream, https://github.com/benjaminp/six/commit/25916292d96f5f09
+Last-Update: 2024-03-17
+
+--- a/third_party/protobuf/third_party/six/six.py
++++ b/third_party/protobuf/third_party/six/six.py
+@@ -71,6 +71,11 @@ else:
+             MAXSIZE = int((1 << 63) - 1)
+         del X
+ 
++if PY34:
++    from importlib.util import spec_from_loader
++else:
++    spec_from_loader = None
++
+ 
+ def _add_doc(func, doc):
+     """Add documentation to a function."""
+@@ -186,6 +191,11 @@ class _SixMetaPathImporter(object):
+             return self
+         return None
+ 
++    def find_spec(self, fullname, path, target=None):
++        if fullname in self.known_modules:
++            return spec_from_loader(fullname, self)
++        return None
++
+     def __get_module(self, fullname):
+         try:
+             return self.known_modules[fullname]
+--- a/tools/grit/third_party/six/__init__.py
++++ b/tools/grit/third_party/six/__init__.py
+@@ -71,6 +71,11 @@ else:
+             MAXSIZE = int((1 << 63) - 1)
+         del X
+ 
++if PY34:
++    from importlib.util import spec_from_loader
++else:
++    spec_from_loader = None
++
+ 
+ def _add_doc(func, doc):
+     """Add documentation to a function."""
+@@ -186,6 +191,11 @@ class _SixMetaPathImporter(object):
+             return self
+         return None
+ 
++    def find_spec(self, fullname, path, target=None):
++        if fullname in self.known_modules:
++            return spec_from_loader(fullname, self)
++        return None
++
+     def __get_module(self, fullname):
+         try:
+             return self.known_modules[fullname]
