@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=qt5-declarative
+_basever=5.15.18
+pkgver=5.15.18+kde+r22
+pkgrel=2
+_commit=1189557a50f11e7bc5716467a149cd09987a9f88
+arch=('x86_64' 'aarch64')
+url='https://www.qt.io'
+license=('GPL3' 'LGPL3' 'FDL' 'custom')
+pkgdesc='Classes for QML and JavaScript languages'
+depends=('qt5-base')
+makedepends=('python' 'vulkan-headers' 'git')
+groups=('qt5')
+conflicts=('qtchooser')
+_pkgfqn=${pkgname/5-/}
+source=("kde-$_pkgfqn::git+https://invent.kde.org/qt/qt/$_pkgfqn#commit=$_commit")
+sha512sums=('a4e4887e122406a957246650c5c76e3ea921bc041ef8e76bb5843a5e936c7cf8')
+
+pkgver() {
+  cd "kde-$_pkgfqn"
+
+  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit` |
+    sed -e 's|+kde+r0||'
+}
+
+prepare() {
+  mkdir -p build
+}
+
+build() {
+  cd build
+
+  qmake "../kde-$_pkgfqn" CONFIG+=fat-static-lto
+
+  make
+}
+
+package() {
+  cd build
+  make INSTALL_ROOT="$pkgdir" install
+
+  # Symlinks for backwards compatibility
+  for b in "$pkgdir"/usr/bin/*; do
+    ln -s $(basename $b) "$pkgdir"/usr/bin/$(basename $b)-qt5
+  done
+
+  # Drop QMAKE_PRL_BUILD_DIR because reference the build dir
+  find "$pkgdir/usr/lib" -type f -name '*.prl' \
+    -exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;
+
+  install -d "$pkgdir"/usr/share/licenses
+  ln -s /usr/share/licenses/qt5-base "$pkgdir/usr/share/licenses/$pkgname"
+}
+
