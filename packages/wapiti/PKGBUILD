@@ -4,11 +4,11 @@
 pkgname=wapiti
 _pkgname=wapiti3
 pkgver=3.2.9.r0.gcb6b4a9c
-pkgrel=1
+pkgrel=2
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
 pkgdesc='A vulnerability scanner for web applications.'
 url='https://github.com/wapiti-scanner/wapiti'
-license=('GPL')
+license=('GPL-2.0-only')
 depends=('python' 'python-httpx' 'python-httpx-socks' 'python-beautifulsoup4'
          'python-tld' 'python-yaswfp' 'python-mako' 'python-pysocks'
          'python-markupsafe' 'python-six' 'python-importlib-metadata'
@@ -27,7 +27,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
