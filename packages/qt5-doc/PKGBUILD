@@ -1,0 +1,81 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=qt5-doc
+pkgname=('qt5-doc' 'qt5-examples')
+_basever=5.15.18
+pkgver=$_basever
+pkgrel=1
+arch=('x86_64' 'aarch64')
+url='https://www.qt.io'
+license=('GPL-3.0-only' 'LGPL-3.0-only' 'FDL' 'custom')
+makedepends=('qt5-tools' 'python' 'pciutils' 'libxtst' 'libxcursor' 'libxrandr'
+             'libxss' 'libxcomposite' 'libxkbfile' 'gperf' 'nss' 'clang'
+             'nodejs' 'ninja')
+groups=('qt5')
+_pkgfqn="qt-everywhere-opensource-src-$pkgver"
+source=("https://download.qt.io/archive/qt/${pkgver%.*}/$pkgver/single/$_pkgfqn.tar.xz"
+        'no-qmake.patch'
+        'qt-everywhere-src-5.15.17-assimp.patch')
+sha512sums=('5bd0e5a59b81b9fe76f8735735746e4eec74d22ee2322451d86f44b5473e5fb580d7881dce96f26f1ed0f6cd5afa8fb361126231cd6e4bd6d5a5f2c463aee980'
+            'a59a85905c3ceef7df95144bbdb236a7f1e2767f922847c348324b904a7eaba9e453591801b7b04125f8d0234ba404eea831739b08f259a9c10a5f27e0ffbf25'
+            'dbf7834de144752eb0aa2492b567f6897114725d6a72fed368476e318cb751878ed2d4f5bfeb7f020c782961f8ff2f598ed65c9f2843d51c6ed6c7aebf320f0c')
+
+prepare() {
+  cd ${_pkgfqn/opensource-/}
+
+  ln -s /usr/bin qttools/
+  ln -s /usr/bin/{rcc,uic,moc,qmake} qtbase/bin/
+
+  patch -d qtbase -p1 < "$srcdir"/no-qmake.patch # Use system qmake
+# Fix build with python 3.13
+  sed -e '/import pipes/d' \
+    -i qtwebengine/src/3rdparty/chromium/build/android/gyp/util/build_utils.py
+
+  # build issues arroung assimp
+  patch -p1 < "$srcdir/qt-everywhere-src-5.15.17-assimp.patch"
+}
+
+build() {
+  cd ${_pkgfqn/opensource-/}
+
+  ./configure -confirm-license -opensource \
+    -prefix /usr \
+    -docdir /usr/share/doc/qt \
+    -headerdir /usr/include/qt \
+    -archdatadir /usr/lib/qt \
+    -datadir /usr/share/qt \
+    -sysconfdir /etc/xdg \
+    -nomake examples
+  make docs
+}
+
+package_qt5-doc() {
+  pkgdesc='A cross-platform application and UI framework (Documentation)'
+  depends=('qt5-base')
+
+  cd ${_pkgfqn/opensource-/}
+  make INSTALL_ROOT="$pkgdir" install_docs
+
+  install -d "$pkgdir"/usr/share/licenses
+  ln -s /usr/share/licenses/qt5-base "$pkgdir/usr/share/licenses/$pkgname"
+}
+
+package_qt5-examples() {
+  pkgdesc='Examples and demos from qt5 documentation'
+  depends=('qt5-doc')
+
+  _base="$pkgdir/usr/share/doc/qt/examples"
+
+  # The various example dirs have conflicting .pro files, but
+  # QtCreator requires them to be in the same top-level directory.
+  # Matching the Qt installer, only the qtbase project is kept.
+  mkdir -p $_base
+  cp ${_pkgfqn/opensource-/}/qtbase/examples/examples.pro $_base
+  _fdirs=$(find "${_pkgfqn/opensource-/}" -maxdepth 2 -type d -name examples)
+  for _dir in $_fdirs; do
+    rm -f $_dir/{examples.pro,README}
+    cp -rn $_dir/* $_base
+  done
+}
+
