@@ -47,11 +47,11 @@ prepare() {
   git submodule set-branch --branch 87-based src/3rdparty
   git -c protocol.file.allow=always submodule update
 
-  patch -p1 -d src/3rdparty -i "$srcdir/qt5-webengine-pipewire-0.3.patch" # Port to pipewire 0.3
-  patch -p2 -d src/3rdparty/chromium -i "$srcdir/qt5-webengine-icu-75.patch" # Fix build with ICU 75
-  patch -p2 -d src/3rdparty/chromium -i "$srcdir/qt5-webengine-ninja-1.12.patch" # Fix build with ninja 1.12
-  patch -p1 -d src/3rdparty/chromium -i "$srcdir/python3.12-six.patch" # Fix build with python 3.12 - patch from Debian
-  patch -p1 -i "$srcdir"/qt5-webengine-gcc-15.patch # Fix build with GCC 15 (Fedora)
+#  patch -p1 -d src/3rdparty -i "$srcdir/qt5-webengine-pipewire-0.3.patch" # Port to pipewire 0.3
+#  patch -p2 -d src/3rdparty/chromium -i "$srcdir/qt5-webengine-icu-75.patch" # Fix build with ICU 75
+#  patch -p2 -d src/3rdparty/chromium -i "$srcdir/qt5-webengine-ninja-1.12.patch" # Fix build with ninja 1.12
+#  patch -p1 -d src/3rdparty/chromium -i "$srcdir/python3.12-six.patch" # Fix build with python 3.12 - patch from Debian
+#  patch -p1 -i "$srcdir"/qt5-webengine-gcc-15.patch # Fix build with GCC 15 (Fedora)
 
   # Fix build with python 3.13
   sed -e '/import pipes/d' \
@@ -59,6 +59,7 @@ prepare() {
 }
 
 build() {
+  cd "kde-$_pkgfqn"
   # this uses malloc_usable_size, which is incompatible with fortification level
   # 3
   export CFLAGS="${CFLAGS/_FORTIFY_SOURCE=3/_FORTIFY_SOURCE=2}"
@@ -66,7 +67,7 @@ build() {
 
   cd build
 
-  qmake "../kde-$_pkgfqn" CONFIG+=force_debug_info -- \
+  qmake ../ CONFIG+=force_debug_info -- \
     -proprietary-codecs \
     -webp \
     -webengine-icu \
@@ -79,6 +80,8 @@ build() {
 }
 
 package() {
+  cd "kde-$_pkgfqn"
+
   # this uses malloc_usable_size, which is incompatible with fortification level
   # 3
   export CFLAGS="${CFLAGS/_FORTIFY_SOURCE=3/_FORTIFY_SOURCE=2}"
