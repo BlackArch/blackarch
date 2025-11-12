@@ -1,0 +1,79 @@
+https://unicode-org.github.io/icu-docs/apidoc/dev/icu4c/uchar_8h_source.html
+https://github.com/unicode-org/icu/blame/main/icu4c/source/common/unicode/uchar.h
+/usr/include/unicode/uchar.h
+
+ICU78 adds LineBreak U_LB_UNAMBIGUOUS_HYPHEN = 48,/*[HH]*/.
+U_LB_COUNT goes from 48 to 49.
+
+kBreakAllLineBreakClassTable is expected to be square with
+the same number of bits across as the lines down for every
+U_LB_COUNT LineBreak. This table should have U_LB_COUNT=49
+bit columns and 49 rows with a bunch of 1 bits sprinkled
+all over and should expand each time a new LineBreak is
+added. Rather than fiddling with the BA_LB_COUNT math or
+keep extending the table with zeros across and down as they
+did here:
+
+https://src.opensuse.org/nodejs/nodejs-electron/src/commit/ee8e43b84d0e17b17d817943357e74dee3e5474ae7e6eaff93c60926bfc3780a/text_break_iterator-icu74-breakAllLineBreakClassTable-should-be-consistent.patch
+
+we just hard set the table to 40 lines to support 0XX-39RI.
+ShouldBreakAfterBreakAll for LineBreak >= 40EB always
+return 0/false which is what the recent table patches were
+doing anyways. Look at the columns RI to VI and lines
+[RI]-[VI]. It's all zeros so everyone gave up extending
+this table with cleverly placed 1's years ago and just came
+up with Whatever Works (TM) patches. LineBreak support >=
+39RI running with 0 may be less than optimal. Here's
+another patch.
+
+https://bugs.gentoo.org/917635
+
+The original table code and patches since are all garbage
+anyways. Noone seems to understand what this table does. I
+don't either but I do know its limits and proper shape and
+that it's not required to have lines and columns added for
+each new LineBreak unless you want perfect support for new
+LineBreak.
+
+The NodeJS patch adds a 6th array column which won't
+compile on earlier ICU versions where U_LB_COUNT is small.
+
+static const unsigned char kBreakAllLineBreakClassTable[][BA_LB_COUNT / 8 + 1] = {
+
+This line is written wrong. It creates an extra byte
+column when BA_LB_COUNT is divisible by 8. Our example of
+40 LineBreak can be stored in 40/8=5 column bytes yet this
+sets the column count to 40/8+1=6. This would be correct
+though with the size of this code I don't see a problem
+allocating 40 extra bytes.
+
+static const unsigned char kBreakAllLineBreakClassTable[][(BA_LB_COUNT-1) / 8 + 1] = {
+
+severach@aur
+https://aur.archlinux.org/packages/qt5-webengine
+
+$ notepadqq
+Cannot mix incompatible Qt library (5.15.17) with this library (5.15.18)
+
+If you have trouble with an application not working, look
+through this list for packages with old versions.
+
+pacman -Qs qt5-
+
+local/qt5-base 5.15.18+kde+r109-2 (qt5)
+*   A cross-platform application and UI framework
+local/qt5-webchannel 5.15.17+kde+r3-1 (qt5)
+*   Provides access to QObject or QML objects from HTML clients for seamless integration of Qt applications with HTML/JavaScript clients
+
+diff -pNaru3 a/src/3rdparty/chromium/third_party/blink/renderer/platform/text/text_break_iterator.cc b/src/3rdparty/chromium/third_party/blink/renderer/platform/text/text_break_iterator.cc
+--- a/src/3rdparty/chromium/third_party/blink/renderer/platform/text/text_break_iterator.cc	2025-11-11 01:42:16.454081862 -0500
++++ b/src/3rdparty/chromium/third_party/blink/renderer/platform/text/text_break_iterator.cc	2025-11-11 01:49:41.838185933 -0500
+@@ -163,7 +163,7 @@ static const unsigned char kAsciiLineBre
+ // clang-format on
+ 
+ #if U_ICU_VERSION_MAJOR_NUM >= 74
+-#define BA_LB_COUNT (U_LB_COUNT - 8)
++#define BA_LB_COUNT (40) /* (U_LB_COUNT - 8) */
+ #elif U_ICU_VERSION_MAJOR_NUM >= 58
+ #define BA_LB_COUNT (U_LB_COUNT - 3)
+ #else
