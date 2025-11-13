@@ -2,13 +2,14 @@
 # See COPYING for license details.
 
 pkgname=ofp-sniffer
-pkgver=189.3898088
-pkgrel=9
+pkgver=1.0.0.r89.g0d907da
+pkgrel=1
+epoch=1
 pkgdesc='An OpenFlow sniffer to help network troubleshooting in production networks.'
 groups=('blackarch' 'blackarch-sniffer')
 arch=('any')
 url='https://github.com/amlight/ofp_sniffer'
-license=('APACHE')
+license=('Apache-2.0')
 depends=('python' 'python-pcapy' 'python-termcolor' 'python-flask' 'python-yaml'
          'python-dateutil' 'python-hexdump' 'python-influxdb'
          'python-python-openflow')
@@ -19,7 +20,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
