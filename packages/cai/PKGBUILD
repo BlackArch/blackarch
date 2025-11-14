@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=cai
+pkgver=1020.96ba5dc
+pkgrel=1
+pkgdesc='The framework for AI Security.'
+arch=('any')
+groups=('blackarch' 'blackarch-automation')
+url='https://github.com/aliasrobotics/cai'
+license=('MIT')
+depends=('python')
+makedepends=('git' 'python-setuptools' 'python-pip')
+source=("git+https://github.com/aliasrobotics/$pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md docs/*.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 README.md "$pkgdir/usr/share/$pkgname/README.md"
+
+  rm -rf LICENSE *.md docs/*.md .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/src/cai/cli.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/cai"
+}
+
