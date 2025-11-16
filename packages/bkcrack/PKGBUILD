@@ -12,13 +12,19 @@ license=('Zlib')
 depends=('gcc-libs' 'glibc')
 makedepends=('git' 'cmake' 'doxygen')
 optdepends=('python: deflate/inflate tools')
+options=('staticlibs')
 source=("git+https://github.com/kimci86/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
@@ -38,7 +44,9 @@ build() {
 package() {
   cd build
 
-  install -Dm 755 "src/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 "src/cli/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 "src/$pkgname/libbkcrack-core.a" \
+    "$pkgdir/usr/lib/libbkcrack-core.a"
 
   install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
   cp -a doc/html "$pkgdir/usr/share/doc/$pkgname/"
