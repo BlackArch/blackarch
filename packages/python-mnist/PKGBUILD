@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Credits AUR
+# Maintainer: otaj
+#
+# Thanks to Jeremy "Ichimonji10" Audet <ichimonji10 at gmail dot com> for
+# his PKGBUILD that served as a base for this one
+
+pkgname=python-mnist
+_pkgname=${pkgname#python-}
+pkgver=0.2.2.r3.g9ae04f8
+pkgrel=1
+pkgdesc="Python utilities to download and parse the MNIST dataset."
+arch=('any')
+url='https://github.com/datapythonista/mnist'
+license=('BSD-3-Clause')
+depends=('python' 'python-numpy')
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+options=(!emptydirs)
+source=("git+https://github.com/datapythonista/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^mnist-//;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $_pkgname
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd $_pkgname
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+

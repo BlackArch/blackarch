@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Credits AUR
+# Maintainer: Alexander Bocken <alexander@bocken.org>
+
+pkgname=python-easydict
+_pkgname=${pkgname#python-}
+pkgver=1.13.r0.g6df258e
+pkgrel=1
+pkgdesc='Access dict values as attributes.'
+arch=('any')
+url="https://github.com/makinacorpus/easydict"
+license=('LGPL-3.0-or-later')
+depends=('python')
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+source=("git+https://github.com/makinacorpus/$_pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $_pkgname
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd $_pkgname
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+

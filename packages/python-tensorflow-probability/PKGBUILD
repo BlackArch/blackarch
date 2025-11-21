@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Credits AUR
+# Maintainer: Oystein Sture <oysstu (at) gmail (dot) com>
+
+pkgname=python-tensorflow-probability
+pkgver=0.25.0
+pkgrel=3
+pkgdesc='Probabilistic reasoning and statistical analysis in TensorFlow.'
+url="https://github.com/tensorflow/probability"
+arch=('any')
+license=('Apache-2.0')
+depends=('python' 'python-tensorflow' 'python-numpy' 'python-six'
+         'python-decorator' 'python-cloudpickle' 'python-gast' 'python-dm-tree'
+         'python-absl' 'python-tf-keras')
+makedepends=('python-setuptools' 'bazel')
+source=("https://github.com/tensorflow/probability/archive/v$pkgver.tar.gz")
+sha512sums=('2481f27a8778adb317cf13cec3c0034e85ffde478772556418930e5e5be051a8890c0f95161ec8376a54a20476fc99f034ceda52d8a7793edcd89f50393f2530')
+
+build() {
+  # Force OpenJDK-21
+  export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+
+  cd "probability-$pkgver"
+
+  bazel build --enable_bzlmod=no --enable_workspace --verbose_failures --spawn_strategy=local --copt=-O3 --copt=-march=native :pip_pkg
+
+  cd "bazel-bin/pip_pkg.runfiles/tensorflow_probability"
+
+  python setup.py build --release
+}
+
+package() {
+  cd "probability-$pkgver/bazel-bin/pip_pkg.runfiles/tensorflow_probability"
+
+  python setup.py install --release --root="$pkgdir" --optimize=1 --skip-build
+}
+
