@@ -3,14 +3,14 @@
 
 pkgname=jwt-tool
 pkgver=83.3bc7407
-pkgrel=1
+pkgrel=2
 pkgdesc='Toolkit for validating, forging and cracking JWTs (JSON Web Tokens).'
 arch=('any')
 groups=('blackarch' 'blackarch-cracker')
 url='https://github.com/ticarpi/jwt_tool'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=('python' 'python-pycryptodomex' 'python-termcolor' 'python-cprint'
-         'python-requests')
+         'python-ratelimit' 'python-requests')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/ticarpi/jwt_tool.git"
         "jwtconf.ini")
@@ -21,7 +21,12 @@ backup=("usr/share/$pkgname/jwtconf.ini")
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
