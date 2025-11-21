@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=adversarial-robustness-toolbox
+pkgver=1.20.1.r155.g23539e2
+pkgrel=1
+pkgdesc='Python Library for Machine Learning Security.'
+arch=('any')
+groups=('blackarch' 'blackarch-defensive')
+url='https://github.com/Trusted-AI/adversarial-robustness-toolbox'
+license=('MIT')
+depends=('python' 'python-numpy' 'python-pytorch' 'python-scipy'
+         'python-scikit-learn' 'python-six' 'python-tqdm')
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+source=("git+https://github.com/Trusted-AI/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+
