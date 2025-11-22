@@ -6,7 +6,7 @@
 
 pkgname=python-tensorflow-probability
 pkgver=0.25.0
-pkgrel=3
+pkgrel=1
 pkgdesc='Probabilistic reasoning and statistical analysis in TensorFlow.'
 url="https://github.com/tensorflow/probability"
 arch=('any')
@@ -19,14 +19,18 @@ source=("https://github.com/tensorflow/probability/archive/v$pkgver.tar.gz")
 sha512sums=('2481f27a8778adb317cf13cec3c0034e85ffde478772556418930e5e5be051a8890c0f95161ec8376a54a20476fc99f034ceda52d8a7793edcd89f50393f2530')
 
 build() {
+  cd "probability-$pkgver"
+
   # Force OpenJDK-21
   export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 
-  cd "probability-$pkgver"
+  bazel build \
+    --enable_bzlmod=no \
+    --enable_workspace \
+    --verbose_failures \
+    --spawn_strategy=local --copt=-O3 --copt=-march=native :pip_pkg
 
-  bazel build --enable_bzlmod=no --enable_workspace --verbose_failures --spawn_strategy=local --copt=-O3 --copt=-march=native :pip_pkg
-
-  cd "bazel-bin/pip_pkg.runfiles/tensorflow_probability"
+  cd bazel-bin/pip_pkg.runfiles/tensorflow_probability
 
   python setup.py build --release
 }
@@ -34,6 +38,6 @@ build() {
 package() {
   cd "probability-$pkgver/bazel-bin/pip_pkg.runfiles/tensorflow_probability"
 
-  python setup.py install --release --root="$pkgdir" --optimize=1 --skip-build
+  python setup.py install --release --root="$pkgdir" -O1 --skip-build
 }
 
