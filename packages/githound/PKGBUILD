@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $_pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
@@ -43,9 +48,9 @@ package() {
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" rules.toml regex.yml \
-    rules/import_gitleaks_rules.py $pkgname
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/" regex.yml $pkgname
   install -Dm 644 config.example.yml "$pkgdir/usr/share/$pkgname/config.yml"
+  cp -a rules rules-generator "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
@@ -53,6 +58,6 @@ cd /usr/share/$pkgname
 exec ./$pkgname "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/$pkgname" "$pkgdir/usr/share/$pkgname/$pkgname"
+  chmod +x "$pkgdir/usr/bin/$pkgname" "$pkgdir/usr/share/$pkgname/$pkgname"
 }
 
