@@ -2,13 +2,13 @@
 # See COPYING for license details.
 
 pkgname=boofuzz
-pkgver=v0.4.2.r34.gd9b0934
+pkgver=v0.4.2.r35.g21773b7
 pkgrel=1
 pigdesc='A fork and successor of the Sulley Fuzzing Framework.'
 groups=('blackarch' 'blackarch-fuzzer')
 arch=('any')
 url='https://github.com/jtpereyda/boofuzz'
-license=('GPL2')
+license=('GPL-2.0-only')
 depends=('python' 'python-virtualenv')
 makedepends=('git' 'python-pip')
 source=("git+https://github.com/jtpereyda/$pkgname.git")
@@ -18,7 +18,12 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
@@ -38,6 +43,6 @@ source venv/bin/activate
 exec python venv/bin/boo "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
