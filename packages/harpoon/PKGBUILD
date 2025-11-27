@@ -3,7 +3,7 @@
 
 pkgname=harpoon
 pkgver=386.52c1071
-pkgrel=1
+pkgrel=2
 pkgdesc='CLI tool for open source and threat intelligence.'
 groups=('blackarch' 'blackarch-automation' 'blackarch-recon')
 arch=('any')
@@ -14,13 +14,18 @@ makedepends=('git' 'libxml2' 'libxslt')
 source=("git+https://github.com/Te-k/$pkgname.git"
         'harpoon.install')
 sha512sums=('SKIP'
-            'fc96306e2aced98e18f06f137e3be89107f489d365689d75d9fdf73a91247e16f37441e437aba65c4a926a02c4ea080228cdfa303d478033daa36f6ef9ddaac1')
+            '688c2993b1e56ff7b579d19041c0b04f4cf1ca85db6d8518914818e64581544af187afd068234e28919c91f60ad6aae80359df01e96bda986fa2c3c9ff46daa1')
 install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

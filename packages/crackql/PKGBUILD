@@ -4,7 +4,7 @@
 pkgname=crackql
 _pkgname=CrackQL
 pkgver=1.0.r53.gac26a44
-pkgrel=6
+pkgrel=7
 pkgdesc='GraphQL password brute-force and fuzzing utility'
 arch=('any')
 groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation'
@@ -18,9 +18,14 @@ sha512sums=('SKIP')
 install="$pkgname.install"
 
 pkgver() {
-  cd $_pkgname
+  cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

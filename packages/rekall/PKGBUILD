@@ -2,13 +2,14 @@
 # See COPYING for license details.
 
 pkgname=rekall
-pkgver=1409.55d1925f
-pkgrel=8
+pkgver=1.7.2rc1.r68.g55d1925
+pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-forensic')
 pkgdesc='Memory Forensic Framework.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/google/rekall'
-license=('GPL2')
+license=('GPL-2.0-only')
 depends=('python' 'python-virtualenv')
 makedepends=('git' 'python-setuptools' 'python-pip')
 replaces=('python-rekall' 'python2-rekall')
@@ -17,9 +18,14 @@ sha512sums=('SKIP')
 install="$pkgname.install"
 
 pkgver() {
-  cd $pkgbase
+  cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

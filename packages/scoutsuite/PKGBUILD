@@ -3,13 +3,13 @@
 
 pkgname=scoutsuite
 pkgver=5.14.0.r0.g7909f2fc6
-pkgrel=5
+pkgrel=6
 epoch=1
 pkgdesc='Multi-Cloud Security Auditing Tool.'
 groups=('blackarch' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/nccgroup/ScoutSuite'
-license=('GPL3')
+license=('GPL-2.0-or-later')
 depends=('python' 'python-virtualenv')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/nccgroup/ScoutSuite.git")
@@ -19,7 +19,12 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

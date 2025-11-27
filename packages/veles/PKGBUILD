@@ -2,15 +2,15 @@
 # See COPYING for license details.
 
 pkgname=veles
-pkgver=637.e65de5a
-pkgrel=10
-epoch=1
+pkgver=2018.05.0.r0.ge65de5a
+pkgrel=1
+epoch=2
 pkgdesc='New open source tool for binary data analysis.'
 url='https://codisec.com/veles/'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-binary' 'blackarch-reversing'
         'blackarch-disassembler')
-license=('APACHE')
+license=('Apache-2.0')
 depends=('qt5-base>=5.11.0' 'python' 'protobuf' 'zlib' 'python-pyopenssl'
          'libmpack' 'python-msgpack' 'python-six' 'python-pbr' 'msgpack-c'
          'msgpack-cxx')
@@ -24,7 +24,12 @@ sha512sums=('SKIP'
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
