@@ -2,17 +2,30 @@
 # See COPYING for license details.
 
 pkgname=ngrok
-pkgver=3.2.2
+pkgver=3.33.1
 pkgrel=1
 pkgdesc='A tunneling, reverse proxy for developing and understanding networked, HTTP services.'
-arch=('x86_64')
+arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-tunnel' 'blackarch-networking')
 url='https://ngrok.com/'
-license=('APACHE')
-source=("https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz")
-sha512sums=('17eb1c0c6b6ef3d00479aea64633d1138407adfd500f7475f1c61cfffad05d061e3969940c8a24129004814005b2fbc22f85c19af89a351faf8ecb0b11e95f36')
+license=('LicenseRef-custom')
+options=(!strip)
+source_x86_64=("https://bin.equinox.io/a/bNzUz3YQtcB/ngrok-v3-$pkbver-linux-amd64.tar.gz")
+source_aarch64=("https://bin.equinox.io/a/8Ke6HQWUP1A/ngrok-v3-$pkgver-linux-arm64.tar.gz")
+sha512sums_x86_64=('3829132a855c9d65eaaa898310035064d47c6ebd10fdaa821a2986e8f8c0289c4b950b2c1a8181ea9b18e648bde2d8108f6be3dfdc5d79fbf9ded06590cd0c80')
+sha512sums_aarch64=('da7f01316ca33893fc53e3a9205cf3fc058385fa699da1af20f3ffeead9034ff1dfec4a816e6f64bfa83cfe233bf75dc5c0f26f44a93bd9476cc9d8974b8b1a6')
 
 package() {
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
-}
+  BASH_COMPLETION_DIR="$pkgdir/usr/share/bash-completion/completions"
+  ZSH_COMPLETION_DIR="$pkgdir/usr/share/zsh/site-functions"
 
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" TERMS-OF-SERVICE.txt
+
+  mkdir -p $BASH_COMPLETION_DIR $ZSH_COMPLETION_DIR
+
+  SHELL=/usr/bin/bash "$pkgdir/usr/bin/$pkgname" completion \
+    > "$BASH_COMPLETION_DIR/$pkgname"
+  SHELL=/usr/bin/zsh "$pkgdir/usr/bin/$pkgname" completion \
+    > "$ZSH_COMPLETION_DIR/_${pkgname}"
+}
