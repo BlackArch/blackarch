@@ -2,18 +2,19 @@
 # See COPYING for license details.
 
 pkgname=python-terminaltables
-_pkgname=${pkgname#python-}
-pkgver=3.1.0
-pkgrel=15
+_pkgname=${pkgname#python-}3
+pkgver=3.1.10
+pkgrel=1
 pkgdesc='Generate simple tables in terminals from a nested list of strings.'
 arch=('any')
-url='https://github.com/Robpol86/terminaltables'
+url='https://github.com/matthewdeanmartin/terminaltables'
 license=('MIT')
 depends=('python')
-makedepends=('python-setuptools')
-source=("https://github.com/Robpol86/$_pkgname/archive/v$pkgver.tar.gz"
+makedepends=('python-setuptools' 'python-build' 'python-installer' 'python-wheel' 'python-poetry'
+              'python-pbs-installer' 'python-zstandard' 'python-httpx')
+source=("https://github.com/matthewdeanmartin/$_pkgname/archive/refs/tags/v$pkgver.tar.gz"
         'python-3.8.patch')
-sha512sums=('dc49458652fff8bc6094d316d84c9b8e9fca1a26e3230c0b668bc03ec8528793f4ef024e8032d4a56fbfabfdfd4a1142870f550f0b373ba6a42dd2e3ead3f501'
+sha512sums=('e68aaebbc65c46e636c980d3d187f965008d0b2badbd4dfad0da9c3eef06883c9b01853b8a0adc43f1c71863bcf249f1327d4334451bafcaf241a1effaa3144f'
             '9a33ef51cbd2854bf9acc247e2d966332229446158e7dae9cad25e03335eb9689d50b0a22234285aa56c707e6e93c12f950299efcfbe7e42ed527216090592f2')
 
 prepare() {
@@ -25,15 +26,15 @@ prepare() {
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --no-isolation --wheel
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python -m installer --destdir="$pkgdir" --prefix=/usr dist/*.whl
 
-  install -Dm 644 README.rst -t "$pkgdir/usr/share/doc/$pkgname/"
+  install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname/"
   install -Dm 644 example*.py -t "$pkgdir/usr/share/doc/$pkgname/examples"
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
