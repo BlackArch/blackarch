@@ -2,19 +2,40 @@
 # See COPYING for license details.
 
 pkgname=nfcutils
-pkgver=0.3.2
-pkgrel=2
+pkgver=61.49aa178
+pkgrel=1
 groups=('blackarch' 'blackarch-nfc')
-pkgdesc="Provides a simple 'lsnfc' command that list tags which are in your NFC device field."
+pkgdesc='A simple command that lists tags which are in your NFC device field.'
 arch=('x86_64' 'aarch64')
-url="http://code.google.com/p/nfc-tools"
-license=('LGPL3')
+url='https://github.com/nfc-tools/nfcutils'
+license=('LGPL-3.0-only')
 depends=('libnfc>=1.4.0')
-source=("http://nfc-tools.googlecode.com/files/$pkgname-$pkgver.tar.gz")
-sha512sums=('e560ba7683175257ef9e72838b9f02cf75ce99b8')
+makedepends=('git' 'autoconf' 'automake')
+source=("git+https://github.com/nfc-tools/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  aclocal || true
+  autoconf || true
+  automake --add-missing || true
+  autoreconf || true
+}
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   ./configure --prefix=/usr
 
@@ -22,7 +43,7 @@ build() {
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   make DESTDIR="$pkgdir" install
 }
