@@ -2,23 +2,35 @@
 # See COPYING for license details.
 
 pkgname=scrying
-pkgver=234.caa233c
-pkgrel=3
+pkgver=v0.9.2.r0.g9d50ade
+pkgrel=1
+epoch=1
 pkgdesc='Collect RDP, web, and VNC screenshots smartly.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-recon')
 arch=('x86_64' 'aarch64')
 url='https://github.com/nccgroup/scrying'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 makedepends=('git' 'cargo' 'webkit2gtk')
 depends=('chromium')
 source=("git+https://github.com/nccgroup/$pkgname.git")
 sha512sums=('SKIP')
 
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
 
 build() {
   cd $pkgname
 
-  cargo build --release
+  export CFLAGS+=' -ffat-lto-objects'
+  cargo build --release --locked
 }
 
 package() {
