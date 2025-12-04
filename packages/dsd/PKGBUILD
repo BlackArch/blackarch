@@ -2,13 +2,14 @@
 # See COPYING for license details.
 
 pkgname=dsd
-pkgver=101.59423fa
-pkgrel=2
+pkgver=v1.6.0.r96.g59423fa
+pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-misc')
 pkgdesc='Digital Speech Decoder.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/szechyjs/dsd'
-license=('GPL2')
+license=('GPL-2.0-only')
 depends=('libsndfile' 'mbelib' 'itpp' 'portaudio')
 makedepends=('git' 'cmake')
 source=("git+https://github.com/szechyjs/$pkgname.git")
@@ -17,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
@@ -27,7 +33,9 @@ build() {
 
   cd build
 
-  cmake ../ -DCMAKE_INSTALL_PREFIX="/usr"
+  cmake ../ \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    -DCMAKE_INSTALL_PREFIX=/usr
 
   make
 }
