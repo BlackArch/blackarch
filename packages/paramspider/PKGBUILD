@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=paramspider
+pkgver=v1.0.1.r2.g790eb91
+pkgrel=1
+pkgdesc='Short description without using the package name itself.'
+arch=('any')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-recon')
+url='https://github.com/devanshbatham/ParamSpider'
+license=('MIT')
+depends=('python' 'python-colorama' 'python-requests')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+source=("$pkgname::git+https://github.com/devanshbatham/ParamSpider.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd $pkgname
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+}
+
