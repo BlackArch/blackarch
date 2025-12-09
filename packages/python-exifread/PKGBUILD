@@ -3,26 +3,37 @@
 
 pkgname=python-exifread
 _pkgname=exif-py
-pkgver=3.0.0
-pkgrel=5
+pkgver=3.5.1
+pkgrel=1
 pkgdesc='Python library to extract EXIF data from tiff and jpeg files.'
 arch=('any')
 url='https://github.com/ianare/exif-py/'
-license=('BSD')
+license=('BSD-3-Clause')
 depends=('python' 'python-pylint' 'mypy')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-pip')
 source=("https://github.com/ianare/$_pkgname/archive/$pkgver.tar.gz")
-sha512sums=('3b819718f5fc9f7807dc245908c2724d1023ce6345b6f6a84ea0c10d62b47939ae4dce23db868d67b6eeaa07e5c88fd406520106f31883d15442eaabcebb0746')
+sha512sums=('4c7ed9c51c8c49e3a9fad816a1c4ec08c3a3afd56c19da26458686ec9dd4416298486222ccb4c73e7f5904ceb4f7f46c5f3ae0260f0e25bd48f583efcc78cc93')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
