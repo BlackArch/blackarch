@@ -2,45 +2,31 @@
 # See COPYING for license details.
 
 pkgname=cutycapt
-pkgver=10
-pkgrel=7
+_pkgname=CutyCapt
+pkgver=11.0
+pkgrel=1
 epoch=3
 groups=('blackarch' 'blackarch-recon')
-pkgdesc="A Qt and WebKit based command-line utility that captures WebKit's rendering of a web page."
+pkgdesc="A Qt and WebEngine-based command-line utility that captures a web page's rendered output."
 arch=('x86_64' 'aarch64')
-url='http://cutycapt.sourceforge.net/'
-license=('GPL')
-depends=('qt5-base' 'qt5-webkit' 'qt5-svg')
-makedepends=('subversion' 'dos2unix')
-provides=('cutycapt-svn')
-conflicts=('cutycapt-svn')
-source=("$pkgname::svn+svn://svn.code.sf.net/p/cutycapt/code"
-        'cutycapt.patch')
-sha512sums=('SKIP'
-            '56f5fcb0fa560f65b6c0b626d386f41c3396d64e267a9cceeda1b41156e78fd643a33379ef51d4af3c0ad3fc3135af20792bcae2f792aad6d826ba32354579b0')
+url='https://cutycapt.sourceforge.net/'
+license=('GPL-3.0-or-later')
+depends=('qt6-base' 'qt6-webengine' 'qt6-webchannel' 'qt6-svg')
+makedepends=('cmake' 'ninja')
+source=("https://github.com/Obsidian-Covenant/$pkgname/archive/refs/tags/$pkgver.tar.gz")
+sha512sums=('a50b52626c6caba48ec593dff2d4a5395e34c098359adadf92b82ca0e34085cc5c0f8fb2a0c64b5730f7f4475d0c154ac057ce5f94588c8bf01b3cdc571c5362')
 
-pkgver() {
-  cd $pkgname
-
-  svnversion | tr -d [A-z]
-}
-
-prepare() {
-  cd "$pkgname/CutyCapt"
-
-  dos2unix *
-}
 
 build() {
-  cd "$pkgname/CutyCapt"
+  cd "$_pkgname-$pkgver"
 
-  qmake-qt5
-  make
+  cmake -S . -B build -GNinja
+  ninja -C build
 }
 
 package() {
-  cd "$pkgname/CutyCapt"
+  cd "$_pkgname-$pkgver"
 
-  install -Dm 755 CutyCapt "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 build/$pkgname "$pkgdir/usr/bin/$pkgname"
 }
 
