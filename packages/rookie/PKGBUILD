@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=rookie
+pkgver=v0.5.6.r2.g60ba7ae
+pkgrel=1
+pkgdesc='Load cookies from your web browsers.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-webapp')
+url='https://github.com/thewh1teagle/rookie'
+license=('MIT')
+depends=('sqlite')
+makedepends=('git' 'cargo')
+source=("git+https://github.com/thewh1teagle/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd "$pkgname/cli"
+
+  export LIBSQLITE3_SYS_USE_PKG_CONFIG=1
+  cargo build --release
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
+
+  install -Dm 644 MIT-LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
