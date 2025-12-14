@@ -2,40 +2,46 @@
 # See COPYING for license details.
 
 pkgname=reglookup
-pkgver=1.0.1
-pkgrel=8
-groups=('blackarch' 'blackarch-forensic')
-pkgdesc='Command line utility for reading and querying Windows NT registries'
+pkgver=1.0.1+svn296.2.r0.gcab83db
+pkgrel=1
+pkgdesc='Command line utility for reading and querying Windows NT registries.'
 arch=('x86_64' 'aarch64')
-url='http://projects.sentinelchicken.org/reglookup'
-license=('GPL')
-depends=('talloc' 'bash')
-makedepends=('gcc' 'scons' 'docbook2x')
-source=("http://reglookup.googlecode.com/files/$pkgname-src-$pkgver.tar.gz"
-        'SConstruct.patch'
-        'pyregfi-distutils.py.patch')
-sha512sums=('13306e1db60b97b308684ad530589d04709f70ba'
-          '066727e13757173f973ce24931a1e0536137187e'
-          'b4b5cbee3e5d816e46ebcc4ecca44473b5cd520c')
+groups=('blackarch' 'blackarch-forensic')
+url='https://projects.sentinelchicken.org/reglookup'
+license=('GPL-3.0-or-later')
+depends=('python' 'talloc' 'bash')
+makedepends=('gcc' 'scons' 'docbook2x' 'docbook-utils' 'python-build'
+             'python-installer' 'python-setuptools' 'python-wheel')
+source=("git+https://salsa.debian.org/pkg-security-team/$pkgname.git"
+        'SConstruct.patch')
+sha512sums=('SKIP'
+            '84e1897dde312fbc215da788c0deb288bc36ccd318fdc5bfc6b70bb9e4ab9445b12384e4248f29b6a682a45c20d6623b05bfcf682753a49c5894fdce4974b6c6')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags --abbrev=7 2>/dev/null \
+  | sed 's|^[^/]*/||; s|/|.|g; s|:||g; s|\(.*\)-\([0-9][0-9]*\)-g\([0-9a-f]\+\)$|\1.r\2.g\3|; s|-|.|g' \
+  || printf '%s.%s\n' "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
 
 prepare() {
-  cd "$pkgname-src-$pkgver"
+  cd $pkgname
 
   patch < ../SConstruct.patch
-  patch < ../pyregfi-distutils.py.patch
 }
 
 build() {
-  cd "$pkgname-src-$pkgver"
+  cd $pkgname
 
   scons
+  python -m build --wheel --no-isolation
 }
 
 package() {
-  cd "$pkgname-src-$pkgver"
+  cd $pkgname
 
   PREFIX="$pkgdir/usr" scons install
-
-  cp -r "$pkgdir/usr/lib/python3.6" "$pkgdir/usr/lib/python2.7"
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
