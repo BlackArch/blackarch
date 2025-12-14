@@ -2,33 +2,30 @@
 # See COPYING for license details.
 
 pkgname=getsids
-pkgver=0.0.1
-pkgrel=4
-pkgdesc='Getsids tries to enumerate Oracle Sids by sending the services command to the Oracle TNS listener. Like doing ‘lsnrctl service’.'
-url='http://www.cqure.net/wp/getsids/'
-groups=('blackarch' 'blackarch-database')
-makedepends=('gcc')
-depends=('glibc')
+pkgver=1.0.0
+pkgrel=1
+pkgdesc='Enumerate Oracle Sids by sending the services command to the Oracle TNS listener.'
 arch=('x86_64' 'aarch64')
-license=('GPL')
-source=("http://www.cqure.net/tools/$pkgname-src-$pkgver.tar.gz")
-sha512sums=('df1a6d71849af4cfad79c86cd63661a3a2862d34c5ba8d195f89ec0da15ca74d6084348e36c473c078ebd23f48ca23490ccd2a3609f3ac4ad7576cf9acd2c86e')
+groups=('blackarch' 'blackarch-database')
+url='http://www.cqure.net/wp/getsids/'
+license=('GPL-2.0-or-later')
+depends=('glibc')
+source=("https://github.com/Obsidian-Covenant/$pkgname/archive/refs/tags/$pkgver.tar.gz")
+sha512sums=('55de3e3b5e8d1a7a8b4ad1378ed1b849c097ba771dfcacd013b83d97848409d64ac880589a9807b4052a5fc5791d9c44a1c3230fe4c11838042267135a8cab46')
 
 build() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
+  autoreconf -i
   ./configure --prefix=/usr
-
-  make CC="gcc $CFLAGS"
+  make
 }
 
 package(){
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
+  make DESTDIR="$pkgdir" install
 
-  install -Dm 755 "bin/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 }
 
