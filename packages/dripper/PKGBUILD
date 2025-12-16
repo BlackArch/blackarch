@@ -10,13 +10,26 @@ url="http://www.blackhatlibrary.net/Dripper"
 arch=('x86_64' 'aarch64')
 license=('custom')
 makedepends=('git')
-source=("git+https://github.com/BlackArch/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/BlackArch/$pkgname.git"
+        "$pkgname.c.patch")
+sha512sums=('SKIP'
+            '58d9bb55ef4b7039ce3bd7f52d470ddff00a422012dab98bf5c4008dfdcefdd3dfed3d3bce4eda9afb1e3f82813b8f3d6e3827bc6a014be18d3a4b66b59dd1bc')
 
 pkgver() {
   cd $pkgname
 
-  git describe --tags | sed -E 's/([^-]*-g)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  patch -Np0 < "$srcdir/$pkgname.c.patch"
 }
 
 build(){
@@ -29,5 +42,6 @@ package() {
   cd $pkgname
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 }
 
