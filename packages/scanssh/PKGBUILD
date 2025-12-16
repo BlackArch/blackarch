@@ -3,30 +3,35 @@
 
 pkgname=scanssh
 pkgver=2.1
-pkgrel=11
+pkgrel=12
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='Fast SSH server and open proxy scanner.'
 arch=('x86_64' 'aarch64')
-depends=('glibc' 'libdnet' 'libevent' 'openssl' 'libpcap' 'libmd' 'openssl-1.1')
-makedepends=('openssl-1.0' 'openssl-1.1')
+depends=('glibc' 'libdnet' 'libevent' 'libpcap' 'libmd' 'openssl' 'openssl-1.1'
+         'openssl-1.0')
 url='http://www.monkey.org/~provos/scanssh/'
 license=('GPL-1.0-or-later')
 source=("http://www.monkey.org/~provos/$pkgname-$pkgver.tar.gz"
         'atomicio.c.patch'
-        'md5.c.patch')
+        'md5.c.patch'
+        'Makefile.in.patch')
 sha512sums=('1ddff6f8e51735bab28032c8d7cbb641ff0cd19a404a27ab489589ef1e30e3721dd486854eb4fef15368cc53f10c9c2650ffaf7fa7f767dc2202fcc5540ae59c'
             '348b675f3a566d5cea434ac43ce43c1ebc3f33674afe50c1965b9a84b6a023ef922ba16a18bc077d7b774924a19838b87e197730172f358ca81a52129f9d4b92'
-            '2e0aca14f448a9e869463dca8141595b2b3c734539d38c5f21e87df19d2f5171a348da222ca15d749dd3829818ff3baa96559b305f44e4bc86f57f24a8761a9d')
+            '2e0aca14f448a9e869463dca8141595b2b3c734539d38c5f21e87df19d2f5171a348da222ca15d749dd3829818ff3baa96559b305f44e4bc86f57f24a8761a9d'
+            'f2a9e114328ae0a7b16784a585ab118c2463719f861d7ac5773d7e95c6dee07b6562cb8abfcf5c7622959e484ca8d89834ecf9ce95dda8535f58a33876151595')
 
 prepare() {
   cd "$pkgname-$pkgver"
 
+  patch -Np0 < "$srcdir/Makefile.in.patch"
   patch -Np0 < "$srcdir/atomicio.c.patch"
   patch -Np0 < "$srcdir/md5.c.patch"
 }
 
 build() {
   cd "$pkgname-$pkgver"
+
+  autoreconf -fi
 
   if [[ "$CARCH" == "i686" || "$CARCH" == "x86_64" ]];
   then
