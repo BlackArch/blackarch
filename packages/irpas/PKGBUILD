@@ -2,27 +2,28 @@
 # See COPYING for license details.
 
 pkgname=irpas
-pkgver=0.10
-pkgrel=7
-groups=('blackarch' 'blackarch-exploitation')
+pkgver=0.11
+pkgrel=1
 pkgdesc='Internetwork Routing Protocol Attack Suite.'
 arch=('x86_64' 'aarch64')
-url='http://phenoelit-us.org/irpas'
-license=('custom:unknown')
-depends=('libpcap')
-source=("http://www.phenoelit.org/$pkgname/${pkgname}_${pkgver}.tar.gz")
-sha512sums=('256d94a327540ffc7de85c4f348e6e973af5e96654a0d04baf698ba5775ecf355d752886afa9a3947e7987b739c3ef9f305e47b706ba354360733a8254720582')
+groups=('blackarch' 'blackarch-exploitation')
+url='https://phenoelit-us.org/irpas'
+license=('custom:phenoelit')
+depends=('libpcap' 'libtirpc')
+source=("https://github.com/Obsidian-Covenant/$pkgname/archive/refs/tags/$pkgver.tar.gz")
+sha512sums=('cc78ed6ad695bb53a8033f38792bf14df61b1f5b1e469563e4debcb662024c34007c78b0c0572ed231aefa0e3daaa06bc6dd7aaf8dd9c29064017129677d27f0')
 
 build() {
+  cd "$pkgname-$pkgver"
+
   make
 }
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin"
+  cd "$pkgname-$pkgver"
 
-  for bin in dhcpx itrace tctrace ass file2cable dfkaa cdp hsrp icmp_redirect \
-    igrp irdp irdpresponder netenum netmask protos timestamp ; do
-    install -m 755 "$bin" "$pkgdir/usr/bin/$pkgname-$bin"
-  done
+  make DESTDIR="$pkgdir" PREFIX=/usr install
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
