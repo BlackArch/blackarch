@@ -2,20 +2,40 @@
 # See COPYING for license details.
 
 pkgname=jynx2
-pkgver=2.0
-pkgrel=5
-groups=('blackarch' 'blackarch-backdoor')
+pkgver=1.2bcbebf
+pkgrel=1
 pkgdesc='An expansion of the original Jynx LD_PRELOAD rootkit.'
 arch=('any')
-url="http://www.blackhatlibrary.net/Jynx2"
+groups=('blackarch' 'blackarch-backdoor')
+url="https://github.com/chokepoint/Jynx2"
 license=('custom:unknown')
+source=("$pkgname::git+https://github.com/chokepoint/Jynx2.git"
+        "fix-stat_ver.patch")
+sha512sums=('SKIP'
+            'a086c35165a05e9011e5493af41a108a41d60128880cc400cad901ffaf05c1e4baf7353844ddd85c32e3ccb69fa33dde75ce5f6e6960fea3b3bf515291216815')
 install=jynx2.install
-source=("http://blackhatlibrary.net/releases/$pkgname.tgz")
-sha512sums=('80c97c1f195ca5e8131866861e87c6233b88cc5f862fef211e665fa5549eb61b6257da5dd8b4512efeae72948670c8c2188e877b18efe31c8780ad840be77e00')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  patch -p1 < ../fix-stat_ver.patch
+}
 
 package() {
   cd $pkgname
 
+  # The make install must be done on the target system to compile the rootkit. Read README file
   #make DESTDIR="$pkgdir/" install
 
   install -dm 755 "$pkgdir/usr/share/$pkgname"
