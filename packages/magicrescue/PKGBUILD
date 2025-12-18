@@ -1,25 +1,37 @@
-# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# Credits BlackArch ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
 pkgname=magicrescue
-pkgver=1.1.9
-pkgrel=5
-groups=('blackarch' 'blackarch-forensic')
+pkgver=v1.1.10.r8.gd9a5793
+pkgrel=1
 pkgdesc='Find and recover deleted files on block devices.'
 arch=('x86_64' 'aarch64')
-url='http://freshmeat.net/projects/magicrescue/'
-license=('GPL')
-source=("http://www.itu.dk/people/jobr/$pkgname/release/$pkgname-$pkgver.tar.gz")
-sha512sums=('d428f7cce8bc00ea4ae3212da5d074fb5bcc1dfe')
+groups=('blackarch' 'blackarch-forensic')
+url='https://github.com/jbj/magicrescue'
+license=('GPL-1.0-or-later')
+makedepends=('git')
+source=("git+https://github.com/jbj/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
 
 prepare() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   sed -i 's|$(PREFIX)/man/man1|$(PREFIX)/share/man/man1|' Makefile.in
 }
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   ./configure --prefix=/usr
 
@@ -27,7 +39,7 @@ build() {
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd $pkgname
 
   install -dm 755 "$pkgdir/usr"
 
