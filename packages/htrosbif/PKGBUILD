@@ -3,21 +3,27 @@
 
 pkgname=htrosbif
 pkgver=134.9dc3f86
-pkgrel=10
+pkgrel=5
 groups=('blackarch' 'blackarch-fingerprint' 'blackarch-recon')
 pkgdesc='Active HTTP server fingerprinting and recon tool.'
 arch=('any')
 url='https://github.com/lkarsten/htrosbif'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=('perl' 'perl-json-xs' 'perl-list-moreutils' 'perl-test-deep')
 makedepends=('git')
-source=("git+https://github.com/lkarsten/$pkgname.git")
+#source=("git+https://github.com/lkarsten/$pkgname.git")
+source=("git+https://github.com/huayra/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
