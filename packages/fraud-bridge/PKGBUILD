@@ -2,26 +2,32 @@
 # See COPYING for license details.
 
 pkgname=fraud-bridge
-pkgver=36.88a5baa
-pkgrel=2
+pkgver=rel.0.32s.r3.g88a5baa
+pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-tunnel' 'blackarch-networking')
 pkgdesc='ICMP and DNS tunneling via IPv4 and IPv6.'
 arch=('x86_64' 'aarch64')
 depends=('libgcrypt')
 makedepends=('git')
 url='https://github.com/stealth/fraud-bridge'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 source=("git+https://github.com/stealth/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
-  cd $pkgname
+  cd "$pkgname/src"
 
   make
 }
@@ -29,8 +35,12 @@ build() {
 package() {
   cd $pkgname
 
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README
+  install -dm 755 "$pkgdir/usr/share/$pkgname/"
+
+  install -Dm 755 "src/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  cp -a config "$pkgdir/usr/share/$pkgname/config"
+  cp -a *.jpg "$pkgdir/usr/share/$pkgname/"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
