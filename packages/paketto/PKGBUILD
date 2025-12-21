@@ -2,36 +2,22 @@
 # See COPYING for license details.
 
 pkgname=paketto
-pkgver=1.10
-pkgrel=5
+pkgver=3.0
+pkgrel=1
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='Advanced TCP/IP Toolkit.'
 url='http://www.doxpara.com/paketto/'
-license=('GPL')
+license=('BSD 3-Clause')
 arch=('x86_64' 'aarch64')
-depends=('glibc')
-source=("http://ftp.oregonstate.edu/pub/gentoo/distfiles/$pkgname-$pkgver.tar.gz"
-        'paketto.patch'
-        'libnet.h.patch'
-        'configure.patch'
-        'gcc4-tomcrypt.diff')
-sha512sums=('16f3281e0a6425cd7f2c299330eec7458f8027bef1b403f10e32239291304ea5fd6b1916fabb91095729fe26630dee1cf592583bb54d488745e51329cc582ea2'
-            '94332b17ff88992cd66f78a0304cd4c15d3ff17fb89e2d374996cf25a87ef8f66d3161c20a6a404e0564ad53a1ee878ee63224d23fda5d2ef704aa2d6de8c966'
-            'bce9906d4ee647510b9ba21f079a059cdb7e122e72169fb4adcac784ca5ddca6ed98aeb983d74b044a6e839f61c6f7c898ecb337d3bd1d643ba0504acc8310c7'
-            '372226a26bf2c09edd931ee1979ccb7a39a99980960a63405e607f0b118fc88de5abc8c4a26530184a4d9849bfb24656005abcf73b635892631d482bb54f11a5'
-            '1f145f35db20a0bb1941805c25c9fc7f64432882c586dde9aabf5c219af315df542657c2303bee5df1b42fce7c6237c370ccaa20d752c75be8c8fdd565e13bd2')
-
-prepare() {
-  cd "$pkgname-$pkgver"
-
-  patch -p1 < "$srcdir/paketto.patch"
-  patch -p1 < "$srcdir/configure.patch"
-}
+depends=('glibc' 'libghthash' 'libnet' 'libnetfilter_queue' 'libpcap'
+         'libtomcrypt')
+source=("https://github.com/Obsidian-Covenant/$pkgname/archive/refs/tags/$pkgver.tar.gz")
+sha512sums=('c8fc9a74c17d2d0599f077a4c0b270cd6ceabfeae71ba389dd2b25eda24fd51374c6a9267321109e1a931a6b88059dd70095f1499f99ca90a461c9701ba4e01e')
 
 build() {
   cd "$pkgname-$pkgver"
 
-  rm -rf libtomcrypt
+  autoreconf -i
 
   if [[ "$CARCH" == "i686" || "$CARCH" == "x86_64" ]];
   then
@@ -41,14 +27,6 @@ build() {
       --sbindir=/usr/bin
   fi
 
-  cd libtomcrypt/
-
-  patch -p0 < "$srcdir/gcc4-tomcrypt.diff"
-  make
-
-  cd ..
-  patch -p1 < "$srcdir/libnet.h.patch"
-
   make
 }
 
@@ -56,9 +34,5 @@ package() {
   cd "$pkgname-$pkgver"
 
   make DESTDIR="$pkgdir" install
-
-  # Fix conflicts with extra/mono.
-  mv "$pkgdir/usr/bin/lc" "$pkgdir/usr/bin/paketto-lc"
-  mv "$pkgdir/usr/share/man/man1/lc.1" "$pkgdir/usr/share/man/man1/paketto-lc.1"
 }
 
