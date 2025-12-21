@@ -4,11 +4,12 @@
 pkgname=pwndora
 pkgver=1.ba7f6e6
 pkgrel=1
+epoch=1
 pkgdesc='Massive IPv4 scanner, find and analyze internet-connected devices in minutes, create your own IoT search engine at home.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
 arch=('any')
 url='https://github.com/alechilczenko/pwndora'
-license=('Apache')
+license=('Apache-2.0')
 depends=('python' 'python-loguru' 'python-requests' 'python-pycountry'
          'python-pymongo' 'python-pyfiglet' 'python-colorama' 'python-geoip2'
          'python-beautifulsoup4' 'webtech')
@@ -19,7 +20,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
