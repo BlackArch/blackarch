@@ -2,34 +2,38 @@
 # See COPYING for license details.
 
 pkgname=spectools
-pkgver=2011_08_R1
-pkgrel=2
-pkgdesc='Spectrum-Tools is a set of utilities for using the Wi-Spy USB spectrum analyzer hardware. Stable version.'
+pkgver=3.0
+pkgrel=1
+epoch=1
+pkgdesc='Spectrum-Tools is a set of utilities for using the Wi-Spy USB spectrum analyzer hardware.'
 arch=('x86_64' 'aarch64')
-url='http://www.kismetwireless.net/spectools/'
-license=('GPL2')
-depends=('bash' 'libusb' 'gtk2' 'cairo')
 groups=('blackarch' 'blackarch-wireless')
-source=("http://www.kismetwireless.net/code/$pkgname-${pkgver//_/-}.tar.gz")
-sha512sums=('92c80b34049055cec6d677db165fb2d06d75fbff9f04d41ab81fa57900f639936e6a9a01f06165aea863b35760964016f0984f17816859d054bc9d14353e847b')
+url='https://www.kismetwireless.net/spectools/'
+license=('GPL-2.0-or-later')
+depends=('libusb' 'gtk4' 'cairo' 'ncurses')
+source=("https://github.com/Obsidian-Covenant/$pkgname/archive/refs/tags/$pkgver.tar.gz")
+sha512sums=('7cbadf66300fbccbc78d4cd86cd90c452e7e38dd4196063f7ede51f6de5ae036a7a0079470fe3d500911def7d8e893627a78999d30a6686c03624f895ac0e413')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  autoreconf -i
+
+  if [[ "$CARCH" == "i686" || "$CARCH" == "x86_64" ]]; then
+    ./configure --enable-gtk --enable-curses --prefix=/usr --sysconfdir=/etc
+  else
+    ./configure --enable-gtk --enable-curses --build=arm --prefix=/usr --sysconfdir=/etc
+  fi
+}
 
 build() {
-  cd "$pkgname-${pkgver//_/-}"
-
-  autoreconf --install
-
-  if [[ "$CARCH" == "i686" || "$CARCH" == "x86_64" ]];
-  then
-    ./configure --prefix=/usr --sysconfdir=/etc
-  else
-    ./configure --build=arm --prefix=/usr --sysconfdir=/etc
-  fi
+  cd "$pkgname-$pkgver"
 
   make
 }
 
 package() {
-  cd "$pkgname-${pkgver//_/-}"
+  cd "$pkgname-$pkgver"
 
   make DESTDIR="$pkgdir" install
 }
