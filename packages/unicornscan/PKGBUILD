@@ -2,43 +2,50 @@
 # See COPYING for license details.
 
 pkgname=unicornscan
-pkgver=0.4.7
-pkgrel=9
-groups=('blackarch' 'blackarch-scanner')
+pkgver=v0.4.10.r2.g0d94296
+pkgrel=1
 pkgdesc='A new information gathering and correlation engine.'
-url='http://www.unicornscan.org/'
-depends=('libpcap' 'postgresql-libs' 'geoip' 'libdnet' 'libltdl')
-makedepends=('flex' 'bison')
-license=('GPL')
 arch=('x86_64' 'aarch64')
-source=("http://downloads.sourceforge.net/project/osace/unicornscan/unicornscan%20-%200.4.7%20source/unicornscan-$pkgver-2.tar.bz2")
-sha512sums=('e952bad280b0f926cca2eb0dd960114f45da497f56c4a20a939b42eefb0c515c0613ca7271709778f83a8de5819a64c42616e38a73ef67fe08c44157c812d230')
+groups=('blackarch' 'blackarch-scanner')
+url='https://github.com/robertelee78/unicornscan'
+license=('GPL-2.0-or-later')
+depends=('libpcap' 'postgresql-libs' 'geoip' 'libdnet' 'libltdl')
+makedepends=('git' 'flex' 'bison')
+source=("git+https://github.com/D3vil0p3r/$pkgname.git#branch=patch-2")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd "$pkgname"
+
+  if [[ "$CARCH" == "i686" || "$CARCH" == "x86_64" ]]; then
+    ./configure CFLAGS="$CFLAGS -D_GNU_SOURCE" LDFLAGS="-lGeoIP" --prefix=/usr \
+      --sysconfdir=/etc --localstatedir=/var --with-pgsql
+  else
+    ./configure CFLAGS="$CFLAGS -D_GNU_SOURCE" LDFLAGS="-lGeoIP" --prefix=/usr \
+      --sysconfdir=/etc --localstatedir=/var --with-pgsql --build=arm
+  fi
+}
 
 build() {
-  cd "$pkgname-$pkgver"
-
-  # prevent crashing geoip dependency
-  export LDFLAGS="${LDFLAGS/--as-needed,/}"
-
-  if [[ "$CARCH" == "i686" || "$CARCH" == "x86_64" ]];
-  then
-    ./configure CFLAGS="$CFLAGS -D_GNU_SOURCE" --prefix=/usr --sysconfdir=/etc \
-      --localstatedir=/var --with-pgsql --with-geoip
-  else
-    ./configure CFLAGS="$CFLAGS -D_GNU_SOURCE" --prefix=/usr --sysconfdir=/etc \
-      --localstatedir=/var --with-pgsql --with-geoip --build=arm
-  fi
+  cd "$pkgname"
 
   make
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd "$pkgname"
 
   make DESTDIR="$pkgdir" install
-
-  cd "$pkgdir/etc/$pkgname"
-
-  ln -s /usr/share/GeoIP/GeoIP.dat GeoIP.dat
 }
 
