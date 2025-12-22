@@ -8,18 +8,26 @@ groups=('blackarch' 'blackarch-cracker')
 pkgdesc='Cisco Router Default Password Scanner.'
 arch=('x86_64' 'aarch64')
 url='http://www.question-defense.com/2013/01/11/ocs-version-0-2-release-ocs-cisco-router-default-password-scanner'
-license=('GPL2')
+license=('GPL-2.0-or-later')
 depends=('gcc')
 makedepends=('git')
 # The true source is "http://www.question-defense.com/wp-content/uploads/OCS-0.2.c"
 #  but it will not download due to a User-agent string issue
-source=("git+https://github.com/BlackArch/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/BlackArch/$pkgname.git"
+        'OCS-0.2.c.patch')
+sha512sums=('SKIP'
+            '27ca07b27135beff322c6161a423ebfb805e76e03a2e074a6d2b39b7e523ca9fffff51ba6b225d45c34dbd7c6e8a9749a3b1da48738365db6bdfeb245fdd2103')
+
+prepare() {
+  cd $pkgname
+
+  patch -Np0 < "$srcdir/OCS-0.2.c.patch"
+}
 
 build() {
   cd $pkgname
 
-  gcc -Wall -Wextra -lpthread "OCS-$pkgver.c" -o $pkgname
+  gcc -Wall -Wextra -lpthread -std=gnu89 "OCS-$pkgver.c" -o $pkgname
 }
 
 package() {
