@@ -2,22 +2,35 @@
 # See COPYING for license details.
 
 pkgname=fimap
-pkgver=1.00
-pkgrel=11
+pkgver=230.41eca15
+pkgrel=1
 epoch=2
-groups=('blackarch' 'blackarch-exploitation' 'blackarch-fuzzer')
 pkgdesc='A little tool for local and remote file inclusion auditing and exploitation.'
 arch=('any')
-url='http://code.google.com/p/fimap/'
-license=('GPL2')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-fuzzer')
+url='https://gitlab.tha-imax.de/root/fimap'
+license=('GPL-2.0-or-later')
 depends=('python2' 'python-urllib3' 'python2-httplib2')
-makedepends=('subversion')
+makedepends=('git')
 options=('!emptydirs')
-source=("$pkgname::svn+http://fimap.googlecode.com/svn/trunk/")
+source=("git+https://gitlab.tha-imax.de/root/$pkgname.git")
 sha512sums=('SKIP')
 
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
 prepare() {
-  grep -rl 'python$' $srcdir/trunk/src | xargs sed -i 's|python$|python2|'
+  cd $pkgname
+
+  grep -rl 'python$' . | xargs sed -i 's|python$|python2|'
 }
 
 package() {
