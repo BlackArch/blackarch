@@ -3,28 +3,38 @@
 
 pkgname=binproxy
 pkgver=8.d02fce9
-pkgrel=14
-groups=('blackarch' 'blackarch-proxy' 'blackarch-networking')
+pkgrel=15
 pkgdesc='A proxy for arbitrary TCP connections.'
 arch=('any')
-license=('custom:unknown')
+groups=('blackarch' 'blackarch-proxy' 'blackarch-networking')
+url='https://github.com/nccgroup/BinProxy/'
+license=('AGPL-3.0-or-later')
 depends=('ruby' 'ruby-bundler')
 makedepends=('git' 'libxslt')
-url='https://github.com/nccgroup/BinProxy/'
-source=("$pkgname::git+https://github.com/nccgroup/BinProxy.git")
+source=("$pkgname::git+https://github.com/nccgroup/BinProxy.git"
+        "fix-binproxy-caller.patch")
 install="$pkgname.install"
-sha512sums=('SKIP')
+sha512sums=('SKIP'
+            'c9179a09fa6dab7cb2b484d406312980bd7d9a506a6c58ae68720fcc9659ce8427e19c511ff20373947e7382faf61300e5190ffbfbc6ad74d0317912645e0bc4')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
   cd $pkgname
 
   sed -i 's|"bundler", "~> 1.3"|"bundler"|g' "$pkgname.gemspec"
+  sed -i "s|'thin', '~>1.7.2'|'thin', '>= 1.8.2', '< 2.0.0'\ns.add_runtime_dependency 'observer'\ns.add_runtime_dependency 'base64'\ns.add_runtime_dependency 'ostruct'|g" "$pkgname.gemspec"
+  patch -p1 < ../fix-binproxy-caller.patch
+  grep -RIl --null 'File\.exists\?' lib bin | xargs -0 sed -i 's/File\.exists\?/File.exist/g'
 }
 
 package() {
