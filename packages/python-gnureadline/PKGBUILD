@@ -4,37 +4,26 @@
 pkgname=python-gnureadline
 _pkgname=${pkgname#python-}
 pkgver=8.2.13
-pkgrel=1
+pkgrel=2
 pkgdesc='The standard Python readline extension statically linked against the GNU readline library.'
 arch=('any')
 url='https://pypi.org/project/gnureadline/#files'
 license=('GPL3')
 depends=('python')
-makedepends=('python-build' 'python-pip')
-options=(!emptydirs)
+makedepends=('python-build' 'python-installer' 'python-wheel')
+options=(!emptydirs !debug)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('fb9473f116287f667c399735cb5a30ea149007db9d2e76a4badd97f5c98eae59cf497aaed9c94ffc8a498eca2ab5f0a53e4b45fa80229fc972f0b23159e64698')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $_pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
