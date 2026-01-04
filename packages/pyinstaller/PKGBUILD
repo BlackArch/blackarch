@@ -3,7 +3,7 @@
 
 pkgname=pyinstaller
 pkgver=6.17.0
-pkgrel=1
+pkgrel=2
 epoch=2
 groups=('blackarch' 'blackarch-misc')
 pkgdesc='Bundles a Python application and all its dependencies into a single package.'
@@ -15,7 +15,7 @@ depends=(
   'glibc' 'binutils' 'gcc' 'base-devel' # project system dependencies
 )
 makedepends=(
-  'python-build' 'python-pip' 'python-wheel' # python package
+  'python-build' 'python-installer' 'python-wheel' 'python-hatchling' # python package
   'waf' # bootloader
 )
 source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz"
@@ -43,25 +43,14 @@ build() {
   #cd ..
 
   # Build package
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$pkgname-$pkgver"
 
   # Package
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 
   # Man pages
   install -Dm 644 doc/{"$pkgname",pyi-makespec}.1 -t \
