@@ -2,37 +2,54 @@
 # See COPYING for license details.
 
 pkgname=getsploit
-pkgver=40.b7a4a8e
-pkgrel=3
+pkgver=v2.0.2.r0.gb7a4a8e
+pkgrel=1
+epoch=1
 pkgdesc='Command line utility for searching and downloading exploits.'
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-misc')
 arch=('any')
 url='https://github.com/vulnersCom/getsploit'
-license=('LGPL3')
+license=('LGPL-3.0-or-later')
 depends=('python' 'python-six' 'python-texttable' 'python-clint'
          'python-vulners' 'python-appdirs')
-makedepends=('git' 'python-setuptools')
+makedepends=('git' 'python-setuptools' 'python-wheel' 'python-installer'
+             'python-build' 'python-pip')
 source=("git+https://github.com/vulnersCom/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
   cd $pkgname
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

@@ -2,27 +2,33 @@
 # See COPYING for license details.
 
 pkgname=gr-gsm
-pkgver=1194.a77cf59
-pkgrel=6
+pkgver=1191.71e9630
+pkgrel=1
 pkgdesc='Gnuradio blocks and tools for receiving GSM transmissions.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-radio')
 url='https://github.com/ptrkrysik/gr-gsm'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=('gnuradio' 'libosmocore' 'boost' 'swig' 'log4cpp' 'python-scipy'
          'qwt' 'gnuradio-companion' 'python-docutils' 'talloc' 'pygtk'
          'gnuradio-osmosdr' 'libosmosdr' 'cppunit' 'doxygen' 'lksctp-tools'
          'python-pyqt5' 'gcc-libs' 'python')
 makedepends=('git' 'cmake' 'graphviz' 'python-yaml' 'pybind11' 'swig' 'log4cpp')
 #source=("git+https://github.com/velichkov/$pkgname.git")
-source=("git+https://github.com/bkerler/gr-gsm.git#branch=maint-3.10")
+#source=("git+https://github.com/bkerler/gr-gsm.git#branch=maint-3.10")
+source=("git+https://github.com/bkerler/$pkgname.git")
 # temporary, move to master later, as it will support gnuradio 3.8 version
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
