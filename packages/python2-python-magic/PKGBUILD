@@ -1,36 +1,33 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=python-python-magic
+pkgname=python2-python-magic
 _pkgname=python-magic
 pkgver=0.4.18
-_pyver=3.14
 pkgrel=7
 pkgdesc='File type identification using libmagic.'
 arch=('any')
 url='https://pypi.org/project/python-magic/#files'
 license=('MIT')
-depends=('python' 'python-libmagic')
-makedepends=('python-build' 'python-installer' 'python-setuptools'
-             'python-wheel')
-options=(!emptydirs)
+depends=('python2' 'python2-libmagic')
+makedepends=('python2-setuptools' 'python2-pip' 'python2-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('18c4d75bc762d44f42c44bb52b999930ea570d2dd11d7cb840807e372806dc14164e1b3ea0acb23ccd692177a1a683d4537b01675bc57f06334bcc0f40520e6c')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python -m build --wheel --no-isolation
+  python2 setup.py build
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python -m installer --destdir="$pkgdir" dist/*.whl
+  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
-  mkdir -p "$pkgdir/usr/lib/python$_pyver/site-packages/"{python-magic,python_magic}
-  cp -af magic.py* "$pkgdir/usr/lib/python$_pyver/site-packages/python_magic/"
+  mkdir -p "$pkgdir/usr/lib/python2.7/site-packages/"{python-magic,python_magic}
+  cp -af magic.py* "$pkgdir/usr/lib/python2.7/site-packages/python_magic/"
   find $pkgdir -type d -name '__pycache__' -exec rm -rf {} +
-  rm -f "$pkgdir/usr/lib/python$_pyver/site-packages/magic.py"
+  rm -f "$pkgdir/usr/lib/python2.7/site-packages/magic."{py,pyc,pyo}
 }
 
