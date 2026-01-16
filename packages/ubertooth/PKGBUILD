@@ -2,45 +2,84 @@
 # See COPYING for license details.
 
 pkgname=ubertooth
-pkgver=2020.12.R1
-pkgrel=8
+pkgver=2020.12.R1.r33.ge0fd34d
+pkgrel=1
 groups=('blackarch' 'blackarch-bluetooth')
 pkgdesc='A 2.4 GHz wireless development board suitable for Bluetooth experimentation. Open source hardware and software. Tools only.'
-url='https://github.com/greatscottgadgets/ubertooth/releases'
 arch=('x86_64' 'aarch64')
-license=('GPL')
-depends=('libusb' 'libbtbb' 'bluez-libs' 'libpcap' 'python' 'python-numpy'
-         'python-pyside' 'python-pyqt4' 'python-pyusb')
-makedepends=('cmake' 'python-setuptools')
-source=("https://github.com/greatscottgadgets/ubertooth/archive/${pkgver//./-}.tar.gz")
-sha512sums=('86dab6cc8db026663783c022670859bdcaadfb22373ce418508de24297c439ec49a4236c49bbf03e956c8cf5f463231003badd7f8146c13d1891ab739874a24f')
+url='https://github.com/greatscottgadgets/ubertooth'
+license=('GPL-2.0-or-later')
+depends=('libbtbb' 'libusb' 'libpcap' 'python' 'python-libusb1' 'python-qtpy')
+makedepends=('git' 'cmake' 'python-setuptools')
+source=("git+https://github.com/greatscottgadgets/$pkgname.git"
+        "specan-version.patch")
+sha512sums=('SKIP'
+            '22ba35af65fdca3872cfc7bb889f2c98a1333d1c834906236bda3e7b09d989cf99ba3336acbdb20084475287f942167dca92c0e4457fc7cfe8ec48a2d177d5a3')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
 
 prepare() {
-  cd "$pkgname-${pkgver//./-}/host"
+  cd $pkgname
 
-  find "$srcdir/" -name "*.py" -exec sed -i 's|env python|env python|' {} \;
-  find "$srcdir/" -name "*.py" -exec \
-    sed -i 's|/usr/bin/python|/usr/bin/python|' {} \;
+  patch -p1 < ../specan-version.patch
 }
 
 build() {
-  cd "$pkgname-${pkgver//./-}/host"
+  cd "$pkgname/host/"
 
   mkdir -p build
 
   cd build
 
-  cmake -DPYTHON_EXECUTABLE:FILEPATH=/usr/bin/python \
-    -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
-
+  cmake \
+    -DCMAKE_INSTALL_PREFIX=$pkgdir/usr \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    -DENABLE_PYTHON=FALSE \
+    -DUDEV_RULES_PATH=$pkgdir/etc/udev/rules.d \
+    -DINSTALL_UDEV_RULES=TRUE \
+    -DUDEV_RULES_GROUP=uucp \
+    ..
   make
+
+  cd ../python/ubtbr/
+
+  python setup.py build
+
+  cd ../../python/specan_ui
+
+  python setup.py build
 }
 
 package() {
-  cd "$pkgname-${pkgver//./-}/host"
+  # Runtime
+  cd "$pkgname/host/build/"
 
-  cd build
+  make install
 
-  make DESTDIR="$pkgdir" install
+  # GUI
+  cd ../python/specan_ui
+
+  python setup.py install --root="$pkgdir/" --optimize=1 --skip-build
+
+  cd ../../python/ubtbr/
+
+  python setup.py install --root="$pkgdir"
+
+  # Firmware
+  install -dm755 "$pkgdir/usr/share/ubertooth"
+
+  cd "$srcdir/ubertooth"
+
+  cp -r "hardware" "$pkgdir/usr/share/ubertooth/hardware"
+  cp -r "firmware" "$pkgdir/usr/share/ubertooth/firmware"
 }
 
