@@ -19,7 +19,12 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
@@ -40,15 +45,15 @@ cd /usr/share/$pkgname
 exec python /usr/share/$pkgname/fuzzer.py "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 
-  cat > "$pkgdir/usr/bin/${pkgname}-shortname" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname-shortname" << EOF
 #!/bin/sh
 source /usr/share/$pkgname/venv/bin/activate
 cd /usr/share/$pkgname
 exec python /usr/share/$pkgname/fuzzer_shortname.py "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/${pkgname}-shortname"
+  chmod +x "$pkgdir/usr/bin/$pkgname-shortname"
 }
 
