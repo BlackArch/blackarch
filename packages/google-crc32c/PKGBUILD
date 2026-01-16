@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=google-crc32c
+pkgver=1.1.2
+pkgrel=1
+pkgdesc='CRC32C implementation with support for CPU-specific acceleration instructions.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/google/crc32c'
+license=('BSD-3-Clause')
+depends=('gcc-libs')
+makedepends=('git' 'cmake')
+_tag='2bbb3be42e20a0e6c0f7b39dc07dc863d9ffbc07'
+source=("$pkgname::git+https://github.com/google/crc32c.git#tag=${_tag}")
+sha512sums=('6d6b65eccf8369a2064a4f399da9ee71f52e6caf2cd6ab1563af31a80961f11f6cf6cdcad343f930e8b0e90491ecc46935817ab08de56c9c203f11d612fa295f')
+
+build() {
+  cd $pkgname
+
+  cmake -B build -S . \
+    -DCMAKE_BUILD_TYPE=None \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DBUILD_SHARED_LIBS=yes \
+    -DCRC32C_BUILD_TESTS=OFF \
+    -DCRC32C_BUILD_BENCHMARKS=OFF \
+    -DCRC32C_USE_GLOG=OFF \
+    -DCRC32C_INSTALL=ON \
+    -Wno-dev
+
+  cmake --build build
+}
+
+package() {
+  cd $pkgname
+
+  DESTDIR="$pkgdir" cmake --install build
+}
+
