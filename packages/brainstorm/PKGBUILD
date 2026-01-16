@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=brainstorm
+pkgver=36.55e6496
+pkgrel=1
+pkgdesc='A smarter web fuzzing tool that combines local LLM models and ffuf to optimize directory and file discovery.'
+arch=('any')
+groups=('blackarch' 'blackarch-fuzzer' 'blackarch-scanner' 'blackarch-recon'
+        'blackarch-webapp')
+url='https://github.com/s7x/brainstorm'
+license=('custom:unknown')
+depends=('python' 'ffuf' 'ollama')
+makedepends=('git' 'python-setuptools' 'python-pip')
+source=("git+https://github.com/s7x/$pkgname.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md *.png
+
+  rm -rf *.md *.png
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+cd /usr/share/$pkgname
+exec python /usr/share/$pkgname/fuzzer.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+
+  cat > "$pkgdir/usr/bin/${pkgname}-shortname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+cd /usr/share/$pkgname
+exec python /usr/share/$pkgname/fuzzer_shortname.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/${pkgname}-shortname"
+}
+
