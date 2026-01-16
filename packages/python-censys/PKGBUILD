@@ -1,50 +1,31 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-censys
-pkgname=('python2-censys' 'python-censys')
+pkgname=python-censys
 _pkgname=censys
 pkgver=2.2.19
-pkgrel=3
+pkgrel=1
 epoch=1
 pkgdesc='Python library for interacting with Censys Search Engine (censys.io).'
 arch=('any')
 url='https://pypi.org/project/censys/#files'
-license=('Apache')
-makedepends=('python2-setuptools' 'python-setuptools')
+license=('Apache-2.0')
+depends=('python' 'python-requests' 'python-netaddr' 'python-backoff'
+         'python-rich' 'python-urllib3' 'python-argcomplete')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel' 'python-poetry')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('d70e4070c6e4f4b708ca65ebb1eb378cc1ad1a6745100efc664453cc3d454eb26a6adb4ffc988b943279f10c59d0a962a86f25666613f624c5263d6c8f595ab0')
 
-prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
-}
-
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
-
-  python setup.py build
-}
-
-package_python2-censys() {
-  depends=('python2' 'python2-requests' 'python2-netaddr' 'python2-backoff')
-
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-
-  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}2"
-}
-
-package_python-censys() {
-  depends=('python' 'python-requests' 'python-netaddr' 'python-backoff'
-           'python-rich')
-
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 

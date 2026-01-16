@@ -2,27 +2,38 @@
 # See COPYING for license details.
 
 pkgname=python-asyncio
+_pkgname=asyncio
 pkgver=4.0.0
-pkgrel=3
-pkgdesc='Reference implementation of PEP 3156.'
+pkgrel=1
+pkgdesc='Deprecated backport of asyncio.'
 arch=('any')
 url='https://pypi.org/project/asyncio/#files'
-license=('Apache2')
+license=('Apache-2.0')
 depends=('python')
-makedepends=('python-setuptools')
-source=("https://pypi.python.org/packages/source/a/asyncio/asyncio-$pkgver.tar.gz")
+makedepends=('python-build' 'python-pip' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('3aca97e7c8a878abd772d3243e03447f483ab2197ace467a150c4439a5f6388c06a42868d97760c91a503129dcef148503369734b00570fd9de3598d05237939')
 
 build() {
-  cd "asyncio-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --outdir="$startdir/dist"
 }
 
 package() {
-  cd "asyncio-$pkgver"
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
 }
 
