@@ -1,0 +1,75 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# Post-install script for unicornscan
+
+post_install() {
+  # Create unicornscan group for shared config access
+  if ! getent group unicornscan >/dev/null 2>&1; then
+    groupadd -r unicornscan 2>/dev/null || true
+  fi
+
+  # Set modules.conf ownership for group access
+  if [[ -f /etc/unicornscan/modules.conf ]]; then
+    chown root:unicornscan /etc/unicornscan/modules.conf 2>/dev/null || true
+    chmod 660 /etc/unicornscan/modules.conf 2>/dev/null || true
+  fi
+
+  # Set Linux capabilities to allow running without root
+  # Fails gracefully if not supported (containers, SELinux, etc.)
+  setcap 'cap_net_raw,cap_net_admin,cap_sys_chroot,cap_setuid,cap_setgid+ep' \
+    /usr/bin/unicornscan 2>/dev/null || true
+  setcap 'cap_net_raw,cap_net_admin,cap_sys_chroot,cap_setuid,cap_setgid+ep' \
+    /usr/bin/fantaip 2>/dev/null || true
+  setcap 'cap_net_raw,cap_net_admin,cap_sys_chroot,cap_setuid,cap_setgid+ep' \
+    /usr/libexec/unicornscan/unilisten 2>/dev/null || true
+  setcap 'cap_net_raw,cap_net_admin,cap_sys_chroot,cap_setuid,cap_setgid+ep' \
+    /usr/libexec/unicornscan/unisend 2>/dev/null || true
+
+  cat <<EOF
+
+╔════════════════════════════════════════════════════════════════╗
+║              Unicornscan installed successfully!               ║
+╠════════════════════════════════════════════════════════════════╣
+║                                                                ║
+║  QUICK START:                                                  ║
+║    unicornscan -mT 192.168.1.0/24:1-1000    # TCP SYN scan     ║
+║    unicornscan -mU 192.168.1.1:53,161       # UDP scan         ║
+║    unicornscan -mA 192.168.1.0/24           # ARP discovery    ║
+║                                                                ║
+║  ALICORN WEB UI (requires Docker):                             ║
+║    unicornscan-web start                    # Start services   ║
+║    http://localhost:31337                   # Open browser     ║
+║                                                                ║
+║  GEOIP (recommended):                                          ║
+║    sudo unicornscan-geoip-update            # Download DBs     ║
+║                                                                ║
+║  Add yourself to unicornscan group for config access:          ║
+║    sudo usermod -aG unicornscan \$USER && newgrp unicornscan    ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+EOF
+}
+
+post_upgrade() {
+  post_install
+}
+
+pre_remove() {
+  # Stop web UI if running
+  if command -v unicornscan-web >/dev/null 2>&1; then
+    unicornscan-web stop 2>/dev/null || true
+  fi
+}
+
+post_remove() {
+  # Remove capabilities (not strictly necessary but clean)
+  if command -v setcap >/dev/null 2>&1; then
+    setcap -r /usr/bin/unicornscan 2>/dev/null || true
+    setcap -r /usr/bin/fantaip 2>/dev/null || true
+    setcap -r /usr/libexec/unicornscan/unilisten 2>/dev/null || true
+    setcap -r /usr/libexec/unicornscan/unisend 2>/dev/null || true
+  fi
+
+  echo "Unicornscan removed. Config files in /etc/unicornscan/ preserved."
+  echo "To remove completely: rm -rf /etc/unicornscan /opt/unicornscan-web"
+}
