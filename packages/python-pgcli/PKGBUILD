@@ -1,54 +1,32 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-pgcli
-pkgname=('python2-pgcli' 'python-pgcli')
-_pkgname=pgcli
+pkgname=python-pgcli
+_pkgname=${pkgname#python-}
 pkgver=4.4.0
-pkgrel=2
+pkgrel=1
 pkgdesc='CLI for Postgres Database. With auto-completion and syntax highlighting.'
 arch=('any')
 url='https://pypi.org/project/pgcli/#files'
-license=('BSD')
-makedepends=('python2-setuptools' 'python-setuptools')
+license=('BSD-3-Clause')
+depends=('python' 'python-click' 'python-pygments' 'python-psycopg2'
+         'python-sqlparse' 'python-configobj' 'python-pgspecial'
+         'python-setproctitle' 'python-cli-helpers' 'python-humanize')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel' 'python-setuptools-scm')
+options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('92020513cc2b90c24cd68312fbc45689b463caf5ab27eec1ce368ab152dfcb45ad108e26f5e2a09123d9af6695e0893cd278db5e4caa00f328575dc771ca2b7d')
 
-prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
-}
-
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
-
-  python setup.py build
-}
-
-package_python2-pgcli() {
-  depends=('python2' 'python2-click' 'python2-pygments' 'python2-psycopg2'
-           'python2-sqlparse' 'python2-configobj' 'python2-pgspecial'
-           'python2-setproctitle' 'python2-cli-helpers' 'python2-humanize')
-
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
-
-  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/${_pkgname}-2"
-}
-
-package_python-pgcli() {
-  depends=('python' 'python-click' 'python-pygments' 'python-psycopg2'
-           'python-sqlparse' 'python-configobj' 'python-pgspecial'
-           'python-setproctitle' 'python-cli-helpers' 'python-humanize')
-
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
