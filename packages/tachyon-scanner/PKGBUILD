@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=tachyon-scanner
-pkgver=471.4f1b1a0
-pkgrel=3
+pkgver=3.5.6.r2.g6029e1c
+pkgrel=1
+epoch=1
 pkgdesc='Fast Multi-Threaded Web Discovery Tool.'
 groups=('blackarch' 'blackarch-scanner')
 arch=('any')
@@ -16,13 +17,18 @@ source=("$pkgname::git+https://github.com/delvelabs/tachyon.git"
         'setup.py.patch'
         'requirements.txt.patch')
 sha512sums=('SKIP'
-            '0b7fdb7ef5d31ecccdce7f820e5c4463c712b60a057541f73303e701edcaeb13460a7f503f751a8d911755718c5966683b445d31a6c635cd79ad51b4800b2c79'
-            '23d33e761bce2961b44c9f5cf594839e9d024c02924e4913239ecc3f61371d2564c573b29657f9744eb4c9cf488936eeea14f1373cb690df782758f1b5c140c5')
+            '15ad63af0ca53cb2dc2c41249be7e72c1898a0de2085c93315a072a3ccd5fc9cc43c276f7e701402b5068cf8f1c33ee95d27660b49e2affb3dcd1367c3393558'
+            'ccfc375f85bcafd44ffaa89775416f90bc7e76166296245898b2e29bc7187df541724e2e8d51ebef85d85eb897f0ed61a8346bfd7cbee06dab18daa20d84a8a8')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

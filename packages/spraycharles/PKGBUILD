@@ -2,14 +2,15 @@
 # See COPYING for license details.
 
 pkgname=spraycharles
-pkgver=239.95699b8
+pkgver=v2.0.2.r2.g95699b8
 _pyver=3.14
-pkgrel=3
+pkgrel=1
+epoch=1
 pkgdesc='Low and slow password spraying tool, designed to spray on an interval over a long period of time.'
 groups=('blackarch' 'blackarch-cracker')
 arch=('any')
 url='https://github.com/Tw1sm/spraycharles'
-license=('BSD')
+license=('BSD-3-Clause')
 depends=('python' 'impacket' 'python-numpy' 'python-requests' 'python-texttable'
          'python-requests-ntlm' 'python-pymsteams' 'python-click-config-file'
          'python-rich' 'python-discord-webhook' 'python-notifiers')
@@ -20,7 +21,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
@@ -31,9 +37,6 @@ build() {
 
 package() {
   cd $pkgname
-
-  install -dm 755 "$pkgdir/usr/share/doc/$pkgname/"
-  install -dm 755 "$pkgdir/usr/share/licenses/$pkgname/"
 
   pip install \
     --verbose \
@@ -48,10 +51,6 @@ package() {
     --find-links="file://$startdir/dist" \
     "$pkgname"
 
-  mv "$pkgdir/usr/lib/python$_pyver/site-packages/CHANGELOG.md" \
-    "$pkgdir/usr/share/doc/$pkgname/CHANGELOG.md"
-
-  mv "$pkgdir/usr/lib/python$_pyver/site-packages/LICENSE" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 }
 
