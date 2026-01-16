@@ -1,48 +1,31 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-mechanicalsoup
-pkgname=('python2-mechanicalsoup' 'python-mechanicalsoup')
-_pkgname=MechanicalSoup
+pkgname=python-mechanicalsoup
+_pkgname=${pkgname#python-}
 pkgver=1.4.0
-pkgrel=3
+pkgrel=1
 pkgdesc='A Python library for automating interaction with websites.'
 arch=('any')
 url='https://pypi.org/project/MechanicalSoup/#files'
 license=('MIT')
-makedepends=('python2-setuptools' 'python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/MechanicalSoup-$pkgver.tar.gz")
+depends=('python' 'python-requests' 'python-six' 'python-beautifulsoup4'
+         'python-lxml')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('e8e8ab304ee9a22886bc4d41871bb1433abfd87005f9a870fca3e22b4632da185be2becb25cfbb9be42662748394d90f70d52f6d81438c391f47716bc7eaf8ea')
 
-prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
-}
-
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
-
-  python setup.py build
-}
-
-package_python2-mechanicalsoup() {
-  depends=('python2' 'python2-requests' 'python2-six' 'python2-beautifulsoup4'
-           'python2-lxml')
-
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-}
-
-package_python-mechanicalsoup() {
-  depends=('python' 'python-requests' 'python-six' 'python-beautifulsoup4'
-           'python-lxml')
-
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
