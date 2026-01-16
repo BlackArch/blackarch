@@ -11,7 +11,8 @@ groups=('blackarch' 'blackarch-windows' 'blackarch-exploitation'
 url='https://github.com/0xdsm/hexodus'
 license=('MIT')
 depends=('python' 'python-flask' 'python-ldap3' 'python-rich' 'impacket')
-makedepends=('git' 'python-build' 'python-pip')
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
 source=("git+https://github.com/0xdsm/$pkgname.git")
 sha512sums=('SKIP')
 
@@ -29,23 +30,12 @@ pkgver() {
 build() {
   cd $pkgname
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd $pkgname
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
