@@ -2,31 +2,31 @@
 # See COPYING for license details.
 
 pkgname=python-uncompyle6
-_pkgname=uncompyle6
+_pkgname=${pkgname#python-}
 pkgver=3.9.3
-pkgrel=3
+pkgrel=1
 pkgdesc='A Python cross-version decompiler.'
 groups=('blackarch' 'blackarch-decompiler')
 arch=('any')
 url='https://pypi.org/project/uncompyle6/#files'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=('python' 'python-hypothesis' 'python-pytest' 'python-spark-parser'
          'python-xdis')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('3d33f23a6fb2c45c99f4f77140372c405de2b03050319072066e59355f773e2e52023b976d6346c742dc4a20c5efebf75157105f38769007b3c5a27dc4b6dced')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 

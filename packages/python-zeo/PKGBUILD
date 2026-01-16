@@ -2,29 +2,37 @@
 # See COPYING for license details.
 
 pkgname=python-zeo
-_pkgname=ZEO
+_pkgname=${pkgname#python-}
 pkgver=6.1
-pkgrel=3
+pkgrel=1
 pkgdesc='A client-server storage for ZODB for sharing a single storage among many clients.'
 arch=('any')
 url='https://pypi.org/project/ZEO/'
-license=('ZPL')
+license=('custom:unknown')
 depends=('python' 'python-zdaemon' 'python-zodb' 'python-six' 'python-zconfig'
          'python-transaction' 'python-persistent' 'python-zc.lockfile'
          'python-zope-interface')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/ZEO-$pkgver.tar.gz")
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('314d7d0d6ad553c335664a15aa445ca1ed459da31e551997dd17bbe4cbebeff7269cb8b21d9618620813b2348590cb0715933d81b0b924437bd9c96dfefd44d0')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  sed -i 's|setuptools == 75.8.2|setuptools|g' pyproject.toml
+}
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 

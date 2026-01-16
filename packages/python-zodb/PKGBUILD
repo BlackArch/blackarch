@@ -2,27 +2,36 @@
 # See COPYING for license details.
 
 pkgname=python-zodb
-_pkgname=ZODB
+_pkgname=${pkgname#python-}
 pkgver=6.1
-pkgrel=3
+pkgrel=1
 pkgdesc='A native object database for Python.'
 arch=('any')
 url='https://pypi.org/project/ZODB/'
-license=('ZPL')
+license=('custom:unknown')
 depends=('python' 'python-persistent' 'python-zodbpickle' 'python-transaction'
          'python-btrees')
-makedepends=('python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/ZODB-$pkgver.tar.gz")
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('5152db470d60888f515f172d433a2a44095d4a8576cff064f260385ed52c3dbf20760204049fb1ae89f452682f63c39c7921903b01bf0a40a49cf69e064196c7')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  sed -i 's|setuptools == 78.1.1|setuptools|g' pyproject.toml
+}
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
+
