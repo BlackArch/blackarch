@@ -3,17 +3,17 @@
 
 pkgname=manticore
 pkgver=0.3.7.r82.gfe2ac403
-pkgrel=2
+pkgrel=3
 pkgdesc='Symbolic execution tool.'
 arch=('any')
 groups=('blackarch' 'blackarch-binary')
 url='https://github.com/trailofbits/manticore'
-license=('AGPL3')
-depends=('python' 'python-yaml' 'python-protobuf' 'python-pysha3' 'python-cbor2'
-         'python-prettytable' 'python-ply' 'python-rlp' 'python-intervaltree'
-         'python-crytic-compile' 'python-wasm' 'python-dataclasses'
-         'python-pyevmasm' 'python-z3-solver' 'python-capstone' 'python-unicorn'
-         'python-pyelftools' 'python-redis')
+license=('AGPL-3.0-or-later')
+depends=('python' 'python-yaml' 'python-protobuf' 'python-pysha3'
+         'python-cbor2' 'python-prettytable' 'python-ply' 'python-rlp'
+         'python-crytic-compile' 'python-wasm' 'python-pyevmasm'
+         'python-z3-solver' 'python-capstone' 'python-unicorn'
+         'python-intervaltree' 'python-pyelftools' 'python-redis')
 makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/trailofbits/$pkgname.git")
 md5sums=('SKIP')
@@ -21,7 +21,12 @@ md5sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

@@ -3,15 +3,15 @@
 
 pkgname=buster
 pkgver=92.131437e
-pkgrel=12
+pkgrel=13
 pkgdesc='Find emails of a person and return info associated with them.'
-groups=('blackarch' 'blackarch-social' 'blackarch-recon')
 arch=('any')
+groups=('blackarch' 'blackarch-social' 'blackarch-recon')
 url='https://github.com/sham00n/buster'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=('python' 'python-requests' 'python-beautifulsoup4' 'python-yaml'
          'python-lxml' 'python-grequests' 'python-gevent' 'twint' 'cython'
-         'python-dataclasses' 'python-certifi')
+         'python-certifi')
 makedepends=('git' 'python-setuptools' 'python-pip' 'python-build'
              'python-wheel')
 source=("git+https://github.com/sham00n/$pkgname.git")
@@ -20,7 +20,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
