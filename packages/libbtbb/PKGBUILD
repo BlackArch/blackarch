@@ -1,35 +1,52 @@
-# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
-# See COPYING for license details.
-
 pkgname=libbtbb
-pkgver=2020.12.R1
-pkgrel=3
-pkgdesc='A library to decode Bluetooth baseband packets, as produced by the Ubertooth and GR-Bluetooth projects.'
-url='https://github.com/greatscottgadgets/libbtbb/releases'
-arch=('x86_64' 'aarch64')
-license=('GPL')
-depends=('glibc' 'python2' 'python2-pcapy' 'python2-pypcap')
-makedepends=('cmake')
-source=("https://github.com/greatscottgadgets/libbtbb/archive/${pkgver//./-}.tar.gz")
-sha512sums=('a3dc2c8d27e4b85aae4847ac39f871ecf800ebf911aacd01682da6c50b13f3247c7d683bce855f2cf59b56a29c661223a2c22e98a8d86e8edaccd57af282bac6')
+pkgver=2020.12.R1.r7.gf0fe176
+pkgrel=1
+pkgdesc='Bluetooth baseband decoding library.'
+arch=('x86_64' 'i686')
+url='https://github.com/greatscottgadgets/libbtbb'
+license=('GPL-2.0-or-later')
+depends=('python')
+makedepends=('git' 'cmake')
+source=("git+https://github.com/greatscottgadgets/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
 
 build() {
-  cd "$pkgname-${pkgver//./-}"
+  cd "$pkgname/build"
 
-  mkdir build
+  sed -i -r -e "s#@CMAKE_INSTALL_PREFIX@#/usr#" ../lib/libbtbb.pc.in
 
-  cd build
-
-  cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
-
+  cmake \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    -DCMAKE_INSTALL_PREFIX=$pkgdir/usr \
+    -DENABLE_PYTHON=FALSE \
+    ..
   make
+  
+  cd ../python/pcaptools
+
+  python setup.py build
 }
 
 package() {
-  cd "$pkgname-${pkgver//./-}"
+  cd "$pkgname/build/"
 
-  cd build
+  make install
 
-  make DESTDIR="$pkgdir" install
+  cd ../python/pcaptools
+
+  mkdir -p ${pkgdir}/usr/bin
+  cp btaptap ${pkgdir}/usr/bin/
+  python setup.py install --root="${pkgdir}/" --optimize=1 --skip-build
 }
 
