@@ -1,50 +1,30 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-ipwhois
-pkgname=('python2-ipwhois' 'python-ipwhois')
+pkgname=python-ipwhois
 _pkgname=ipwhois
 pkgver=1.3.0
-pkgrel=3
+pkgrel=1
 pkgdesc='Retrieve and parse whois data for IPv4 and IPv6 addresses.'
 url='https://pypi.org/project/ipwhois/#files'
 arch=('any')
 license=('MIT')
-makedepends=('python2-setuptools' 'python-setuptools')
+depends=('python' 'python-dnspython' 'python-defusedxml' 'python-ipaddr')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('4fba512abae765e447a2ac1b89abda1f013098391674fb1ade84f365d3e89e457a77ce7f8165e5ee8cb311f8d1166c500a395a3b3bc438c0dff9e409ce3b77d8')
 
-prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
-}
-
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
-
-  python setup.py build
-}
-
-package_python2-ipwhois() {
-  depends=('python2' 'python2-dnspython' 'python2-ipaddr')
-
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
-
-  mv "$pkgdir/usr/bin/ipwhois_cli.py" "$pkgdir/usr/bin/ipwhois_cli2.py"
-  mv "$pkgdir/usr/bin/ipwhois_utils_cli.py" \
-    "$pkgdir/usr/bin/ipwhois_utils_cli2.py"
-}
-
-package_python-ipwhois() {
-  depends=('python' 'python-dnspython')
-
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 

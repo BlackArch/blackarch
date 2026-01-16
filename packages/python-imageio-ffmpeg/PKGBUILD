@@ -1,47 +1,30 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-imageio-ffmpeg
-pkgname=('python2-imageio-ffmpeg' 'python-imageio-ffmpeg')
-_pkgname=imageio-ffmpeg
+pkgname=python-imageio-ffmpeg
+_pkgname=imageio_ffmpeg
 pkgver=0.6.0
-pkgrel=3
+pkgrel=1
 pkgdesc='FFMPEG wrapper for Python.'
 arch=('any')
 url='https://pypi.org/project/imageio-ffmpeg/#files'
-license=('BSD')
-makedepends=('python2-setuptools' 'python-setuptools' 'python2-pip'
-             'python-pip')
+license=('BSD-2-Clause')
+depends=('python')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('f5039cc214e3d4899108ba33227e7e4064d3e546004be59ff232ff672917d9ec4ab907691238b52768c74739f3e067c41d82def5a5496834243818c600a15d6d')
 
-prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
-}
-
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
-
-  python setup.py build
-}
-
-package_python2-imageio-ffmpeg() {
-  depends=('python2')
-
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-}
-
-package_python-imageio-ffmpeg() {
-  depends=('python')
-
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
