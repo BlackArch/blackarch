@@ -4,37 +4,26 @@
 pkgname=pyinstaller-hooks-contrib
 _pkgname=pyinstaller_hooks_contrib
 pkgver=2025.11
-pkgrel=2
+pkgrel=3
 pkgdesc='PyInstaller community hooks.'
 arch=('any')
 groups=('blackarch' 'blackarch-misc')
 url='https://github.com/pyinstaller/pyinstaller-hooks-contrib'
 license=('custom:mixed')
 depends=('python')
-makedepends=('python-build' 'python-pip')
+makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('a24859b85616b10ab48a06aca96424f329c9ab90983d9cd4d0ac9e08aabe13921530a2a571afc31c8d2ec76571d9c81bf461a7122e4694019721ab239aeb3dae')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
