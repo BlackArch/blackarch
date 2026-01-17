@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=hexodus
+pkgver=72.69a96f6
+pkgrel=1
+pkgdesc='Python framework project designed to enumerate and help in Active Directory attacks through Windows protocols like SMB, LDAP, WinRM and other.'
+arch=('any')
+groups=('blackarch' 'blackarch-windows' 'blackarch-exploitation'
+        'blackarch-recon')
+url='https://github.com/0xdsm/hexodus'
+license=('MIT')
+depends=('python' 'python-flask' 'python-ldap3' 'python-rich' 'impacket')
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+source=("git+https://github.com/0xdsm/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd $pkgname
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+
