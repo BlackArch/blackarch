@@ -2,14 +2,15 @@
 # See COPYING for license details.
 
 pkgname=btlejack
-pkgver=88.c487859
-pkgrel=6
+pkgver=v2.1.1.r1.gc487859
+pkgrel=1
+epoch=1
 pkgdesc='Bluetooth Low Energy Swiss-army knife.'
 arch=('any')
 groups=('blackarch' 'blackarch-bluetooth')
 url='https://github.com/virtualabs/btlejack'
 license=('MIT')
-depends=('python' 'python-pyserial' 'python-argparse' 'python-halo')
+depends=('python' 'python-pyserial' 'python-halo')
 makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/virtualabs/$pkgname.git")
 sha512sums=('SKIP')
@@ -17,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

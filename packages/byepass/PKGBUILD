@@ -3,13 +3,13 @@
 
 pkgname=byepass
 pkgver=213.8cbfd9b
-pkgrel=8
+pkgrel=9
 pkgdesc='Automates password cracking tasks using optimized dictionaries and mangling rules.'
 arch=('any')
 groups=('blackarch' 'blackarch-automation' 'blackarch-cracker')
 url='https://github.com/webpwnized/byepass'
 license=('custom:unknown')
-depends=('john' 'python' 'python-argparse' 'unzip')
+depends=('john' 'python' 'unzip')
 makedepends=('git')
 source=("git+https://github.com/webpwnized/$pkgname.git")
 sha512sums=('SKIP')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

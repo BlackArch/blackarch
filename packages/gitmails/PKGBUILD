@@ -2,15 +2,15 @@
 # See COPYING for license details.
 
 pkgname=gitmails
-pkgver=71.8aa8411
-pkgrel=9
+pkgver=0.1.1.r6.g8aa8411
+pkgrel=1
+epoch=1
 pkgdesc='An information gathering tool to collect git commit emails in version control host services.'
 groups=('blackarch' 'blackarch-recon' 'blackarch-social')
 arch=('any')
 url='https://github.com/giovanifss/gitmails'
 license=('MIT')
-depends=('python' 'python-argparse' 'python-requests' 'python-tabulate'
-         'python-pygit2')
+depends=('python' 'python-requests' 'python-tabulate' 'python-pygit2')
 makedepends=('git')
 source=("git+https://github.com/giovanifss/$pkgname.git")
 sha512sums=('SKIP')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

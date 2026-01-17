@@ -3,14 +3,14 @@
 
 pkgname=freewifi
 pkgver=30.1cb752b
-pkgrel=10
+pkgrel=11
 pkgdesc='How to get free wifi.'
 groups=('blackarch' 'blackarch-wireless')
 arch=('any')
 url='https://github.com/kylemcdonald/FreeWifi'
 license=('MIT')
 depends=('python' 'python-netifaces' 'python-tqdm' 'python-netaddr'
-         'python-argparse' 'python-wireless' 'python-spoofmac')
+         'python-wireless' 'python-spoofmac')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/kylemcdonald/FreeWifi.git")
 sha512sums=('SKIP')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

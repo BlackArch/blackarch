@@ -4,13 +4,13 @@
 pkgname=uhoh365
 _pkgname=UhOh365
 pkgver=26.110277a
-pkgrel=8
+pkgrel=9
 pkgdesc='Script to enumerate Office 365 users without performing login attempts'
 groups=('blackarch' 'blackarch-recon')
 arch=('any')
 url='https://github.com/Raikia/UhOh365'
-license=('GPL3')
-depends=('python' 'python-requests' 'python-argparse')
+license=('GPL-3.0-or-later')
+depends=('python' 'python-requests')
 makedepends=('git')
 source=("git+https://github.com/Raikia/$_pkgname.git")
 sha512sums=('SKIP')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $_pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

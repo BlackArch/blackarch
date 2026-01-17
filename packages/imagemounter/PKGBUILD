@@ -3,13 +3,13 @@
 
 pkgname=imagemounter
 pkgver=413.383b30b
-pkgrel=7
+pkgrel=8
 pkgdesc='Command line utility and Python package to ease the (un)mounting of forensic disk images.'
 groups=('blackarch' 'blackarch-forensic' 'blackarch-misc')
 arch=('any')
 url='https://github.com/ralphje/imagemounter'
 license=('MIT')
-depends=('python' 'python-termcolor' 'python-argparse')
+depends=('python' 'python-termcolor')
 makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/ralphje/$pkgname.git")
 sha512sums=('SKIP')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

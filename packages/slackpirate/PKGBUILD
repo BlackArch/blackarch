@@ -2,15 +2,15 @@
 # See COPYING for license details.
 
 pkgname=slackpirate
-pkgver=148.99e470f
+pkgver=0.20.r6.g99e470f
 pkgrel=1
+epoch=1
 pkgdesc='Slack Enumeration and Extraction Tool - extract sensitive information from a Slack Workspace.'
 arch=('any')
 groups=('blackarch' 'blackarch-social' 'blackarch-recon')
 url='https://github.com/emtunc/SlackPirate'
-license=('GPL3')
-depends=('python-requests' 'python-colorama' 'python-termcolor'
-         'python-argparse')
+license=('GPL-3.0-or-later')
+depends=('python-requests' 'python-colorama' 'python-termcolor')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/emtunc/SlackPirate.git")
 sha512sums=('SKIP')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

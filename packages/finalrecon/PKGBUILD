@@ -2,16 +2,17 @@
 # See COPYING for license details.
 
 pkgname=finalrecon
-pkgver=197.ac4681c
-pkgrel=2
+pkgver=v1.1.7.r16.gac4681c
+pkgrel=1
+epoch=1
 pkgdesc='OSINT Tool for All-In-One Web Reconnaissance.'
 arch=('any')
 groups=('blackarch' 'blackarch-recon')
 url='https://github.com/thewhiteh4t/FinalRecon'
 license=('MIT')
 depends=('python' 'python-requests' 'python-ipwhois' 'python-beautifulsoup4'
-         'python-lxml' 'python-argparse' 'python-icmplib' 'python-tldextract'
-         'python-dnslib' 'python-aiohttp' 'python-psycopg2' 'python-aiodns')
+         'python-lxml' 'python-icmplib' 'python-tldextract' 'python-dnslib'
+         'python-aiohttp' 'python-psycopg2' 'python-aiodns')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/thewhiteh4t/FinalRecon.git")
 sha512sums=('SKIP')
@@ -19,7 +20,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

@@ -3,13 +3,13 @@
 
 pkgname=wmi-forensics
 pkgver=11.0ab08dc
-pkgrel=9
+pkgrel=10
 pkgdesc='Scripts used to find evidence in WMI repositories.'
 groups=('blackarch' 'blackarch-forensic')
 arch=('any')
 url='https://github.com/davidpany/WMI_Forensics'
 license=('custom:unknown')
-depends=('python' 'python-argparse')
+depends=('python')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/davidpany/WMI_Forensics.git")
 sha512sums=('SKIP')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

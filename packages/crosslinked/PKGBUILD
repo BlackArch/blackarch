@@ -2,16 +2,16 @@
 # See COPYING for license details.
 
 pkgname=crosslinked
-pkgver=49.2ae8d7b
-pkgrel=5
-epoch=1
+pkgver=v0.3.0.r23.g2ae8d7b
+pkgrel=1
+epoch=2
 pkgdesc='LinkedIn enumeration tool to extract valid employee names from an organization through search engine scraping.'
 groups=('blackarch' 'blackarch-social' 'blackarch-recon')
 arch=('any')
 url='https://github.com/m8r0wn/crosslinked'
-license=('GPL3')
-depends=('python' 'python-argparse' 'python-beautifulsoup4' 'python-urllib3'
-         'python-requests' 'python-unidecode' 'python-taser')
+license=('GPL-3.0-or-later')
+depends=('python' 'python-beautifulsoup4' 'python-urllib3' 'python-requests'
+         'python-unidecode' 'python-taser')
 makedepends=('git')
 source=("git+https://github.com/m8r0wn/$pkgname.git")
 sha512sums=('SKIP')
@@ -19,7 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

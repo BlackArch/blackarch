@@ -3,13 +3,13 @@
 
 pkgname=githubcloner
 pkgver=36.20203e7
-pkgrel=2
+pkgrel=3
 pkgdesc='A script that clones Github repositories of users and organizations automatically.'
 groups=('blackarch' 'blackarch-misc' 'blackarch-automation')
 arch=('any')
 url='https://github.com/mazen160/GithubCloner'
 license=('MIT')
-depends=('python' 'python-argparse' 'python-requests' 'python-gitpython')
+depends=('python' 'python-requests' 'python-gitpython')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/mazen160/GithubCloner.git")
 sha512sums=('SKIP')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

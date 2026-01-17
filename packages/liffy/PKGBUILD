@@ -2,17 +2,16 @@
 # See COPYING for license details.
 
 pkgname=liffy
-pkgver=13.43a9298
-pkgrel=9
+pkgver=46.b990d6a
+pkgrel=2
 epoch=1
 groups=('blackarch' 'blackarch-webapp' 'blackarch-exploitation'
         'blackarch-fuzzer')
 pkgdesc='A Local File Inclusion Exploitation tool.'
 arch=('any')
 url='https://github.com/mzfr/liffy/'
-license=('GPL')
-depends=('python' 'python-requests' 'python-daemon' 'python-pyfiglet'
-         'python-argparse')
+license=('GPL-1.0-or-later')
+depends=('python' 'python-requests' 'python-daemon' 'python-pyfiglet')
 makedepends=('git')
 source=("git+https://github.com/mzfr/$pkgname.git")
 sha512sums=('SKIP')
@@ -20,7 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

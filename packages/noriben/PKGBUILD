@@ -2,14 +2,15 @@
 # See COPYING for license details.
 
 pkgname=noriben
-pkgver=198.35327a6
-pkgrel=2
+pkgver=2.0.r5.g35327a6
+pkgrel=1
+epoch=1
 pkgdesc='Portable, Simple, Malware Analysis Sandbox.'
 groups=('blackarch' 'blackarch-malware')
 arch=('any')
 url='https://github.com/Rurik/Noriben'
 license=('custom:unknown')
-depends=('python' 'python-argparse' 'python-magic')
+depends=('python' 'python-magic')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/Rurik/Noriben.git")
 sha512sums=('SKIP')
@@ -17,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

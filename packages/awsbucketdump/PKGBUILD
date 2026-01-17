@@ -3,13 +3,13 @@
 
 pkgname=awsbucketdump
 pkgver=82.4684670
-pkgrel=7
+pkgrel=8
 pkgdesc='A tool to quickly enumerate AWS S3 buckets to look for loot.'
 groups=('blackarch' 'blackarch-automation' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/jordanpotti/AWSBucketDump'
 license=('MIT')
-depends=('python-xmltodict' 'python-requests' 'python-argparse' 'python')
+depends=('python' 'python-xmltodict' 'python-requests')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/jordanpotti/AWSBucketDump.git")
 sha512sums=('SKIP')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

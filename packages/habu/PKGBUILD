@@ -2,17 +2,17 @@
 # See COPYING for license details.
 
 pkgname=habu
-pkgver=366.6318b62
-pkgrel=2
+pkgver=0.1.6.r171.g9868861
+pkgrel=1
+epoch=1
 pkgdesc='Python Network Hacking Toolkit.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-spoof' 'blackarch-dos'
         'blackarch-cracker' 'blackarch-dos')
 arch=('any')
 url='https://github.com/portantier/habu'
 license=('custom:unknown')
-depends=('python' 'python-requests' 'python-argparse' 'python-requests-cache'
-         'python-click' 'python-delegator.py' 'python-beautifulsoup4'
-         'python-scapy')
+depends=('python' 'python-requests' 'python-requests-cache' 'python-click'
+         'python-delegator.py' 'python-beautifulsoup4' 'python-scapy')
 makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/portantier/$pkgname.git")
 sha512sums=('SKIP')
@@ -20,7 +20,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

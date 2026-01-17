@@ -3,15 +3,15 @@
 
 pkgname=wpbullet
 pkgver=34.6185112
-pkgrel=9
+pkgrel=10
 pkgdesc='A static code analysis for WordPress (and PHP).'
 groups=('blackarch' 'blackarch-code-audit' 'blackarch-webapp')
 arch=('any')
 url='https://github.com/webarx-security/wpbullet'
-license=('GPL2')
+license=('GPL-2.0-or-later')
 depends=('python' 'python-certifi' 'python-chardet' 'python-colorama'
-         'python-idna' 'python-requests' 'python-tabulate' 'python-argparse'
-         'python-terminaltables' 'python-urllib3')
+         'python-idna' 'python-requests' 'python-tabulate' 'python-urllib3'
+         'python-terminaltables')
 makedepends=('git')
 source=("git+https://github.com/webarx-security/$pkgname.git")
 sha512sums=('SKIP')
@@ -19,7 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

@@ -2,14 +2,15 @@
 # See COPYING for license details.
 
 pkgname=pwdlyser
-pkgver=11.b84c635
-pkgrel=8
+pkgver=v1.0.0.r8.gb84c635
+pkgrel=1
+epoch=1
 pkgdesc='Python-based CLI Password Analyser (Reporting Tool).'
 groups=('blackarch' 'blackarch-crypto' 'blackarch-misc')
 arch=('any')
 url='https://github.com/ins1gn1a/pwdlyser'
 license=('MIT')
-depends=('python' 'python-argparse')
+depends=('python')
 makedepends=('git')
 source=("git+https://github.com/ins1gn1a/$pkgname.git")
 sha512sums=('SKIP')
@@ -17,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

@@ -3,13 +3,13 @@
 
 pkgname=seth
 pkgver=106.6e869cd
-pkgrel=2
+pkgrel=3
 pkgdesc='Perform a MitM attack and extract clear text credentials from RDP connections.'
 groups=('blackarch' 'blackarch-networking' 'blackarch-sniffer')
 arch=('any')
 url='https://github.com/SySS-Research/Seth'
 license=('MIT')
-depends=('python' 'python-argparse' 'dsniff' 'tcpdump' 'openssl')
+depends=('python' 'dsniff' 'tcpdump' 'openssl')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/SySS-Research/Seth.git")
 sha512sums=('SKIP')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

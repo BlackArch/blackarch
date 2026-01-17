@@ -2,18 +2,18 @@
 # See COPYING for license details.
 
 pkgname=voltron
-pkgver=629.be9e54b
-pkgrel=2
+pkgver=v0.1.8.r0.gbe9e54b
+pkgrel=1
+epoch=1
 pkgdesc="UI for GDB, LLDB and Vivisect's VDB."
 groups=('blackarch' 'blackarch-debugger')
 arch=('any')
 url='https://github.com/snare/voltron'
 license=('MIT')
 depends=('python' 'python-pygments' 'python-blessed' 'python-flask'
-         'python-flask-restful' 'python-requests-unixsocket' 'python-argparse'
-         'python-scruffy' 'python-pysigset' 'python-pexpect' 'python-requests'
-         'python-werkzeug' 'python-six' 'python-mock' 'python-nose'
-         'python-scruffington')
+         'python-flask-restful' 'python-requests-unixsocket' 'python-scruffy'
+         'python-pysigset' 'python-pexpect' 'python-requests' 'python-werkzeug'
+         'python-six' 'python-mock' 'python-nose' 'python-scruffington')
 makedepends=('git' 'python-setuptools')
 optdepends=('gdb: GDB' 'lldb: LLDB' 'vivisect: VDB')
 source=("git+https://github.com/snare/$pkgname.git"
@@ -24,7 +24,12 @@ sha512sums=('SKIP'
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

@@ -3,14 +3,13 @@
 
 pkgname=altdns
 pkgver=78.6728272
-pkgrel=2
+pkgrel=3
 pkgdesc='Generates permutations, alterations and mutations of subdomains and then resolves them.'
 groups=('blackarch' 'blackarch-recon')
 arch=('any')
 url='https://github.com/infosec-au/altdns'
-license=('Apache')
-depends=('python' 'python-dnspython' 'python-tldextract' 'python-termcolor'
-         'python-argparse')
+license=('Apache-2.0')
+depends=('python' 'python-dnspython' 'python-tldextract' 'python-termcolor')
 makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/infosec-au/$pkgname.git")
 sha512sums=('SKIP')
@@ -18,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

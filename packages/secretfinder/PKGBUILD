@@ -3,15 +3,15 @@
 
 pkgname=secretfinder
 pkgver=15.d06119d
-pkgrel=5
+pkgrel=6
 epoch=1
 pkgdesc='A python script to find sensitive data (apikeys, accesstoken, jwt,..) in javascript files.'
 arch=('any')
 groups=('blackarch' 'blackarch-webapp' 'blackarch-recon')
 url='https://github.com/m4ll0k/SecretFinder'
-license=('GPL3')
-depends=('python' 'python-requests' 'python-requests-file' 'python-argparse'
-         'python-jsbeautifier' 'python-lxml')
+license=('GPL-3.0-or-later')
+depends=('python' 'python-requests' 'python-requests-file' 'python-jsbeautifier'
+         'python-lxml')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/m4ll0k/SecretFinder.git")
 sha512sums=('SKIP')
@@ -19,7 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

@@ -3,14 +3,14 @@
 
 pkgname=shellerator
 pkgver=34.c325e3d
-pkgrel=5
+pkgrel=6
 pkgdesc='Simple command-line tool aimed to help pentesters quickly generate one-liner reverse/bind shells in multiple languages.'
 arch=('any')
 groups=('blackarch' 'blackarch-automation')
 url='https://github.com/ShutdownRepo/shellerator'
-license=('GPL3')
-depends=('python' 'python-psutil' 'python-console-menu' 'python-argparse'
-         'python-colorama' 'python-simple-term-menu')
+license=('GPL-3.0-or-later')
+depends=('python' 'python-psutil' 'python-console-menu' 'python-colorama'
+         'python-simple-term-menu')
 makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/ShutdownRepo/$pkgname.git")
 sha512sums=('SKIP')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

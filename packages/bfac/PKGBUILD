@@ -2,14 +2,15 @@
 # See COPYING for license details.
 
 pkgname=bfac
-pkgver=53.18fb0b5
-pkgrel=8
+pkgver=v1.0.r12.g18fb0b5
+pkgrel=1
+epoch=1
 pkgdesc="An automated tool that checks for backup artifacts that may disclose the web-application's source code."
 groups=('blackarch' 'blackarch-recon' 'blackarch-webapp')
 arch=('any')
 url='https://github.com/mazen160/bfac'
-license=('GPL3')
-depends=('python' 'python-colorama' 'python-requests' 'python-argparse')
+license=('GPL-3.0-or-later')
+depends=('python' 'python-colorama' 'python-requests')
 makedepends=('git')
 source=("git+https://github.com/mazen160/$pkgname.git")
 sha512sums=('SKIP')
@@ -17,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

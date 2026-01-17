@@ -3,13 +3,13 @@
 
 pkgname=blindy
 pkgver=12.59de8f2
-pkgrel=10
+pkgrel=11
 pkgdesc='Simple script to automate brutforcing blind sql injection vulnerabilities.'
 groups=('blackarch' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/missDronio/blindy'
 license=('custom:unknown')
-depends=('python' 'python-argparse' 'python-requests')
+depends=('python' 'python-requests')
 makedepends=('git')
 source=("git+https://github.com/missDronio/$pkgname.git")
 sha512sums=('SKIP')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

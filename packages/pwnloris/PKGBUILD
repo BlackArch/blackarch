@@ -3,13 +3,13 @@
 
 pkgname=pwnloris
 pkgver=14.7ad1486
-pkgrel=2
+pkgrel=3
 groups=('blackarch' 'blackarch-dos')
 pkgdesc='An improved slowloris DOS tool which keeps attacking until the server starts getting exhausted.'
 arch=('any')
 url='https://github.com/h0ussni/pwnloris'
-license=('GPL3')
-depends=('python' 'python-argparse' 'python-pysocks')
+license=('GPL-3.0-or-later')
+depends=('python' 'python-pysocks')
 makedepends=('git')
 source=("git+https://github.com/h0ussni/$pkgname.git")
 sha512sums=('SKIP')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

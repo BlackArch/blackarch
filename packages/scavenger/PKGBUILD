@@ -3,14 +3,14 @@
 
 pkgname=scavenger
 pkgver=103.75907e8
-pkgrel=10
+pkgrel=11
 pkgdesc='Crawler (Bot) searching for credential leaks on different paste sites.'
 arch=('any')
 groups=('blackarch' 'blackarch-recon' 'blackarch-social')
 url='https://github.com/rndinfosecguy/Scavenger'
-license=('Apache')
-depends=('python' 'python-tweepy' 'python-argparse' 'python-httplib2'
-         'python-requests' 'python-beautifulsoup4' 'tmux' 'python-colorama')
+license=('Apache-2.0')
+depends=('python' 'python-tweepy' 'python-httplib2' 'python-requests'
+         'python-beautifulsoup4' 'tmux' 'python-colorama')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/rndinfosecguy/Scavenger.git")
 sha512sums=('SKIP')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

@@ -3,13 +3,13 @@
 
 pkgname=rdpassspray
 pkgver=33.c1ba58e
-pkgrel=6
+pkgrel=7
 pkgdesc='Python3 tool to perform password spraying using RDP.'
 arch=('any')
 groups=('blackarch' 'blackarch-cracker')
 url='https://github.com/xFreed0m/RDPassSpray'
-license=('GPL3')
-depends=('python' 'python-argparse' 'python-colorlog' 'freerdp')
+license=('GPL-3.0-or-later')
+depends=('python' 'python-colorlog' 'freerdp')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/xFreed0m/RDPassSpray.git")
 sha512sums=('SKIP')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

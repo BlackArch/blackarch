@@ -4,13 +4,13 @@
 pkgname=ntlm-challenger
 _pkgname=ntlm_challenger
 pkgver=8.bd61ef6
-pkgrel=7
+pkgrel=8
 pkgdesc='Parse NTLM over HTTP challenge messages.'
 arch=('any')
 groups=('blackarch' 'blackarch-scanner')
 url='https://github.com/b17zr/ntlm_challenger'
 license=('MIT')
-depends=('python' 'python-argparse' 'python-requests' 'impacket')
+depends=('python' 'python-requests' 'impacket')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/b17zr/$_pkgname.git")
 sha512sums=('SKIP')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

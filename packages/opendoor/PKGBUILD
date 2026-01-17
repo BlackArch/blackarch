@@ -2,15 +2,16 @@
 # See COPYING for license details.
 
 pkgname=opendoor
-pkgver=483.5f8a253
-pkgrel=6
+pkgver=v.4.2.0.r4.g5f8a253
+pkgrel=1
+epoch=1
 pkgdesc='OWASP WEB Directory Scanner.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/stanislav-web/OpenDoor'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=('python' 'python-urllib3' 'python-json2html' 'python-tabulate'
-         'python-argparse' 'python-ddt' 'python-mock')
+         'python-ddt' 'python-mock')
 makedepends=('git' 'python-setuptools')
 source=("$pkgname::git+https://github.com/stanislav-web/OpenDoor.git")
 sha512sums=('SKIP')
@@ -18,7 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

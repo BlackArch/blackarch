@@ -3,13 +3,13 @@
 
 pkgname=linkfinder
 pkgver=168.1debac5
-pkgrel=6
+pkgrel=7
 pkgdesc='Discovers endpoint and their parameters in JavaScript files.'
 arch=('any')
 groups=('blackarch' 'blackarch-webapp' 'blackarch-recon')
 url='https://github.com/GerbenJavado/LinkFinder'
 license=('custom:unknown')
-depends=('python' 'python-argparse' 'python-jsbeautifier')
+depends=('python' 'python-jsbeautifier')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/GerbenJavado/LinkFinder.git")
 sha512sums=('SKIP')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

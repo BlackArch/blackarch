@@ -3,14 +3,13 @@
 
 pkgname=cr3dov3r
 pkgver=48.49bbdbe
-pkgrel=2
+pkgrel=3
 pkgdesc='Search for public leaks for email addresses + check creds against 16 websites.'
 groups=('blackarch' 'blackarch-recon' 'blackarch-social')
 arch=('any')
 url='https://github.com/D4Vinci/Cr3dOv3r'
 license=('MIT')
-depends=('python' 'python-argparse' 'python-mechanicalsoup' 'python-pyopenssl'
-         'python-requests')
+depends=('python' 'python-mechanicalsoup' 'python-pyopenssl' 'python-requests')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/D4Vinci/Cr3dOv3r.git")
 sha512sums=('SKIP')
@@ -18,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

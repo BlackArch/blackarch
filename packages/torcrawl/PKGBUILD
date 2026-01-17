@@ -2,15 +2,16 @@
 # See COPYING for license details.
 
 pkgname=torcrawl
-pkgver=159.6b2fde4
-pkgrel=2
+pkgver=v1.35.r0.g0d6a29b
+pkgrel=1
+epoch=1
 pkgdesc='Crawl and extract (regular or onion) webpages through TOR network.'
 arch=('any')
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
 url='https://github.com/MikeMeliz/TorCrawl.py'
-license=('GPL3')
-depends=('python' 'python-argparse' 'python-beautifulsoup4' 'python-requests'
-         'python-socks' 'python-urllib3' 'python-yara-python-dex' 'tor')
+license=('GPL-3.0-or-later')
+depends=('python' 'python-beautifulsoup4' 'python-requests'  'python-socks'
+         'python-urllib3' 'python-yara-python-dex' 'tor')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/MikeMeliz/TorCrawl.py.git")
 sha512sums=('SKIP')
@@ -18,7 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

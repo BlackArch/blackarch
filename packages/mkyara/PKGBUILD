@@ -4,13 +4,13 @@
 pkgname=mkyara
 _pkgname=mkYARA
 pkgver=3.8147f91
-pkgrel=10
+pkgrel=11
 pkgdesc='Tool to generate YARA rules based on binary code.'
 groups=('blackarch' 'blackarch-misc')
 arch=('any')
 url='https://github.com/fox-it/mkYARA'
-license=('GPL3')
-depends=('python' 'python-capstone' 'python-yara-python-dex' 'python-argparse')
+license=('GPL-3.0-or-later')
+depends=('python' 'python-capstone' 'python-yara-python-dex')
 makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/fox-it/$_pkgname.git")
 sha512sums=('SKIP')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $_pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

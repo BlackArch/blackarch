@@ -3,16 +3,16 @@
 
 pkgname=pepe
 pkgver=13.b81889b
-pkgrel=9
+pkgrel=10
 pkgdesc='Collect information about email addresses from Pastebin.'
 groups=('blackarch' 'blackarch-social' 'blackarch-recon')
 arch=('any')
 url='https://github.com/woj-ciech/pepe'
 license=('custom:unknown')
-depends=('python' 'python-colorama' 'python-urllib3' 'python-argparse'
-         'python-elasticsearch' 'python-google' 'python-requests'
-         'python-validate-email' 'python-python-pushsafer' 'python-pyhibp'
-         'python-fullcontactpy' 'python-piplapis-python')
+depends=('python' 'python-colorama' 'python-urllib3' 'python-elasticsearch'
+         'python-google' 'python-requests' 'python-validate-email'
+         'python-python-pushsafer' 'python-pyhibp' 'python-fullcontactpy'
+         'python-piplapis-python')
 makedepends=('git')
 source=("git+https://github.com/woj-ciech/$pkgname.git")
 sha512sums=('SKIP')
@@ -20,7 +20,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

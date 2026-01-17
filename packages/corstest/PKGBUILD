@@ -3,13 +3,13 @@
 
 pkgname=corstest
 pkgver=10.beffd0b
-pkgrel=10
+pkgrel=11
 pkgdesc='A simple CORS misconfigurations checker.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
 arch=('any')
-license=('GPL2')
+license=('GPL-2.0-or-later')
 url='https://github.com/RUB-NDS/CORStest'
-depends=('python' 'python-argparse')
+depends=('python')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/RUB-NDS/CORStest")
 sha512sums=('SKIP')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

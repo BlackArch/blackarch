@@ -3,14 +3,14 @@
 
 pkgname=one-lin3r
 pkgver=66.711a040
-pkgrel=2
+pkgrel=3
 pkgdesc='Gives you one-liners that aids in penetration testing and more.'
 arch=('any')
 groups=('blackarch' 'blackarch-misc')
 url='https://github.com/D4Vinci/One-Lin3r'
-license=('GPL')
-depends=('python' 'python-argparse' 'python-terminaltables'
-         'python-pyperclip' 'python-prompt_toolkit')
+license=('GPL-1.0-or-later')
+depends=('python' 'python-terminaltables' 'python-pyperclip'
+         'python-prompt_toolkit')
 makedepends=('git' 'python-setuptools')
 source=("$pkgname::git+https://github.com/D4Vinci/One-Lin3r.git")
 sha512sums=('SKIP')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

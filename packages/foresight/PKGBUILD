@@ -2,14 +2,15 @@
 # See COPYING for license details.
 
 pkgname=foresight
-pkgver=57.6f48984
-pkgrel=11
+pkgver=0.1.r12.g6f48984
+pkgrel=1
+epoch=1
 pkgdesc='A tool for predicting the output of random number generators.'
 groups=('blackarch' 'blackarch-crypto')
 arch=('any')
 url='https://github.com/ALSchwalm/foresight'
 license=('MIT')
-depends=('python' 'python-argparse')
+depends=('python' 'python-nose')
 makedepends=('git' 'python-setuptools')
 source=("git+https://github.com/ALSchwalm/$pkgname.git")
 sha512sums=('SKIP')
@@ -17,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

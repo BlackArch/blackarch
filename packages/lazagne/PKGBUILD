@@ -2,15 +2,16 @@
 # See COPYING for license details.
 
 pkgname=lazagne
-pkgver=889.858ff6f
-pkgrel=2
+pkgver=v2.4.7.r6.g858ff6f
+pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-forensic' 'blackarch-social')
 arch=('any')
 pkgdesc='An open source application used to retrieve lots of passwords stored on a local computer.'
 url='https://github.com/AlessandroZ/LaZagne'
-license=('LGPL3')
-depends=('python' 'python-argparse' 'python-psutil' 'python-pycryptodome'
-         'python-pyasn1' 'python-pydes' 'python-pbkdf2' 'python-libkeepass')
+license=('LGPL-3.0-or-later')
+depends=('python' 'python-psutil' 'python-pycryptodome' 'python-pyasn1'
+         'python-pydes' 'python-pbkdf2' 'python-libkeepass')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/AlessandroZ/LaZagne.git")
 sha512sums=('SKIP')
@@ -18,7 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

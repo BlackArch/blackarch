@@ -2,14 +2,15 @@
 # See COPYING for license details.
 
 pkgname=limeaide
-pkgver=305.ce3c9b7
-pkgrel=9
+pkgver=v2.0.0.r3.gce3c9b7
+pkgrel=1
+epoch=1
 pkgdesc='Remotely dump RAM of a Linux client and create a volatility profile for later analysis on your local host.'
 groups=('blackarch' 'blackarch-forensic')
 arch=('any')
 url='https://github.com/kd8bny/LiMEaide'
-license=('GPL3')
-depends=('python' 'python-paramiko' 'python-argparse' 'python-termcolor')
+license=('GPL-3.0-or-later')
+depends=('python' 'python-paramiko' 'python-termcolor')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/kd8bny/LiMEaide.git")
 sha512sums=('SKIP')
@@ -17,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

@@ -2,16 +2,18 @@
 # See COPYING for license details.
 
 pkgname=pymeta
-pkgver=13.fa74e64
-pkgrel=9
+pkgver=1.0.4.r25.gdb8a80b
+pkgrel=1
+epoch=1
 pkgdesc='Auto Scanning to SSL Vulnerability.'
 groups=('blackarch' 'blackarch-recon')
 arch=('any')
 url='https://github.com/m8r0wn/pymeta'
-license=('GPL3')
-depends=('python' 'python-requests' 'python-beautifulsoup4' 'python-argparse'
-         'python-urllib3')
-makedepends=('git')
+license=('GPL-3.0-or-later')
+depends=('python' 'python-requests' 'python-beautifulsoup4' 'python-urllib3'
+         'perl-image-exiftool')
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
 source=("git+https://github.com/m8r0wn/$pkgname.git"
         "$pkgname.py.patch")
 sha512sums=('SKIP'
@@ -20,32 +22,25 @@ sha512sums=('SKIP'
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
-prepare() {
-  patch -p1 < "$pkgname.py.patch"
+build() {
+  cd $pkgname
+
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  python -m installer --destdir="$pkgdir" dist/*.whl
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm README.md LICENSE
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-cd /usr/share/$pkgname
-exec python $pkgname.py "\$@"
-EOF
-
-  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
