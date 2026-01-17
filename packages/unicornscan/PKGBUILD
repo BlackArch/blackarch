@@ -2,44 +2,51 @@
 # See COPYING for license details.
 
 pkgname=unicornscan
-pkgver=v0.4.10.r5.gf110f0d
-pkgrel=2
+pkgver=0.4.43
+pkgrel=1
 epoch=1
-pkgdesc='Asynchronous, stateless tool for scalable, high-speed network reconnaissance and security auditing.'
+pkgdesc='Asynchronous, stateless TCP/UDP scanner for scalable, high-speed network reconnaissance. Includes Alicorn web UI for result visualization.'
 arch=('x86_64' 'aarch64')
-groups=('blackarch' 'blackarch-scanner')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
 url='https://github.com/robertelee78/unicornscan'
 license=('GPL-2.0-or-later')
-depends=('libpcap' 'postgresql-libs' 'libdnet' 'libltdl' 'libmaxminddb')
-makedepends=('git' 'flex' 'bison')
-source=("git+https://github.com/robertelee78/$pkgname.git")
+depends=('libpcap' 'postgresql-libs' 'libdnet' 'libltdl' 'libmaxminddb' 'libcap')
+makedepends=('git' 'postgresql')
+optdepends=('docker: Alicorn web UI container runtime'
+            'docker-compose: Alicorn web UI orchestration'
+            'nodejs: Development mode and setup wizard'
+            'geoip-database: IP geolocation lookups'
+            'geoip-database-extra: Extended IP geolocation data')
+source=("git+https://github.com/robertelee78/$pkgname.git#tag=v$pkgver")
 sha512sums=('SKIP')
-
-pkgver() {
-  cd $pkgname
-
-  ( set -o pipefail
-    git describe --long --tags --abbrev=7 2>/dev/null |
-      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
-    printf "%s.%s" "$(git rev-list --count HEAD)" \
-      "$(git rev-parse --short=7 HEAD)"
-  )
-}
+install=unicornscan.install
 
 prepare() {
   cd $pkgname
 
-  if [[ "$CARCH" == "i686" || "$CARCH" == "x86_64" ]]; then
-    ./configure CFLAGS="$CFLAGS -D_GNU_SOURCE" --prefix=/usr \
-      --sysconfdir=/etc --localstatedir=/var --with-pgsql
-  else
-    ./configure CFLAGS="$CFLAGS -D_GNU_SOURCE" --prefix=/usr \
-      --sysconfdir=/etc --localstatedir=/var --with-pgsql --build=arm
-  fi
+  # Generate build system from autotools
+  autoreconf -fi
 }
 
 build() {
   cd $pkgname
+
+  # Configure with PostgreSQL support
+  # -Wno-error required for legacy C code with modern GCC
+  if [[ "$CARCH" == "aarch64" ]]; then
+    ./configure CFLAGS="$CFLAGS -D_GNU_SOURCE -Wno-error" \
+      --prefix=/usr \
+      --sysconfdir=/etc \
+      --localstatedir=/var/lib \
+      --with-pgsql \
+      --build=aarch64-unknown-linux-gnu
+  else
+    ./configure CFLAGS="$CFLAGS -D_GNU_SOURCE -Wno-error" \
+      --prefix=/usr \
+      --sysconfdir=/etc \
+      --localstatedir=/var/lib \
+      --with-pgsql
+  fi
 
   make
 }
@@ -48,5 +55,73 @@ package() {
   cd $pkgname
 
   make DESTDIR="$pkgdir" install
-}
 
+  # Create runtime directory (FHS-compliant path)
+  install -dm755 "$pkgdir/var/lib/unicornscan"
+
+  # =========================================================================
+  # Install Alicorn Web UI to FHS-compliant paths
+  # Static files: /usr/share/unicornscan/alicorn
+  # Runtime data: /var/lib/unicornscan/alicorn (created by unicornscan-alicorn on first run)
+  # =========================================================================
+  install -dm755 "$pkgdir/usr/share/unicornscan/alicorn"
+  install -dm755 "$pkgdir/usr/share/unicornscan/alicorn/src"
+  install -dm755 "$pkgdir/usr/share/unicornscan/alicorn/public"
+  install -dm755 "$pkgdir/usr/share/unicornscan/alicorn/cli"
+  install -dm755 "$pkgdir/usr/share/unicornscan/alicorn/sql"
+  install -dm755 "$pkgdir/usr/share/unicornscan/alicorn/geoip-api"
+  install -dm755 "$pkgdir/usr/share/unicornscan/alicorn/postgrest"
+  install -dm755 "$pkgdir/var/lib/unicornscan/alicorn"
+
+  # Docker configuration
+  install -Dm644 alicorn/docker-compose.standalone.yml "$pkgdir/usr/share/unicornscan/alicorn/docker-compose.yml"
+  install -Dm644 alicorn/Dockerfile "$pkgdir/usr/share/unicornscan/alicorn/Dockerfile"
+  install -Dm644 alicorn/nginx.conf "$pkgdir/usr/share/unicornscan/alicorn/nginx.conf"
+
+  # PostgREST
+  install -Dm644 alicorn/postgrest/Dockerfile "$pkgdir/usr/share/unicornscan/alicorn/postgrest/Dockerfile"
+
+  # Build configuration
+  install -Dm644 alicorn/package.json "$pkgdir/usr/share/unicornscan/alicorn/package.json"
+  install -Dm644 alicorn/package-lock.json "$pkgdir/usr/share/unicornscan/alicorn/package-lock.json"
+  install -Dm644 alicorn/vite.config.ts "$pkgdir/usr/share/unicornscan/alicorn/vite.config.ts"
+  install -Dm644 alicorn/tsconfig.json "$pkgdir/usr/share/unicornscan/alicorn/tsconfig.json"
+  install -Dm644 alicorn/tsconfig.app.json "$pkgdir/usr/share/unicornscan/alicorn/tsconfig.app.json"
+  install -Dm644 alicorn/tsconfig.node.json "$pkgdir/usr/share/unicornscan/alicorn/tsconfig.node.json"
+  install -Dm644 alicorn/index.html "$pkgdir/usr/share/unicornscan/alicorn/index.html"
+
+  # Optional config files (may not exist in all versions)
+  [[ -f alicorn/eslint.config.js ]] && install -Dm644 alicorn/eslint.config.js "$pkgdir/usr/share/unicornscan/alicorn/eslint.config.js"
+  [[ -f alicorn/vitest.config.ts ]] && install -Dm644 alicorn/vitest.config.ts "$pkgdir/usr/share/unicornscan/alicorn/vitest.config.ts"
+
+  # Source code
+  cp -r alicorn/src/* "$pkgdir/usr/share/unicornscan/alicorn/src/"
+  cp -r alicorn/public/* "$pkgdir/usr/share/unicornscan/alicorn/public/"
+
+  # CLI / Setup wizard
+  install -Dm644 alicorn/cli/setup.ts "$pkgdir/usr/share/unicornscan/alicorn/cli/setup.ts"
+
+  # GeoIP API service
+  install -Dm644 alicorn/geoip-api/Dockerfile "$pkgdir/usr/share/unicornscan/alicorn/geoip-api/Dockerfile"
+  install -Dm644 alicorn/geoip-api/package.json "$pkgdir/usr/share/unicornscan/alicorn/geoip-api/package.json"
+  install -Dm644 alicorn/geoip-api/server.js "$pkgdir/usr/share/unicornscan/alicorn/geoip-api/server.js"
+
+  # SQL schema
+  install -Dm644 src/output_modules/database/sql/pgsql_schema.sql "$pkgdir/usr/share/unicornscan/alicorn/sql/pgsql_schema.sql"
+
+  # =========================================================================
+  # Install management scripts
+  # =========================================================================
+  install -Dm755 debian/unicornscan-alicorn "$pkgdir/usr/bin/unicornscan-alicorn"
+  install -Dm755 scripts/unicornscan-geoip-update "$pkgdir/usr/bin/unicornscan-geoip-update"
+
+  # =========================================================================
+  # Documentation
+  # =========================================================================
+  install -Dm644 README "$pkgdir/usr/share/doc/$pkgname/README"
+  install -Dm644 docs/MANUAL.txt "$pkgdir/usr/share/doc/$pkgname/MANUAL.txt" 2>/dev/null || true
+  install -Dm644 HISTORY.md "$pkgdir/usr/share/doc/$pkgname/HISTORY.md" 2>/dev/null || true
+
+  # License
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
