@@ -3,13 +3,13 @@
 
 pkgname=httpscreenshot
 pkgver=70.f081c69
-pkgrel=5
+pkgrel=6
 pkgdesc='A tool for grabbing screenshots and HTML of large numbers of websites.'
-groups=('blackarch' 'blackarch-misc')
 arch=('any')
+groups=('blackarch' 'blackarch-misc')
 url='https://github.com/breenmachine/httpscreenshot'
 license=('custom:unknown')
-depends=('python' 'python-selenium' 'python-pillow6' 'python-python-libnmap'
+depends=('python' 'python-selenium' 'python-pillow' 'python-python-libnmap'
          'python-m2crypto' 'python-requests' 'python-beautifulsoup4'
          'python-pyvirtualdisplay' 'python-lxml' 'python-webdriver-manager')
 makedepends=('git')
@@ -19,7 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
