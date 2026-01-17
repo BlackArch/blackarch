@@ -2,15 +2,16 @@
 # See COPYING for license details.
 
 pkgname=pcapxray
-pkgver=274.1721645
-pkgrel=7
+pkgver=3_0.r5.g1721645
+pkgrel=1
+epoch=1
 pkgdesc='A Network Forensics Tool - To visualize a Packet Capture offline as a Network Diagram including device identification, highlight important communication and file extraction.'
-groups=('blackarch' 'blackarch-forensic' 'blackarch-networking')
 arch=('any')
+groups=('blackarch' 'blackarch-forensic' 'blackarch-networking')
 url='https://github.com/Srinivas11789/PcapXray'
 license=('MIT')
 depends=('python' 'python-networkx' 'python-netaddr' 'python-ipwhois' 'tk'
-         'python-pillow6' 'python-stem' 'python-matplotlib' 'python-pyvis'
+         'python-pillow' 'python-stem' 'python-matplotlib' 'python-pyvis'
          'python-graphviz' 'python-pyshark' 'python-cryptography' 'scapy')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/Srinivas11789/PcapXray.git")
@@ -19,7 +20,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
