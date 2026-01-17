@@ -3,13 +3,13 @@
 
 pkgname=androwarn
 pkgver=135.626c02d
-pkgrel=10
+pkgrel=11
 pkgdesc='Yet another static code analyzer for malicious Android applications.'
 groups=('blackarch' 'blackarch-mobile' 'blackarch-code-audit')
 arch=('any')
 url='https://github.com/maaaaz/androwarn'
-license=('GPL3')
-depends=('python' 'python-lxml' 'python-future' 'python-argparse' 'python-jinja'
+license=('GPL-3.0-or-later')
+depends=('python' 'python-lxml' 'python-future' 'python-jinja'
          'python-play-scraper' 'androguard')
 makedepends=('git')
 source=("git+https://github.com/maaaaz/$pkgname.git")
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
