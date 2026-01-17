@@ -3,14 +3,14 @@
 
 pkgname=ipba2
 pkgver=95.c03bd85
-pkgrel=4
+pkgrel=5
 epoch=1
-groups=('blackarch' 'blackarch-forensic')
 pkgdesc='IOS Backup Analyzer.'
-url='http://www.ipbackupanalyzer.com/'
 arch=('any')
-license=('GPL2')
-depends=('python2' 'python2-pillow6' 'python2-pyside' 'python2-six' 'qt4')
+groups=('blackarch' 'blackarch-forensic')
+url='http://www.ipbackupanalyzer.com/'
+license=('GPL-2.0-or-later')
+depends=('python2' 'python2-pillow' 'python2-pyside' 'python2-six' 'qt4')
 makedepends=('git')
 #source=("http://www.ipbackupanalyzer.com/downloads/python-pre-assembled-files/python-pre-assembled-files-$pkgver/ipba2-python-build-$pkgver-zip")
 source=("$pkgname::git+https://github.com/PicciMario/iPhone-Backup-Analyzer-2.git")
@@ -19,7 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

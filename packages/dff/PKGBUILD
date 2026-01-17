@@ -3,15 +3,15 @@
 
 pkgname=dff
 pkgver=183.d40d46b
-pkgrel=6
+pkgrel=7
 pkgdesc='A Forensics Framework coming with command line and graphical interfaces.'
 arch=('x86_64' 'aarch64')
-url='https://github.com/arxsys/dff'
-license=('GPL')
-provides=('dff')
 groups=('blackarch' 'blackarch-forensic')
+url='https://github.com/arxsys/dff'
+license=('GPL-2.0-or-later')
+provides=('dff')
 depends=('python2' 'qt4' 'python-pyqt4' 'python2-pyqt4' 'python2-magic'
-         'python2-apsw' 'python2-pillow6' 'poppler-qt4' 'python2-poppler-qt4'
+         'python2-apsw' 'python2-pillow' 'poppler-qt4' 'python2-poppler-qt4'
          'ffmpeg' 'libbfio' 'libbde' 'libewf' 'libpff' 'libvshadow')
 makedepends=('autoconf' 'automake' 'libtool' 'gettext' 'pkg-config' 'bison'
              'flex' 'swig' 'tre' 'pkg-config' 'libbfio' 'libbde' 'libewf'
@@ -28,16 +28,19 @@ source=("git+https://github.com/arxsys/$pkgname.git"
 sha512sums=('SKIP'
             '25757b4fad24da09393d752f41c752a7ab4982c0af77431ead0885ddb9a7fd775dcd06934c15fc780fd2c163b4aea65d96d1ee6a68f96bc328b1adc2df6d2d89')
 
-_gitname="dff"
-
 pkgver() {
-  cd "$_gitname"
+  cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
-  cd "$_gitname"
+  cd $pkgname
 
   # patching to python2
   sed -i 's/\/python/\/python2/g' 'dff.py'
@@ -53,7 +56,7 @@ prepare() {
 }
 
 build() {
-  cd "$_gitname"
+  cd $pkgname
 
   # create build folder
   rm -rf build
@@ -72,7 +75,7 @@ build() {
 }
 
 package() {
-  cd "$_gitname/build"
+  cd "$pkgname/build"
 
   PATH=./bin:$PATH make INSTALL_ROOT="$pkgdir" DESTDIR="$pkgdir/" install
 
