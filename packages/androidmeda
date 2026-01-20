@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+    # See COPYING for license details.
+    
+    pkgname=androidmeda
+    pkgver=1.0.0
+    pkgrel=1
+    pkgdesc='AI tool to deobfuscate and find any potential vulnerabilities in android apps.'
+    arch=('any')
+    groups=('blackarch' 'blackarch-mobile')
+    url='https://github.com/In3tinct/Androidmeda'
+    license=('Apache-2.0')
+    depends=('python python-google-generativeai python-absl-py python-ollama python-openai python-anthropic')
+    makedepends=('git')
+    source=("git+https://github.com/In3tinct/Androidmeda")
+    sha512sums=('SKIP')
+    #install="$pkgname.install"
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md docs/*.md
+
+  # Only install license if required according to
+  # https://wiki.archlinux.org/index.php/PKGBUILD#license
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE *.md docs/*.md .gitignore
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/NAME.py "\$@"
+EOF
+# if from install from pypi and not from source
+# exec /usr/share/$pkgname/venv/bin/$pkgname "\$@"
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
