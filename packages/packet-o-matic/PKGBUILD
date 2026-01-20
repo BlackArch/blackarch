@@ -2,14 +2,14 @@
 # See COPYING for license details.
 
 pkgname=packet-o-matic
-pkgver=1394.a1a8ce8
-pkgrel=2
+pkgver=v0.0.19.r12.g2fe05e7
+pkgrel=1
 epoch=1
 pkgdesc='A real time packet processor. Reads the packet from an input module, match the packet using rules and connection tracking information and then send it to a target module.'
 arch=('x86_64' 'aarch64')
-url='http://www.packet-o-matic.org/'
-license=('GPL')
 groups=('blackarch' 'blackarch-networking' 'blackarch-tunnel')
+url='http://www.packet-o-matic.org/'
+license=('GPL-2.0-or-later')
 depends=('libpcap' 'libxml2' 'libnet' 'uthash' 'libmicrohttpd' 'lua'
          'libexif')
 makedepends=('git' 'xmlrpc-c' 'libtool' 'pkg-config')
@@ -19,14 +19,16 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
   cd $pkgname
-
-  export lua_CFLAGS="-llua"
-  export lua_LIBS="-llua"
 
   autoreconf -f -i
   ./configure --prefix=/usr
