@@ -3,34 +3,41 @@
 
 pkgname=onionsearch
 pkgver=44.fc9d62c
-pkgrel=4
-pkgdesc='Script that scrapes urls on different ".onion" search engines.'
+pkgrel=5
+pkgdesc='Script that scrapes urls on different .onion search engines.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/megadose/OnionSearch'
-license=('MIT')
-depends=('python' 'python-beautifulsoup4' 'python-requests' 'python-tqdm'
-         'python-urllib3')
-makedepends=('git' 'python-setuptools')
+license=('GPL-3.0-only')
+depends=('python-requests' 'python-termcolor' 'python-tqdm' 'python-html5lib'
+         'python-beautifulsoup4' 'python-pysocks' 'python-argparse')
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+options=(!emptydirs)
 source=("$pkgname::git+https://github.com/megadose/OnionSearch.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
-  cd $pkgname
+  cd "$pkgname"
 
-  python setup.py build
+  python -m build --wheel --no-isolation
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python -m installer --destdir="$pkgdir" dist/*.whl
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 }
