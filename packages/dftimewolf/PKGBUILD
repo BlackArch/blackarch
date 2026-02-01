@@ -2,13 +2,14 @@
 # See COPYING for license details.
 
 pkgname=dftimewolf
-pkgver=833.50f869b7
-pkgrel=1
+pkgver=833.50f869b
+pkgrel=3
+_pyver=3.14
 pkgdesc='Framework for orchestrating forensic collection, processing and data export.'
 arch=('any')
 groups=('blackarch' 'blackarch-forensic')
 url='https://github.com/log2timeline/dftimewolf'
-license=('Apache')
+license=('Apache-2.0')
 depends=('python' 'python-poetry')
 makedepends=('git')
 source=("git+https://github.com/log2timeline/$pkgname.git")
@@ -18,7 +19,20 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i 's|>=3.11,<=3.13|>=3.11,<=3.15|g' pyproject.toml
+
+  rm poetry.lock
 }
 
 package() {

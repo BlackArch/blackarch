@@ -3,7 +3,7 @@
 
 pkgname=manspider
 pkgver=89.aa5194a
-pkgrel=1
+pkgrel=2
 pkgdesc='Spider entire networks for juicy files sitting on SMB shares. Search filenames or file content - regex supported!'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
 arch=('any')
@@ -18,7 +18,19 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i 's|>=3.8,<3.14|>=3.8,<3.15|g' pyproject.toml
+  sed -i 's|<3.14,>=3.8|<3.15,>=3.8|g' poetry.lock
 }
 
 package() {
@@ -29,8 +41,6 @@ package() {
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 
-  rm README.md
-
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
 cat > "$pkgdir/usr/bin/$pkgname" << EOF
@@ -38,6 +48,6 @@ cat > "$pkgdir/usr/bin/$pkgname" << EOF
 exec /usr/share/$pkgname/bin/$pkgname "\$@"
 EOF
 
-   chmod +x "$pkgdir/usr/bin/$pkgname"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
