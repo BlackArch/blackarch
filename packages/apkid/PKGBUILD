@@ -3,35 +3,39 @@
 
 pkgname=apkid
 _pkgname=APKiD
-pkgver=2.1.5
-pkgrel=5
+pkgver=3.0.0
+pkgrel=1
 epoch=2
+_pyver=3.14
 pkgdesc='Android Application Identifier for Packers, Protectors, Obfuscators and Oddities.'
 groups=('blackarch' 'blackarch-mobile')
 arch=('any')
 url='https://github.com/rednaga/APKiD'
-license=('GPL-3.0')
+license=('GPL-3.0-or-later' 'custom:unknown')
 depends=('python' 'python-yara-python-dex')
-makedepends=('python-setuptools')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
 source=("https://github.com/rednaga/$_pkgname/archive/refs/tags/v$pkgver.tar.gz")
-sha512sums=('11767921662fc6939a23694155c4d6e31d19b62d809e51aca6002669649bc97f2f0ee2eddfcd35804b41db39e9023269c4990d45181757d3e5e12224ac8dc413')
+sha512sums=('be55db138d2c5ad37ff0469bf9adcf48d92566d0289c352d33ab4346f2c76d848bd524f88176935d9752c5bee58ea569be25b68c5f40954c5bc9c0be6c35238e')
 
 prepare() {
   cd "$_pkgname-$pkgver"
 
   sed -i 's|yara-python==3.11.0|yara-python|' setup.py
+
+  ./prep-release.py
 }
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python -m installer --destdir="$pkgdir" dist/*.whl
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.*
   install -Dm 644 -t "$pkgdir/usr/share/licenses/$pkgname" LICENSE.GPL \
