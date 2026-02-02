@@ -11,7 +11,7 @@ arch=('any')
 groups=('blackarch' 'blackarch-forensic')
 url='https://github.com/log2timeline/dftimewolf'
 license=('Apache-2.0')
-depends=('python' 'python-poetry')
+depends=('python' 'python-pip')
 makedepends=('git')
 source=("git+https://github.com/log2timeline/$pkgname.git")
 sha512sums=('SKIP')
@@ -31,7 +31,13 @@ pkgver() {
 prepare() {
   cd $pkgname
 
+  # Allow python 3.14
+  # waiting for https://github.com/log2timeline/dftimewolf/pull/1042
   sed -i 's|>=3.11,<=3.13|>=3.11,<=3.15|g' pyproject.toml
+
+  # Fix missing dependency
+  # waiting for https://github.com/log2timeline/dftimewolf/pull/1043
+  sed -i '/openrelik-api-client = "0.2.3"/a \python-dateutil = "^2.9.0.post0"' pyproject.toml
 
   rm poetry.lock
 }
@@ -44,9 +50,8 @@ package() {
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md docs/*.md
 
-  rm -rf LICENSE *.md docs/*.md .gitignore .pylintrc .travis.yml .style.yapf \
-    .isort.cfg appveyor.yml run_tests.py docker tests mkdocs.yml *.ini \
-    requirements*.txt
+  rm -rf .github/ .vscode/ docker/ docs/ tests/ .gitignore .isort.cfg .pylintrc \
+    ACKNOWLEDGEMENTS AUTHORS LICENSE mkdocs.yml mypy.ini
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
@@ -55,7 +60,11 @@ package() {
 poetry config cache-dir "/usr/share/$pkgname"
 poetry env use /usr/share/$pkgname/.venv/bin/python$_pyver \\
   --directory /usr/share/$pkgname
-poetry run --directory "/usr/share/$pkgname" $_pkgname_cmd "\$@"
+poetry run --directory "/usr/share/$pkgname" $pkgname "\$@"
+
+# some try with venv + pip
+#source /usr/share/$pkgname/venv/bin/activate
+#exec python -m dftimewolf "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
