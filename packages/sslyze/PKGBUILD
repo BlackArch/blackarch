@@ -2,9 +2,9 @@
 # See COPYING for license details.
 
 pkgname=sslyze
-pkgver=6.2.0
+pkgver=6.3.0
 _pyver=3.14
-pkgrel=2
+pkgrel=1
 groups=('blackarch' 'blackarch-crypto' 'blackarch-scanner')
 pkgdesc='Python tool for analyzing the configuration of SSL servers and for identifying misconfigurations.'
 arch=('x86_64' 'aarch64')
@@ -12,15 +12,10 @@ url='https://github.com/nabla-c0d3/sslyze'
 license=('AGPL-3.0-or-later')
 depends=('python' 'python-tls-parser' 'python-cryptography' 'python-nassl'
          'python-typing_extensions' 'python-pydantic' 'python-pyopenssl')
-makedepends=('python-build' 'python-pip')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
 source=("https://github.com/nabla-c0d3/$pkgname/archive/$pkgver.zip")
-sha512sums=('c20024ab4085b68f0587561bd192f6b3e78bed0507abde924fdbc1afe4e295cd644b637b4b6a0d2efdc80396ec2e7a8e473cb1d5a98dffac62b540c29115809c')
-
-build() {
-  cd "$pkgname-$pkgver"
-
-  python -m build --wheel --outdir="$startdir/dist"
-}
+sha512sums=('1beec53cbc7aa4651a5e500eb62311be784a8e4c3dc02b0c0857c40805c1fcb4d3bb2821a62311086454319acf23c44b9baf31cb7ad83cb1adde7d1640403c1f')
 
 prepare() {
   cd "$pkgname-$pkgver"
@@ -28,21 +23,16 @@ prepare() {
   sed -i 's|pydantic>=1.7,<1.10|pydantic|g' setup.py
 }
 
+build() {
+  cd "$pkgname-$pkgver"
+
+  python -m build --wheel --no-isolation
+}
+
 package() {
   cd "$pkgname-$pkgver"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    "$pkgname"
+  python -m installer --destdir="$pkgdir" dist/*.whl
 
   install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 

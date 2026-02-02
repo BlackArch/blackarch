@@ -3,39 +3,28 @@
 
 pkgname=python-h3
 _pkgname=${pkgname#python-}
-pkgver=4.3.1
-pkgrel=2
+pkgver=4.4.2
+pkgrel=1
 pkgdesc='Python bindings for H3, a hierarchical hexagonal geospatial indexing system.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/uber/h3-py'
 license=('MIT')
 depends=('python')
-makedepends=('git' 'python-build' 'python-pip' 'cython'
-             'python-scikit-build-core')
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'cython'
+             'python-wheel' 'python-scikit-build-core' 'git')
 options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('90f2c221117e58d253f05e91404ed81fb3aaf1a00eb33dbfffdff9d082d81f0915a8f30f9824bb8ce4ba9e7598f0d68cbdde4778ed61b2601fa3d830192e3f7f')
+sha512sums=('13e0320a6b2862c4e65990ccaf7b09a152d6b15631ca651bac6714b82110c57f40d88b81fa75aacc809b9e1cb5ffe5b3be05f9dfb67c419582d81e2f1ad78804')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $_pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
