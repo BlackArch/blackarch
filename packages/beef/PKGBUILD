@@ -2,25 +2,30 @@
 # See COPYING for license details.
 
 pkgname=beef
-pkgver=4969.399ab9020
+pkgver=v0.6.0.0.r123.g399ab90
 pkgrel=1
-epoch=1
+epoch=2
 groups=('blackarch' 'blackarch-exploitation')
 pkgdesc='The Browser Exploitation Framework that focuses on the web browser.'
 arch=('any')
-url='http://beefproject.com/'
+url='https://github.com/beefproject/beef'
 install="$pkgname.install"
-license=('Apache')
+license=('GPL-2.0-or-later')
 makedepends=('git')
 depends=('ruby' 'ruby-bundler' 'sqlite' 'python' 'libxslt' 'nodejs'
          'ruby-eventmachine')
-source=("git+http://github.com/beefproject/$pkgname.git")
+source=("git+https://github.com/beefproject/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
@@ -40,7 +45,7 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec ruby $pkgname "\$@"
+exec bundle exec ruby $pkgname "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"

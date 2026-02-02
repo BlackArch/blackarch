@@ -3,12 +3,12 @@
 
 pkgname=adenum
 pkgver=36.fbbe14d
-pkgrel=8
+pkgrel=9
 pkgdesc='A pentesting tool that allows to find misconfiguration through the the protocol LDAP and exploit some of those weaknesses with kerberos.'
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/SecuProject/ADenum'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=('python' 'python-pwntools' 'python-ldap')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/SecuProject/ADenum.git")
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

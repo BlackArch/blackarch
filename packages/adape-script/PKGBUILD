@@ -3,7 +3,7 @@
 
 pkgname=adape-script
 pkgver=43.4d0b9ff
-pkgrel=1
+pkgrel=2
 pkgdesc='Active Directory Assessment and Privilege Escalation Script.'
 arch=('x86_64')
 groups=('blackarch' 'blackarch-windows' 'blackarch-exploitation')
@@ -16,7 +16,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

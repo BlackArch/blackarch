@@ -3,12 +3,12 @@
 
 pkgname=adfspray
 pkgver=6.3d7745d
-pkgrel=7
+pkgrel=8
 pkgdesc='Python3 tool to perform password spraying against Microsoft Online service using various methods.'
 groups=('blackarch' 'blackarch-cracker' 'blackarch-windows')
 arch=('any')
 url='https://github.com/xFreed0m/ADFSpray'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=('python' 'python-colorlog' 'python-requests' 'python-requests-ntlm')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/xFreed0m/ADFSpray.git")
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

@@ -3,12 +3,12 @@
 
 pkgname=aggroargs
 pkgver=51.c032446
-pkgrel=3
+pkgrel=4
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-fuzzer')
 pkgdesc='Bruteforce commandline buffer overflows, linux, aggressive arguments.'
 arch=('any')
 url='https://github.com/tintinweb/aggroArgs'
-license=('GPL2')
+license=('GPL-2.0-or-later')
 depends=('python2')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/tintinweb/aggroArgs.git")
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

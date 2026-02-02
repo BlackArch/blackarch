@@ -3,12 +3,12 @@
 
 pkgname=abcd
 pkgver=4.2738809
-pkgrel=4
+pkgrel=5
 pkgdesc='ActionScript ByteCode Disassembler.'
 groups=('blackarch' 'blackarch-disassembler')
 arch=('any')
 url='https://github.com/MITRECND/abcd'
-license=('BSD')
+license=('BSD-2-Clause')
 depends=('python2' 'python2-setuptools' 'python2-pyswf')
 makedepends=('git')
 source=("git+https://github.com/MITRECND/$pkgname.git")
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
