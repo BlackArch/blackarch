@@ -2,42 +2,44 @@
 # Contributor: Borja Ruiz <borja [at] libcrack [dot] so>
 
 pkgname=apkstudio
-pkgver=100.9e114ca
-pkgrel=4
+pkgver=v6.3.0.r0.gc6e2724
+pkgrel=1
+epoch=1
 pkgdesc='An IDE for decompiling/editing & then recompiling of android application binaries.'
 groups=('blackarch' 'blackarch-reversing' 'blackarch-mobile')
 arch=('x86_64' 'aarch64')
 url='http://www.vaibhavpandey.com/apkstudio/'
-license=('GPL2')
-depends=('qt5-base' 'android-tools' 'android-apktool')
-makedepends=('git' 'qt5-tools' 'unzip')
+license=('GPL-2.0-or-later')
+depends=('qt6-base' 'android-tools' 'android-apktool')
+makedepends=('git' 'qt5-tools' 'unzip' 'vulkan-headers')
 source=("git+https://github.com/vaibhavpandeyvpz/$pkgname.git"
         'APKTOOL_VERSION'
-        "$pkgname-setup.sh"
-        'change-vendor-zip-warning.patch')
+        "$pkgname-setup.sh")
 sha512sums=('SKIP'
             '07ab697a07e8dfa7da53eb48ea43898cf9e2187b33cb31fbd33df1225a76703684be4f8d0eac660d6cfc60746ff09d7acfd554249545f84338642f357f5aed3c'
-            '4a24a5ada6b7c426faa91b90bd314b16dace01463406be6dc6246a78afa3bce2c5474b670bf708e891de7907eae45ade28d71d8bd1db152fc4e45d08ee13f3b4'
-            '7851265ed7df3daa7cf00001fa4428dae542e5d24f1e7c6edf7cb3ada9d524aadb64b4392c298722f23ec37d3021be9af5c3f70da1f7dbd802b04833e1ad5cf5')
+            '4a24a5ada6b7c426faa91b90bd314b16dace01463406be6dc6246a78afa3bce2c5474b670bf708e891de7907eae45ade28d71d8bd1db152fc4e45d08ee13f3b4')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
-prepare() {
-  cd $pkgname
-
-  patch -p0 -i ../change-vendor-zip-warning.patch
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
   cd $pkgname
 
-  lrelease-qt5 res/lang/en.ts
-  qmake-qt5 -r apkstudio.pro CONFIG+=release
-  make
+  cmake -B build -S . \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_BUILD_TYPE=Release
+
+  cmake --build build \
+    --config Release \
+    -DCMAKE_INSTALL_PREFIX=/usr
 }
 
 package() {

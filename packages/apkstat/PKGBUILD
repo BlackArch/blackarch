@@ -3,7 +3,7 @@
 
 pkgname=apkstat
 pkgver=18.81cdad3
-pkgrel=4
+pkgrel=5
 pkgdesc='Automated Information Retrieval From APKs For Initial Analysis.'
 groups=('blackarch' 'blackarch-mobile' 'blackarch-recon')
 arch=('any')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

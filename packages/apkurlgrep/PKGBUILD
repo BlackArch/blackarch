@@ -3,7 +3,7 @@
 
 pkgname=apkurlgrep
 pkgver=8.a188a98
-pkgrel=1
+pkgrel=2
 pkgdesc='Extract endpoints from APK files.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-mobile' 'blackarch-misc')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
