@@ -3,12 +3,12 @@
 
 pkgname=androick
 pkgver=8.522cfb4
-pkgrel=3
+pkgrel=4
 groups=('blackarch' 'blackarch-mobile' 'blackarch-forensic')
 pkgdesc='A python tool to help in forensics analysis on android.'
 arch=('any')
 url='https://github.com/Flo354/Androick'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=('python2' 'python2-magic' 'sqlite' 'android-sdk-build-tools'
          'android-sdk-platform-tools' 'android-sdk')
 makedepends=('git')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
