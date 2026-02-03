@@ -3,13 +3,13 @@
 
 pkgname=airoscript
 pkgver=45.0a122ee
-pkgrel=11
+pkgrel=12
 epoch=2
 pkgdesc='A script to simplify the use of aircrack-ng tools.'
 arch=('any')
 url='http://midnightresearch.com/projects/wicrawl/'
 groups=('blackarch' 'blackarch-wireless')
-license=('GPL')
+license=('GPL-1.0-or-later')
 depends=('mdk3' 'aircrack-ng' 'dhclient' 'perl-yaml-syck')
 options=(!makeflags)
 makedepends=('git')
@@ -21,7 +21,12 @@ sha512sums=('SKIP'
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
