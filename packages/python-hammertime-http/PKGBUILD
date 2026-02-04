@@ -4,38 +4,35 @@
 pkgname=python-hammertime-http
 _pkgname=HammerTime-http
 pkgver=0.11.1
-pkgrel=2
+pkgrel=3
 pkgdesc='An HTTP client library aiming to perform a large number of requests on a server as fast as it can take them, but without distrupting operations significantly.'
 url='https://pypi.org/project/HammerTime-http/#files'
 arch=('any')
 license=('GPL-2.0-only')
 depends=('python' 'python-aiohttp' 'python-easyinject' 'python-aiodns'
-         'python-simhash' 'python-forkedsimhash-py' 'python-marshmallow-har'
+         'python-simhash' 'python-marshmallow-har'
          'python-marshmallow-autoschema')
-makedepends=('python-build' 'python-pip' 'python-wheel')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('c8c48d588fa4f53e56c8f090e1f866da4a69f25caf5004a25bd0107dd4183a0c686a3c20b4c383205ebcef5e8bc629a7f69aa58fde76155c314ae84c78cb57a8')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  sed -i 's|"pytest-runner"||g' setup.py
+}
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $_pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
