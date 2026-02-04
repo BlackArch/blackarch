@@ -3,12 +3,12 @@
 
 pkgname=canalyzat0r
 pkgver=41.6bc251e
-pkgrel=10
+pkgrel=11
 pkgdesc='Security analysis toolkit for proprietary car protocols.'
 groups=('blackarch' 'blackarch-automobile')
 arch=('any')
 url='https://github.com/schutzwerk/CANalyzat0r'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=('can-utils' 'ffmpeg' 'iproute2' 'python' 'python-pyside' 'python-pyvit'
          'python-sphinx_rtd_theme' 'python-can' 'python-aenum')
 makedepends=('git')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
