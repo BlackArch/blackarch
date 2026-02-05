@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=androidmeda
-pkgver=2.0.0
+pkgver=v2.0.0.r1.ge2e5084
 pkgrel=1
 pkgdesc='AI tool to deobfuscate and find any potential vulnerabilities in android apps.'
 arch=('any')
@@ -16,15 +16,18 @@ source=("git+https://github.com/In3tinct/androidmeda")
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$pkgname"
+  cd $pkgname
+
   ( set -o pipefail
-    git describe --long --tags --abbrev=7 2>/dev/null | sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
-    printf "%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
   )
 }
 
 package() {
-  cd "$pkgname"
+  cd $pkgname
 
   # Create directory structure
   install -dm 755 "$pkgdir/usr/bin"
@@ -34,13 +37,15 @@ package() {
   python -m venv "$pkgdir/usr/share/$pkgname/venv"
 
   # 2. Install missing dependencies via pip into the venv
-  # This replaces the missing 'python-google-generativeai', 'python-ollama', etc.
+  # This replaces the missing 'python-google-generativeai', 'python-ollama',
+  # etc.
   "$pkgdir/usr/share/$pkgname/venv/bin/pip" install --upgrade pip
   "$pkgdir/usr/share/$pkgname/venv/bin/pip" install -r requirements.txt
 
   # Copy application files
   install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md docs/*.md 2>/dev/null || true
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md docs/*.md \
+    2>/dev/null || true
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   rm -rf LICENSE *.md docs/ .gitignore
@@ -50,7 +55,7 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 source /usr/share/$pkgname/venv/bin/activate
-exec python /usr/share/$pkgname/androidmeda.py "\$@"
+exec python /usr/share/$pkgname/$pkgname.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
