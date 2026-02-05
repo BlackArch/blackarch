@@ -2,69 +2,36 @@
 # See COPYING for license details.
 
 pkgname=veles
-pkgver=2018.05.0.r0.ge65de5a
+pkgver=2018.05
 pkgrel=1
-epoch=2
+epoch=3
 pkgdesc='New open source tool for binary data analysis.'
 url='https://codisec.com/veles/'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-binary' 'blackarch-reversing'
         'blackarch-disassembler')
 license=('Apache-2.0')
-depends=('qt5-base>=5.11.0' 'python' 'protobuf' 'zlib' 'python-pyopenssl'
-         'libmpack' 'python-msgpack' 'python-six' 'python-pbr' 'msgpack-c'
-         'msgpack-cxx')
-makedepends=('git' 'cmake' 'python-setuptools' 'python-virtualenv' 'protobuf'
-             'python-pip' 'python-wheel')
-source=("git+https://github.com/codilime/$pkgname.git"
+depends=('qt5-base' 'python' 'python-pyopenssl' 'python-msgpack' 'python-six'
+         'python-pbr' 'double-conversion')
+makedepends=()
+source=("https://github.com/codilime/veles/releases/download/${pkgver}.0.TIF/Veles_${pkgver}_64bit_Ubuntu1604.deb"
         'fix_qt5_use_modules.patch')
-sha512sums=('SKIP'
+sha512sums=('4e441e1c19bda1053e2e33936598c634c18cd17f5d9948d1950b12a5d150367c4d55b443f48f83c6b56593e4eba9723d8bc97b206280c30698a24e806ff5e787'
             '421d2e782a25b88b21d5b47453c4e46fa22855db2a4364e6be9656f264191d6a6afbd7b60e354c4eb400bc71afe2f596a40c448498654e8e0ee43e9352848378')
 
-pkgver() {
-  cd $pkgname
-
-  ( set -o pipefail
-    git describe --long --tags --abbrev=7 2>/dev/null |
-      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
-    printf "%s.%s" "$(git rev-list --count HEAD)" \
-      "$(git rev-parse --short=7 HEAD)"
-  )
-}
-
-prepare() {
-  cd $pkgname
-
-  patch -Np1 -i ../fix_qt5_use_modules.patch
-}
-
-build() {
-  cd $pkgname
-
-  mkdir -p build
-  cd build
-  cmake \
-    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-    -Wno-dev -DCMAKE_BUILD_TYPE=MinSizeRel \
-    -DCMAKE_VERBOSE_MAKEFILE=ON \
-    -DCMAKE_INSTALL_PREFIX:PATH=/usr \
-    ..
-
-  make
-
-  cd python
-  python setup.py build
-}
-
 package() {
-  cd "$pkgname/build"
+  tar xvf data.tar.gz
+  cp -r usr $pkgdir
+  tar xfv "$pkgdir/usr/share/veles-server/"veles-*.tar.gz
 
-  make DESTDIR="$pkgdir" install
+  _pypath="$(find . -type f -name setup.py -print -quit)"
 
-  cd python
+  pushd "$(dirname $_pypath)"
+
+  python setup.py build
+
   python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 
-  install -Dm 644 ../../LICENSE-2.0 \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  popd
 }
 
