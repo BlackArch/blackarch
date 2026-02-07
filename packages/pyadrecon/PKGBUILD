@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pyadrecon
+_pkgname=PyADRecon
+pkgver=0.6.3
+pkgrel=1
+pkgdesc='Gathers information about the Active Directory and generates a report which can provide a holistic picture of the current state of the target AD environment.'
+arch=('any')
+groups=('blackarch' 'blackarch-networking')
+url='https://github.com/l4rm4nd/PyADRecon'
+license=('MIT') # https://github.com/l4rm4nd/PyADRecon/issues/1
+depends=('python' 'python-ldap3' 'python-openpyxl' 'impacket' 'python-gssapi')
+makedepends=()
+source=("$url/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('8b8afcb0d78e0dd36baad0d33124724d1424bdbe3fb94d057ac2e8942c46481428bc971e82f25895993d81c8d4f15d3a8744090ac96246dd4fda02c559dc9918')
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+
+  # waiting for upstream license file
+  # https://github.com/l4rm4nd/PyADRecon/issues/1
+  # install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  # For now there is only one file
+  # rm -rf *.md *.txt *.json Dockerfile .*
+  # cp -a * "$pkgdir/usr/share/$pkgname/"
+  cp -a "$pkgname.py" "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec python /usr/share/$pkgname/$pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
