@@ -3,12 +3,12 @@
 
 pkgname=armscgen
 pkgver=98.c51b7d6
-pkgrel=6
+pkgrel=7
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-automation')
 pkgdesc='ARM Shellcode Generator (Mostly Thumb Mode).'
 arch=('any')
 url='https://github.com/alexpark07/ARMSCGen'
-license=('GPL' 'GPL2' 'MIT')
+license=('GPL-1.0-only' 'GPL-2.0-or-later' 'MIT')
 depends=('python2' 'python2-capstone' 'python2-keystone' 'unicorn'
          'python2-unicorn' 'python2-setuptools')
 makedepends=('git' 'python2-setuptools')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
