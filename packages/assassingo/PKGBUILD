@@ -3,7 +3,7 @@
 
 pkgname=assassingo
 pkgver=173.2dd8650
-pkgrel=2
+pkgrel=3
 pkgdesc='Web pentest framework for information gathering and vulnerability scanning.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
