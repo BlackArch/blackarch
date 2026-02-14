@@ -3,39 +3,28 @@
 
 pkgname=python-pyghidra
 _pkgname=${pkgname#python-}
-pkgver=3.0.0
-pkgrel=2
+pkgver=3.0.2
+pkgrel=1
 pkgdesc='Python library that provides direct access to the Ghidra API.'
 arch=('any')
 url='https://github.com/NationalSecurityAgency/ghidra'
 license=('Apache-2.0')
 depends=('python-jpype1' 'python-packaging')
-makedepends=('python-build' 'python-pip')
+makedepends=('python-build' 'python-wheel' 'python-installer' 'python-setuptools')
 options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('0c4a41929f46ccebb962a3b930adad3303ab6f604b3ab2b87d72d99c5e853604d68a672fef0c7fff8071f6a2bef7879569772d17421e86d6daa36481fe511d42')
+sha512sums=('b81fd1fa559443c84426dc3b8644004b521d57e55362e91fd6d8309f1f157da4b2a8d4b5b45bc34c590b88a8f62bf0dd6980cc7c07f4e786557a283bc4bc4c8a')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $_pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 
     # No need. It installs an executable to install pyghidra in a venv. It is
     # already provided by ghidra package

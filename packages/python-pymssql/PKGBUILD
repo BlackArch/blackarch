@@ -3,37 +3,34 @@
 
 pkgname=python-pymssql
 _pkgname=pymssql
-pkgver=2.3.11
+pkgver=2.3.13
 pkgrel=1
 pkgdesc='DB-API interface to Microsoft SQL Server for Python. (new Cython-based version).'
 arch=('x86_64' 'aarch64')
 url='https://pypi.org/project/pymssql/#files'
 license=('LGPL')
 depends=('python' 'freetds')
-makedepends=('python-pip' 'python-build' 'python-wheel' 'cython')
+makedepends=('python-installer' 'python-setuptools' 'python-build' 'python-wheel' 'cython'
+            'python-packaging' 'python-setuptools-scm' 'python-tomli')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('501a60aba45ed9294c94ff4cc0d05ad495b67e64827f559a361c3826b0dd739f164e548ce04d1d8e2b64438ddc798206b6e2cb095c7ea650887022b65c1c28c1')
+sha512sums=('53bcf3f04c00bfac60935af12331e08a5adc59e1eaab12083304f49799a925e99f944436ce4cff606c562fee842c93e4a824f46c97513f2efc6196be82184023')
+
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  sed -i '/standard-distutils/d' pyproject.toml
+}
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $_pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
