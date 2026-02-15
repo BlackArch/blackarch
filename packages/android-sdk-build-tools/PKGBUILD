@@ -1,41 +1,68 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
+#.
+# from AUR - adjusted to our style
 #
+# Original Maintainer: Amin Vakil <info AT aminvakil DOT com>
+# Contributor: Martchus <martchus ät gmx dot net>
 # Contributor: xgdgsc <xgdgsc @t gmail dot com>
+# Contributor: mynacol <dc07d át mynacol dót xyz>
 
-_android=android-14
-_sdk=android-sdk
 pkgname=android-sdk-build-tools
-pkgver=r34
+pkgver=r36.1
 pkgrel=1
+_major=36
+_minor=1
+_micro=0
+_ver=36.1
+_ver_install="$_ver.$_micro"
+_displayversion=36
+_sdk=android-sdk
+_android=android-16
+
 pkgdesc='Build-Tools for Google Android SDK (aapt, aidl, dexdump, dx, llvm-rs-cc).'
 arch=('x86_64' 'aarch64')
-url='https://developer.android.com/studio/releases/build-tools'
-license=('custom:unknown')
-depends=('zlib')
-conflicts=('dioxus-cli')
-source=("https://dl-ssl.google.com/android/repository/build-tools_$pkgver-linux.zip")
-sha512sums=('c28dd52f8eca82996726905617f3cb4b0f0aee1334417b450d296991d7112cab1288f5fd42c48a079ba6788218079f81caa3e3e9108e4a6f27163a1eb7f32bd7')
+url="https://developer.android.com/studio/releases/build-tools"
+license=('custom')
+depends=('gcc-libs' 'zlib' 'bash')
+optdepends=('lib32-gcc-libs' 'lib32-zlib' 'java-runtime'
+            'ncurses5-compat-libs: necessary to run bcc_compat and llvm-rs-cc')
+conflicts=('zipalign')
+provides=('zipalign')
+source=("https://dl.google.com/android/repository/build-tools_${pkgver}_linux.zip"
+        'package.xml')
+sha512sums=('32a1eea273980a96745ae5e0b141720e5f91c6c6f83f42da4244fad36025d7750521fdf678a7d332afe5946057b498264343c2533ba524967d84347af9cd7ce5'
+            '501211771b02940010420a4003b8396d3d6599fb339c2f64959335ab1c3cf615811cc62acaa093c9f4e14bbc019a9e493835573a5136383617d8b5184509d3f8')
 options=('!strip')
 
 package() {
   cd $pkgdir
 
-  ver="$(cat "$srcdir/$_android/source.properties" |
-  grep ^Pkg.Revision=|sed 's/Pkg.Revision=\([0-9.]*\).*/\1/')"
+  install -d "usr/share/licenses/$pkgname/"
 
-  install -dm 755 "opt/$_sdk/build-tools/$ver"
-  install -dm 755 "usr/bin"
-  install -Dm 644 "$srcdir/$_android/NOTICE.txt" \
+  ln -s "/opt/$_sdk/build-tools/$_ver/NOTICE.txt" \
     "usr/share/licenses/$pkgname/NOTICE.txt"
-  cp -r "$srcdir/$_android/"* "opt/$_sdk/build-tools/$ver"
-  chmod +Xr -R "$pkgdir/opt/$_sdk/build-tools/$ver"
+  sed -i "s/@major@/$_major/g;s/@minor@/$_minor/g;s/@micro@/$_micro/g;s/@displayv@/$_ver_install/g;s/@pathv@/$_ver_install/g" \
+    "$srcdir/package.xml"
+  install -Dm 644 "$srcdir/package.xml" \
+    "opt/$_sdk/build-tools/$_ver_install/package.xml"
+  ln -s "/opt/$_sdk/build-tools/$_ver_install/package.xml" \
+    "usr/share/licenses/$pkgname/package.xml"
 
-  binaries=("aapt" "aapt2" "aidl" "apksigner" "bcc_compat" "d8" "dexdump" "dx" \
-    "llvm-rs-cc" "mainDexClasses" "split-select" "zipalign")
+  target="opt/$_sdk/build-tools/$_ver_install"
+  mkdir -p "$target"
+  cp -r "$srcdir/$_android/"* "$target"
+  chmod +Xr -R "$target"
 
-  for f in "${binaries[@]}"; do
-    ln -s "/opt/$_sdk/build-tools/$ver/$f" "usr/bin/$f"
+  # Add symlinks to binaries to usr/bin/
+  mkdir -p usr/bin/
+
+  # lld is also provided by extra/lld, not creating symlink
+  bins=$(find "${target}" -maxdepth 1 -type f -executable -not -iname lld \
+    -printf "%f\n")
+  for f in ${bins[@]}
+  do
+    ln -s "/$target/$f" "usr/bin/$f"
   done
 }
 
