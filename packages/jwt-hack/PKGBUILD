@@ -2,14 +2,14 @@
 # See COPYING for license details.
 
 pkgname=jwt-hack
-pkgver=v2.4.0.r127.g73bcc90
+pkgver=v2.4.0.r129.g1727edf
 pkgrel=1
 pkgdesc='A tool for hacking / security testing to JWT.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-webapp' 'blackarch-cracker')
 url='https://github.com/hahwul/jwt-hack'
 license=('MIT')
-depends=('glibc')
+depends=()
 makedepends=('git' 'cargo')
 source=("git+https://github.com/hahwul/$pkgname.git")
 sha256sums=('SKIP')
@@ -17,13 +17,21 @@ sha256sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
   cd $pkgname
 
-  cargo build --release
+  CFLAGS+=' -ffat-lto-objects'
+
+  cargo clean
+  cargo build --release --locked
 }
 
 package() {
