@@ -1,0 +1,73 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Original Maintainer: Behruz <extreme29@proton.me>
+
+pkgname=llm-guard-cli
+pkgver=0.3.16
+pkgrel=14
+pkgdesc='Standalone LLM Guard CLI with bundled Python runtime'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-ai')
+url='https://github.com/protectai/llm-guard'
+license=('MIT')
+
+depends=()
+makedepends=('tar' 'gzip' 'curl')
+options=(!strip !emptydirs)
+
+install=llm-guard-cli.install
+
+source=(
+  "llm_guard-${pkgver}.tar.gz::https://files.pythonhosted.org/packages/source/l/llm-guard/llm_guard-${pkgver}.tar.gz"
+  "python310.tar.gz::https://github.com/astral-sh/python-build-standalone/releases/download/20240713/cpython-3.10.14+20240713-x86_64_v2-unknown-linux-gnu-install_only.tar.gz"
+)
+
+sha512sums=('SKIP' 'SKIP')
+
+package() {
+  install -d "$pkgdir/usr/share/llm-guard-cli"
+  install -d "$pkgdir/usr/bin"
+
+  # Extract bundled Python
+  tar -xzf python310.tar.gz -C "$pkgdir/usr/share/llm-guard-cli"
+  mv "$pkgdir/usr/share/llm-guard-cli/python" \
+     "$pkgdir/usr/share/llm-guard-cli/python310"
+
+  # Save llm-guard source for local install
+  install -Dm644 "$srcdir/llm_guard-${pkgver}.tar.gz" \
+    "$pkgdir/usr/share/llm-guard-cli/llm_guard-${pkgver}.tar.gz"
+
+  # CLI runtime script (TO‘G‘RI API)
+  cat <<'EOF' > "$pkgdir/usr/share/llm-guard-cli/run.py"
+import argparse
+from llm_guard import scan_prompt
+from llm_guard.input_scanners import PromptInjection
+
+def main():
+    parser = argparse.ArgumentParser(prog="llm-guard")
+    parser.add_argument("--text", required=True, help="Text to scan")
+    args = parser.parse_args()
+
+    scanners = [PromptInjection()]
+    _, valid, risk = scan_prompt(scanners, args.text)
+
+    print(f"valid={valid}")
+    print(f"risk={risk}")
+
+if __name__ == "__main__":
+    main()
+EOF
+
+  # Launcher
+  cat <<'EOF' > "$pkgdir/usr/bin/llm-guard"
+#!/usr/bin/env bash
+BASE="/usr/share/llm-guard-cli"
+exec "$BASE/python310/bin/python3.10" "$BASE/run.py" "$@"
+EOF
+  chmod 755 "$pkgdir/usr/bin/llm-guard"
+
+  # License
+  install -Dm644 "$srcdir/llm_guard-${pkgver}/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
