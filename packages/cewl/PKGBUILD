@@ -2,13 +2,14 @@
 # See COPYING for license details.
 
 pkgname=cewl
-pkgver=200.2f17ee1
+pkgver=6.2.1.r12.g2f17ee1
 pkgrel=2
+epoch=1
 groups=('blackarch' 'blackarch-automation' 'blackarch-cracker')
 pkgdesc='A custom word list generator.'
 arch=('any')
 url='http://www.digininja.org/projects/cewl.php'
-license=('CCPL')
+license=('CC-BY-NC-SA-2.0' 'GPL-3.0-or-later')
 depends=('ruby' 'ruby-bundler' 'libxslt')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/digininja/CeWL.git")
@@ -18,13 +19,20 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
   cd $pkgname
 
   sed -i "s|require './cewl_lib'|require '/usr/share/cewl/cewl_lib'|g" cewl.rb
+
+  echo "gem 'getoptlong'" >> Gemfile
 }
 
 package() {

@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=spray365
-pkgver=43.22b39af
+pkgver=0.2.2.beta.r1.g22b39af
 pkgrel=2
+epoch=1
 pkgdesc='Makes spraying Microsoft accounts (Office 365 / Azure AD) easy through its customizable two-step password spraying approach.'
 groups=('blackarch' 'blackarch-cracker' 'blackarch-recon' 'blackarch-windows')
 arch=('any')
@@ -18,13 +19,20 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {
   cd $pkgname
 
   sed -i '1i\#!/usr/bin/python' "$pkgname.py"
+
+  touch modules/__init__.py
 }
 
 package() {
