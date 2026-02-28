@@ -5,7 +5,7 @@
 # Old Maintainer: Niklas Krafczyk <krafczyk.n at gmail dot com>
 
 pkgname=klee
-pkgver=2.3
+pkgver=3.2
 pkgrel=6
 pkgdesc='A symbolic virtual machine built on top of the LLVM compiler infrastructure.'
 arch=('x86_64' 'aarch64')
@@ -15,21 +15,14 @@ groups=('blackarch' 'blackarch-binary' 'blackarch-reversing'
         'blackarch-debugger')
 depends=('gperftools' 'z3' 'libcap' 'python' 'llvm-libs' 'klee-uclibc' 'sqlite')
 makedepends=('llvm' 'clang' 'cmake' 'git' 'gperftools' 'z3')
-source=("git+https://github.com/$pkgname/$pkgname.git#commit=879be792870d20a51e26f8f007d24fc0584ee514"
-        "git+https://github.com/google/googletest.git#tag=release-1.10.0"
-        'KnownLLVMVersionPatch'
-        'TargetRegistryPatch')
-sha512sums=('SKIP'
-            'SKIP'
-            'ba101c4203d1f7c51674fdfd08e34e61d18d5e24ba044d65d46e6f0cf63a15eb1ab10050d4b44bf06af179cfe752c7c98cbb096121813b90557b846ce3d9c941'
-            'a8e9cc67ea6b62d3fd7c446c7538180ba3cf8a185453ecd857ee0a8be75dec427acd60a39d472c01166b4bfedecfc0478e271becf5bd8b603ccf0d019a56aae3')
+source=("git+https://github.com/$pkgname/$pkgname.git"
+        "https://github.com/google/googletest/archive/refs/tags/v1.16.0.zip")
+sha512sums=(
+  'SKIP'
+  '9e2ce58c9be3a24b877b981b0c848648cd8beb13dfc07799b71c017357bbf9974abd7d2d2c77556d1a935091f9d3d6f1287e4ef54dc1749b2d0ed304f209a305')
 
 prepare() {
   cd $pkgname
-
-  git cherry-pick 39f8069db879e1f859c60c821092452748b4ba37
-  git apply "$srcdir/TargetRegistryPatch"
-  git apply "$srcdir/KnownLLVMVersionPatch"
 
   mkdir -p "$srcdir/build"
   cd "$srcdir/build"
@@ -66,5 +59,9 @@ package() {
 
   install -Dm 644 "$srcdir/$pkgname/LICENSE.TXT" \
     "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+check() {
+  make systemtests
 }
 
