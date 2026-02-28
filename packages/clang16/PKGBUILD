@@ -1,0 +1,105 @@
+pkgname=clang16
+pkgver=16.0.6
+pkgrel=1
+pkgdesc="C language family frontend for LLVM 16"
+arch=('x86_64')
+url="https://clang.llvm.org/"
+license=('custom:Apache 2.0 with LLVM Exception')
+depends=('llvm16-libs' 'gcc' 'compiler-rt16')
+makedepends=('llvm16' 'cmake' 'ninja' 'python')
+optdepends=('openmp: OpenMP support in clang with -fopenmp'
+            'llvm16: referenced by some clang headers')
+checkdepends=('llvm')
+_source_base=https://github.com/llvm/llvm-project/releases/download/llvmorg-$pkgver
+source=($_source_base/clang-$pkgver.src.tar.xz{,.sig}
+        $_source_base/llvm-$pkgver.src.tar.xz{,.sig}
+        $_source_base/cmake-$pkgver.src.tar.xz{,.sig}
+        $_source_base/third-party-$pkgver.src.tar.xz{,.sig}
+        enable-fstack-protector-strong-by-default.patch)
+sha256sums=('1186b6e6eefeadd09912ed73b3729e85b59f043724bb2818a95a2ec024571840'
+            'SKIP'
+            'e91db44d1b3bb1c33fcea9a7d1f2423b883eaa9163d3d56ca2aa6d2f0711bc29'
+            'SKIP'
+            '39d342a4161095d2f28fb1253e4585978ac50521117da666e2b1f6f28b62f514'
+            'SKIP'
+            '15f5b9aeeba938530af977d5f9205612737a091a7f0f6c8075df8723b7713f70'
+            'SKIP'
+            '45da5783f4e89e4507a351ed0ffbbe6ec240e21ff7070797a89c5ccf434ac612')
+
+_get_distribution_components() {
+  local target
+  ninja -t targets | grep -Po 'install-\K.*(?=-stripped:)' | while read -r target; do
+    case $target in
+      clang-libraries|distribution)
+        continue
+        ;;
+      # trim static analyzer and other bits
+      bash-autocomplete|clang-format|clang-rename|hmaptool|scan-*)
+        continue
+        ;;
+      clang|clang-*)
+        ;;
+      clang*|findAllSymbols)
+        continue
+        ;;
+    esac
+    echo $target
+  done
+}
+
+prepare() {
+  rename -v -- "-$pkgver.src" '' {cmake,third-party}-$pkgver.src
+  cd clang-$pkgver.src
+  mkdir build
+  patch -Np2 -i ../enable-fstack-protector-strong-by-default.patch
+}
+
+build() {
+  cd clang-$pkgver.src/build
+
+  # Build only minimal debug info to reduce size
+  CFLAGS=${CFLAGS/-g /-g1 }
+  CXXFLAGS=${CXXFLAGS/-g /-g1 }
+
+  local cmake_args=(
+    -G Ninja
+    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_INSTALL_PREFIX=/usr/lib/llvm16
+    -DCMAKE_SKIP_RPATH=ON
+    -DCLANG_DEFAULT_PIE_ON_LINUX=ON
+    -DCLANG_LINK_CLANG_DYLIB=ON
+    -DENABLE_LINKER_BUILD_ID=ON
+    -DLLVM_BUILD_TESTS=ON
+    -DLLVM_CMAKE_DIR=/usr/lib/llvm16/lib/cmake
+    -DLLVM_CONFIG=/usr/lib/llvm16/bin/llvm-config
+    -DLLVM_ENABLE_RTTI=ON
+    -DLLVM_EXTERNAL_LIT=/usr/bin/lit
+    -DLLVM_LINK_LLVM_DYLIB=ON
+    -DLLVM_MAIN_SRC_DIR="$srcdir/llvm-$pkgver.src"
+  )
+
+  cmake .. "${cmake_args[@]}"
+  local distribution_components=$(_get_distribution_components | paste -sd\;)
+  test -n "$distribution_components"
+  cmake_args+=(-DLLVM_DISTRIBUTION_COMPONENTS="$distribution_components")
+
+  cmake .. "${cmake_args[@]}"
+  ninja
+}
+
+check() {
+  cd clang-$pkgver.src/build
+  LD_LIBRARY_PATH=$PWD/lib ninja check-clang
+}
+
+package() {
+  cd clang-$pkgver.src/build
+
+  DESTDIR="$pkgdir" ninja install-distribution
+  install -Dm644 ../LICENSE.TXT "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  mv "$pkgdir"/usr/lib/{llvm16/lib/,}libclang-cpp.so.16
+  ln -s ../../libclang-cpp.so.16 "$pkgdir/usr/lib/llvm16/lib/libclang-cpp.so.16"
+  ln -s llvm16/lib/libclang.so.16 "$pkgdir"/usr/lib/libclang.so.16
+}
+
