@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=firmware-mod-kit
-pkgver=189.c72f45d
+pkgver=0.99.r119.gc72f45d
 pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-firmware')
 pkgdesc='Modify firmware images without recompiling.'
 url='https://github.com/rampageX/firmware-mod-kit'
@@ -17,13 +18,16 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
-build(){
+build() {
   cd "$pkgname/src"
-
-  ./configure --prefix=/usr
 
   make
 }
