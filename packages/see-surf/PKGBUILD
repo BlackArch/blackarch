@@ -3,13 +3,15 @@
 
 pkgname=see-surf
 pkgver=v3.0.r27.g2d15238
-pkgrel=1
+pkgrel=2
 pkgdesc='Security tool to find potential vulnerable Server Side Request Forgery (SSRF) parameters.'
 arch=('any')
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
 url='https://github.com/In3tinct/See-SURF'
-license=('GPL3')
-depends=('python' 'python-requests' 'python-beautifulsoup4')
+license=('GPL-3.0-or-later')
+depends=('python' 'python-requests' 'python-beautifulsoup4' 'python-openai'
+         'python-pycryptodome' 'python-absl' 'python-anthropic' 'python-openai'
+         'python-google-genai' 'python-ollama')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/In3tinct/See-SURF.git")
 sha512sums=('SKIP')
@@ -17,14 +19,38 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i '/^from blind_verifier/d' "$pkgname.py"
 }
 
 package() {
   cd $pkgname
 
-  install -Dm 755 "$pkgname.py" "$pkgdir/usr/bin/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
+
+  rm -f *.md LICENSE requirements.txt
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python $pkgname.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

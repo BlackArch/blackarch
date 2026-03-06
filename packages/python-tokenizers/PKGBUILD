@@ -1,0 +1,72 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# from AUR - adjusted to our style
+#
+# Maintainer: Daniel Bershatsky <bepshatsky@yandex.ru>
+# Contributor: Filip Graliński <filipg@amu.edu.pl>
+
+: ${CARGO_HOME:=$SRCDEST/cargo-home}
+: ${CARGO_TARGET_DIR:=target}
+: ${RUSTUP_TOOLCHAIN:=stable}
+
+_module=tokenizers
+_pkgname="python-$_module"
+pkgname="$_pkgname"
+pkgver=0.22.2
+pkgrel=1
+pkgdesc='Fast State-of-the-Art Tokenizers optimized for Research and Production.'
+url="https://github.com/huggingface/tokenizers"
+license=('Apache-2.0')
+arch=('x86_64' 'aarch64')
+depends=('python')
+makedepends=('clang' 'rust-bindgen' 'python-build' 'python-installer'
+             'python-maturin' 'python-setuptools-rust' 'python-wheel')
+options=('!lto')
+_pkgsrc="$_module-$pkgver"
+_pkgext="tar.gz"
+source=(
+  "$_pkgsrc.$_pkgext"::"$url/archive/refs/tags/v$pkgver.$_pkgext"
+  'norvig-big.txt'::'https://norvig.com/big.txt'
+  'roberta.json'::'https://huggingface.co/roberta-large/raw/main/tokenizer.json'
+)
+sha512sums=('6df9f9e30cde94418a160190a8d31e272d768e9cc5321e38e820290c2164d55650f8904e4d58be9c5d5e2cc87a656a6bbd82f12e1828ff12384dd9e1bf1cfde4'
+            '879636a399c0ed9f10898822189339fe95a40e120036b22d0e9c944561606c6e5d22759b5d37547f62e99a655eabdf37ee23050382af96ae5f016d258e9e65e1'
+            '5b9a2f1a7f5bc5103dceadf98b482d4a294fdcd3be8f110707fb1e32d784791252285a465244e545ea1c7beebfd38292cc69be296c0936fea48d882e00a7c19d')
+
+_rust_env() {
+  export CARGO_HOME CARGO_TARGET_DIR RUSTUP_TOOLCHAIN
+  export GIT_DIR='.'
+}
+
+prepare() (
+  _rust_env
+  cd "$_pkgsrc/bindings/python"
+
+  # fix typo
+  sed -E -e 's@defaut@default@' -i Cargo.toml
+
+  cargo update
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+)
+
+build() (
+  _rust_env
+
+  cd "$_pkgsrc/bindings/python"
+
+  cargo build --frozen --release
+
+  python -m build --no-isolation --wheel
+)
+
+package() {
+  cd "$_pkgsrc/bindings/python"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+
+  cd "$srcdir/$_pkgsrc"
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

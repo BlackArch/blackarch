@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-google-genai
+_pkgname=google_genai
+pkgver=1.66.0
+pkgrel=1
+pkgdesc='GenAI Python SDK.'
+arch=('any')
+url='https://pypi.org/project/google-genai/#files'
+license=('MIT')
+depends=('python' 'python-anyio' 'python-google-auth' 'python-httpx'
+         'python-pydantic' 'python-requests' 'python-tenacity'
+         'python-websockets' 'python-typing_extensions' 'python-distro'
+         'python-sniffio' 'python-aiohttp')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('f721343ecc6fa7535f71bb343560f53d97a45c2dc81c3a503b8062f48125daae44377236368ace592d67f9f08ff2331164ec2bd7474ef8549f7011bc35262ab0')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  sed -i 's/, "twine>=6.1.0", "packaging>=24.2", "pkginfo>=1.12.0"//g' \
+    pyproject.toml
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+
