@@ -3,16 +3,16 @@
 
 pkgname=krbrelayx
 pkgver=61.aef69a7
-pkgrel=1
-pkgdesc='Kerberos unconstrained delegation abuse toolkit.'
+pkgrel=2
+pkgdesc='Kerberos relaying and unconstrained delegation abuse toolkit.'
 arch=('any')
 groups=('blackarch' 'blackarch-scanner' 'blackarch-fuzzer' 'blackarch-spoof'
         'blackarch-networking')
 url='https://github.com/dirkjanm/krbrelayx'
 license=('MIT')
-depends=('python2-ldapdomaindump' 'python2' 'python2-argparse' 'python2-ldap3'
-         'python2-pycryptodome' 'python2-pyasn1' 'python2-dnspython'
-         'python2-pycryptodomex' 'python2-impacket' 'python2-setuptools')
+depends=('python-ldapdomaindump' 'python' 'python-ldap3'
+         'python-pycryptodome' 'python-pyasn1' 'python-dnspython'
+         'python-pycryptodomex' 'impacket' 'python-setuptools')
 makedepends=('git')
 source=("git+https://github.com/dirkjanm/$pkgname.git")
 sha512sums=('SKIP')
@@ -20,7 +20,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
@@ -37,7 +42,7 @@ package() {
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 $pkgname.py "\$@"
+exec python $pkgname.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
@@ -45,7 +50,7 @@ EOF
   cat > "$pkgdir/usr/bin/$pkgname-addspn" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 addspn.py "\$@"
+exec python addspn.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-addspn"
@@ -53,7 +58,7 @@ EOF
   cat > "$pkgdir/usr/bin/$pkgname-dnstool" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 dnstool.py "\$@"
+exec python dnstool.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-dnstool"
@@ -61,7 +66,7 @@ EOF
   cat > "$pkgdir/usr/bin/$pkgname-printerbug" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python2 printerbug.py "\$@"
+exec python printerbug.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname-printerbug"
