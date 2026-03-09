@@ -2,13 +2,13 @@
 # See COPYING for license details.
 
 pkgname=pfring-dkms
-pkgver=4176.7c381712
+pkgver=7.4.0.r2097.g7c38171
 pkgrel=1
-epoch=1
+epoch=2
 pkgdesc='Linux kernel module for packet capture at wirespeed.'
 url='https://github.com/ntop/PF_RING'
 arch=('x86_64' 'aarch64')
-license=('LGPL')
+license=('LGPL-2.1-or-later')
 depends=('dkms' 'linux-headers' 'numactl')
 makedepends=('git')
 replaces=('pfring-kmod')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
