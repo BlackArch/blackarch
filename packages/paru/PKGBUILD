@@ -4,19 +4,25 @@
 # AUR Maintainer: Morgan <morganamilo@archlinux.org>
 
 pkgname=paru
-pkgver=2.0.4
-pkgrel=1
+pkgver=2.1.0
+pkgrel=2
 pkgdesc='Feature packed AUR helper.'
 url='https://github.com/morganamilo/paru'
 arch=('x86_64' 'aarch64')
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=('git' 'pacman')
-makedepends=('rust' 'cargo')
+makedepends=('cargo')
 optdepends=('asp: downloading repo pkgbuilds' 'bat: colored pkgbuild printing'
             'devtools: build in chroot')
 backup=("etc/$pkgname.conf")
 source=("https://github.com/Morganamilo/$pkgname/archive/v$pkgver.tar.gz")
-sha512sums=('bb2e85d74cae57a7fa48a857676c0bb536faa6e8e3c30a868ccf74689b1577523a07db95e4b336b71632a615ddf15a23d429129eebb218b4de0149c9ef9ded3b')
+sha512sums=('031dea9cc90146bdfb006ee9ccb34e634c3894297e43172b416f776c168c2ab5cedf60bb96d5a0d2eceda88b920932ad7c3fcca34f2f2ebe5225ec420e21b450')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+  cargo update alpm alpm-utils
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's|host: ||p')"
+}
 
 build () {
   cd "$pkgname-$pkgver"
@@ -34,6 +40,7 @@ build () {
   fi
 
   cargo build --locked --features "${_features:-}" --release --target-dir target
+  ./scripts/mkmo locale/
 }
 
 package() {
@@ -52,5 +59,8 @@ package() {
   "$pkgdir/usr/share/fish/vendor_completions.d/$pkgname.fish"
   install -Dm 644 completions/zsh \
     "$pkgdir/usr/share/zsh/site-functions/_${pkgname}"
+
+  install -d "$pkgdir/usr/share/"
+  cp -r locale "$pkgdir/usr/share/"
 }
 
