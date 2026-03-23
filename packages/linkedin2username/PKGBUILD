@@ -2,30 +2,50 @@
 # See COPYING for license details.
 
 pkgname=linkedin2username
-pkgver=144.8889f30
-pkgrel=6
-epoch=1
+pkgver=0.29.r4.g8889f30
+pkgrel=2
 pkgdesc='OSINT Tool: Generate username lists for companies on LinkedIn.'
-groups=('blackarch' 'blackarch-social' 'blackarch-recon' 'blackarch-misc')
 arch=('any')
+groups=('blackarch' 'blackarch-social' 'blackarch-recon' 'blackarch-misc')
 url='https://github.com/initstring/linkedin2username'
 license=('MIT')
-depends=('python' 'python-requests')
-makedepends=('git')
+depends=('python')
+makedepends=('git' 'python-setuptools' 'python-pip')
 source=("git+https://github.com/initstring/$pkgname.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  
+  )
 }
 
 package() {
   cd $pkgname
 
-  install -Dm 755 "$pkgname.py" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CONTRIBUTING.md
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  rm -rf LICENSE *.md .gitignore .github/ tests/
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/linkedin2username.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 
