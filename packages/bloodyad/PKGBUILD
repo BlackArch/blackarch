@@ -2,25 +2,28 @@
 # See COPYING for license details.
 
 pkgname=bloodyad
-pkgver=284.dd13a57
+pkgver=2.5.4.r1.gdd13a57
 pkgrel=1
 pkgdesc='An Active Directory Privilege Escalation Framework.'
 arch=('any')
 groups=('blackarch' 'blackarch-exploitation' 'blackarch-windows')
 url='https://github.com/CravateRouge/bloodyAD'
 license=('GPL3')
-depends=('python' 'python-ldap3' 'python-dsinternals' 'python-winacl' 'impacket'
-         'python-neo4j-driver' 'python-gssapi' 'python-msldap'
-         'python-dnspython' 'python-minikerberos' 'python-asn1crypto'
-         'python-cryptography')
-makedepends=('git')
+depends=('python')
+makedepends=('git' 'python-setuptools' 'python-pip')
 source=("git+https://github.com/CravateRouge/$pkgname.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
@@ -30,29 +33,18 @@ package() {
   install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" *.md
 
-  rm -rf LICENSE *.md .gitignore
+  # Keep README.md because it is needed in pyproject.toml,
+  # else it prevents building
+  rm -rf LICENSE .gitignore
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
 exec python /usr/share/$pkgname/bloodyAD.py "\$@"
 EOF
 
   chmod a+x "$pkgdir/usr/bin/$pkgname"
-
-  cat > "$pkgdir/usr/bin/autobloody" << EOF
-#!/bin/sh
-exec python /usr/share/$pkgname/autobloody.py "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/autobloody"
-
-  cat > "$pkgdir/usr/bin/pathgen" << EOF
-#!/bin/sh
-exec python /usr/share/$pkgname/pathgen.py "\$@"
-EOF
-
-  chmod a+x "$pkgdir/usr/bin/pathgen"
 }
 
