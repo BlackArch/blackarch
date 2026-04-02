@@ -1,0 +1,41 @@
+# Maintainer: Zhangir Ospanov <zhangir.ospanov@proton.me>
+
+pkgname=jdwp-knife
+pkgver=1.0.0
+pkgrel=1
+pkgdesc='Advanced JDWP exploitation and data extraction tool with interactive shell.'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-scanner')
+url='https://github.com/s0ld13rr/jdwp-knife'
+license=('MIT')
+depends=('python')
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
+source=("$pkgname-$pkgver.tar.gz::${url}/archive/refs/tags/v${pkgver}.tar.gz")
+sha512sums=('a2b3ae5a2f24da440eac42c2b8d0e77c9373e614f16bc8d7d5fa740d72694df453da633792c54eb0e6de9d4d6b7487db1164327d51a824a63738caffa0381183')
+
+build() {
+  cd "${pkgname}-${pkgver}"
+
+  python -m build --wheel --no-isolation
+}
+
+check() {
+  cd "${pkgname}-${pkgver}"
+
+  # Проверка, что модуль корректно импортируется
+  python -c "import jdwp_knife; print('Import successful')"
+}
+
+package() {
+  cd "${pkgname}-${pkgver}"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+
+  # Установка man-страницы (если она есть в репозитории в папке man/)
+  if [ -f "man/${pkgname}.1" ]; then
+    install -Dm644 "man/${pkgname}.1" "${pkgdir}/usr/share/man/man1/${pkgname}.1"
+  fi
+
+  # Установка лицензии (критично для Arch-дистрибутивов)
+  install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}
