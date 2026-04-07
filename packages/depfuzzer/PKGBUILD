@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=depfuzzer
+pkgver=4.513b66f
+pkgrel=1
+pkgdesc="Find dependency confusion or project where owner's email can be takeover."
+arch=('any')
+groups=('blackarch' 'blackarch-code-audit' 'blackarch-scanner')
+url='https://github.com/synacktiv/DepFuzzer/'
+license=('MIT')
+depends=('python' 'python-requirements-parser' 'python-requests' 'python-pyfiglet' 'python-python-whois')
+makedepends=('git')
+source=("git+https://github.com/synacktiv/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a main.py utils/ "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+python /usr/share/$pkgname/main.py "\$@"
+EOF
+
+  chmod a+x "$pkgdir/usr/bin/$pkgname"
+}
