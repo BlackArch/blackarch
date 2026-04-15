@@ -6,27 +6,30 @@
 
 pkgname=python-selenium
 _pkgname=selenium
-pkgver=3.141.0
-pkgrel=10
-pkgdesc='Python binding for Selenium Remote Control.'
+pkgver=4.43.0
+pkgrel=1
+pkgdesc='Official Python bindings for Selenium WebDriver.'
 arch=('any')
 url='https://pypi.python.org/pypi/selenium'
-license=('Apache')
-depends=('python' 'python-urllib3')
-makedepends=('python-setuptools')
+license=('Apache-2.0')
+depends=('python' 'python-urllib3' 'python-websocket-client' 'python-trio'
+         'python-trio-websocket' 'python-typing_extensions' 'python-certifi')
+makedepends=('python-setuptools' 'python-build' 'python-wheel'
+             'python-installer' 'python-setuptools-rust')
 optdepends=('geckodriver: Firefox driver support')
 source=("https://pypi.io/packages/source/s/selenium/selenium-$pkgver.tar.gz")
-sha512sums=('3d2afbe9e96f88e9c055a89786b5090af387d3feba4598577b70fd3e0b20c2c09c4b25af920c654f52ec7e34f23181e6d278ac05f1a1f960d2d371ce7a6b82d8')
+sha512sums=('48fd7223a685f9a200d52e81b56b5ccd36add26741ff67ba311e194d14e95061b3c55cf338ba8ea10cd0b2fd436092a382165631616664eb95de30e3d2394f47')
 
 build() {
+  CFLAGS+=' -ffat-lto-objects'
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir/" --prefix=/usr -O1 --skip-build
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
