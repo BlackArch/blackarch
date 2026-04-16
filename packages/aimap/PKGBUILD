@@ -1,0 +1,36 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=aimap
+pkgver=1.1.1
+pkgrel=1
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-networking')
+pkgdesc='Security scanner and fingerprinter for AI/ML infrastructure. Identifies 23 service types including LLMs, vector databases, and model servers.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/Nicholas-Kloster/aimap'
+license=('MIT')
+makedepends=('go')
+source=("https://github.com/Nicholas-Kloster/aimap/archive/v$pkgver.tar.gz")
+sha512sums=('919f2e2077aa0fdd880f1540faa1ffa94d836de3a5e52bb0ba2bd9a0afc2c9fafb86ae7279f2a17339bd56a7cb631f157a17bbb08f97d0bb7a0af7b077b3e57c')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o "$pkgname" .
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -Dm 755 "$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 "aimap.1" "$pkgdir/usr/share/man/man1/aimap.1"
+  install -Dm 644 "LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 "README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
+}
