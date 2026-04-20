@@ -3,21 +3,26 @@
 
 pkgname=cyberscanai
 pkgver=75.ca85794
-pkgrel=3
+pkgrel=1
 pkgdesc='AI Agent Tool for Penetration Testing and Network Forensics'
 groups=('blackarch' 'blackarch-networking' 'blackarch-scanner')
 arch=('any')
 url='https://github.com/medbenali/CyberScanAI'
 license=('GPL3')
-depends=('python' 'python-scapy')
-makedepends=('git' 'python-pip')
+depends=('python' 'python-scapy' 'python-fastmcp')
+makedepends=('git')
 source=("$pkgname::git+https://github.com/medbenali/CyberScanAI.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
@@ -33,15 +38,10 @@ package() {
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  # Create virtual environment and install fastmcp
-  python3 -m venv "$pkgdir/usr/share/$pkgname/venv"
-  "$pkgdir/usr/share/$pkgname/venv/bin/pip" install --upgrade pip
-  "$pkgdir/usr/share/$pkgname/venv/bin/pip" install fastmcp
-
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec venv/bin/python3 CyberScanAI.py "\$@"
+exec python3 CyberScanAI.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
