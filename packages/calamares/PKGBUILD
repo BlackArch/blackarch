@@ -4,64 +4,74 @@
 # and later reworked to match https://github.com/arch-linux-calamares-installer/alci-pkgbuild/blob/master/calamares/alci-calamares/calamares-3.3.0.230321-04/PKGBUILD
 #
 # Old Maintainer: Philip Müller <philm[at]manjaro[dot]org>
+# Maintainer: Baxshilloyev Behruz <extreme29@proton.me>
 
 pkgname=calamares
-pkgver=3.3.0.23.0321
-pkgrel=1
+pkgver=3.4.2.26.0427
+pkgrel=3
 epoch=3
 pkgdesc='Distribution-independent installer framework.'
 url='https://github.com/calamares/calamares'
 arch=('x86_64' 'aarch64')
 license=('LGPL')
-depends=('kconfig' 'kcoreaddons' 'kiconthemes' 'ki18n' 'kio' 'solid' 'yaml-cpp'
-         'kpmcore' 'mkinitcpio-openswap' 'boost-libs' 'ckbcomp' 'hwinfo'
-         'qt5-svg' 'polkit-qt5' 'gtk-update-icon-cache' 'plasma-framework'
-         'qt5-xmlpatterns' 'squashfs-tools' 'libpwquality' 'appstream-qt' 'icu'
-         'efibootmgr' 'kdbusaddons' 'python')
-makedepends=('extra-cmake-modules' 'qt5-tools' 'qt5-translations' 'git' 'boost'
-             'kparts' 'kdbusaddons' 'python')
-backup=('usr/share/calamares/modules/bootloader.conf'
-        'usr/share/calamares/modules/displaymanager.conf'
-        'usr/share/calamares/modules/initcpio.conf'
-        'usr/share/calamares/modules/unpackfs.conf')
-source=($pkgname::git+https://github.com/calamares/calamares#commit=4f2ab85)
+
+depends=(
+  'kconfig' 'kcoreaddons' 'kiconthemes' 'ki18n' 'kio' 'solid'
+  'yaml-cpp' 'kpmcore' 'mkinitcpio-openswap'
+  'boost-libs' 'ckbcomp' 'hwinfo'
+  'qt6-base' 'qt6-declarative' 'qt6-svg'
+  'polkit-qt6' 'gtk-update-icon-cache'
+  'squashfs-tools' 'libpwquality'
+  'icu' 'efibootmgr' 'kdbusaddons'
+  'python' 'python-yaml' 'kcrash'
+)
+
+makedepends=(
+  'extra-cmake-modules' 'qt6-tools' 'qt6-translations'
+  'git' 'boost' 'kdbusaddons'
+  'python' 'ninja' 'cmake'
+)
+
+source=("$pkgname::git+https://github.com/calamares/calamares.git")
 sha512sums=('SKIP')
 
 prepare() {
   cd "$pkgname"
 
-  _ver="$(cat CMakeLists.txt | grep -m3 -e "  VERSION" | grep -o "[[:digit:]]*" | xargs | sed s'/ /./g')"
+  _ver="$(grep -m3 VERSION CMakeLists.txt | grep -o '[0-9]*' | xargs | sed 's/ /./g')"
+
   sed -i -e \
     "s|\${CALAMARES_VERSION_MAJOR}.\${CALAMARES_VERSION_MINOR}.\${CALAMARES_VERSION_PATCH}|${_ver}-${pkgrel}|g" \
     CMakeLists.txt
+
   sed -i -e "s|CALAMARES_VERSION_RC 1|CALAMARES_VERSION_RC 0|g" CMakeLists.txt
 }
 
 build() {
   cd "$pkgname"
 
-  mkdir -p build && cd build
+  cmake -S . -B build \
+    -GNinja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTING=OFF \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_INSTALL_LIBDIR=lib \
+    -DWITH_QT6=ON \
+    -DWITH_PYTHONQT=OFF \
+    -DWITH_KF5DBus=OFF \
+    -DBoost_NO_BOOST_CMAKE=ON \
+    -DCMAKE_DISABLE_FIND_PACKAGE_PartitionManager=ON \
+    -DSKIP_MODULES="webview tracking interactiveterminal initramfs \
+      initramfscfg dracut dracutlukscfg \
+      dummyprocess dummypython dummycpp \
+      dummypythonqt services-openrc \
+      keyboardq localeq welcomeq"
 
-  cmake .. \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_INSTALL_PREFIX=/usr \
-  -DCMAKE_INSTALL_LIBDIR=lib \
-  -DWITH_PYTHONQT=OFF \
-  -DWITH_KF5DBus=OFF \
-  -DBoost_NO_BOOST_CMAKE=ON \
-  -DWEBVIEW_FORCE_WEBKIT=OFF \
-  -DSKIP_MODULES="webview tracking interactiveterminal initramfs \
-  initramfscfg dracut dracutlukscfg \
-  dummyprocess dummypython dummycpp \
-  dummypythonqt services-openrc \
-  keyboardq localeq welcomeq"
-
-  make
+  cmake --build build
 }
 
 package() {
   cd "$pkgname/build"
-
-  make DESTDIR="$pkgdir" install
+  DESTDIR="$pkgdir" cmake --install .
 }
 
