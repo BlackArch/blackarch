@@ -2,33 +2,28 @@
 # See COPYING for license details.
 
 pkgname=opendoor
-pkgver=v.4.2.0.r4.g5f8a253
+pkgver=5.13.2
 pkgrel=1
 epoch=1
 pkgdesc='OWASP WEB Directory Scanner.'
-groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-recon')
 arch=('any')
 url='https://github.com/stanislav-web/OpenDoor'
 license=('GPL-3.0-or-later')
-depends=('python' 'python-urllib3' 'python-json2html' 'python-tabulate'
-         'python-ddt' 'python-mock')
+depends=(
+  'python'
+  'python-packaging'
+  'python-pysocks'
+  'python-six'
+  'python-tabulate'
+  'python-urllib3'
+)
 makedepends=('git' 'python-setuptools')
-source=("$pkgname::git+https://github.com/stanislav-web/OpenDoor.git")
+source=("$pkgname::git+https://github.com/stanislav-web/OpenDoor.git#tag=v$pkgver")
 sha512sums=('SKIP')
 
-pkgver() {
-  cd $pkgname
-
-  ( set -o pipefail
-    git describe --long --tags --abbrev=7 2>/dev/null |
-      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
-    printf "%s.%s" "$(git rev-list --count HEAD)" \
-      "$(git rev-parse --short=7 HEAD)"
-  )
-}
-
 package() {
-  cd $pkgname
+  cd "$pkgname"
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
@@ -36,16 +31,13 @@ package() {
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm *.md LICENSE
-
-  cp -a * "$pkgdir/usr/share/$pkgname/"
+  cp -a data src opendoor.py opendoor.conf VERSION "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
-exec python3 $pkgname.py "\$@"
+exec python3 opendoor.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
 }
-
