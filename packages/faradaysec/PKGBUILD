@@ -2,7 +2,8 @@
 # See COPYING for license details.
 
 pkgname=faradaysec
-pkgver=v3.19.0.r2714.ga9237b1
+_pkgname=faraday
+pkgver=5.20.0
 pkgrel=1
 epoch=1
 pkgdesc='Collaborative Penetration Test and Vulnerability Management Platform.'
@@ -35,38 +36,28 @@ depends=('couchdb' 'python' 'gtk3' 'gobject-introspection' 'vte3' 'zsh' 'curl'
          'python-flask-kvsession-fork' 'python-distro' 'python-faraday-plugins'
          'python-pendulum' 'python-prompt_toolkit' 'python-email-validator'
          'postgresql')
-makedepends=('git')
+makedepends=('git' 'python-build' 'python-wheel' 'python-installer'
+             'python-setuptools')
 options=('!strip')
 license=('GPL-3.0-or-later')
-source=("$pkgname::git+https://github.com/infobyte/faraday.git")
+source=("$pkgname::https://github.com/infobyte/$_pkgname/archive/refs/tags/v$pkgver.tar.gz")
 sha512sums=('SKIP')
 
-pkgver() {
-  cd $pkgname
-
-  ( set -o pipefail
-    git describe --long --tags --abbrev=7 2>/dev/null |
-      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
-    printf "%s.%s" "$(git rev-list --count HEAD)" \
-      "$(git rev-parse --short=7 HEAD)"
-  )
-}
-
 prepare() {
-  cd $pkgname
+  cd "$_pkgname-$pkgver"
 
-  sed -i 's/>=.*//g' requirements.txt
+  sed -i 's/setuptools>=61,<82/setuptools>=61,<83/g' pyproject.toml
 }
 
 build() {
-  cd $pkgname
+  cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --no-isolation
 }
 
 package() {
-  cd $pkgname
+  cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
