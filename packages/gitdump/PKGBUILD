@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=gitdump
-pkgver=1.682fa37
-pkgrel=9
+pkgver=1.fc8adc2
+pkgrel=1
+epoch=1
 pkgdesc='A pentesting tool that dumps the source code from .git even when the directory traversal is disabled.'
 groups=('blackarch' 'blackarch-webapp' 'blackarch-automation')
 arch=('any')
@@ -17,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
