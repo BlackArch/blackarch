@@ -1,46 +1,31 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-splinter
-pkgname=('python2-splinter' 'python-splinter')
+pkgname=python-splinter
 _pkgname=splinter
 pkgver=0.21.0
-pkgrel=3
+pkgrel=4
 pkgdesc='Browser abstraction for web acceptance testing.'
 arch=('any')
 url='https://pypi.org/project/splinter/#files'
-license=('custom:unknown')
-makedepends=('python2-setuptools' 'python-setuptools')
+license=('BSD-3-Clause')
+depends=('python' 'python-selenium')
+makedepends=('python-setuptools' 'python-build' 'python-installer'
+             'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
 sha512sums=('b279527d05de990dd632b7febe4ac0da9c3cbabe3c7982b2e67db607c8cb92bb3992f8b488d6e265a652c022ce59d37c9654d3e1ea92ede4e78fdb722e925fc4')
 
-prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
-}
-
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
   cd "$srcdir/$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --no-isolation
 }
 
-package_python2-splinter() {
-  depends=('python2' 'python2-selenium')
-
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-}
-
-package_python-splinter() {
-  depends=('python' 'python-selenium')
-
+package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python -m installer --destdir="$pkgdir" dist/*.whl
+
+  install -Dm644 LICENSE -t "${pkgdir}/usr/share/licenses/${pkgname}/"
 }
 
