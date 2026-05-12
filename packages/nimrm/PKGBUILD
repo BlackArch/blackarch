@@ -1,0 +1,41 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=nimrm
+pkgver=24.d9cb76b
+pkgrel=1
+pkgdesc='Native WinRM shell client with NTLM, Kerberos, file transfers, in-memory operations, and multi-session support.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-windows' 'blackarch-exploitation' 'blackarch-backdoor')
+url='https://github.com/blue0x1/nimrm'
+license=('MIT')
+depends=('openssl' 'krb5')
+makedepends=('git' 'nim')
+source=("git+https://github.com/blue0x1/nimrm.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  nim c -d:release -d:ssl --opt:speed -o:nimrm nimrm.nim
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 nimrm "$pkgdir/usr/bin/nimrm"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}
+
