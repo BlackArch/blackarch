@@ -3,21 +3,34 @@
 
 pkgname=traxss
 pkgver=81.48dee2e
-pkgrel=9
+pkgrel=10
 pkgdesc='Automated XSS Vulnerability Scanner.'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-automation')
 arch=('any')
 url='https://github.com/M4cs/traxss'
-license=('custom:unknown')
+license=('MIT')
 depends=('python' 'python-requests' 'python-selenium' 'python-crayons')
 makedepends=('git')
-source=("$pkgname::git+https://github.com/M4cs/$pkgname.git")
-sha512sums=('SKIP')
+source=("$pkgname::git+https://github.com/M4cs/$pkgname.git"
+        "selenium4-migration.patch")
+sha512sums=('SKIP'
+            '9eb7e2628d0b0d54ed435a22ccbc0cdf2c9a42bab415956a81ccfebdc0d9bdcffa7e1e8e110b7be2e83bacf649a56651ae93d42b2a4624cd6daa1cccbc2ba6d1')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  patch -p1 < ../selenium4-migration.patch
 }
 
 package() {
