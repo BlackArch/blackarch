@@ -1,0 +1,61 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# from AUR - adjusted to our style
+#
+# Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Contributor: Andrea Scarpino <andrea@archlinux.org>
+
+pkgname=qt5-location
+_basever=5.15.18
+pkgver=5.15.18+kde+r7
+pkgrel=3
+_commit=ba48a8b5cedd157d972c08d371ac2581db166bf7
+pkgdesc='Provides access to position, satellite and area monitoring classes.'
+arch=('x86_64' 'aarch64')
+url='https://www.qt.io'
+license=('GPL-3.0-or-later' 'LGPL-3.0-or-later' 'FDL' 'custom:unknown')
+depends=('qt5-declarative')
+makedepends=('git')
+_pkgfqn=${pkgname/5-/}
+source=("kde-$_pkgfqn::git+https://invent.kde.org/qt/qt/$_pkgfqn#commit=$_commit"
+        'git+https://invent.kde.org/qt/qt/qtlocation-mapboxgl.git')
+sha512sums=('e406c9736cf0158e6bd87c1802cd0f39d785f4e2333a919c4aa9590341511adf2311fcecd7e03e7ac18e91ef2946dfb92b7b1f33573332d781f4e75bc81b59b3'
+            'SKIP')
+
+pkgver() {
+  cd "kde-$_pkgfqn"
+
+  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit` |
+    sed -e 's|+kde+r0||'
+}
+
+prepare() {
+  mkdir -p build
+
+  cd "kde-$_pkgfqn"
+
+  git submodule init
+  git submodule set-url src/3rdparty/mapbox-gl-native \
+    "$srcdir/qtlocation-mapboxgl"
+  git -c protocol.file.allow=always submodule update
+}
+
+build() {
+  cd build
+
+  qmake "../kde-$_pkgfqn"
+
+  make
+}
+
+package() {
+  cd build
+
+  make INSTALL_ROOT="$pkgdir" install
+
+  # Drop QMAKE_PRL_BUILD_DIR because reference the build dir
+  find "$pkgdir/usr/lib" -type f -name '*.prl' \
+    -exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;
+}
+
