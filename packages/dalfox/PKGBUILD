@@ -2,42 +2,45 @@
 # See COPYING for license details.
 
 pkgname=dalfox
-pkgver=2579.48d7375
+pkgver=v3.0.0.r2.g50e2ccb
 pkgrel=1
-pkgdesc='Parameter Analysis and XSS Scanning tool.'
+pkgdesc='Powerful open-source XSS scanner and utility focused on automation.'
 arch=('x86_64' 'aarch64')
-groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-fuzzer' 'blackarch-scanner')
 url='https://github.com/hahwul/dalfox'
 license=('MIT')
 depends=('glibc')
-makedepends=('git' 'go')
+makedepends=('git' 'cargo')
 source=("git+https://github.com/hahwul/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
+  CFLAGS+=' -ffat-lto-objects'
   cd $pkgname
 
-  GOPATH="$srcdir" go mod download
-  GOPATH="$srcdir" go build \
-    -trimpath \
-    -buildmode=pie \
-    -mod=readonly \
-    -modcacherw \
-    -ldflags "-s -w" \
-    -o $pkgname .
+  cargo build --release --locked
+
 }
 
 package() {
   cd $pkgname
 
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
+
+  cp -a docs/ AGENTS.md CHANGELOG.md "$pkgdir/usr/share/doc/$pkgname/"
+
   install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
