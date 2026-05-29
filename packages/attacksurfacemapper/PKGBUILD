@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=attacksurfacemapper
-pkgver=47.8a402ed
-pkgrel=6
+pkgver=v1.1.r25.g8a402ed
+pkgrel=1
+epoch=1
 pkgdesc='Tool that aims to automate the reconnaissance process.'
 arch=('any')
 groups=('blackarch' 'blackarch-recon' 'blackarch-automation')
@@ -15,14 +16,27 @@ depends=('python' 'python-beautifulsoup4' 'python-colorama' 'python-dnslib'
          'python-shodan' 'python-tld' 'python-trans' 'python-validator-collection'
          'python-selenium' 'python-censys' 'python-backoff')
 makedepends=('git')
-source=("$pkgname::git+https://github.com/superhedgy/AttackSurfaceMapper.git")
-sha512sums=('SKIP')
+source=("$pkgname::git+https://github.com/superhedgy/AttackSurfaceMapper.git"
+        "selenium_update.patch")
+sha512sums=('SKIP'
+            'a5f9843dd93d01b6ad46b3fc43cffa19593efaef6718c83039627ae5924a064d439fe300812a56ef233c7ef0f0b5246f01a7b4e2d69aeee0de85b75549ec0d22')
 install="$pkgname.install"
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  patch -p1 < ../selenium_update.patch
 }
 
 package() {
