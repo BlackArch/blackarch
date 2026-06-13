@@ -1,0 +1,149 @@
+# BlackArch Code Improvement Report
+
+This report documents the improvements and bug fixes applied to the BlackArch Linux repository.
+
+## 1. Bug Fix: scripts/checkpkgs
+- **Issue**: The script was using an undefined variable `$name` in an error message instead of `$pkgname`.
+- **Improvement**: Corrected the variable name to ensure accurate error reporting.
+
+### Code Change:
+```bash
+# Old
+if [[ "$pkgname" != "$p" ]] ; then
+    echo "pkgname '$name' does not match directory '$p'"
+fi
+
+# New
+if [[ "$pkgname" != "$p" ]] ; then
+    echo "pkgname '$pkgname' does not match directory '$p'"
+fi
+```
+
+## 2. Refactoring: scripts/check-deps
+- **Issue**: The script had hardcoded values (`virtualbox`) and incorrect directory paths.
+- **Improvement**: 
+    - Made the script generic by accepting a package name as the first argument.
+    - Updated the path to point to the correct `packages/` directory.
+    - Added a check for the `yay` command dependency.
+
+### New Code:
+```bash
+#!/bin/sh
+# check deps recursively looking for a specified package ($1)
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 <package_name>"
+  exit 1
+fi
+
+grepstr="$1"
+
+if ! command -v yay >/dev/null 2>&1; then
+  echo "Error: 'yay' is not installed."
+  exit 1
+fi
+
+for i in packages/*
+do
+  pkgname=$(basename "$i")
+  echo "[$pkgname]"
+  for j in $(yay -Si "$pkgname" | grep -i 'depends on' | cut -d ':' -f 2-)
+  do
+    yay -Si "$j" | grep -i 'depends on' | cut -d ':' -f 2- | tr -s ' ' '\n' |
+    grep -i "$grepstr"
+  done
+done
+```
+
+## 3. Maintenance Policy Change: scripts/prep
+- **Issue**: The script was automatically replacing variables like `$pkgname` with their literal values in PKGBUILDs.
+- **Improvement**: Removed this behavior. Using variables in PKGBUILDs is an Arch Linux best practice that makes maintenance easier (e.g., when updating versions or source URLs).
+
+### Removed Sections:
+- Logic that replaced `\$pkgname`, `\$_pkgname`, and `\$_realname`.
+
+## 4. Modernization: GitHub Actions CI/CD
+- **Issue**: The project relied on an outdated Travis CI configuration.
+- **Improvement**: Created a new GitHub Actions workflow to provide a more reliable and integrated testing pipeline.
+
+### New File: `.github/workflows/test.yml`
+```yaml
+name: Test PKGBUILDs
+
+on:
+  pull_request:
+    paths:
+      - 'packages/*/PKGBUILD'
+
+jobs:
+  test-pkgbuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: packages/*/PKGBUILD
+      - name: Run tests
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "Testing $file"
+            dir=$(dirname "$file")
+            docker build -t builder -f travis/Dockerfile "$dir"
+            docker run --rm builder
+          done
+```
+
+## 5. Robustness: run-tests.sh
+- **Issue**: The script was heavily dependent on Travis-specific environment variables and lacked error checking.
+- **Improvement**:
+    - Added support for passing a commit range as an argument.
+    - Defaults to checking the last commit if no range is provided.
+    - Added existence checks for `pkgcheck` and `docker`.
+    - Added directory validation before attempting builds.
+
+### New Code:
+```bash
+#!/bin/bash
+
+COMMIT_RANGE=${1:-$TRAVIS_COMMIT_RANGE}
+
+if [ -z "$COMMIT_RANGE" ]; then
+  COMMIT_RANGE="HEAD~1..HEAD"
+fi
+
+echo "Checking changes in range: $COMMIT_RANGE"
+
+CHANGED_FILES=($(git diff --name-only "$COMMIT_RANGE" 2>/dev/null))
+
+if [ ${#CHANGED_FILES[@]} -eq 0 ]; then
+  echo "No changed files found in range."
+  exit 0
+fi
+
+for FILE in "${CHANGED_FILES[@]}"; do
+  if [[ $(basename "$FILE") == "PKGBUILD" ]]; then
+    echo "Processing $FILE"
+    if command -v pkgcheck >/dev/null 2>&1; then
+      pkgcheck "$FILE"
+    else
+      echo "Warning: pkgcheck not found, skipping linting."
+    fi
+
+    if command -v docker >/dev/null 2>&1; then
+      dir=$(dirname "$FILE")
+      if [ -f "$dir/PKGBUILD" ]; then
+        docker build -t builder -f travis/Dockerfile "$dir"
+        docker run --rm builder
+      fi
+    else
+      echo "Warning: docker not found, skipping build test."
+    fi
+  fi
+done
+```
