@@ -100,50 +100,14 @@ jobs:
 ```
 
 ## 5. Robustness: run-tests.sh
-- **Issue**: The script was heavily dependent on Travis-specific environment variables and lacked error checking.
-- **Improvement**:
-    - Added support for passing a commit range as an argument.
-    - Defaults to checking the last commit if no range is provided.
-    - Added existence checks for `pkgcheck` and `docker`.
-    - Added directory validation before attempting builds.
-
-### New Code:
-```bash
-#!/bin/bash
-
-COMMIT_RANGE=${1:-$TRAVIS_COMMIT_RANGE}
-
-if [ -z "$COMMIT_RANGE" ]; then
-  COMMIT_RANGE="HEAD~1..HEAD"
-fi
-
-echo "Checking changes in range: $COMMIT_RANGE"
-
-CHANGED_FILES=($(git diff --name-only "$COMMIT_RANGE" 2>/dev/null))
-
-if [ ${#CHANGED_FILES[@]} -eq 0 ]; then
-  echo "No changed files found in range."
-  exit 0
-fi
-
-for FILE in "${CHANGED_FILES[@]}"; do
-  if [[ $(basename "$FILE") == "PKGBUILD" ]]; then
-    echo "Processing $FILE"
-    if command -v pkgcheck >/dev/null 2>&1; then
-      pkgcheck "$FILE"
-    else
-      echo "Warning: pkgcheck not found, skipping linting."
-    fi
-
-    if command -v docker >/dev/null 2>&1; then
-      dir=$(dirname "$FILE")
-      if [ -f "$dir/PKGBUILD" ]; then
-        docker build -t builder -f travis/Dockerfile "$dir"
-        docker run --rm builder
-      fi
-    else
-      echo "Warning: docker not found, skipping build test."
-    fi
-  fi
+...
 done
 ```
+
+## 6. System-Level: Security Auditing (baaudit & babuild)
+- **New Tool**: `scripts/baaudit`
+    - Automatically audits built ELF binaries for PIE, RELRO, Stack Canaries, and NX bits using `checksec`.
+- **Integration**: `scripts/babuild`
+    - Modified to automatically run `baaudit` on every package after a successful build.
+- **Benefit**: Ensures that all tools distributed via BlackArch repositories meet modern security hardening standards, providing a higher level of safety for end-users.
+
