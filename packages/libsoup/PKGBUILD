@@ -1,0 +1,59 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
+# Contributor: Jan de Groot <jgc@archlinux.org>
+
+pkgbase=libsoup
+pkgname=('libsoup' 'libsoup-docs')
+pkgver=2.74.3
+pkgrel=4
+pkgdesc='HTTP client/server library for GNOME.'
+url='https://wiki.gnome.org/Projects/libsoup'
+arch=('x86_64' 'aarch64')
+license=('LGPL-2.0-or-later')
+depends=('brotli' 'glib-networking' 'glib2' 'glibc' 'krb5' 'libpsl'
+         'libsysprof-capture' 'libxml2' 'sqlite' 'zlib')
+makedepends=('git' 'glib2-devel' 'gobject-introspection' 'gtk-doc' 'meson'
+             'samba' 'vala')
+checkdepends=('apache' 'php-apache')
+source=("git+https://gitlab.gnome.org/GNOME/libsoup.git#tag=$pkgver"
+        '0001-Disable-flaky-test.patch')
+b2sums=('9f2a278482af7ab851aa08b69f59bdd9de8187cac8cb2ac0d904ff087155afaadab253842d7c48fd8e162b3cba742565226e3ec390e671dc7921075fc089949d'
+        'b468451f6e411c3a4e0b03b593ea8498f74d73bca6ee679baa6c81c45de0773ddc5d627000dcc3738c9ae4ba59cad36c63ca074c6f4bfb7c3574cda3452a670e')
+
+prepare() {
+  cd $pkgbase
+
+  # Include fixes from the maintained 2.74 branch.
+  git cherry-pick -n 2.74.3..5739a090529209c2afc13f482256573bcd9ce940
+  git apply -3 ../0001-Disable-flaky-test.patch
+}
+
+build() {
+  arch-meson $pkgbase build -D gtk_doc=true
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
+}
+
+package_libsoup() {
+  depends+=('libbrotlidec.so' 'libgssapi_krb5.so' 'libglib-2.0.so'
+            'libgobject-2.0.so' 'libgio-2.0.so' 'libpsl.so')
+  optdepends=('samba: Windows Domain SSO')
+  provides=('libsoup-2.4.so' 'libsoup-gnome-2.4.so')
+
+  meson install -C build --destdir "$pkgdir"
+
+  install -dm 755 doc/usr/share
+  mv "$pkgdir/usr/share/gtk-doc" doc/usr/share/
+}
+
+package_libsoup-docs() {
+  pkgdesc+=' (documentation)'
+  depends=()
+
+  mv doc/* "$pkgdir"
+}
