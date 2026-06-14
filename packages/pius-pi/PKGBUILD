@@ -1,17 +1,18 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgname=titus
-pkgver=v1.2.2.r0.g1ea17fd
+pkgname=pius-pi
+_pkgname=pius
+pkgver=1.1.1.r0.gbb9d8c3
 pkgrel=1
-pkgdesc='High-performance secrets scanner based on NoseyParker.'
+pkgdesc='Organizational asset discovery tool with 20+ plugins covering certificate transparency, passive DNS, and all 5 Regional Internet Registries.'
 arch=('x86_64' 'aarch64')
-groups=('blackarch' 'blackarch-scanner' 'blackarch-code-audit')
-url='https://github.com/praetorian-inc/titus'
+groups=('blackarch' 'blackarch-recon' 'blackarch-scanner')
+url='https://github.com/praetorian-inc/pius'
 license=('Apache-2.0')
 depends=('glibc')
 makedepends=('git' 'go')
-source=("git+https://github.com/praetorian-inc/$pkgname.git")
+source=("$pkgname::git+https://github.com/praetorian-inc/$_pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
@@ -19,7 +20,7 @@ pkgver() {
 
   ( set -o pipefail
     git describe --long --tags --abbrev=7 2>/dev/null |
-      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+      sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' ||
     printf "%s.%s" "$(git rev-list --count HEAD)" \
       "$(git rev-parse --short=7 HEAD)"
   )
@@ -29,13 +30,13 @@ build() {
   cd $pkgname
 
   GOPATH="$srcdir" go mod download
-  GOPATH="$srcdir" GOWORK=off CGO_ENABLED=0 go build \
+  GOPATH="$srcdir" go build \
     -trimpath \
     -buildmode=pie \
     -mod=readonly \
     -modcacherw \
     -ldflags "-s -w" \
-    -o $pkgname ./cmd/$pkgname
+    -o $pkgname "./cmd/$_pkgname"
 }
 
 package() {
@@ -43,9 +44,5 @@ package() {
 
   install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-
-  cp -a docs/ "$pkgdir/usr/share/doc/$pkgname/"
-
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
