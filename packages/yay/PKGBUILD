@@ -3,14 +3,14 @@
 
 pkgname=yay
 pkgver=12.6.0
-pkgrel=1
+pkgrel=2
 pkgdesc='Yet another yogurt. Pacman wrapper and AUR helper written in go.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-misc')
 url='https://github.com/Jguer/yay'
 license=('GPL-3.0-or-later')
 depends=('pacman' 'git')
-makedepends=('go-pie')
+makedepends=('go')
 optdepends=('sudo')
 source=("https://github.com/Jguer/$pkgname/archive/v$pkgver.tar.gz")
 sha512sums=('139e3de6028594ab02820a10a5711bb4f96988832f29a9d1e035e8168f026c027eeffd82118ebae9fa58b476c5cccc31aaa3d91b595ad74fc3d7f6af58a6e043')
@@ -18,9 +18,14 @@ sha512sums=('139e3de6028594ab02820a10a5711bb4f96988832f29a9d1e035e8168f026c027ee
 build() {
   cd "$pkgname-$pkgver"
 
-  EXTRA_GOFLAGS="-gcflags all=-trimpath=${PWD} -asmflags all=-trimpath=${PWD}" \
-    LDFLAGS="-linkmode external -extldflags \"${LDFLAGS}\"" \
-    make VERSION="$pkgver" DESTDIR="$pkgdir" build
+  export GOPATH="$srcdir"/gopath
+  export CGO_CPPFLAGS="${CPPFLAGS}"
+  export CGO_CFLAGS="${CFLAGS}"
+  export CGO_CXXFLAGS="${CXXFLAGS}"
+  export CGO_LDFLAGS="${LDFLAGS}"
+  export CGO_ENABLED=1
+
+  make VERSION=$pkgver DESTDIR="$pkgdir" PREFIX=/usr build
 }
 
 package() {
