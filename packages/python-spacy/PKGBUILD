@@ -2,41 +2,32 @@
 # See COPYING for license details.
 
 pkgname=python-spacy
-_pkgname=spacy
-pkgver=3.8.11
+_pkgname=spaCy
+pkgver=3.8.14
 pkgrel=1
 pkgdesc='Industrial-strength Natural Language Processing (NLP) in Python.'
 arch=('x86_64' 'aarch64')
-url='https://pypi.org/project/spacy/#files'
+url='https://github.com/explosion/spaCy'
 license=('MIT')
 depends=('python-catalogue' 'python-cymem' 'python-jinja' 'python-murmurhash'
          'python-numpy' 'python-pathlib' 'python-plac' 'python-preshed'
          'python-regex' 'python-requests' 'python-srsly' 'python-thinc'
-         'python-tqdm' 'python-typer' 'python-ujson' 'python-wasabi')
-makedepends=('python-pip' 'python-build' 'python-wheel' 'cython')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('a63ae83b8c880354974fc935f529627cf599e30c6b7cafa4faac627177bd30df12c1768303f0795947cbefe1bcc4c0edd60ae2bbeaf7fc367d8e89f4aec46edf')
+         'python-tqdm' 'python-typer' 'python-ujson' 'python-wasabi'
+         'python-weasel')
+makedepends=('python-installer' 'python-build' 'python-wheel' 'cython'
+             'python-setuptools' 'python-confection')
+source=("https://github.com/explosion/spaCy/archive/refs/tags/release-v$pkgver.tar.gz")
+sha512sums=('25fdc6b39d24cde41ee7165a4d32c339227c23a6488ff8718329a64a4e1b24da567f87899b027737537dbd072dd731c0d3183469f2cc513f00274d9824f89fd5')
 
 build() {
-  cd "$_pkgname-$pkgver"
+  cd "$_pkgname-release-v$pkgver"
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
-  cd "$_pkgname-$pkgver"
+  cd "$_pkgname-release-v$pkgver"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $_pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
