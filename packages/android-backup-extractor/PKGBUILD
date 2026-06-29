@@ -1,0 +1,50 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=android-backup-extractor
+pkgver=20251027
+pkgrel=1
+pkgdesc='Android backup extractor'
+arch=('any')
+groups=('blackarch' 'blackarch-mobile')
+url='https://github.com/nelenkov/android-backup-extractor'
+license=('Apache-2.0')
+depends=('java-runtime')
+makedepends=('maven' 'git')
+source=("git+https://github.com/nelenkov/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  mvn clean package -DskipTests
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+
+  install -Dm 755 "target/abe.jar" \
+    "$pkgdir/usr/share/$pkgname/$pkgname-$pkgver.jar"
+
+  cat > "$pkgdir/usr/bin/abe" << EOF
+#!/bin/sh
+exec java -jar /usr/share/$pkgname/$pkgname-$pkgver.jar "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/abe"
+}
