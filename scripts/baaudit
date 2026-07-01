@@ -1,0 +1,54 @@
+#!/bin/bash
+# baaudit - BlackArch System-Level Security Auditor for ELF binaries
+# Checks for PIE, RELRO, Stack Canaries, and NX bits.
+
+if ! command -v checksec >/dev/null 2>&1; then
+    echo "Error: 'checksec' (from the checksec package) is required."
+    exit 1
+fi
+
+usage() {
+    echo "Usage: $0 <package_file.pkg.tar.zst>"
+    exit 1
+}
+
+if [ $# -lt 1 ]; then
+    usage
+fi
+
+pkg_file="$1"
+
+if [ ! -f "$pkg_file" ]; then
+    echo "Error: File '$pkg_file' not found."
+    exit 1
+fi
+
+tmp_dir=$(mktemp -d /tmp/baaudit.XXXXXX)
+trap 'rm -rf "$tmp_dir"' EXIT
+
+echo "Extracting $pkg_file to check binaries..."
+tar -xvf "$pkg_file" -C "$tmp_dir" > /dev/null 2>&1
+
+# Find all ELF binaries
+elf_files=$(find "$tmp_dir" -type f -exec file {} + | grep "ELF" | cut -d: -f1)
+
+if [ -z "$elf_files" ]; then
+    echo "No ELF binaries found in package."
+    exit 0
+fi
+
+echo "Auditing security flags for binaries in $pkg_file:"
+echo "------------------------------------------------"
+
+for binary in $elf_files; do
+    rel_path=${binary#$tmp_dir}
+    echo "Binary: $rel_path"
+    checksec --file="$binary" --output=csv | awk -F, '{
+        printf "  RELRO:    %s\n", $2
+        printf "  Canary:   %s\n", $3
+        printf "  NX:       %s\n", $4
+        printf "  PIE:      %s\n", $5
+        printf "  Fortify:  %s\n", $7
+    }'
+    echo "------------------------------------------------"
+done
