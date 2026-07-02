@@ -3,14 +3,14 @@
 
 pkgname=driftnet
 pkgver=v1.6.0.r0.g4c8a849
-pkgrel=1
+pkgrel=2
 epoch=1
 groups=('blackarch' 'blackarch-scanner' 'blackarch-sniffer')
 pkgdesc='Listens to network traffic and picks out images from TCP streams it observes.'
 arch=('x86_64' 'aarch64')
 url='http://www.ex-parrot.com/~chris/driftnet/'
-license=('GPL2')
-depends=('libjpeg' 'libpcap' 'gtk2' 'giflib' 'libwebsockets')
+license=('GPL-2.0-or-later')
+depends=('libjpeg-turbo' 'libpcap' 'gtk2' 'giflib' 'libwebsockets')
 makedepends=('git' 'imake')
 source=("git+https://github.com/deiv/$pkgname.git")
 sha512sums=('SKIP')
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
