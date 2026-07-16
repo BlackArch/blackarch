@@ -3,7 +3,7 @@
 
 pkgname=burpsuite
 pkgver=2026.6
-pkgrel=1
+pkgrel=3
 epoch=1
 groups=('blackarch' 'blackarch-webapp' 'blackarch-proxy' 'blackarch-scanner'
         'blackarch-fuzzer')
@@ -13,17 +13,26 @@ url='https://portswigger.net/burp/releases'
 license=('custom')
 depends=('java-runtime>=17' 'giflib' 'libxext' 'libxrender' 'libxtst')
 makedepends=('git')
+checkdepends=('file' 'grep')
 noextract=("$pkgname.jar")
-source=("$pkgname.jar::https://portswigger.net/burp/releases/download?product=community&version=$pkgver&type=jar"
+source=("$pkgname.jar::https://portswigger.net/burp/releases/download?product=desktop&version=$pkgver&type=Jar"
         'LICENSE'
         "$pkgname.desktop"
         'icon64.png'
         'git+https://github.com/PortSwigger/command-injection-attacker.git')
-sha512sums=('65c36ff78df966217013b9bcf94a80679d5b2f97c54f00ef15190025e733756b31887b9fede8de6d3fec045ed356b0d09c9862ab5b290d987ccc48d561783f8f'
+sha512sums=('749bf77352368bcdf146dce59a6ef6f42004a0cd1cf50241e24741f65823ff90b6be9217b2a1c3297297f73896e8369b4a8412df739844e80e1915338257a314'
             '07f646ce79e4e259c8da4a16ecd9b0149f09cd047ab42bfb758dc1cd4871710866e4dae6cda572f96fb49d0b156e64dd7b0a78904d9d367d41136214de5488a2'
             '292dcc47a625f69f0a235c8333e74eef437ec77095f731e97e5065261a7067a03f361375a10631828b42484f77b3e5d24ce71ceff174b0d6083f3a7abebe677c'
             '928083e0189ce50304c4b32f8f6ef56be79881090bffdaddb5e990a59186ed2596c03293255693d488a47519e6da4e969e74e9bfe22a0f6ca53491a4e0749575'
             'SKIP')
+
+
+check() {
+  # when the download URL changes, the file downloaded can be a HTML page instead of the real JAR
+  # version burp then results in silent broken package
+  # this check ensure the current upstream source URL is still valid
+  file --brief --mime --dereference "$pkgname.jar" | grep 'application/java-archive'
+}
 
 package() {
   install -dm 755 "$pkgdir/usr/bin"
