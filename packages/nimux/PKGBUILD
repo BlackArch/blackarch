@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=nimux
+pkgver=v1.0.2
+pkgrel=1
+pkgdesc='Pure-Nim network enumeration and remote execution toolkit.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-networking' 'blackarch-windows' 'blackarch-exploitation')
+url='https://github.com/blue0x1/nimux'
+license=('AGPL-3.0-only')
+depends=('openssl' 'krb5' 'zlib' 'zstd')
+makedepends=('git' 'nim')
+source=("git+https://github.com/blue0x1/nimux.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  nim c -d:release --opt:speed -o:nimux src/nimux.nim
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 nimux "$pkgdir/usr/bin/nimux"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}
