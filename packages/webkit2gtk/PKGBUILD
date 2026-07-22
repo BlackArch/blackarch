@@ -9,7 +9,7 @@
 pkgbase=webkit2gtk
 pkgname=('webkit2gtk' 'webkit2gtk-docs')
 pkgver=2.50.6
-pkgrel=3
+pkgrel=4
 pkgdesc='Web content engine for GTK.'
 url='https://webkitgtk.org/'
 arch=('x86_64' 'aarch64')
@@ -35,6 +35,13 @@ makedepends=('clang' 'cmake' 'gi-docgen' 'glib2-devel' 'gobject-introspection'
 source=("$url/releases/webkitgtk-$pkgver.tar.xz")
 sha512sums=('62723af51a14aa2352a2ac54b5dab975afce1aee8ce43924666da08f280495c83b86649ff00fb59fcc0cc0ca80b9a78843b1c0ed568a2d77a2312c13889d8ab4')
 
+prepare() {
+  cd "webkitgtk-$pkgver"
+  sed -i \
+    's|(\${framework} STREQUAL \${_linked_into}) OR (NOT \${_linked_into} IN_LIST|("${framework}" STREQUAL "${_linked_into}") OR (NOT "${_linked_into}" IN_LIST|' \
+    Source/cmake/WebKitMacros.cmake
+}
+
 build() {
   local cmake_options=(
     -D CMAKE_BUILD_TYPE=Release
@@ -50,6 +57,12 @@ build() {
     -D USE_GTK4=OFF
     -D USE_LIBBACKTRACE=OFF
   )
+
+  # Limit parallel builds to what the user configured in /etc/makepkg.conf, also MAKEFLAGS
+  # might contains more than just -j<N>
+  export CMAKE_BUILD_PARALLEL_LEVEL=$(echo "$MAKEFLAGS" | sed 's/.*\(-j[ =]\?\|--jobs[ =]\)\([0-9]\+\).*/\2/' )
+  # If CMAKE_BUILD_PARALLEL_LEVEL is still empty assign half of nproc as default value
+  export CMAKE_BUILD_PARALLEL_LEVEL=${CMAKE_BUILD_PARALLEL_LEVEL:=$(( $(nproc) / 2 ))}
 
   # Upstream prefers Clang
   # https://gitlab.archlinux.org/archlinux/packaging/packages/webkitgtk-6.0/-/issues/4
