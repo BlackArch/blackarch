@@ -1,0 +1,129 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# From AUR
+
+# Maintainer: Patrick Northon <northon_patrick3@yahoo.ca>
+# Contributor: Frederik “Freso” S. Olesen <archlinux@freso.dk>
+# Contributor: Levente Polyak <anthraxx[at]archlinux[dot]org>
+# Contributor: Frederik Schwan <freswa at archlinux dot org>
+# Contributor: Maxime Gauduin <alucryd@archlinux.org>
+# Contributor: Guillaume Alaux <guillaume@archlinux.org>
+# Contributor: William Gathoye <william + archlinux at gathoye dot be>
+# Contributor: Emanuel Couto <emanuel dot amaral dot couto at gmail dot com>
+# Contributor: Richard Jackson <rdjack21 at gmail dot com>
+# Contributor: Tinx <arch at tinx dot eu>
+# Contributor: Jens Kapitza <j dot kapitza at schwarze-allianz dot de>
+# Contributor: Olli <olli at coderkun dot de>
+
+: ${_use_gradle_wrapper:=1}
+
+pkgbase=java-openjfx
+pkgname=(
+  java-openjfx
+  java-openjfx-doc
+  java-openjfx-src
+)
+_java_build_ver=25
+_java_run_ver=25
+_tag='28+0'
+pkgver=${_tag//+/.}
+pkgrel=1
+pkgdesc='Java OpenJFX client application platform (open-source implementation of JavaFX) - latest version'
+arch=('x86_64' 'aarch64')
+url='https://wiki.openjdk.java.net/display/OpenJFX/Main'
+license=('GPL-2.0-only WITH Classpath-exception-2.0')
+makedepends=('alsa-lib' 'ant' 'cairo' 'cmake' 'ffmpeg' 'freetype2' 'gdk-pixbuf2' 'glib2'
+'gperf' 'gtk3' "java-environment-openjdk=$_java_build_ver" 'libgl' 'libx11'
+'libxtst' 'libxxf86vm' 'pango' 'perl' 'python' 'unzip' 'zip')
+if (( !_use_gradle_wrapper )); then
+  makedepends+=('gradle')
+fi
+options=(!lto)
+source=(
+  "${pkgbase}-${pkgver}.tar.gz::https://github.com/openjdk/jfx/archive/refs/tags/${_tag}.tar.gz"
+  "${pkgbase}-gradle.properties"
+  "${pkgbase}-flags.patch"
+  "${pkgbase}-profile"{.sh,.csh}
+  "${pkgbase}-env.sh"
+)
+sha512sums=('33a3d388cfa18a22bf69595819925f32d7c5175ef5c9bc30f2f15d4366afb1a84c4e674cc404ea0e80b62e7e54c7df41dacf43a8748c1e3fa73745b72cc1cf3c'
+            'b204a747c0fc309599f48cfa2027598f0692efb5520d5042c9c8f1e4362c6ff3bc4a7f03fd606eb8dbf31311a85ebaa1943ff1be56f950512ea97edc64cbc98e'
+            '0c7df85cbfa2415e6f4314805fb5d05e3989a3c5d7ef8e1f8994e4e838a4c3e5f219d90e9b5c4543773da19726e2de578b5df0de400078b02937cf50d420ece1'
+            '25287bb93a6a87d27b764c1dee41246824b77f433c56bf4095762ca2d51779b4d386fafb8a02b3e32b0b260d91b8e2224064c55c0a914353871ac421efd08ee5'
+            '4a57484d39694a3eeb6641a35c1bb22c67d5c583a577817a815198e5d6dc1d22952eb3542a5dbc938cf605823eaf521a284cda81e496c2a8c77bce63cf07bb89'
+            '4b10412e18446a4767a13e42a5596dd1b34223d0e890813bdd021d8cf1a3c2d030cc9269b6892039dcdc0cd0889a13834f397f36b12080c2434d7c6a90a984e6')
+
+_jfxdir="jfx-${_tag//+/-}"
+if (( _use_gradle_wrapper )); then
+  _gradle=(sh ./gradlew)
+else
+  _gradle=(gradle)
+fi
+
+prepare() {
+  cd $_jfxdir
+
+  # Clean from potential previous runs
+  "${_gradle[@]}" --stop
+  rm -rf build
+
+  ln -sf "../${pkgbase}-gradle.properties" 'gradle.properties'
+  patch -Np1 -i "../${pkgbase}-flags.patch"
+  sed 's|, "-Werror"||g' -i buildSrc/linux.gradle
+}
+
+build() {
+  cd $_jfxdir
+
+  # Build with openjdk $_java_build_ver
+  export PATH="/usr/lib/jvm/java-$_java_build_ver-openjdk/bin/:$PATH"
+
+  # Workaround for situation where the linker treats whitespace as arguments
+  export LDFLAGS="${LDFLAGS//+([[:space:]]|[[:blank:]])/ }"
+
+  export CFLAGS+=" -Wno-error=implicit-function-declaration"
+
+  "${_gradle[@]}" --no-daemon zips
+}
+
+package_java-openjfx() {
+  depends=(
+    "java-runtime-openjdk>=$_java_run_ver"
+    libgl
+    libx11
+    libxtst
+  )
+  optdepends=('gtk3: GTK3 support')
+  provides=(java-openjfx=${pkgver%%.*})
+
+  cd $_jfxdir
+
+  install -dm 755  "${pkgdir}"/usr/{lib/$pkgbase,share/java/$pkgbase,share/licenses}
+  cp -dr --no-preserve=ownership build/sdk/lib/*.jar "${pkgdir}/usr/share/java/$pkgbase"
+  cp -dr --no-preserve=ownership build/sdk/lib/*.so "${pkgdir}/usr/lib/$pkgbase"
+  cp -dr --no-preserve=ownership build/jmods "${pkgdir}/usr/share/java/$pkgbase"
+  cp -dr --no-preserve=ownership build/sdk/legal "${pkgdir}/usr/share/licenses/$pkgbase"
+
+  install -Dm644 "${srcdir}/${pkgbase}-profile"{.sh,.csh} -t "${pkgdir}/etc/profile.d"
+  install -Dm755 "${srcdir}/${pkgbase}-env.sh" "${pkgdir}/usr/bin/${pkgbase}-env"
+}
+
+package_java-openjfx-doc() {
+  arch=(any)
+  cd $_jfxdir
+
+  install -dm 755 "${pkgdir}"/usr/share/{doc,licenses}
+  cp -dr --no-preserve=ownership build/javadoc "${pkgdir}/usr/share/doc/$pkgbase"
+  ln -s "$pkgbase" "${pkgdir}/usr/share/licenses/$pkgbase-doc"
+}
+
+package_java-openjfx-src() {
+  arch=(any)
+  cd $_jfxdir
+
+  install -dm 755  "${pkgdir}"/usr/{lib/jvm/java-$_java_build_ver-openjdk,share/licenses}
+  install -m 644 build/sdk/src.zip "${pkgdir}/usr/lib/jvm/java-$_java_build_ver-openjdk/javafx-src.zip"
+  ln -s "$pkgbase" "${pkgdir}/usr/share/licenses/$pkgbase-src"
+}
+

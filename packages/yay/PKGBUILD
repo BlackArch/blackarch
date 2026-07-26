@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=yay
-pkgver=12.5.7
+pkgver=13.0.1
 pkgrel=1
 pkgdesc='Yet another yogurt. Pacman wrapper and AUR helper written in go.'
 arch=('x86_64' 'aarch64')
@@ -10,17 +10,22 @@ groups=('blackarch' 'blackarch-misc')
 url='https://github.com/Jguer/yay'
 license=('GPL-3.0-or-later')
 depends=('pacman' 'git')
-makedepends=('go-pie')
-optdepends=('sudo')
+makedepends=('go>=1.24')
+optdepends=('sudo' 'doas')
 source=("https://github.com/Jguer/$pkgname/archive/v$pkgver.tar.gz")
-sha512sums=('98ba4f87e07c3dde403039f11fa18aae0970273210c0a6516309fbe2d3e1fc110e9bf9e65706d4e3dc40eb793920475f7143c9603cb05cd8fbc6b3d3b1d22f16')
+sha512sums=('9c16b80b69d0793a9c14ce38bc6f3e67146ae00963e9bd664feba57ffcfbdba238bc6d375bf3d379aa9fa1228e28e4c5ce13cd3c733cb247eb19f3bbaa43d6c4')
 
 build() {
+  export GOPATH="$srcdir"/gopath
+  export CGO_CPPFLAGS="${CPPFLAGS}"
+  export CGO_CFLAGS="${CFLAGS}"
+  export CGO_CXXFLAGS="${CXXFLAGS}"
+  export CGO_LDFLAGS="${LDFLAGS}"
+  export CGO_ENABLED=1
+
   cd "$pkgname-$pkgver"
 
-  EXTRA_GOFLAGS="-gcflags all=-trimpath=${PWD} -asmflags all=-trimpath=${PWD}" \
-    LDFLAGS="-linkmode external -extldflags \"${LDFLAGS}\"" \
-    make VERSION="$pkgver" DESTDIR="$pkgdir" build
+  make VERSION=$pkgver DESTDIR="$pkgdir" PREFIX=/usr build
 }
 
 package() {

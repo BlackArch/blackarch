@@ -1,0 +1,95 @@
+diff -upr libowfat-0.34.orig/buffer/buffer_frombuf.c libowfat-0.34/buffer/buffer_frombuf.c
+--- libowfat-0.34.orig/buffer/buffer_frombuf.c	2025-06-05 13:04:55.953444541 +0000
++++ libowfat-0.34/buffer/buffer_frombuf.c	2025-06-05 13:07:56.706475665 +0000
+@@ -14,6 +14,6 @@ void buffer_frombuf(buffer* b,const char
+   b->n=l;
+   b->a=l;
+   b->fd=0;
+-  b->op=dummyreadwrite;
++  b->op=(ssize_t (*)())dummyreadwrite;
+   b->deinit=0;
+ }
+diff -upr libowfat-0.34.orig/buffer/buffer_init.c libowfat-0.34/buffer/buffer_init.c
+--- libowfat-0.34.orig/buffer/buffer_init.c	2025-06-05 13:04:55.954260901 +0000
++++ libowfat-0.34/buffer/buffer_init.c	2025-06-05 13:08:59.040375115 +0000
+@@ -2,7 +2,7 @@
+ 
+ void buffer_init(buffer* b,ssize_t (*op)(),int fd,
+ 		 char* y,size_t ylen) {
+-  b->op=op;
++  b->op=(ssize_t (*)())op;
+   b->fd=fd;
+   b->x=y;
+   b->a=ylen;
+diff -upr libowfat-0.34.orig/buffer/buffer_init_read.c libowfat-0.34/buffer/buffer_init_read.c
+--- libowfat-0.34.orig/buffer/buffer_init_read.c	2025-06-05 13:04:55.954376812 +0000
++++ libowfat-0.34/buffer/buffer_init_read.c	2025-06-05 13:09:27.488368184 +0000
+@@ -3,7 +3,7 @@
+ 
+ int buffer_init_read(buffer* b, int fd, char* y,size_t ylen) {
+   if (fd==-1) return -1;
+-  buffer_init(b, read, fd, y, ylen);
++  buffer_init(b, (ssize_t (*)())read, fd, y, ylen);
+   return 0;
+ }
+ 
+diff -upr libowfat-0.34.orig/buffer/buffer_init_read_allocbuf.c libowfat-0.34/buffer/buffer_init_read_allocbuf.c
+--- libowfat-0.34.orig/buffer/buffer_init_read_allocbuf.c	2025-06-05 13:04:55.954406172 +0000
++++ libowfat-0.34/buffer/buffer_init_read_allocbuf.c	2025-06-05 13:10:05.473383454 +0000
+@@ -2,6 +2,6 @@
+ #include "buffer.h"
+ 
+ int buffer_init_read_allocbuf(buffer* b, int fd, size_t ylen) {
+-  return buffer_init_allocbuf(b, read, fd, ylen);
++  return buffer_init_allocbuf(b, (ssize_t (*)())read, fd, ylen);
+ }
+ 
+diff -upr libowfat-0.34.orig/buffer/buffer_init_write.c libowfat-0.34/buffer/buffer_init_write.c
+--- libowfat-0.34.orig/buffer/buffer_init_write.c	2025-06-05 13:04:55.954492336 +0000
++++ libowfat-0.34/buffer/buffer_init_write.c	2025-06-05 13:11:27.055825690 +0000
+@@ -3,7 +3,7 @@
+ 
+ int buffer_init_write(buffer* b, int fd, char* y,size_t ylen) {
+   if (fd==-1) return -1;
+-  buffer_init(b, write, fd, y, ylen);
++  buffer_init(b, (ssize_t (*)())write, fd, y, ylen);
+   return 0;
+ }
+ 
+diff -upr libowfat-0.34.orig/buffer/buffer_init_write_allocbuf.c libowfat-0.34/buffer/buffer_init_write_allocbuf.c
+--- libowfat-0.34.orig/buffer/buffer_init_write_allocbuf.c	2025-06-05 13:04:55.954520046 +0000
++++ libowfat-0.34/buffer/buffer_init_write_allocbuf.c	2025-06-05 13:11:03.334025742 +0000
+@@ -2,6 +2,6 @@
+ #include "buffer.h"
+ 
+ int buffer_init_write_allocbuf(buffer* b, int fd, size_t ylen) {
+-  return buffer_init_allocbuf(b, write, fd, ylen);
++  return buffer_init_allocbuf(b, (ssize_t (*)())write, fd, ylen);
+ }
+ 
+diff -upr libowfat-0.34.orig/buffer/buffer_tosa.c libowfat-0.34/buffer/buffer_tosa.c
+--- libowfat-0.34.orig/buffer/buffer_tosa.c	2025-06-05 13:04:55.956117620 +0000
++++ libowfat-0.34/buffer/buffer_tosa.c	2025-06-05 13:11:51.320981423 +0000
+@@ -21,7 +21,7 @@ int buffer_tosa(buffer* b,stralloc* sa)
+   b->n=0;
+   b->a=1024;
+   b->fd=0;
+-  b->op=strallocwrite;
++  b->op=(ssize_t (*)())strallocwrite;
+   b->cookie=sa;
+   b->deinit=0;
+   return 0;
+diff -upr libowfat-0.34.orig/buffer.h libowfat-0.34/buffer.h
+--- libowfat-0.34.orig/buffer.h	2025-06-05 13:04:55.948677083 +0000
++++ libowfat-0.34/buffer.h	2025-06-05 13:06:36.896963445 +0000
+@@ -37,8 +37,8 @@ typedef struct buffer {
+   int fd;		/* passed as first argument to op */
+ } buffer;
+ 
+-#define BUFFER_INIT(op,fd,buf,len) { (char*)(buf), 0, 0, (len), (op), NULL, NULL, (fd) }
+-#define BUFFER_INIT_FREE(op,fd,buf,len) { (buf), 0, 0, (len), (op), NULL, buffer_free, (fd) }
++#define BUFFER_INIT(op,fd,buf,len) { (char*)(buf), 0, 0, (len), ((ssize_t (*)())op), NULL, NULL, (fd) }
++#define BUFFER_INIT_FREE(op,fd,buf,len) { (buf), 0, 0, (len), ((ssize_t (*)())op), NULL, buffer_free, (fd) }
+ #define BUFFER_INIT_READ(op,fd,buf,len) BUFFER_INIT(op,fd,buf,len) /*obsolete*/
+ #define BUFFER_INSIZE 8192
+ #define BUFFER_OUTSIZE 8192

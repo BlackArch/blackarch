@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=libosmocore
-pkgver=1.10.0.r47.g38eb428
+pkgver=1.14.0
 pkgrel=1
 epoch=2
 pkgdesc='Collection of common code used in various sub-projects inside the Osmocom family of projects.'
@@ -12,39 +12,33 @@ url='https://osmocom.org/projects/libosmocore/wiki/Libosmocore'
 license=('GPL')
 depends=('talloc' 'pcsclite' 'lksctp-tools' 'libusb' 'lksctp-tools' 'liburing'
          'libmnl' 'python')
-makedepends=('git')
-source=("git://git.osmocom.org/libosmocore.git")
-sha512sums=('SKIP')
-
-pkgver() {
-  cd $pkgname
-
-  ( set -o pipefail
-    git describe --long --tags --abbrev=7 2>/dev/null |
-      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
-    printf "%s.%s" "$(git rev-list --count HEAD)" \
-      "$(git rev-parse --short=7 HEAD)"
-  )
-}
+source=(https://github.com/osmocom/libosmocore/archive/refs/tags/$pkgver.tar.gz)
+sha512sums=('45c9b4cedd477d17882c9527c29e514f5ea2bc97f504ebd47797e8c683683cf87db2805ecc12d29f396f7945748658115922697c58296bfcac8db29c222e881a')
 
 prepare() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
   autoreconf -i
-  ./configure --prefix=/usr --exec-prefix=/usr --bindir=/usr/bin \
-              --sbindir=/usr/sbin --datadir=/usr/share --libexecdir=/usr/lib \
-              --localstatedir=/var --docdir=/usr/share/doc/libosmocore \
-              --libdir=/usr/lib/
+  ./configure \
+    --prefix=/usr \
+    --exec-prefix=/usr \
+    --bindir=/usr/bin \
+    --sbindir=/usr/sbin \
+    --datadir=/usr/share \
+    --libexecdir=/usr/lib \
+    --localstatedir=/var \
+    --docdir=/usr/share/doc/libosmocore \
+    --libdir=/usr/lib/
 }
 
 build() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
   make
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname-$pkgver"
 
   make DESTDIR="$pkgdir" install
 }
