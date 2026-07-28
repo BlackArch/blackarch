@@ -2,16 +2,16 @@
 # Contributor: Borja Ruiz <borja [at] libcrack [dot] so>
 
 pkgname=apkstudio
-pkgver=v6.3.0.r0.gc6e2724
+pkgver=6.3.0.r0.gc6e2724
 pkgrel=1
-epoch=1
+epoch=2
 pkgdesc='An IDE for decompiling/editing & then recompiling of android application binaries.'
 groups=('blackarch' 'blackarch-reversing' 'blackarch-mobile')
 arch=('x86_64' 'aarch64')
 url='http://www.vaibhavpandey.com/apkstudio/'
 license=('GPL-2.0-or-later')
 depends=('qt6-base' 'android-tools' 'android-apktool')
-makedepends=('git' 'qt5-tools' 'unzip' 'vulkan-headers')
+makedepends=('git' 'qt5-tools' 'unzip' 'vulkan-headers' 'cmake')
 source=("git+https://github.com/vaibhavpandeyvpz/$pkgname.git"
         'APKTOOL_VERSION'
         "$pkgname-setup.sh")
@@ -24,10 +24,16 @@ pkgver() {
 
   ( set -o pipefail
     git describe --long --tags --abbrev=7 2>/dev/null |
-      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+      sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' ||
     printf "%s.%s" "$(git rev-list --count HEAD)" \
       "$(git rev-parse --short=7 HEAD)"
   )
+}
+
+prepare() {
+  cd $pkgname
+
+  git submodule update --init --recursive
 }
 
 build() {
@@ -38,13 +44,12 @@ build() {
     -DCMAKE_BUILD_TYPE=Release
 
   cmake --build build \
-    --config Release \
-    -DCMAKE_INSTALL_PREFIX=/usr
+    --config Release
 }
 
 package() {
-  install -Dm 755 "$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 744 'APKTOOL_VERSION' "$pkgdir/usr/share/$pkgname/APKTOOL_VERSION"
+  install -Dm 755 "$pkgname/build/bin/ApkStudio" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 APKTOOL_VERSION "$pkgdir/usr/share/$pkgname/APKTOOL_VERSION"
   install -Dm 755 "$pkgname-setup.sh" "$pkgdir/usr/bin/$pkgname-setup.sh"
 }
 
