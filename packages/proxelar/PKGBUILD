@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=proxelar
+pkgver=v0.5.0.r0.g764a162
+pkgrel=1
+pkgdesc='Scriptable MITM proxy to inspect, intercept, replay and rewrite HTTP/HTTPS and WebSocket traffic, with TUI, web GUI and Lua scripting.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-proxy' 'blackarch-sniffer' 'blackarch-networking')
+url='https://github.com/emanuele-em/proxelar'
+license=('MIT')
+depends=('openssl' 'pkgconf')
+makedepends=('git' 'cargo')
+source=("git+https://github.com/emanuele-em/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd $pkgname
+
+  # https://archlinux.org/todo/lto-fat-objects/
+  CFLAGS+=" -ffat-lto-objects"
+
+  cargo build --release --locked
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md
+  install -Dm 644 LICENSE-MIT "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a examples/ "$pkgdir/usr/share/doc/$pkgname/"
+}
