@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details..
+# Original Maintainer: Behruz <extreme29@proton.me>
+
+pkgname=aidebug
+_pkgname=1200km_aidebug
+_pypiname=1200km-aidebug
+pkgver=1.1.0
+pkgrel=1
+pkgdesc='AI-assisted malware reverse-engineering debugger and triage CLI.'
+arch=('any')
+groups=('blackarch' 'blackarch-debugger' 'blackarch-malware'
+        'blackarch-reversing')
+url='https://github.com/anpa1200/AIDebug'
+license=('MIT')
+depends=('python' 'python-anthropic' 'python-capstone' 'python-pefile'
+         'python-pyelftools' 'python-rich' 'python-textual')
+optdepends=('python-frida: dynamic tracing support')
+makedepends=('python-build' 'python-pip')
+source=("https://files.pythonhosted.org/packages/source/${_pypiname::1}/$_pypiname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('c98380950739ce122ee3bcd42d9f4eefb46c3523ac72f6f905d5658a5af0e84235513d622f2b388d14fedf9c3d0eae1a80b2ffeecf5fced6f7c628b67bd02deb')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pypiname
+}
+
