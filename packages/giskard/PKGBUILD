@@ -1,24 +1,21 @@
-# This file is part of BlackArch Linux (https://www.blackarch.org/).
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
-#
 # Original Maintainer: Behruz <extreme29@proton.me>
 
 pkgname=giskard
 _pkgname=giskard-oss
-pkgver=3.0.0b1.r10622.g8aafe5892
+pkgver=3.0.0b1.r10634.g3bd69b4
 pkgrel=1
 pkgdesc='Evaluation, testing and vulnerability scanning framework for AI agents.'
-arch=('x86_64')
+arch=('any')
 groups=('blackarch' 'blackarch-ai')
 url='https://github.com/Giskard-AI/giskard-oss'
 license=('Apache-2.0')
-depends=('python>=3.12')
-makedepends=('git' 'python-pip' 'python-virtualenv')
-provides=('giskard')
-conflicts=('giskard-oss-git' 'python-giskard')
-options=('!strip' '!debug')
+depends=('python')
+makedepends=('git' 'python-setuptools' 'python-pip')
 source=("git+$url.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
   cd "$_pkgname"
@@ -30,128 +27,27 @@ pkgver() {
     pyproject.toml | head -n 1)
 
   printf '%s.r%s.g%s' \
-    "${_version:-3.0.0b1}" \
+    "$_version" \
     "$(git rev-list --count HEAD)" \
-    "$(git rev-parse --short HEAD)"
+    "$(git rev-parse --short=7 HEAD)"
 }
 
 package() {
   cd "$_pkgname"
 
-  local _venv="$pkgdir/opt/$pkgname"
-  local _python="$_venv/bin/python"
-  local _file
-  local _cmd
+  install -dm 755 "$pkgdir/usr/bin" "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  python -m venv "$_venv"
+  cp -r -- * "$pkgdir/usr/share/$pkgname/"
+  rm -f "$pkgdir/usr/share/$pkgname/LICENSE" \
+    "$pkgdir/usr/share/$pkgname/README.md"
 
-  PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    "$_python" -m pip install \
-      --no-cache-dir \
-      --no-warn-script-location \
-      --upgrade \
-      pip \
-      setuptools \
-      wheel
-
-  PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    "$_python" -m pip install \
-      --no-cache-dir \
-      --no-warn-script-location \
-      --compile \
-      "$srcdir/$_pkgname/libs/giskard-core" \
-      "$srcdir/$_pkgname/libs/giskard-llm" \
-      "$srcdir/$_pkgname/libs/giskard-agents" \
-      "$srcdir/$_pkgname/libs/giskard-checks" \
-      "$srcdir/$_pkgname/libs/giskard-scan" \
-      "$srcdir/$_pkgname"
-
-  while IFS= read -r -d '' _file; do
-    if head -n 1 "$_file" 2>/dev/null |
-      grep -Fq "#!$pkgdir/opt/$pkgname/bin/python"; then
-      sed -i \
-        "1s|^#!$pkgdir/opt/$pkgname/bin/python[^[:space:]]*|#!/opt/$pkgname/bin/python|" \
-        "$_file"
-    fi
-  done < <(
-    find "$_venv/bin" \
-      -maxdepth 1 \
-      -type f \
-      -print0
-  )
-
-  find "$_venv" \
-    -type d \
-    \( \
-      -name '.pytest_cache' \
-      -o -name '.mypy_cache' \
-      -o -name '.ruff_cache' \
-    \) \
-    -prune \
-    -exec rm -rf '{}' +
-
-  install -dm 755 "$pkgdir/usr/bin"
-
-  cat > "$pkgdir/usr/bin/giskard-python" << 'EOF'
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-exec /opt/giskard/bin/python "$@"
+source /usr/share/$pkgname/venv/bin/activate
+exec /usr/share/$pkgname/venv/bin/python "\$@"
 EOF
 
-  cat > "$pkgdir/usr/bin/giskard-info" << 'EOF'
-#!/opt/giskard/bin/python
-
-from importlib.metadata import PackageNotFoundError, version
-
-packages = (
-    "giskard",
-    "giskard-core",
-    "giskard-llm",
-    "giskard-agents",
-    "giskard-checks",
-    "giskard-scan",
-)
-
-for package in packages:
-    try:
-        installed_version = version(package)
-    except PackageNotFoundError:
-        installed_version = "not installed"
-
-    print(f"{package}: {installed_version}")
-EOF
-
-  chmod 755 \
-    "$pkgdir/usr/bin/giskard-python" \
-    "$pkgdir/usr/bin/giskard-info"
-
-  for _file in "$_venv"/bin/giskard*; do
-    [[ -f "$_file" && -x "$_file" ]] || continue
-
-    _cmd="${_file##*/}"
-
-    [[ "$_cmd" == 'giskard-info' ]] && continue
-    [[ "$_cmd" == 'giskard-python' ]] && continue
-
-    cat > "$pkgdir/usr/bin/$_cmd" << EOF
-#!/bin/sh
-exec /opt/$pkgname/bin/$_cmd "\$@"
-EOF
-
-    chmod 755 "$pkgdir/usr/bin/$_cmd"
-  done
-
-  install -Dm 644 LICENSE \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  install -Dm 644 README.md \
-    "$pkgdir/usr/share/doc/$pkgname/README.md"
-
-  [[ -f SECURITY.md ]] &&
-    install -Dm 644 SECURITY.md \
-      "$pkgdir/usr/share/doc/$pkgname/SECURITY.md"
-
-  [[ -f THIRD_PARTY_NOTICES.md ]] &&
-    install -Dm 644 THIRD_PARTY_NOTICES.md \
-      "$pkgdir/usr/share/doc/$pkgname/THIRD_PARTY_NOTICES.md"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
-
