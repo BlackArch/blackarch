@@ -7,7 +7,7 @@ new developers.
 
 This document contains a simple lists of information rather than detailed
 descriptions. Longer text blocks should be avoided except for this description.
-Further details or any questions can be discussed in
+Further details or any questions can be discussed in 
 [Matrix](https://matrix.to/#/#BlackArch:matrix.org).
 
 The categories are structured to have at least a little bit of an overview.
