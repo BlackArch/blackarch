@@ -1,0 +1,33 @@
+name: Test PKGBUILDs
+
+on:
+  pull_request:
+    paths:
+      - 'packages/*/PKGBUILD'
+
+jobs:
+  test-pkgbuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: packages/*/PKGBUILD
+
+      - name: Run tests
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "Testing $file"
+            dir=$(dirname "$file")
+            # Build docker image
+            docker build -t builder -f travis/Dockerfile "$dir"
+            # Run makepkg
+            docker run --rm builder
+          done
