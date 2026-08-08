@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+# Original Maintainer: Behruz <extreme29@proton.me>
+
+pkgname=giskard
+_pkgname=giskard-oss
+pkgver=3.0.0b1.r10634.g3bd69b4
+pkgrel=1
+pkgdesc='Evaluation, testing and vulnerability scanning framework for AI agents.'
+arch=('any')
+groups=('blackarch' 'blackarch-ai')
+url='https://github.com/Giskard-AI/giskard-oss'
+license=('Apache-2.0')
+depends=('python')
+makedepends=('git' 'python-setuptools' 'python-pip')
+source=("git+$url.git")
+sha512sums=('SKIP')
+install="$pkgname.install"
+
+pkgver() {
+  cd "$_pkgname"
+
+  local _version
+
+  _version=$(sed -n \
+    's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
+    pyproject.toml | head -n 1)
+
+  printf '%s.r%s.g%s' \
+    "$_version" \
+    "$(git rev-list --count HEAD)" \
+    "$(git rev-parse --short=7 HEAD)"
+}
+
+package() {
+  cd "$_pkgname"
+
+  install -dm 755 "$pkgdir/usr/bin" "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -r -- * "$pkgdir/usr/share/$pkgname/"
+  rm -f "$pkgdir/usr/share/$pkgname/LICENSE" \
+    "$pkgdir/usr/share/$pkgname/README.md"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec /usr/share/$pkgname/venv/bin/python "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
