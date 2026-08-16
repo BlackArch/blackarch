@@ -2,21 +2,27 @@
 # See COPYING for license details.
 
 pkgname=fernmelder
-pkgver=8.030212e
+pkgver=0.4s2.r2.g030212e
 pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
 pkgdesc='Asynchronous mass DNS scanner.'
 arch=('x86_64' 'aarch64')
 makedepends=('git')
 url='https://github.com/stealth/fernmelder'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 source=("git+https://github.com/stealth/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  ) | sed 's|fernmelder.||g'
 }
 
 build() {

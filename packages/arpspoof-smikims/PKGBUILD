@@ -3,7 +3,7 @@
 
 pkgname=arpspoof-smikims
 pkgver=31.ef5f0b1
-pkgrel=3
+pkgrel=4
 groups=('blackarch' 'blackarch-spoof' 'blackarch-exploitation'
         'blackarch-networking')
 pkgdesc="Performs an ARP spoofing attack using the Linux kernel's raw sockets."
@@ -19,8 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

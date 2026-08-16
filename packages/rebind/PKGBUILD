@@ -3,18 +3,19 @@
 
 pkgname=rebind
 pkgver=0.3.4
-pkgrel=8
+pkgrel=7
 groups=('blackarch' 'blackarch-exploitation')
 pkgdesc='DNS Rebinding Tool.'
-arch=('x86_64' 'aarch64')
+arch=('x86_64')
 url='http://code.google.com/p/rebind/'
 license=('MIT')
 depends=('python2' 'sqlite3' 'readline')
 makedepends=('subversion')
-source=("https://rebind.googlecode.com/files/${pkgname}_${pkgver//./-}.tar.gz")
-sha512sums=('e6e97cc05cd313255ee1f3f2b742ea2401843144')
+#source=("https://rebind.googlecode.com/files/${pkgname}_${pkgver//./-}.tar.gz")
+source=("https://web.archive.org/web/20160610013043/https://rebind.googlecode.com/files/${pkgname}_${pkgver//./-}.tar.gz")
+sha512sums=('1d220f7815598d972442bb2bab3c5d699443b339e5b77d9b71b279beca8b6413909f55f635e802642bce1f954852f3a2c7febe5b01ad3112065360af5e8b23ec')
 
-prepare(){
+prepare() {
   cd "$pkgname/dev"
 
   sed -i 's/env python/env python2/' *.py
@@ -22,25 +23,14 @@ prepare(){
   chmod +x *.py
 }
 
-build(){
-  cd "$pkgname/src"
-
-  make
-}
-
-package(){
+package() {
   cd $pkgname
 
-  install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
-  install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
 
-  rm -rf bin/rebind_{i686,x86-64}
+  install -Dm 755 "bin/${pkgname}_x86-64" "$pkgdir/usr/bin/$pkgname-dns"
 
-  cp -a --no-preserve=ownership src/www "$pkgdir/usr/share/doc/$pkgname/"
-  cp -a --no-preserve=ownership docs/* "$pkgdir/usr/share/doc/$pkgname/"
-
-  # Renamed to fix conflict with community/elfkickers.
-  install -m 755 src/rebind "$pkgdir/usr/bin/rebind_dns"
+  cp -a --no-preserve=ownership dev/ src/www "$pkgdir/usr/share/$pkgname/"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" docs/*
 }
 

@@ -3,13 +3,13 @@
 
 pkgname=cintruder
 pkgver=14.f8a3f12
-pkgrel=3
-groups=('blackarch' 'blackarch-cracker' 'blackarch-webapp')
+pkgrel=4
 pkgdesc='An automatic pentesting tool to bypass captchas.'
 arch=('any')
+groups=('blackarch' 'blackarch-cracker' 'blackarch-webapp')
 url='https://github.com/epsylon/cintruder'
-license=('GPL3')
-depends=('python2' 'python2-pycurl' 'python2-lxml' 'python2-pillow6')
+license=('GPL-3.0-or-later')
+depends=('python2' 'python2-pycurl' 'python2-lxml' 'python2-pillow')
 makedepends=('git')
 source=("git+https://github.com/epsylon/$pkgname.git")
 sha512sums=('SKIP')
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

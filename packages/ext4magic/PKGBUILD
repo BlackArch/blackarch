@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ext4magic
+pkgver=0.3.2
+pkgrel=4
+pkgdesc='File carver used when recovering from disasters or in digital forensics activities.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-forensic')
+url='https://sourceforge.net/projects/ext4magic/'
+license=('GPL-2.0-or-later')
+depends=('bzip2' 'file' 'util-linux' 'e2fsprogs')
+conflicts=($pkgname)
+source=("$url/files/$pkgname-$pkgver.tar.gz"
+        "$url/files/Patches/workaround.patch"
+        '01-i_dir_acl.patch'
+        '02-Fix-undefined-reference-to-makedev.patch'
+        '03-Fix-segfault-extent-free.patch')
+sha512sums=('81bc9ba40dc2ea0bfb01bec160a1bbf0bf8a7983241aba34190d3571386f4d7dc63409866737b8d64516a3594eba11c819bbb721a1942c0a675d5675a7bba9a1'
+            '737ad97a0f9f827c212b0b22c559ca8da61749079e636946d87e01d2fab3ca86b28818eada2c7477baf7256aaef7eac5184d6a10306c3cd3a10d08719d307af5'
+            'c481be00803fca84e3db292abc52afef3bbf8236753e7d710f395d2340c285253b4283ebf392433300c6e8e5603477cc1918119e889ec23096291e9f88674ee0'
+            'd4e3484c2af3c8f71ce52627d3d8ca0a177776face63c2c7b71d54d6a7a90e493c7504c9b738500204a48982282f83e4a8597a564bc3ecce330de3bf8cccdf9c'
+            '8943e7d358b6d8ff0b21af0d171aec8b23ef0b1617860b6b04e7ef9c2b601a64af1eddafa7dfad01541d9ac3fc96efee8bedf31b6aa0f7c696ac45f36812ce6c')
+
+prepare() {
+  cd $pkgname-$pkgver
+
+  # apply patch from the source array (should be a pacman feature)
+  local filename
+  for filename in "${source[@]}"; do
+    if [[ "$filename" =~ \.patch$ ]]; then
+      echo "Applying patch ${filename##*/}"
+      patch -p1 -N -i "$srcdir/${filename##*/}"
+    fi
+  done
+  :
+}
+
+build() {
+  cd $pkgname-$pkgver
+
+  ./configure --prefix=/usr --sbindir=/usr/bin
+
+  make
+}
+
+package() {
+  cd $pkgname-$pkgver
+
+  make DESTDIR="$pkgdir" install
+}
+

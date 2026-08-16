@@ -3,7 +3,7 @@
 
 pkgname=retire
 _pkgname=retire.js
-pkgver=5.2.8.r0.g4518973
+pkgver=5.4.3.r30.g61a3098
 pkgrel=1
 pkgdesc='Scanner detecting the use of JavaScript libraries with known vulnerabilities.'
 arch=('any')
@@ -16,13 +16,18 @@ source=("git+https://github.com/RetireJS/$_pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
-  cd "$_pkgname"
+  cd $_pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
-  cd "$_pkgname"
+  cd $_pkgname
 
   _npmdir="$pkgdir/usr/lib/node_modules/"
 

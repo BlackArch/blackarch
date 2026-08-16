@@ -1,0 +1,53 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=libghthash
+pkgver=v0.6.2.r1.g1ce70bb
+pkgrel=1
+pkgdesc='Extensible, generic and flexible hash table.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/SimonKagstrom/libghthash'
+license=('MIT')
+makedepends=('git')
+source=("git+https://github.com/SimonKagstrom/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  autoreconf -i
+
+  if [[ "$CARCH" == "aarch64" ]]; then
+    ./configure --build=arm --prefix=/usr
+  else
+    ./configure --prefix=/usr
+  fi
+}
+
+build() {
+  cd $pkgname
+
+  make
+}
+
+package() {
+  cd $pkgname
+
+  make DESTDIR="$pkgdir" install
+
+  install -Dm 644 README -t "$pkgdir/usr/share/doc/$pkgname"
+
+  install -Dm 644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+

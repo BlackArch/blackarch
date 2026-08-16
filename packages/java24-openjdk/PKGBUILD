@@ -1,0 +1,56 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Credits AUR
+# Maintainer: Marcel Joss <marceljoss@hotmail.ch>
+# Contributor: Felix Golatofski <contact@xdfr.de>
+# Contributor: M A <morealaz at gmail dot com>
+
+pkgname=java24-openjdk
+_majorver=24
+_fullver=24.0.2
+_buildver=12
+_hash=fdc5d0102fe0414db21410ad5834341f
+pkgver="$_fullver.u$_buildver"
+pkgrel=2
+pkgdesc="Java OpenJDK $_fullver Oracle Build."
+arch=('x86_64' 'aarch64')
+url="https://jdk.java.net/$_majorver"
+license=('GPL-2.0-or-later')
+depends=('java-environment-common' 'java-runtime-common' 'ca-certificates-utils'
+         'nss')
+provides=(
+  "java-environment=$_majorver"
+  "java-environment-openjdk=$_majorver"
+  "java-runtime=$_majorver"
+  "java-runtime-openjdk=$_majorver"
+  "java-runtime-headless=$_majorver"
+  "java-runtime-headless-openjdk=$_majorver"
+)
+source_x86_64=("https://download.java.net/java/GA/jdk${_fullver}/${_hash}/${_buildver}/GPL/openjdk-${_fullver}_linux-x64_bin.tar.gz")
+source_aarch64=("https://download.java.net/java/GA/jdk${_fullver}/${_hash}/${_buildver}/GPL/openjdk-${_fullver}_linux-aarch64_bin.tar.gz")
+sha512sums_x86_64=('ca964593081624465591c1cf87889aa614807a314ac8146e9ecbe418402b333f66e34dd90fb610cdef7bf5e95101214760e0d48c198846111e85498570a21221')
+sha512sums_aarch64=('654577690f2eef73207b66d3717fc4f980c83174143a7ff6b124aafd1d37a4b0eff3d4c22d96840d8fb940ebd2a65ab4ef6594df0755471079ddd3b657ab4642')
+_jvmdir="usr/lib/jvm/java-$_majorver-openjdk"
+
+package() {
+  install -d "$pkgdir/$_jvmdir"
+  cd "jdk-$_fullver"
+  cp -a bin include jmods lib release "$pkgdir/$_jvmdir/"
+
+  # Link JKS keystore from ca-certificates-utils
+  rm -f "$pkgdir/$_jvmdir/lib/security/cacerts"
+  ln -sf /etc/ssl/certs/java/cacerts "$pkgdir/$_jvmdir/lib/security/cacerts"
+
+  # Legal - conflicts with java24-openjfx
+  #install -d "$pkgdir/usr/share/licenses/java$_majorver-openjdk"
+  #cp -a legal "$pkgdir/usr/share/licenses/java$_majorver-openjdk/"
+  #ln -s "/usr/share/licenses/java$_majorver-openjdk" \
+  #  "$pkgdir/$_jvmdir/legal"
+
+  # Conf
+  install -d "$pkgdir/etc"
+  cp -r conf "$pkgdir/etc/java$_majorver-openjdk"
+  ln -s "/etc/java$_majorver-openjdk" "$pkgdir/$_jvmdir/conf"
+}
+

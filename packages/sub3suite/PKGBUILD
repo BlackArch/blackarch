@@ -8,7 +8,7 @@ pkgdesc='A free, open source, cross platform Intelligence Gathering tool.'
 groups=('blackarch' 'blackarch-recon')
 arch=('x86_64' 'aarch64')
 url='https://github.com/3nock/sub3suite'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=('qt5-base')
 makedepends=('git' 'make' 'qtcreator')
 source=("git+https://github.com/3nock/$pkgname.git"
@@ -17,14 +17,18 @@ source=("git+https://github.com/3nock/$pkgname.git"
 sha512sums=('SKIP'
             'SKIP'
             'SKIP')
-
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
-prepare(){
+prepare() {
   cd $pkgname
 
   git submodule init
@@ -58,12 +62,12 @@ package() {
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" ../*.md
 
-    cat > "$pkgdir/usr/bin/$pkgname" << EOF
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
 cd /opt/$pkgname/bin
 exec ./$pkgname "\$@"
 EOF
 
-  chmod a+x "$pkgdir/usr/bin/$pkgname"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

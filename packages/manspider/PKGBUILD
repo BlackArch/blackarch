@@ -2,7 +2,8 @@
 # See COPYING for license details.
 
 pkgname=manspider
-pkgver=86.499f44f
+_pkgname=man-spider
+pkgver=118.dd76e9c
 pkgrel=1
 pkgdesc='Spider entire networks for juicy files sitting on SMB shares. Search filenames or file content - regex supported!'
 groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
@@ -18,7 +19,12 @@ install="$pkgname.install"
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
@@ -29,8 +35,6 @@ package() {
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 
-  rm README.md
-
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
 cat > "$pkgdir/usr/bin/$pkgname" << EOF
@@ -38,6 +42,6 @@ cat > "$pkgdir/usr/bin/$pkgname" << EOF
 exec /usr/share/$pkgname/bin/$pkgname "\$@"
 EOF
 
-   chmod +x "$pkgdir/usr/bin/$pkgname"
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

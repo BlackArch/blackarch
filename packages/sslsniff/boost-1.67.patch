@@ -1,0 +1,46 @@
+Description: Fix build with boost 1.67
+Author: Gianfranco Costamagna <locutusofborg@debian.org>
+Last-Update: 2018-08-31
+
+--- sslsniff-0.8.orig/SSLBridge.cpp
++++ sslsniff-0.8/SSLBridge.cpp
+@@ -83,7 +83,7 @@ void SSLBridge::handshakeWithClient(Cert
+   buildClientContext(clientContext, leaf, chain);
+ 
+   SSL *clientSession = SSL_new(clientContext);
+-  SSL_set_fd(clientSession, clientSocket->native());
++  SSL_set_fd(clientSession, clientSocket->native_handle());
+ 
+   if (SSL_accept(clientSession) == 0) {
+     Logger::logError("SSL Accept Failed!");
+@@ -110,7 +110,7 @@ void SSLBridge::handshakeWithServer() {
+   }
+ 
+   SSL_set_connect_state(serverSession);
+-  SSL_set_fd(serverSession, serverSocket->native());
++  SSL_set_fd(serverSession, serverSocket->native_handle());
+   SSL_set_options(serverSession, SSL_OP_ALL);
+   
+   if (SSL_connect(serverSession) < 0) {
+@@ -126,8 +126,8 @@ void SSLBridge::handshakeWithServer() {
+ }
+ 
+ void SSLBridge::shuttleData() {
+-  struct pollfd fds[2] = {{clientSocket->native(), POLLIN | POLLPRI | POLLHUP | POLLERR, 0},
+-			  {serverSocket->native(), POLLIN | POLLPRI | POLLHUP | POLLERR, 0}};
++  struct pollfd fds[2] = {{clientSocket->native_handle(), POLLIN | POLLPRI | POLLHUP | POLLERR, 0},
++			  {serverSocket->native_handle(), POLLIN | POLLPRI | POLLHUP | POLLERR, 0}};
+ 
+   for (;;) {
+     if (poll(fds, 2, -1) < 0)        return;
+--- sslsniff-0.8.orig/util/Destination.cpp
++++ sslsniff-0.8/util/Destination.cpp
+@@ -46,7 +46,7 @@ int Destination::getOriginalDestination(
+ {
+ #ifdef HAVE_NETFILTER
+ 	struct sockaddr_in serverAddr;
+-	int fd   = (int)socket.native();
++	int fd   = (int)socket.native_handle();
+ 	int size = sizeof(serverAddr);
+ 
+ 	if (getsockopt(fd, SOL_IP, SO_ORIGINAL_DST, &serverAddr, (socklen_t*)&size) < 0) {

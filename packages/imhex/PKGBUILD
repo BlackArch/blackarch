@@ -4,14 +4,14 @@
 # AUR Maintainer: Alex Sarum <rum.274.4 at gmail dot com>
 
 pkgname=imhex
-pkgver=nightly.r4.g8f94b4614
+pkgver=nightly.r5.g7bfa135
 pkgrel=1
-epoch=1
+epoch=16
 pkgdesc='A Hex Editor for Reverse Engineers, Programmers and people that value their eye sight when working at 3 AM.'
-arch=('x86_64')
+arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-misc')
 url='https://github.com/WerWolv/ImHex'
-license=('GPL2')
+license=('GPL-2.0-or-later')
 depends=('glfw' 'glm' 'capstone' 'llvm-libs' 'llvm' 'nlohmann-json' 'python'
          'file' 'gtk3' 'mbedtls' 'libssh2' 'curl' 'dbus' 'freetype2' 'yara'
          'hicolor-icon-theme' 'xdg-desktop-portal-gtk' 'fmt')
@@ -22,7 +22,12 @@ sha256sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

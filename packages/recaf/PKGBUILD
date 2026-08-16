@@ -2,29 +2,54 @@
 # See COPYING for license details.
 
 pkgname=recaf
-pkgver=2.21.14.2283.e5669cd90
+pkgver=4.0.0.alpha.r420.g8c6de68
+_javaver=24
 pkgrel=1
 groups=('blackarch' 'blackarch-decompiler' 'blackarch-reversing')
 pkgdesc='Modern Java bytecode editor.'
 arch=('any')
 url='https://github.com/Col-E/Recaf'
 license=('MIT')
-depends=('java-runtime' 'java-environment')
-makedepends=('maven' 'git' 'jdk-openjdk')
+depends=('java-runtime' 'java-environment' "java-openjfx>=$_javaver")
+makedepends=('git' "java${_javaver}-openjdk" "gradle")
 source=("$pkgname::git+https://github.com/Col-E/Recaf.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git describe --tags).$(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  echo "org.gradle.java.installations.auto-detect=false" >> gradle.properties
+  echo "org.gradle.java.installations.auto-download=false" >> gradle.properties
+  echo "org.gradle.java.installations.paths=/usr/lib/jvm/java-${_javaver}-openjdk" >> gradle.properties
 }
 
 build() {
   cd $pkgname
 
-  # https://github.com/Col-E/Recaf/blob/master/build
-  mvn package -Dmaven.test.skip -Dcheckstyle.skip -P java11
+  # How upstream builds
+  # https://github.com/Col-E/Recaf/blob/master/.github/workflows/build.yml
+
+  # Try either with
+  # 1. gradle as makedepends + call gradle
+  # 2. no gradle as makedepends + call ./gradlew
+  # `./gradlew` wrapper forces a specific version of gradle that may not be
+  # compatible with latest Java version
+  # See https://docs.gradle.org/current/userguide/compatibility.html
+
+  export JAVA_HOME="/usr/lib/jvm/java-${_javaver}-openjdk"
+  export PATH="$JAVA_HOME/bin:$PATH"
+  TARGET_VERSION=$_javaver gradle publish --stacktrace
 }
 
 package() {
@@ -33,7 +58,7 @@ package() {
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  cp target/recaf-*-jar-with-dependencies.jar \
+  cp recaf-ui/build/libs/recaf-ui-*-all.jar \
     "$pkgdir/usr/share/$pkgname/$pkgname.jar"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF

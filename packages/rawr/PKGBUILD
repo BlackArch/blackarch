@@ -3,15 +3,15 @@
 
 pkgname=rawr
 pkgver=74.544dd75
-pkgrel=6
-groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
+pkgrel=7
 pkgdesc='Rapid Assessment of Web Resources. A web enumerator.'
 arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
 url='https://bitbucket.org/al14s/rawr/wiki/Home'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 makedepends=('git')
 depends=('nmap' 'python2' 'graphviz' 'python2-pygraphviz' 'python2-lxml'
-         'phantomjs' 'python2-pillow6' 'python2-imaging' 'python2-xlsxwriter'
+         'phantomjs' 'python2-pillow' 'python2-imaging' 'python2-xlsxwriter'
          'python2-rdpy' 'python2-pyqt4')
 source=("git+https://bitbucket.org/al14s/$pkgname.git")
 sha512sums=('SKIP')
@@ -19,7 +19,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

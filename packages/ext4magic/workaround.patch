@@ -1,0 +1,51 @@
+diff -Naur ext4magic-0.3.2/src/block.c ext4magic-0.3.2_new/src/block.c
+--- ext4magic-0.3.2/src/block.c	2014-03-12 01:54:03.000000000 +0100
++++ ext4magic-0.3.2_new/src/block.c	2015-10-18 23:28:47.060000000 +0200
+@@ -130,7 +130,8 @@
+ 
+ 
+ 
+-
++//FIXME : Debian Bug #802089 (temporary work around)
++/*
+ errcode_t local_ext2fs_extent_open(ext2_filsys fs, struct ext2_inode inode,
+                           ext2_extent_handle_t *ret_handle) {
+ 
+@@ -189,7 +190,7 @@
+ 
+         return 0;
+ }
+-
++*/
+ 
+ static int mark_extent_block(ext2_filsys fs, char *extent_block ){
+ 	struct ext3_extent_header 	*eh;
+@@ -613,7 +614,11 @@
+ 		int			uninit;
+ 		unsigned int		j;
+ 
+-		ctx.errcode = local_ext2fs_extent_open(fs, inode, &handle);
++		
++//FIXME : Debian Bug #802089 (temporary work around)
++//		ctx.errcode = local_ext2fs_extent_open(fs, inode, &handle);
++		ctx.errcode = ext2fs_extent_open2(fs,0,&inode,&handle);
++//
+ 		if (ctx.errcode)
+ 			goto abort_exit;
+ 
+diff -Naur ext4magic-0.3.2/src/inode.c ext4magic-0.3.2_new/src/inode.c
+--- ext4magic-0.3.2/src/inode.c	2014-03-12 01:54:03.000000000 +0100
++++ ext4magic-0.3.2_new/src/inode.c	2015-10-18 23:23:19.468000000 +0200
+@@ -112,8 +112,10 @@
+         unsigned int            printed = 0;
+         errcode_t               errcode;
+ 
+-	
+-        errcode = local_ext2fs_extent_open(current_fs, *inode, &handle);
++//FIXME : Debian Bug #802089 (temporary work around)
++//      errcode = local_ext2fs_extent_open(current_fs, *inode, &handle);
++        errcode = ext2fs_extent_open2(current_fs,0,inode,&handle);
++//
+         if (errcode)
+                 return;
+ 

@@ -3,12 +3,12 @@
 
 pkgname=arpwner
 pkgver=26.f300fdf
-pkgrel=5
+pkgrel=6
 arch=('any')
 groups=('blackarch' 'blackarch-networking')
 pkgdesc='GUI-based python tool for arp poisoning and dns poisoning attacks.'
 url='https://github.com/ntrippar/ARPwner'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=('python2' 'python2-pypcap' 'pygtk')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/ntrippar/ARPwner.git")
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {

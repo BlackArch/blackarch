@@ -3,31 +3,36 @@
 
 pkgname=firewalk
 pkgver=5.0
-pkgrel=5
+pkgrel=6
 groups=('blackarch' 'blackarch-fuzzer' 'blackarch-scanner')
 pkgdesc='An active reconnaissance network security tool.'
 arch=('x86_64' 'aarch64')
 url='http://packetfactory.openwall.net/projects/firewalk/'
-license=('BSD')
+license=('BSD-2-Clause')
 depends=('libdnet' 'libnet' 'libpcap')
 source=("http://packetfactory.openwall.net/$pkgname/dist/$pkgname.tar.gz"
-        'firewalk-gcc3.4.patch')
+        "firewalk-gcc3.4.patch"
+        "fix-signals.patch")
 sha512sums=('919aa6e464dac72a02f8967ccf7109de7d0b3a574f0a396bcf69bacc988ab8e13e8e25932d749eadc898cae2546f8f81014d53ef51429e6c784a16d40da90ff2'
-            'e9079d6d9a08af3bfad96cc93b1eda144c90ec26b4e8686bdf585c9eaab3b9c34dbc94a073bb3ca851211b5d3f758281539cfd1240e7877a72166239f059f338')
+            'e9079d6d9a08af3bfad96cc93b1eda144c90ec26b4e8686bdf585c9eaab3b9c34dbc94a073bb3ca851211b5d3f758281539cfd1240e7877a72166239f059f338'
+            '10c5eb96b6a4be8da535e979cf19a1cb7cb99073987b65b90723468d3c21bd51928b10889c0a89ad518c0671d986dc13259d734d10778b644955f296c3c5a0be')
 
 prepare() {
   cd Firewalk
 
-  patch -Np1 < "$srcdir/firewalk-gcc3.4.patch"
+  patch -p1 < ../firewalk-gcc3.4.patch
+  patch -p1 < ../fix-signals.patch
+
+  autoreconf -fi
 }
 
 build() {
   cd Firewalk
 
-  if [[ $CARCH == arm* ]]; then
-    ./configure --prefix=/usr --build=arm
+  if [[ $CARCH == "aarch64" ]]; then
+    ./configure --prefix=/usr --build=aarch64-unknown-linux-gnu
   else
-    ./configure --prefix=/usr
+    ./configure --prefix=/usr --build=x86_64-pc-linux-gnu
   fi
   make
 }

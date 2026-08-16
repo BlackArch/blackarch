@@ -1,0 +1,38 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=subbrute
+pkgver=77.r30.g07d2925
+pkgrel=1
+pkgdesc='A DNS meta-query spider that enumerates DNS records, and subdomains.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
+arch=('any')
+url='https://github.com/TheRook/subbrute'
+license=('GPL-3.0-or-later')
+depends=('python' 'python-dnslib')
+makedepends=('git')
+source=("git+https://github.com/TheRook/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  install -Dm 755 "$pkgname.py" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+
+  cp -a resolvers.txt names.txt names_small.txt "$pkgdir/usr/share/$pkgname/"
+}
+

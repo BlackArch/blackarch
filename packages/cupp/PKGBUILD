@@ -2,13 +2,13 @@
 # See COPYING for license details.
 
 pkgname=cupp
-pkgver=77.56547fd
-pkgrel=3
+pkgver=87.b77f1ae
+pkgrel=1
 pkgdesc='Common User Password Profiler'
 url='http://www.remote-exploit.org/?page_id=418'
 groups=('blackarch' 'blackarch-cracker')
-license=('GPL3')
-depends=('python2')
+license=('GPL-3.0-or-later')
+depends=('python')
 makedepends=('git')
 arch=('any')
 source=("git+https://github.com/Mebus/$pkgname.git")
@@ -17,7 +17,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
@@ -35,8 +40,7 @@ package() {
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname
-exec python3 $pkgname.py "\$@"
+exec python3 /usr/share/$pkgname/$pkgname.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"

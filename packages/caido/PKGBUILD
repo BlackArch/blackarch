@@ -1,0 +1,75 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgbase=caido
+pkgname=('caido-cli' 'caido-desktop')
+pkgver=0.57.1
+pkgrel=1
+pkgdesc='Intercepting proxy to replay, inject, scan and fuzz HTTP requests.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-proxy' 'blackarch-scanner'
+        'blackarch-fuzzer')
+url='https://caido.io/'
+license=('custom:private')
+options=(!strip)
+_appimage="caido-desktop-v$pkgver-linux-$CARCH.AppImage"
+noextract=($_appimage)
+source=('LICENSE')
+source_x86_64=(
+  "https://caido.download/releases/v$pkgver/caido-desktop-v$pkgver-linux-x86_64.AppImage"
+  "https://caido.download/releases/v$pkgver/caido-cli-v$pkgver-linux-x86_64.tar.gz"
+)
+source_aarch64=(
+  "https://caido.download/releases/v$pkgver/caido-desktop-v$pkgver-linux-aarch64.AppImage"
+  "https://caido.download/releases/v$pkgver/caido-cli-v$pkgver-linux-aarch64.tar.gz"
+)
+sha512sums=('83a63c23f42f381a1f312387896598409dbd7b6dad8c9d89b7b747ff09f143c173272c724f0f6755ddd0bb26662866a8f7a8992a521f659be57ef0fb82f0d917')
+sha512sums_x86_64=('1b2a9dcaa259c3ba4551aa09dee788dc4f5357b8b3229b5c54b710b5871801c3491e2818647c0a5d928be3d66aefd6879e7ed30975b01872ef705736124db53f'
+                   'dd58d03bf0fd57318bbe95da80bb5798f967e565ac164b0eb23e4a42459e9c78df2791895b56f0114a8d9ca7625ff1e88f7288b3978b2c56a2f96e915a1c35c1')
+sha512sums_aarch64=('6eb41279ed0ae4239f26f42655d6c3f07f16bd076f224172fa8244c553d1a6aaef3fd0d1c2285021372979a704bc0d734e0c138024dcc8fca146ed4087e738ca'
+                    '548b4e1a9345641b9d36454c46ddc9fb7ae3a0247c752622e04267a3c74bc8183f2e3c37d8428cee16a7e9731f2cfe316fddcec92928c604b58c8d087b308a0f')
+
+prepare() {
+  chmod +x $_appimage
+
+  ./$_appimage --appimage-extract
+}
+
+build() {
+  sed -i -E \
+    "s|Exec=AppRun|Exec=env DESKTOPINTEGRATION=false /usr/bin/$pkgbase|" \
+    "squashfs-root/$pkgbase.desktop"
+
+    chmod -R a-x+rX squashfs-root/usr
+}
+
+package_caido-desktop() {
+  depends=('glibc' 'gcc-libs')
+  provides=('caido')
+
+  install -Dm 755 "$srcdir/$_appimage" "$pkgdir/opt/$pkgbase/$pkgbase.AppImage"
+  install -Dm 644 "$srcdir/LICENSE" "$pkgdir/opt/$pkgbase/LICENSE"
+
+  install -Dm 644 "$srcdir/squashfs-root/$pkgbase.desktop" \
+    "$pkgdir/usr/share/applications/$pkgbase.desktop"
+
+  install -dm 755 "$pkgdir/usr/share/applications/"
+  cp -a "$srcdir/squashfs-root/usr/share/icons" "$pkgdir/usr/share/"
+  cp -a "$srcdir/squashfs-root/$pkgbase.desktop" \
+    "$pkgdir/usr/share/applications/"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  ln -s "/opt/$pkgbase/$pkgbase.AppImage" "$pkgdir/usr/bin/$pkgbase"
+
+  install -dm 755 "$pkgdir/usr/share/licenses/$pkgname/"
+  install -m 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/"
+}
+
+package_caido-cli() {
+  depends=('glibc' 'gcc-libs')
+
+  install -dm 755 "$pkgdir/usr/share/licenses/$pkgname/"
+  install -m 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/"
+  install -Dm 755 caido-cli "$pkgdir/usr/bin/caido-cli"
+}
+

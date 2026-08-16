@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-flasgger
+_pkgname=flasgger
+pkgver=0.9.7.1
+pkgrel=8
+pkgdesc='Extract swagger specs from your flask project.'
+arch=('any')
+url='https://pypi.org/project/flasgger/#files'
+license=('MIT')
+depends=('python' 'python-flask' 'python-yaml' 'python-jsonschema'
+         'python-mistune' 'python-six')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+        'click-8.2.patch' # https://salsa.debian.org/python-team/packages/python-flasgger/-/raw/3c07675321c85d9bad623b87d4245df3da24819f/debian/patches/click-8.2.patch
+        'python-flasgger-remove-pkg_resources.patch')
+sha512sums=('fe1feb5ebadc6c3cde8e9e70726c86efc8d88392c5eb44ddaa6135fa96fbaada975d2042187bd4cebe08d843d21dc8e89dea5f2935b6c65863b36e4a6a39d121'
+            '596f82fa3aeeb72e35e2e4ba53baccbc3021a3ab610df9dff11e52b29ccbe9149d2663ce893c7ddcea47ac9c939b3b68bdd1705d899f6ecfa327d272893a6eb4'
+            '86ef7e187798a9017af0d64e1d4233f05060af9b36398141fe71acc1f540d0ef82a1189e4dcf5ea39743e4eadb38709c96a2c7cb849dfaf0a0fe47cbf8715d02')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  patch -p1 < "$srcdir/click-8.2.patch"
+  patch -p1 < "$srcdir/python-flasgger-remove-pkg_resources.patch"
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+

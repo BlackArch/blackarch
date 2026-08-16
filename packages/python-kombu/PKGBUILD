@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-kombu
+_pkgname=kombu
+pkgver=5.6.2
+pkgrel=1
+pkgdesc='Messaging library for Python.'
+arch=('any')
+url='https://pypi.org/project/kombu/#files'
+license=('BSD')
+depends=('python' 'python-amqp' 'python-vine')
+makedepends=('python-build' 'python-pip' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('9a6d51e2bdc6b6d993b68209bec8c4671305a40637e67b6a2f26db501bb8617cbca09670e80274d62f11144481f58b995f2fe7d1e71f5ce4c08c954fc164f33a')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $_pkgname
+}
+

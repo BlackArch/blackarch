@@ -3,8 +3,8 @@
 
 pkgname=python-vtapi3
 _pkgname=virustotalapi3
-pkgver=267.c71e22d
-pkgrel=4
+pkgver=281.0c3739a
+pkgrel=1
 pkgdesc='The module that implements the VirusTotal API functions (3 version).'
 arch=('any')
 url='https://github.com/drobotun/virustotalapi3'
@@ -18,17 +18,22 @@ sha512sums=('SKIP')
 pkgver() {
   cd $_pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
-  cd "$_pkgname"
+  cd $_pkgname
 
   python setup.py build
 }
 
 package() {
-  cd "$_pkgname"
+  cd $_pkgname
 
   python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
 }

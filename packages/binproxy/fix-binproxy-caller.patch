@@ -1,0 +1,18 @@
+--- a/bin/binproxy	2025-12-23 03:51:08.760564496 +0100
++++ b/bin/binproxy	2025-12-23 03:52:22.715842720 +0100
+@@ -65,11 +65,12 @@
+     FATAL: :red,
+   }
+   #formatter.call(sev,date,prog,msg).colorize(colors[sev.to_sym] ||:light_blue)
+-  line = caller.find {|l| !l.match /logger\.rb/ }
+-  cm = line.match(%r|^.*/([^/]+):(\d+):in `(.*)'$|) or raise "Couldn't parse caller() line"
++  loc = caller_locations.find { |l| !(l.absolute_path || l.path).match?(/logger\.rb/) } || caller_locations(1,1).first
++  file = File.basename(loc.absolute_path || loc.path)
++  line = loc.lineno
+   msg = msg.gsub /\r?\n/, ("\n" + " " * 25)
+   sprintf( "%-18s %-5s %s\n",
+-           "#{cm[1]}:#{cm[2]}", sev, msg
++           "#{file}:#{line}", sev, msg
+   ).colorize(colors[sev.to_sym] ||:light_blue)
+ end
+ log.level = case

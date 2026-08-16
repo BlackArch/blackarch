@@ -1,0 +1,408 @@
+From: Kali Developers <devel@kali.org>
+Date: Mon, 19 Aug 2019 09:08:03 +0200
+Subject: Fix Makefile to keep hardening flags injected by dpkg
+
+---
+ Makefile                          | 22 +++++++++-------------
+ capt_dissectors/ca/Makefile       |  2 +-
+ capt_dissectors/pcap/Makefile     |  2 +-
+ capt_dissectors/pol/Makefile      |  2 +-
+ capt_dissectors/rltm/Makefile     |  2 +-
+ capt_dissectors/rltm_pol/Makefile |  2 +-
+ dispatch/cli/Makefile             |  2 +-
+ dispatch/none/Makefile            |  2 +-
+ dispatch/pcap2wav/Makefile        |  2 +-
+ dissectors/dns_ca/Makefile        |  4 ++--
+ dissectors/mms/Makefile           |  2 +-
+ dissectors/ssl/Makefile           |  6 ------
+ dissectors/tcp_ca/Makefile        |  4 ++--
+ dissectors/tcp_grbg/Makefile      |  4 ++--
+ dissectors/udp_ca/Makefile        |  4 ++--
+ dissectors/udp_grbg/Makefile      |  4 ++--
+ manipulators/mfbc/Makefile        |  2 +-
+ manipulators/mfile/Makefile       |  2 +-
+ manipulators/mpaltalk/Makefile    |  2 +-
+ manipulators/mwebymsg/Makefile    |  2 +-
+ manipulators/mwmail/Makefile      |  2 +-
+ manipulators/www/Makefile         |  2 +-
+ system/dema/Makefile              |  9 ++-------
+ system/trigcap/Makefile           | 10 ++--------
+ 24 files changed, 38 insertions(+), 59 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index ee57967..bb82933 100644
+--- a/Makefile
++++ b/Makefile
+@@ -43,26 +43,22 @@ XPL_LIB = $(ROOT_DIR)/common/libxplico_core.a $(ROOT_DIR)/capt_dissectors/libxpl
+ # src file
+ SRC = xplico.c report.c
+ 
++# Export base flags for reuse in subdirectories
++export CFLAGS_BASE = $(shell dpkg-buildflags --get CFLAGS) $(shell dpkg-buildflags --get CPPFLAGS)
++export LDFLAGS_BASE = $(shell dpkg-buildflags --get LDFLAGS)
++
++# Include CPPFLAGS too for hardening
++CFLAGS += $(CPPFLAGS)
++
+ # compilation
+ INCLUDE_DIR = -I$(ROOT_DIR)/include -I$(ROOT_DIR)/common/include -I$(ROOT_DIR)/dissectors/include -I$(ROOT_DIR)/capt_dissectors/include -I$(ROOT_DIR)/dispatch/include
+-LDFLAGS = -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto
+-CFLAGS = -rdynamic $(INCLUDE_DIR) -Wall -fPIC -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE
++LDFLAGS += -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto
++CFLAGS += -rdynamic $(INCLUDE_DIR) -fPIC -D_FILE_OFFSET_BITS=64
+ MODULE_PATH = modules
+ 
+ # pedantic statistics
+ CFLAGS += -DXPL_PEDANTIC_STATISTICS=1
+ 
+-# optmimization
+-ifdef O3
+-CFLAGS += -O3
+- ifndef CHECKOFF
+- CHECKOFF = 1
+- endif
+-else
+-#CFLAGS += -g -ggdb -dr
+-CFLAGS += -g -ggdb -O0
+-endif
+-
+ # performance
+ ifdef GPROF
+ CFLAGS += -pg
+diff --git a/capt_dissectors/ca/Makefile b/capt_dissectors/ca/Makefile
+index 71a7608..c010137 100644
+--- a/capt_dissectors/ca/Makefile
++++ b/capt_dissectors/ca/Makefile
+@@ -36,7 +36,7 @@ SUBDIRS =
+ SRC = ca.c
+ 
+ # compilation
+-LDFLAGS = -lpcap
++LDFLAGS += -lpcap
+ 
+ # To make it visible
+ export CC CCPP ROOT_DIR CFLAGS LDFLAGS INCLUDE_DIR
+diff --git a/capt_dissectors/pcap/Makefile b/capt_dissectors/pcap/Makefile
+index 8eea3d9..3fdbcd2 100644
+--- a/capt_dissectors/pcap/Makefile
++++ b/capt_dissectors/pcap/Makefile
+@@ -36,7 +36,7 @@ SUBDIRS =
+ SRC = pcap.c
+ 
+ # compilation
+-LDFLAGS = -lpcap
++LDFLAGS += -lpcap
+ 
+ # To make it visible
+ export CC CCPP ROOT_DIR CFLAGS LDFLAGS INCLUDE_DIR
+diff --git a/capt_dissectors/pol/Makefile b/capt_dissectors/pol/Makefile
+index 48de0f2..246a963 100644
+--- a/capt_dissectors/pol/Makefile
++++ b/capt_dissectors/pol/Makefile
+@@ -36,7 +36,7 @@ SUBDIRS =
+ SRC = pol.c
+ 
+ # compilation
+-LDFLAGS = -lpcap
++LDFLAGS += -lpcap
+ 
+ # To make it visible
+ export CC CCPP ROOT_DIR CFLAGS LDFLAGS INCLUDE_DIR
+diff --git a/capt_dissectors/rltm/Makefile b/capt_dissectors/rltm/Makefile
+index bf0dc46..ee6dd05 100644
+--- a/capt_dissectors/rltm/Makefile
++++ b/capt_dissectors/rltm/Makefile
+@@ -36,7 +36,7 @@ SUBDIRS =
+ SRC = rltm.c
+ 
+ # compilation
+-LDFLAGS = -lpcap
++LDFLAGS += -lpcap
+ 
+ # To make it visible
+ export CC CCPP ROOT_DIR CFLAGS LDFLAGS INCLUDE_DIR
+diff --git a/capt_dissectors/rltm_pol/Makefile b/capt_dissectors/rltm_pol/Makefile
+index eb75f29..587c973 100644
+--- a/capt_dissectors/rltm_pol/Makefile
++++ b/capt_dissectors/rltm_pol/Makefile
+@@ -36,7 +36,7 @@ SUBDIRS =
+ SRC = rltm_pol.c
+ 
+ # compilation
+-LDFLAGS = -lpcap
++LDFLAGS += -lpcap
+ 
+ # To make it visible
+ export CC CCPP ROOT_DIR CFLAGS LDFLAGS INCLUDE_DIR
+diff --git a/dispatch/cli/Makefile b/dispatch/cli/Makefile
+index 00cff45..7e526dc 100644
+--- a/dispatch/cli/Makefile
++++ b/dispatch/cli/Makefile
+@@ -37,7 +37,7 @@ SUBDIRS =
+ SRC = cli.c
+ 
+ # compilation
+-LDFLAGS = 
++LDFLAGS +=
+ 
+ # To make it visible
+ export CC CCPP ROOT_DIR CFLAGS LDFLAGS INCLUDE_DIR
+diff --git a/dispatch/none/Makefile b/dispatch/none/Makefile
+index 18ca7e1..ef479cd 100644
+--- a/dispatch/none/Makefile
++++ b/dispatch/none/Makefile
+@@ -36,7 +36,7 @@ SUBDIRS =
+ SRC = none.c
+ 
+ # compilation
+-LDFLAGS = 
++LDFLAGS +=
+ 
+ # To make it visible
+ export CC CCPP ROOT_DIR CFLAGS LDFLAGS INCLUDE_DIR
+diff --git a/dispatch/pcap2wav/Makefile b/dispatch/pcap2wav/Makefile
+index e1f4ec4..23ee590 100644
+--- a/dispatch/pcap2wav/Makefile
++++ b/dispatch/pcap2wav/Makefile
+@@ -36,7 +36,7 @@ SUBDIRS =
+ SRC = pcap2wav.c
+ 
+ # compilation
+-LDFLAGS = 
++LDFLAGS +=
+ 
+ # To make it visible
+ export CC CCPP ROOT_DIR CFLAGS LDFLAGS INCLUDE_DIR
+diff --git a/dissectors/dns_ca/Makefile b/dissectors/dns_ca/Makefile
+index 7ac799d..1f120ca 100644
+--- a/dissectors/dns_ca/Makefile
++++ b/dissectors/dns_ca/Makefile
+@@ -44,9 +44,9 @@ endif
+ 
+ # library specific to the dissector
+ ifdef LOCAL_NDPI
+-LDFLAGS = $(ROOT_DIR)/../nDPI/src/lib/.libs/libndpi.a
++LDFLAGS += $(ROOT_DIR)/../nDPI/src/lib/.libs/libndpi.a
+ else
+-LDFLAGS = $(shell pkg-config --libs libndpi)
++LDFLAGS += $(shell pkg-config --libs libndpi)
+ endif
+ 
+ # To make it visible
+diff --git a/dissectors/mms/Makefile b/dissectors/mms/Makefile
+index 862f552..a2026df 100644
+--- a/dissectors/mms/Makefile
++++ b/dissectors/mms/Makefile
+@@ -36,7 +36,7 @@ SUBDIRS =
+ SRC = dis_log.c mms.c mms_decode.c
+ 
+ # compilation
+-LDFLAGS = -lz
++LDFLAGS += -lz
+ 
+ # To make it visible
+ export CC CCPP ROOT_DIR CFLAGS LDFLAGS INCLUDE_DIR
+diff --git a/dissectors/ssl/Makefile b/dissectors/ssl/Makefile
+index aa72409..e915613 100644
+--- a/dissectors/ssl/Makefile
++++ b/dissectors/ssl/Makefile
+@@ -35,12 +35,6 @@ SUBDIRS =
+ # src file
+ SRC = dis_log.c ssl.c
+ 
+-# C flags specific to the dissector
+-CFLAGS +=
+-
+-# library specific to the dissector
+-LDFLAGS = 
+-
+ # To make it visible
+ export CC CCPP ROOT_DIR CFLAGS LDFLAGS INCLUDE_DIR
+ 
+diff --git a/dissectors/tcp_ca/Makefile b/dissectors/tcp_ca/Makefile
+index 72af350..d3659bb 100644
+--- a/dissectors/tcp_ca/Makefile
++++ b/dissectors/tcp_ca/Makefile
+@@ -44,9 +44,9 @@ endif
+ 
+ # library specific to the dissector
+ ifdef LOCAL_NDPI
+-LDFLAGS = $(ROOT_DIR)/../nDPI/src/lib/.libs/libndpi.a
++LDFLAGS += $(ROOT_DIR)/../nDPI/src/lib/.libs/libndpi.a
+ else
+-LDFLAGS = $(shell pkg-config --libs libndpi)
++LDFLAGS += $(shell pkg-config --libs libndpi)
+ endif
+ 
+ # To make it visible
+diff --git a/dissectors/tcp_grbg/Makefile b/dissectors/tcp_grbg/Makefile
+index c03c122..ee2578e 100644
+--- a/dissectors/tcp_grbg/Makefile
++++ b/dissectors/tcp_grbg/Makefile
+@@ -44,9 +44,9 @@ endif
+ 
+ # library specific to the dissector
+ ifdef LOCAL_NDPI
+-LDFLAGS = $(ROOT_DIR)/../nDPI/src/lib/.libs/libndpi.a
++LDFLAGS += $(ROOT_DIR)/../nDPI/src/lib/.libs/libndpi.a
+ else
+-LDFLAGS = $(shell pkg-config --libs libndpi)
++LDFLAGS += $(shell pkg-config --libs libndpi)
+ endif
+ 
+ # To make it visible
+diff --git a/dissectors/udp_ca/Makefile b/dissectors/udp_ca/Makefile
+index e71a08f..155f8ed 100644
+--- a/dissectors/udp_ca/Makefile
++++ b/dissectors/udp_ca/Makefile
+@@ -44,9 +44,9 @@ endif
+ 
+ # library specific to the dissector
+ ifdef LOCAL_NDPI
+-LDFLAGS = $(ROOT_DIR)/../nDPI/src/lib/.libs/libndpi.a
++LDFLAGS += $(ROOT_DIR)/../nDPI/src/lib/.libs/libndpi.a
+ else
+-LDFLAGS = $(shell pkg-config --libs libndpi)
++LDFLAGS += $(shell pkg-config --libs libndpi)
+ endif
+ 
+ # To make it visible
+diff --git a/dissectors/udp_grbg/Makefile b/dissectors/udp_grbg/Makefile
+index a612b88..78ca4bb 100644
+--- a/dissectors/udp_grbg/Makefile
++++ b/dissectors/udp_grbg/Makefile
+@@ -44,9 +44,9 @@ endif
+ 
+ # library specific to the dissector
+ ifdef LOCAL_NDPI
+-LDFLAGS = $(ROOT_DIR)/../nDPI/src/lib/.libs/libndpi.a
++LDFLAGS += $(ROOT_DIR)/../nDPI/src/lib/.libs/libndpi.a
+ else
+-LDFLAGS = $(shell pkg-config --libs libndpi)
++LDFLAGS += $(shell pkg-config --libs libndpi)
+ endif
+ 
+ # To make it visible
+diff --git a/manipulators/mfbc/Makefile b/manipulators/mfbc/Makefile
+index 130b91e..4cf9d01 100644
+--- a/manipulators/mfbc/Makefile
++++ b/manipulators/mfbc/Makefile
+@@ -41,7 +41,7 @@ OBJ = $(SRC:.c=.o)
+ DEP = ../core/mmain.c mpei.c analyse.c
+ 
+ # compilation
+-LDFLAGS =  -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto
++LDFLAGS +=  -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto
+ 
+ # cflags
+ CFLAGS += -I./include
+diff --git a/manipulators/mfile/Makefile b/manipulators/mfile/Makefile
+index 008390b..c20c80c 100644
+--- a/manipulators/mfile/Makefile
++++ b/manipulators/mfile/Makefile
+@@ -41,7 +41,7 @@ OBJ = $(SRC:.c=.o)
+ DEP = ../core/mmain.c mpei.c analyse.c
+ 
+ # compilation
+-LDFLAGS =  -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto
++LDFLAGS +=  -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto
+ 
+ # cflags
+ CFLAGS += -I./include
+diff --git a/manipulators/mpaltalk/Makefile b/manipulators/mpaltalk/Makefile
+index 610e3bb..0edec94 100644
+--- a/manipulators/mpaltalk/Makefile
++++ b/manipulators/mpaltalk/Makefile
+@@ -41,7 +41,7 @@ OBJ = $(SRC:.c=.o)
+ DEP = ../core/mmain.c mpei.c analyse.c
+ 
+ # compilation
+-LDFLAGS =  -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto
++LDFLAGS +=  -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto
+ 
+ # cflags
+ CFLAGS += -I./include
+diff --git a/manipulators/mwebymsg/Makefile b/manipulators/mwebymsg/Makefile
+index 2bfa41a..8150c32 100644
+--- a/manipulators/mwebymsg/Makefile
++++ b/manipulators/mwebymsg/Makefile
+@@ -41,7 +41,7 @@ OBJ = $(SRC:.c=.o)
+ DEP = ../core/mmain.c mpei.c analyse.c
+ 
+ # compilation
+-LDFLAGS =  -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto $(shell pkg-config --libs json-c)
++LDFLAGS +=  -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto $(shell pkg-config --libs json-c)
+ 
+ # cflags
+ CFLAGS += -I./include $(shell pkg-config --cflags json-c)
+diff --git a/manipulators/mwmail/Makefile b/manipulators/mwmail/Makefile
+index a2d254c..1cdec70 100644
+--- a/manipulators/mwmail/Makefile
++++ b/manipulators/mwmail/Makefile
+@@ -43,7 +43,7 @@ OBJ = $(SRC:.c=.o)
+ DEP = ../core/mmain.c mpei.c analyse.c
+ 
+ # compilation
+-LDFLAGS =  -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto
++LDFLAGS +=  -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto
+ 
+ # cflags
+ CFLAGS += -I./include
+diff --git a/manipulators/www/Makefile b/manipulators/www/Makefile
+index bdbb69d..2128db0 100644
+--- a/manipulators/www/Makefile
++++ b/manipulators/www/Makefile
+@@ -41,7 +41,7 @@ OBJ = $(SRC:.c=.o)
+ DEP = ../core/mmain.c mpei.c analyse.c
+ 
+ # compilation
+-LDFLAGS =  -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto
++LDFLAGS +=  -L$(ROOT_DIR) -ldl -lpthread -lz -lssl -lcrypto
+ 
+ # cflags
+ CFLAGS += -I./include
+diff --git a/system/dema/Makefile b/system/dema/Makefile
+index 934db3a..ae4d1ac 100644
+--- a/system/dema/Makefile
++++ b/system/dema/Makefile
+@@ -39,17 +39,12 @@ SRC = dema.c session_decoding.c dbinterface.c captime.c log.c
+ 
+ # compilation
+ INCLUDE_DIR = -I$(ROOT_DIR)/include
+-LDFLAGS = -L$(ROOT_DIR) -ldl -lpthread -lpcap
+-CFLAGS = -rdynamic $(INCLUDE_DIR) -Wall -g -ggdb -fPIC -D_FILE_OFFSET_BITS=64
++LDFLAGS = $(LDFLAGS_BASE) -L$(ROOT_DIR) -ldl -lpthread -lpcap
++CFLAGS = $(CFLAGS_BASE) -rdynamic $(INCLUDE_DIR) -fPIC -D_FILE_OFFSET_BITS=64
+ CFLAGS += $(shell mysql_config --cflags)
+ LDFLAGS += $(shell mysql_config --libs)
+ CFLAGS += -DMYSQLXON=1
+ 
+-# performance
+-ifdef GPROF
+-CFLAGS += -pg
+-endif
+-
+ # sqlite version
+ LDFLAGS += -lsqlite3 -lssl -lcrypto
+ 
+diff --git a/system/trigcap/Makefile b/system/trigcap/Makefile
+index 72072a7..bb86243 100644
+--- a/system/trigcap/Makefile
++++ b/system/trigcap/Makefile
+@@ -39,14 +39,8 @@ SRC = trigcap.c
+ 
+ # compilation
+ INCLUDE_DIR = -I$(ROOT_DIR)/include
+-LDFLAGS = -L$(ROOT_DIR) -lpcap
+-CFLAGS = -rdynamic $(INCLUDE_DIR) -Wall -g -ggdb -fPIC -D_FILE_OFFSET_BITS=64
+-
+-# performance
+-ifdef GPROF
+-CFLAGS += -pg
+-endif
+-
++LDFLAGS = $(LDFLAGS_BASE) -L$(ROOT_DIR) -lpcap
++CFLAGS = $(CFLAGS_BASE) -rdynamic $(INCLUDE_DIR) -fPIC -D_FILE_OFFSET_BITS=64
+ 
+ # To make it visible
+ export CC CCPP ROOT_DIR CFLAGS LDFLAGS INCLUDE_DIR INSTALL_DIR

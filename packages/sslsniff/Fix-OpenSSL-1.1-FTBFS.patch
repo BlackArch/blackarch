@@ -1,0 +1,90 @@
+Description: Fix build with OpenSSL 1.1
+ Those changes are not backwards compatible, the code will not
+ build with OpenSSL 1.0.
+Author: Hilko Bengen <bengen@debian.org>
+Bug-Debian: https://bugs.debian.org/828557
+Bug: https://github.com/moxie0/sslsniff/issues/27
+Origin: vendor, https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=828557#54
+Last-Update: 2018-02-22
+
+Index: sslsniff/SessionCache.cpp
+===================================================================
+--- sslsniff.orig/SessionCache.cpp
++++ sslsniff/SessionCache.cpp
+@@ -47,7 +47,9 @@ void SessionCache::removeSessionId(unsig
+ }
+ 
+ int SessionCache::setNewSessionId(SSL *s, SSL_SESSION *session) {
+-  return setNewSessionId(s, session, session->session_id, session->session_id_length);
++  unsigned int id_length;
++  const unsigned char *id = SSL_SESSION_get_id(session, &id_length);
++  return setNewSessionId(s, session, (unsigned char*)id, id_length);
+ }
+ 
+ int SessionCache::setNewSessionId(SSL *s, SSL_SESSION *session, 
+@@ -94,7 +96,7 @@ int SessionCache::setNewSessionId(SSL *s
+   return 1;  
+ }
+ 
+-SSL_SESSION * SessionCache::getSessionId(SSL *s, unsigned char *id, int idLength, int *ref) {
++SSL_SESSION * SessionCache::getSessionId(SSL *s, const unsigned char *id, int idLength, int *ref) {
+   int i;
+   unsigned char *b;
+ 
+@@ -117,7 +119,7 @@ SSL_SESSION * SessionCache::getSessionId
+ 
+ // Trampoline Functions.  Yay C.
+ 
+-SSL_SESSION * SessionCache::getSessionIdTramp(SSL *s, unsigned char *id, int idLength, int *ref) {
++SSL_SESSION * SessionCache::getSessionIdTramp(SSL *s, const unsigned char *id, int idLength, int *ref) {
+   return SessionCache::getInstance()->getSessionId(s, id, idLength, ref);
+ }
+ 
+Index: sslsniff/certificate/Certificate.hpp
+===================================================================
+--- sslsniff.orig/certificate/Certificate.hpp
++++ sslsniff/certificate/Certificate.hpp
+@@ -92,7 +92,8 @@ private:
+   }
+ 
+   void parseCommonName(X509 *cert) {
+-    std::string distinguishedName(cert->name);
++    char buf[4096];
++    std::string distinguishedName(X509_NAME_oneline(X509_get_subject_name(cert), buf, sizeof(buf)));
+     std::string::size_type cnIndex = distinguishedName.find("CN=");
+ 
+     if (cnIndex == std::string::npos) throw BadCertificateException();
+Index: sslsniff/certificate/TargetedCertificateManager.cpp
+===================================================================
+--- sslsniff.orig/certificate/TargetedCertificateManager.cpp
++++ sslsniff/certificate/TargetedCertificateManager.cpp
+@@ -115,8 +115,9 @@ void TargetedCertificateManager::getCert
+ 
+ void TargetedCertificateManager::dump() {
+   std::list<Certificate*>::iterator i;
++  char buf[4096];
+ 
+   for(i=certificates.begin(); i != certificates.end(); ++i) 
+-    std::cout << "Certificate: " << (*i)->getCert()->name << std::endl;
++    std::cout << "Certificate: " << X509_NAME_oneline(X509_get_subject_name((*i)->getCert()), buf, sizeof(buf)) << std::endl;
+ 
+ }
+Index: sslsniff/SessionCache.hpp
+===================================================================
+--- sslsniff.orig/SessionCache.hpp
++++ sslsniff/SessionCache.hpp
+@@ -49,12 +49,12 @@ class SessionCache {
+ 
+ public:
+   static SessionCache* getInstance();
+-  static SSL_SESSION * getSessionIdTramp(SSL *s, unsigned char *id, int idLength, int *ref);
++  static SSL_SESSION * getSessionIdTramp(SSL *s, const unsigned char *id, int idLength, int *ref);
+   static int setNewSessionIdTramp(SSL *s, SSL_SESSION *session);
+ 
+   int setNewSessionId(SSL *s, SSL_SESSION *session);
+   int setNewSessionId(SSL *s, SSL_SESSION *session, unsigned char *id, int idLength);
+-  SSL_SESSION * getSessionId(SSL *s, unsigned char *id, int idLength, int *ref);
++  SSL_SESSION * getSessionId(SSL *s, const unsigned char *id, int idLength, int *ref);
+ 
+ private:
+   static SessionCache *sessionCache;

@@ -1,0 +1,547 @@
+--- a/dissectors/tcp_grbg/tcp_garbage.c	2025-09-30 21:29:48.417930502 +0200
++++ b/dissectors/tcp_grbg/tcp_garbage.c	2025-09-30 21:56:22.388938156 +0200
+@@ -50,7 +50,6 @@
+ /* nDPI library */
+ #include <ndpi/ndpi_main.h>
+ #include <ndpi/ndpi_api.h>
+-#include <ndpi/ndpi_typedefs.h>
+ 
+ 
+ #define GRB_FILE           0           /* to put (or not) data in to a pcap file */
+@@ -94,11 +93,11 @@
+ static struct ndpi_detection_module_struct *ndpi = NULL;
+ static pthread_mutex_t ndpi_mux;  /* mutex to access the ndpi handler */
+ static unsigned int ndpi_flow_struct_size;
+-static unsigned int ndpi_proto_size;
+ static long limit_pkts;
+ 
+ 
+-static ndpi_protocol nDPIPacket(packet *pkt, struct ndpi_flow_struct *l7flow, struct ndpi_id_struct *l7src, struct ndpi_id_struct *l7dst, bool ipv4)
++/* helper: run nDPI on a packet (no per-endpoint ID structs needed) */
++static ndpi_protocol nDPIPacket(packet *pkt, struct ndpi_flow_struct *l7flow, bool ipv4)
+ {
+     void *data;
+     size_t offset, size;
+@@ -125,7 +124,7 @@
+     when = when * NDPI_TICK_RES;
+     when += pkt->cap_usec/1000;  /* (1000000 / NDPI_TICK_RES) */
+     pthread_mutex_lock(&ndpi_mux);
+-    l7prot_id = ndpi_detection_process_packet(ndpi, l7flow, data, size, when);
++    l7prot_id = ndpi_detection_process_packet(ndpi, l7flow, data, size, when, 0);
+     pthread_mutex_unlock(&ndpi_mux);
+ 
+     return l7prot_id;
+@@ -509,7 +508,6 @@
+     char buff[TCP_CFG_LINE_MAX_SIZE];
+     char *l7prot_type;
+     struct ndpi_flow_struct *l7flow;
+-    struct ndpi_id_struct *l7src, *l7dst;
+     ndpi_protocol l7prot_id;
+     unsigned char stage;
+     
+@@ -517,28 +515,8 @@
+ 
+     /* ndpi init */ 
+     l7flow = xcalloc(1, ndpi_flow_struct_size);
+-    if (l7flow == NULL) {
++    if (l7flow == NULL)
+         LogPrintf(LV_ERROR, "Out of memory");
+-        l7src = NULL;
+-        l7dst = NULL;
+-    }
+-    else {
+-        l7src = xcalloc(1, ndpi_proto_size);
+-        if (l7src != NULL) {
+-            l7dst = xcalloc(1, ndpi_proto_size);
+-            if (l7dst == NULL) {
+-                xfree(l7src);
+-                xfree(l7flow);
+-                l7src = NULL;
+-                l7flow = NULL;
+-            }
+-        }
+-        else {
+-            xfree(l7flow);
+-            l7flow = NULL;
+-            l7dst = NULL;
+-        }
+-    }
+     
+     /* dig init */
+     dig_srch_a = dig_srch_b = NULL;
+@@ -668,16 +646,18 @@
+             count++;
+             end_cap = pkt->cap_sec;
+             /* protocol type -ndpi- */
+-            if (stage != 4 && (l7prot_type == NULL || l7prot_id.master_protocol == NDPI_PROTOCOL_HTTP) && l7flow != NULL) {
++            if (stage != 4 && (l7prot_type == NULL || (l7prot_type && strcmp(l7prot_type, "HTTP") == 0)) && l7flow != NULL) {
+                 if (TcpGrbClientPkt(priv, pkt)) {
+-                    l7prot_id = nDPIPacket(pkt, l7flow, l7src, l7dst, ipv4);
++                    l7prot_id = nDPIPacket(pkt, l7flow, ipv4);
+                 }
+                 else {
+-                    l7prot_id = nDPIPacket(pkt, l7flow, l7dst, l7src, ipv4);
++                    l7prot_id = nDPIPacket(pkt, l7flow, ipv4);
+                 }
+-                if (l7prot_id.app_protocol != NDPI_PROTOCOL_UNKNOWN) {
++                /* consider it classified if name is not "Unknown" */
++                const char *name = ndpi_protocol2name(ndpi, l7prot_id, buff, TCP_CFG_LINE_MAX_SIZE);
++                if (name && strcmp(name, "Unknown") != 0) {
+                     stage++;
+-                    l7prot_type = ndpi_protocol2name(ndpi, l7prot_id, buff, TCP_CFG_LINE_MAX_SIZE);
++                    l7prot_type = (char *)name;
+                 }
+             }
+ #ifdef XPL_CHECK_CODE
+@@ -938,11 +918,7 @@
+     }
+     
+     /* ndpi free */
+-    if (l7flow != NULL) {
+-        xfree(l7flow);
+-        xfree(l7src);
+-        xfree(l7dst);
+-    }
++    if (l7flow != NULL) xfree(l7flow);
+     if (l7prot_type == NULL)
+         l7prot_type = "Unknown";
+ 
+@@ -1250,7 +1226,7 @@
+ 
+     /* ndpi */
+     pthread_mutex_init(&ndpi_mux, NULL);
+-    ndpi = ndpi_init_detection_module(ndpi_no_prefs);
++    ndpi = ndpi_init_detection_module(NULL);
+     if (ndpi == NULL) {
+         LogPrintf(LV_ERROR, "nDPi initializzation failed");
+ 
+@@ -1259,7 +1235,6 @@
+     /* enable all protocols */
+     NDPI_BITMASK_SET_ALL(all);
+     ndpi_set_protocol_detection_bitmask2(ndpi, &all);
+-    ndpi_proto_size = ndpi_detection_get_sizeof_ndpi_id_struct();
+     ndpi_flow_struct_size = ndpi_detection_get_sizeof_ndpi_flow_struct();
+ 
+     return 0;
+--- a/dissectors/udp_grbg/udp_garbage.c	2025-09-30 22:54:28.103615479 +0200
++++ b/dissectors/udp_grbg/udp_garbage.c	2025-09-30 23:04:31.074093839 +0200
+@@ -49,7 +49,6 @@
+ /* nDPI library */
+ #include <ndpi/ndpi_main.h>
+ #include <ndpi/ndpi_api.h>
+-#include <ndpi/ndpi_typedefs.h>
+ 
+ #define GRB_FILE           0  /* to put (or not) data in to a file */
+ #define UDP_GRB_TMP_DIR    "udp_grb"
+@@ -82,11 +81,11 @@
+ static struct ndpi_detection_module_struct *ndpi = NULL;
+ static pthread_mutex_t ndpi_mux;  /* mutex to access the ndpi handler */
+ static unsigned int ndpi_flow_struct_size;
+-static unsigned int ndpi_proto_size;
+ static long limit_pkts;
+ 
+ 
+-static ndpi_protocol nDPIPacket(packet *pkt, struct ndpi_flow_struct *l7flow, struct ndpi_id_struct *l7src, struct ndpi_id_struct *l7dst, bool ipv4)
++/* helper: run nDPI on a packet (no per-endpoint ID structs needed) */
++static ndpi_protocol nDPIPacket(packet *pkt, struct ndpi_flow_struct *l7flow, bool ipv4)
+ {
+     void *data;
+     size_t offset, size;
+@@ -113,7 +112,7 @@
+     when = when * NDPI_TICK_RES;
+     when += pkt->cap_usec/1000;  /* (1000000 / NDPI_TICK_RES) */;
+     pthread_mutex_lock(&ndpi_mux);
+-    l7prot_id = ndpi_detection_process_packet(ndpi, l7flow, data, size, when);
++    l7prot_id = ndpi_detection_process_packet(ndpi, l7flow, data, size, when, 0);
+     pthread_mutex_unlock(&ndpi_mux);
+ 
+     return l7prot_id;
+@@ -250,35 +249,14 @@
+     char buff[UDP_CFG_LINE_MAX_SIZE];
+     char *l7prot_type;
+     struct ndpi_flow_struct *l7flow;
+-    struct ndpi_id_struct *l7src, *l7dst;
+     ndpi_protocol l7prot_id;
+ 
+     LogPrintf(LV_DEBUG, "UDP garbage id: %d", flow_id);
+ 
+     /* ndpi init */ 
+     l7flow = xcalloc(1, ndpi_flow_struct_size);
+-    if (l7flow == NULL) {
++    if (l7flow == NULL)
+         LogPrintf(LV_ERROR, "Out of memory");
+-        l7src = NULL;
+-        l7dst = NULL;
+-    }
+-    else {
+-        l7src = xcalloc(1, ndpi_proto_size);
+-        if (l7src != NULL) {
+-            l7dst = xcalloc(1, ndpi_proto_size);
+-            if (l7dst == NULL) {
+-                xfree(l7src);
+-                xfree(l7flow);
+-                l7src = NULL;
+-                l7flow = NULL;
+-            }
+-        }
+-        else {
+-            xfree(l7flow);
+-            l7flow = NULL;
+-            l7dst = NULL;
+-        }
+-    }
+ 
+     /* init */
+     priv = DMemMalloc(sizeof(ugrb_priv));
+@@ -368,13 +346,14 @@
+         /* protocol type -ndpi- */
+         if (l7prot_type == NULL && l7flow != NULL) {
+             if (UdpGrbClientPkt(priv, pkt)) {
+-                l7prot_id = nDPIPacket(pkt, l7flow, l7src, l7dst, ipv4);
++                l7prot_id = nDPIPacket(pkt, l7flow, ipv4);
+             }
+             else {
+-                l7prot_id = nDPIPacket(pkt, l7flow, l7dst, l7src, ipv4);
++                l7prot_id = nDPIPacket(pkt, l7flow, ipv4);
+             }
+-            if (l7prot_id.master_protocol != NDPI_PROTOCOL_UNKNOWN) {
+-                l7prot_type = ndpi_protocol2name(ndpi, l7prot_id, buff, UDP_CFG_LINE_MAX_SIZE);
++        const char *name = ndpi_protocol2name(ndpi, l7prot_id, buff, UDP_CFG_LINE_MAX_SIZE);
++            if (name && strcmp(name, "Unknown") != 0) {
++                l7prot_type = (char *)name;
+             }
+         }
+ #if GRB_FILE
+@@ -452,12 +431,7 @@
+         xfree(thrs);
+     }
+     /* ndpi free */
+-    if (l7flow != NULL) {
+-        xfree(l7flow);
+-        xfree(l7src);
+-        xfree(l7dst);
+-        l7flow = NULL;
+-    }
++    if (l7flow != NULL) xfree(l7flow);
+     if (l7prot_type == NULL)
+         l7prot_type = "Unknown";
+ 
+@@ -569,7 +543,7 @@
+ 
+     /* ndpi */
+     pthread_mutex_init(&ndpi_mux, NULL);
+-    ndpi = ndpi_init_detection_module(ndpi_no_prefs);
++    ndpi = ndpi_init_detection_module(NULL);
+     if (ndpi == NULL) {
+         LogPrintf(LV_ERROR, "nDPi initializzation failed");
+ 
+@@ -578,7 +552,6 @@
+     /* enable all protocols */
+     NDPI_BITMASK_SET_ALL(all);
+     ndpi_set_protocol_detection_bitmask2(ndpi, &all);
+-    ndpi_proto_size = ndpi_detection_get_sizeof_ndpi_id_struct();
+     ndpi_flow_struct_size = ndpi_detection_get_sizeof_ndpi_flow_struct();
+ 
+     return 0;
+
+--- a/dissectors/tcp_ca/tcp_analysis.c	2025-09-30 23:11:26.195615226 +0200
++++ b/dissectors/tcp_ca/tcp_analysis.c	2025-09-30 23:47:07.379121388 +0200
+@@ -48,7 +48,7 @@
+ #include "png.h"
+ 
+ /* nDPI library */
+-#include <ndpi/ndpi_main.h>
++#include <ndpi/ndpi_api.h>
+ 
+ 
+ #define CA_CHECK_LOST     0           /* check lost data */
+@@ -99,9 +99,9 @@
+ 
+ static volatile unsigned int incr;
+ /* ndpi */
++static struct ndpi_global_context *ndpi_g = NULL;
+ static struct ndpi_detection_module_struct *ndpi = NULL;
+ static unsigned int ndpi_flow_struct_size;
+-static unsigned int ndpi_proto_size;
+ static long limit_pkts;
+ 
+ static bool grpdis;
+@@ -112,13 +112,13 @@
+ static pthread_mutex_t pthrs_mux;
+ 
+ 
+-static ndpi_protocol nDPIPacket(packet *pkt, struct ndpi_flow_struct *l7flow, struct ndpi_id_struct *l7src, struct ndpi_id_struct *l7dst, bool ipv6)
++static ndpi_protocol nDPIPacket(packet *pkt, struct ndpi_flow_struct *l7flow, bool ipv6)
+ {
+-    void *data;
++    const uint8_t *data;
+     size_t offset, size;
+     ftval voffset;
+     const pstack_f *ip;
+-    unsigned long when;
++    uint64_t when_ms;
+     ndpi_protocol l7prot_id;
+ 
+     if (ipv6) {
+@@ -136,10 +136,8 @@
+         size = pkt->raw_len - offset;
+     }
+     
+-    when = pkt->cap_sec;
+-    when = when * NDPI_TICK_RES;
+-    when += pkt->cap_usec/1000;  /* (1000000 / NDPI_TICK_RES) */;
+-    l7prot_id = ndpi_detection_process_packet(ndpi, l7flow, data, size, when);
++    when_ms  = (uint64_t)pkt->cap_sec * 1000ULL + (pkt->cap_usec / 1000);
++    l7prot_id = ndpi_detection_process_packet(ndpi, l7flow, data, (uint16_t)size, when_ms, 0);
+ 
+     return l7prot_id;
+ }
+@@ -402,28 +400,8 @@
+ 
+     /* ndpi init */ 
+     ifw->l7flow = xcalloc(1, ndpi_flow_struct_size);
+-    if (ifw->l7flow == NULL) {
++    if (ifw->l7flow == NULL)
+         LogPrintf(LV_ERROR, "Out of memory");
+-        ifw->l7src = NULL;
+-        ifw->l7dst = NULL;
+-    }
+-    else {
+-        ifw->l7src = xcalloc(1, ndpi_proto_size);
+-        if (ifw->l7src != NULL) {
+-            ifw->l7dst = xcalloc(1, ndpi_proto_size);
+-            if (ifw->l7dst == NULL) {
+-                xfree(ifw->l7src);
+-                xfree(ifw->l7flow);
+-                ifw->l7src = NULL;
+-                ifw->l7flow = NULL;
+-            }
+-        }
+-        else {
+-            xfree(ifw->l7flow);
+-            ifw->l7flow = NULL;
+-            ifw->l7dst = NULL;
+-        }
+-    }
+     
+     /* init */
+     memset(&ifw->priv, 0, sizeof(tca_priv));
+@@ -517,14 +495,14 @@
+         ifw->end_cap = pkt->cap_sec;
+         
+         /* protocol type -ndpi- */
+-        if (ifw->stage != 4 && (ifw->l7prot_type == NULL || ifw->l7prot_id.master_protocol == NDPI_PROTOCOL_HTTP) && ifw->l7flow != NULL && ins == TRUE) {
++        if (ifw->stage != 4 && (ifw->l7prot_type == NULL || (ifw->l7prot_type && strcmp(ifw->l7prot_type, "HTTP") == 0)) && ifw->l7flow != NULL) {
+             if (clnt) {
+-                ifw->l7prot_id = nDPIPacket(pkt, ifw->l7flow, ifw->l7src, ifw->l7dst, ifw->priv.ipv6);
++                ifw->l7prot_id = nDPIPacket(pkt, ifw->l7flow, ifw->priv.ipv6);
+             }
+             else {
+-                ifw->l7prot_id = nDPIPacket(pkt, ifw->l7flow, ifw->l7dst, ifw->l7src, ifw->priv.ipv6);
++                ifw->l7prot_id = nDPIPacket(pkt, ifw->l7flow, ifw->priv.ipv6);
+             }
+-            if (ifw->l7prot_id.app_protocol != NDPI_PROTOCOL_UNKNOWN) {
++            if (ndpi_is_protocol_detected(ifw->l7prot_id)) {
+                 ifw->stage++;
+                 ifw->l7prot_type = ndpi_protocol2name(ndpi, ifw->l7prot_id, ifw->buff, TCP_CA_LINE_MAX_SIZE);
+             }
+@@ -607,12 +585,9 @@
+ static packet *TcpCaDisFlowEnd(tca_flow *ifw)
+ {
+     if (ifw->l7prot_type == NULL) {
+-        if (ifw->priv.ipv6)
+-            ifw->l7prot_id = ndpi_guess_undetected_protocol(ndpi, ifw->l7flow, IPPROTO_TCP, 0, 0, ifw->priv.port_s, ifw->priv.port_d);
+-        else
+-            ifw->l7prot_id = ndpi_guess_undetected_protocol(ndpi, ifw->l7flow, IPPROTO_TCP, ifw->priv.ip_s.uint32, ifw->priv.ip_d.uint32, ifw->priv.port_s, ifw->priv.port_d);
++        ifw->l7prot_id = ndpi_guess_undetected_protocol(ndpi, ifw->l7flow, IPPROTO_TCP);
+         
+-        if (ifw->l7prot_id.master_protocol != NDPI_PROTOCOL_UNKNOWN) {
++        if (ndpi_is_protocol_detected(ifw->l7prot_id)) {
+             ifw->l7prot_type = ndpi_protocol2name(ndpi, ifw->l7prot_id, ifw->buff, TCP_CA_LINE_MAX_SIZE);
+         }
+         else {
+@@ -622,8 +597,6 @@
+     /* ndpi free */
+     if (ifw->l7flow != NULL) {
+         xfree(ifw->l7flow);
+-        xfree(ifw->l7src);
+-        xfree(ifw->l7dst);
+     }
+     
+     /* tcp reset */
+@@ -1081,7 +1054,13 @@
+     mkdir(tmp_dir, 0x01FF);
+ 
+     /* ndpi */
+-    ndpi = ndpi_init_detection_module(ndpi_no_prefs);
++    /* nDPI 4.x: global ctx + module */
++    ndpi_g = ndpi_global_init();
++    if (!ndpi_g) {
++        LogPrintf(LV_ERROR, "nDPI global init failed");
++        return -1;
++    }
++    ndpi = ndpi_init_detection_module(ndpi_g);
+     if (ndpi == NULL) {
+         LogPrintf(LV_ERROR, "nDPi initializzation failed");
+ 
+@@ -1090,7 +1069,6 @@
+     /* enable all protocols */
+     NDPI_BITMASK_SET_ALL(all);
+     ndpi_set_protocol_detection_bitmask2(ndpi, &all);
+-    ndpi_proto_size = ndpi_detection_get_sizeof_ndpi_id_struct();
+     ndpi_flow_struct_size = ndpi_detection_get_sizeof_ndpi_flow_struct();
+ 
+     return 0;
+
+--- a/dissectors/udp_ca/udp_analysis.c	2025-09-30 23:50:45.764876976 +0200
++++ b/dissectors/udp_ca/udp_analysis.c	2025-10-01 00:04:13.227990696 +0200
+@@ -46,11 +46,9 @@
+ #include "geoiploc.h"
+ 
+ /* nDPI library */
+-#include <ndpi/ndpi_main.h>
+ #include <ndpi/ndpi_api.h>
+ 
+ #define UDP_CA_TMP_DIR    "udp_ca"
+-#define NDPI_TICK_RES      1000        /* Hz */
+ 
+ static int ppp_id;
+ static int eth_id;
+@@ -91,20 +89,20 @@
+ 
+ static volatile unsigned int incr;
+ /* ndpi */
++static struct ndpi_global_context *ndpi_g = NULL;
+ static struct ndpi_detection_module_struct *ndpi = NULL;
+ static pthread_mutex_t ndpi_mux;  /* mutex to access the ndpi handler */
+ static unsigned int ndpi_flow_struct_size;
+-static unsigned int ndpi_proto_size;
+ static long limit_pkts;
+ 
+ 
+-static ndpi_protocol nDPIPacket(packet *pkt, struct ndpi_flow_struct *l7flow, struct ndpi_id_struct *l7src, struct ndpi_id_struct *l7dst, bool ipv4)
++static ndpi_protocol nDPIPacket(packet *pkt, struct ndpi_flow_struct *l7flow, bool ipv4)
+ {
+-    void *data;
++    const uint8_t *data;
+     size_t offset, size;
+     ftval voffset;
+     const pstack_f *ip;
+-    unsigned long when;
++    uint64_t when_ms;
+     ndpi_protocol l7prot_id;
+ 
+     if (ipv4) {
+@@ -121,11 +119,9 @@
+         data = pkt->raw + offset;
+         size = pkt->raw_len - offset;
+     }
+-    when = pkt->cap_sec;
+-    when = when * NDPI_TICK_RES;
+-    when += pkt->cap_usec/1000;  /* (1000000 / NDPI_TICK_RES) */;
++    when_ms  = (uint64_t)pkt->cap_sec * 1000ULL + (pkt->cap_usec / 1000);
+     pthread_mutex_lock(&ndpi_mux);
+-    l7prot_id = ndpi_detection_process_packet(ndpi, l7flow, data, size, when);
++    l7prot_id = ndpi_detection_process_packet(ndpi, l7flow, data, (uint16_t)size, when_ms, 0);
+     pthread_mutex_unlock(&ndpi_mux);
+ 
+     return l7prot_id;
+@@ -331,7 +327,6 @@
+     char buff[UDP_CA_LINE_MAX_SIZE];
+     char *l7prot_type;
+     struct ndpi_flow_struct *l7flow;
+-    struct ndpi_id_struct *l7src, *l7dst;
+     ndpi_protocol l7prot_id;
+ 
+     LogPrintf(LV_DEBUG, "UDP analysis id: %d", flow_id);
+@@ -340,25 +335,6 @@
+     l7flow = xcalloc(1, ndpi_flow_struct_size);
+     if (l7flow == NULL) {
+         LogPrintf(LV_ERROR, "Out of memory");
+-        l7src = NULL;
+-        l7dst = NULL;
+-    }
+-    else {
+-        l7src = xcalloc(1, ndpi_proto_size);
+-        if (l7src != NULL) {
+-            l7dst = xcalloc(1, ndpi_proto_size);
+-            if (l7dst == NULL) {
+-                xfree(l7src);
+-                xfree(l7flow);
+-                l7src = NULL;
+-                l7flow = NULL;
+-            }
+-        }
+-        else {
+-            xfree(l7flow);
+-            l7flow = NULL;
+-            l7dst = NULL;
+-        }
+     }
+ 
+     /* init */
+@@ -426,12 +402,12 @@
+         /* protocol type -ndpi- */
+         if (l7prot_type == NULL && l7flow != NULL) {
+             if (clnt) {
+-                l7prot_id = nDPIPacket(pkt, l7flow, l7src, l7dst, ipv4);
++                l7prot_id = nDPIPacket(pkt, l7flow, ipv4);
+             }
+             else {
+-                l7prot_id = nDPIPacket(pkt, l7flow, l7dst, l7src, ipv4);
++                l7prot_id = nDPIPacket(pkt, l7flow, ipv4);
+             }
+-            if (l7prot_id.master_protocol != NDPI_PROTOCOL_UNKNOWN) {
++            if (ndpi_is_protocol_detected(l7prot_id)) {
+                 l7prot_type = ndpi_protocol2name(ndpi, l7prot_id, buff, UDP_CA_LINE_MAX_SIZE);
+             }
+         }
+@@ -439,23 +415,15 @@
+         pkt = FlowGetPkt(flow_id);
+     }
+     if (l7prot_type == NULL) {
+-        if (priv.ipv6)
+-            l7prot_id = ndpi_guess_undetected_protocol(ndpi, l7flow, IPPROTO_UDP, 0, 0, priv.port_s, priv.port_d);
+-        else
+-            l7prot_id = ndpi_guess_undetected_protocol(ndpi, l7flow, IPPROTO_UDP, priv.ip_s.uint32, priv.ip_d.uint32, priv.port_s, priv.port_d);
+-        
+-        if (l7prot_id.master_protocol != NDPI_PROTOCOL_UNKNOWN) {
++        l7prot_id = ndpi_guess_undetected_protocol(ndpi, l7flow, IPPROTO_UDP);
++        if (ndpi_is_protocol_detected(l7prot_id))
+             l7prot_type = ndpi_protocol2name(ndpi, l7prot_id, buff, UDP_CA_LINE_MAX_SIZE);
+-        }
+-        else {
++        else
+             l7prot_type = "Unknown";
+-        }
+     }
+     /* ndpi free */
+     if (l7flow != NULL) {
+         xfree(l7flow);
+-        xfree(l7src);
+-        xfree(l7dst);
+         l7flow = NULL;
+     }
+ 
+@@ -631,7 +599,12 @@
+ 
+     /* ndpi */
+     pthread_mutex_init(&ndpi_mux, NULL);
+-    ndpi = ndpi_init_detection_module(ndpi_no_prefs);
++    ndpi_g = ndpi_global_init();
++    if (!ndpi_g) {
++        LogPrintf(LV_ERROR, "nDPI global init failed");
++        return -1;
++    }
++    ndpi = ndpi_init_detection_module(ndpi_g);
+     if (ndpi == NULL) {
+         LogPrintf(LV_ERROR, "nDPi initializzation failed");
+ 
+@@ -640,7 +613,6 @@
+     /* enable all protocols */
+     NDPI_BITMASK_SET_ALL(all);
+     ndpi_set_protocol_detection_bitmask2(ndpi, &all);
+-    ndpi_proto_size = ndpi_detection_get_sizeof_ndpi_id_struct();
+     ndpi_flow_struct_size = ndpi_detection_get_sizeof_ndpi_flow_struct();
+ 
+     return 0;

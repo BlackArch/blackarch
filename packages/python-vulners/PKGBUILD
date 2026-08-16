@@ -2,29 +2,30 @@
 # See COPYING for license details.
 
 pkgname=python-vulners
-_pkgname=vulners
-pkgver=3.0.5
+_pkgname=${pkgname#python-}
+pkgver=3.1.11
 pkgrel=1
 pkgdesc='Python library and command-line utility for Vulners (https://vulners.com).'
 arch=('any')
 url='https://pypi.org/project/vulners/#files'
-depends=('python-requests' 'python-six')
-makedepends=('python-setuptools')
-license=('GPL3')
+license=('GPL-3.0-or-later')
+depends=('python' 'python-requests' 'python-six' 'python-httpx' 'python-orjson'
+         'python-pydantic')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel' 'python-poetry')
+options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('69547ac0015e30d909c913a3d25f56646edfdce1829727a1348fbe740eb17f244a1a2fbb73e2447b50a13584cf47fa1457ef0eaaa5c72e697102fd3e55fef607')
+sha512sums=('044c2da81b079287c6c9e33d48a349e307550fd57a95a68b45949934c8c7afab319f56ef228e451ab0fbd00d38f184d0ab5c8bdc1433c1df84ea196367003db4')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
-
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 

@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=nox-framework
+pkgver=1.0.5
+pkgrel=1
+pkgdesc='OSINT & CTI Framework with 120+ sources, async performance, identity pivoting, and automated risk analysis.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon' 'blackarch-forensic')
+url='https://github.com/nox-project/nox-framework'
+license=('Apache-2.0')
+depends=('python' 'python-aiohttp' 'python-aiohttp-socks' 'python-aiosqlite'
+         'python-httpx' 'python-requests' 'python-certifi' 'python-cloudscraper'
+         'python-beautifulsoup4' 'python-lxml' 'python-dnspython'
+         'python-phonenumbers' 'python-pydantic' 'python-pydantic-core'
+         'python-colorama' 'python-rich' 'python-stem' 'python-fpdf2')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+source=("$url/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('f2c7a53b4188baf75ce1dc84a48a8bf1788a8dd954952a93353e004218a13207e367bfbcab7bc47c33c17242b27315545aff5c53a382fa2de894394e42fbdcbc')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  python -m build --wheel --no-isolation
+
+  python build_sources.py
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+
+  install -Dm 644 -t "$pkgdir/usr/share/$pkgname/sources/" sources/*.json
+}
+

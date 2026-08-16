@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Credits AUR
+# Maintainer: redponike <proton (dot) me>
+# Contributor: acxz <akashpatel2008 at yahoo dot com>
+
+pkgname=python-dm-tree
+_pkgname=${pkgname#python-}
+pkgver=0.1.10
+pkgrel=1
+pkgdesc='Library for working with nested data structures.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/google-deepmind/tree'
+license=('Apache-2.0')
+depends=('python' 'python-six' 'abseil-cpp' 'python-absl' 'python-attrs'
+         'python-numpy' 'python-wrapt')
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'cmake')
+source=("https://github.com/google-deepmind/tree/archive/refs/tags/$pkgver.tar.gz")
+sha512sums=('ed6aff3ac04078f0ba2f9269712602bab7ef822992ef00a58675fbf7d2a65759a6e29563b662bcd78e3ec6f39d22d8da5217343d29e86c77aced516ad997d100')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  sed -i '/cmake_args = \[/a \        "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",' \
+    setup.py
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+

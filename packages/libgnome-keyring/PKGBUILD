@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=libgnome-keyring
+pkgver=3.12.0.r14.g23438cc
+pkgrel=2
+epoch=1
+pkgdesc='GNOME keyring client library (deprecated).'
+url='https://gitlab.gnome.org/Archive/libgnome-keyring'
+arch=('x86_64' 'aarch64')
+license=('LGPL-2.1-or-later')
+depends=('dbus' 'glib2' 'libgcrypt')
+makedepends=('git' 'gnome-common' 'gobject-introspection' 'intltool' 'vala')
+optdepends=('org.freedesktop.secrets: secret storage backend')
+_commit=23438cc767a744f29aeaf8cb8746f8d5ce9cdb32  # master
+source=("git+https://gitlab.gnome.org/Archive/libgnome-keyring.git#commit=$_commit")
+sha512sums=('334dc86f0b39764b3e50e1f3cef24a6ae2fea6c88055e2255455eb42255054821e1fa1624f1d513126fa1945c772c8b523b47e0973f3b96d3a1f4d1ed2a44ee6')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  NOCONFIGURE=1 ./autogen.sh
+}
+
+build() {
+  local configure_options=(
+    --prefix=/usr
+    --sysconfdir=/etc
+    --localstatedir=/var
+    --libexecdir=/usr/lib
+    --disable-static
+    --enable-gtk-doc
+  )
+
+  cd $pkgname
+  ./configure "${configure_options[@]}"
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  make
+}
+
+package() {
+  cd $pkgname
+
+  make DESTDIR="$pkgdir" install
+}
+

@@ -2,18 +2,19 @@
 # See COPYING for license details.
 
 pkgname=zeek
-pkgver=v8.1.0.dev.r24.g13f613eb1d
+pkgver=v9.0.0.dev.r770.g8269c21
 pkgrel=1
-epoch=1
+epoch=2
 groups=('blackarch' 'blackarch-networking' 'blackarch-defensive'
         'blackarch-sniffer')
 pkgdesc='A powerful network analysis framework that is much different from the typical IDS you may know.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/zeek/zeek'
-license=('BSD')
+license=('BSD-3-Clause')
 depends=('libpcap' 'openssl-1.0' 'bash' 'python' 'swig' 'ruby' 'perl'
          'crypto++')
-makedepends=('git' 'cmake' 'python' 'swig' 'bison' 'flex' 'zlib')
+makedepends=('git' 'cmake' 'python' 'swig' 'bison' 'flex' 'zlib' 'nodejs'
+             'zeromq')
 replaces=('bro')
 provides=('bro')
 source=("git+https://github.com/$pkgname/$pkgname.git")
@@ -22,7 +23,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 prepare() {

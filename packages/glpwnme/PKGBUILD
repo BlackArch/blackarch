@@ -1,0 +1,43 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=glpwnme
+pkgver=119.8a0e671
+pkgrel=1
+pkgdesc='GLPI vulnerabilities checking tool.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner')
+url='https://github.com/Orange-Cyberdefense/glpwnme'
+license=('GPL-3.0-or-later')
+depends=('python' 'python-beautifulsoup4' 'python-bs4' 'python-certifi'
+         'python-charset-normalizer' 'python-idna' 'python-markdown-it-py'
+         'python-mdurl' 'python-packaging' 'python-pygments' 'python-requests'
+         'python-rich' 'python-soupsieve' 'python-urllib3')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel' 'git' 'python-poetry-core')
+source=("git+https://github.com/Orange-Cyberdefense/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd $pkgname
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+

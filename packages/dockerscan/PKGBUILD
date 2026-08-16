@@ -2,47 +2,42 @@
 # See COPYING for license details.
 
 pkgname=dockerscan
-pkgver=59.590a844
-_pyver=3.13
-pkgrel=12
+pkgver=latest.r25.g32e6f86
+_pyver=3.14
+pkgrel=1
+epoch=2
 pkgdesc='Docker security analysis & hacking tools.'
 groups=('blackarch' 'blackarch-scanner')
-arch=('any')
+arch=('x86_64' 'aarch64')
 url='https://github.com/cr0hn/dockerscan'
-license=('BSD')
-depends=('python' 'python-requests' 'python-pytest' 'python-click'
-         'python-python-dxf' 'python-colorlog' 'python-booby-ng'
-         'python-cryptography')
-makedepends=('git' 'python-setuptools')
+license=('BSD-3-Clause')
+depends=()
+makedepends=('git' 'go')
 source=("git+https://github.com/cr0hn/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
-prepare() {
-  cd $pkgname
-
-  sed -i 's/==.*//g' requirements.txt
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
   cd $pkgname
 
-  python setup.py build
+  make build
 }
 
 package() {
   cd $pkgname
 
-  python setup.py install --root="$pkgdir" --prefix=/usr --skip-build
-
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.rst CHANGELOG
+  install -Dm 755 -t "$pkgdir/usr/bin/$pkgname" bin/*
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
-  rm -rf "$pkgdir/usr/lib/python$_pyver/site-packages/test"
 }
 

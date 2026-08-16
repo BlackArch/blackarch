@@ -1,0 +1,55 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# from AL [extra] - adjusted to our style.
+#
+# Old Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Old Contributor: Andrea Scarpino <andrea@archlinux.org>
+
+pkgname=qt5-sensors
+_pkgname=${pkgname/5-/}
+pkgver=5.15.18
+_commit=12aaf56f40487f67b305ae22b9989c191072537d
+pkgrel=1
+arch=('x86_64' 'aarch64')
+url='https://www.qt.io/'
+pkgdesc='Provides access to sensor hardware and motion gesture recognition.'
+license=('GPL-3.0-or-later' 'LGPL-3.0-or-later' 'FDL' 'custom')
+depends=('qt5-base')
+makedepends=('git' 'qt5-declarative')
+optdepends=('qt5-declarative: QML bindings')
+source=("git+https://invent.kde.org/qt/qt/$_pkgname#commit=$_commit")
+sha512sums=('758109ae5115108d6cb151207a881fb8b0c5036e00e0206dede3aa6ac0dcae7bdbaff748de06544fda2db98cdf7d51309c76bf75ca84a09201176928d289a804')
+
+pkgver() {
+  cd $_pkgname
+
+  echo "$pkgver+kde+r"`git rev-list --count v"$pkgver-lts-lgpl..$_commit"` |
+    sed -e 's|+kde+r0||'
+}
+
+prepare() {
+  mkdir -p build
+}
+
+build() {
+  cd build
+
+  qmake "../$_pkgname"
+
+  make
+}
+
+package() {
+  cd build
+
+  make INSTALL_ROOT="$pkgdir" install
+
+  # Drop QMAKE_PRL_BUILD_DIR because reference the build dir
+  find "$pkgdir/usr/lib" -type f -name '*.prl' \
+    -exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;
+
+  install -d "$pkgdir/usr/share/licenses"
+  ln -s /usr/share/licenses/qt5-base "$pkgdir/usr/share/licenses/$pkgname"
+}
+

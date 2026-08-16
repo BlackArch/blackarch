@@ -1,0 +1,37 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-google-crc32c
+_pkgname=python-crc32c
+pkgver=1.8.0
+pkgrel=1
+pkgdesc='Wraps the google/crc32c hardware-based implementation of the CRC32C hashing algorithm.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/googleapis/python-crc32c'
+license=('Apache-2.0')
+depends=('python' 'google-crc32c')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+source=("https://github.com/googleapis/python-crc32c/archive/v$pkgver.tar.gz")
+sha512sums=('bcfba53d9d859ebc32d15698caf259674a85935a44ddf1a3edcdccbee85d8fc6ad8154afe78ae8c7e41188188b98b276d2a39cfcc9c21c9ad61e9922f68ebf95')
+
+prepare() {
+	cd "$_pkgname-$pkgver"
+
+	sed -i '73,74d' setup.py
+}
+
+build() {
+	cd "$_pkgname-$pkgver"
+
+	CRC32C_INSTALL_PREFIX=/usr python -m build --wheel --no-isolation
+}
+
+package() {
+	cd "$_pkgname-$pkgver"
+
+	python -m installer --destdir="$pkgdir/" dist/*.whl
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+}
+

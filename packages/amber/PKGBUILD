@@ -2,8 +2,9 @@
 # See COPYING for license details.
 
 pkgname=amber
-pkgver=256.f6eb2dc
+pkgver=v3.1.r2.gf6eb2dc
 pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-binary' 'blackarch-packer' 'blackarch-windows')
 pkgdesc='Reflective PE packer.'
 arch=('x86_64' 'aarch64')
@@ -19,7 +20,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-celery
+_pkgname=celery
+pkgver=5.6.3
+pkgrel=1
+pkgdesc='Distributed Task Queue.'
+arch=('any')
+url='https://pypi.org/project/celery/#files'
+license=('BSD-3-Clause')
+depends=('python' 'python-billiard' 'python-click-didyoumean'
+         'python-click-plugins' 'python-click-repl' 'python-kombu' 'python-pytz'
+         'python-vine')
+optdepends=('python-cryptography: for celery.security'
+            'python-pymongo: for celery.backends.mongodb'
+            'python-msgpack: for using the msgpack serializer'
+            'python-pyro: for using Pyro4 message transport'
+            'python-redis: for celery.backends.redis'
+            'python-sqlalchemy: for celery.backends.database'
+            'python-boto3: for SQS transport'
+            'python-yaml: for using the yaml serializer'
+            'python-pyzmq: for using ZeroMQ transport')
+makedepends=('python-build' 'python-installer' 'python-wheel'
+             'python-setuptools')
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+        'celery@.service'
+        'celery.tmpfiles.d')
+sha512sums=('778cadc45a19e0afba4c0a148e86415afcef3ddf71683cda12c89ec8061e09aabe182c163cc238b8c4e4101b884589f9c54d3608cdad3eda80d525ecd8f925e9'
+            '3c6c9dbdacca2de12d49c03526b34797fd867c14d04115af0d1fda64d2848a5d3f64ceb6d284be319a81d932dc86e69c157b6f5f859f2fa213fc2f43a6052c65'
+            '67279b75c3b44d065811c9c90aee006296164000912d5bb97c74956b26ee4ad4f0847e846052a896d379848b869c849300367e676d3f689cf29e3a0c7ae5310b')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+
+  install -Dm 644 "$srcdir/celery@.service" \
+    "$pkgdir/usr/lib/systemd/system/celery@.service"
+  install -Dm 644 "$srcdir/celery.tmpfiles.d" \
+    "$pkgdir/usr/lib/tmpfiles.d/celery.conf"
+}
+

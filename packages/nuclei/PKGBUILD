@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=nuclei
-pkgver=v3.4.7.r30.g8ef366263
+pkgver=v3.6.2.r392.gba05210
 pkgrel=1
 epoch=2
 groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp' 'blackarch-recon'
@@ -13,13 +13,20 @@ url='https://github.com/projectdiscovery/nuclei'
 license=('MIT')
 depends=('nuclei-templates')
 makedepends=('git' 'go')
-source=("git+https://github.com/projectdiscovery/$pkgname.git")
-sha512sums=('SKIP')
+source=("git+https://github.com/projectdiscovery/$pkgname.git"
+        'config.yaml')
+sha512sums=('SKIP'
+            '45c72fa30d3e223319ab5f74263b9c73daa6efeb9db77ff1a440c4c534b5ecc2d6beea3de393d8e416ab18da5c387e6ea77a2895ef928e3a16e986b437fdfed6')
 
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
@@ -32,14 +39,23 @@ build() {
     -mod=readonly \
     -modcacherw \
     -ldflags "-s -w" \
-    -o $pkgname ./cmd/$pkgname
+    -o $pkgname "./cmd/$pkgname"
 }
 
 package() {
   cd $pkgname
 
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 755 $pkgname "$pkgdir/usr/share/$pkgname/$pkgname"
+  install -Dm 755 ../config.yaml "$pkgdir/usr/share/$pkgname/config.yaml"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md THANKS.md
   install -Dm 644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec /usr/share/$pkgname/$pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
 }
 

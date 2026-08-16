@@ -1,46 +1,30 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-secure
-pkgname=('python2-secure' 'python-secure')
-_pkgname=secure
-pkgver=1.0.1
+pkgname=python-secure
+_pkgname=${pkgname#python-}
+pkgver=2.0.1
 pkgrel=1
 pkgdesc='A lightweight package that adds optional security headers and cookie attributes for Python web frameworks.'
 arch=('any')
 url='https://pypi.org/project/secure/#files'
 license=('MIT')
-makedepends=('python2-setuptools' 'python-setuptools')
+depends=('python')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+options=(!emptydirs)
 source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('7a34c76b0a879e299ddec8c4fdbe7725a855812325f5fa3cc6f8fd88f8b8728656f5d9e6f49334a3a0b7897cdbb977376703129077ff0c044c4cd819ec835526')
-
-prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
-}
+sha512sums=('36e9a2b321a1243b9f854eb570ac376fadb8b62bd25e6ab13ad5559bfed079975aca4f75e918a904e817e6c784a87ed60e6ee40f71df211138310fc79f667bf1')
 
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
-
-  python setup.py build
-}
-
-package_python2-secure() {
-  depends=('python2')
-
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
-}
-
-package_python-secure() {
-  depends=('python')
-
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" -O1 --skip-build
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 

@@ -1,0 +1,58 @@
+From: =?utf-8?q?Edgaras_Janu=C5=A1auskas?= <edgaras.janusauskas@gmail.com>
+Date: Thu, 5 Dec 2019 12:52:16 +0200
+Subject: [PATCH] Fix failures on PHP 7.4. Run phpcs on PHP 7.0
+
+Origin: upstream, https://github.com/cakephp/cakephp/commit/49bbc21e1df15ee5ca21dd8ec3623994fe210e22;
+---
+ system/xi3/lib/Cake/Console/ShellDispatcher.php          | 2 +-
+ system/xi3/lib/Cake/Model/Datasource/Database/Sqlite.php | 1 -
+ system/xi3/lib/Cake/Model/Model.php                      | 4 ++--
+ 3 files changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/system/xi3/lib/Cake/Console/ShellDispatcher.php b/system/xi3/lib/Cake/Console/ShellDispatcher.php
+index 5249008..22a4e53 100644
+--- a/system/xi3/lib/Cake/Console/ShellDispatcher.php
++++ b/system/xi3/lib/Cake/Console/ShellDispatcher.php
+@@ -223,7 +223,7 @@ class ShellDispatcher {
+ 		}
+ 		$methods = array_diff(get_class_methods($Shell), get_class_methods('Shell'));
+ 		$added = in_array($command, $methods);
+-		$private = $command[0] === '_' && method_exists($Shell, $command);
++		$private = substr($command, 0, 1) === '_' && method_exists($Shell, $command);
+ 
+ 		if (!$private) {
+ 			if ($added) {
+diff --git a/system/xi3/lib/Cake/Model/Datasource/Database/Sqlite.php b/system/xi3/lib/Cake/Model/Datasource/Database/Sqlite.php
+index 749d73b..487868b 100644
+--- a/system/xi3/lib/Cake/Model/Datasource/Database/Sqlite.php
++++ b/system/xi3/lib/Cake/Model/Datasource/Database/Sqlite.php
+@@ -179,7 +179,6 @@ class Sqlite extends DboSource {
+ 		);
+ 
+ 		foreach ($result as $column) {
+-			$column = (array)$column;
+ 			$default = ($column['dflt_value'] === 'NULL') ? null : trim($column['dflt_value'], "'");
+ 
+ 			$fields[$column['name']] = array(
+diff --git a/system/xi3/lib/Cake/Model/Model.php b/system/xi3/lib/Cake/Model/Model.php
+index 6f14d78..860ad5b 100644
+--- a/system/xi3/lib/Cake/Model/Model.php
++++ b/system/xi3/lib/Cake/Model/Model.php
+@@ -1358,7 +1358,7 @@ class Model extends CakeObject implements CakeEventListener {
+ 					}
+ 				}
+ 
+-				if (!isset($data[$val]) || isset($data[$val]) && (empty($data[$val]) || $data[$val][0] === '-')) {
++				if (!isset($data[$val]) || isset($data[$val]) && (empty($data[$val]) || substr($data[$val], 0, 1) === '-')) {
+ 					return null;
+ 				}
+ 
+@@ -1991,7 +1991,7 @@ class Model extends CakeObject implements CakeEventListener {
+  */
+ 	protected function _isUUIDField($field) {
+ 		$field = $this->schema($field);
+-		return $field['length'] == 36 && in_array($field['type'], array('string', 'binary', 'uuid'));
++		return $field !== null && $field['length'] == 36 && in_array($field['type'], array('string', 'binary', 'uuid'));
+ 	}
+ 
+ /**

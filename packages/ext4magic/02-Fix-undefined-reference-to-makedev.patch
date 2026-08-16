@@ -1,0 +1,30 @@
+From d412778d45774225ff4b36470193a6056ecc03cd Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?S=C3=A9bastien=20Luttringer?= <seblu@seblu.net>
+Date: Sun, 11 Nov 2018 14:42:38 +0100
+Subject: [PATCH] Fix undefined reference to `makedev'
+
+Add include to sys/sysmacros.h to fix compilation with gcc 8.2.1
+
+Error:
+gcc -O2 -g -D_FILE_OFFSET_BITS=64 -g -O2 -o ext4magic ext4magic-block.o ext4magic-dir_list.o ext4magic-ext4magic.o ext4magic-extent_db.o ext4magic-file_type.o ext4magic-hard_link_stack.o ext4magic-imap_search.o ext4magic-inode.o ext4magic-journal.o ext4magic-lookup_local.o ext4magic-magic_block_scan.o ext4magic-recover.o ext4magic-ring_buf.o ext4magic-util.o  -le2p -luuid -lblkid -lz -lbz2 -lmagic -lext2fs
+/bin/ld: ext4magic-recover.o: in function `recover_file':
+/home/seblu/scm/foss/ext4magic/src/recover.c:478: undefined reference to `makedev'
+---
+ src/recover.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/recover.c b/src/recover.c
+index 41b4aee..30b5d8f 100644
+--- a/src/recover.c
++++ b/src/recover.c
+@@ -24,6 +24,7 @@
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <utime.h>
++#include <sys/sysmacros.h>
+ 
+ #ifndef O_LARGEFILE
+ #define O_LARGEFILE 0
+-- 
+2.19.1
+

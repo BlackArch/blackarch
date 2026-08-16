@@ -1,0 +1,41 @@
+From: Arnaud Rebillout <arnaudr@kali.org>
+Date: Fri, 9 Sep 2022 21:20:06 +0700
+Subject: Update Cake library for PHP 8
+
+Cherry-picked from https://github.com/cakephp/cakephp/commit/d201312a
+
+Otherwise, the xplico server crashes with:
+
+  [Fri Sep 09 08:35:32.183051 2022] [php:error] [pid 11356] [client 127.0.0.1:60674] PHP Fatal error:  Uncaught Error: Unknown named parameter  in /opt/xplico/xi/lib/Cake/Utility/ObjectCollection.php:129
+  Stack trace:
+  #0 /opt/xplico/xi/lib/Cake/Event/CakeEventManager.php(243): ObjectCollection->trigger()
+  #1 /opt/xplico/xi/lib/Cake/Controller/Controller.php(682): CakeEventManager->dispatch()
+  #2 /opt/xplico/xi/lib/Cake/Error/ExceptionRenderer.php(158): Controller->startupProcess()
+  #3 /opt/xplico/xi/lib/Cake/Error/ExceptionRenderer.php(95): ExceptionRenderer->_getController()
+  #4 /opt/xplico/xi/lib/Cake/Error/ErrorHandler.php(126): ExceptionRenderer->__construct()
+  #5 /opt/xplico/xi/lib/Cake/Error/ErrorHandler.php(269): ErrorHandler::handleException()
+  #6 /opt/xplico/xi/lib/Cake/Error/ErrorHandler.php(212): ErrorHandler::handleFatalError()
+  #7 /opt/xplico/xi/lib/Cake/Core/App.php(970): ErrorHandler::handleError()
+  #8 /opt/xplico/xi/lib/Cake/Core/App.php(943): App::_checkFatalError()
+  #9 [internal function]: App::shutdown()
+  #10 {main}
+    thrown in /opt/xplico/xi/lib/Cake/Utility/ObjectCollection.php on line 129
+
+Cf. https://bugs.kali.org/view.php?id=7862
+---
+ system/xi3/lib/Cake/Utility/ObjectCollection.php | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/system/xi3/lib/Cake/Utility/ObjectCollection.php b/system/xi3/lib/Cake/Utility/ObjectCollection.php
+index 1e36e4c..3228898 100644
+--- a/system/xi3/lib/Cake/Utility/ObjectCollection.php
++++ b/system/xi3/lib/Cake/Utility/ObjectCollection.php
+@@ -126,7 +126,7 @@ abstract class ObjectCollection {
+ 		}
+ 		$result = null;
+ 		foreach ($list as $name) {
+-			$result = call_user_func_array(array($this->_loaded[$name], $callback), array_filter(compact('subject')) + $params);
++			$result = call_user_func_array(array($this->_loaded[$name], $callback), array_values(array_filter(compact('subject')) + $params));
+ 			if ($options['collectReturn'] === true) {
+ 				$collected[] = $result;
+ 			}

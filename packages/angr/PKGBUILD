@@ -2,43 +2,47 @@
 # See COPYING for license details.
 
 pkgname=angr
-pkgver=9.1.11752
-pkgrel=7
-epoch=1
+pkgver=9.2.205
+pkgrel=1
+epoch=2
 groups=('blackarch' 'blackarch-binary' 'blackarch-disassembler'
         'blackarch-reversing')
 pkgdesc='The next-generation binary analysis platform from UC Santa Barbaras Seclab.'
 arch=('x86_64' 'aarch64')
 url='https://pypi.org/project/angr/#files'
-license=('BSD')
+license=('BSD-2-Clause')
 depends=('python' 'python-capstone' 'python-networkx' 'python-rpyc'
          'python-progressbar' 'python-mulpyplexer' 'python-unicorn'
          'python-cooldict' 'python-archinfo' 'python-pyvex' 'python-ana'
          'python-claripy' 'python-simuvex' 'python-cle' 'libffi'
-         'python-cachetools' 'python-pyelftools' 'python-cffi' 'python-psutil'
-         'python-bintrees' 'python-dpkt' 'python-z3-solver' 'python-gitpython'
-         'python-sortedcontainers' 'python-pycparser' 'python-ailment'
-         'python-protobuf' 'python-itanium-demangler' 'python-cppheaderparser'
-         'python-sympy' 'python-nampa')
-makedepends=('git' 'python-setuptools' 'python-pip' 'python-wheel')
+         'python-colorama' 'python-cachetools' 'python-pyelftools' 'python-cffi'
+         'python-psutil' 'python-bintrees' 'python-dpkt' 'python-z3-solver'
+         'python-gitpython' 'python-sortedcontainers' 'python-pycparser'
+         'python-ailment' 'python-pyformlang' 'python-protobuf'
+         'python-itanium-demangler' 'python-cppheaderparser' 'python-sympy'
+         'python-nampa' 'python-unique-log-filter' 'python-lmdb' 'python-rich'
+         'python-msgspec' 'python-cxxheaderparser' 'python-pydemumble')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel' 'python-setuptools-rust' 'rust')
 source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz")
-sha512sums=('a0e1069d38bd756ccb520c48d9b14d348c5306326686adf1841ca3d626b5606e20f3fb0ea273da0d11cc1d09ee255d5690e4385b82810fce654180b5ee4bbb73')
+sha512sums=('70cf2d2e34911f0a66a2899f59cedffb66773c93ddca8888cf22c72e41e4a79c39a158fd47e3745019ad7acc64e5dd6621898e547612674e2a4d424f503984e9')
 
 prepare() {
   cd "$pkgname-$pkgver"
 
   sed -i 's|unicorn==1.0.2rc4|unicorn|g' setup.py
+  sed -i 's|pyvex==9.2.194|pyvex|g' pyproject.toml
 }
 
 build() {
   cd "$pkgname-$pkgver"
 
-  python setup.py build
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$pkgname-$pkgver"
 
-  python setup.py install --root="$pkgdir" --prefix=/usr -O1 --skip-build
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 

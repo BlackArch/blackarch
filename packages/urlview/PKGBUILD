@@ -2,49 +2,32 @@
 # See COPYING for license details.
 
 pkgname=urlview
-pkgver=0.9
-pkgrel=15
-_patchlevel=22
+_pkgsrcdir=urlview-ng-1e
+pkgver=1e
+pkgrel=1
 pkgdesc='A curses URL parser for text files.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-misc')
 url="http://packages.qa.debian.org/u/urlview.html"
-license=('GPL')
-depends=('bash' 'ncurses')
-makedepends=('patch' 'automake-1.11' 'autoconf')
-source=("http://ftp.debian.org/debian/pool/main/u/$pkgname/${pkgname}_$pkgver.orig.tar.gz"
-        "http://ftp.debian.org/debian/pool/main/u/$pkgname/${pkgname}_$pkgver-$_patchlevel.diff.gz")
-sha512sums=('68eb2140d93f60974fb6094131d48b6b2bf116ea904d53c6cba54a172933789849c3226cbf5d5565ae10a7717eb0c539390d4474f0617e9b85c3008be767c4fa'
-            'bd4402cbeb1b8ea530643893c330ece57e8426433d904f8153e3b939d5ff1a755339001ba70f56f418b267d06be2461eea2dc5f810c7bc8b9e9d4f403455916c')
-
-prepare() {
-  cd "$pkgname-$pkgver.orig"
-
-  patch -Np1 -i "$srcdir/urlview_$pkgver-$_patchlevel.diff"
-
-  aclocal-1.11
-}
+license=('0BSD' 'GPL-2.0-or-later')
+depends=('bash' 'glibc' 'ncurses')
+makedepends=('git')
+options=('!debug')
+source=("https://ftp.debian.org/debian/pool/main/u/urlview/${pkgname}_${pkgver}.orig.tar.gz")
+sha512sums=('c55f99f43708b664a52cce41814dbc8482b98e3d18c78fdd4cf542860ec730b0c7c91c3e44b7e1bcd21e89c9aca2566dba3da7321e462e6b7cd1fd22d1fa1b2b')
 
 build() {
-  cd "$pkgname-$pkgver.orig"
-
-  ./configure --prefix=/usr
+  cd "$_pkgsrcdir"
 
   make
 }
 
 package() {
-  cd "$pkgname-$pkgver.orig"
+  cd "$_pkgsrcdir"
 
-  install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/etc/$pkgname"
-  install -dm 755 "$pkgdir/usr/share/man/man1"
+  DESTDIR="$pkgdir" PREFIX='/usr' make install
 
-  make prefix="$pkgdir/usr" mandir="$pkgdir/usr/share/man" install
-
-  install -Dm 755 url_handler.sh "$pkgdir/etc/$pkgname/url_handler.sh"
-  install -Dm 644 sample.urlview "$pkgdir/etc/$pkgname/system.urlview"
-
-  ln -fs /etc/urlview/url_handler.sh "$pkgdir/usr/bin/url_handler.sh"
+  install -Dm644 'LICENSES/0BSD.txt' \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE.0BSD"
 }
 

@@ -1,48 +1,30 @@
 # This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
 # See COPYING for license details.
 
-pkgbase=python-pysmb
-pkgname=('python2-pysmb' 'python-pysmb')
-_pkgname=pysmb
-pkgver=1.2.11
+pkgname=python-pysmb
+_pkgname=${pkgname#python-}
+pkgver=1.2.14
 pkgrel=1
 pkgdesc='An experimental SMB/CIFS library written in Python to support file sharing between Windows and Linux machines.'
 arch=('any')
 url='https://pypi.org/project/pysmb/#files'
-license=('GPL')
-makedepends=('python2-setuptools' 'python-setuptools')
-source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.zip")
-sha512sums=('90382456bcca243a5c93e191337f628ce8aee3707ef4fd3bee46879309c76f5e920b7bcbfd3af681c2da54834db931061efb0b9ea3c7050aecab014adeeeee44')
-
-prepare() {
-  cp -a "$_pkgname-$pkgver"{,-2}
-}
+license=('Zlib' 'Libpng')
+depends=('python' 'python-pyasn1' 'python-tqdm')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+options=(!emptydirs)
+source=("https://files.pythonhosted.org/packages/source/${_pkgname::1}/$_pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('54c9d44001bac34f23fd7687cda0b3f31ded80179e53373ca9c1e3173108c362035e15e670e5c9c60890c75d0502d093281162de9c486df9c727e57c12d9db76')
 
 build() {
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py build
-
-  cd "$srcdir/$_pkgname-$pkgver"
-
-  python setup.py build
-}
-
-package_python2-pysmb() {
-  depends=('python2' 'python2-pyasn1')
-
-  cd "$_pkgname-$pkgver-2"
-
-  python2 setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
-}
-
-package_python-pysmb() {
-  depends=('python' 'python-pyasn1')
-
   cd "$_pkgname-$pkgver"
 
-  python setup.py install --prefix=/usr --root="$pkgdir" --optimize=1 \
-    --skip-build
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 

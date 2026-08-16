@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# from AUR - adjusted to our style.
+#
+# Maintainer: HurricanePootis <hurricanepootis@protonmail.com>
+# Contributor:: Maxime Gauduin <alucryd@archlinux.org>
+# Contributor: Mikael Eriksson <mikael_eriksson@miffe.org>
+
+pkgname=libjpeg6-turbo
+_pkgname=libjpeg-turbo
+pkgver=1.5.3
+pkgrel=3
+pkgdesc='libjpeg derivative with accelerated baseline JPEG compression and decompression.'
+arch=('x86_64' 'aarch64')
+url='https://libjpeg-turbo.org/'
+license=('BSD-3-Clause AND Zlib AND IJG')
+depends=('glibc')
+makedepends=('nasm')
+provides=('libjpeg6')
+conflicts=('libjpeg6')
+source=("https://downloads.sourceforge.net/project/libjpeg-turbo/$pkgver/libjpeg-turbo-$pkgver.tar.gz")
+sha512sums=('b611b1cc3d1ddedddad871854b42449d053a5f910ed1bdfa45c98e0270f4ecc110fde3a10111d2b876d847a826fa634f09c0bb8c357056c9c3a91c9065eb5202')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  ./configure \
+    --prefix=/usr \
+    --mandir=/usr/share/man \
+    --without-simd \
+    --with-build-date="$(date --utc --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m%d)"
+
+  make
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  rm -rf "$pkgdir/usr/"{bin,include,lib/pkgconfig,share}
+  rm "$pkgdir/usr/lib/lib"{jpeg.{a,so},turbojpeg.{a,so*}}
+
+  install -Dm 644 LICENSE.md -t "$pkgdir/usr/share/licenses/libjpeg6-turbo/"
+  install -Dm 644 README.ijg \
+    "$pkgdir/usr/share/licenses/libjpeg6-turbo/LICENSE-IJG.md"
+}
+

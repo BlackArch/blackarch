@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=bless
+pkgver=v0.6.3.r3.g103fbd6
+pkgrel=1
+epoch=1
+pkgdesc='High-quality, full-featured hex editor.'
+groups=('blackarch' 'blackarch-misc')
+arch=('any')
+url='https://github.com/afrantzis/bless'
+license=('GPL-1.0-or-later')
+depends=('gtk-sharp-2')
+makedepends=('git' 'meson' 'ninja' 'itstool')
+source=("git+https://github.com/afrantzis/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  arch-meson -Dtests=false -Dhtml_user_doc=false build
+
+  ninja -C build
+}
+
+package() {
+  cd $pkgname
+
+  DESTDIR="$pkgdir" ninja -C build install
+}
+

@@ -2,34 +2,34 @@
 # See COPYING for license details.
 
 pkgname=androidpincrack
-pkgver=2.ddaf307
-pkgrel=4
+_pkgname=AndroidPINCrack
+pkgver=5.6439bd2
+pkgrel=1
 groups=('blackarch' 'blackarch-mobile' 'blackarch-cracker')
 pkgdesc='Bruteforce the Android Passcode given the hash and salt.'
 arch=('any')
 url='https://github.com/PentesterES/AndroidPINCrack'
 license=('MIT')
 makedepends=('git')
-depends=('python2')
-source=("$pkgname::git+https://github.com/PentesterES/AndroidPINCrack.git")
+depends=('python')
+source=("$pkgname::git+https://github.com/PentesterES/$_pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
-}
-
-prepare() {
-  cd $pkgname
-
-  sed -i 's|bin/python|bin/python2|' "$pkgname.py"
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
   cd $pkgname
 
-  install -Dm 755 "$pkgname.py" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 "$_pkgname.py" "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
 }
 

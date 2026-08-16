@@ -1,0 +1,49 @@
+From: =?utf-8?q?Rapha=C3=ABl_Hertzog?= <hertzog@debian.org>
+Date: Fri, 21 Nov 2014 16:45:51 +0100
+Subject: Improve upstream Makefile
+
+We want it to respect DESTDIR, to not strip the binaries, to use FHS
+path (with manual pages in /usr/share/man/), to have sensible default
+permissions and to NOT install anything as root.
+
+Additionally, don't try to use libnet11-config, it doesn't exist and the
+logs are littered with `bin/sh: 1: libnet11-config: not found`.
+---
+ GNUmakefile | 15 ++++++++-------
+ 1 file changed, 8 insertions(+), 7 deletions(-)
+
+diff --git a/GNUmakefile b/GNUmakefile
+index be4a798..00b47d9 100644
+--- a/GNUmakefile
++++ b/GNUmakefile
+@@ -27,8 +27,8 @@ LDOPTS=-L$(LOCALBASE)/lib
+ LIBS=-lgcrypt
+ 
+ ifndef WITHOUT_LIBNET
+-LIBNET_CFLAGS?=$(shell libnet11-config --cflags || libnet-config --cflags)
+-LIBNET_LIBS?=$(shell libnet11-config --libs || libnet-config --libs)
++LIBNET_CFLAGS?=$(shell libnet-config --cflags)
++LIBNET_LIBS?=$(shell libnet-config --libs)
+ CFLAGS+=$(LIBNET_CFLAGS)
+ LIBS+=$(LIBNET_LIBS)
+ COPTS+=-DWITH_LIBNET
+@@ -69,13 +69,14 @@ main.o: main.c $(SUBDIR)/*.h *.h
+ strip: $(PGM)
+ 	strip -g $^
+ 
+-install: strip
+-	install -o root -g 0 -m 0444 $(PGM).1 $(PREFIX)/man/man1/
+-	install -o root -g 0 -m 0511 $(PGM) $(PREFIX)/bin/
++install:
++	install -m 0755 -d $(DESTDIR)$(PREFIX)/share/man/man1/ $(DESTDIR)$(PREFIX)/bin/
++	install -m 0644 $(PGM).1 $(DESTDIR)$(PREFIX)/share/man/man1/
++	install -m 0755 $(PGM) $(DESTDIR)$(PREFIX)/bin/
+ 
+ uninstall:
+-	rm -f $(PREFIX)/man/man1/$(PGM).1
+-	rm -f $(PREFIX)/bin/$(PGM)
++	rm -f $(DESTDIR)$(PREFIX)/share/man/man1/$(PGM).1
++	rm -f $(DESTDIR)$(PREFIX)/bin/$(PGM)
+ 
+ package: clean
+ 	mkdir $(PGM)-$(VERSION) && \

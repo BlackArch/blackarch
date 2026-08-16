@@ -1,0 +1,238 @@
+From: Markus Podar <markus@fischer.name>
+Date: Fri, 20 Mar 2020 21:10:58 +0100
+Subject: php-7.4-compact: replace deprecated curly brace offset access
+
+Per https://wiki.php.net/rfc/deprecate_curly_braces_array_access and https://www.php.net/manual/en/migration74.deprecated.php
+>  The array and string offset access syntax using curly braces is deprecated. Use $var[$idx] instead of $var{$idx}.
+Origin: upstream, https://github.com/cakephp/cakephp/commit/459ee900fe052cf1aeef790a103ae02c673002c4
+---
+ system/xi3/lib/Cake/Console/Command/Task/ModelTask.php   |  2 +-
+ system/xi3/lib/Cake/Console/Command/UpgradeShell.php     |  2 +-
+ system/xi3/lib/Cake/Console/ConsoleOptionParser.php      |  4 ++--
+ .../xi3/lib/Cake/Model/Behavior/ContainableBehavior.php  |  2 +-
+ system/xi3/lib/Cake/Model/Permission.php                 |  2 +-
+ system/xi3/lib/Cake/Network/Http/HttpSocket.php          |  2 +-
+ system/xi3/lib/Cake/TestSuite/CakeTestCase.php           |  2 +-
+ system/xi3/lib/Cake/Utility/Folder.php                   |  2 +-
+ system/xi3/lib/Cake/Utility/Sanitize.php                 |  2 +-
+ system/xi3/lib/Cake/Utility/Set.php                      |  2 +-
+ system/xi3/lib/Cake/View/Helper/FormHelper.php           |  2 +-
+ system/xi3/lib/Cake/View/Helper/JsBaseEngineHelper.php   | 16 ++++++++--------
+ 12 files changed, 20 insertions(+), 20 deletions(-)
+
+diff --git a/system/xi3/lib/Cake/Console/Command/Task/ModelTask.php b/system/xi3/lib/Cake/Console/Command/Task/ModelTask.php
+index 88be255..f70cf65 100644
+--- a/system/xi3/lib/Cake/Console/Command/Task/ModelTask.php
++++ b/system/xi3/lib/Cake/Console/Command/Task/ModelTask.php
+@@ -388,7 +388,7 @@ class ModelTask extends BakeTask {
+ 		sort($options);
+ 		$default = 1;
+ 		foreach ($options as $option) {
+-			if ($option{0} !== '_') {
++			if ($option[0] !== '_') {
+ 				$choices[$default] = $option;
+ 				$default++;
+ 			}
+diff --git a/system/xi3/lib/Cake/Console/Command/UpgradeShell.php b/system/xi3/lib/Cake/Console/Command/UpgradeShell.php
+index f9d1223..c738f0e 100644
+--- a/system/xi3/lib/Cake/Console/Command/UpgradeShell.php
++++ b/system/xi3/lib/Cake/Console/Command/UpgradeShell.php
+@@ -237,7 +237,7 @@ class UpgradeShell extends AppShell {
+ 		foreach ($helpers as $helper) {
+ 			$helper = preg_replace('/Helper$/', '', $helper);
+ 			$oldHelper = $helper;
+-			$oldHelper{0} = strtolower($oldHelper{0});
++			$oldHelper[0] = strtolower($oldHelper[0]);
+ 			$patterns[] = array(
+ 				"\${$oldHelper} to \$this->{$helper}",
+ 				"/\\\${$oldHelper}->/",
+diff --git a/system/xi3/lib/Cake/Console/ConsoleOptionParser.php b/system/xi3/lib/Cake/Console/ConsoleOptionParser.php
+index f90dbc4..f313c41 100644
+--- a/system/xi3/lib/Cake/Console/ConsoleOptionParser.php
++++ b/system/xi3/lib/Cake/Console/ConsoleOptionParser.php
+@@ -620,8 +620,8 @@ class ConsoleOptionParser {
+ 		if (substr($name, 0, 2) === '--') {
+ 			return isset($this->_options[substr($name, 2)]);
+ 		}
+-		if ($name{0} === '-' && $name{1} !== '-') {
+-			return isset($this->_shortOptions[$name{1}]);
++		if ($name[0] === '-' && $name[1] !== '-') {
++			return isset($this->_shortOptions[$name[1]]);
+ 		}
+ 		return false;
+ 	}
+diff --git a/system/xi3/lib/Cake/Model/Behavior/ContainableBehavior.php b/system/xi3/lib/Cake/Model/Behavior/ContainableBehavior.php
+index a494dd7..57ae597 100644
+--- a/system/xi3/lib/Cake/Model/Behavior/ContainableBehavior.php
++++ b/system/xi3/lib/Cake/Model/Behavior/ContainableBehavior.php
+@@ -306,7 +306,7 @@ class ContainableBehavior extends ModelBehavior {
+ 				if (!$optionKey && is_string($key) && preg_match('/^[a-z(]/', $key) && (!isset($Model->{$key}) || !is_object($Model->{$key}))) {
+ 					$option = 'fields';
+ 					$val = array($key);
+-					if ($key{0} === '(') {
++					if ($key[0] === '(') {
+ 						$val = preg_split('/\s*,\s*/', substr($key, 1, -1));
+ 					} elseif (preg_match('/ASC|DESC$/', $key)) {
+ 						$option = 'order';
+diff --git a/system/xi3/lib/Cake/Model/Permission.php b/system/xi3/lib/Cake/Model/Permission.php
+index 8014e61..dc3dcf5 100644
+--- a/system/xi3/lib/Cake/Model/Permission.php
++++ b/system/xi3/lib/Cake/Model/Permission.php
+@@ -190,7 +190,7 @@ class Permission extends AppModel {
+ 				$actions = array('_' . $actions);
+ 			}
+ 			foreach ($actions as $action) {
+-				if ($action{0} !== '_') {
++				if ($action[0] !== '_') {
+ 					$action = '_' . $action;
+ 				}
+ 				if (!in_array($action, $permKeys, true)) {
+diff --git a/system/xi3/lib/Cake/Network/Http/HttpSocket.php b/system/xi3/lib/Cake/Network/Http/HttpSocket.php
+index 2e62bad..624b97a 100644
+--- a/system/xi3/lib/Cake/Network/Http/HttpSocket.php
++++ b/system/xi3/lib/Cake/Network/Http/HttpSocket.php
+@@ -589,7 +589,7 @@ class HttpSocket extends CakeSocket {
+ 			if (is_array($port)) {
+ 				$port = $port[0];
+ 			}
+-			if ($url{0} === '/') {
++			if ($url[0] === '/') {
+ 				$url = $this->config['request']['uri']['host'] . ':' . $port . $url;
+ 			}
+ 			if (!preg_match('/^.+:\/\/|\*|^\//', $url)) {
+diff --git a/system/xi3/lib/Cake/TestSuite/CakeTestCase.php b/system/xi3/lib/Cake/TestSuite/CakeTestCase.php
+index 3597004..11e0220 100644
+--- a/system/xi3/lib/Cake/TestSuite/CakeTestCase.php
++++ b/system/xi3/lib/Cake/TestSuite/CakeTestCase.php
+@@ -401,7 +401,7 @@ abstract class CakeTestCase extends PHPUnit_Framework_TestCase {
+ 				$tags = (string)$tags;
+ 			}
+ 			$i++;
+-			if (is_string($tags) && $tags{0} === '<') {
++			if (is_string($tags) && $tags[0] === '<') {
+ 				$tags = array(substr($tags, 1) => array());
+ 			} elseif (is_string($tags)) {
+ 				$tagsTrimmed = preg_replace('/\s+/m', '', $tags);
+diff --git a/system/xi3/lib/Cake/Utility/Folder.php b/system/xi3/lib/Cake/Utility/Folder.php
+index 7decebe..cf7e83e 100644
+--- a/system/xi3/lib/Cake/Utility/Folder.php
++++ b/system/xi3/lib/Cake/Utility/Folder.php
+@@ -520,7 +520,7 @@ class Folder {
+ 		foreach ($iterator as $itemPath => $fsIterator) {
+ 			if ($skipHidden) {
+ 				$subPathName = $fsIterator->getSubPathname();
+-				if ($subPathName{0} === '.' || strpos($subPathName, DS . '.') !== false) {
++				if ($subPathName[0] === '.' || strpos($subPathName, DS . '.') !== false) {
+ 					continue;
+ 				}
+ 			}
+diff --git a/system/xi3/lib/Cake/Utility/Sanitize.php b/system/xi3/lib/Cake/Utility/Sanitize.php
+index 0f8b5e0..f05c2bb 100644
+--- a/system/xi3/lib/Cake/Utility/Sanitize.php
++++ b/system/xi3/lib/Cake/Utility/Sanitize.php
+@@ -72,7 +72,7 @@ class Sanitize {
+ 		$db = ConnectionManager::getDataSource($connection);
+ 		$string = $db->value($string, 'string');
+ 		$start = 1;
+-		if ($string{0} === 'N') {
++		if ($string[0] === 'N') {
+ 			$start = 2;
+ 		}
+ 
+diff --git a/system/xi3/lib/Cake/Utility/Set.php b/system/xi3/lib/Cake/Utility/Set.php
+index 5958b98..ac811da 100644
+--- a/system/xi3/lib/Cake/Utility/Set.php
++++ b/system/xi3/lib/Cake/Utility/Set.php
+@@ -500,7 +500,7 @@ class Set {
+ 
+ 			$val = $data[$key];
+ 
+-			if ($op === '=' && $expected && $expected{0} === '/') {
++			if ($op === '=' && $expected && $expected[0] === '/') {
+ 				return preg_match($expected, $val);
+ 			}
+ 			if ($op === '=' && $val != $expected) {
+diff --git a/system/xi3/lib/Cake/View/Helper/FormHelper.php b/system/xi3/lib/Cake/View/Helper/FormHelper.php
+index 83eb67e..eabea8d 100644
+--- a/system/xi3/lib/Cake/View/Helper/FormHelper.php
++++ b/system/xi3/lib/Cake/View/Helper/FormHelper.php
+@@ -2060,7 +2060,7 @@ class FormHelper extends AppHelper {
+ 			$tag = $this->Html->useTag('submitimage', $caption, $options);
+ 		} elseif ($isImage) {
+ 			unset($options['type']);
+-			if ($caption{0} !== '/') {
++			if ($caption[0] !== '/') {
+ 				$url = $this->webroot(Configure::read('App.imageBaseUrl') . $caption);
+ 			} else {
+ 				$url = $this->webroot(trim($caption, '/'));
+diff --git a/system/xi3/lib/Cake/View/Helper/JsBaseEngineHelper.php b/system/xi3/lib/Cake/View/Helper/JsBaseEngineHelper.php
+index ca2d776..3aa29b5 100644
+--- a/system/xi3/lib/Cake/View/Helper/JsBaseEngineHelper.php
++++ b/system/xi3/lib/Cake/View/Helper/JsBaseEngineHelper.php
+@@ -196,7 +196,7 @@ abstract class JsBaseEngineHelper extends AppHelper {
+ 		$length = strlen($string);
+ 		$return = '';
+ 		for ($i = 0; $i < $length; ++$i) {
+-			$ord = ord($string{$i});
++			$ord = ord($string[$i]);
+ 			switch (true) {
+ 				case $ord == 0x08:
+ 					$return .= '\b';
+@@ -216,10 +216,10 @@ abstract class JsBaseEngineHelper extends AppHelper {
+ 				case $ord == 0x22:
+ 				case $ord == 0x2F:
+ 				case $ord == 0x5C:
+-					$return .= '\\' . $string{$i};
++					$return .= '\\' . $string[$i];
+ 					break;
+ 				case (($ord >= 0x20) && ($ord <= 0x7F)):
+-					$return .= $string{$i};
++					$return .= $string[$i];
+ 					break;
+ 				case (($ord & 0xE0) == 0xC0):
+ 					if ($i + 1 >= $length) {
+@@ -227,7 +227,7 @@ abstract class JsBaseEngineHelper extends AppHelper {
+ 						$return .= '?';
+ 						break;
+ 					}
+-					$charbits = $string{$i} . $string{$i + 1};
++					$charbits = $string[$i] . $string[$i + 1];
+ 					$char = Multibyte::utf8($charbits);
+ 					$return .= sprintf('\u%04s', dechex($char[0]));
+ 					$i += 1;
+@@ -238,7 +238,7 @@ abstract class JsBaseEngineHelper extends AppHelper {
+ 						$return .= '?';
+ 						break;
+ 					}
+-					$charbits = $string{$i} . $string{$i + 1} . $string{$i + 2};
++					$charbits = $string[$i] . $string[$i + 1] . $string[$i + 2];
+ 					$char = Multibyte::utf8($charbits);
+ 					$return .= sprintf('\u%04s', dechex($char[0]));
+ 					$i += 2;
+@@ -249,7 +249,7 @@ abstract class JsBaseEngineHelper extends AppHelper {
+ 						$return .= '?';
+ 						break;
+ 					}
+-					$charbits = $string{$i} . $string{$i + 1} . $string{$i + 2} . $string{$i + 3};
++					$charbits = $string[$i] . $string[$i + 1] . $string[$i + 2] . $string[$i + 3];
+ 					$char = Multibyte::utf8($charbits);
+ 					$return .= sprintf('\u%04s', dechex($char[0]));
+ 					$i += 3;
+@@ -260,7 +260,7 @@ abstract class JsBaseEngineHelper extends AppHelper {
+ 						$return .= '?';
+ 						break;
+ 					}
+-					$charbits = $string{$i} . $string{$i + 1} . $string{$i + 2} . $string{$i + 3} . $string{$i + 4};
++					$charbits = $string[$i] . $string[$i + 1] . $string[$i + 2] . $string[$i + 3] . $string[$i + 4];
+ 					$char = Multibyte::utf8($charbits);
+ 					$return .= sprintf('\u%04s', dechex($char[0]));
+ 					$i += 4;
+@@ -271,7 +271,7 @@ abstract class JsBaseEngineHelper extends AppHelper {
+ 						$return .= '?';
+ 						break;
+ 					}
+-					$charbits = $string{$i} . $string{$i + 1} . $string{$i + 2} . $string{$i + 3} . $string{$i + 4} . $string{$i + 5};
++					$charbits = $string[$i] . $string[$i + 1] . $string[$i + 2] . $string[$i + 3] . $string[$i + 4] . $string[$i + 5];
+ 					$char = Multibyte::utf8($charbits);
+ 					$return .= sprintf('\u%04s', dechex($char[0]));
+ 					$i += 5;

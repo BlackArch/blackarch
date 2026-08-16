@@ -5,23 +5,32 @@ pkgbase=shiboken
 pkgname=('python2-shiboken' 'python-shiboken' 'shiboken')
 _pkgname=Shiboken
 pkgver=1.2.4
-_pyver=3.13
-pkgrel=13
-arch=('x86_64')
-license=('LGPL')
+_pyver=3.14
+pkgrel=12
+arch=('x86_64' 'aarch64')
+license=('GPL-2.0-only')
 url='https://github.com/pyside/Shiboken/tags'
 depends=('libicu64')
 makedepends=('cmake' 'python2' 'python' 'qt4' 'libxslt' 'openssl'
              'python-distutils-extra')
 source=("$pkgbase-$pkgver.tar.gz::https://github.com/PySide/Shiboken/archive/$pkgver.tar.gz"
-        'support-new-python.diff')
+        'support-new-python.patch'
+        'basewrapper.cpp.patch'
+        'sbkenum.cpp.patch'
+        'sbkstring.cpp.patch')
 sha512sums=('daa3fadf3daffaec52f199c0285a37431a4b6b0d450a43a035f49e5505a35b666a1cb0b334c7267af7530841dadbf0b97296812141c93de3b7cd07c7d9016a2a'
-            'fe42b2cc3792efd10d55caa9c34d74f8c06b1bca94d6d3a4b96c1558dc8a2f45841987e39d292b003ce05797cadb6f5dbfb96731a4f46f783e5dc252d3f240f3')
+            '7372b8173a198d05272a76f7954625972d3d0a180c996dab10e9b4ed506640b8855c03e270a9dada55be922d44c71b918360243f19b83d28c6b809e5f284a351'
+            '9deb7f5012bfc2c25827d3f3c250b11325add1385b18efc1c7a71ffaafb2200a2bdc4f6909eaa95a554e00191ad477be6801b165b00c78dcad12755a1996907e'
+            '5a0b395a49db7cd349248cec319698197da2ee097547bec8c14db8c60d26369fe0c5a8f92b01b9464ee7db27d224f6ba587a821ae45032ed4142fe39634f7c81'
+            'f7c7735d7894029d1180cb7ce87c8ee449c61ac50e43f1f86a9dbb63827526fbb4de52473a18412ed2185fcdd476cd96bf525532f31e68323d71c101e1d798fe')
 
 prepare() {
   cd "$_pkgname-$pkgver"
 
-  patch -p1 -i ../support-new-python.diff
+  patch -Np1 -i "$srcdir/support-new-python.patch"
+  patch -Np2 -i "$srcdir/basewrapper.cpp.patch"
+  patch -Np2 -i "$srcdir/sbkenum.cpp.patch"
+  patch -Np2 -i "$srcdir/sbkstring.cpp.patch"
 }
 
 build() {
@@ -29,21 +38,31 @@ build() {
 
   mkdir -p build-py2 && cd build-py2
 
-  cmake ../ -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_TESTS=OFF -DPYTHON_EXECUTABLE=/usr/bin/python2 \
+  cmake .. \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTS=OFF \
+    -DPYTHON_EXECUTABLE=/usr/bin/python2 \
     -DPYTHON_LIBRARY=/usr/lib/libpython2.7.so \
-    -DPYTHON_INCLUDE_DIR=/usr/include/python2.7 -DQT_QMAKE_EXECUTABLE=qmake-qt4
+    -DPYTHON_INCLUDE_DIR=/usr/include/python2.7 \
+    -DQT_QMAKE_EXECUTABLE=qmake-qt4
 
   make -j1
 
   cd "$srcdir/$_pkgname-$pkgver"
 
-  sed -i 's|type->tp_print = &SbkEnumObject_print;||g' libshiboken/sbkenum.cpp
   mkdir -p build-py3 && cd build-py3
 
-  cmake ../ -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_TESTS=OFF -DUSE_PYTHON3=yes -DQT_QMAKE_EXECUTABLE=qmake-qt4 \
-    -DUSE_PYTHON_VERSION=3 -DPYTHON_EXECUTABLE=/usr/bin/python3 \
+  cmake .. \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTS=OFF \
+    -DUSE_PYTHON3=yes \
+    -DQT_QMAKE_EXECUTABLE=qmake-qt4 \
+    -DUSE_PYTHON_VERSION=3 \
+    -DPYTHON_EXECUTABLE=/usr/bin/python3 \
     -DPYTHON3_INCLUDE_DIR="/usr/include/python$_pyver" \
     -DPYTHON3_LIBRARY="/usr/lib/python$_pyver" \
     -DPYTHON_INCLUDE_DIR="/usr/include/python$_pyver" \

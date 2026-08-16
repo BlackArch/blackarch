@@ -1,0 +1,120 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+#
+# original from below - adjusted to our style
+#
+# Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
+# Contributor: Eric Bélanger <eric@archlinux.org>
+
+pkgbase=webkit2gtk
+pkgname=('webkit2gtk' 'webkit2gtk-docs')
+pkgver=2.50.6
+pkgrel=5
+pkgdesc='Web content engine for GTK.'
+url='https://webkitgtk.org/'
+arch=('x86_64' 'aarch64')
+license=('AFL-2.0 OR GPL-2.0-or-later' 'Apache-2.0'
+         'Apache-2.0 WITH LLVM-exception' 'BSD-2-Clause' 'BSD-2-Clause-Views'
+         'BSD-3-Clause' 'BSD-Source-Code' 'BSL-1.0' 'bzip2-1.0.6' 'GPL-2.0-only'
+         'GPL-3.0-only WITH Autoconf-exception-3.0'
+         'GPL-3.0-or-later WITH Bison-exception-2.2' 'ICU' 'ISC'
+         'LGPL-2.1-only' 'LGPL-2.1-or-later' 'MIT' 'MPL-1.1' 'MPL-2.0' 'NCSA'
+         'NCSA OR MIT' 'OFL-1.1' 'SunPro' 'Unicode-TOU')
+depends=('at-spi2-core' 'atk' 'bubblewrap' 'cairo' 'enchant' 'expat'
+         'fontconfig' 'freetype2' 'gdk-pixbuf2' 'glib2' 'glibc'
+         'gst-plugins-bad-libs' 'gst-plugins-base-libs' 'gstreamer' 'gtk3'
+         'harfbuzz' 'harfbuzz-icu' 'hyphen' 'icu' 'lcms2' 'libatomic' 'libavif'
+         'libdrm' 'libegl' 'libepoxy' 'libgcc' 'libgcrypt' 'libgl' 'libgles'
+         'libjpeg-turbo' 'libjxl' 'libmanette' 'libpng' 'libseccomp' 'libsecret'
+         'libsoup' 'libstdc++' 'libsystemd' 'libtasn1' 'libwebp' 'libx11'
+         'libxml2' 'libxslt' 'mesa' 'openjpeg2' 'pango' 'sqlite' 'ttf-font'
+         'wayland' 'woff2' 'xdg-dbus-proxy' 'zlib')
+makedepends=('clang' 'cmake' 'gi-docgen' 'glib2-devel' 'gobject-introspection'
+             'gperf' 'gst-plugins-bad' 'lld' 'ninja' 'python' 'ruby'
+             'ruby-stdlib' 'systemd' 'unifdef' 'wayland-protocols')
+source=("$url/releases/webkitgtk-$pkgver.tar.xz")
+sha512sums=('62723af51a14aa2352a2ac54b5dab975afce1aee8ce43924666da08f280495c83b86649ff00fb59fcc0cc0ca80b9a78843b1c0ed568a2d77a2312c13889d8ab4')
+
+prepare() {
+  cd "webkitgtk-$pkgver"
+  sed -i \
+    's|(\${framework} STREQUAL \${_linked_into}) OR (NOT \${_linked_into} IN_LIST|("${framework}" STREQUAL "${_linked_into}") OR (NOT "${_linked_into}" IN_LIST|' \
+    Source/cmake/WebKitMacros.cmake
+}
+
+build() {
+  local cmake_options=(
+    -D CMAKE_BUILD_TYPE=Release
+    -D CMAKE_INSTALL_LIBDIR=lib
+    -D CMAKE_INSTALL_LIBEXECDIR=lib
+    -D CMAKE_INSTALL_PREFIX=/usr
+    -D CMAKE_SKIP_RPATH=ON
+    -D ENABLE_DOCUMENTATION=ON
+    -D ENABLE_MINIBROWSER=ON
+    -D ENABLE_SPEECH_SYNTHESIS=OFF
+    -D PORT=GTK
+    -D USE_FLITE=OFF
+    -D USE_GTK4=OFF
+    -D USE_LIBBACKTRACE=OFF
+    -D USE_SOUP2=ON
+  )
+
+  # Limit parallel builds to what the user configured in /etc/makepkg.conf, also MAKEFLAGS
+  # might contains more than just -j<N>
+  export CMAKE_BUILD_PARALLEL_LEVEL=$(echo "$MAKEFLAGS" | sed 's/.*\(-j[ =]\?\|--jobs[ =]\)\([0-9]\+\).*/\2/' )
+  # If CMAKE_BUILD_PARALLEL_LEVEL is still empty assign half of nproc as default value
+  export CMAKE_BUILD_PARALLEL_LEVEL=${CMAKE_BUILD_PARALLEL_LEVEL:=$(( $(nproc) / 2 ))}
+
+  # Upstream prefers Clang
+  # https://gitlab.archlinux.org/archlinux/packaging/packages/webkitgtk-6.0/-/issues/4
+  export CC=clang CXX=clang++
+  LDFLAGS+=" -fuse-ld=lld"
+
+  # Skia uses malloc_usable_size
+  CFLAGS="${CFLAGS/_FORTIFY_SOURCE=3/_FORTIFY_SOURCE=2}"
+  CXXFLAGS="${CXXFLAGS/_FORTIFY_SOURCE=3/_FORTIFY_SOURCE=2}"
+
+  # JITted code crashes when CET is used
+  CFLAGS+=' -fcf-protection=none'
+  CXXFLAGS+=' -fcf-protection=none'
+
+  cmake -S "webkitgtk-$pkgver" -B build -G Ninja "${cmake_options[@]}"
+  cmake --build build
+}
+
+package_webkit2gtk() {
+  provides+=(
+    libjavascriptcoregtk-4.0.so
+    libwebkit2gtk-4.0.so
+  )
+  optdepends=(
+    'geoclue: Geolocation support'
+    'gst-libav: nonfree media decoding'
+    'gst-plugins-bad: media decoding'
+    'gst-plugins-good: media decoding'
+  )
+
+  DESTDIR="$pkgdir" cmake --install build
+
+  rm -r "$pkgdir/usr/bin"
+
+  mkdir -p doc/usr/share
+  mv {"$pkgdir",doc}/usr/share/doc
+
+  cd "webkitgtk-$pkgver"
+  find Source -name 'COPYING*' -or -name 'LICENSE*' -print0 | sort -z |
+    while IFS= read -d $'\0' -r _f; do
+      echo "### $_f ###"
+      cat "$_f"
+      echo
+    done |
+    install -Dm 644 /dev/stdin "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+package_webkit2gtk-docs() {
+  pkgdesc+=" (documentation)"
+  depends=()
+
+  mv doc/* "$pkgdir"
+}
+
