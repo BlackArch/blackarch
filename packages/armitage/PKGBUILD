@@ -2,48 +2,66 @@
 # See COPYING for license details.
 
 pkgname=armitage
-pkgver=150813
-pkgrel=10
-epoch=4
-groups=('blackarch' 'blackarch-exploitation' 'blackarch-automation')
+pkgver=debian.20220123.0kali4.r9.g6151300
+pkgrel=1
 pkgdesc='A graphical cyber attack management tool for Metasploit.'
-url='http://www.fastandeasyhacking.com/'
 arch=('any')
-license=('GPL')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-automation')
+url='https://gitlab.com/kalilinux/packages/armitage'
+license=('BSD')
 depends=('metasploit' 'java-environment' 'nmap' 'postgresql' 'ruby-msgpack')
-makedepends=('ant' 'zip' 'unzip' 'subversion')
-install='armitage.install'
-source=("http://www.fastandeasyhacking.com/download/armitage$pkgver.tgz"
-        'armitage.install')
-sha512sums=('29743c32ff13e62e5cb4a97cf60b3f5e5a4c5ac01a014ff709abc1be4f1b9d795973de357b967a764b4acd4f26d47f6d4517f40c9831672c74e054de2d361e51'
-            '6c987c243d2a3a232a1f062a62ff028160fe6aa22296b3a29672b4b3e0a717250de5cd2bda09501789599746ed74f1ccfbbef9f5366dab6eb37c41d38c7c1869')
+makedepends=('git' 'ant' 'zip' 'unzip' 'subversion')
+source=("git+https://gitlab.com/kalilinux/packages/armitage.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\//./g; s/\([^-]*-g\)/r\1/; s/-/./g' ||
+      # sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+      # if there is a 'v' prefix in the git tag
+      # sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+  sed -i '5s/.*/JAVA_HOME=\/usr\/lib\/jvm\/java-11-openjdk .\/gradlew assemble/' ./package.sh
+}
+
+build() {
+  cd $pkgname
+  ./package.sh
+}
 
 package() {
-  cd $pkgname
+  cd "$pkgname"
 
   install -dm 755 "$pkgdir/usr/bin"
   install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
 
-  install -Dm644 -t "$pkgdir/usr/share/doc/$pkgname" readme.txt whatsnew.txt
+  cp -a release/unix/* "$pkgdir/usr/share/$pkgname/"
 
-  rm readme.txt whatsnew.txt
-
-  cp -a * "$pkgdir/usr/share/$pkgname"
+  install -m644 "$pkgdir/usr/share/$pkgname/readme.txt" "$pkgdir/usr/share/doc/$pkgname/"
+  install -m644 "$pkgdir/usr/share/$pkgname/whatsnew.txt" "$pkgdir/usr/share/doc/$pkgname/"
+  rm "$pkgdir/usr/share/$pkgname/readme.txt" "$pkgdir/usr/share/$pkgname/whatsnew.txt"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/armitage
-exec ./armitage "\$@"
+cd /usr/share/$pkgname
+exec /usr/lib/jvm/java-11-openjdk/bin/java -jar armitage.jar "\$@"
 EOF
-
   chmod +x "$pkgdir/usr/bin/$pkgname"
 
   cat > "$pkgdir/usr/bin/teamserver" << EOF
 #!/bin/sh
-cd /usr/share/armitage
+cd /usr/share/$pkgname
 exec ./teamserver "\$@"
 EOF
-
   chmod +x "$pkgdir/usr/bin/teamserver"
 }
-
