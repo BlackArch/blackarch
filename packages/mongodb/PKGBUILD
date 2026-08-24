@@ -23,21 +23,21 @@ backup=("etc/mongodb.conf")
 
 _repo_url=https://repo.mongodb.org/apt/ubuntu/dists/${_basedist}/mongodb-org/${_basever}/multiverse
 source=(
-  "$pkgname.sysusers"
-  "$pkgname.tmpfiles"
-  'LICENSE'
+	"$pkgname.sysusers"
+	"$pkgname.tmpfiles"
+	'LICENSE'
 )
 source_x86_64=(
-  "$pkgname-org-server_${pkgver}_x86_64.deb"::"$_repo_url/binary-amd64/mongodb-org-server_${pkgver}_amd64.deb"
-  "$pkgname-org-mongos_${pkgver}_x86_64.deb"::"$_repo_url/binary-amd64/mongodb-org-mongos_${pkgver}_amd64.deb"
+	"$pkgname-org-server_${pkgver}_x86_64.deb"::"$_repo_url/binary-amd64/mongodb-org-server_${pkgver}_amd64.deb"
+	"$pkgname-org-mongos_${pkgver}_x86_64.deb"::"$_repo_url/binary-amd64/mongodb-org-mongos_${pkgver}_amd64.deb"
 )
 source_aarch64=(
-  "mongodb-org-server_${pkgver}_aarch64.deb"::"$_repo_url/binary-arm64/mongodb-org-server_${pkgver}_arm64.deb"
-  "mongodb-org-mongos_${pkgver}_aarch64.deb"::"$_repo_url/binary-arm64/mongodb-org-mongos_${pkgver}_arm64.deb"
+	"mongodb-org-server_${pkgver}_aarch64.deb"::"$_repo_url/binary-arm64/mongodb-org-server_${pkgver}_arm64.deb"
+	"mongodb-org-mongos_${pkgver}_aarch64.deb"::"$_repo_url/binary-arm64/mongodb-org-mongos_${pkgver}_arm64.deb"
 )
 noextract=(
-  "$pkgname-org-server_${pkgver}_${CARCH}.deb"
-  "$pkgname-org-mongos_${pkgver}_${CARCH}.deb"
+	"$pkgname-org-server_${pkgver}_${CARCH}.deb"
+	"$pkgname-org-mongos_${pkgver}_${CARCH}.deb"
 )
 
 sha512sums=('889425b864c58a767aa5865c0ce9817361ad99fec78050fa600f14eaef5a56ce0bc41a03878233e99f4862596a94dafcfebebecd4d57443b742117b873ab813d'
@@ -48,50 +48,50 @@ sha512sums_x86_64=('a97de3e90a024e18d802f09d13cb5abe5829b277a60477f498df8042f9da
 sha512sums_aarch64=('3c1afd5b54d685f98a77e6f414d39e13b0de655f80623e62d352aff9e2fd0d6de4eead8618886644d9a040a9597a615cb2e0c2617caa8296a093d136199d8db6'
                     'c0cfb72de16e9b54261633517307985c6009ae2fced27ba148794907b6628f07544ad3560320cb39806798e0deace676d0a831a01766b2379da2dd6c8f5b0da5')
 prepare() {
-  mkdir -p output
-  bsdtar -O -xf "$pkgname-org-server_${pkgver}_${CARCH}.deb" data.tar.zst |
+	mkdir -p output
+	bsdtar -O -xf "$pkgname-org-server_${pkgver}_${CARCH}.deb" data.tar.zst |
     bsdtar -C output -xJf - #server extracted
-  bsdtar -O -xf "$pkgname-org-mongos_${pkgver}_${CARCH}.deb" data.tar.zst |
+	bsdtar -O -xf "$pkgname-org-mongos_${pkgver}_${CARCH}.deb" data.tar.zst |
     bsdtar -C output -xJf - #mongos extracted
 
-  # Remove insecure RUNPATH '$ORIGIN/../lib' as reported by namcap
-  chrpath -d output/usr/bin/mongos
+	# Remove insecure RUNPATH '$ORIGIN/../lib' as reported by namcap
+	chrpath -d output/usr/bin/mongos
 
-  # Keep historical Arch dbPath
-  sed -i 's|dbPath: /var/lib/mongo$|dbPath: /var/lib/mongodb|' \
+	# Keep historical Arch dbPath
+	sed -i 's|dbPath: /var/lib/mongo$|dbPath: /var/lib/mongodb|' \
     output/etc/mongod.conf
 
-  # Keep historical Arch conf file name
-  sed -i 's|/etc/mongod.conf|/etc/mongodb.conf|' \
+	# Keep historical Arch conf file name
+	sed -i 's|/etc/mongod.conf|/etc/mongodb.conf|' \
     output/usr/lib/systemd/system/mongod.service
 
-  # Keep historical Arch user name (no need for separate daemon group name)
-  sed -i 's/User=mongod$/User=mongodb/' \
+	# Keep historical Arch user name (no need for separate daemon group name)
+	sed -i 's/User=mongod$/User=mongodb/' \
     output/usr/lib/systemd/system/mongod.service
-  sed -i 's/Group=mongod$/Group=mongodb/' \
+	sed -i 's/Group=mongod$/Group=mongodb/' \
     output/usr/lib/systemd/system/mongod.service
 
-  # Avoid legacy PID filepath
-  sed -i 's|/var/run/|/var/|' output/usr/lib/systemd/system/mongod.service
+	# Avoid legacy PID filepath
+	sed -i 's|/var/run/|/var/|' output/usr/lib/systemd/system/mongod.service
 
-  # Remove sysconfig file, used by upstream's init.d script not used on Arch
-  sed -i '/^EnvironmentFile=/d' output/usr/lib/systemd/system/mongod.service
+	# Remove sysconfig file, used by upstream's init.d script not used on Arch
+	sed -i '/^EnvironmentFile=/d' output/usr/lib/systemd/system/mongod.service
 
-  # Make systemd wait as long as it takes for MongoDB to start
+	# Make systemd wait as long as it takes for MongoDB to start
   # If MongoDB needs a long time to start, prevent systemd from restarting it
   # every 90 seconds. See: https://jira.mongodb.org/browse/SERVER-38086
-  sed -i 's/\[Service]/[Service]\nTimeoutStartSec=infinity/' \
+	sed -i 's/\[Service]/[Service]\nTimeoutStartSec=infinity/' \
     output/usr/lib/systemd/system/mongod.service
 }
 
 package() {
-  install -Dm 644 output/etc/mongod.conf "$pkgdir/etc/$pkgname.conf"
-  install -Dm 644 output/usr/lib/systemd/system/mongod.service \
+	install -Dm 644 output/etc/mongod.conf "$pkgdir/etc/$pkgname.conf"
+	install -Dm 644 output/usr/lib/systemd/system/mongod.service \
     "$pkgdir/usr/lib/systemd/system/$pkgname.service"
-  install -Dm 755 output/usr/bin/* -t "$pkgdir/usr/bin"
-  install -Dm 644 output/usr/share/man/man1/* -t "$pkgdir/usr/share/man/man1"
-  install -Dm 644 "$pkgname.sysusers" "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
-  install -Dm 644 "$pkgname.tmpfiles" "$pkgdir/usr/lib/tmpfiles.d/$pkgname.conf"
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	install -Dm 755 output/usr/bin/* -t "$pkgdir/usr/bin"
+	install -Dm 644 output/usr/share/man/man1/* -t "$pkgdir/usr/share/man/man1"
+	install -Dm 644 "$pkgname.sysusers" "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
+	install -Dm 644 "$pkgname.tmpfiles" "$pkgdir/usr/lib/tmpfiles.d/$pkgname.conf"
+	install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
