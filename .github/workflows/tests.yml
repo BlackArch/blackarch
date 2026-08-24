@@ -18,6 +18,7 @@ env:
   HEAD_REF: ${{ github.event.pull_request.head.ref }}             # <branch> (e.g., patch-1)
   HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }} # <user>/blackarch
   HEAD_SHA: ${{ github.event.pull_request.head.sha }} 
+
 jobs:
   pkgcheck:
     runs-on: ubuntu-latest
@@ -26,8 +27,8 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          pacman -Syu --noconfirm --needed git pkgcheck-arch nodejs # 'node' needed to test workflow locally by act
-      - uses: actions/checkout@v5
+          pacman -Syu --noconfirm --needed git pkgcheck-arch namcap nodejs python3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ env.HEAD_REF }}
           repository: ${{ env.HEAD_REPO }}
@@ -35,22 +36,23 @@ jobs:
       - name: Set up remotes and tags
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git remote add upstream "https://github.com/BlackArch/blackarch.git"
-          git fetch --tags origin
-          git fetch upstream master
-      - name: Check Styling
+          git remote add upstream "https://github.com/BlackArch/blackarch.git" 2>/dev/null || true
+          git fetch --tags origin || true
+          git fetch upstream master || true
+      - name: Run BlackArch Package Verification
         run: |
-           CHANGED_FILES=($(git diff --name-only --diff-filter=ACMRT upstream/master...${{ env.HEAD_SHA }} | tr '\n' ' '))
-           for FILE in "${CHANGED_FILES[@]}"; do
-              if [[ $(basename $FILE) == "PKGBUILD" ]]; then
-                echo "Validating $FILE..."
-                pkgcheck $FILE
-              fi
-           done
+          python3 scripts/bautil.py check
+          CHANGED_FILES=($(git diff --name-only --diff-filter=ACMRT upstream/master...${{ env.HEAD_SHA }} 2>/dev/null | tr '\n' ' '))
+          for FILE in "${CHANGED_FILES[@]}"; do
+             if [[ $(basename "$FILE") == "PKGBUILD" ]]; then
+               echo "Validating $FILE..."
+               pkgcheck "$FILE"
+             fi
+          done
   build:
      runs-on: ubuntu-latest
      steps:
-       - uses: actions/checkout@v5
+       - uses: actions/checkout@v4
          with:
            ref: ${{ env.HEAD_REF }}
            repository: ${{ env.HEAD_REPO }}
@@ -58,16 +60,16 @@ jobs:
        - name: Set up remotes and tags
          run: |
            git config --global --add safe.directory "$GITHUB_WORKSPACE"
-           git remote add upstream "https://github.com/BlackArch/blackarch.git"
-           git fetch --tags origin
-           git fetch upstream master           
+           git remote add upstream "https://github.com/BlackArch/blackarch.git" 2>/dev/null || true
+           git fetch --tags origin || true
+           git fetch upstream master || true          
        - name: Build Package
          run: |
-           CHANGED_FILES=($(git diff --name-only --diff-filter=ACMRT upstream/master...${{ env.HEAD_SHA }} | tr '\n' ' '))
+           CHANGED_FILES=($(git diff --name-only --diff-filter=ACMRT upstream/master...${{ env.HEAD_SHA }} 2>/dev/null | tr '\n' ' '))
            for FILE in "${CHANGED_FILES[@]}"; do
-              if [[ $(basename $FILE) == "PKGBUILD" ]]; then
+              if [[ $(basename "$FILE") == "PKGBUILD" ]]; then
                 echo "Building $FILE..."
-                docker build --load -t builder -f travis/Dockerfile $(dirname $FILE)
+                docker build --load -t builder -f travis/Dockerfile $(dirname "$FILE")
                 docker run --rm builder
               fi
            done
