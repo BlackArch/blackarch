@@ -1,15 +1,26 @@
 #!/bin/sh
 #
-# check deps recursively looking for a specified package ($grepstr)
+# check deps recursively looking for a specified package ($1)
 
-grepstr='virtualbox'
+if [ -z "$1" ]; then
+  echo "Usage: $0 <package_name>"
+  exit 1
+fi
 
-for i in $(ls repos/blackarch/packages/)
+grepstr="$1"
+
+if ! command -v yay >/dev/null 2>&1; then
+  echo "Error: 'yay' is not installed."
+  exit 1
+fi
+
+for i in packages/*
 do
-  echo "[$i]"
-  for j in $(yay -Si $i | grep -i 'depends on' | cut -d ':' -f 2-)
+  pkgname=$(basename "$i")
+  echo "[$pkgname]"
+  for j in $(yay -Si "$pkgname" | grep -i 'depends on' | cut -d ':' -f 2-)
   do
-    yay -Si $j | grep -i 'depends on' | cut -d ':' -f 2- | tr -s ' ' '\n' |
+    yay -Si "$j" | grep -i 'depends on' | cut -d ':' -f 2- | tr -s ' ' '\n' |
     grep -i "$grepstr"
   done
 done
