@@ -3,14 +3,14 @@
 
 pkgname=darkdump
 pkgver=Darkdump.4.r5.g59912f6
-pkgrel=1
+pkgrel=2
 epoch=2
 pkgdesc='Open Source Intelligence interface for Deep Web scraping.'
 arch=('any')
 groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
 url='https://github.com/josh0xA/darkdump'
 license=('MIT')
-depends=('python' 'nltk-data')
+depends=('python')
 makedepends=('git' 'python-setuptools' 'python-pip')
 source=("git+https://github.com/josh0xA/$pkgname.git")
 sha512sums=('SKIP')
@@ -31,21 +31,48 @@ package() {
   cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md imgs/*
-
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-
   rm -rf LICENSE *.md imgs/
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
+  # Build an isolated venv at package() time so the tool never depends on the
+  # host interpreter state or on network access at install() time. This fixes
+  # the "broken venv missing deps" failure reported for Python 3.14 (#5024),
+  # where the previous post_install() venv creation could silently fail.
+  # Use the system interpreter explicitly (not a venv-activated `python`) so the
+  # launcher scripts are generated correctly.
+  /usr/bin/python3 -m venv --copies "$pkgdir/usr/share/$pkgname/venv"
+  "$pkgdir/usr/share/$pkgname/venv/bin/pip" install --no-cache-dir \
+    --upgrade -r "$pkgdir/usr/share/$pkgname/requirements.txt"
+
+  # Some PyPI wheels occasionally drop a duplicate launcher with a non-ASCII
+  # filename (e.g. a clone of `python` named `󐧀thon`). bsdtar cannot package
+  # such paths, so drop any non-ASCII-named files from the venv bin directory.
+  /usr/bin/python3 - <<PY
+import os
+bin_dir = os.path.join("$pkgdir", "usr/share", "$pkgname", "venv", "bin")
+if os.path.isdir(bin_dir):
+    for f in os.listdir(bin_dir):
+        if any(ord(c) > 126 for c in f):
+            p = os.path.join(bin_dir, f)
+            if os.path.isfile(p):
+                os.remove(p)
+PY
+
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-source /usr/share/$pkgname/venv/bin/activate
+VENV="/usr/share/$pkgname/venv"
+if [ ! -x "\$VENV/bin/python" ]; then
+  echo "darkdump: venv missing at \$VENV, reinstall the package" >&2
+  exit 1
+fi
+source "\$VENV/bin/activate"
 exec python /usr/share/$pkgname/darkdump.py "\$@"
 EOF
 
   chmod +x "$pkgdir/usr/bin/$pkgname"
 }
-
