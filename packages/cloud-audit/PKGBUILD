@@ -1,0 +1,70 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=cloud-audit
+_pkgname=cloud-audit
+pkgver=2.4.0
+pkgrel=1
+pkgdesc='Open-source, read-only AWS security scanner. 110 checks across 25 services, Terraform remediation on every finding.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner')
+url='https://github.com/gebalamariusz/cloud-audit'
+license=('MIT')
+depends=('python')
+makedepends=('git' 'python-pip')
+source=("git+https://github.com/gebalamariusz/$_pkgname.git#tag=v$pkgver")
+sha512sums=('SKIP')
+install="$_pkgname.install"
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md docs/*.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  # Build an isolated venv at package() time so the tool ships a working,
+  # isolated environment and never depends on the host interpreter state or
+  # on network access at install() time. The project uses a pyproject.toml
+  # (PEP 517), so pip reads its dependencies automatically. The README.md
+  # must still be present here because pip generates metadata from it.
+  /usr/bin/python3 -m venv "$pkgdir/usr/share/$pkgname/venv"
+  "$pkgdir/usr/share/$pkgname/venv/bin/pip" install --no-cache-dir \
+    --upgrade --isolated .
+
+  # Python 3.14's ensurepip drops a launcher clone with a non-ASCII filename
+  # (e.g. a clone of `python` named "𝜋thon"). bsdtar cannot package such paths
+  # ("Can't translate pathname ... to UTF-8"), so drop any non-ASCII-named
+  # files from the venv bin directory. Verified on Arch Linux / Python 3.14.7.
+  /usr/bin/python3 - <<PY
+import os
+bin_dir = os.path.join("$pkgdir", "usr/share", "$pkgname", "venv", "bin")
+if os.path.isdir(bin_dir):
+    for f in os.listdir(bin_dir):
+        if any(ord(c) > 126 for c in f):
+            p = os.path.join(bin_dir, f)
+            if os.path.isfile(p):
+                os.remove(p)
+PY
+
+  # Now that the venv is built, drop the docs/license from the shipped source
+  # tree (they live under /usr/share/{doc,licenses}/$pkgname instead).
+  rm -rf "$pkgdir/usr/share/$pkgname/LICENSE" "$pkgdir/usr/share/$pkgname/"*.md \
+         "$pkgdir/usr/share/$pkgname/docs"/*.md
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+VENV="/usr/share/$pkgname/venv"
+if [ ! -x "\$VENV/bin/cloud-audit" ]; then
+  echo "$pkgname: venv missing at \$VENV, reinstall the package" >&2
+  exit 1
+fi
+source "\$VENV/bin/activate"
+exec cloud-audit "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
