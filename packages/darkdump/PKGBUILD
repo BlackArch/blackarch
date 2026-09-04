@@ -31,45 +31,17 @@ package() {
   cd $pkgname
 
   install -dm 755 "$pkgdir/usr/bin"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
-
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md imgs/*
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
   rm -rf LICENSE *.md imgs/
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
-  # Build an isolated venv at package() time so the tool never depends on the
-  # host interpreter state or on network access at install() time. This fixes
-  # the "broken venv missing deps" failure reported for Python 3.14 (#5024),
-  # where the previous post_install() venv creation could silently fail.
-  /usr/bin/python3 -m venv "$pkgdir/usr/share/$pkgname/venv"
-  "$pkgdir/usr/share/$pkgname/venv/bin/pip" install --no-cache-dir \
-    --upgrade -r "$pkgdir/usr/share/$pkgname/requirements.txt"
-
-  # Python 3.14's ensurepip drops a launcher clone with a non-ASCII filename
-  # (e.g. a clone of `python` named "𝜋thon"). bsdtar cannot package such paths
-  # ("Can't translate pathname ... to UTF-8"), so drop any non-ASCII-named
-  # files from the venv bin directory. Verified on Arch Linux / Python 3.14.7.
-  /usr/bin/python3 - <<PY
-import os
-bin_dir = os.path.join("$pkgdir", "usr/share", "$pkgname", "venv", "bin")
-if os.path.isdir(bin_dir):
-    for f in os.listdir(bin_dir):
-        if any(ord(c) > 126 for c in f):
-            p = os.path.join(bin_dir, f)
-            if os.path.isfile(p):
-                os.remove(p)
-PY
-
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-VENV="/usr/share/$pkgname/venv"
-if [ ! -x "\$VENV/bin/python" ]; then
-  echo "darkdump: venv missing at \$VENV, reinstall the package" >&2
-  exit 1
-fi
-source "\$VENV/bin/activate"
+source /usr/share/$pkgname/venv/bin/activate
 exec python /usr/share/$pkgname/darkdump.py "\$@"
 EOF
 
