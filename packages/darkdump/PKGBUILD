@@ -43,15 +43,14 @@ package() {
   # host interpreter state or on network access at install() time. This fixes
   # the "broken venv missing deps" failure reported for Python 3.14 (#5024),
   # where the previous post_install() venv creation could silently fail.
-  # Use the system interpreter explicitly (not a venv-activated `python`) so the
-  # launcher scripts are generated correctly.
-  /usr/bin/python3 -m venv --copies "$pkgdir/usr/share/$pkgname/venv"
+  /usr/bin/python3 -m venv "$pkgdir/usr/share/$pkgname/venv"
   "$pkgdir/usr/share/$pkgname/venv/bin/pip" install --no-cache-dir \
     --upgrade -r "$pkgdir/usr/share/$pkgname/requirements.txt"
 
-  # Some PyPI wheels occasionally drop a duplicate launcher with a non-ASCII
-  # filename (e.g. a clone of `python` named `󐧀thon`). bsdtar cannot package
-  # such paths, so drop any non-ASCII-named files from the venv bin directory.
+  # Python 3.14's ensurepip drops a launcher clone with a non-ASCII filename
+  # (e.g. a clone of `python` named "𝜋thon"). bsdtar cannot package such paths
+  # ("Can't translate pathname ... to UTF-8"), so drop any non-ASCII-named
+  # files from the venv bin directory. Verified on Arch Linux / Python 3.14.7.
   /usr/bin/python3 - <<PY
 import os
 bin_dir = os.path.join("$pkgdir", "usr/share", "$pkgname", "venv", "bin")
