@@ -1,0 +1,49 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=aide
+pkgver=0.19.4
+pkgrel=2
+pkgdesc='A file integrity checker and intrusion detection program.'
+arch=('x86_64' 'aarch64')
+url='https://aide.github.io/'
+license=('GPL-2.0-or-later')
+depends=('acl' 'curl' 'e2fsprogs' 'nettle' 'pcre2' 'zlib')
+source=("https://github.com/aide/aide/releases/download/v$pkgver/aide-$pkgver.tar.gz"
+        "aide.conf"
+        "aidecheck.service"
+        "aidecheck.timer")
+sha512sums=('e3e1bc695ce4d1586ad61a6fa47d51fce4638709fe41be61f5bf092b4107222bde4361649e3a2b5923f43ac41a0c8fe08a599cef73aa5f201fee96dc09918859'
+            'af21291575c75c5683ac011ca0e519e8b2d9b9792424ef650e3c94a3d1c2b36fa01e0bbb4f00f3e34aece432f4ef50ff45eef7825ba90f9ed3690fb8c74358f1'
+            '575880dd98288c60af213210a9ebf8a62b48735dd4e95cdae112c08b301cdca4cb50970f26ce884988fcb291974af39c22a43eb472c5ada61e0a5d2c69925042'
+            '37ddef7eb51bcfa9635b600ebbc6acd0e488948f7294d853ff498e59219cfb51079b6a6bab5db11cfbc0467a63af28e2d795635112c0489c00abe4a72ce8eebd')
+backup=("etc/aide.conf")
+install="aide.install"
+
+build(){
+ cd "$pkgname-$pkgver"
+
+ ./configure \
+  --prefix="/usr" \
+  --sysconfdir="/etc" \
+  --with-posix-acl \
+  --with-xattr \
+  --with-zlib \
+  --with-e2fsattrs \
+  --disable-static \
+  --with-curl \
+  --with-nettle
+ make
+}
+
+package(){
+ cd "$pkgname-$pkgver"
+
+ make DESTDIR="$pkgdir" install
+ install -d -m 700 "$pkgdir/var/lib/aide"
+ install -d -m 700 "$pkgdir/var/log/aide"
+ install -D -m 600 "$srcdir/aide.conf" "$pkgdir/etc/aide.conf"
+ install -D -m 644 "$srcdir/aidecheck.service" -t"$pkgdir/usr/lib/systemd/system"
+ install -D -m 644 "$srcdir/aidecheck.timer"   -t "$pkgdir/usr/lib/systemd/system"
+}
+
