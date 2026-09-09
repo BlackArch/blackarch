@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=lol
+_pkgname=L.O.L
+pkgver=1.0.0
+pkgrel=1
+pkgdesc='Unified, automation-first framework for controlled phishing simulation and form-flow analysis.'
+arch=('any')
+groups=('blackarch' 'blackarch-social')
+url='https://github.com/dx0rz/L.O.L'
+license=('GPL3')
+depends=('python' 'php')
+makedepends=('git' 'python-pip')
+_commit=a48a4ce58bd015c8d41a8ea05d23fba07dac6e34
+source=("git+https://github.com/dx0rz/$_pkgname.git#commit=$_commit")
+sha512sums=('SKIP')
+install="lol.install"
+
+package() {
+  cd "$_pkgname"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 requirements.txt "$pkgdir/usr/share/$pkgname/requirements.txt"
+
+  # Keep main.py (launcher target) and the .sites PHP templates (runtime
+  # required by main.py) in the shared tree. pip reads requirements.txt.
+  cp -a main.py "$pkgdir/usr/share/$pkgname/"
+  cp -a .sites "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" <<EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/main.py --sites-dir /usr/share/$pkgname/.sites "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
