@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=vulture
+pkgver=44.dae26cd
+pkgrel=1
+pkgdesc='Modular intelligence, research, engineering, and automation platform combining RF analysis, signal processing, AI/ML, scientific computing, and more.'
+arch=('any')
+groups=('blackarch' 'blackarch-radio')
+url='https://github.com/black-210/VULTURE'
+license=('AGPL-3.0-or-later')
+depends=('python' 'python-numpy' 'python-scipy' 'python-scikit-learn'
+         'python-pandas' 'python-matplotlib' 'python-pyqt6'
+         'python-pyqt6-sip' 'python-onnx' 'python-onnxruntime'
+         'python-requests' 'python-cryptography' 'python-pytest'
+         'python-pytest-cov' 'python-yaml' 'python-pydantic'
+         'python-aiohttp' 'python-pillow')
+makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools')
+source=("git+https://github.com/black-210/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd $pkgname
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+
