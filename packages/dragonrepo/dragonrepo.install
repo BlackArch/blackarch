@@ -1,0 +1,23 @@
+post_install() {
+  set -e
+  cd /usr/share/dragonrepo
+  python -m venv venv
+  source venv/bin/activate &&
+    # requirements.txt present, pip reads its dependencies automatically.
+    pip install --isolated --root=/usr/share/dragonrepo --prefix=venv \
+      -r requirements.txt
+}
+
+post_upgrade() {
+  set -e
+  cd /usr/share/dragonrepo
+  source venv/bin/activate &&
+    # Do not recreate the venv; update already installed packages in place.
+    pip install --isolated --root=/usr/share/dragonrepo --prefix=venv \
+      -r requirements.txt -U
+}
+
+post_remove() {
+  # The venv folder is untracked by pacman, so clean it up on removal.
+  rm -rf /usr/share/dragonrepo
+}

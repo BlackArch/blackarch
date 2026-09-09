@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=dragonrepo
+_pkgname=dragonrepo
+pkgver=1.0.0
+pkgrel=1
+pkgdesc='Automated penetration testing report generator with command tracking and evidence.'
+arch=('any')
+groups=('blackarch' 'blackarch-reporting')
+url='https://github.com/12hrformat/dragonrepo'
+license=('MIT')
+depends=('python')
+makedepends=('git' 'python-pip')
+source=("git+https://github.com/12hrformat/$_pkgname.git#tag=v$pkgver")
+sha512sums=('SKIP')
+install="$_pkgname.install"
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  # Keep README.md, dragonrepo.py and requirements.txt in the share tree: the
+  # launcher invokes dragonrepo.py directly and post_install() reads
+  # requirements.txt from /usr/share/dragonrepo at install time.
+  cp -a dragonrepo.py "$pkgdir/usr/share/$pkgname/"
+  cp -a requirements.txt "$pkgdir/usr/share/$pkgname/"
+  cp -a modules templates "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" <<EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/dragonrepo.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
