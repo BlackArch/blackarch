@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=rusthound
+_pkgname=RustHound
+pkgver=1.1.69
+pkgrel=1
+pkgdesc='Active Directory data collector for BloodHound written in Rust.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-recon')
+url='https://github.com/NH-RED-TEAM/RustHound'
+license=('MIT')
+depends=()
+makedepends=('git' 'cargo')
+source=("git+https://github.com/NH-RED-TEAM/$_pkgname.git#tag=v$pkgver")
+sha512sums=('SKIP')
+
+build() {
+  cd $_pkgname
+
+  # The pinned `time 0.3.30` does not build with current Rust (E0282). Bump it
+  # to a compatible release so the crate compiles; the rest of the lockfile is
+  # kept as upstream shipped it.
+  cargo update -p time --precise 0.3.36
+  # ring 0.17.x assembly does not link with the default rust-lld on Rust 1.98;
+  # disable the bundled lld so the system GNU ld is used, and build the ring
+  # C/asm with default visibility so the ring_core_* symbols are exported.
+  cargo update -p ring@0.17.7 --precise 0.17.11
+  CFLAGS="-fPIC -fvisibility=default" RUSTFLAGS="-C link-self-contained=-linker -C linker-features=-lld" cargo build --release
+}
+
+package() {
+  cd $_pkgname
+
+  install -Dm 755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
