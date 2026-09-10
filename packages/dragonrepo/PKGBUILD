@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=dragonrepo
+_pkgname=dragonrepo
+pkgver=1.0.1.r0.g36cb471
+pkgrel=1
+pkgdesc='Automated penetration testing report generator with command tracking and evidence.'
+arch=('any')
+groups=('blackarch' 'blackarch-reporting')
+url='https://github.com/12hrformat/dragonrepo'
+license=('MIT')
+depends=('python' 'python-typer' 'python-rich' 'python-jinja' 'python-markdown')
+makedepends=('git' 'python-build' 'python-installer' 'python-wheel' 'python-setuptools')
+source=("git+$url.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $_pkgname
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd $_pkgname
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+
