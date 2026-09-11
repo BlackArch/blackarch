@@ -2,22 +2,35 @@
 # See COPYING for license details.
 
 pkgname=gitminer
-pkgver=55.d322fe1
-pkgrel=3
+pkgver=8.071385f
+pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-recon')
-pkgdesc='Tool for advanced mining for content on Github.'
+pkgdesc='Tool for advanced mining of sensitive content on Github.'
 arch=('any')
-url='https://github.com/danilovazb/GitMiner'
-license=('GPL3')
-depends=('python' 'python-lxml' 'python-requests')
+url='https://github.com/UnkL4b/Gitminer3'
+license=('GPL-3.0-or-later')
+depends=('python' 'python-colorama' 'python-requests' 'python-tqdm'
+         'python-yaml')
 makedepends=('git')
-source=("$pkgname::git+https://github.com/danilovazb/GitMiner.git")
+source=("$pkgname::git+https://github.com/UnkL4b/Gitminer3.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+
+  sed -i "s|\"config/|\"/usr/share/$pkgname/config/|g" config/paths.yaml
 }
 
 package() {
@@ -29,16 +42,18 @@ package() {
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  rm README.* LICENSE
+  rm README.md LICENSE requirements.txt
 
   cp -a * "$pkgdir/usr/share/$pkgname/"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/sh
-cd /usr/share/$pkgname
-exec python $pkgname-v2.0.py "\$@"
+PYTHONPATH="/usr/share/$pkgname\${PYTHONPATH:+:\$PYTHONPATH}"
+export PYTHONPATH
+exec python /usr/share/$pkgname/gitminer_v3.py \\
+  --config-dir /usr/share/$pkgname/config "\$@"
 EOF
 
-  chmod +x "$pkgdir/usr/bin/$pkgname"
+  chmod 755 "$pkgdir/usr/bin/$pkgname"
 }
 
