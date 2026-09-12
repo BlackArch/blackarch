@@ -1,0 +1,46 @@
+# Maintainer: Diogo Damasceno <mitszukyo@gmail.com>
+
+pkgname=boltclaw
+_pkgname=BoltClaw
+pkgver=1.1.0
+pkgrel=1
+pkgdesc='Security control panel for AI-agent skills and MCP servers: config hardening, skill scanning, risk scoring'
+arch=('any')
+groups=('blackarch' 'blackarch-misc')
+url='https://github.com/Sonofg0tham/BoltClaw'
+license=('MIT')
+depends=('nodejs')
+makedepends=('npm' 'git')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/Sonofg0tham/$_pkgname/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('eb4f4f83f2bc689edacbb92b6fef6dd20731f4b2f39207b45cd66038e4443c8024ab4bfde293472dfb704e5d250198000cdeae8cb75c5c2250af77af73800814')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  # Monorepo with private workspaces; the published pkg is broken via
+  # `npm install -g` because @boltclaw/* deps live in devDependencies.
+  # Build all workspaces and vendor node_modules.
+  npm install
+  npm run build --workspaces
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  # Ship the full built tree (node_modules + dist) so the bin can resolve
+  # the private @boltclaw/* workspace deps at runtime.
+  cp -a . "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+exec node /usr/share/$pkgname/packages/mcp-server/dist/index.js "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
