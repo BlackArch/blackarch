@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=proxelar
+pkgver=0.5.1.r0.gdce799f
+pkgrel=1
+pkgdesc='Scriptable MITM proxy to inspect, intercept, replay and rewrite HTTP/HTTPS and WebSocket traffic, with TUI, web GUI and Lua scripting.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-proxy' 'blackarch-sniffer' 'blackarch-networking')
+url='https://github.com/emanuele-em/proxelar'
+license=('MIT')
+depends=('gcc-libs' 'glibc')
+makedepends=('git' 'cargo' 'perl')
+source=("git+https://github.com/emanuele-em/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  # https://archlinux.org/todo/lto-fat-objects/
+  CFLAGS+=" -ffat-lto-objects"
+
+  cargo build --release --locked
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md
+  install -Dm 644 LICENSE-MIT "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  cp -a examples/ "$pkgdir/usr/share/doc/$pkgname/"
+}
