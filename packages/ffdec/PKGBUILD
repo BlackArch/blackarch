@@ -1,0 +1,57 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=ffdec
+pkgver=26.2.1
+pkgrel=2
+pkgdesc='Open Source Flash SWF decompiler and editor.'
+arch=('any')
+url='https://github.com/jindrapetrik/jpexs-decompiler'
+license=('GPL-3.0-or-later')
+depends=('java-runtime')
+makedepends=('ant' 'java-environment')
+source=("ffdec-$pkgver.tar.gz::https://github.com/jindrapetrik/jpexs-decompiler/archive/refs/tags/version$pkgver.tar.gz"
+        'ffdec-script-regex-fix.patch'
+        'ffdec.desktop')
+sha512sums=('f21100d27a856884fc940a09df04b4429b2b5d7da817acd736a2a9152b78610da578029818297dee0b79467361356aa8c8fd7fa8bace0cf338216c9c3b6bf8c7'
+            '0ee057f63d07bb14f1fe47c973a99835c4a23bcd30fdec3ddef61b7eaf1c4f7f396aa56630bb52b87df76c88c3942054ffcae561fb63dbb39121465b3dc57ba2'
+            '1196eecb93ab6c34d652dd1c8b6cc1934e409d7ee5927ad6e4fa51450829170f6de46649e5b12884febea7ccdecf05ef8239cfb374ece0e96b7d02a53edb2327')
+
+prepare() {
+    cd "jpexs-decompiler-version$pkgver"
+
+    patch --strip=1 --input=../ffdec-script-regex-fix.patch
+
+    IFS='.' read -r major minor release <<< "$pkgver"
+    sed -E -ie 's/(name="version.major" value=")0(")/\1'"$major"'\2/g'       build.xml
+    sed -E -ie 's/(name="version.minor" value=")0(")/\1'"$minor"'\2/g'       build.xml
+    sed -E -ie 's/(name="version.release" value=")0(")/\1'"$release"'\2/g'   build.xml
+    sed -E -ie 's/(name="version.debug" value=")true(")/\1false\2/g'         build.xml
+    sed -i 's/property="git.present"/property="git.disabled"/g' build.xml libsrc/ffdec_lib/build.xml
+}
+
+build() {
+    cd "jpexs-decompiler-version$pkgver"
+
+    ant build
+}
+
+package() {
+    cd "jpexs-decompiler-version$pkgver"
+
+    install -Dm644 "dist/ffdec.jar" -t "$pkgdir/usr/share/java/$pkgname"
+    for f in lib/*.jar; do
+        install -Dm644 "$f" -t "$pkgdir/usr/share/java/$pkgname/lib"
+    done
+
+    install -Dm755 "dist/ffdec.sh" "$pkgdir/usr/bin/ffdec"
+
+    install -Dm644 "../ffdec.desktop" -t "$pkgdir/usr/share/applications"
+    install -Dm644 "resources/icon.png" "$pkgdir/usr/share/pixmaps/$pkgname.png"
+
+    for f in lib/*.license.txt; do
+        install -Dm644 "$f" -t "$pkgdir/usr/share/licenses/$pkgname"
+    done
+    install -Dm644 "resources/license.txt" -t "$pkgdir/usr/share/licenses/$pkgname"
+}
+
