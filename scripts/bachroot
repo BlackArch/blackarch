@@ -1,176 +1,293 @@
 #!/bin/bash
 
-blackarch=$(dirname "$0")/..
-chroot=$HOME/alt/blackarch
-image=$HOME/alt/blackarch
-nbd=/dev/nbd1
-arch=x86_64
+# Configuration
+DEFAULT_ARCH="x86_64"
+DEFAULT_IMAGE_SIZE="15G"
+DEFAULT_NBD_DEVICE="/dev/nbd1"
+DEFAULT_USER="test"
+DEFAULT_PASSWORD="a"  # In production, use something more secure
 
-base_packages=(base base-devel namcap zsh tmux sudo vim parallel moreutils)
+# Paths
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+BLACKARCH_DIR="${SCRIPT_DIR}/.."
+CHROOT_DIR="${HOME}/alt/blackarch"
+IMAGE_DIR="${HOME}/alt/blackarch"
 
-if [[ $UID != 0 ]] ; then
-	echo >&2 'must be root'
-	exit 1
-fi
+# Packages
+BASE_PACKAGES=(base base-devel namcap zsh tmux sudo vim parallel moreutils)
+
+# Global variables
+declare -a mounts=()
+arch="${DEFAULT_ARCH}"
+nbd="${DEFAULT_NBD_DEVICE}"
+image_path=""
+
+# Helper functions
+die() {
+    echo >&2 "ERROR: $*"
+    exit 1
+}
+
+check_root() {
+    [[ $UID -eq 0 ]] || die "This script must be run as root"
+}
+
+validate_arch() {
+    case "$1" in
+        i686|x86_64) return 0 ;;
+        *) die "Invalid architecture: $1. Supported: i686, x86_64" ;;
+    esac
+}
+
+check_nbd_available() {
+    if ! modprobe nbd max_part=63 >/dev/null 2>&1; then
+        die "Failed to load nbd module"
+    fi
+}
+
+is_mounted() {
+    mountpoint -q "$1"
+}
 
 clear_mounts() {
-	cd /
+    for (( idx=${#mounts[@]}-1 ; idx>=0 ; idx-- )) ; do
+        local mount="${mounts[idx]}"
+        echo "Unmounting $mount..."
+        if is_mounted "$mount"; then
+            umount -R "$mount" || die "Failed to unmount $mount"
+        fi
+        rmdir "$mount" 2>/dev/null
+    done
+    mounts=()
 
-	echo "mounts: ${mounts[@]}"
-
-	for mount in "${mounts[@]}" ; do
-		echo "unmounting $mount..."
-		umount "$mount"
-	done
-
-	mounts=()
-
-	qemu-nbd -d "$nbd"
+    if [[ -e "$nbd" ]]; then
+        echo "Disconnecting NBD device..."
+        qemu-nbd -d "$nbd" >/dev/null 2>&1
+    fi
 }
-trap clear_mounts EXIT
 
 track_mount() {
-	#if mountpoint -q "$2" ; then
-	#    echo >&2 "already mountpoint: $2"
-	#    exit 1
-	#fi
+    local target="$2"
+    
+    if is_mounted "$target"; then
+        die "$target is already a mountpoint"
+    fi
 
-	mounts=("$2" "${mounts[@]}")
-	mkdir -p "$2"
-	mount "$@"
+    mkdir -p "$target" || die "Failed to create mountpoint $target"
+    mount "$@" || die "Failed to mount $*"
 
-	echo "mounts now: ${mounts[@]}"
+    mounts=("$target" "${mounts[@]}")
 }
 
 connect_nbd() {
-	modprobe nbd max_part=63 || true
-	qemu-nbd -f qcow2 -c "$nbd" "$1"
+    local image="$1"
+    check_nbd_available
+    
+    if [[ -e "${nbd}p1" ]]; then
+        die "NBD device ${nbd} is already in use"
+    fi
+
+    qemu-nbd -f qcow2 -c "$nbd" "$image" || die "Failed to connect NBD device"
 }
 
-set -e
+setup_base_system() {
+    local chroot="$1"
+    local arch="$2"
 
-# Parse args
-while (( $# )) ; do
-	case "$1" in
-		--arch|-a)
-			arch=$2
-			case $arch in
-				i686|x86_64) ;;
-				*)
-					echo >&2 "invalid arch: $arch"
-					exit 1
-					;;
-			esac
-			shift
-			;;
-		init)
-			echo 'making a new base image...'
+    case "$arch" in
+        x86_64)
+            echo "Setting up x86_64 system..."
+            pacstrap -d "$chroot" "${BASE_PACKAGES[@]}" || die "Pacstrap failed"
+            
+            # Enable multilib
+            echo "Enabling multilib..."
+            cat >> "$chroot/etc/pacman.conf" <<-EOF
+			[multilib]
+			Include = /etc/pacman.d/mirrorlist
+			EOF
+            ;;
+            
+        i686)
+            echo "Setting up i686 system..."
+            # Create custom pacman.conf for i686
+            sed -e 's/\$arch/i686/g' /etc/pacman.d/mirrorlist > "$chroot/mirrorlist" ||
+                die "Failed to create i686 mirrorlist"
+                
+            sed -e "s|/etc/pacman.d/mirrorlist|$chroot/mirrorlist|g" \
+                -e '/Architecture/s|auto|i686|' \
+                -e '/\[multilib\]/,/Include/d' \
+                /etc/pacman.conf > "$chroot/pacman.conf" ||
+                die "Failed to create i686 pacman.conf"
 
-			[[ -e "$image.$arch.qcow2" ]] && mv -f "$image.$arch.qcow2" "$image.$arch.qcow2.bak"
+            mkdir -p "$chroot"/var/{cache/pacman/pkg,lib/pacman} ||
+                die "Failed to create pacman directories"
 
-			qemu-img create -f qcow2 "$image.$arch.qcow2" 15G
+            pacman --root "$chroot" \
+                   --cachedir "$chroot/var/cache/pacman/pkg" \
+                   --noconfirm \
+                   --config "$chroot/pacman.conf" \
+                   -Sy "${BASE_PACKAGES[@]}" || die "Package installation failed"
+            ;;
+    esac
 
-			echo "arch: $arch"
-			connect_nbd "$image.$arch.qcow2"
-			mkfs.ext4 "$nbd"
-			track_mount "$nbd" "$chroot"
+    # Initialize pacman keyring
+    echo "Initializing pacman keyring..."
+    arch-chroot "$chroot" pacman-key --init || die "Pacman-key init failed"
+    arch-chroot "$chroot" pacman-key --populate archlinux || die "Pacman-key populate failed"
 
+    # Copy mirrorlist
+    echo "Configuring mirrors..."
+    cp -f /etc/pacman.d/mirrorlist "$chroot/etc/pacman.d/mirrorlist" ||
+        die "Failed to copy mirrorlist"
 
-			case $arch in
-				x86_64)
-					# Strap
-					echo 'strapping...'
-					pacstrap -d "$chroot" "${base_packages[@]}"
+    # Setup user
+    echo "Configuring user account..."
+    arch-chroot "$chroot" groupadd "$DEFAULT_USER" ||
+        die "Failed to create group $DEFAULT_USER"
+    arch-chroot "$chroot" useradd -s /bin/zsh -g "$DEFAULT_USER" -m "$DEFAULT_USER" ||
+        die "Failed to create user $DEFAULT_USER"
+    printf '%s\n' "${DEFAULT_USER}:${DEFAULT_PASSWORD}" | arch-chroot "$chroot" chpasswd ||
+        die "Failed to set password"
 
-					# Multilib
-					echo 'modifying pacman.conf...'
-					cat >> "$chroot/etc/pacman.conf" <<-EOF
-					[multilib]
-					Include = /etc/pacman.d/mirrorlist
-					EOF
-					;;
-				i686)
-					sed -e 's/\$arch/i686/g' /etc/pacman.d/mirrorlist > "$chroot/mirrorlist"
-					sed -e "s|/etc/pacman.d/mirrorlist|$chroot/mirrorlist|g" \
-					    -e '/Architecture/s|auto|i686|' \
-					    -e '/\[multilib\]/,/Include/d' \
-						/etc/pacman.conf \
-					    > "$chroot/pacman.conf"
+    # Configure sudo
+    echo "Configuring sudo..."
+    sed -i "/root ALL/a\\${DEFAULT_USER} ALL=NOPASSWD: ALL" "$chroot/etc/sudoers" ||
+        die "Failed to modify sudoers"
+}
 
-					mkdir -p "$chroot"/var/{cache/pacman/pkg,lib/pacman}
+enter_chroot() {
+    local chroot="$1"
+    
+    echo "Entering chroot..."
+    track_mount "$chroot" "$chroot" --rbind
+    track_mount "$BLACKARCH_DIR" "$chroot/home/${DEFAULT_USER}/blackarch" --bind
+    
+    # Ensure essential directories are mounted
+    for dir in proc sys dev; do
+        mkdir -p "$chroot/$dir"
+        track_mount --bind "/$dir" "$chroot/$dir"
+    done
 
-					pacman --root "$chroot" --cachedir "$chroot/var/cache/pacman/pkg" \
-					  --noconfirm --config "$chroot/pacman.conf" -Sy "${base_packages[@]}"
-					;;
-			esac
+    arch-chroot "$chroot" su - "$DEFAULT_USER"
+}
 
-			arch-chroot "$chroot" pacman-key --init
-			arch-chroot "$chroot" pacman-key --populate
+# Main operations
+cmd_init() {
+    echo "Creating new base image for $arch..."
+    image_path="${IMAGE_DIR}.${arch}.qcow2"
+    
+    [[ -e "$image_path" ]] && mv -f "$image_path" "${image_path}.bak"
+    
+    qemu-img create -f qcow2 "$image_path" "$DEFAULT_IMAGE_SIZE" ||
+        die "Failed to create disk image"
+    
+    connect_nbd "$image_path"
+    mkfs.ext4 -F "$nbd" || die "Failed to create filesystem"
+    track_mount "$nbd" "$CHROOT_DIR"
+    
+    setup_base_system "$CHROOT_DIR" "$arch"
+    
+    clear_mounts
+    
+    echo "Creating base snapshot..."
+    qemu-img snapshot -c base "$image_path" ||
+        die "Failed to create base snapshot"
+    
+    echo "Base image created successfully at $image_path"
+}
 
-			# Mirrorlist
-			echo 'copying mirrorlist...'
-			cp -f /etc/pacman.d/mirrorlist "$chroot/etc/pacman.d/mirrorlist"
+cmd_snaps() {
+    image_path="${IMAGE_DIR}.${arch}.qcow2"
+    [[ -f "$image_path" ]] || die "Image file not found: $image_path"
+    
+    echo "Snapshots for $image_path:"
+    qemu-img snapshot -l "$image_path" || die "Failed to list snapshots"
+}
 
-			# User
-			echo 'adding user...'
-			arch-chroot "$chroot" groupadd test
-			arch-chroot "$chroot" useradd -s /bin/zsh -g test -m test
-			arch-chroot "$chroot" echo test:a \| chpasswd
+cmd_clean() {
+    image_path="${IMAGE_DIR}.${arch}.qcow2"
+    [[ -f "$image_path" ]] || die "Image file not found: $image_path"
+    
+    echo "Reverting to base snapshot..."
+    qemu-img snapshot -a base "$image_path" ||
+        die "Failed to revert to base snapshot"
+    
+    echo "Cleaning snapshots..."
+    qemu-img snapshot -l "$image_path" | awk 'NR>2 {print $2}' | grep -v '^base$' |
+    while read -r snap; do
+        echo "Deleting snapshot $snap..."
+        qemu-img snapshot -d "$snap" "$image_path" ||
+            die "Failed to delete snapshot $snap"
+    done
+    
+    echo "Snapshots cleaned successfully"
+}
 
-			# Sudo
-			echo 'modifying sudoers...'
-			sed -i '/root ALL/a\test ALL=NOPASSWD: ALL' "$chroot/etc/sudoers"
+cmd_revert() {
+    image_path="${IMAGE_DIR}.${arch}.qcow2"
+    [[ -f "$image_path" ]] || die "Image file not found: $image_path"
+    
+    echo "Reverting to base snapshot..."
+    qemu-img snapshot -a base "$image_path" ||
+        die "Failed to revert to base snapshot"
+    echo "Reverted successfully"
+}
 
-			clear_mounts
+cmd_enter() {
+    image_path="${IMAGE_DIR}.${arch}.qcow2"
+    [[ -f "$image_path" ]] || die "Image file not found: $image_path"
+    
+    connect_nbd "$image_path"
+    track_mount "$nbd" "$CHROOT_DIR"
+    
+    enter_chroot "$CHROOT_DIR"
+    
+    clear_mounts
+    
+    local snap_name="build_$(date +%Y%m%d_%H%M%S)"
+    echo "Creating snapshot $snap_name..."
+    qemu-img snapshot -c "$snap_name" "$image_path" ||
+        echo "Warning: Failed to create snapshot" >&2
+}
 
-			qemu-img snapshot -c base "$image.$arch.qcow2"
-			;;
+# Main execution
+main() {
+    check_root
+    trap clear_mounts EXIT
 
-		snaps)
-			qemu-img snapshot -l "$image.$arch.qcow2"
-			;;
+    # Parse arguments
+    while (( $# )); do
+        case "$1" in
+            -a|--arch)
+                validate_arch "$2"
+                arch="$2"
+                shift 2
+                ;;
+            init)
+                shift
+                cmd_init
+                ;;
+            snaps)
+                shift
+                cmd_snaps
+                ;;
+            clean)
+                shift
+                cmd_clean
+                ;;
+            revert)
+                shift
+                cmd_revert
+                ;;
+            enter)
+                shift
+                cmd_enter
+                ;;
+            *)
+                die "Invalid command: $1\nUsage: $0 [--arch i686|x86_64] {init|snaps|clean|revert|enter}"
+                ;;
+        esac
+    done
+}
 
-		clean)
-			echo 'reverting to base snapshot...'
-			qemu-img snapshot -a base "$image.$arch.qcow2"
-
-			echo >&2 'cleaning snapshots...'
-			qemu-img snapshot -l "$image.$arch.qcow2" | awk '{ print $2 }' |
-			sed 1,2d | grep -v '^base$' |
-			xargs -n1 -I{} qemu-img snapshot -d {} "$image.$arch.qcow2"
-			;;
-
-		revert)
-			echo 'reverting to base snapshot...'
-			qemu-img snapshot -a base "$image.$arch.qcow2"
-			;;
-
-		enter)
-			echo 'diving into chroot...'
-
-			connect_nbd "$image.$arch.qcow2"
-			track_mount "$nbd" "$chroot"
-
-			if mountpoint -q "$chroot/proc" ; then
-				echo 'already mounted.'
-				chroot "$chroot" su - test
-			else
-				echo 'mounting...'
-
-				track_mount "$chroot" "$chroot" --rbind
-				track_mount "$blackarch" "$chroot/home/test/blackarch" --bind
-				arch-chroot "$chroot" su - test
-			fi
-
-			clear_mounts
-
-			qemu-img snapshot -c build$RANDOM "$image.$arch.qcow2"
-			;;
-
-		*)
-			echo >&2 'invalid command.'
-			exit 1
-			;;
-	esac
-	shift
-done
+[[ "$0" == "$BASH_SOURCE" ]] && main "$@"
