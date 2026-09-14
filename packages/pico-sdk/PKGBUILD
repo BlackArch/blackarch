@@ -1,0 +1,31 @@
+pkgname=pico-sdk
+pkgver=2.3.0.r0.g98a542c
+pkgrel=1
+pkgdesc='Headers, libraries and build system necessary to write programs for the RP-series microcontroller-based devices.'
+arch=('any')
+groups=('blackarch' 'blackarch-hardware')
+url='https://github.com/raspberrypi/pico-sdk'
+license=('BSD-3-Clause')
+depends=()
+makedepends=('git')
+source=("git+https://github.com/raspberrypi/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+  install -dm 755 "$pkgdir/usr/lib/$pkgname"
+  find . -type f -not -path "./.git**" -exec install -D "{}" "$pkgdir/usr/lib/$pkgname/{}" \;
+  install -d "$pkgname" "$pkgdir/usr/lib/$pkgname"
+}
+
