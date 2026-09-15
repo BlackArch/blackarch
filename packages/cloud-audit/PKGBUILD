@@ -1,0 +1,52 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=cloud-audit
+_pkgname=cloud-audit
+pkgver=2.4.0.r0.gc6e5e21
+pkgrel=1
+pkgdesc='Open-source, read-only AWS security scanner. 110 checks across 25 services, Terraform remediation on every finding.'
+arch=('any')
+groups=('blackarch' 'blackarch-scanner')
+url='https://github.com/gebalamariusz/cloud-audit'
+license=('MIT')
+depends=('python')
+makedepends=('git' 'python-pip')
+source=("git+https://github.com/gebalamariusz/$_pkgname.git")
+sha512sums=('SKIP')
+install="$_pkgname.install"
+
+pkgver() {
+  cd $_pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $_pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md docs/*.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  # Keep README.md in the source tree: pip reads it from the pyproject's
+  # readme= field when building the venv in post_install().
+  rm -rf LICENSE
+
+  cp -a * "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+source /usr/share/$pkgname/venv/bin/activate
+exec python /usr/share/$pkgname/src/cloud_audit/cli.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
