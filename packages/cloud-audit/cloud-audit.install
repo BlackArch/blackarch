@@ -1,0 +1,23 @@
+post_install() {
+  set -e
+  cd /usr/share/cloud-audit
+  python -m venv venv
+  source venv/bin/activate &&
+    # pyproject.toml present, so pip reads its dependencies (and README.md
+    # for metadata) automatically.
+    pip install --isolated --root=/usr/share/cloud-audit --prefix=venv \
+      .
+}
+
+post_upgrade() {
+  set -e
+  cd /usr/share/cloud-audit
+  source venv/bin/activate &&
+    pip install --isolated --root=/usr/share/cloud-audit --prefix=venv \
+      cloud-audit -U
+}
+
+post_remove() {
+  # The venv folder is untracked by pacman, so clean it up on removal.
+  rm -rf /usr/share/cloud-audit
+}

@@ -3,10 +3,10 @@
 
 pkgname=fakenetbios
 pkgver=7.b83701e
-pkgrel=2
-groups=('blackarch' 'blackarch-spoof' 'blackarch-honeypot' 'blackarch-networking')
+pkgrel=3
 pkgdesc='A family of tools designed to simulate Windows hosts (NetBIOS) on a LAN.'
 arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-spoof' 'blackarch-honeypot' 'blackarch-networking')
 url='https://github.com/mubix/FakeNetBIOS'
 license=('custom')
 makedepends=('git')
@@ -16,7 +16,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build(){

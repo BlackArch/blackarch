@@ -3,33 +3,31 @@
 
 pkgname=sasm
 _pkgname=SASM
-pkgver=3.12.2
+pkgver=3.16.0
 pkgrel=1
 pkgdesc='A simple crossplatform IDE for NASM, MASM, GAS and FASM assembly languages.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-misc')
 url='https://github.com/Dman95/SASM'
-license=('custom')
+license=('GPL-3.0-or-later')
 depends=('nasm' 'libxcb' 'gdb' 'qt5-base' 'mesa')
-makedepends=('qt4>=4.8')
 source=("https://github.com/Dman95/$_pkgname/archive/refs/tags/v$pkgver.tar.gz")
-sha512sums=('f96c06fce2a35f9de6c2ed8d82cf3c03d7a9d0cd53bba72ec38f7f8005817733a5ee8d352eba806358f7259334a96f564b1da2c060d9b750545b42385c72854a')
+sha512sums=('2120c523992f5b1fddd473ac2bd2be712152882eca3863588cbdd9a52869b4465e3b45f08c3865627ff6b39dfc6465cd19aecbb433e7a18c8d99e36452928005')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  qmake QMAKE_CXXFLAGS="$CFLAGS -Wa,--noexecstack -Wl,-z,noexecstack -W \
-    -D_REENTRANT -fPIE -fPIC" QMAKE_LFLAGS="-Wl,-z,noexecstack,-fPIC"
+  qmake QMAKE_CXXFLAGS="$CXXFLAGS -Wa,--noexecstack -D_REENTRANT" \
+        QMAKE_LFLAGS="$LDFLAGS -Wl,-z,noexecstack"
 
-  make CXXFLAGS="$CXXFLAGS -Wa,--noexecstack -W -D_REENTRANT -fPIE -fPIC" \
-    LDFLAGS="-Wl,-z,noexecstack"
+  make
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
   install -dm 755 "$pkgdir/usr/bin/"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"{NASM,Projects,include}
+  install -dm 755 "$pkgdir/usr/share/$pkgname/"{NASM,Projects,include}
   install -dm 755 "$pkgdir/usr/share/doc/sasm"
 
   install -Dm 755 sasm "$pkgdir/usr/bin/$pkgname"
