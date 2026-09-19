@@ -2,36 +2,42 @@
 # See COPYING for license details.
 
 pkgname=padoracle
-pkgver=v0.1.1.r30.g535ae89
+pkgver=0.1.1.r30.g535ae89
 pkgrel=1
 pkgdesc='Padding Oracle Attack with Node.js.'
 arch=('any')
 groups=('blackarch' 'blackarch-crypto')
 url='https://github.com/imyelo/padoracle'
-license=('Apache')
+license=('Apache-2.0')
 depends=('nodejs')
-makedepends=('npm' 'git')
+makedepends=('git' 'npm')
 source=("git+https://github.com/imyelo/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
   cd $pkgname
 
-  _npmdir="$pkgdir/usr/lib/node_modules/"
+  local _npmdir="$pkgdir/usr/lib/node_modules"
 
   install -dm 755 "$_npmdir"
 
-  cd "$_npmdir"
+  npm install -g --prefix "$pkgdir/usr" --cache "$srcdir/npm-cache" "$pkgname@"
 
-  npm install --user root -g --prefix "$pkgdir/usr" "$pkgname@"
+  rm -f "$_npmdir/.package-lock.json"
 
-  cd "$srcdir/$pkgname"
+  find "$pkgdir/usr" -type d -exec chmod 755 {} +
+  chown -R root:root "$pkgdir"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 }
