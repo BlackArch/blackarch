@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=shuji
-pkgver=v0.8.0.r129.gcd9c98a
+pkgver=0.8.0.r130.gf5e0077
 pkgrel=1
 pkgdesc='Reverse engineering JavaScript and CSS sources from sourcemaps.'
 arch=('any')
@@ -19,25 +19,25 @@ pkgver() {
 
   ( set -o pipefail
     git describe --long --tags --abbrev=7 2>/dev/null |
-      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
     printf "%s.%s" "$(git rev-list --count HEAD)" \
       "$(git rev-parse --short=7 HEAD)"
   )
 }
 
-
 package() {
   cd $pkgname
 
-  _npmdir="$pkgdir/usr/lib/node_modules/"
+  local _npmdir="$pkgdir/usr/lib/node_modules"
 
   install -dm 755 "$_npmdir"
 
-  cd "$_npmdir"
+  npm install -g --prefix "$pkgdir/usr" --cache "$srcdir/npm-cache" "$pkgname@"
 
-  npm install --user root -g --prefix "$pkgdir/usr" "$pkgname@"
+  rm -f "$_npmdir/.package-lock.json"
 
-  cd "$srcdir/$pkgname"
+  find "$pkgdir/usr" -type d -exec chmod 755 {} +
+  chown -R root:root "$pkgdir"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
 
