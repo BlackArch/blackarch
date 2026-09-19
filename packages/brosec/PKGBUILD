@@ -2,13 +2,14 @@
 # See COPYING for license details.
 
 pkgname=brosec
-pkgver=278.c51164f
+pkgver=1.4.1.r11.gc51164f
 pkgrel=1
-groups=('blackarch' 'blackarch-exploitation')
+epoch=1
 pkgdesc='An interactive reference tool to help security professionals utilize useful payloads and commands.'
-url='https://github.com/gabemarshall/Brosec'
 arch=('x86_64' 'aarch64')
-license=('custom:unknown')
+groups=('blackarch' 'blackarch-exploitation')
+url='https://github.com/gabemarshall/Brosec'
+license=('ISC')
 depends=('nodejs' 'xsel')
 makedepends=('git' 'npm')
 source=("$pkgname::git+https://github.com/gabemarshall/Brosec.git")
@@ -17,22 +18,39 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package(){
   cd $pkgname
 
-  local _npmdir="$pkgdir/usr/lib/node_modules/"
+  local _npmdir="$pkgdir/usr/lib/node_modules"
 
   install -dm 755 "$_npmdir"
   install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
 
-  cd "$_npmdir"
+  npm install -g --prefix "$pkgdir/usr" --cache "$srcdir/npm-cache" Brosec@
 
-  npm install --user root -g --prefix "$pkgdir/usr" Brosec@
+  rm -f "$_npmdir/.package-lock.json"
 
-  cd "$srcdir/$pkgname"
+  # Upstream depends on "yargs": "*". yargs >= 18 dropped the deprecated
+  # singleton export, so require('yargs').argv is undefined and every module
+  # reading it throws at startup. The explicit factory entry point works on
+  # both old and new yargs.
+  sed -i "s|require('yargs').argv|require('yargs/yargs')(process.argv.slice(2)).argv|" \
+    "$_npmdir/Brosec/bros" \
+    "$_npmdir/Brosec/modules/webserver/simpleFtp.js"
+
+  grep -q "yargs/yargs" "$_npmdir/Brosec/bros" ||
+    { echo "yargs patch did not apply" >&2; return 1; }
+
+  find "$pkgdir/usr" -type d -exec chmod 755 {} +
+  chown -R root:root "$pkgdir"
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md CHANGELOG.md
 }
