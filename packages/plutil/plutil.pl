@@ -23,7 +23,7 @@ use POSIX ();
 use Math::BigInt;
 use MIME::Base64;
 
-my $VERSION = "v1.5";
+my $VERSION = "v1.6";
 
    sub nice_string {
        join("",
