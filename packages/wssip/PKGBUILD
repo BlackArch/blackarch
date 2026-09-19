@@ -2,39 +2,53 @@
 # See COPYING for license details.
 
 pkgname=wssip
-pkgver=75.56d0d2c
-pkgrel=5
-groups=('blackarch' 'blackarch-webapp' 'blackarch-proxy')
+pkgver=1.1.0.r14.g56d0d2c
+pkgrel=1
+epoch=1
 pkgdesc='Application for capturing, modifying and sending custom WebSocket data from client to server and vice versa.'
-url='https://github.com/nccgroup/wssip'
 arch=('any')
-license=('GAGPL')
-depends=('nodejs' 'coffee-script')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-proxy')
+url='https://github.com/nccgroup/wssip'
+license=('AGPL-3.0-or-later')
+depends=('nodejs' 'coffee-script' 'electron')
 makedepends=('git' 'npm' 'python' 'python2' 'libxtst')
-#conflicts=('electron')
 source=("git+https://github.com/nccgroup/$pkgname.git")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
   cd $pkgname
 
-  _npmdir="$pkgdir/usr/lib/node_modules/"
+  local _npmdir="$pkgdir/usr/lib/node_modules"
 
-  install -dm 755 $_npmdir
+  install -dm 755 "$_npmdir"
 
-  cd $_npmdir
+  npm install -g --prefix "$pkgdir/usr" --cache "$srcdir/npm-cache" \
+    --no-audit --no-fund wssip@
 
-  npm install --user root -g --prefix "$pkgdir/usr" electron@1.7
-  npm install --user root -g --prefix "$pkgdir/usr" wssip@
+  rm -f "$_npmdir/.package-lock.json"
 
-  mv "$pkgdir/usr/bin/electron" "$pkgdir/usr/bin/electron-1.7"
+  sed -i "s|^\( *\)require('electron'),$|\1'/usr/bin/electron',|" \
+    "$_npmdir/wssip/lib/main.js"
 
-  chmod 755 "$pkgdir/usr/bin" "$pkgdir/usr/lib/node_modules"
+  sed -i "s|^\( *\)show: false$|\1show: false,\n\1webPreferences: {nodeIntegration: true, contextIsolation: false}|" \
+    "$_npmdir/wssip/lib/electron.js"
+
+  grep -q "/usr/bin/electron" "$_npmdir/wssip/lib/main.js" &&
+    grep -q "nodeIntegration" "$_npmdir/wssip/lib/electron.js" ||
+      { echo "electron patches did not apply" >&2; return 1; }
+
+  find "$pkgdir/usr" -type d -exec chmod 755 {} +
+  chown -R root:root "$pkgdir"
 }
 
