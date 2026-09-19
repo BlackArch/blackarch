@@ -1073,5 +1073,5 @@ if ((@ARGV > 0) && (-e $ARGV[0])) {
     Convert($ARGV[0]);
 }
 else {
-    print "usage: plutil file[.text|.binary][.plist|.strings|.*]\n";
+    print "usage: plutil.pl file[.text|.binary][.plist|.strings|.*]\n";
 }
