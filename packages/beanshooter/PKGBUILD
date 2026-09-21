@@ -2,23 +2,44 @@
 # See COPYING for license details.
 
 pkgname=beanshooter
-pkgver=4.1.0
+pkgver=v4.1.0.r0.gfd37fa7
 pkgrel=1
-groups=('blackarch' 'blackarch-exploitation' 'blackarch-scanner')
 pkgdesc='JMX enumeration and attacking tool.'
 arch=('any')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-scanner')
 url='https://github.com/qtc-de/beanshooter'
 license=('GPL3')
 depends=('java-runtime')
-source=("https://github.com/qtc-de/$pkgname/releases/download/v$pkgver/$pkgname-$pkgver-jar-with-dependencies.jar")
-noextract=("$pkgname-$pkgver-jar-with-dependencies.jar")
-sha512sums=('af8591446f91235b50605f88f0896e80e876280ff5cebd1d9d2cee586732be43c78a3e8c44a4a5937be825fd52b83eaec0a4d0102e45d02afa557eb8d935382b')
+makedepends=('maven' 'git')
+source=("git+https://github.com/qtc-de/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  mvn clean package -DskipTests
+}
 
 package() {
-  install -dm 755 "$pkgdir/usr/bin/"
-  install -dm 755 "$pkgdir/usr/share/$pkgname"
+  cd $pkgname
 
-  install -Dm 644 "$pkgname-$pkgver-jar-with-dependencies.jar" \
+  install -dm 755 "$pkgdir/usr/bin"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/docs/" docs/*.md
+
+  install -Dm 755 target/$pkgname-*-jar-with-dependencies.jar \
     "$pkgdir/usr/share/$pkgname/$pkgname.jar"
 
   cat > "$pkgdir/usr/bin/$pkgname" << EOF
