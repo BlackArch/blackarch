@@ -3,7 +3,7 @@
 
 pkgname=haiti
 _gemname=haiti-hash
-pkgver=v4.0.0.r36.g7f10490
+pkgver=4.0.0.r39.g4e76df7
 pkgrel=1
 groups=('blackarch' 'blackarch-crypto')
 pkgdesc='Hash type identifier (CLI & lib).'
@@ -12,6 +12,9 @@ url='https://noraj.github.io/haiti/'
 license=('MIT')
 depends=('ruby' 'ruby-paint' 'ruby-docopt')
 makedepends=('git')
+optdepends=('fzf: for haiti-fzf, john-haiti, hashcat-haiti CLI commands'
+            'john: for john-haiti CLI command'
+            'hashcat: for hashcat-haiti CLI command')
 options=(!emptydirs)
 source=("git+https://github.com/noraj/$pkgname.git")
 sha512sums=('SKIP')
@@ -19,7 +22,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
@@ -39,7 +47,6 @@ package() {
 
   rm -rf "$pkgdir/$_gemdir/cache/$_gemname-$_release.gem"
   find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_release/test"
 
   install -Dm 644 "$pkgdir/$_gemdir/gems/$_gemname-$_release/LICENSE.txt" \
     "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
