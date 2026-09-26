@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+# Original Maintainer: Behruz <extreme29@proton.me>
+
+pkgname=medusa-ai
+_pkgname=medusa
+pkgver=2026.7.0
+pkgrel=1
+pkgdesc='AI-first security scanner for code, AI/ML, LLM agents, MCP and RAG applications.'
+arch=('any')
+groups=('blackarch' 'blackarch-ai' 'blackarch-code-audit'
+        'blackarch-scanner')
+url='https://github.com/Pantheon-Security/medusa'
+license=('AGPL-3.0-or-later')
+depends=('python' 'python-click' 'python-rich' 'python-tqdm' 'python-requests'
+         'python-urllib3' 'python-yaml' 'python-psutil' 'python-defusedxml'
+         'python-tomli-w' 'python-toml' 'python-pathspec')
+makedepends=('python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/Pantheon-Security/$_pkgname/archive/refs/tags/v$pkgver.tar.gz"
+        'setuptools-compat.patch')
+sha512sums=('dad304c61febc5fc45ee925c3252a400040442df40cc509271eff84b57ec762aed8e17aad1a55ada25523f1716e26b5b43df3223a70881f4c64832b4af7b29f3'
+            '394168d0963584f77c6f2b0a180307369e99ea18a7a8292e94388282fe7ec7d7e20c03894af9a89091c2f1652d79ca3643dabdf67e3702966ccacbd0bb54b425')
+
+prepare() {
+  cd "$_pkgname-$pkgver"
+
+  patch -Np1 -i "$srcdir/setuptools-compat.patch"
+}
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+
+  # Avoid collision with Arch's unrelated /usr/bin/medusa package.
+  mv "$pkgdir/usr/bin/$_pkgname" "$pkgdir/usr/bin/$pkgname"
+  sed -i '1s|^#!.*python$|#!/usr/bin/python|' \
+    "$pkgdir/usr/bin/$pkgname"
+}
+
