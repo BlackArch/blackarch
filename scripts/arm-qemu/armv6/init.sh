@@ -17,7 +17,7 @@ check_priv() {
 }
 
 get_root() {
-	wget -nc http://archlinuxarm.org/os/ArchLinuxARM-rpi-latest.zip
+	wget -nc https://archlinuxarm.org/os/ArchLinuxARM-rpi-latest.zip
 	unzip -o ArchLinuxARM-rpi-latest.zip
 	mv -f ArchLinuxARM-2014.02-rpi.img "$root_file"
 
@@ -26,6 +26,8 @@ get_root() {
 }
 
 get_kernel() {
+	# NOTE: xecdesign.com has no TLS. The downloaded kernel is not
+	# integrity-checked - treat these build VMs as untrusted either way.
 	wget -nc http://xecdesign.com/downloads/linux-qemu/kernel-qemu
 }
 
@@ -36,9 +38,9 @@ mod_root() {
 	echo '/dev/sdb    /home           ext4    defaults        0       0' >> root/etc/fstab
 	echo '/home/swap  none            swap    defaults        0       0' >> root/etc/fstab
 	echo '[blackarch]' >> root/etc/pacman.conf
-	echo 'Server = http://blackarch.org/blackarch/$repo/os/armv6h' >> root/etc/pacman.conf
+	echo 'Server = https://blackarch.org/blackarch/$repo/os/armv6h' >> root/etc/pacman.conf
 
-	sed -i 's|^Include = .*|Server = http://mirror.archlinuxarm.org/$arch/$repo|' root/etc/pacman.conf
+	sed -i 's|^Include = .*|Server = https://mirror.archlinuxarm.org/$arch/$repo|' root/etc/pacman.conf
 	pacstrap -G -M -C root/etc/pacman.conf root base-devel devtools-alarm blackarch-devtools git vim
 
 	sync
