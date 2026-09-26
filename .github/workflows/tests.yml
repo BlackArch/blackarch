@@ -40,11 +40,11 @@ jobs:
           git fetch upstream master
       - name: Check Styling
         run: |
-           CHANGED_FILES=($(git diff --name-only --diff-filter=ACMRT upstream/master...${{ env.HEAD_SHA }} | tr '\n' ' '))
+           mapfile -t CHANGED_FILES < <(git diff --name-only --diff-filter=ACMRT upstream/master...${{ env.HEAD_SHA }})
            for FILE in "${CHANGED_FILES[@]}"; do
-              if [[ $(basename $FILE) == "PKGBUILD" ]]; then
+              if [[ $(basename "$FILE") == "PKGBUILD" ]]; then
                 echo "Validating $FILE..."
-                pkgcheck $FILE
+                pkgcheck "$FILE"
               fi
            done
   build:
@@ -63,11 +63,11 @@ jobs:
            git fetch upstream master           
        - name: Build Package
          run: |
-           CHANGED_FILES=($(git diff --name-only --diff-filter=ACMRT upstream/master...${{ env.HEAD_SHA }} | tr '\n' ' '))
+           mapfile -t CHANGED_FILES < <(git diff --name-only --diff-filter=ACMRT upstream/master...${{ env.HEAD_SHA }})
            for FILE in "${CHANGED_FILES[@]}"; do
-              if [[ $(basename $FILE) == "PKGBUILD" ]]; then
+              if [[ $(basename "$FILE") == "PKGBUILD" ]]; then
                 echo "Building $FILE..."
-                docker build --load -t builder -f travis/Dockerfile $(dirname $FILE)
+                docker build --load -t builder -f travis/Dockerfile "$(dirname "$FILE")"
                 docker run --rm builder
               fi
            done
