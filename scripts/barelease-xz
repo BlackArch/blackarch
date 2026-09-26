@@ -185,6 +185,23 @@ check_packages() {
 	done
 }
 
+# These values are interpolated into remote shell command strings and into
+# rsync's -e option (which is itself shell-evaluated). Refuse anything that
+# could be interpreted as shell syntax.
+check_remote_args() {
+	local name value
+
+	for name in user site sitedir repo key ; do
+		value=${!name}
+		[[ -z "$value" ]] && continue
+
+		if [[ ! "$value" =~ ^[A-Za-z0-9._/@:=-]+$ ]] ; then
+			err "invalid characters in '$name' (potential command injection): '$value'"
+			exit 1
+		fi
+	done
+}
+
 start_gpg_agent() {
 	[[ -z "$GPG_TTY" ]] && export GPG_TTY=$(tty)
 	if [[ -z "$GPG_AGENT_INFO" ]] ; then
@@ -337,7 +354,7 @@ do_release() {
 		  blackarch.db.tar.gz{,.sig} "$site:$sitedir/blackarch/$repo/os/$arch" ||
 		true
 	done
-  ssh -l $user $site "date +%s > $sitedir/blackarch/lastupdate"
+  ssh -l "$user" "$site" "date +%s > $sitedir/blackarch/lastupdate"
 }
 
 main() {
@@ -345,6 +362,8 @@ main() {
 
 	check_args "$@"
 	parse_args "$@"
+
+	check_remote_args
 
 	check_packages
 
