@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=vamp-ssl-audit
+_pyname=vamp_ssl_audit
+pkgver=1.4.0
+pkgrel=1
+pkgdesc='TLS/SSL security auditor for protocol version, cipher suites, certificate validity and HSTS preload checking.'
+groups=('blackarch' 'blackarch-scanner' 'blackarch-crypto')
+arch=('any')
+url='https://github.com/Vampsecure-Labs/vamp-ssl-audit'
+license=('AGPL-3.0-only')
+depends=('python' 'python-cryptography' 'python-rich' 'python-dnspython')
+makedepends=('python-build' 'python-pip' 'python-setuptools' 'python-wheel')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/${pkgname}/${_pyname}-${pkgver}.tar.gz")
+sha512sums=('8531ad27d9fd187b2ec12d7e38b8163745cacca404049c5bc7a23c14ec4165acecc28cf151dfe667998079a38e5dc628eef78d1ada47133bbe11f4d2a255a0a9')
+
+build() {
+  cd "${_pyname}-${pkgver}"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "${_pyname}-${pkgver}"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
