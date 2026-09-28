@@ -25,7 +25,7 @@ make_root() {
 	mount -o loop "$root_file" root
 
 	# rootfs
-	wget -nc http://archlinuxarm.org/os/ArchLinuxARM-omap-smp-latest.tar.gz
+	wget -nc https://archlinuxarm.org/os/ArchLinuxARM-omap-smp-latest.tar.gz
 	tar xzf ArchLinuxARM-omap-smp-latest.tar.gz -C root
 
 	# fstab
@@ -36,8 +36,8 @@ make_root() {
 	# TODO: tweak swappiness
 	# pacman.conf
 	echo '[blackarch]' >> root/etc/pacman.conf
-	echo 'Server = http://blackarch.org/blackarch/$repo/os/armv6h' >> root/etc/pacman.conf
-	sed -i 's|^Include = .*|Server = http://mirror.archlinuxarm.org/$arch/$repo|' root/etc/pacman.conf
+	echo 'Server = https://blackarch.org/blackarch/$repo/os/armv6h' >> root/etc/pacman.conf
+	sed -i 's|^Include = .*|Server = https://mirror.archlinuxarm.org/$arch/$repo|' root/etc/pacman.conf
 
 	# Some more packages
 	pacstrap -d -G -M -C root/etc/pacman.conf root base-devel devtools-alarm blackarch-devtools git vim
@@ -55,6 +55,8 @@ make_root() {
 }
 
 get_kernel() {
+	# NOTE: xecdesign.com has no TLS. The downloaded kernel is not
+	# integrity-checked - treat these build VMs as untrusted either way.
 	wget -nc http://xecdesign.com/downloads/linux-qemu/kernel-qemu
 }
 
