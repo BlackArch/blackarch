@@ -1,0 +1,58 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=zond
+pkgver=0.19.0.r6.g8b056f8
+pkgrel=1
+pkgdesc='Network scanner that finds hosts, ports and services and matches them against distribution security data.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-recon'
+        'blackarch-networking')
+url='https://github.com/zond-rs/zond'
+license=('AGPL-3.0-or-later' 'CC-BY-SA-4.0')
+depends=('libpcap')
+makedepends=('git' 'cargo')
+source=("git+https://github.com/zond-rs/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  # ring's C objects are built with LTO, which rust-lld cannot link.
+  # See https://archlinux.org/todo/lto-fat-objects/ for more details.
+  CFLAGS+=' -ffat-lto-objects'
+  cd $pkgname
+
+  cargo build --release --locked
+
+  SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)" \
+    target/release/$pkgname __generate target/assets
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
+  install -Dm 644 assets/advisories/NOTICE \
+    "$pkgdir/usr/share/licenses/$pkgname/NOTICE.ubuntu-data"
+
+  install -Dm 644 target/assets/man/*.1 -t "$pkgdir/usr/share/man/man1"
+  install -Dm 644 target/assets/man/*.7 -t "$pkgdir/usr/share/man/man7"
+  install -Dm 644 target/assets/completions/zond.bash \
+    "$pkgdir/usr/share/bash-completion/completions/$pkgname"
+  install -Dm 644 target/assets/completions/_zond \
+    "$pkgdir/usr/share/zsh/site-functions/_$pkgname"
+  install -Dm 644 target/assets/completions/zond.fish \
+    "$pkgdir/usr/share/fish/vendor_completions.d/$pkgname.fish"
+}
+
