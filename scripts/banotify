@@ -91,5 +91,15 @@ remote_irc_notify() {
 	fi
 }
 
-ssh -l "$user" "$site" "$(declare -f remote_irc_notify); remote_irc_notify ${notify_list[@]}"
+# Quote every package name so it can never be interpreted as shell syntax
+# by the remote shell. Package names are derived from file names, which can
+# contain arbitrary characters.
+remote_args=''
+for p in "${notify_list[@]}" ; do
+	printf -v quoted '%q' "$p"
+	remote_args+=" $quoted"
+done
+
+# The remote shell is bash (see baclean).
+ssh -l "$user" "$site" "$(declare -f remote_irc_notify); remote_irc_notify${remote_args}"}
 
