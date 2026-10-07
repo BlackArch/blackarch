@@ -3,13 +3,13 @@
 
 pkgname=xssscan
 pkgver=17.7f1ea90
-pkgrel=3
+pkgrel=4
 epoch=1
 pkgdesc='Command line tool for detection of XSS attacks in URLs. Based on ModSecurity rules from OWASP CRS.'
-groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
 arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner' 'blackarch-fuzzer')
 url='https://github.com/gwroblew/detectXSSlib'
-license=('custom')
+license=('MS-PL')
 depends=('gcc-libs')
 makedepends=('git')
 source=("$pkgname::git+https://github.com/gwroblew/detectXSSlib.git")
@@ -18,7 +18,12 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {

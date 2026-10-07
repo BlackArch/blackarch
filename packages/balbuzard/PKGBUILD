@@ -2,24 +2,29 @@
 # See COPYING for license details.
 
 pkgname=balbuzard
-pkgver=67.d6349ef1bc55
-pkgrel=4
+pkgver=77.16c1e21
+pkgrel=1
 pkgdesc='A package of malware analysis tools in python to extract patterns of interest from suspicious files (IP addresses, domain names, known file headers, interesting strings, etc).'
 arch=('any')
 groups=('blackarch' 'blackarch-malware' 'blackarch-cracker'
         'blackarch-reversing')
-url='https://bitbucket.org/decalage/balbuzard/'
-license=('GPL')
+url='https://github.com/decalage2/balbuzard/'
+license=('BSD')
 depends=('python2' 'yara' 'python2-yara')
-makedepends=('mercurial' 'python2-setuptools')
+makedepends=('git' 'python2-setuptools')
 options=('!strip')
-source=("hg+https://bitbucket.org/decalage/$pkgname")
+source=("git+https://github.com/decalage2/$pkgname")
 sha512sums=('SKIP')
 
 pkgver() {
   cd $pkgname
 
-  echo $(hg identify -n).$(hg identify -i) | cut -d ' ' -f 2- | tr -d ' '
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
@@ -41,8 +46,7 @@ package() {
 
   cp -a "$pkgname"/* "$pkgdir/usr/share/$pkgname/"
 
-  for tool in $_tools
-  do
+  for tool in $_tools; do
     cat > "$pkgdir/usr/bin/$tool" << EOF
 #!/bin/sh
 cd /usr/share/$pkgname
