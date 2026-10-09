@@ -10,31 +10,21 @@ groups=('blackarch' 'blackarch-forensic')
 arch=('any')
 url='https://github.com/Vampsecure-Labs/vamp-forensic-query'
 license=('AGPL-3.0-only')
+options=(!emptydirs)
 depends=('python')
-makedepends=('python-build' 'python-pip' 'python-setuptools' 'python-wheel')
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/${pkgname}/${_pyname}-${pkgver}.tar.gz")
 sha512sums=('dc2080bb4f3040e2af6f35df94f5bef7f2d5ba40a77ed832df0624ca056d254843326d6c4cff279aee375b99e55d1308bd564f0a3c93cfa98a59113a24deb1fb')
 
 build() {
   cd "${_pyname}-${pkgver}"
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "${_pyname}-${pkgver}"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
