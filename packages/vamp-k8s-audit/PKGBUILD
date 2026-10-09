@@ -10,31 +10,21 @@ groups=('blackarch' 'blackarch-scanner' 'blackarch-cloud')
 arch=('any')
 url='https://github.com/Vampsecure-Labs/vamp-k8s-audit'
 license=('AGPL-3.0-only')
+options=(!emptydirs)
 depends=('python')
-makedepends=('python-build' 'python-pip' 'python-setuptools' 'python-wheel')
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/${pkgname}/${_pyname}-${pkgver}.tar.gz")
 sha512sums=('8cf40736841133aa12531a4aa17eca3c37c4b8016a7bf9deafe5359fa0511ab19bef7da805e6a59b33e6dc3d94f2f120b74779c9a112dc4c5917d3830e1579b4')
 
 build() {
   cd "${_pyname}-${pkgver}"
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "${_pyname}-${pkgver}"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
