@@ -10,31 +10,21 @@ groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
 arch=('any')
 url='https://github.com/Vampsecure-Labs/vamp-graphql-audit'
 license=('AGPL-3.0-only')
+options=(!emptydirs)
 depends=('python' 'python-rich')
-makedepends=('python-build' 'python-pip' 'python-setuptools' 'python-wheel')
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/${pkgname}/${_pyname}-${pkgver}.tar.gz")
 sha512sums=('a74b80d228f0fbd4572eb81c0c051a2525ddd5e840b96a5c7a9021f92e049d89e47504b8c517616b019f94a75d3853e93d85d38741329f3f52f81613dcb93554')
 
 build() {
   cd "${_pyname}-${pkgver}"
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "${_pyname}-${pkgver}"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
