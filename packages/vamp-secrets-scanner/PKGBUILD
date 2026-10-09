@@ -10,31 +10,21 @@ groups=('blackarch' 'blackarch-scanner' 'blackarch-code-audit')
 arch=('any')
 url='https://github.com/Vampsecure-Labs/vamp-secrets-scanner'
 license=('AGPL-3.0-only')
+options=(!emptydirs)
 depends=('python' 'python-rich')
-makedepends=('python-build' 'python-pip' 'python-setuptools' 'python-wheel')
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/${pkgname}/${_pyname}-${pkgver}.tar.gz")
 sha512sums=('4f08f568095c12e0ed7aeaf37270dd99b53aa6086ce46b48a57a5a743f95865b3b65c643d63949bc61395e2964ec0868adcdb0ed94da79d633eb8faeec957ca5')
 
 build() {
   cd "${_pyname}-${pkgver}"
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "${_pyname}-${pkgver}"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
