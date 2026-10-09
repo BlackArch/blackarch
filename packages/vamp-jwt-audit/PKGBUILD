@@ -10,31 +10,21 @@ groups=('blackarch' 'blackarch-scanner' 'blackarch-webapp')
 arch=('any')
 url='https://github.com/Vampsecure-Labs/vamp-jwt-audit'
 license=('AGPL-3.0-only')
+options=(!emptydirs)
 depends=('python' 'python-rich')
-makedepends=('python-build' 'python-pip' 'python-setuptools' 'python-wheel')
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/${pkgname}/${_pyname}-${pkgver}.tar.gz")
 sha512sums=('29f5efe32204b1f1a56268fcc8bf043ec46da00914d1cfb4a7a6a92e3205f52c983c47babb84b108c07c670b36d2cf65f5fbb9648b5ff3a557e40396688bfb3b')
 
 build() {
   cd "${_pyname}-${pkgver}"
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "${_pyname}-${pkgver}"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
