@@ -10,31 +10,21 @@ groups=('blackarch' 'blackarch-scanner' 'blackarch-recon')
 arch=('any')
 url='https://github.com/Vampsecure-Labs/vamp-subdomain-takeover'
 license=('AGPL-3.0-only')
+options=(!emptydirs)
 depends=('python' 'python-aiohttp' 'python-rich')
-makedepends=('python-build' 'python-pip' 'python-setuptools' 'python-wheel')
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
 source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/${pkgname}/${_pyname}-${pkgver}.tar.gz")
 sha512sums=('29b2d44f0df60132673c7fe8ac21f9f180385b9371d8bdc7a5e150a67078c92c04e083bb5b629eb07ee963a1e82094c1fd00741831df62ce213b0364de055a96')
 
 build() {
   cd "${_pyname}-${pkgver}"
 
-  python -m build --wheel --outdir="$startdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "${_pyname}-${pkgver}"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$startdir/dist" \
-    $pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 }
 
