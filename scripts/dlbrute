@@ -46,7 +46,7 @@ for arch in i686 x86_64 ; do
 	cat > "$conffile" <<EOF
 [options]
 Architecture = $arch
-SigLevel    = Never
+SigLevel    = Required DatabaseOptional
 #CacheDir    = $tmp/$arch
 #DBPath      = $dbdir
 #LogFile     = $logfile
@@ -81,6 +81,23 @@ EOF
 done |
 parallel --no-notice -n1 -j$jobs wget -P "$out" \
   > /dev/null 2>&1
+
+# Verify every downloaded package against its signature before the files are
+# used any further. Fail closed on any unverifiable package.
+failed=0
+for pkg_file in "$out"/*.pkg.tar.xz ; do
+	[[ -e "$pkg_file" ]] || continue
+
+	if ! pacman-key --verify "$pkg_file.sig" "$pkg_file" > /dev/null 2>&1 ; then
+		err "signature verification failed for '$pkg_file'"
+		failed=1
+	fi
+done
+
+if (( $failed )) ; then
+	err 'refusing to continue with unverified packages.'
+	exit 1
+fi
 
 echo "you may remove $tmp now"
 

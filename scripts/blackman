@@ -44,7 +44,7 @@ for arg ; do
 			*) error "unsupported: $arg"; exit 1 ;;
 		esac
 	else
-		targets+=($arg)
+		targets+=("$arg")
 	fi
 done
 
@@ -93,12 +93,12 @@ case $action in
 
 		for pack in "${targets[@]}" ; do (
 			if ! $no_deps ; then
-				while read dep <&3 ; do
-					if ! is_installed $dep ; then
+				while read -r dep <&3 ; do
+					if ! is_installed "$dep" ; then
 						if $print_only ; then
-							echo $dep
+							echo "$dep"
 						else
-							do_sync $dep --asdeps 
+							do_sync "$dep" --asdeps 
 						fi
 					fi
 				done 3< <("$basedir/get-blackarch-deps" "$pack" |
@@ -120,7 +120,7 @@ case $action in
 		# TODO: narrow down searches for each word instead
 		for pattern in "${targets[@]:-^}" ; do
 			for pack in packages/*/ aur/*/ ; do (
-				source $pack/PKGBUILD
+				source "$pack/PKGBUILD"
 				if [[ "$pkgname $pkgdesc" =~ $pattern ]] ; then
 					printf 'blackarch/%s %s-%s' "$pkgname" "$pkgver" "$pkgrel"
 					[[ -n "${groups[*]}" ]] && printf ' (%s)' "${groups[*]}"
@@ -133,13 +133,13 @@ case $action in
 		;;
 	groups)
 		for pack in packages/*/ aur/*/ ; do (
-			source $pack/PKGBUILD
+			source "$pack/PKGBUILD"
 			printf '%s\n' "${groups[@]}"
 		) ; done | sort -u | sed '1d'
 		;;
 	groupings)
 		for pack in packages/*/ aur/*/ ; do (
-			source $pack/PKGBUILD
+			source "$pack/PKGBUILD"
 			if [[ -n "${groups[@]}" ]] ; then
 				printf "%s $pkgname\n" "${groups[@]}"
 			fi
@@ -147,7 +147,7 @@ case $action in
 		# Many locales cause sort to ignore punctuation, including hyphens.
 		;;
 	info)
-		[[ -z "${targets[@]}" ]] && targets=($(basename -a packages/*/ aur/*/))
+		[[ -z "${targets[@]}" ]] && mapfile -t targets < <(basename -a packages/*/ aur/*/)
 		for pack in "${targets[@]}" ; do (
 			if [[ -d aur/$pack ]] ; then
 				repo=aur
@@ -160,9 +160,9 @@ case $action in
 				continue
 			fi
 
-			source $dir/PKGBUILD
+			source "$dir/PKGBUILD"
 
-			size=$(du -hs $dir/*.pkg.tar.xz 2> /dev/null | head -n1 | cut -d$'\t' -f1)
+			size=$(du -hs "$dir"/*.pkg.tar.xz 2> /dev/null | head -n1 | cut -d$'\t' -f1)
 
 			[[ ${#md5sums[@]} != 0 ]] && validation+='MD5 Sum'
 			[[ ${#sha256sums[@]} != 0 ]] && validation+='SHA256 Sum'
@@ -208,7 +208,7 @@ case $action in
 	upgrade)
 		for pack in packages/*/ aur/*/ ; do (
 			source "$pack/PKGBUILD"
-			if is_installed $pkgname ; then
+			if is_installed "$pkgname" ; then
 				do_sync "$pkgname"
 			fi
 		) done

@@ -124,7 +124,7 @@ pacman_init() {
     cat > "$conffile" <<EOF
 [options]
 Architecture = $arch
-SigLevel    = Never
+SigLevel    = Required DatabaseOptional
 CacheDir    = $tmp/$arch
 DBPath      = $dbdir
 LogFile     = $logfile
@@ -185,13 +185,38 @@ handle_package() {
 	)
 }
 
+verify_sigs() {
+	local file
+
+	err 'verifying package signatures...'
+
+	for file in "$tmp"/*.pkg.tar.$FEXT ; do
+		[[ -e "$file" ]] || continue
+
+		if ! pacman-key --verify "$file.sig" "$file" > /dev/null 2>&1 ; then
+			err "signature verification failed for '$file'."
+			err "make sure the matching keyring (archlinux-keyring, archlinux32-keyring"
+			err "or archlinuxarm-keyring) is installed and that the mirror '$mirror'"
+			err "is trustworthy."
+			die 'refusing to continue with unverified packages.'
+		fi	done
+}
+
 handle_finale() {
 	if $do_release ; then
-    "$base/barelease" -o "$tmp"/*.pkg.tar.$FEXT
+		$signatures || die 'refusing to release packages downloaded without signatures (-s).'
+
+		verify_sigs
+
+		"$base/barelease" -o "$tmp"/*.pkg.tar.$FEXT
 	else
-		cp -i "$tmp"/*.pkg.tar.$FEXT "$out_dir"
 		if $signatures ; then
+			verify_sigs
+
+			cp -i "$tmp"/*.pkg.tar.$FEXT "$out_dir"
 			cp -i "$tmp"/*.pkg.tar.$FEXT.sig "$out_dir"
+		else
+			cp -i "$tmp"/*.pkg.tar.$FEXT "$out_dir"
 		fi
 	fi
 }
