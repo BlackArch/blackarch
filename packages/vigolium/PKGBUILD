@@ -1,0 +1,46 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+# Maintainer: Jessie Ho <j3ssiejjj@gmail.com>
+
+pkgname=vigolium
+pkgver=0.5.1
+pkgrel=1
+pkgdesc='Web vulnerability scanner with traffic ingestion, passive analysis and a REST API.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+url='https://github.com/vigolium/vigolium'
+license=('MIT')
+depends=('bash' 'glibc' 'gcc-libs' 'zlib' 'ca-certificates')
+optdepends=('chromium: browser crawling'
+            'git: template updates and repository operations')
+conflicts=('vigolium-bin')
+# Preserve the release executable and its embedded Bun helpers unchanged.
+options=('!strip' '!debug')
+source=("$pkgname-LICENSE::https://raw.githubusercontent.com/vigolium/vigolium/v$pkgver/LICENSE"
+        "$pkgname-THIRD_PARTY_NOTICES.md::https://raw.githubusercontent.com/vigolium/vigolium/v$pkgver/THIRD_PARTY_NOTICES.md")
+sha512sums=('ed5215f955b6eaa153bc3356135e351cc78c6d9a8c9d96a4b2367c01875f5832930953ac791e6e39aa14a4c399a44ee6696c0aaad8766a856f4d131ee376bd9f'
+            '55e4889a73b55c43ed0df63676e5b70d08f594d09675cf4aa19b324ae8f6b9726970b5ef834a844a5380d77eb714e2a007e7681e75eb15e639e507483bcf5d5d')
+source_x86_64=("https://github.com/vigolium/vigolium/releases/download/v$pkgver/${pkgname}_${pkgver}_linux_amd64.tar.gz")
+sha512sums_x86_64=('efe09ed0e9407a20cf77034f3169a2fea8155f59e2166b25e82eff97467dd17e91c4aa30ce6d94f74efdb22dc56f402bd4a42f68be3e0d3c1257e2d56d1af654')
+source_aarch64=("https://github.com/vigolium/vigolium/releases/download/v$pkgver/${pkgname}_${pkgver}_linux_arm64.tar.gz")
+sha512sums_aarch64=('a16c50b661598140a0be016b1c3cdf1d849ca89dea25053eb3d81b37011bddc8e668fe772639ed8053050ad53423bb4a4840817d258a466dea34227d0520aabf')
+
+package() {
+  install -Dm 755 "$srcdir/$pkgname" "$pkgdir/usr/lib/$pkgname/$pkgname"
+  install -Dm 644 "$srcdir/$pkgname-LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm 644 "$srcdir/$pkgname-THIRD_PARTY_NOTICES.md" \
+    "$pkgdir/usr/share/doc/$pkgname/THIRD_PARTY_NOTICES.md"
+
+  install -dm 755 "$pkgdir/usr/bin"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/bash
+export VIGOLIUM_DISABLE_UPDATE_CHECK=1
+export VIGOLIUM_PACKAGE_MANAGER=pacman
+exec /usr/lib/$pkgname/$pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
+
