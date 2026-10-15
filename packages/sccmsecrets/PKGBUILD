@@ -1,0 +1,44 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=sccmsecrets
+pkgver=22.5488158
+pkgrel=1
+pkgdesc='Exploit SCCM policies distribution for credentials harvesting, initial access and lateral movement.'
+arch=('any')
+groups=('blackarch' 'blackarch-windows')
+url='https://github.com/synacktiv/SCCMSecrets'
+license=('custom:unknown')
+depends=('python' 'python-requests' 'python-typer' 'python-beautifulsoup4' 'python-cryptography'
+    'python-requests-ntlm' 'python-requests-kerberos' 'python-requests-toolbelt' 'python-pyasn1-modules')
+makedepends=('git')
+source=("git+https://github.com/synacktiv/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+package() {
+  cd $pkgname
+
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
+
+  cp -a utils/ *.py "$pkgdir/usr/share/$pkgname/"
+
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec python ./SCCMSecrets.py "\$@"
+EOF
+
+  chmod +x "$pkgdir/usr/bin/$pkgname"
+}
