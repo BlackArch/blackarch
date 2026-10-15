@@ -1,0 +1,46 @@
+pkgname=picotool
+pkgver=2.3.0.r0.282a3ca
+pkgrel=1
+pkgdesc='Tool for working with RP2040/RP2350 binaries, and interacting with RP2040/RP2350 devices when they are in BOOTSEL mode.'
+arch=('x86_64')
+groups=('blackarch' 'blackarch-hardware')
+url='https://github.com/raspberrypi/picotool'
+license=('BSD-3-Clause')
+depends=()
+makedepends=('pico-sdk' 'libusb' 'cmake' 'base-devel' 'git')
+source=("git+https://github.com/raspberrypi/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+prepare() {
+  cd $pkgname
+  mkdir build
+  cd build
+  cmake .. -DPICO_SDK_PATH=/usr/lib/pico-sdk
+}
+
+build() {
+  cd $pkgname/build
+  make
+}
+
+package() {
+  cd $pkgname
+  install -dm 755 "$pkgdir/etc/udev/rules.d"
+  install -Dm 744 "udev/60-$pkgname.rules" "$pkgdir/etc/udev/rules.d/60-$pkgname.rules"
+
+  cd build
+  install -dm 755 "$pkgdir/usr/bin"
+  install -Dm 755 "$pkgname" "$pkgdir/usr/bin/$pkgname"
+}
+
