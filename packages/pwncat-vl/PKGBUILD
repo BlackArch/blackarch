@@ -1,0 +1,45 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=pwncat-vl
+pkgver=0.7.0
+pkgrel=1
+pkgdesc='Community-maintained fork of pwncat: a Linux/Windows post-exploitation platform and reverse/bind shell handler.'
+arch=('any')
+groups=('blackarch' 'blackarch-exploitation' 'blackarch-backdoor')
+url='https://github.com/Chocapikk/pwncat-vl'
+license=('MIT')
+depends=('python' 'python-psutil' 'python-packaging' 'python-prompt_toolkit'
+         'python-requests' 'python-rich' 'python-jinja' 'python-cryptography'
+         'python-pygments' 'python-persistent' 'python-btrees'
+         'python-transaction' 'python-paramiko-ng' 'python-libpass'
+         'python-zodb')
+makedepends=('python-build' 'python-pip')
+provides=('pwncat-caleb')
+conflicts=('pwncat-caleb')
+replaces=('pwncat-caleb')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/pwncat_vl-$pkgver.tar.gz")
+sha512sums=('e1edaf174a4b1c8cff95c79bdec318ce403db52b9192e754b754eba38bbd8328618e17540161205470cff28e38734b82894e71b2e840659984ec99e7069c173b')
+
+build() {
+  cd "pwncat_vl-$pkgver"
+
+  python -m build --wheel --outdir="$startdir/dist"
+}
+
+package() {
+  cd "pwncat_vl-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$startdir/dist" \
+    $pkgname
+}
