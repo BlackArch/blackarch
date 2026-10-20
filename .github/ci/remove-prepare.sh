@@ -35,6 +35,19 @@ meta = json.load(open(sys.argv[1])); dirs = sys.argv[2:]
 def dep_name(d): return re.split(r"[<>=:]", d, 1)[0].strip()
 produced = {d: (meta.get(d, {}).get("pkgname") or [d]) for d in dirs}
 removed = {n for v in produced.values() for n in v}
+# names these packages provide (top level and per split package) count too,
+# unless another package that stays in the tree produces or provides them
+def provided(d):
+    m = meta.get(d, {})
+    out = {dep_name(x) for x in m.get("provides", [])}
+    out |= {dep_name(x.split(" ", 1)[1]) for x in m.get("sdep_provides", []) if " " in x}
+    return out
+others = set()
+for y, m in meta.items():
+    if y not in dirs:
+        others |= set(m.get("pkgname") or [y]) | provided(y)
+for d in dirs:
+    removed |= provided(d) - others
 users = {}
 for y, m in meta.items():
     if y in dirs: continue
@@ -55,10 +68,12 @@ git checkout -q -B "$branch" "origin/$BASE_BRANCH"
 for n in "${todo[@]}"; do git rm -rq -- "${PKGDIR[$n]}"; done
 # BlackArch: drop the names from the plain package lists too
 if [[ -d lists ]]; then
-  for n in "${todo[@]}"; do
-    for l in lists/to-release lists/to-release-arm lists/broken lists/to-remove lists/python2-tools; do
-      [[ -f $l ]] && sed -i -E "/^${n//./\\.}([[:space:]]|$)/d" "$l"
-    done
+  # drop lines whose first word is a removed package: literal comparison, no
+  # regex (names may contain '+' or '.')
+  for l in lists/to-release lists/to-release-arm lists/broken lists/to-remove lists/python2-tools; do
+    [[ -f $l ]] || continue
+    awk -v names="${todo[*]}" 'BEGIN { n = split(names, a, " "); for (i = 1; i <= n; i++) rm[a[i]] = 1 }
+                               !($1 in rm)' "$l" > "$l.new" && mv "$l.new" "$l"
   done
   git add lists
 fi
@@ -67,7 +82,9 @@ git push -q origin "HEAD:refs/heads/$branch"
 
 body=$(mktemp)
 {
-  echo "<!-- remove-packages: $(python3 -c 'import json,sys; print(" ".join(sorted({n for v in json.loads(sys.argv[1])["produced"].values() for n in v})))' "$info") -->"
+  # <dir>=<name>,<name>: release-merged.sh removes the names only if this PR
+  # really deleted <dir>/PKGBUILD and the directory is gone after the merge
+  echo "<!-- remove-packages: $(python3 -c 'import json,sys; d=json.loads(sys.argv[1])["produced"]; print(" ".join(k + "=" + ",".join(sorted(v)) for k, v in sorted(d.items())))' "$info") -->"
   echo "Removes **${#todo[@]}** package(s) from the tree ([run]($RUN_URL))."
   echo
   echo "**Merging this PR also removes the packages below from the package repository** (database entries and files)."

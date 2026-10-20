@@ -182,7 +182,20 @@ def main() -> None:
             warnings.append(i)
 
     # ------------------------------------------------------------ reverse deps
-    failing = {x["pkg"] for c in FAILING for x in lists[c] if x["severity"] == "error"}
+    # Only failures of the CURRENT tree count for removal verdicts: a failed
+    # *update* (build release/vcs, or carried from an earlier run) says nothing
+    # about the PKGBUILD on the base branch, which may build fine and keep
+    # needing its dependencies. Audit/rebuild/ship builds, lint and the source
+    # probe do describe the current tree.
+    def current_tree(x):
+        fb = x["found_by"]
+        if fb.startswith("update ("):
+            return False
+        if fb.startswith("build "):
+            return fb.split(" ", 1)[1] in ("test", "rebuild", "ship")
+        return True
+    failing = {x["pkg"] for c in FAILING for x in lists[c]
+               if x["severity"] == "error" and current_tree(x)}
 
     def rdeps(p):
         return [r for r in graph.get(p, {}).get("rdeps", []) if r["pkg"] != p]
@@ -223,7 +236,10 @@ def main() -> None:
     for c in CATS:
         for x in lists[c]:
             x["needed_by"] = [{k: r[k] for k in ("pkg", "type", "name", "via")} for r in rdeps(x["pkg"])]
-            x["removable"], x["verdict"] = verdict(x["pkg"])
+            if current_tree(x):
+                x["removable"], x["verdict"] = verdict(x["pkg"])
+            else:   # an update failure is not a reason to remove a working package
+                x["removable"], x["verdict"] = "n/a", "- (update failed; current PKGBUILD not shown broken)"
         lists[c].sort(key=lambda x: (x["severity"] != "error", x["pkg"]))
 
     removal = []

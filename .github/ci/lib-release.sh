@@ -157,19 +157,26 @@ remove_packages() {
   for n in "$@"; do
     timeout 30m ./scripts/barelease -w --remove -k "$GPG_KEY_ID" -u "$SSH_USER" -d "$REPO_SITEDIR" "$n" || rc=1
   done
-  ssh-agent -k >/dev/null 2>&1
-  (( rc == 0 )) || { _fail "barelease --remove failed for at least one package"; return 1; }
+  (( rc == 0 )) || { ssh-agent -k >/dev/null 2>&1; _fail "barelease --remove failed for at least one package"; return 1; }
+  # verify with the key still loaded; the agent is only killed at the end
   local t arch still=()
   t=$(mktemp -d)
   for arch in x86_64 aarch64; do
     rsync -q -e "ssh -o BatchMode=yes -l $SSH_USER" \
       "$REPO_HOST:$REPO_SITEDIR/blackarch/blackarch/os/$arch/blackarch.db.tar.gz" "$t/$arch.db" ||
-      { rm -rf "$t"; _fail "cannot download the $arch database to verify the removal"; return 1; }
+      { rm -rf "$t"; ssh-agent -k >/dev/null 2>&1; _fail "cannot download the $arch database to verify the removal"; return 1; }
+    # package names in the db: "name-ver-rel/" entries minus the last two fields;
+    # literal comparison (names may contain '+'), full listing read (no SIGPIPE)
+    if ! tar -tzf "$t/$arch.db" > "$t/$arch.list"; then
+      rm -rf "$t"; ssh-agent -k >/dev/null 2>&1; _fail "cannot read the $arch database to verify the removal"; return 1
+    fi
+    sed -nE 's|^(\./)?([^/]+)/$|\2|p' "$t/$arch.list" | sed -E 's/-[^-]+-[^-]+$//' | sort -u > "$t/$arch.names"
     for n in "$@"; do
-      tar -tzf "$t/$arch.db" | sed 's|^\./||' | grep -qE "^$n-[^-]+-[^-]+/" && still+=("$arch/$n")
+      grep -qxF -- "$n" "$t/$arch.names" && still+=("$arch/$n")
     done
   done
   rm -rf "$t"
+  ssh-agent -k >/dev/null 2>&1
   (( ${#still[@]} == 0 )) || { _fail "still in the repo database after removal: ${still[*]}"; return 1; }
   released=true
 }

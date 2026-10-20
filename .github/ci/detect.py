@@ -349,7 +349,7 @@ def release_entry(url: str, ver: str) -> tuple[dict, str] | None:
         return {"source": "cpan", "cpan": fname.split(f"-{ver}.", 1)[0]}, "cpan"
 
     # SourceForge has no nvchecker source; scrape the project's file RSS feed
-    if host.endswith("sourceforge.net") and ver in fname and parts:
+    if host.endswith("sourceforge.net") and parts:   # /download URLs: fname is fixed below
         proj = None
         if host in ("downloads.sourceforge.net", "download.sourceforge.net"):
             if parts[0] in ("project", "sourceforge") and len(parts) >= 3:
@@ -705,8 +705,12 @@ def cmd_plan(a) -> None:
     shipped = 0
     if repo is not None:
         busy = {u["pkg"] for u in updates}
+        # scan's exclusions (exclude.txt, lists/to-remove, python2 pattern) apply
+        # here too: never re-add a package that is being removed. --force still wins.
+        excluded = {p for p, why in json.loads((st / "untracked.json").read_text()).items()
+                    if why.startswith("excluded")} if (st / "untracked.json").exists() else set()
         for d, m in sorted(meta.items()):
-            if d in busy or not buildable(m) or "fatal" in m or "syntax_error" in m \
+            if d in busy or d in excluded or not buildable(m) or "fatal" in m or "syntax_error" in m \
                     or not m.get("pkgver") or not m.get("pkgrel"):
                 continue
             rec = tracking.get(d, {})

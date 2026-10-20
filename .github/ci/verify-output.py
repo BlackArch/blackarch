@@ -29,8 +29,12 @@ Exit code is always 0; a rejection becomes a build_failed result.
 """
 import argparse
 import json
+import os
 import re
+import select
+import signal
 import subprocess
+import time
 from pathlib import Path
 
 RESULTS = {"ok", "build_failed", "source_broken", "pkgbuild_invalid", "no_change"}
@@ -124,20 +128,35 @@ PKGINFO_LINE = re.compile(r"[a-z]+ = [^\x00-\x1f\x7f]*")
 
 
 def _run(cmd: list[str], limit: int, timeout: int = 120) -> str:
-    """run cmd, keep at most `limit` bytes of stdout (hostile archives may be bombs)"""
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    """
+    Run cmd, keep at most `limit` bytes of stdout, and give up after `timeout`
+    seconds: a hostile archive may be a bomb (size) or just very slow (time).
+    The process gets its own session so tar AND its zstd child are killed.
+    """
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                         start_new_session=True)
+    chunks, size, deadline = [], 0, time.monotonic() + timeout
     try:
-        raw = p.stdout.read(limit + 1)
-        truncated = len(raw) > limit
+        while size <= limit:
+            left = deadline - time.monotonic()
+            if left <= 0:
+                raise Bad("archive could not be read in time")
+            if not select.select([p.stdout], [], [], left)[0]:
+                raise Bad("archive could not be read in time")
+            chunk = os.read(p.stdout.fileno(), 1 << 16)
+            if not chunk:
+                break
+            chunks.append(chunk)
+            size += len(chunk)
     finally:
-        p.kill()
         try:
-            p.wait(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            raise Bad("archive could not be read in time")
-    if truncated:
+            os.killpg(p.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        p.wait()
+    if size > limit:
         raise Bad("archive listing or .PKGINFO is too large")
-    return raw.decode(errors="replace")
+    return b"".join(chunks).decode(errors="replace")
 
 
 def pkginfo(path: Path) -> dict[str, str]:
@@ -146,12 +165,15 @@ def pkginfo(path: Path) -> dict[str, str]:
     must hold one .PKGINFO (no ./.PKGINFO or duplicate copies that another tar
     implementation might pick instead), and every line must be well formed.
     """
-    members = _run(["tar", "-I", "zstd", "-tf", str(path)], 64 << 20).split("\n")
+    # both calls decompress the whole archive: scale the deadline with its size
+    # (120 s + 1 s per 20 MB compressed), so a huge but honest package passes
+    budget = 120 + path.stat().st_size // (20 << 20)
+    members = _run(["tar", "-I", "zstd", "-tf", str(path)], 64 << 20, timeout=budget).split("\n")
     # every spelling of a top-level .PKGINFO another tar might match
     candidates = [m for m in members if re.fullmatch(r"(\./|/)*\.PKGINFO/?", m)]
     if candidates != [".PKGINFO"]:
         raise Bad("package must contain exactly one .PKGINFO at the top level")
-    raw = _run(["tar", "-I", "zstd", "-xOf", str(path), ".PKGINFO"], MAX_TEXT)
+    raw = _run(["tar", "-I", "zstd", "-xOf", str(path), ".PKGINFO"], MAX_TEXT, timeout=budget)
     info: dict[str, str] = {}
     for line in raw.split("\n"):
         if line == "" or line.startswith("#"):
@@ -184,8 +206,14 @@ def check(a, meta: dict, work: Path) -> tuple[str, list[str], str]:
         raise Bad(f"pkgver {ver} is not the requested {a.target}")
     if a.kind == "rebuild" and ver is not None and ver != a.cur and "has_pkgver_func" not in meta:
         raise Bad(f"pkgver changed during a rebuild ({a.cur} -> {ver})")
+    # audit/ship builds must not change the PKGBUILD, except that makepkg
+    # itself rewrites pkgver= for packages with a pkgver() function (VCS) when
+    # upstream moved; shape() above already limits any change to pkgver/pkgrel
     if a.kind in ("test", "ship") and new != orig:
-        raise Bad("PKGBUILD was modified by the build")
+        if "has_pkgver_func" not in meta:
+            raise Bad("PKGBUILD was modified by the build")
+        if rel is not None and rel != meta.get("pkgrel", rel):
+            raise Bad("pkgrel changed during an audit build")
     # a computed pkgver=/pkgrel= line (unchanged from master, so allowed above):
     # the expected value is the evaluated one detect read from the PKGBUILD
     if ver is None:

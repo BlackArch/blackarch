@@ -49,9 +49,26 @@ jobs:
         if: startsWith(github.event.pull_request.head.ref, 'auto-update/')
         env:
           BODY: ${{ github.event.pull_request.body }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           id=$(printf '%s\n' "$BODY" | sed -nE 's/.*auto-update-run-id: ([0-9]+).*/\1/p' | head -n1)
           [ -n "$id" ] || { echo "no auto-update-run-id marker in the PR body"; exit 1; }
+          # The PR body is editable, so never trust the id alone: the run must be
+          # the one that opened this PR (branch auto-update/<date>-<run id>), an
+          # auto-update.yml run of THIS repository on master, and successful.
+          [ "${HEAD_REF##*-}" = "$id" ] || { echo "run id $id does not match the PR branch $HEAD_REF"; exit 1; }
+          run=$(gh api "repos/$GH_REPO/actions/runs/$id" \
+                  -q '[.path, .head_branch, .repository.full_name, .conclusion, .event] | join(" ")') ||
+            { echo "cannot look up run $id"; exit 1; }
+          read -r path branch repo conclusion event <<<"$run"
+          [ "$path" = ".github/workflows/auto-update.yml" ] || { echo "run $id is not an auto-update run ($path)"; exit 1; }
+          [ "$branch" = "master" ] || { echo "run $id did not run on master ($branch)"; exit 1; }
+          [ "$repo" = "$GH_REPO" ] || { echo "run $id belongs to $repo"; exit 1; }
+          # failure is allowed: the report job may fail after the PR was opened
+          case $conclusion in success|failure) ;; *) echo "run $id is not finished or was cancelled ($conclusion)"; exit 1 ;; esac
+          case $event in schedule|workflow_dispatch) ;; *) echo "run $id was triggered by $event"; exit 1 ;; esac
           echo "id=$id" >> "$GITHUB_OUTPUT"
 
       - uses: actions/download-artifact@v8
