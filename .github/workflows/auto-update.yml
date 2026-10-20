@@ -1,0 +1,556 @@
+# Daily automated package updates for BlackArch.
+#
+#   detect   lint all PKGBUILDs, ask nvchecker for upstream versions, plan shards
+#   build    N parallel shards; every package is bumped, built and install-tested
+#            in its own throw-away container (no secrets in this job)
+#   publish  commit the good PKGBUILDs to master + release them with
+#            scripts/barelease (gated by vars.AUTO_PUBLISH and an environment)
+#   report   one report artifact + job summary + a single tracking issue
+#
+# Setup and knobs: .github/ci/README.md
+name: Auto-update packages
+
+on:
+  schedule:
+    - cron: '23 4 * * *'          # daily, off the top of the hour
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'Extra packages, built first (space separated): updated if upstream is newer, else rebuilt with pkgrel+1'
+        type: string
+        default: ''
+      only_these:
+        description: 'Build ONLY the packages listed above (no other updates, no audit builds)'
+        type: boolean
+        default: false
+      max_updates:
+        description: 'Max packages to update in this run'
+        type: number
+        default: 250
+      audit:
+        description: 'Also build N not-updated packages as-is (rolling whole-repo build test)'
+        type: number
+        default: 300
+      publish:
+        description: 'Publish successful builds (auto = follow vars.AUTO_PUBLISH)'
+        type: choice
+        options: [auto, 'true', 'false']
+        default: auto
+      publish_mode:
+        description: 'push = commit to master + release now; pr = one PR, release on merge (default = vars.PUBLISH_MODE)'
+        type: choice
+        options: [default, push, pr]
+        default: default
+      probe_sources:
+        description: 'Probe every source URL: default = vars.PROBE_SOURCES (sundays if unset)'
+        type: choice
+        options: [default, sundays, 'on', 'off']   # quoted: bare on/off are YAML booleans
+        default: default
+      retry_failed:
+        description: 'Retry packages that already failed for the same upstream version'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: auto-update
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  detect:
+    runs-on: ubuntu-latest
+    container: blackarchlinux/blackarch:latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      pull-requests: read          # find packages already waiting in an open PR
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      count: ${{ steps.plan.outputs.count }}
+      updates: ${{ steps.plan.outputs.updates }}
+      base_sha: ${{ steps.sha.outputs.sha }}
+      publish: ${{ steps.gate.outputs.publish }}
+      mode: ${{ steps.gate.outputs.mode }}
+    steps:
+      - name: Install tools
+        # python-packaging is an optional nvchecker dependency its pypi source needs
+        run: pacman -Syu --noconfirm --needed --noprogressbar git jq python nvchecker python-packaging pkgcheck-arch
+
+      # the triggering branch: lets you test CI changes on a branch (publishing
+      # is only allowed from master, see the gate below)
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - id: sha
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - id: gate
+        env:
+          INPUT: ${{ inputs.publish || 'auto' }}
+          AUTO: ${{ vars.AUTO_PUBLISH || 'false' }}
+          MODE_IN: ${{ inputs.publish_mode || 'default' }}
+          MODE_VAR: ${{ vars.PUBLISH_MODE || 'push' }}
+        run: |
+          if [ "$INPUT" = auto ]; then publish=$AUTO; else publish=$INPUT; fi
+          if [ "$publish" = true ] && [ "$GITHUB_REF" != refs/heads/master ]; then
+            echo "::notice::not publishing: this run is on $GITHUB_REF, publishing only happens from master"
+            publish=false
+          fi
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+          if [ "$MODE_IN" = default ]; then mode=$MODE_VAR; else mode=$MODE_IN; fi
+          case $mode in push|pr) ;; *) echo "invalid PUBLISH_MODE '$mode'"; exit 1 ;; esac
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+
+      - name: Restore cache of earlier results
+        uses: actions/cache/restore@v6
+        with:
+          path: .ci-state/seen.json
+          key: auto-update-seen-${{ github.run_id }}
+          restore-keys: auto-update-seen-
+
+      - name: Read and lint every PKGBUILD (+ pkgcheck, same check as tests.yml)
+        run: |
+          useradd -m ci                       # makepkg refuses to run as root
+          mkdir -p .ci-state/state && chown -R ci: .ci-state packages
+          runuser -u ci -- bash .github/ci/meta-all.sh packages .ci-state/meta.txt
+          bash .github/ci/pkgcheck-all.sh packages .ci-state/state/pkgcheck.out
+          python3 .github/ci/detect.py scan \
+            --meta .ci-state/meta.txt --out .ci-state/state \
+            --packages packages --pkgcheck .ci-state/state/pkgcheck.out \
+            --exclude .github/ci/exclude.txt --exclude lists/to-remove \
+            --overrides .github/ci/nvchecker-overrides.toml
+
+      - name: List Arch Linux official packages
+        run: |
+          # "repo name version" for core/extra/multilib (not the AUR, not testing);
+          # the report flags BlackArch packages that duplicate one of them
+          out=.ci-state/state/arch-official.txt; : > "$out"
+          # the archlinux image has [multilib] commented out: enable it here (detect container only)
+          if ! pacman-conf --repo-list | grep -qx multilib; then
+            printf '\n[multilib]\nInclude = /etc/pacman.d/mirrorlist\n' >> /etc/pacman.conf
+            pacman -Sy --noconfirm --noprogressbar >/dev/null || echo "::warning::pacman -Sy failed after enabling multilib"
+          fi
+          for repo in core extra multilib; do
+            pacman -Sl "$repo" >> "$out" 2>/dev/null || echo "::warning::repository $repo not available"
+          done
+          cp lists/official .ci-state/state/lists-official.txt 2>/dev/null || : > .ci-state/state/lists-official.txt
+          echo "official packages listed: $(wc -l < "$out")"
+
+      - name: List packages in the package repo
+        env:
+          REPO_DB_URL: ${{ vars.REPO_DB_URL || 'https://blackarch.org/blackarch/blackarch/os/x86_64/blackarch.db' }}
+        run: |
+          # "name version" per repo entry; the plan ships tree versions the repo
+          # does not have yet (manual bumps merged to the base branch, new packages)
+          out=.ci-state/state/repo-db.txt
+          if curl -fsSL --retry 3 --max-time 120 -o .ci-state/repo.db "$REPO_DB_URL"; then
+            tar -tf .ci-state/repo.db | sed -n 's|^\./||; s|/$||p' | grep -v / \
+              | sed -E 's/^(.+)-([^-]+-[^-]+)$/\1 \2/' > "$out"
+            echo "repo entries: $(wc -l < "$out")"
+          else
+            echo "::warning::cannot download $REPO_DB_URL; nothing is shipped this run"
+          fi
+
+      - name: Check upstream versions (nvchecker)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GIT_TERMINAL_PROMPT: '0'          # dead/private repos must fail, not hang
+          GIT_HTTP_LOW_SPEED_LIMIT: '1000'
+          GIT_HTTP_LOW_SPEED_TIME: '30'
+        run: |
+          keyfile="$RUNNER_TEMP/nvchecker-keys.toml"
+          printf '[keys]\ngithub = "%s"\n' "$GH_TOKEN" > "$keyfile"
+          cd .ci-state/state
+          nvchecker -c nvchecker.toml -k "$keyfile" -t 2 --logger json > nvchecker.log 2>&1 || true
+          rm -f "$keyfile"
+          echo "versions found: $(jq '.data | length' newver.json 2>/dev/null || echo 0)"
+
+      - name: Probe source URLs
+        id: probe
+        env:
+          PROBE_IN: ${{ inputs.probe_sources || 'default' }}
+          PROBE_VAR: ${{ vars.PROBE_SOURCES || 'sundays' }}
+        run: |
+          mode=$PROBE_IN; [ "$mode" = default ] && mode=$PROBE_VAR
+          case $mode in
+            on|true)   mode=on;  run=yes ;;
+            off|false) mode=off; run=no ;;
+            sundays)   [ "$(date -u +%u)" = 7 ] && run=yes || run=no ;;
+            *)         echo "invalid PROBE_SOURCES '$mode' (use sundays, on or off)"; exit 1 ;;
+          esac
+          { echo "mode=$mode"; echo "ran=$run"; } >> "$GITHUB_OUTPUT"
+          if [ "$run" = yes ]; then
+            python3 .github/ci/probe-sources.py --state .ci-state/state
+          else
+            echo "source probe skipped (mode: $mode)"
+          fi
+
+      - name: Find packages already waiting in open auto-update PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STRICT: ${{ steps.gate.outputs.publish == 'true' && steps.gate.outputs.mode == 'pr' }}
+        run: |
+          set -- --repo "$GITHUB_REPOSITORY" --out .ci-state/state/pending.json
+          [ "$STRICT" = true ] && set -- "$@" --strict
+          python3 .github/ci/detect.py pending "$@"
+
+      - id: plan
+        name: Plan updates
+        env:
+          FORCE: ${{ inputs.packages }}
+          # format() keeps an explicit 0 (plain `||` would turn 0 into the default)
+          MAX: ${{ format('{0}', inputs.max_updates) }}
+          AUDIT: ${{ format('{0}', inputs.audit) }}
+          AUDIT_VAR: ${{ vars.AUDIT_PER_RUN }}
+          ONLY: ${{ inputs.only_these || false }}
+          PUBLISH: ${{ steps.gate.outputs.publish }}
+          RETRY: ${{ inputs.retry_failed || false }}
+        run: |
+          MAX=${MAX:-250}
+          AUDIT=${AUDIT:-${AUDIT_VAR:-300}}
+          if [ "$ONLY" = true ]; then
+            [ -n "$FORCE" ] || { echo "only_these is set but no packages are listed"; exit 1; }
+            MAX=0 AUDIT=0
+          fi
+          set -- --state .ci-state/state --seen .ci-state/seen.json \
+                 --pending .ci-state/state/pending.json --force "$FORCE" --max "$MAX" \
+                 --audit "$AUDIT" --repo-db .ci-state/state/repo-db.txt
+          # dry runs: don't rebuild what already built fine for the same version
+          [ "$PUBLISH" = true ] || set -- "$@" --skip-built-ok
+          [ "$RETRY" = true ] && set -- "$@" --retry-failed
+          { echo "max=$MAX"; echo "audit=$AUDIT"; } >> "$GITHUB_OUTPUT"
+          python3 .github/ci/detect.py plan "$@"
+
+      - name: Run settings
+        env:
+          PUBLISH: ${{ steps.gate.outputs.publish }}
+          MODE: ${{ steps.gate.outputs.mode }}
+          UPDATES: ${{ steps.plan.outputs.updates }}
+          COUNT: ${{ steps.plan.outputs.count }}
+          MAX: ${{ steps.plan.outputs.max }}
+          AUDIT: ${{ steps.plan.outputs.audit }}
+          PROBE_MODE: ${{ steps.probe.outputs.mode }}
+          PROBE_RAN: ${{ steps.probe.outputs.ran }}
+          IN_PACKAGES: ${{ inputs.packages }}
+          IN_ONLY: ${{ inputs.only_these }}
+          IN_MAX: ${{ inputs.max_updates }}
+          IN_AUDIT: ${{ inputs.audit }}
+          IN_PUBLISH: ${{ inputs.publish }}
+          IN_MODE: ${{ inputs.publish_mode }}
+          IN_PROBE: ${{ inputs.probe_sources }}
+          IN_RETRY: ${{ inputs.retry_failed }}
+        run: |
+          # what was asked for vs what the run actually used (variables fill in
+          # "default"/"auto"); shown at the top of the run summary
+          esc() { printf '%s' "${1:--}" | sed 's/|/\\|/g'; }
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            started="manually by $GITHUB_ACTOR"; ask() { esc "$1"; }
+          else
+            started="by the daily schedule (no inputs)"; ask() { printf '%s' '-'; }
+          fi
+          {
+            echo "## Run settings"
+            echo
+            echo "Started $started on \`${GITHUB_REF#refs/heads/}\`."
+            echo
+            echo "| Setting | Chosen | Used in this run |"
+            echo "|---|---|---|"
+            echo "| packages | $(ask "$IN_PACKAGES") | $(esc "$IN_PACKAGES") |"
+            echo "| only_these | $(ask "$IN_ONLY") | ${IN_ONLY:-false} |"
+            echo "| max_updates | $(ask "$IN_MAX") | $MAX |"
+            echo "| audit | $(ask "$IN_AUDIT") | $AUDIT |"
+            echo "| publish | $(ask "$IN_PUBLISH") | $PUBLISH |"
+            echo "| publish_mode | $(ask "$IN_MODE") | $MODE$([ "$PUBLISH" = true ] || echo ' (not used: not publishing)') |"
+            echo "| probe_sources | $(ask "$IN_PROBE") | $PROBE_MODE ($([ "$PROBE_RAN" = yes ] && echo ran || echo skipped)) |"
+            echo "| retry_failed | $(ask "$IN_RETRY") | ${IN_RETRY:-false} |"
+            echo
+            echo "Planned: **${UPDATES:-0}** updates and **$(( ${COUNT:-0} - ${UPDATES:-0} ))** audit builds."
+            cat .ci-state/state/build-jobs.md 2>/dev/null || true
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$PUBLISH" != true ]; then
+            if [ "$GITHUB_REF" != refs/heads/master ]; then why="the run is on $GITHUB_REF, not master"
+            else why="publishing is off (set the AUTO_PUBLISH variable to true, or run with publish: true)"; fi
+            echo "::notice title=Publish will be skipped::$why. This is a dry run: build and report only."
+          elif [ "${UPDATES:-0}" = 0 ]; then
+            echo "::notice title=Publish will be skipped::no package updates in this run (audit builds are never published)."
+          else
+            echo "::notice title=Publishing::$UPDATES updates, mode: $MODE"
+          fi
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: state
+          path: .ci-state/
+          include-hidden-files: true
+          retention-days: 14
+
+  # ---------------------------------------------------------------------------
+  # Build the builder image once per run (runs alongside detect) and hand it to
+  # the shards as a short-lived artifact: one Docker Hub pull and one
+  # `pacman -Syu` per run instead of one per shard, every shard gets the same
+  # packages, and nothing is stored as a package on the repository.
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      ok: ${{ steps.save.outputs.ok }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/ci
+
+      - id: save
+        continue-on-error: true      # build jobs then build the image themselves
+        run: |
+          docker build -t ba-builder .github/ci
+          docker save ba-builder | zstd -T0 -3 -q -o ba-builder.tar.zst
+          ls -lh ba-builder.tar.zst
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        if: steps.save.outputs.ok == 'true'
+        continue-on-error: true
+        with:
+          name: builder-image
+          path: ba-builder.tar.zst
+          retention-days: 1
+          compression-level: 0         # already zstd-compressed
+          overwrite: true
+
+  # ---------------------------------------------------------------------------
+  build:
+    needs: [detect, image]
+    if: >-
+      !cancelled() && needs.detect.result == 'success'
+      && fromJSON(needs.detect.outputs.count || '0') > 0
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJSON(needs.detect.outputs.matrix) }}
+    steps:
+      - id: start
+        run: echo "t=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.detect.outputs.base_sha }}
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: state
+          path: .ci-state
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          docker image prune -af >/dev/null
+          df -h .
+
+      - uses: actions/download-artifact@v8
+        if: needs.image.outputs.ok == 'true'
+        continue-on-error: true          # fall back to building the image here
+        with:
+          name: builder-image
+
+      - name: Get the builder image
+        run: |
+          if [ -f ba-builder.tar.zst ] && zstd -dc ba-builder.tar.zst | docker load -q; then
+            rm -f ba-builder.tar.zst
+          else
+            echo "::warning::shared builder image not available, building it in this job"
+            docker build -t ba-builder .github/ci
+          fi
+
+      - name: Bump, build and install-test shard ${{ matrix.shard }}
+        env:
+          JOB_START: ${{ steps.start.outputs.t }}
+          JOB_TIMEOUT_MIN: '340'        # keep equal to this job's timeout-minutes
+        run: |
+          bash .github/ci/build-shard.sh ".ci-state/state/shards/${{ matrix.shard }}.json" \
+            packages out/results out/pkgs .ci-state/state/meta.json
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: results-${{ matrix.shard }}
+          path: out/results/
+          retention-days: 30
+          overwrite: true
+
+      # one tar per shard: epoch packages are named name-2:1.0-1-any.pkg.tar.zst
+      # and upload-artifact refuses ':' in file names
+      - name: Pack built packages
+        if: always()
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          if [ -d out/pkgs ] && [ -n "$(ls -A out/pkgs)" ]; then
+            tar -cf "out/pkgs-$SHARD.tar" -C out/pkgs .
+          fi
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: pkgs-${{ matrix.shard }}
+          overwrite: true
+          path: out/pkgs-${{ matrix.shard }}.tar
+          retention-days: 14              # PR mode releases these on merge
+          if-no-files-found: ignore
+          compression-level: 0            # .zst is already compressed
+
+  # ---------------------------------------------------------------------------
+  publish:
+    needs: [detect, build]
+    if: >-
+      !cancelled() && needs.detect.result == 'success' && needs.build.result != 'skipped'
+      && needs.detect.outputs.publish == 'true'
+      && fromJSON(needs.detect.outputs.updates || '0') > 0
+    runs-on: ubuntu-latest
+    container: blackarchlinux/blackarch:latest
+    environment: blackarch-repo      # put the secrets here; add reviewers if wanted
+    timeout-minutes: 120
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm --needed --noprogressbar git jq rsync openssh gnupg github-cli
+
+      - uses: actions/checkout@v7
+        with:
+          ref: master
+          token: ${{ secrets.BA_BOT_TOKEN || github.token }}
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: results-*
+          path: results
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v8
+        continue-on-error: true            # no package built OK -> no pkgs-* artifact
+        with:
+          pattern: pkgs-*
+          path: pkgs
+          merge-multiple: true
+
+      - name: Commit and release
+        env:
+          BASE_SHA: ${{ needs.detect.outputs.base_sha }}
+          # relative on purpose: ${{ github.workspace }} is the host path in container jobs
+          RESULTS: results
+          PKGS: pkgs
+          PUBLISH_OUT: publish.json
+          PUBLISH_MODE: ${{ needs.detect.outputs.mode }}
+          RUN_ID: ${{ github.run_id }}
+          GH_TOKEN: ${{ secrets.BA_BOT_TOKEN || github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RELEASE: ${{ vars.AUTO_RELEASE || 'true' }}
+          GPG_KEY_ID: ${{ vars.REPO_GPG_KEY_ID }}
+          GPG_PRIVATE_KEY: ${{ secrets.REPO_GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.REPO_GPG_PASSPHRASE }}
+          SSH_PRIVATE_KEY: ${{ secrets.REPO_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ vars.REPO_SSH_KNOWN_HOSTS }}
+          SSH_USER: ${{ vars.REPO_SSH_USER }}
+          REPO_SITEDIR: ${{ vars.REPO_SITEDIR }}
+        run: bash .github/ci/publish.sh
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: publish
+          path: publish.json
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  report:
+    needs: [detect, build, publish]
+    if: always() && needs.detect.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/ci
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: state
+          path: .ci-state
+
+      - uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          pattern: results-*
+          path: results
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v8
+        # only exists when the publish job ran (it is skipped on dry runs)
+        if: needs.publish.result == 'success' || needs.publish.result == 'failure'
+        continue-on-error: true
+        with:
+          name: publish
+          path: publish
+
+      - name: Build report
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p results
+          python3 .github/ci/report.py --state .ci-state/state --results results \
+            --publish publish/publish.json \
+            --seen-in .ci-state/seen.json --seen-out .ci-state/seen.json \
+            --out report --run-url "$RUN_URL"
+          cp -r results report/logs
+          cp .ci-state/state/depgraph.json .ci-state/state/pkgcheck.out .ci-state/state/untracked.json report/
+          cp .ci-state/seen.json report/status-db.json
+          head -c 1000000 report/issue.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: auto-update-report
+          path: report/
+          retention-days: 90
+          overwrite: true
+
+      - name: Remember results for the next run
+        uses: actions/cache/save@v6
+        with:
+          path: .ci-state/seen.json
+          key: auto-update-seen-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Update the tracking issue
+        if: vars.REPORT_ISSUE != 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh label create auto-update-report --color 0e8a16 \
+            --description "Daily auto-update report" 2>/dev/null || true
+          n=$(gh issue list --label auto-update-report --state open --json number -q '.[0].number')
+          if [ -n "$n" ]; then
+            gh issue edit "$n" --body-file report/issue.md
+          else
+            gh issue create --title "Auto-update report" --label auto-update-report \
+              --body-file report/issue.md
+          fi
