@@ -442,10 +442,18 @@ def build_depgraph(meta: dict[str, dict]) -> dict[str, dict]:
     """
     owner: dict[str, str] = {}
     graph: dict[str, dict] = {}
+    # alias -> the outputs of the directory that provide it: a top-level
+    # provides=() applies to every split package, package_X() provides to X
+    alias_of: dict[str, dict[str, set[str]]] = {}
     for d, m in meta.items():
-        names = list(m["pkgname"])
-        prov = [dep_name(x) for x in m["provides"]]
-        prov += [dep_name(x.split(" ", 1)[1]) for x in m["sdep_provides"] if " " in x]
+        names = list(m["pkgname"]) or [d]
+        top = [dep_name(x) for x in m["provides"]]
+        alias_of[d] = {a: set(names) for a in top}
+        for x in m["sdep_provides"]:
+            if " " in x:
+                sub, dep = x.split(" ", 1)
+                alias_of[d].setdefault(dep_name(dep), set()).add(sub)
+        prov = list(alias_of[d])
         graph[d] = {"names": {n: [] for n in names}, "rdeps": []}
         for n in names + prov:
             owner.setdefault(n, d)
@@ -480,6 +488,10 @@ def build_depgraph(meta: dict[str, dict]) -> dict[str, dict]:
                 graph[x]["rdeps"].append(r)
                 if name in graph[x]["names"]:
                     graph[x]["names"][name].append(r)
+                else:   # asked for by a provided alias: credit the output(s) that provide it
+                    for o in alias_of[x].get(name, ()):
+                        if o in graph[x]["names"]:
+                            graph[x]["names"][o].append(r)
     return graph
 
 

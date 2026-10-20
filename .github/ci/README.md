@@ -66,6 +66,12 @@ detect.py plan  shards               pacman -U install test             (sign + 
   `[skip ci]`. If the upload fails after the push, the packages are appended
   to `lists/to-release` so the normal release flow picks them up.
 
+Packages are signed by the CI itself and handed to `scripts/barelease -b`;
+after the upload the run downloads the database again (signature + entries)
+and checksums every uploaded package and signature on the server, since
+barelease ignores rsync errors. A stale `/tmp/blackarch.lck` (older than 3 h)
+is reported as a warning, never removed automatically.
+
 ## Publish modes (`PUBLISH_MODE`)
 
 | | `push` (default) | `pr` |

@@ -98,7 +98,7 @@ while read -r u; do
       while read -r f; do [[ -n $f ]] && cp "$f" "$inst/"; done < "$host/valid.txt"
       chmod -R a+rX "$inst"
       { echo; echo "==> install test in a clean container"; } >> "$work/.out/build.log"
-      if timeout 20m docker run --rm --name "inst-${cname#build-}" --entrypoint /usr/local/bin/install-test.sh \
+      if timeout --kill-after=2m 20m docker run --rm --name "inst-${cname#build-}" --entrypoint /usr/local/bin/install-test.sh \
            -v "$inst:/pkgs:ro" -v "$CACHE:/var/cache/pacman/pkg" ba-builder \
            < /dev/null >> "$work/.out/build.log" 2>&1; then
         jq '.reason = "built and installed"' "$results/$pkg/status.json" > "$work/s" &&
@@ -109,6 +109,8 @@ while read -r u; do
           cp "$inst"/*.pkg.tar.zst "$pkgout/$pkg/"
         fi
       else
+        # an install hook that ignores SIGTERM leaves the container running after the timeout
+        docker rm -f "inst-${cname#build-}" >/dev/null 2>&1 || true
         jq --arg t "$(tail -n 40 "$work/.out/build.log" | cut -c1-300)" \
           '.result = "build_failed" | .reason = "does not install on a clean system (missing runtime depends or file conflicts)" | .log_tail = $t' \
           "$results/$pkg/status.json" > "$work/s" && mv "$work/s" "$results/$pkg/status.json"

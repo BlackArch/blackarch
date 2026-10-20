@@ -104,8 +104,18 @@ esac
 
 # ---------------------------------------------------------------- sources
 if [[ $KIND != vcs ]]; then
-  run "makepkg --verifysource" makepkg --verifysource -f --noconfirm ||
-    status source_broken "source download or integrity check failed"
+  if ! run "makepkg --verifysource" makepkg --verifysource -f --noconfirm; then
+    # the fetch itself may need makedepends (subversion, mercurial, ...):
+    # retry with dependencies installed, download only, no build
+    run "makepkg -s -o (deps + fetch)" makepkg -s -o -f --noconfirm --noprepare --noprogressbar
+    rc=$?
+    case $rc in
+      0) ;;
+      12) status pkgbuild_invalid "makepkg rejected the PKGBUILD (rc=12)" ;;
+      8|15) status build_failed "dependencies could not be installed (rc=$rc)" ;;
+      *) status source_broken "source download or integrity check failed (rc=$rc)" ;;
+    esac
+  fi
 fi
 
 # ---------------------------------------------------------------- build

@@ -84,12 +84,17 @@ release_setup() {
   return 0
 }
 
-# Wait until nobody holds the repo lock, instead of letting barelease wait:
-# barelease releases the lock on exit even when it never got it.
+# Pre-wait (with a stale-lock warning) before letting barelease take the lock
+# itself: its mkdir is atomic and, with the patched scripts/barelease, its
+# cleanup only removes a lock it really took, so no check-then-acquire race.
 _wait_for_lock() {
-  local deadline=$(( $(date +%s) + ${LOCK_WAIT_MIN:-60} * 60 ))
-  while ssh -o BatchMode=yes -l "$SSH_USER" "$REPO_HOST" '[ -e /tmp/blackarch.lck ]'; do
+  local deadline=$(( $(date +%s) + ${LOCK_WAIT_MIN:-60} * 60 )) age
+  while age=$(ssh -o BatchMode=yes -l "$SSH_USER" "$REPO_HOST" \
+                '[ -e /tmp/blackarch.lck ] && echo $(( $(date +%s) - $(stat -c %Y /tmp/blackarch.lck) ))'); [[ -n $age ]]; do
     (( $(date +%s) < deadline )) || return 1
+    if (( age > ${LOCK_STALE_MIN:-180} * 60 )); then
+      echo "::warning::/tmp/blackarch.lck on $REPO_HOST is $(( age / 60 )) min old; if no release is running, remove it by hand (scripts/balock -u)"
+    fi
     echo "repo is locked by someone else; waiting..."
     sleep 30
   done
@@ -108,7 +113,7 @@ _verify_remote() { # <pkg>...  -> checks db signatures and that every package is
       { _fail "cannot download the $arch repo database to verify the upload"; return 1; }
     gpg --batch --verify "$t/$arch/blackarch.db.tar.gz.sig" "$t/$arch/blackarch.db.tar.gz" 2>/dev/null ||
       { _fail "UPLOADED, BUT THE $arch DATABASE SIGNATURE DOES NOT VERIFY - check the repo now"; return 1; }
-    tar -tzf "$t/$arch/blackarch.db.tar.gz" > "$t/$arch/list" 2>/dev/null
+    tar -tzf "$t/$arch/blackarch.db.tar.gz" 2>/dev/null | sed 's|^\./||' > "$t/$arch/list"
     for f in "${files[@]}"; do
       [[ $arch == aarch64 && $f != *-any.pkg.tar.zst ]] && continue
       entry=$(basename "$f"); entry=${entry%-*.pkg.tar.zst}     # name-ver-rel
@@ -117,18 +122,49 @@ _verify_remote() { # <pkg>...  -> checks db signatures and that every package is
   done
   rm -rf "$t"
   (( ${#missing[@]} == 0 )) || { _fail "not in the repo database after upload: ${missing[*]}"; return 1; }
+
+  # barelease ignores rsync failures (`|| true`) and never overwrites an
+  # existing remote file: compare the remote package files and signatures
+  # with the local ones, byte for byte (sha256), in one ssh call per arch
+  local bad=() remote_dir names=() sums
+  for arch in "${arches[@]}"; do
+    remote_dir="$REPO_SITEDIR/blackarch/blackarch/os/$arch"
+    names=()
+    for f in "${files[@]}"; do
+      [[ $arch == aarch64 && $f != *-any.pkg.tar.zst ]] && continue
+      names+=("${f##*/}" "${f##*/}.sig")
+    done
+    (( ${#names[@]} )) || continue
+    sums=$(ssh -o BatchMode=yes -l "$SSH_USER" "$REPO_HOST" "cd '$remote_dir' && sha256sum -- $(printf "'%s' " "${names[@]}")" 2>/dev/null) ||
+      { _fail "cannot checksum the uploaded files on the server ($arch)"; return 1; }
+    for f in "${files[@]}"; do
+      [[ $arch == aarch64 && $f != *-any.pkg.tar.zst ]] && continue
+      local x
+      for x in "$f" "$f.sig"; do
+        [[ -f $x ]] || { bad+=("$arch/${x##*/} (no local signature)"); continue; }
+        grep -qF "$(sha256sum "$x" | cut -d' ' -f1)  ${x##*/}" <<<"$sums" || bad+=("$arch/${x##*/}")
+      done
+    done
+  done
+  (( ${#bad[@]} == 0 )) || { _fail "UPLOADED FILES DIFFER FROM THE BUILT ONES OR ARE MISSING: ${bad[*]} - the db points at them, check the repo now"; return 1; }
 }
 
 release_upload() {
   (( $# )) || return 0
-  local files=() pkg rc
+  local files=() pkg rc f
   for pkg in "$@"; do files+=("$PKGS/$pkg"/*.pkg.tar.zst); done
+  # sign here and pass -b (use existing signatures): the local .sig is then
+  # exactly what is uploaded, so _verify_remote can compare it
+  for f in "${files[@]}"; do
+    gpg --batch --yes --no-tty --default-key "$GPG_KEY_ID" -b "$f" 2>/dev/null ||
+      { _fail "cannot sign ${f##*/}"; return 1; }
+  done
 
   if ! _wait_for_lock; then
     _fail "repo lock still held after ${LOCK_WAIT_MIN:-60} min"
   else
-    # -w: fail at once if someone grabbed the lock in the meantime
-    timeout 90m ./scripts/barelease -w -k "$GPG_KEY_ID" -u "$SSH_USER" -d "$REPO_SITEDIR" "${files[@]}"
+    # no -w: if someone grabbed the lock in the meantime barelease waits for it
+    timeout 90m ./scripts/barelease -b -k "$GPG_KEY_ID" -u "$SSH_USER" -d "$REPO_SITEDIR" "${files[@]}"
     rc=$?
     if (( rc != 0 )); then
       _fail "barelease failed (rc=$rc)"
@@ -155,7 +191,7 @@ remove_packages() {
     _fail "repo lock still held after ${LOCK_WAIT_MIN:-60} min"; return 1
   fi
   for n in "$@"; do
-    timeout 30m ./scripts/barelease -w --remove -k "$GPG_KEY_ID" -u "$SSH_USER" -d "$REPO_SITEDIR" "$n" || rc=1
+    timeout 30m ./scripts/barelease --remove -k "$GPG_KEY_ID" -u "$SSH_USER" -d "$REPO_SITEDIR" "$n" || rc=1
   done
   (( rc == 0 )) || { ssh-agent -k >/dev/null 2>&1; _fail "barelease --remove failed for at least one package"; return 1; }
   # verify with the key still loaded; the agent is only killed at the end

@@ -16,8 +16,11 @@ on:
 permissions:
   contents: read
 
+# one group per PR: a shared group keeps only ONE pending run, so two merges
+# during a long release would silently drop one of them (and an unrelated PR
+# closure would take the slot too). Releases serialise on the repo lock.
 concurrency:
-  group: auto-update-release
+  group: auto-update-release-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
@@ -60,9 +63,9 @@ jobs:
           # auto-update.yml run of THIS repository on master, and successful.
           [ "${HEAD_REF##*-}" = "$id" ] || { echo "run id $id does not match the PR branch $HEAD_REF"; exit 1; }
           run=$(gh api "repos/$GH_REPO/actions/runs/$id" \
-                  -q '[.path, .head_branch, .repository.full_name, .conclusion, .event] | join(" ")') ||
+                  -q '[.path, .head_branch, .repository.full_name, .conclusion, .event, .head_sha] | join(" ")') ||
             { echo "cannot look up run $id"; exit 1; }
-          read -r path branch repo conclusion event <<<"$run"
+          read -r path branch repo conclusion event head_sha <<<"$run"
           [ "$path" = ".github/workflows/auto-update.yml" ] || { echo "run $id is not an auto-update run ($path)"; exit 1; }
           [ "$branch" = "master" ] || { echo "run $id did not run on master ($branch)"; exit 1; }
           [ "$repo" = "$GH_REPO" ] || { echo "run $id belongs to $repo"; exit 1; }
@@ -70,6 +73,7 @@ jobs:
           case $conclusion in success|failure) ;; *) echo "run $id is not finished or was cancelled ($conclusion)"; exit 1 ;; esac
           case $event in schedule|workflow_dispatch) ;; *) echo "run $id was triggered by $event"; exit 1 ;; esac
           echo "id=$id" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
 
       - uses: actions/download-artifact@v8
         if: startsWith(github.event.pull_request.head.ref, 'auto-update/')
@@ -95,6 +99,8 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BUILD_SHA: ${{ steps.run.outputs.head_sha }}
           PR_BODY: ${{ github.event.pull_request.body }}
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
