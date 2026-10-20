@@ -35,17 +35,37 @@ if [[ ${HEAD_REF:-} == remove/* ]]; then
     gh api --paginate "repos/$GH_REPO/pulls/$PR_NUMBER/files" -q '.[] | select(.status == "removed") | .filename' |
       sed -nE 's|^packages/([^/]+)/PKGBUILD$|\1|p' | sort -u)
   names="" kept=""
+  # A PKGBUILD "declares" a name if a top-level pkgname= line or a package_<name>()
+  # function mentions it. Pure text matching: nothing from the tree is evaluated
+  # in this job (it holds the signing key).
+  _declares() { # <name>, PKGBUILD text on stdin
+    local q; q=$(printf '%s' "$1" | sed 's/[][\\.^$*+?(){}|]/\\&/g')
+    grep -qE "^pkgname=\\(?[[:space:]]*([\"']?[^\"' )]+[\"']?[[:space:]]+)*[\"']?${q}[\"']?([[:space:]]|\\)|$)|^package_${q}[[:space:]]*\\(\\)"
+  }
+  mapfile -t tree_pkgbuilds < <(ls packages/*/PKGBUILD)
+  _still_declared() { # <name>: some PKGBUILD still on the base branch declares it
+    local f; for f in "${tree_pkgbuilds[@]}"; do _declares "$1" < "$f" && return 0; done; return 1
+  }
   for item in $marker; do
     dir=${item%%=*}; list=${item#*=}
     [[ $item == *=* ]] || { dir=$item; list=$item; }      # old marker format: names only
     if printf '%s\n' "${deleted[@]}" | grep -qxF -- "$dir" && [[ ! -d packages/$dir ]]; then
-      names+=" ${list//,/ }"
+      # the names must come from the deleted PKGBUILD (as it was before the
+      # merge) and must not be produced by anything left in the tree
+      old_pkgbuild=$(git show "$PR_BASE_SHA":"packages/$dir"/PKGBUILD 2>/dev/null || true)
+      for n in ${list//,/ }; do
+        if [[ -n $old_pkgbuild ]] && _declares "$n" <<<"$old_pkgbuild" && ! _still_declared "$n"; then
+          names+=" $n"
+        else
+          kept+=" $n"
+        fi
+      done
     else
       kept+=" ${list//,/ }"
     fi
   done
   names=${names# }; kept=${kept# }
-  [[ -z $kept ]] || echo "::warning::not removed from the repo (restored during review or still in the tree): $kept"
+  [[ -z $kept ]] || echo "::warning::not removed from the repo (restored during review, still produced by the tree, or not declared by the deleted PKGBUILD): $kept"
   if [[ -z $names ]]; then
     echo "ℹ️ Nothing removed from the package repository: the packages are still in the tree ($kept)." > "$comment"
     gh pr comment "$PR_NUMBER" --body-file "$comment" || true

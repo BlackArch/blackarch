@@ -62,7 +62,8 @@ jobs:
           rc=0
           printf '%s\0' "${files[@]}" | PATH="$shim:$PATH" xargs -0 -P "$(nproc)" -n 1 \
             sh -c 'out=$(pkgcheck "$1" 2>&1); r=$?
-                   if [ $r -eq 0 ]; then echo "ok: $1"
+                   if [ $r -eq 0 ] && [ -z "$out" ]; then echo "ok: $1"
+                   elif [ $r -eq 0 ]; then printf "::group::ok with warnings: %s\n%s\n::endgroup::\n" "$1" "$out"
                    else printf "::group::problems: %s\n%s\n::endgroup::\n" "$1" "$out"; fi
                    exit $r' _ || rc=$?
           if (( rc != 0 )); then
