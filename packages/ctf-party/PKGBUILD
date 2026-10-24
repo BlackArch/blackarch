@@ -2,47 +2,53 @@
 # See COPYING for license details.
 
 pkgname=ctf-party
-_gemname=ctf-party
-pkgver=v5.0.0.r50.gd93dd99
+pkgver=5.0.0.r52.gd0f9db8
 pkgrel=1
 groups=('blackarch' 'blackarch-misc')
 pkgdesc='A CLI tool & library to enhance and speed up script/exploit writing for CTF players.'
 arch=('any')
 url='https://noraj.github.io/ctf-party/'
 license=('MIT')
-depends=('ruby' 'ruby-docopt')
-makedepends=('git')
+depends=('ruby')
+makedepends=('git' 'ruby-bundler')
 replaces=('ruby-ctf-party')
 options=(!emptydirs)
-source=("git+https://github.com/noraj/$_gemname.git")
+source=("git+https://github.com/noraj/$pkgname.git")
 sha512sums=('SKIP')
+install="$pkgname.install"
 
 pkgver() {
-  cd $_gemname
+  cd $pkgname
 
-  git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
-}
-
-build() {
-  cd $_gemname
-
-  gem build ctf_party.gemspec
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 package() {
-  cd $_gemname
+  cd $pkgname
 
-  _gemdir="$(ruby -e'puts Gem.default_dir')"
-  _release=$(gem build ctf_party.gemspec | grep Version | cut -d' ' -f4)
+  install -dm 755 "$pkgdir/usr/bin"
+  install -dm 755 "$pkgdir/usr/share/$pkgname"
 
-  gem install --ignore-dependencies --no-user-install --no-document \
-    -i "$pkgdir/$_gemdir" -n "$pkgdir/usr/bin" "$_gemname-$_release.gem"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" docs/**/*.md *.md
 
-  rm -rf "$pkgdir/$_gemdir/cache/$_gemname-$_release.gem"
-  find "$pkgdir/$_gemdir/extensions/" -name *.so -delete
-  rm -rf "$pkgdir/$_gemdir/gems/$_gemname-$_release/test"
+  install -Dm 644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-  install -Dm 644 "$pkgdir/$_gemdir/gems/$_gemname-$_release/LICENSE.txt" \
-    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  rm -rf .github/ docs/ test/ .* Dockerfile Rakefile *.md LICENSE docker-compose.yml
+
+  cp --no-preserve=ownership -a * "$pkgdir/usr/share/$pkgname/"
+
+  # need to cd to load .bundle/
+  cat > "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/sh
+cd /usr/share/$pkgname
+exec bundle exec ruby bin/$pkgname "\$@"
+EOF
+
+  chmod +x "$pkgdir"/usr/bin/*
 }
 

@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=python-pyfiglet
+_pkgname=${pkgname#python-}
+pkgver=1.0.4
+pkgrel=3
+pkgdesc='Pure-python FIGlet implementation.'
+arch=('any')
+url=https://github.com/pwaller/pyfiglet
+license=('MIT')
+depends=('python')
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools'
+             'python-wheel')
+source=("git+$url.git#tag=v$pkgver")
+sha512sums=('16a910905a273707bd803b3bfd89719e3e4fca7379088d1d7aeb14f2e5e002abce8e70d5adc66e09ac74d83f42f38a62eae5938cfc24d87ef918b107c56e458d')
+
+build() {
+  cd $_pkgname
+
+  mkdir pyfiglet/fonts
+
+  cp pyfiglet/fonts-standard/* pyfiglet/fonts
+  cp pyfiglet/fonts-contrib/* pyfiglet/fonts
+
+  python -m build --wheel --skip-dependency-check --no-isolation
+}
+
+package() {
+  local site_packages=$(python -c "import site; print(site.getsitepackages()[0])")
+
+  install -d "$pkgdir/usr/share/licenses/$pkgname"
+  ln -s "$site_packages"/"$_pkgname-$pkgver.dist-info/licenses/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname"
+
+  cd "$_pkgname"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}
+

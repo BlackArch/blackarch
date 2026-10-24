@@ -1,0 +1,54 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=evil-opencode
+pkgver=1.19.0
+pkgrel=1
+_pkgtag="v${pkgver}-unguarded"
+pkgdesc='OpenCode coding-agent fork with LLM prompt guardrails removed and outbound telemetry disabled.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-ai')
+url='https://github.com/winmin/evil-opencode'
+license=('MIT')
+depends=('glibc' 'gcc-libs' 'ripgrep')
+makedepends=('bun')
+options=('!strip' '!lto' '!debug')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/$_pkgtag.tar.gz")
+sha512sums=('9d442f525d191dc3a0e0f167c1f5b422e0c854f34da6748a249342965fdb3f67b6231888ad85d3b6ba4087ca1deedaeed846c8541cbb47cff65aed75dbbdc8f5')
+
+prepare() {
+  cd "$pkgname-$pkgver-unguarded"
+
+  rm -rf packages/console packages/stats packages/enterprise
+
+  sed -i 's/throw new Error(`This script requires bun/console.warn(`(relaxed) requires bun/' \
+    packages/script/src/index.ts || true
+}
+
+build() {
+  cd "$pkgname-$pkgver-unguarded"
+
+  export OPENCODE_VERSION="$pkgver"
+
+  bun install
+
+  cd packages/opencode
+  bun run script/build.ts --single --skip-embed-web-ui
+}
+
+package() {
+  cd "$pkgname-$pkgver-unguarded/packages/opencode"
+
+  local _barch
+  case "$CARCH" in
+    x86_64)  _barch='x64'   ;;
+    aarch64) _barch='arm64' ;;
+  esac
+
+  install -Dm 755 "dist/opencode-linux-${_barch}/bin/opencode" \
+	  "$pkgdir/usr/bin/evil-opencode"
+
+  install -Dm 644 ../../LICENSE \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
