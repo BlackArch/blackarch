@@ -1,0 +1,39 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=apkhunt-legacy
+_pkgname="${pkgname%-legacy}"
+pkgver=102.386a0d5 # after this commit comes v2.0 which is a full rewrite from go to python and CLI to web server
+_commit=386a0d54eac9bdcb0c08573c296aefb84e903ef0
+pkgrel=1
+pkgdesc='Static code analysis tool for Android apps that is based on the OWASP MASVS framework.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-mobile' 'blackarch-code-audit')
+url='https://github.com/Cyber-Buddy/apkhunt'
+license=('GPL-3.0-only')
+depends=('dex2jar')
+makedepends=('git' 'go')
+source=("git+https://github.com/Cyber-Buddy/$_pkgname.git#commit=$_commit")
+sha512sums=('SKIP')
+
+build() {
+  cd $_pkgname
+
+  GOPATH="$srcdir" go mod init go.mod
+  GOPATH="$srcdir" go mod tidy
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $_pkgname .
+}
+
+package() {
+  cd $_pkgname
+
+  install -Dm 755 $_pkgname "$pkgdir/usr/bin/$_pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$_pkgname/" README.md
+}
