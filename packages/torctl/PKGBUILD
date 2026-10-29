@@ -1,31 +1,74 @@
-# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+
+# This file is part of BlackArch Linux (https://www.blackarch.org/).
 # See COPYING for license details.
 
 pkgname=torctl
-pkgver=0.5.7
+pkgver=0.5.9
 pkgrel=1
 epoch=1
+pkgdesc='Redirect system traffic through the Tor network'
+arch=('x86_64')
+url='https://github.com/oluxid/torctl-rs'
+license=('GPL-3.0-or-later')
 groups=('blackarch' 'blackarch-automation')
-pkgdesc='Script to redirect all traffic through tor network including dns queries for anonymizing entire system.'
-arch=('any')
-url='https://github.com/BlackArch/torctl'
-license=('GPL3')
-depends=('tor' 'systemd' 'curl' 'iptables' 'secure-delete' 'iproute2'
-         'macchanger')
-source=("https://github.com/BlackArch/$pkgname/archive/v$pkgver.tar.gz")
-sha512sums=('408fd6ff01fd1cd1061ba91a61f5c9252c9d48952e915f574467ec4a6c272eee8476c9358e404e4e9015c1ef7f547da50430b5dc25e9fef7bf9fdc7a8b792459')
+options=(!lto)
 
-package() {
-  cd "$pkgname-$pkgver"
+depends=(
+  'tor'
+  'systemd'
+  'iptables'
+  'iproute2'
+  'macchanger'
+  'secure-delete'
+)
+makedepends=('cargo')
 
-  install -Dm 755 "$pkgname" "$pkgdir/usr/bin/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
-  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-  install -Dm 644 service/$pkgname-autostart.service \
-    "$pkgdir/etc/systemd/system/$pkgname-autostart.service"
-  install -Dm 644 service/$pkgname-autowipe.service \
-    "$pkgdir/etc/systemd/system/$pkgname-autowipe.service"
-  install -Dm 644 bash-completion/$pkgname \
-    "$pkgdir/usr/share/bash-completion/completions/$pkgname"
+source=(
+  "$pkgname-$pkgver.tar.gz::https://github.com/oluxid/torctl-rs/archive/refs/tags/v$pkgver.tar.gz"
+)
+
+# Generate and insert the verified checksum before submitting.
+sha512sums=('3D968BCA37CFB70ECC4ED26C0EC5B4A7D950CDBF9874C68CEE41187C73B436D7557BE3F5341B42DBFAB64DE3F7D7E627D420A40BD97DA567CCFFD9ED4EB484D9')
+
+prepare() {
+  cd "$srcdir/torctl-rs-$pkgver"
+  cargo fetch --locked
 }
 
+build() {
+  cd "$srcdir/torctl-rs-$pkgver"
+
+  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=cc \
+    RUSTFLAGS="-C link-arg=-fuse-ld=bfd" \
+    cargo build --frozen --release
+}
+
+check() {
+  cd "$srcdir/torctl-rs-$pkgver"
+
+  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=cc \
+    RUSTFLAGS="-C link-arg=-fuse-ld=bfd" \
+    cargo test --frozen
+}
+
+package() {
+  cd "$srcdir/torctl-rs-$pkgver"
+
+  install -Dm755 target/release/torctl \
+    "$pkgdir/usr/bin/torctl"
+
+  install -Dm644 README.md \
+    "$pkgdir/usr/share/doc/torctl/README.md"
+
+  install -Dm644 LICENSE \
+    "$pkgdir/usr/share/licenses/torctl/LICENSE"
+
+  install -Dm644 service/torctl-autostart.service \
+    "$pkgdir/usr/lib/systemd/system/torctl-autostart.service"
+
+  install -Dm644 service/torctl-autowipe.service \
+    "$pkgdir/usr/lib/systemd/system/torctl-autowipe.service"
+
+  install -Dm644 bash-completion/torctl \
+    "$pkgdir/usr/share/bash-completion/completions/torctl"
+}
