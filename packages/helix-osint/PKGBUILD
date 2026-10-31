@@ -1,0 +1,51 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=helix-osint
+_pkgname=helix_osint
+pkgver=3.6.1
+pkgrel=1
+pkgdesc='OSINT username checker that verifies every hit live and maps how the accounts connect.'
+groups=('blackarch' 'blackarch-social' 'blackarch-recon')
+arch=('any')
+url='https://github.com/thalha-a9/helix'
+license=('MIT')
+depends=('python' 'python-aiohttp')
+optdepends=('python-aiohttp-socks: --tor and socks5:// proxies'
+            'python-curl_cffi: TLS impersonation for X, Instagram and TikTok'
+            'python-imagehash: avatar matching (--phash)'
+            'python-pillow: avatar matching (--phash)'
+            'holehe: email account check (--holehe)'
+            'python-weasyprint: PDF reports (--report)')
+makedepends=('python-build' 'python-pip' 'python-setuptools')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$_pkgname-$pkgver.tar.gz")
+sha512sums=('82a80d7eb648ef7d0ad9a552ed72731b1a5b832f610595eca2743259b5cfa0901f11f8bcda519af7c727fc20fdc4bdc5e4e906337a76d11fbb359d0d290eb711')
+
+build() {
+  cd "$_pkgname-$pkgver"
+
+  python -m build --wheel --no-isolation --outdir="$srcdir/dist"
+}
+
+package() {
+  cd "$_pkgname-$pkgver"
+
+  pip install \
+    --verbose \
+    --disable-pip-version-check \
+    --no-warn-script-location \
+    --ignore-installed \
+    --no-compile \
+    --no-deps \
+    --root="$pkgdir" \
+    --prefix=/usr \
+    --no-index \
+    --find-links="file://$srcdir/dist" \
+    $pkgname
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  # /usr/bin/helix belongs to the Helix text editor (extra/helix).
+  rm -f "$pkgdir/usr/bin/helix"
+}
