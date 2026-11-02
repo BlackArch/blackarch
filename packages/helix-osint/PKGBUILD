@@ -3,11 +3,11 @@
 
 pkgname=helix-osint
 _pkgname=helix_osint
-pkgver=3.6.1
+pkgver=3.6.2
 pkgrel=1
 pkgdesc='OSINT username checker that verifies every hit live and maps how the accounts connect.'
-groups=('blackarch' 'blackarch-social' 'blackarch-recon')
 arch=('any')
+groups=('blackarch' 'blackarch-social' 'blackarch-recon')
 url='https://github.com/thalha-a9/helix'
 license=('MIT')
 depends=('python' 'python-aiohttp')
@@ -17,31 +17,20 @@ optdepends=('python-aiohttp-socks: --tor and socks5:// proxies'
             'python-pillow: avatar matching (--phash)'
             'holehe: email account check (--holehe)'
             'python-weasyprint: PDF reports (--report)')
-makedepends=('python-build' 'python-pip' 'python-setuptools')
+makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools')
 source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$_pkgname-$pkgver.tar.gz")
-sha512sums=('82a80d7eb648ef7d0ad9a552ed72731b1a5b832f610595eca2743259b5cfa0901f11f8bcda519af7c727fc20fdc4bdc5e4e906337a76d11fbb359d0d290eb711')
+sha512sums=('af9c1846a8d496c1cfaefe6edc2a69bdc3d3dfa156a78aead346944d32af43fa926988429b98af3eb551c5708f7aaeb6e75337763623e2980a8194c858fd0d54')
 
 build() {
   cd "$_pkgname-$pkgver"
 
-  python -m build --wheel --no-isolation --outdir="$srcdir/dist"
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$_pkgname-$pkgver"
 
-  pip install \
-    --verbose \
-    --disable-pip-version-check \
-    --no-warn-script-location \
-    --ignore-installed \
-    --no-compile \
-    --no-deps \
-    --root="$pkgdir" \
-    --prefix=/usr \
-    --no-index \
-    --find-links="file://$srcdir/dist" \
-    $pkgname
+  python -m installer --destdir="$pkgdir" dist/*.whl
 
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md
   install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
