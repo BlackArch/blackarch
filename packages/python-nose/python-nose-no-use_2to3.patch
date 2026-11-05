@@ -1,0 +1,53 @@
+diff --git a/setup.py b/setup.py
+index a2091c0..7e01bba 100644
+--- a/setup.py
++++ b/setup.py
+@@ -13,8 +13,7 @@ if sys.version_info >= (3,):
+         from distribute_setup import use_setuptools
+         use_setuptools()
+ 
+-    extra = {'use_2to3': True,
+-             'test_dirs': test_dirs,
++    extra = {'test_dirs': test_dirs,
+              'test_build_dir': 'build/tests',
+              'pyversion_patching': True,
+              }
+diff --git a/setup3lib.py b/setup3lib.py
+index 27bdb93..761b74f 100644
+--- a/setup3lib.py
++++ b/setup3lib.py
+@@ -18,7 +18,6 @@ else:
+     import logging
+     from setuptools import Distribution as _Distribution
+     from distutils.core import Command
+-    from setuptools.command.build_py import Mixin2to3
+     from distutils import dir_util, file_util, log
+     import setuptools.command.test
+     from pkg_resources import normalize_path
+@@ -68,7 +67,7 @@ else:
+             self.pyversion_patching = False
+             _Distribution.__init__(self, attrs)
+ 
+-    class BuildTestsCommand (Command, Mixin2to3):
++    class BuildTestsCommand (Command):
+         # Create mirror copy of tests, convert all .py files using 2to3
+         user_options = []
+ 
+@@ -83,7 +82,6 @@ else:
+             self.test_base = test_base
+ 
+         def run(self):
+-            use_2to3 = getattr(self.distribution, 'use_2to3', False)
+             test_dirs = getattr(self.distribution, 'test_dirs', [])
+             test_base = self.test_base
+             bpy_cmd = self.get_finalized_command("build_py")
+@@ -112,9 +110,6 @@ else:
+                             if fn.endswith(ext):
+                                 doc_modified.append(dstfile)
+                                 break
+-            if use_2to3:
+-                self.run_2to3(py_modified)
+-                self.run_2to3(doc_modified, True)
+             if self.distribution.pyversion_patching:
+                 if patch is not None:
+                     for file in modified:

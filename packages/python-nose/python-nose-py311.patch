@@ -1,0 +1,203 @@
+diff --git a/functional_tests/test_attribute_plugin.py b/functional_tests/test_attribute_plugin.py
+index c9bab66..df2cfd3 100644
+--- a/functional_tests/test_attribute_plugin.py
++++ b/functional_tests/test_attribute_plugin.py
+@@ -150,7 +150,10 @@ class TestClassAndMethodAttrs(AttributePluginTester):
+     args = ["-a", "meth_attr=method,cls_attr=class"]
+ 
+     def verify(self):
+-        assert '(test_attr.TestClassAndMethodAttrs) ... ok' in self.output
++        if sys.version_info >= (3, 11):
++            assert '(test_attr.TestClassAndMethodAttrs.test_method) ... ok' in self.output
++        else:
++            assert '(test_attr.TestClassAndMethodAttrs) ... ok' in self.output
+         assert 'test_case_two' not in self.output
+         assert 'test_case_one' not in self.output
+         assert 'test_case_three' not in self.output
+@@ -166,7 +169,10 @@ class TestTopLevelNotSelected(AttributePluginTester):
+         # rather than the attribute plugin, but the issue more easily manifests
+         # itself when using attributes.
+         assert 'test.test_b ... ok' in self.output
+-        assert 'test_a (test.TestBase) ... ok' in self.output
++        if sys.version_info >= (3, 11):
++            assert 'test_a (test.TestBase.test_a) ... ok' in self.output
++        else:
++            assert 'test_a (test.TestBase) ... ok' in self.output
+         assert 'TestDerived' not in self.output
+ 
+ 
+diff --git a/functional_tests/test_load_tests_from_test_case.py b/functional_tests/test_load_tests_from_test_case.py
+index 13d0c8a..934d43b 100644
+--- a/functional_tests/test_load_tests_from_test_case.py
++++ b/functional_tests/test_load_tests_from_test_case.py
+@@ -2,6 +2,7 @@
+ Tests that plugins can override loadTestsFromTestCase
+ """
+ import os
++import sys
+ import unittest
+ from nose import loader
+ from nose.plugins import PluginTester
+@@ -44,9 +45,14 @@ class TestLoadTestsFromTestCaseHook(PluginTester, unittest.TestCase):
+     suitepath = os.path.join(support, 'ltftc')
+ 
+     def runTest(self):
+-        expect = [
+-            'test_value (%s.Derived) ... ERROR' % __name__,
+-            'test_value (tests.Tests) ... ok']
++        if sys.version_info >= (3, 11):
++            expect = [
++                'test_value (%s.Derived.test_value) ... ERROR' % __name__,
++                'test_value (tests.Tests.test_value) ... ok']
++        else:
++            expect = [
++                'test_value (%s.Derived) ... ERROR' % __name__,
++                'test_value (tests.Tests) ... ok']
+         print str(self.output)
+         for line in self.output:
+             if expect:
+diff --git a/functional_tests/test_xunit.py b/functional_tests/test_xunit.py
+index 6c2e99d..6e76a7d 100644
+--- a/functional_tests/test_xunit.py
++++ b/functional_tests/test_xunit.py
+@@ -25,7 +25,10 @@ class TestXUnitPlugin(PluginTester, unittest.TestCase):
+         
+         assert "ERROR: test_error" in self.output
+         assert "FAIL: test_fail" in self.output
+-        assert "test_skip (test_xunit_as_suite.TestForXunit) ... SKIP: skipit" in self.output
++        if sys.version_info >= (3, 11):
++            assert "test_skip (test_xunit_as_suite.TestForXunit.test_skip) ... SKIP: skipit" in self.output
++        else:
++            assert "test_skip (test_xunit_as_suite.TestForXunit) ... SKIP: skipit" in self.output
+         assert "XML: %s" % xml_results_filename in self.output
+         
+         f = codecs.open(xml_results_filename,'r', encoding='utf8')
+diff --git a/nose/config.py b/nose/config.py
+index ad01e61..d9aec2d 100644
+--- a/nose/config.py
++++ b/nose/config.py
+@@ -78,7 +78,7 @@ class ConfiguredDefaultsOptionParser(object):
+         except AttributeError:
+             filename = '<???>'
+         try:
+-            cfg.readfp(fh)
++            cfg.read_file(fh)
+         except ConfigParser.Error, exc:
+             raise ConfigError("Error reading config file %r: %s" %
+                               (filename, str(exc)))
+diff --git a/nose/plugins/errorclass.py b/nose/plugins/errorclass.py
+index d1540e0..38ecec9 100644
+--- a/nose/plugins/errorclass.py
++++ b/nose/plugins/errorclass.py
+@@ -1,4 +1,15 @@
++import sys
++
++if sys.version_info >= (3, 11):
++    method = "TestTodo.runTest"
++    traceback = """
++...Todo("I need to test something")
++...
+ """
++else:
++    method = "TestTodo"
++    traceback = ""
++f"""
+ ErrorClass Plugins
+ ------------------
+ 
+@@ -66,7 +77,7 @@ each step.
+ Now run the test. TODO is printed.
+ 
+     >>> _ = case(result) # doctest: +ELLIPSIS
+-    runTest (....TestTodo) ... TODO: I need to test something
++    runTest (....{method}) ... TODO: I need to test something
+ 
+ Errors and failures are empty, but todo has our test:
+ 
+@@ -79,10 +90,10 @@ Errors and failures are empty, but todo has our test:
+     >>> result.printErrors() # doctest: +ELLIPSIS
+     <BLANKLINE>
+     ======================================================================
+-    TODO: runTest (....TestTodo)
++    TODO: runTest (....{method})
+     ----------------------------------------------------------------------
+     Traceback (most recent call last):
+-    ...
++    ...{traceback}
+     ...Todo: I need to test something
+     <BLANKLINE>
+ 
+diff --git a/nose/plugins/manager.py b/nose/plugins/manager.py
+index 4d2ed22..daa9edb 100644
+--- a/nose/plugins/manager.py
++++ b/nose/plugins/manager.py
+@@ -105,7 +105,7 @@ class PluginProxy(object):
+         meth = getattr(plugin, call, None)
+         if meth is not None:
+             if call == 'loadTestsFromModule' and \
+-                    len(inspect.getargspec(meth)[0]) == 2:
++                    len(inspect.getfullargspec(meth)[0]) == 2:
+                 orig_meth = meth
+                 meth = lambda module, path, **kwargs: orig_meth(module)
+             self.plugins.append((plugin, meth))
+diff --git a/nose/result.py b/nose/result.py
+index f974a14..228a42c 100644
+--- a/nose/result.py
++++ b/nose/result.py
+@@ -13,7 +13,7 @@ try:
+     # 2.7+
+     from unittest.runner import _TextTestResult
+ except ImportError:
+-    from unittest import _TextTestResult
++    from unittest import TextTestResult as _TextTestResult
+ from nose.config import Config
+ from nose.util import isclass, ln as _ln # backwards compat
+ 
+diff --git a/nose/util.py b/nose/util.py
+index 80ab1d4..21770ae 100644
+--- a/nose/util.py
++++ b/nose/util.py
+@@ -449,15 +449,15 @@ def try_run(obj, names):
+             if type(obj) == types.ModuleType:
+                 # py.test compatibility
+                 if isinstance(func, types.FunctionType):
+-                    args, varargs, varkw, defaults = \
+-                        inspect.getargspec(func)
++                    args, varargs, varkw, defaults, *_ = \
++                        inspect.getfullargspec(func)
+                 else:
+                     # Not a function. If it's callable, call it anyway
+                     if hasattr(func, '__call__') and not inspect.ismethod(func):
+                         func = func.__call__
+                     try:
+-                        args, varargs, varkw, defaults = \
+-                            inspect.getargspec(func)
++                        args, varargs, varkw, defaults, *_ = \
++                            inspect.getfullargspec(func)
+                         args.pop(0) # pop the self off
+                     except TypeError:
+                         raise TypeError("Attribute %s of %r is not a python "
+diff --git a/unit_tests/test_xunit.py b/unit_tests/test_xunit.py
+index 2a9f69b..560b9c2 100644
+--- a/unit_tests/test_xunit.py
++++ b/unit_tests/test_xunit.py
+@@ -134,7 +134,8 @@ class TestXMLOutputWithXML(unittest.TestCase):
+             err_lines = err.text.strip().split("\n")
+             eq_(err_lines[0], 'Traceback (most recent call last):')
+             eq_(err_lines[-1], 'AssertionError: one is not \'equal\' to two')
+-            eq_(err_lines[-2], '    raise AssertionError("one is not \'equal\' to two")')
++            r_line = -3 if '^' * 10 in err_lines[-2] else -2
++            eq_(err_lines[r_line], '    raise AssertionError("one is not \'equal\' to two")')
+         else:
+             # this is a dumb test for 2.4-
+             assert '<?xml version="1.0" encoding="UTF-8"?>' in result
+@@ -201,7 +202,8 @@ class TestXMLOutputWithXML(unittest.TestCase):
+             err_lines = err.text.strip().split("\n")
+             eq_(err_lines[0], 'Traceback (most recent call last):')
+             eq_(err_lines[-1], 'RuntimeError: some error happened')
+-            eq_(err_lines[-2], '    raise RuntimeError("some error happened")')
++            r_line = -3 if '^' * 10 in err_lines[-2] else -2
++            eq_(err_lines[r_line], '    raise RuntimeError("some error happened")')
+         else:
+             # this is a dumb test for 2.4-
+             assert '<?xml version="1.0" encoding="UTF-8"?>' in result
