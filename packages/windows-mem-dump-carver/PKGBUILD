@@ -1,0 +1,33 @@
+# Maintainer: CyberQueenMeg <github.com/cyberqueenmeg>
+
+pkgname=windows-mem-dump-carver
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="A PowerShell-based memory dump carving tool for Windows malware analysis and incident response."
+arch=('any')
+url="https://github.com/cyberqueenmeg/WindowsMemDumpCarver"
+license=('MIT')
+groups=('blackarch' 'blackarch-forensic' 'blackarch-malware')
+depends=('powershell')
+source=("${pkgname}-${pkgver}.tar.gz::${url}/archive/refs/tags/v${pkgver}.tar.gz")
+sha512sums=('55af5f20820d26a59738382908e34455d33c514e7ebf8a0a67d0026a9535f29a01affff66b8d2485befb8956499eeb8ee0317fd9a5b8fc5b5b63e27594047d9c')
+
+package() {
+  cd "WindowsMemDumpCarver-${pkgver}"
+
+  # Install script
+  install -dm755 "${pkgdir}/usr/share/${pkgname}"
+  install -m644 WinMemDumpCarver.ps1 "${pkgdir}/usr/share/${pkgname}/"
+
+  # Create wrapper
+  install -dm755 "${pkgdir}/usr/bin"
+  cat << 'EOF' > "${pkgdir}/usr/bin/${pkgname}"
+#!/bin/bash
+exec pwsh -File /usr/share/windows-mem-dump-carver/WinMemDumpCarver.ps1 "$@"
+EOF
+  chmod 755 "${pkgdir}/usr/bin/${pkgname}"
+
+  # Docs and License
+  install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+  install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}
