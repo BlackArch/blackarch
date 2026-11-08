@@ -2,14 +2,15 @@
 # See COPYING for license details.
 
 pkgname=slurp-scanner
-pkgver=93.2dea27e
+pkgver=18.38f0cc7
 pkgrel=1
+epoch=1
 groups=('blackarch' 'blackarch-scanner')
 pkgdesc='Evaluate the security of S3 buckets.'
 arch=('x86_64' 'aarch64')
 # Move to an existing fork
 url='https://codeberg.org/invirtuate/slurp'
-license=('GPL3')
+license=('GPL-3.0-or-later')
 makedepends=('git' 'go')
 source=("$pkgname::git+https://codeberg.org/invirtuate/slurp.git")
 sha512sums=('SKIP')
@@ -17,18 +18,22 @@ sha512sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  echo $(git rev-list --count HEAD).$(git rev-parse --short HEAD)
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
-  cd $pkgname
+  cd "$pkgname/cmd/slurp"
 
   GOPATH="$srcdir" go mod download
   GOPATH="$srcdir" go build \
     -trimpath \
     -buildmode=pie \
-    -mod=readonly \
-    -modcacherw \
+    -mod=vendor \
     -ldflags "-s -w" \
     -o $pkgname .
 }
@@ -36,7 +41,7 @@ build() {
 package() {
   cd $pkgname
 
-  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 755 "cmd/slurp/$pkgname" "$pkgdir/usr/bin/$pkgname"
   install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname" README.md
 }
 
