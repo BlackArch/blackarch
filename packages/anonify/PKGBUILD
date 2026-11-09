@@ -1,0 +1,42 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+# Maintainer: Rodrigo Martinez <elgalacticoyt@gmail.com>
+
+pkgname=anonify
+pkgver=1.0.0
+pkgrel=1
+groups=('blackarch' 'blackarch-networking' 'blackarch-spoof' 'blackarch-tunnel')
+pkgdesc='Reversible network privacy hardening: randomized MAC and hostname, IPv6 and DNS leak prevention, Tor or WireGuard behind a fail-closed nftables kill switch.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/grubberdubber/anonify'
+license=('GPL-3.0-only')
+depends=('nftables' 'iproute2' 'procps-ng')
+makedepends=('cargo' 'rust')
+optdepends=('tor: tor and dns modules'
+            'wireguard-tools: vpn module'
+            'networkmanager: runtime MAC/IPv6 changes through nmcli'
+            'bubblewrap: launch --isolate'
+            'curl: Tor exit-IP verification in check'
+            'obfs4proxy: pluggable transports for --tor-bridges')
+options=(!lto)
+source=("$pkgname-$pkgver.tar.gz::https://github.com/grubberdubber/anonify/archive/refs/tags/v$pkgver.tar.gz")
+sha512sums=('fb5b0bccff0d4f7731c7d329c70f069b710f1715df484ee11a97ca4e4695193ff3e62543d90b65b2c959b295b3f038450ade49669d2ed37814053928e729964e')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  cargo build --release --locked
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -Dm 755 target/release/anonify "$pkgdir/usr/bin/anonify"
+  install -Dm 755 target/release/anonify-browser "$pkgdir/usr/bin/anonify-browser"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md
+  install -Dm 644 docs/install.md docs/platforms.md docs/stability.md \
+    -t "$pkgdir/usr/share/doc/$pkgname/"
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
