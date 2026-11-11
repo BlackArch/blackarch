@@ -35,6 +35,8 @@ remove=false
 
 we_started_gpg=false
 we_started_ssh=false
+# set once we really hold /tmp/blackarch.lck on the server
+we_locked=false
 
 # default
 MKTEMPDIR="/tmp"
@@ -75,7 +77,9 @@ EOF
 cleanup() {
 	echo 'cleaning up...'
 
-	unlock
+	# only release the lock if we took it; otherwise a failed or interrupted
+	# run would delete the lock of whoever is releasing right now
+	$we_locked && unlock
 
 	# Kill gpg-agent.
 	$we_started_gpg && kill "$(cut -d: -f2 <<< "$GPG_AGENT_INFO")" 2> /dev/null >&2
@@ -209,7 +213,8 @@ start_ssh_agent() {
 
 lock() {
 	echo "obtaining lock..."
-	ssh -l "$user" "$site" "$(declare -f remote_lock); remote_lock $wait_for_lock"
+	ssh -l "$user" "$site" "$(declare -f remote_lock); remote_lock $wait_for_lock" &&
+		we_locked=true
 }
 
 # This runs on the remote host.

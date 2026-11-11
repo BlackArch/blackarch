@@ -1,0 +1,51 @@
+# Remove packages: give one or more package directory names; the run deletes
+# their sources on a branch and opens ONE pull request. Merging that PR removes
+# the packages from the package repository too (auto-update-release.yml).
+name: Remove packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'Package directory names to remove (space separated)'
+        type: string
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    container: blackarchlinux/blackarch:latest
+    timeout-minutes: 30
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm --needed --noprogressbar git jq python github-cli
+
+      - uses: actions/checkout@v7
+        with:
+          ref: master
+          token: ${{ secrets.BA_BOT_TOKEN || github.token }}
+
+      - name: Read the package tree
+        run: |
+          mkdir -p .ci-state/state
+          bash .github/ci/meta-all.sh packages .ci-state/meta.txt
+          python3 .github/ci/detect.py scan --meta .ci-state/meta.txt --out .ci-state/state \
+            --packages packages --exclude .github/ci/exclude.txt --exclude lists/to-remove \
+            --overrides .github/ci/nvchecker-overrides.toml >/dev/null
+
+      - name: Open the removal PR
+        env:
+          PACKAGES: ${{ inputs.packages }}
+          BASE_BRANCH: master
+          META: .ci-state/state/meta.json
+          GH_TOKEN: ${{ secrets.BA_BOT_TOKEN || github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GIT_USER_NAME: blackarch-ci[bot]
+          GIT_USER_EMAIL: team@blackarch.org
+        run: bash .github/ci/remove-prepare.sh packages "$PACKAGES"
