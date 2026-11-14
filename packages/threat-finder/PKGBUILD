@@ -1,0 +1,40 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=threat-finder
+pkgver=v0.4.1.r2.g790de0e
+pkgrel=1
+pkgdesc='Runtime vulnerability scanner that finds CVEs in running services and ranks them by network exposure.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-scanner' 'blackarch-defensive')
+url='https://github.com/offseq/threat-finder'
+license=('MIT OR Apache-2.0')
+depends=('gcc-libs' 'glibc')
+makedepends=('git' 'cargo')
+source=("git+https://github.com/offseq/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  cargo build --release --locked
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
+  install -Dm 644 LICENSE-MIT LICENSE-APACHE -t "$pkgdir/usr/share/licenses/$pkgname"
+}
