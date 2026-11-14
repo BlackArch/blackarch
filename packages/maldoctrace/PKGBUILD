@@ -1,0 +1,47 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=maldoctrace
+pkgver=0.4.0.r0.g8deb654
+pkgrel=1
+pkgdesc='Static analyzer and safe VBA emulator for malicious Office documents.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-malware' 'blackarch-forensic')
+url='https://github.com/debugactiveprocess/MaldocTrace'
+license=('Apache-2.0')
+depends=('glibc')
+makedepends=('git' 'go')
+source=("$pkgname::git+https://github.com/debugactiveprocess/MaldocTrace.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  GOPATH="$srcdir" go mod download
+  GOPATH="$srcdir" go build \
+    -trimpath \
+    -buildmode=pie \
+    -mod=readonly \
+    -modcacherw \
+    -ldflags "-s -w" \
+    -o $pkgname ./cmd/maldoctrace
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/bin/$pkgname"
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md
+  install -Dm 644 debian/maldoctrace.1 "$pkgdir/usr/share/man/man1/maldoctrace.1"
+}
