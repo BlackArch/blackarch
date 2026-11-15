@@ -2,9 +2,9 @@
 # See COPYING for license details.
 
 pkgname=ddosify
-pkgver=v2.4.0.r0.g34bbca1
+pkgver=2.4.0.r0.g34bbca1
 pkgrel=1
-epoch=1
+epoch=2
 pkgdesc='High-performance load testing tool, written in Golang.'
 arch=('x86_64' 'aarch64')
 groups=('blackarch' 'blackarch-dos' 'blackarch-misc')
@@ -18,8 +18,12 @@ sha256sums=('SKIP')
 pkgver() {
   cd $pkgname
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' |
-  sed 's|selfhosted.|v|g'
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
