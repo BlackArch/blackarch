@@ -1,0 +1,92 @@
+# This file is part of BlackArch Linux ( https://www.blackarch.org/ ).
+# See COPYING for license details.
+
+pkgname=vigolium
+pkgver=0.5.6.r0.g1aa203d
+pkgrel=1
+pkgdesc='Web vulnerability scanner with traffic ingestion, passive analysis and a REST API.'
+arch=('x86_64' 'aarch64')
+groups=('blackarch' 'blackarch-webapp' 'blackarch-scanner')
+url='https://github.com/vigolium/vigolium'
+license=('MIT')
+depends=('glibc' 'ca-certificates')
+makedepends=('git' 'go' 'bun' 'file')
+optdepends=('chromium: browser crawling'
+            'git: template updates and repository operations')
+conflicts=('vigolium-bin')
+# Built with -s -w, so a debug package would be empty.
+options=('!debug')
+source=("git+https://github.com/vigolium/$pkgname.git")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd $pkgname
+
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
+}
+
+build() {
+  cd $pkgname
+
+  export GOPATH="$srcdir/gopath"
+  export GOFLAGS='-mod=readonly -modcacherw'
+  export CGO_ENABLED=0
+  export BUN_INSTALL_CACHE_DIR="$srcdir/bun-cache"
+
+  local goarch
+  case "$CARCH" in
+    x86_64) goarch=amd64 ;;
+    aarch64) goarch=arm64 ;;
+  esac
+
+  go mod download
+
+  # Vigolium embeds two Bun-compiled helpers. Build both from the sources
+  # shipped in the same repository instead of using prebuilt release blobs.
+
+  # jstangle: JavaScript analysis helper used by content discovery.
+  ( cd platform/jstangle
+    bun install --frozen-lockfile --linker isolated --ignore-scripts
+    bun run scripts/build-binaries.ts --host )
+  install -Dm 755 "platform/jstangle/bin/jstangle-linux-$goarch" \
+    "internal/resources/deparos/jstangle/jstangle-linux-$goarch"
+  go run ./internal/tools/blobpack \
+    -in "internal/resources/deparos/jstangle/jstangle-linux-$goarch" \
+    -platform "linux/$goarch" \
+    -marker "$(cd platform/jstangle && bun scripts/source-fingerprint.ts)"
+
+  # vigolium-audit: source-audit helper.
+  ( cd platform/vigolium-audit
+    bun install --frozen-lockfile
+    VIGOLIUM_AUDIT_BUILD_NO_INSTALL=1 bun run build.ts )
+  bash build/scripts/stage-audit-blob.sh linux "$goarch"
+
+  go build \
+    -trimpath \
+    -buildmode=pie \
+    -ldflags "-s -w \
+      -X github.com/vigolium/vigolium/pkg/cli.Commit=$(git rev-parse --short HEAD) \
+      -X github.com/vigolium/vigolium/pkg/cli.BuildTime=$(date -u -d "@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y-%m-%dT%H:%M:%SZ)" \
+    -o $pkgname ./cmd/vigolium
+}
+
+package() {
+  cd $pkgname
+
+  install -Dm 755 $pkgname "$pkgdir/usr/lib/$pkgname/$pkgname"
+  # Tells vigolium it is managed by pacman, so update notices point there.
+  echo pacman > "$pkgdir/usr/lib/$pkgname/.vigolium-package-manager"
+
+  install -dm 755 "$pkgdir/usr/bin"
+  ln -s "/usr/lib/$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md \
+    THIRD_PARTY_NOTICES.md
+  install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
