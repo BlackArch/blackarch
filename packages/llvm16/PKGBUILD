@@ -1,0 +1,72 @@
+pkgname=('llvm16' )
+pkgver=16.0.6
+pkgrel=3
+arch=('x86_64')
+url="https://llvm.org/"
+license=('custom:Apache 2.0 with LLVM Exception')
+pkgdesc="Compiler infrastructure and runtime libraries (LLVM 16)"
+depends=('gcc-libs' 'zlib' 'libffi' 'libedit' 'ncurses' 'libxml2' 'perl')
+makedepends=('cmake' 'ninja' 'zlib' 'zstd' 'libffi' 'libedit' 'ncurses'
+             'libxml2' 'python' 'clang')
+checkdepends=('python-psutil')
+options=('staticlibs' '!lto') # https://github.com/llvm/llvm-project/issues/57740
+_source_base=https://github.com/llvm/llvm-project/releases/download/llvmorg-$pkgver
+source=($_source_base/llvm-$pkgver.src.tar.xz
+        $_source_base/cmake-$pkgver.src.tar.xz
+        $_source_base/third-party-$pkgver.src.tar.xz)
+sha256sums=('e91db44d1b3bb1c33fcea9a7d1f2423b883eaa9163d3d56ca2aa6d2f0711bc29'
+            '39d342a4161095d2f28fb1253e4585978ac50521117da666e2b1f6f28b62f514'
+            '15f5b9aeeba938530af977d5f9205612737a091a7f0f6c8075df8723b7713f70')
+
+prepare() {
+  rename -v -- "-$pkgver.src" '' {cmake,third-party}-$pkgver.src
+  cd llvm-$pkgver.src
+  mkdir build
+}
+
+build() {
+  cd llvm-$pkgver.src/build
+
+  # Build only minimal debug info to reduce size
+  CFLAGS=${CFLAGS/-g /-g1 }
+  CXXFLAGS=${CXXFLAGS/-g /-g1 }
+
+  local cmake_args=(
+    -G Ninja
+    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_INSTALL_PREFIX=/usr/lib/llvm16
+    -DCMAKE_SKIP_RPATH=ON
+    -DLLVM_BINUTILS_INCDIR=/usr/include
+    -DLLVM_BUILD_LLVM_DYLIB=ON
+    -DLLVM_BUILD_TESTS=ON
+    -DLLVM_ENABLE_BINDINGS=OFF
+    -DLLVM_ENABLE_FFI=ON
+    -DLLVM_ENABLE_RTTI=ON
+    -DLLVM_HOST_TRIPLE=$CHOST
+    -DLLVM_INCLUDE_BENCHMARKS=OFF
+    -DLLVM_INSTALL_UTILS=ON
+    -DLLVM_LINK_LLVM_DYLIB=ON
+    -DLLVM_USE_PERF=ON
+    -DCMAKE_CXX_STANDARD=17
+    -DCMAKE_C_COMPILER=clang
+    -DCMAKE_CXX_COMPILER=clang++
+    -DCMAKE_C_FLAGS="-include stdint.h"
+    -DCMAKE_CXX_FLAGS="-include stdint.h"
+  )
+
+  cmake .. "${cmake_args[@]}"
+  ninja
+}
+
+check() {
+  cd llvm-$pkgver.src/build
+  LD_LIBRARY_PATH=$PWD/lib ninja check
+}
+
+package() {
+
+  cd llvm-$pkgver.src/build
+
+  DESTDIR="$pkgdir" ninja install
+}
+
