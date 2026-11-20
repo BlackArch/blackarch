@@ -1,0 +1,118 @@
+# Release the packages of a merged auto-update PR (PUBLISH_MODE=pr), or remove
+# the packages of a merged remove/* PR (remove-packages.yml) from the repo.
+# The packages were already built and install-tested by the auto-update run
+# whose id is recorded in the PR body; nothing is rebuilt here.
+name: Auto-update release (merged PR)
+
+# pull_request_target, not pull_request: the job then runs with ref master
+# (so a `blackarch-repo` environment limited to master still works) and the
+# workflow file always comes from master, not from the PR. It is safe here:
+# it only runs after a merge and only checks out master.
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [master]
+
+permissions:
+  contents: read
+
+# one group per PR: a shared group keeps only ONE pending run, so two merges
+# during a long release would silently drop one of them (and an unrelated PR
+# closure would take the slot too). Releases serialise on the repo lock.
+concurrency:
+  group: auto-update-release-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: >-
+      github.event.pull_request.merged
+      && (startsWith(github.event.pull_request.head.ref, 'auto-update/')
+          || startsWith(github.event.pull_request.head.ref, 'remove/'))
+      && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    container: blackarchlinux/blackarch:latest
+    environment: blackarch-repo
+    timeout-minutes: 120
+    permissions:
+      contents: write          # lists/to-release
+      actions: read            # download artifacts of the original run
+      pull-requests: write     # result comment
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm --needed --noprogressbar git jq rsync openssh gnupg github-cli
+
+      - uses: actions/checkout@v7
+        with:
+          ref: master
+          token: ${{ secrets.BA_BOT_TOKEN || github.token }}
+
+      - id: run
+        name: Find the run that built this PR
+        if: startsWith(github.event.pull_request.head.ref, 'auto-update/')
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          id=$(printf '%s\n' "$BODY" | sed -nE 's/.*auto-update-run-id: ([0-9]+).*/\1/p' | head -n1)
+          [ -n "$id" ] || { echo "no auto-update-run-id marker in the PR body"; exit 1; }
+          # The PR body is editable, so never trust the id alone: the run must be
+          # the one that opened this PR (branch auto-update/<date>-<run id>), an
+          # auto-update.yml run of THIS repository on master, and successful.
+          [ "${HEAD_REF##*-}" = "$id" ] || { echo "run id $id does not match the PR branch $HEAD_REF"; exit 1; }
+          run=$(gh api "repos/$GH_REPO/actions/runs/$id" \
+                  -q '[.path, .head_branch, .repository.full_name, .conclusion, .event, .head_sha] | join(" ")') ||
+            { echo "cannot look up run $id"; exit 1; }
+          read -r path branch repo conclusion event head_sha <<<"$run"
+          [ "$path" = ".github/workflows/auto-update.yml" ] || { echo "run $id is not an auto-update run ($path)"; exit 1; }
+          [ "$branch" = "master" ] || { echo "run $id did not run on master ($branch)"; exit 1; }
+          [ "$repo" = "$GH_REPO" ] || { echo "run $id belongs to $repo"; exit 1; }
+          # failure is allowed: the report job may fail after the PR was opened
+          case $conclusion in success|failure) ;; *) echo "run $id is not finished or was cancelled ($conclusion)"; exit 1 ;; esac
+          case $event in schedule|workflow_dispatch) ;; *) echo "run $id was triggered by $event"; exit 1 ;; esac
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@v8
+        if: startsWith(github.event.pull_request.head.ref, 'auto-update/')
+        continue-on-error: true      # expired results -> lists/to-release
+        with:
+          run-id: ${{ steps.run.outputs.id }}
+          github-token: ${{ github.token }}
+          pattern: results-*
+          path: results
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v8
+        if: startsWith(github.event.pull_request.head.ref, 'auto-update/')
+        continue-on-error: true      # expired artifacts -> lists/to-release
+        with:
+          run-id: ${{ steps.run.outputs.id }}
+          github-token: ${{ github.token }}
+          pattern: pkgs-*
+          path: pkgs
+          merge-multiple: true
+
+      - name: Release
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BUILD_SHA: ${{ steps.run.outputs.head_sha }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          # relative on purpose: ${{ github.workspace }} is the host path in container jobs
+          RESULTS: results
+          PKGS: pkgs
+          RELEASE: ${{ vars.AUTO_RELEASE || 'true' }}
+          GPG_KEY_ID: ${{ vars.REPO_GPG_KEY_ID }}
+          GPG_PRIVATE_KEY: ${{ secrets.REPO_GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.REPO_GPG_PASSPHRASE }}
+          SSH_PRIVATE_KEY: ${{ secrets.REPO_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ vars.REPO_SSH_KNOWN_HOSTS }}
+          SSH_USER: ${{ vars.REPO_SSH_USER }}
+          REPO_SITEDIR: ${{ vars.REPO_SITEDIR }}
+        run: bash .github/ci/release-merged.sh

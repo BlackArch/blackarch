@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: |
           pacman -Syu --noconfirm --needed git pkgcheck-arch nodejs # 'node' needed to test workflow locally by act
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_REF }}
           repository: ${{ env.HEAD_REPO }}
@@ -39,18 +39,44 @@ jobs:
           git fetch --tags origin
           git fetch upstream master
       - name: Check Styling
+        shell: bash
         run: |
-           CHANGED_FILES=($(git diff --name-only --diff-filter=ACMRT upstream/master...${{ env.HEAD_SHA }} | tr '\n' ' '))
-           for FILE in "${CHANGED_FILES[@]}"; do
-              if [[ $(basename $FILE) == "PKGBUILD" ]]; then
-                echo "Validating $FILE..."
-                pkgcheck $FILE
-              fi
-           done
+          # Check every changed PKGBUILD, in parallel, and fail at the end if
+          # any has problems (so all of them are listed in one run).
+          mapfile -t files < <(git diff --name-only --diff-filter=ACMRT \
+            "upstream/master...$HEAD_SHA" | grep -E '(^|/)PKGBUILD$' || true)
+          if (( ${#files[@]} == 0 )); then echo "no PKGBUILD changed"; exit 0; fi
+          echo "checking ${#files[@]} PKGBUILD(s)"
+
+          # pkgcheck runs `pacman -Si base-devel` for every PKGBUILD line:
+          # answer it once from a cache
+          shim=$(mktemp -d)
+          real=$(command -v pacman)
+          "$real" -Si base-devel > "$shim/base-devel.si" 2>/dev/null || true
+          printf '%s\n' '#!/bin/sh' \
+            "if [ \"\$*\" = '-Si base-devel' ] && [ -s '$shim/base-devel.si' ]; then exec cat '$shim/base-devel.si'; fi" \
+            "exec '$real' \"\$@\"" > "$shim/pacman"
+          chmod +x "$shim/pacman"
+
+          # one file per pkgcheck call; each file's output is printed as one block
+          rc=0
+          printf '%s\0' "${files[@]}" | PATH="$shim:$PATH" xargs -0 -P "$(nproc)" -n 1 \
+            sh -c 'out=$(pkgcheck "$1" 2>&1); r=$?
+                   if [ $r -eq 0 ] && [ -z "$out" ]; then echo "ok: $1"
+                   elif [ $r -eq 0 ]; then printf "::group::ok with warnings: %s\n%s\n::endgroup::\n" "$1" "$out"
+                   else printf "::group::problems: %s\n%s\n::endgroup::\n" "$1" "$out"; fi
+                   exit $r' _ || rc=$?
+          if (( rc != 0 )); then
+            echo "::error::pkgcheck found problems, see the 'problems:' groups above"
+            exit 1
+          fi
   build:
+     # auto-update PRs are already built and install-tested by auto-update.yml
+     # (only branches of this repository: a fork can name a branch anything)
+     if: ${{ !startsWith(github.head_ref, 'auto-update/') || github.event.pull_request.head.repo.full_name != github.repository }}
      runs-on: ubuntu-latest
      steps:
-       - uses: actions/checkout@v5
+       - uses: actions/checkout@v7
          with:
            ref: ${{ env.HEAD_REF }}
            repository: ${{ env.HEAD_REPO }}
@@ -62,12 +88,32 @@ jobs:
            git fetch --tags origin
            git fetch upstream master           
        - name: Build Package
+         shell: bash
          run: |
-           CHANGED_FILES=($(git diff --name-only --diff-filter=ACMRT upstream/master...${{ env.HEAD_SHA }} | tr '\n' ' '))
-           for FILE in "${CHANGED_FILES[@]}"; do
-              if [[ $(basename $FILE) == "PKGBUILD" ]]; then
-                echo "Building $FILE..."
-                docker build --load -t builder -f travis/Dockerfile $(dirname $FILE)
-                docker run --rm builder
-              fi
+           # Build every changed package (one after another, as before) and
+           # fail at the end with the list of the ones that did not build.
+           mapfile -t files < <(git diff --name-only --diff-filter=ACMRT \
+             "upstream/master...$HEAD_SHA" | grep -E '(^|/)PKGBUILD$' || true)
+           if (( ${#files[@]} == 0 )); then echo "no PKGBUILD changed"; exit 0; fi
+           ok=() failed=()
+           for FILE in "${files[@]}"; do
+             dir=$(dirname "$FILE")
+             echo "::group::Building $dir"
+             if docker build --load -t builder -f travis/Dockerfile "$dir" && docker run --rm builder; then
+               ok+=("$dir")
+             else
+               failed+=("$dir")
+             fi
+             echo "::endgroup::"
            done
+           {
+             echo "### Package builds"
+             echo
+             for d in "${ok[@]}"; do echo "- ✅ \`$d\`"; done
+             for d in "${failed[@]}"; do echo "- ❌ \`$d\`"; done
+           } >> "$GITHUB_STEP_SUMMARY"
+           echo "built: ${#ok[@]}  failed: ${#failed[@]}"
+           if (( ${#failed[@]} )); then
+             echo "::error::failed to build: ${failed[*]}"
+             exit 1
+           fi
