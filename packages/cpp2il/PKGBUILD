@@ -2,59 +2,73 @@
 # See COPYING for license details.
 
 pkgname=cpp2il
-pkgver=2022.1.0.pre.release.21.r150.gb5ad444b
-pkgrel=1
+pkgver=2022.1.0.pre.release.21.r150.gb5ad444
+pkgrel=3
 epoch=1
 pkgdesc="A tool to reverse unity's IL2PP toolchain"
-arch=('x86_64' 'aarch64')
+arch=('x86_64')
 groups=('blackarch' 'blackarch-binary' 'blackarch-reversing')
 url='https://github.com/SamboyCoding/Cpp2IL'
 license=('MIT')
-depends=('dotnet-runtime-6.0')
+depends=('dotnet-runtime')
 makedepends=('git' 'dotnet-host' 'dotnet-sdk')
 source=("$pkgname::git+https://github.com/SamboyCoding/Cpp2IL.git")
 sha512sums=('SKIP')
 
+_rid=linux-x64
+
 pkgver() {
-  cd $pkgname
+  cd "$pkgname"
 
-  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
-}
-
-check() {
-  cd $pkgname
-  dotnet build
-  dotnet test -v=n --no-build
+  ( set -o pipefail
+    git describe --long --tags --abbrev=7 2>/dev/null |
+      sed 's/^v\([0-9]\)/\1/;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "%s.%s" "$(git rev-list --count HEAD)" \
+      "$(git rev-parse --short=7 HEAD)"
+  )
 }
 
 build() {
-  cd $pkgname
+  cd "$pkgname"
 
-  dotnet restore
-  dotnet build /p:Configuration=Release --no-restore
-  pushd ./Cpp2IL || exit 1
-  # It's build name named "ubuntu" but it is suitable for all linux
-  # distributions, as long as it is x86_64
-  dotnet publish /p:Configuration=Release /p:TargetFramework=net6.0 \
-    --no-restore -r ubuntu-x64
-  popd || exit 1
+  # Remove stale build and restore assets
+  rm -rf Cpp2IL/obj Cpp2IL/bin
+
+  # Restore using the same RID as publish
+  dotnet restore Cpp2IL/Cpp2IL.csproj -r "$_rid"
+
+  # Build
+  dotnet build Cpp2IL/Cpp2IL.csproj \
+    -c Release \
+    -r "$_rid" \
+    --no-restore
+
+  # Publish
+  dotnet publish Cpp2IL/Cpp2IL.csproj \
+    -c Release \
+    -r "$_rid" \
+    -p:TargetFramework=net10.0 \
+    --no-restore
 }
 
 package() {
-  cd $pkgname
+  cd "$pkgname"
 
   install -dm 755 "$pkgdir/usr/bin"
-
-  cat > "$pkgdir/usr/bin/$pkgname" << EOF
-#!/bin/sh
-exec /usr/share/$pkgname/Cpp2IL "\$@"
-EOF
-  chmod 755 "$pkgdir/usr/bin/$pkgname"
-
   install -dm 755 "$pkgdir/usr/share/$pkgname"
-  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" *.md
+  install -dm 755 "$pkgdir/usr/share/doc/$pkgname"
 
-  cp -a --no-preserve=ownership ./Cpp2IL/bin/Release/net6.0/ubuntu-x64/* \
+  cat > "$pkgdir/usr/bin/cpp2il" << 'EOF'
+#!/bin/sh
+exec /usr/share/cpp2il/Cpp2IL "$@"
+EOF
+
+  chmod 755 "$pkgdir/usr/bin/cpp2il"
+
+  install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" ./*.md
+
+  cp -a --no-preserve=ownership \
+    ./Cpp2IL/bin/Release/net10.0/linux-x64/. \
     "$pkgdir/usr/share/$pkgname/"
 }
 
