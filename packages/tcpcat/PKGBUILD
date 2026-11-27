@@ -2,13 +2,13 @@
 # See COPYING for license details.
 
 pkgname=tcpcat
-pkgver=v1.8.0.r0.g6072319
+pkgver=v1.10.0.r0.g9cdc5ab
 pkgrel=1
 groups=('blackarch' 'blackarch-scanner' 'blackarch-networking')
-pkgdesc='High-performance network reconnaissance and vulnerability intelligence scanner with an eBPF/AF_XDP engine.'
+pkgdesc='Network scanner that shows what your servers expose, with an offline AI that explains each open port.'
 arch=('x86_64' 'aarch64')
 url='https://github.com/NycolazSec/tcpcat'
-license=('Apache-2.0')
+license=('AGPL-3.0-only')
 depends=('iputils')
 makedepends=('git' 'go')
 source=("git+https://github.com/NycolazSec/$pkgname.git")
@@ -28,6 +28,10 @@ pkgver() {
 build() {
   cd $pkgname
 
+  local ldflags="-s -w -X main.version=${pkgver#v}"
+  ldflags+=" -X main.commit=$(git rev-parse --short=7 HEAD)"
+  ldflags+=" -X main.date=$(date -u -d "@$SOURCE_DATE_EPOCH" +%FT%TZ)"
+
   export CGO_ENABLED=0
   GOPATH="$srcdir" go mod download
   GOPATH="$srcdir" go build \
@@ -35,7 +39,7 @@ build() {
     -buildmode=pie \
     -mod=readonly \
     -modcacherw \
-    -ldflags "-s -w" \
+    -ldflags "$ldflags" \
     -o "$pkgname" ./cmd/$pkgname
 }
 
